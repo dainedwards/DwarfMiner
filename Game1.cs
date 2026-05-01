@@ -762,7 +762,8 @@ public sealed class DwarfMinerGame : Game
 
         // Kaiju eyes: gold → red as anger climbs. Two sockets, both lit. Position must mirror
         // the renderer (headBase = body + tup*26 + tright*facing*110, sockets at tup*8 ± 14).
-        if (_titan.Health > 0)
+        // Same visibility cull as the body — no point lighting an off-screen kaiju.
+        if (kaijuVisible)
         {
             var anger01 = MathHelper.Clamp(_titan.Anger / 100f, 0f, 1f);
             var tup = _planet.UpAt(_titan.Position);
