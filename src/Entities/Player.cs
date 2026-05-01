@@ -1,0 +1,227 @@
+using System;
+using System.Collections.Generic;
+using DwarfMiner.World;
+using Microsoft.Xna.Framework;
+
+namespace DwarfMiner.Entities;
+
+public sealed class Player
+{
+    public Vector2 Position;
+    public Vector2 Velocity;
+    public float Radius = 2.6f;            // pixels — short and stout
+    public float Health = 100f;
+    public bool Grounded;
+
+    public int PickaxePower = 1;
+    public float MineRange = 22f;          // pixels — dwarves have short reach
+    public float MoveSpeed = 78f;          // shorter legs
+    public float JumpSpeed = 150f;
+    public float Gravity = 320f;
+    public float MineCooldown;
+    public float ShootCooldown;
+
+    /// <summary>Debug fly: ignores gravity and tile collision, direct velocity control.</summary>
+    public bool FlyMode;
+
+    public readonly Inventory Inventory = new();
+
+    public Player(Vector2 pos) { Position = pos; }
+
+    public Vector2 Up(Planet planet) => planet.UpAt(Position);
+    public Vector2 Right(Planet planet)
+    {
+        var u = Up(planet);
+        return new Vector2(-u.Y, u.X); // tangent, 90° clockwise from up
+    }
+
+    /// <param name="moveAxis">-1 left, 0 idle, +1 right (in player-local tangent)</param>
+    /// <param name="jumpPressed">true on the frame jump was pressed</param>
+    /// <param name="verticalAxis">-1 down, 0 idle, +1 up (along local up). Only used when <see cref="FlyMode"/> is on.</param>
+    public void Update(float dt, Planet planet, int moveAxis, bool jumpPressed, int verticalAxis = 0)
+    {
+        var up = Up(planet);
+        var right = new Vector2(-up.Y, up.X);
+
+        if (FlyMode)
+        {
+            // Ghost mode: direct velocity, no gravity, phase through tiles. For world-testing.
+            var spd = MoveSpeed * 2.4f;
+            Velocity = right * (moveAxis * spd) + up * (verticalAxis * spd);
+            Position += Velocity * dt;
+            Grounded = false;
+            if (MineCooldown > 0) MineCooldown -= dt;
+            if (ShootCooldown > 0) ShootCooldown -= dt;
+            return;
+        }
+
+        // Input → desired tangent velocity. We project current velocity onto basis vectors,
+        // adjust the tangent component, then recompose. This way gravity-aligned momentum
+        // is preserved while horizontal-along-surface input is responsive.
+        var vTangent = Vector2.Dot(Velocity, right);
+        var vNormal = Vector2.Dot(Velocity, up);
+
+        var targetTangent = moveAxis * MoveSpeed;
+        var accel = Grounded ? 600f : 250f;
+        vTangent = MoveToward(vTangent, targetTangent, accel * dt);
+
+        // Gravity pulls along -up direction.
+        vNormal -= Gravity * dt;
+
+        if (jumpPressed && Grounded)
+        {
+            vNormal = JumpSpeed;
+            Grounded = false;
+        }
+
+        Velocity = right * vTangent + up * vNormal;
+
+        Position += Velocity * dt;
+        ResolveCollision(planet);
+
+        // Grounded probe: cast a short distance along -up, see if a solid tile blocks us.
+        Grounded = ProbeSolid(planet, Position - up * (Radius + 1.5f));
+
+        if (MineCooldown > 0) MineCooldown -= dt;
+        if (ShootCooldown > 0) ShootCooldown -= dt;
+    }
+
+    /// <summary>
+    /// Push the player out of any polar tile it's overlapping. Each tile is treated as a
+    /// rotated rect aligned with its local-up; the player (a circle) projects into tile-local
+    /// coords, clamps to the tile's local AABB, and gets pushed along the world-space direction
+    /// of the resulting separation. Iterative for stability.
+    /// </summary>
+    private void ResolveCollision(Planet planet)
+    {
+        for (var iter = 0; iter < 4; iter++)
+        {
+            var (tx, ty) = planet.WorldToTile(Position);
+            var pushed = false;
+            for (var dy = -2; dy <= 2; dy++)
+            {
+                for (var dx = -2; dx <= 2; dx++)
+                {
+                    var x = tx + dx; var y = ty + dy;
+                    if (!Tiles.IsSolid(planet.Get(x, y))) continue;
+
+                    var centre = planet.TileToWorld(x, y);
+                    var up = planet.UpAt(centre);
+                    var right = new Vector2(-up.Y, up.X);
+                    var rel = Position - centre;
+                    var pLocalX = Vector2.Dot(rel, right);
+                    var pLocalY = Vector2.Dot(rel, up);
+
+                    // Tile-local extents: chord (arc width) × TileSize (radial).
+                    var ringRadius = (Planet.RingMin + x + 0.5f) * Planet.TileSize;
+                    var halfX = MathHelper.TwoPi * ringRadius / Planet.TilesAt(x) * 0.5f;
+                    var halfY = Planet.TileSize * 0.5f;
+
+                    var cLocalX = MathHelper.Clamp(pLocalX, -halfX, halfX);
+                    var cLocalY = MathHelper.Clamp(pLocalY, -halfY, halfY);
+
+                    var diffX = pLocalX - cLocalX;
+                    var diffY = pLocalY - cLocalY;
+                    var distSq = diffX * diffX + diffY * diffY;
+                    if (distSq < Radius * Radius && distSq > 0.0001f)
+                    {
+                        var dist = MathF.Sqrt(distSq);
+                        var pushAmount = Radius - dist + 0.05f;
+                        // World-space push direction = local separation vector mapped through (right, up).
+                        var n = right * (diffX / dist) + up * (diffY / dist);
+                        Position += n * pushAmount;
+                        var into = Vector2.Dot(Velocity, n);
+                        if (into < 0) Velocity -= n * into;
+                        pushed = true;
+                    }
+                    else if (distSq <= 0.0001f)
+                    {
+                        // Centre exactly inside the tile — escape along local up.
+                        Position += planet.UpAt(Position) * 1f;
+                        pushed = true;
+                    }
+                }
+            }
+            if (!pushed) break;
+        }
+    }
+
+    private bool ProbeSolid(Planet planet, Vector2 worldPoint)
+    {
+        var (x, y) = planet.WorldToTile(worldPoint);
+        return Tiles.IsSolid(planet.Get(x, y));
+    }
+
+    /// <summary>Place a block from inventory into a sky tile under the cursor. Stone first, then dirt.</summary>
+    public TileKind? TryPlace(Planet planet, Physics physics, Vector2 worldCursor)
+    {
+        if (MineCooldown > 0) return null;
+        var d = worldCursor - Position;
+        if (d.Length() > MineRange) return null;
+        var (x, y) = planet.WorldToTile(worldCursor);
+        if (planet.Get(x, y) != TileKind.Sky) return null;
+
+        // Don't seal the dwarf inside a tile — keep at least a body's distance.
+        var tilePos = planet.TileToWorld(x, y);
+        if ((tilePos - Position).Length() < Radius + Planet.TileSize * 0.55f) return null;
+
+        TileKind placed;
+        if (Inventory.TryConsume("stone", 1)) placed = TileKind.Stone;
+        else if (Inventory.TryConsume("dirt", 1)) placed = TileKind.Dirt;
+        else return null;
+
+        planet.Set(x, y, placed);
+        physics.MarkDirty(x, y);
+        MineCooldown = 0.10f;
+        return placed;
+    }
+
+    /// <summary>Try to mine the tile under the cursor. Returns the tile kind if shattered.</summary>
+    public TileKind? TryMine(Planet planet, Physics physics, Vector2 worldCursor)
+    {
+        if (MineCooldown > 0) return null;
+        var d = worldCursor - Position;
+        if (d.Length() > MineRange) return null;
+        var (x, y) = planet.WorldToTile(worldCursor);
+        var k = planet.Get(x, y);
+        if (k == TileKind.Sky) return null;
+        var broken = planet.Mine(x, y, PickaxePower);
+        MineCooldown = 0.10f;
+        if (broken is { } bk)
+        {
+            physics.MarkDirty(x, y);
+            var drop = Tiles.Drop(bk);
+            if (drop is { } d2) Inventory.Add(d2.id, d2.count);
+            return bk;
+        }
+        return null;
+    }
+
+    private static float MoveToward(float v, float target, float maxDelta)
+    {
+        var d = target - v;
+        if (MathF.Abs(d) <= maxDelta) return target;
+        return v + MathF.Sign(d) * maxDelta;
+    }
+}
+
+public sealed class Inventory
+{
+    private readonly Dictionary<string, int> _items = new();
+    public IReadOnlyDictionary<string, int> Items => _items;
+
+    public void Add(string id, int count)
+    {
+        _items.TryGetValue(id, out var existing);
+        _items[id] = existing + count;
+    }
+
+    public bool TryConsume(string id, int count)
+    {
+        if (!_items.TryGetValue(id, out var have) || have < count) return false;
+        _items[id] = have - count;
+        return true;
+    }
+
+    public int Count(string id) => _items.GetValueOrDefault(id, 0);
+}

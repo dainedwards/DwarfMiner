@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+
+# IDE
+.idea/
+.vs/
+*.user
+*.suo
+*.userprefs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MonoGame content cache
+Content/bin/
+Content/obj/

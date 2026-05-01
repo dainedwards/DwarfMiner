@@ -1,0 +1,450 @@
+using System;
+using DwarfMiner.Entities;
+using DwarfMiner.World;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+
+namespace DwarfMiner.Rendering;
+
+public sealed class Renderer
+{
+    private readonly GraphicsDevice _gd;
+    private readonly SpriteBatch _sb;
+    private readonly Texture2D _pixel;
+    private readonly Texture2D _circle;
+    private readonly PixelFont _font;
+    private readonly Lighting _lighting;
+
+    public Renderer(GraphicsDevice gd)
+    {
+        _gd = gd;
+        _sb = new SpriteBatch(gd);
+        _pixel = new Texture2D(gd, 1, 1);
+        _pixel.SetData(new[] { Color.White });
+        _circle = MakeCircle(gd, 32);
+        _font = new PixelFont(gd);
+        _lighting = new Lighting(gd);
+    }
+
+    public Texture2D Pixel => _pixel;
+    public SpriteBatch Batch => _sb;
+
+    public void BeginLighting(Camera cam, Color ambient) => _lighting.Begin(cam, ambient);
+    public void AddLight(Vector2 worldPos, float radius, Color color) => _lighting.AddPoint(worldPos, radius, color);
+    public void EndLighting() => _lighting.End();
+    public void CompositeLighting(Point screenSize) => _lighting.Composite(_sb, screenSize);
+    public void BloomLighting(Point screenSize, Color tint) => _lighting.Bloom(_sb, screenSize, tint);
+    public void Darken(Vector2 worldPos, float radius, Color color) => _lighting.Darken(worldPos, radius, color);
+
+    public void DrawWorld(Planet planet, Camera cam)
+    {
+        var view = cam.View;
+        var inv = Matrix.Invert(view);
+        var corners = new[]
+        {
+            Vector2.Transform(Vector2.Zero, inv),
+            Vector2.Transform(new Vector2(cam.ViewportSize.X, 0), inv),
+            Vector2.Transform(new Vector2(0, cam.ViewportSize.Y), inv),
+            Vector2.Transform(new Vector2(cam.ViewportSize.X, cam.ViewportSize.Y), inv),
+        };
+        var minX = float.MaxValue; var minY = float.MaxValue;
+        var maxX = float.MinValue; var maxY = float.MinValue;
+        foreach (var c in corners)
+        {
+            if (c.X < minX) minX = c.X;
+            if (c.Y < minY) minY = c.Y;
+            if (c.X > maxX) maxX = c.X;
+            if (c.Y > maxY) maxY = c.Y;
+        }
+
+        // Use the camera-target distance ± the viewport's half-diagonal (in world units) to bound
+        // the visible ring range. This always fully encloses the rectangular viewport regardless
+        // of camera rotation, so we never miss tiles that should be visible.
+        var camDist = (cam.Target - planet.Center).Length();
+        var halfW = cam.ViewportSize.X / cam.Zoom * 0.5f;
+        var halfH = cam.ViewportSize.Y / cam.Zoom * 0.5f;
+        var halfDiag = MathF.Sqrt(halfW * halfW + halfH * halfH) + Planet.TileSize;
+        var minDistTight = MathF.Max(0f, camDist - halfDiag);
+        var maxDistTight = camDist + halfDiag;
+
+        var minRing = Math.Max(0, (int)(minDistTight / Planet.TileSize) - Planet.RingMin - 1);
+        var maxRing = Math.Min(Planet.RingCount - 1, (int)(maxDistTight / Planet.TileSize) - Planet.RingMin + 1);
+
+        _gd.Clear(new Color(8, 10, 18));
+        _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view);
+
+        var camAngle = MathF.Atan2(cam.Target.Y - planet.Center.Y, cam.Target.X - planet.Center.X);
+
+        for (var r = minRing; r <= maxRing; r++)
+        {
+            var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
+            var tpr = Planet.TilesAt(r);
+            var chord = MathHelper.TwoPi * ringRadius / tpr;
+
+            // Visible angular slice: from the law of cosines, a tile at angle Δθ from the
+            // camera direction is within `halfDiag` of the camera target iff cos(Δθ) ≥ k where
+            // k = (R² + camDist² − halfDiag²) / (2 · R · camDist). This is the *correct*
+            // visibility test (works whether the player is inside, on, or outside the ring),
+            // unlike the old atan2 approximation.
+            int t0, t1;
+            if (camDist < 1f || ringRadius < 1f)
+            {
+                t0 = 0; t1 = tpr;
+            }
+            else
+            {
+                var k = (ringRadius * ringRadius + camDist * camDist - halfDiag * halfDiag)
+                      / (2f * ringRadius * camDist);
+                if (k <= -1f)
+                {
+                    t0 = 0; t1 = tpr; // full ring visible
+                }
+                else if (k >= 1f)
+                {
+                    continue; // ring is entirely outside the viewport
+                }
+                else
+                {
+                    var halfArc = MathF.Acos(k) + 0.05f;
+                    var span = (int)(halfArc / MathHelper.TwoPi * tpr) + 2;
+                    var centreT = (int)((camAngle / MathHelper.TwoPi + 1f) % 1f * tpr);
+                    t0 = centreT - span;
+                    t1 = centreT + span;
+                }
+            }
+
+            for (var ti = t0; ti < t1; ti++)
+            {
+                var t = ((ti % tpr) + tpr) % tpr;
+                var k = planet.Get(r, t);
+
+                var centre = planet.TileToWorld(r, t);
+                // Cull tiles whose centre is too far from the viewport rect (cheap secondary check).
+                if (centre.X < minX - chord || centre.X > maxX + chord ||
+                    centre.Y < minY - chord || centre.Y > maxY + chord)
+                    continue;
+
+                var up = planet.UpAt(centre);
+                var rotation = MathF.Atan2(up.X, -up.Y);
+                var size = new Vector2(chord + 1f, Planet.TileSize + 1f); // +1 px overlap kills sub-pixel seams between neighbours
+                var hash = (r * 73856093) ^ (t * 19349663);
+
+                // Sky tile: maybe draw the background wall (cave back-wall, Terraria style).
+                if (k == TileKind.Sky)
+                {
+                    var wallK = planet.GetWall(r, t);
+                    if (wallK == TileKind.Sky) continue; // outside planet — no wall
+                    var wb = Tiles.BaseColor(wallK);
+                    var wjit = ((hash >> 4) & 31) - 16;
+                    var wcol = new Color(
+                        Math.Clamp((int)(wb.R * 0.40f) + wjit / 5, 0, 255),
+                        Math.Clamp((int)(wb.G * 0.40f) + wjit / 5, 0, 255),
+                        Math.Clamp((int)(wb.B * 0.40f) + wjit / 5, 0, 255));
+                    _sb.Draw(_pixel, centre, null, wcol, rotation,
+                        new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+                    continue;
+                }
+
+                var jitter = ((hash >> 4) & 31) - 16;
+                var col = Tiles.BaseColor(k);
+                col = new Color(
+                    Math.Clamp(col.R + jitter / 4, 0, 255),
+                    Math.Clamp(col.G + jitter / 4, 0, 255),
+                    Math.Clamp(col.B + jitter / 4, 0, 255));
+
+                var right = new Vector2(-up.Y, up.X);
+
+                _sb.Draw(_pixel, centre, null, col, rotation,
+                    new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+
+                // Top/bottom shade — bright band on the outer (sky-facing) side, dark on the
+                // inner (centre-facing) side. Bakes ambient sky-light into every solid tile.
+                var topShade = new Color(
+                    Math.Clamp(col.R + 16, 0, 255),
+                    Math.Clamp(col.G + 16, 0, 255),
+                    Math.Clamp(col.B + 16, 0, 255));
+                var botShade = new Color(
+                    Math.Clamp(col.R - 16, 0, 255),
+                    Math.Clamp(col.G - 16, 0, 255),
+                    Math.Clamp(col.B - 16, 0, 255));
+                DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 2, topShade);
+                DrawDeco(centre, right, up, rotation, chord, 0, 6, 8, 2, botShade);
+
+                // Edge rims — outer/inner radial + tangential to either side.
+                var rim = new Color(
+                    Math.Clamp(col.R + 44, 0, 255),
+                    Math.Clamp(col.G + 44, 0, 255),
+                    Math.Clamp(col.B + 44, 0, 255));
+                var sh = new Color(
+                    Math.Clamp(col.R - 36, 0, 255),
+                    Math.Clamp(col.G - 36, 0, 255),
+                    Math.Clamp(col.B - 36, 0, 255));
+                var outerSky = false;
+                var outerCount = planet.OuterNeighbourCount(r, t);
+                for (var oi = 0; oi < outerCount; oi++)
+                {
+                    var (or_, ot_) = planet.OuterNeighbour(r, t, oi);
+                    if (planet.Get(or_, ot_) == TileKind.Sky) { outerSky = true; break; }
+                }
+                var (ir_, it_) = planet.InnerNeighbour(r, t);
+                var innerSky = planet.Get(ir_, it_) == TileKind.Sky;
+                var leftSky  = planet.Get(r, t - 1) == TileKind.Sky;
+                var rightSky = planet.Get(r, t + 1) == TileKind.Sky;
+                if (outerSky) DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, rim);
+                if (innerSky) DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, sh);
+                if (leftSky)  DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, rim);
+                if (rightSky) DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, sh);
+
+                // Per-kind decoration — every sub-rect is in 8×8 reference coords; DrawDeco
+                // scales the X axis by chord/8 so wide surface tiles spread the pattern out
+                // proportionally without distorting Y.
+                switch (k)
+                {
+                    case TileKind.Stone:
+                    case TileKind.HardStone:
+                    {
+                        var jy = 2 + ((hash >> 5) & 3);
+                        var jc = new Color(
+                            Math.Clamp(col.R - 28, 0, 255),
+                            Math.Clamp(col.G - 28, 0, 255),
+                            Math.Clamp(col.B - 28, 0, 255));
+                        DrawDeco(centre, right, up, rotation, chord, 1, jy, 6, 1, jc);
+                        var gx = (hash >> 9) & 5;
+                        var gy = (hash >> 13) & 5;
+                        DrawDeco(centre, right, up, rotation, chord, 1 + gx, 1 + gy, 1, 1, topShade);
+                        break;
+                    }
+                    case TileKind.Granite:
+                    {
+                        // Pink/grey speckled grain — scatter light + dark mineral flecks.
+                        var lt = new Color(
+                            Math.Clamp(col.R + 32, 0, 255),
+                            Math.Clamp(col.G + 18, 0, 255),
+                            Math.Clamp(col.B + 18, 0, 255));
+                        var dk = new Color(
+                            Math.Clamp(col.R - 30, 0, 255),
+                            Math.Clamp(col.G - 28, 0, 255),
+                            Math.Clamp(col.B - 22, 0, 255));
+                        DrawDeco(centre, right, up, rotation, chord, 1 + ((hash >> 2) & 5), 1 + ((hash >> 5) & 5), 1, 1, lt);
+                        DrawDeco(centre, right, up, rotation, chord, 2 + ((hash >> 9) & 4), 2 + ((hash >> 12) & 4), 1, 1, dk);
+                        DrawDeco(centre, right, up, rotation, chord, 4 + ((hash >> 14) & 2), 1 + ((hash >> 17) & 4), 1, 1, lt);
+                        break;
+                    }
+                    case TileKind.Basalt:
+                    {
+                        // Dark angular fracture lines — two short diagonal slashes.
+                        var crack = new Color(
+                            Math.Clamp(col.R - 32, 0, 255),
+                            Math.Clamp(col.G - 32, 0, 255),
+                            Math.Clamp(col.B - 32, 0, 255));
+                        var jy = 1 + ((hash >> 5) & 4);
+                        DrawDeco(centre, right, up, rotation, chord, 1, jy, 2, 1, crack);
+                        DrawDeco(centre, right, up, rotation, chord, 3, jy + 1, 2, 1, crack);
+                        DrawDeco(centre, right, up, rotation, chord, 5, jy + 2, 2, 1, crack);
+                        var hi = new Color(
+                            Math.Clamp(col.R + 22, 0, 255),
+                            Math.Clamp(col.G + 22, 0, 255),
+                            Math.Clamp(col.B + 28, 0, 255));
+                        DrawDeco(centre, right, up, rotation, chord, 2 + ((hash >> 11) & 4), 1 + ((hash >> 14) & 4), 1, 1, hi);
+                        break;
+                    }
+                    case TileKind.Obsidian:
+                    {
+                        // Glassy black with bright sub-tile glints.
+                        var glint = new Color(180, 190, 220);
+                        var dx = 1 + ((hash >> 3) & 5);
+                        var dy = 1 + ((hash >> 7) & 5);
+                        DrawDeco(centre, right, up, rotation, chord, dx, dy, 1, 1, glint);
+                        DrawDeco(centre, right, up, rotation, chord, dx + 1, dy, 1, 1, new Color(120, 130, 170));
+                        var dx2 = 2 + ((hash >> 13) & 3);
+                        var dy2 = 4 + ((hash >> 17) & 2);
+                        DrawDeco(centre, right, up, rotation, chord, dx2, dy2, 1, 1, glint);
+                        break;
+                    }
+                    case TileKind.Dirt:
+                    case TileKind.Gravel:
+                    {
+                        var pc = new Color(
+                            Math.Clamp(col.R - 24, 0, 255),
+                            Math.Clamp(col.G - 22, 0, 255),
+                            Math.Clamp(col.B - 18, 0, 255));
+                        DrawDeco(centre, right, up, rotation, chord, 1 + ((hash >> 2) & 4), 2 + ((hash >> 5) & 3), 2, 1, pc);
+                        DrawDeco(centre, right, up, rotation, chord, 3 + ((hash >> 9) & 3), 4 + ((hash >> 12) & 2), 1, 1, pc);
+                        break;
+                    }
+                    case TileKind.Grass:
+                    {
+                        var bc = new Color(110, 160, 80);
+                        DrawDeco(centre, right, up, rotation, chord, 1 + ((hash >> 2) & 5), 0, 1, 1, bc);
+                        DrawDeco(centre, right, up, rotation, chord, 2 + ((hash >> 6) & 4), 1, 1, 1, bc);
+                        DrawDeco(centre, right, up, rotation, chord, 4 + ((hash >> 10) & 3), 0, 1, 1, bc);
+                        break;
+                    }
+                    case TileKind.Snow:
+                    {
+                        var sx = (hash >> 3) & 5;
+                        var sy = (hash >> 7) & 3;
+                        DrawDeco(centre, right, up, rotation, chord, 1 + sx, 1 + sy, 1, 1, Color.White);
+                        break;
+                    }
+                    case TileKind.MossStone:
+                    {
+                        var mc = new Color(70, 120, 75);
+                        DrawDeco(centre, right, up, rotation, chord, 1 + ((hash >> 2) & 3), 1 + ((hash >> 4) & 3), 2, 1, mc);
+                        DrawDeco(centre, right, up, rotation, chord, 4 + ((hash >> 8) & 2), 4 + ((hash >> 11) & 2), 1, 2, mc);
+                        break;
+                    }
+                    case TileKind.Core:
+                    {
+                        DrawDeco(centre, right, up, rotation, chord, 2, 2, 4, 4, new Color(255, 180, 80));
+                        DrawDeco(centre, right, up, rotation, chord, 3, 3, 2, 2, new Color(255, 235, 190));
+                        break;
+                    }
+                    case TileKind.Support:
+                    {
+                        var grain = new Color(115, 78, 45);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 2, 6, 1, grain);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 5, 6, 1, grain);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 1, 2, 6, new Color(75, 60, 45));
+                        break;
+                    }
+                }
+
+                // Ore speckles — bright sub-tile flecks at hash-stable positions.
+                if (Tiles.IsOre(k))
+                {
+                    var spec = Tiles.OreSpeckle(k);
+                    var sx1 = (hash >> 1) & 5;
+                    var sy1 = (hash >> 4) & 5;
+                    var sx2 = (hash >> 7) & 5;
+                    var sy2 = (hash >> 10) & 5;
+                    DrawDeco(centre, right, up, rotation, chord, 1 + sx1, 1 + sy1, 2, 2, spec);
+                    DrawDeco(centre, right, up, rotation, chord, 1 + sx2, 1 + sy2, 1, 1, spec);
+                    if (k is TileKind.Crystal or TileKind.GoldOre or TileKind.PlatinumOre
+                          or TileKind.Diamond or TileKind.Ruby or TileKind.Sapphire
+                          or TileKind.SilverOre)
+                        DrawDeco(centre, right, up, rotation, chord, 2 + sx1, 2 + sy1, 1, 1, Color.White);
+                }
+
+                // Damage overlay + cracks once past the halfway mark.
+                var dmg = planet.Damage(r, t);
+                if (dmg > 0)
+                {
+                    var a = (byte)(dmg / 1.4f);
+                    _sb.Draw(_pixel, centre, null, new Color((byte)0, (byte)0, (byte)0, a), rotation,
+                        new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+                    if (dmg > 140)
+                    {
+                        var cc = new Color((byte)0, (byte)0, (byte)0, (byte)200);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 3, 1, 2, cc);
+                        DrawDeco(centre, right, up, rotation, chord, 4, 1, 2, 1, cc);
+                        DrawDeco(centre, right, up, rotation, chord, 5, 4, 1, 2, cc);
+                    }
+                }
+            }
+        }
+        _sb.End();
+    }
+
+    /// <summary>
+    /// Draw a sub-rect within a polar tile, given the tile's centre, local axes (right, up),
+    /// rotation, and arc width (chord). Sub-rect is authored in 8×8 reference coords with
+    /// (0,0) at the outer-tangent-left corner; X scales by chord/8 so wide surface tiles
+    /// spread their decoration proportionally.
+    /// </summary>
+    private void DrawDeco(Vector2 tileCentre, Vector2 right, Vector2 up, float rotation, float chord,
+                          float lx, float ly, float lw, float lh, Color color)
+    {
+        var scaleX = chord / Planet.TileSize;
+        var offX = (lx + lw * 0.5f - Planet.TileSize * 0.5f) * scaleX;
+        var offY = (ly + lh * 0.5f - Planet.TileSize * 0.5f);
+        var world = tileCentre + right * offX - up * offY;
+        var size = new Vector2(lw * scaleX + 0.3f, lh + 0.3f);
+        _sb.Draw(_pixel, world, null, color, rotation, new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+    }
+
+    public void BeginEntities(Camera cam)
+    {
+        _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: cam.View);
+    }
+
+    public void EndEntities() => _sb.End();
+
+    public void DrawRect(Vector2 worldPos, Vector2 size, Color color, float rotation = 0f)
+    {
+        _sb.Draw(_pixel, worldPos, null, color, rotation, new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+    }
+
+    public void DrawCircle(Vector2 worldPos, float radius, Color color)
+    {
+        _sb.Draw(_circle, worldPos, null, color, 0f,
+            new Vector2(_circle.Width / 2f, _circle.Height / 2f),
+            radius * 2f / _circle.Width, SpriteEffects.None, 0f);
+    }
+
+    public void DrawHudBars(int viewportWidth, int viewportHeight, Player player, int titanAnger, string status, string controls)
+    {
+        _sb.Begin(samplerState: SamplerState.PointClamp);
+        // Health bar
+        var barW = 220; var barH = 14;
+        _sb.Draw(_pixel, new Rectangle(12, 12, barW, barH), new Color(40, 10, 10));
+        var hp = (int)(barW * MathHelper.Clamp(player.Health / 100f, 0f, 1f));
+        _sb.Draw(_pixel, new Rectangle(12, 12, hp, barH), new Color(220, 60, 60));
+        _sb.Draw(_pixel, new Rectangle(12, 12, barW, 1), Color.Black);
+        _sb.Draw(_pixel, new Rectangle(12, 12 + barH - 1, barW, 1), Color.Black);
+        _font.Draw(_sb, "HP", new Vector2(barW + 18, 13), Color.White, scale: 1);
+
+        // Anger bar
+        _sb.Draw(_pixel, new Rectangle(12, 32, barW, barH), new Color(40, 30, 10));
+        var ang = (int)(barW * MathHelper.Clamp(titanAnger / 100f, 0f, 1f));
+        _sb.Draw(_pixel, new Rectangle(12, 32, ang, barH), new Color(240, 140, 40));
+        _sb.Draw(_pixel, new Rectangle(12, 32, barW, 1), Color.Black);
+        _sb.Draw(_pixel, new Rectangle(12, 32 + barH - 1, barW, 1), Color.Black);
+        _font.Draw(_sb, "TITAN ANGER", new Vector2(barW + 18, 33), Color.White, scale: 1);
+
+        _font.Draw(_sb, status, new Vector2(12, 56), Color.White, scale: 1);
+        _font.Draw(_sb, controls, new Vector2(12, viewportHeight - 56), new Color(200, 200, 220), scale: 1);
+        _sb.End();
+    }
+
+    public void DrawCenteredText(string text, int viewportWidth, int viewportHeight, Color color, int scale = 3)
+    {
+        var w = _font.Measure(text, scale);
+        _sb.Begin(samplerState: SamplerState.PointClamp);
+        _font.Draw(_sb, text, new Vector2((viewportWidth - w) / 2f, viewportHeight / 2f - _font.LineHeight * scale / 2f), color, scale);
+        _sb.End();
+    }
+
+    /// <summary>Build a small pixel-art Texture2D from a string layout + char→Color palette.
+    /// Unrecognised characters become Color.Transparent.</summary>
+    public static Texture2D BuildSprite(GraphicsDevice gd, string[] rows, System.Collections.Generic.Dictionary<char, Color> palette)
+    {
+        var h = rows.Length;
+        var w = rows[0].Length;
+        var data = new Color[w * h];
+        for (var y = 0; y < h; y++)
+            for (var x = 0; x < w; x++)
+                data[y * w + x] = palette.TryGetValue(rows[y][x], out var c) ? c : Color.Transparent;
+        var tex = new Texture2D(gd, w, h);
+        tex.SetData(data);
+        return tex;
+    }
+
+    private static Texture2D MakeCircle(GraphicsDevice gd, int size)
+    {
+        var tex = new Texture2D(gd, size, size);
+        var data = new Color[size * size];
+        var r = size / 2f - 0.5f;
+        for (var y = 0; y < size; y++)
+        {
+            for (var x = 0; x < size; x++)
+            {
+                var dx = x - r; var dy = y - r;
+                var d = MathF.Sqrt(dx * dx + dy * dy);
+                data[y * size + x] = d <= r ? Color.White : Color.Transparent;
+            }
+        }
+        tex.SetData(data);
+        return tex;
+    }
+}

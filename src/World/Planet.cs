@@ -1,0 +1,236 @@
+using System;
+using System.Collections.Generic;
+using Microsoft.Xna.Framework;
+
+namespace DwarfMiner.World;
+
+/// <summary>
+/// Polar tile grid with per-band halving so each tile's arc width stays roughly 4–8px at
+/// every depth. The world is divided into bands of constant <c>TilesAt(r)</c>; whenever the
+/// ring radius halves, the band's tile count halves too. Inner-ring radial neighbours are 1
+/// tile (collapsed); outer-ring radial neighbours are 1 or 2 tiles (split across the boundary).
+///
+/// Public API still uses (x, y) → (ring, angle). Below ring 0 = Core; above outer ring = Sky.
+/// </summary>
+public sealed class Planet
+{
+    public const int RingCount = 200;
+    public const int RingMin = 20;
+    public const int TileSize = 8;
+
+    /// <summary>Tile count per ring, computed per ring at construction. Power-of-2 halved at radius bands.</summary>
+    private static readonly int[] _tilesAt;
+    private static readonly int[] _ringOffsets;
+    private static readonly int _totalTiles;
+
+    static Planet()
+    {
+        _tilesAt = new int[RingCount];
+        _ringOffsets = new int[RingCount + 1];
+        for (var r = 0; r < RingCount; r++)
+        {
+            _tilesAt[r] = ComputeTilesAt(r);
+            _ringOffsets[r + 1] = _ringOffsets[r] + _tilesAt[r];
+        }
+        _totalTiles = _ringOffsets[RingCount];
+    }
+
+    /// <summary>Per-ring tile count chosen so each tile's chord ≈ <see cref="TileSize"/> px —
+    /// roughly square at every depth. TPR varies smoothly with radius rather than in discrete
+    /// halving bands, eliminating sliver tiles deep underground at the cost of variable
+    /// (non-power-of-2) ring counts.</summary>
+    private static int ComputeTilesAt(int r)
+    {
+        var globalRadius = RingMin + r + 0.5f;
+        return Math.Max(8, (int)Math.Round(MathHelper.TwoPi * globalRadius));
+    }
+
+    public static int TilesAt(int r)
+    {
+        if (r < 0 || r >= RingCount) return 1;
+        return _tilesAt[r];
+    }
+
+    public Vector2 Center;
+    public int Radius => RingMin + RingCount;
+    public int Size => RingCount;
+
+    private readonly TileKind[] _tiles;
+    private readonly byte[] _damage;
+    /// <summary>Background "wall" tile kind per cell — what was there before caves were carved.
+    /// Visible as a darker silhouette behind Sky tiles inside the planet (Terraria-style).</summary>
+    private readonly TileKind[] _wall;
+
+    public Planet(Vector2 center)
+    {
+        Center = center;
+        _tiles = new TileKind[_totalTiles];
+        _damage = new byte[_totalTiles];
+        _wall = new TileKind[_totalTiles];
+    }
+
+    public int Index(int x, int y)
+    {
+        var n = TilesAt(x);
+        var w = ((y % n) + n) % n;
+        return _ringOffsets[x] + w;
+    }
+
+    /// <summary>Decompose a flat tile index back to (ring, angle). Linear search across rings;
+    /// fine for the rates we call it at (dirty queue processing).</summary>
+    public (int x, int y) UnIndex(int idx)
+    {
+        int lo = 0, hi = RingCount;
+        while (lo < hi)
+        {
+            var mid = (lo + hi) / 2;
+            if (_ringOffsets[mid + 1] <= idx) lo = mid + 1;
+            else hi = mid;
+        }
+        return (lo, idx - _ringOffsets[lo]);
+    }
+
+    public bool InBounds(int x, int y) => x >= 0 && x < RingCount;
+
+    public TileKind Get(int x, int y)
+    {
+        if (x < 0) return TileKind.Core;
+        if (x >= RingCount) return TileKind.Sky;
+        return _tiles[Index(x, y)];
+    }
+
+    public void Set(int x, int y, TileKind k)
+    {
+        if (!InBounds(x, y)) return;
+        var i = Index(x, y);
+        _tiles[i] = k;
+        _damage[i] = 0;
+    }
+
+    public byte Damage(int x, int y) =>
+        InBounds(x, y) ? _damage[Index(x, y)] : (byte)0;
+
+    /// <summary>Background-wall material at this tile. Returns Sky if outside the playable rings.</summary>
+    public TileKind GetWall(int x, int y) =>
+        InBounds(x, y) ? _wall[Index(x, y)] : TileKind.Sky;
+
+    /// <summary>Set the background wall (called during world gen).</summary>
+    public void SetWall(int x, int y, TileKind k)
+    {
+        if (!InBounds(x, y)) return;
+        _wall[Index(x, y)] = k;
+    }
+
+    public TileKind? Mine(int x, int y, int power)
+    {
+        if (!InBounds(x, y)) return null;
+        var i = Index(x, y);
+        var k = _tiles[i];
+        if (k == TileKind.Sky) return null;
+        var hardness = Tiles.Hardness(k);
+        if (hardness >= 99) return null;
+        var dmg = _damage[i] + Math.Max(1, power * 32 / hardness);
+        if (dmg >= 255)
+        {
+            _tiles[i] = TileKind.Sky;
+            _damage[i] = 0;
+            return k;
+        }
+        _damage[i] = (byte)dmg;
+        return null;
+    }
+
+    public Vector2 TileToWorld(int x, int y)
+    {
+        if (x < 0) return Center;
+        var n = TilesAt(x);
+        var w = ((y % n) + n) % n;
+        var radius = (RingMin + x + 0.5f) * TileSize;
+        var angle = (w + 0.5f) / n * MathHelper.TwoPi;
+        return Center + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * radius;
+    }
+
+    public (int x, int y) WorldToTile(Vector2 p)
+    {
+        var rel = p - Center;
+        var dist = rel.Length();
+        var ringIdx = (int)(dist / TileSize) - RingMin;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
+        var nRing = MathHelper.Clamp(ringIdx, 0, RingCount - 1);
+        var n = TilesAt(nRing);
+        var t = (int)(ang / MathHelper.TwoPi * n);
+        if (t >= n) t = n - 1;
+        return (ringIdx, t);
+    }
+
+    public Vector2 GravityAt(Vector2 worldPos)
+    {
+        var to = Center - worldPos;
+        var len = to.Length();
+        if (len < 0.0001f) return Vector2.Zero;
+        return to / len;
+    }
+
+    public Vector2 UpAt(Vector2 worldPos)
+    {
+        var up = worldPos - Center;
+        var len = up.Length();
+        if (len < 0.0001f) return -Vector2.UnitY;
+        return up / len;
+    }
+
+    public bool IsSolidAt(Vector2 worldPos)
+    {
+        var (x, y) = WorldToTile(worldPos);
+        return Tiles.IsSolid(Get(x, y));
+    }
+
+    /// <summary>Inner radial neighbour. With smooth per-ring TPR the inner ring has slightly
+    /// fewer tiles; we take the inner tile that contains this tile's centre angle.</summary>
+    public (int x, int y) InnerNeighbour(int x, int y)
+    {
+        if (x <= 0) return (-1, 0);
+        var nIn = TilesAt(x - 1);
+        var nOut = TilesAt(x);
+        var w = ((y % nOut) + nOut) % nOut;
+        if (nIn == nOut) return (x - 1, w);
+        return (x - 1, (int)((w + 0.5) * nIn / nOut) % nIn);
+    }
+
+    /// <summary>Outer-radial neighbour count for this specific tile — usually 1, occasionally 2
+    /// when the outer ring's TPR is large enough that this tile's arc spans two outer tiles.</summary>
+    public int OuterNeighbourCount(int x, int y)
+    {
+        if (x >= RingCount - 1) return 1;
+        var nIn = TilesAt(x);
+        var nOut = TilesAt(x + 1);
+        if (nIn == nOut) return 1;
+        var w = ((y % nIn) + nIn) % nIn;
+        var first = (int)Math.Floor((double)w * nOut / nIn);
+        var lastExcl = (int)Math.Ceiling((double)(w + 1) * nOut / nIn);
+        return Math.Max(1, lastExcl - first);
+    }
+
+    /// <summary>Outer-radial neighbour at index <paramref name="which"/> in [0, OuterNeighbourCount).</summary>
+    public (int x, int y) OuterNeighbour(int x, int y, int which = 0)
+    {
+        if (x >= RingCount - 1) return (RingCount, 0);
+        var nIn = TilesAt(x);
+        var nOut = TilesAt(x + 1);
+        var w = ((y % nIn) + nIn) % nIn;
+        if (nIn == nOut) return (x + 1, w);
+        var first = (int)Math.Floor((double)w * nOut / nIn);
+        return (x + 1, (first + which) % nOut);
+    }
+
+    public IEnumerable<(int x, int y)> AllTiles()
+    {
+        for (var x = 0; x < RingCount; x++)
+        {
+            var n = TilesAt(x);
+            for (var y = 0; y < n; y++)
+                yield return (x, y);
+        }
+    }
+}
