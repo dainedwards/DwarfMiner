@@ -21,6 +21,25 @@ public sealed class Player
     public float MineCooldown;
     public float ShootCooldown;
 
+    /// <summary>Hard cap on downward speed. Prevents tunneling at terminal velocity (a tile is
+    /// 8 px and the body radius is ~2.6 px — uncapped, a long fall could move >8 px per frame
+    /// and pass clean through a tile without ever overlapping it). Also gives a controlled,
+    /// non-floaty fall feel.</summary>
+    private const float MaxFallSpeed = 380f;
+    /// <summary>Window after walking off a ledge during which a jump press still registers.
+    /// Standard platformer "coyote time" — keeps jumps feeling forgiving.</summary>
+    private const float CoyoteTime = 0.10f;
+    /// <summary>Window before landing during which a jump press is buffered and triggers on
+    /// touchdown. Means a slightly-early jump press still works — no missed jumps.</summary>
+    private const float JumpBufferTime = 0.12f;
+    /// <summary>Multiplier on gravity while ascending without the jump button held — gives the
+    /// classic Mario-style variable jump (hold for full height, tap for a short hop).</summary>
+    private const float JumpReleaseGravityMul = 2.4f;
+
+    private bool _jumpHeldPrev;       // for edge detection inside Update
+    private float _coyoteTimer;       // counts down from CoyoteTime after leaving ground
+    private float _jumpBufferTimer;   // counts down from JumpBufferTime after a jump press
+
     /// <summary>Debug god mode: ghost flight (no gravity / no collision), super-pickaxe power,
     /// and extended mining reach. Toggled in-game with the G key. When on, mining uses the
     /// god values below; when off, it falls back to PickaxePower/MineRange so crafted upgrades
