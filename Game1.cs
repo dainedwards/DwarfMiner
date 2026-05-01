@@ -1130,6 +1130,8 @@ public sealed class DwarfMinerGame : Game
         _renderer.AddLight(_planet.Center, 90f, new Color(255, 90, 30));
 
         // Visible ores within a tile-radius of the player so we don't scan the whole map.
+        // Same pass picks up player-placed lights (Glowshroom, Beacon) so a torch-lit room
+        // illuminates correctly without us having to track each placeable separately.
         var (ptx, pty) = _planet.WorldToTile(_player.Position);
         const int oreScanR = 14;
         for (var dy = -oreScanR; dy <= oreScanR; dy++)
@@ -1144,6 +1146,17 @@ public sealed class DwarfMinerGame : Game
                     case TileKind.GoldOre: glow = new Color(255, 180, 60);  r = 9f; break;
                     case TileKind.Crystal: glow = new Color(180, 110, 230); r = 11f; break;
                     case TileKind.IronOre: glow = new Color(220, 150, 110); r = 5f; break;
+                    case TileKind.Glowshroom:
+                        glow = new Color(110, 220, 130);
+                        // Soft pulse so a row of mushrooms breathes together with a low frequency.
+                        r = 26f + MathF.Sin((float)gameTime.TotalGameTime.TotalSeconds * 1.6f + dx * 0.3f) * 3f;
+                        break;
+                    case TileKind.Beacon:
+                        glow = new Color(190, 130, 255);
+                        // Sharper pulse for the beacon — matches the renderer's pixel pulse so
+                        // the tile core, the light, and the bloom all peak together.
+                        r = 32f + MathF.Sin((float)gameTime.TotalGameTime.TotalSeconds * 3.0f + dx * 0.4f) * 5f;
+                        break;
                     default: continue;
                 }
                 var op = _planet.TileToWorld(ptx + dx, pty + dy);
