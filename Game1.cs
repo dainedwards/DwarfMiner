@@ -548,6 +548,7 @@ public sealed class DwarfMinerGame : Game
         // elongates its limbs to crest mountains and compress them on flat ground. Foot
         // positions, leg step state, and tail nodes are all simulated in Titan.Update; this
         // block is rendering only.
+        if (kaijuVisible)
         {
             var tup = _planet.UpAt(_titan.Position);
             var tright = new Vector2(-tup.Y, tup.X);
