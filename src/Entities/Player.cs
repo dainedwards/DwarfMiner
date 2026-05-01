@@ -141,11 +141,6 @@ public sealed class Player
 
         Velocity = right * vTangent + up * vNormal;
 
-        // Reset the step-climb budget for this frame. ResolveCollision draws from this when
-        // it lifts the player over small obstacles — the budget caps climb rate so a tall
-        // wall doesn't get cleared in one frame.
-        _stepClimbBudget = StepClimbBudgetPerFrame;
-
         // Substepped position + collision resolution. Each substep moves at most ~Radius * 0.6
         // so the player can never traverse a whole tile (8 px) in one substep — eliminates
         // the tunneling that lets fast falls pass through terrain.
