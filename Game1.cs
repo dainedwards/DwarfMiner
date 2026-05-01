@@ -851,6 +851,41 @@ public sealed class DwarfMinerGame : Game
         Console.WriteLine($"[screenshot] {path}");
     }
 
+    private void DrawHoverDebugLabel()
+    {
+        var mouse = Mouse.GetState();
+        var screenPos = new Vector2(mouse.X, mouse.Y);
+        if (screenPos.X < 0 || screenPos.Y < 0 || screenPos.X >= VirtualWidth || screenPos.Y >= VirtualHeight)
+            return;
+        var worldCursor = _camera.ScreenToWorld(screenPos);
+
+        // Cell-grid material wins over the underlying tile, so hovering a sand pile shows
+        // "SAND" rather than the dirt tile beneath it.
+        string label;
+        var (cx, cy) = _cells.WorldToCell(worldCursor);
+        var mat = _cells.Get(cx, cy);
+        if (mat != Material.Empty)
+        {
+            label = $"MATERIAL: {mat}";
+        }
+        else
+        {
+            var (tx, ty) = _planet.WorldToTile(worldCursor);
+            var tile = _planet.Get(tx, ty);
+            if (tile == TileKind.Sky)
+            {
+                var wall = _planet.GetWall(tx, ty);
+                label = wall == TileKind.Sky ? "SKY" : $"SKY (WALL: {wall})";
+            }
+            else
+            {
+                label = $"TILE: {tile}";
+            }
+        }
+
+        _renderer.DrawDebugLabel(label, screenPos + new Vector2(12, 12), Color.White);
+    }
+
     private void DrawGameOverOverlay()
     {
         var sb = _renderer.Batch;
