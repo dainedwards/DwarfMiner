@@ -1252,13 +1252,20 @@ public sealed class DwarfMinerGame : Game
 
         var depth = _planet.Radius - (int)((_player.Position - _planet.Center).Length() / Planet.TileSize);
         var inv = _player.Inventory;
-        // Resource counts moved to the right-side panel — keep depth/run-state in this strip.
-        var status = $"DEPTH {depth}   TITAN HP {(int)_titan.Health}/{(int)_titan.MaxHealth}\nMETA: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
-        var controls = "WASD/ARROWS MOVE   SPACE JUMP   LMB MINE   Q PLACE   RMB SHOOT   F NUKE   L LAUNCH ROCKET\n1 PICKAXE+   2 CANNON   3 SUPPORT BEAM   4 ROCKET PART   5 NUKE";
+        // Resource counts moved to the right-side panel — keep depth/run-state and the active
+        // build mode + tool roster in this strip. Tool letters light up green once owned so
+        // the player can see at a glance which permanent unlocks they have this run.
+        var tools = ToolBadge();
+        var status = $"DEPTH {depth}   TITAN HP {(int)_titan.Health}/{(int)_titan.MaxHealth}   TOOLS [{tools}]   BUILD: {_player.Build.Label()}\n" +
+                     $"META: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
+        var controls = "WASD MOVE  SPACE JUMP  LMB MINE  RMB FIRE  Q PLACE STONE  E PLACE BUILD  B BUILD MODE  T BEACON RECALL  H HEAL\n" +
+                       "Z DYNAMITE  Y HARPOON  F NUKE  X CORE DRILL  L LAUNCH ROCKET  C CRAFT MENU  G GOD MODE";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _player, (int)_titan.Anger, status, controls);
         _renderer.DrawInventoryPanel(VirtualWidth, VirtualHeight, inv);
 
         DrawHoverDebugLabel();
+
+        if (_craftingOpen) DrawCraftingMenu();
 
         if (_gameOver) DrawGameOverOverlay();
 
