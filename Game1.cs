@@ -814,12 +814,14 @@ public sealed class DwarfMinerGame : Game
             case "pickaxe_ii":  _player.PickaxeTier = 2; break;
             case "pickaxe_iii": _player.PickaxeTier = 3; break;
             case "pickaxe_iv":  _player.PickaxeTier = 4; break;
-            // Permanent active tools — flip the flag *and* auto-equip a slot. If the toolbelt
-            // is full, the flag is still set; the player can drag the tool onto a slot later.
-            case "drill":       _player.HasDrill     = true; _player.Toolbelt.AutoEquip("drill");      break;
-            case "hammer":      _player.HasHammer    = true; _player.Toolbelt.AutoEquip("hammer");     break;
-            case "core_drill":  _player.HasCoreDrill = true; _player.Toolbelt.AutoEquip("core_drill"); break;
-            case "cannon":      _hasCannon           = true; _player.Toolbelt.AutoEquip("cannon");     break;
+            // Permanent active tools — flip the flag, auto-equip a slot, and stash a marker
+            // entry in inventory so the panel surfaces them when not on the belt. The marker
+            // is only displayed (filtered out by DrawInventoryPanel when the belt holds it)
+            // and never consumed by TryConsume — count stays at 1 for the run.
+            case "drill":       _player.HasDrill     = true; _player.Inventory.Add("drill", 1);      _player.Toolbelt.AutoEquip("drill");      break;
+            case "hammer":      _player.HasHammer    = true; _player.Inventory.Add("hammer", 1);     _player.Toolbelt.AutoEquip("hammer");     break;
+            case "core_drill":  _player.HasCoreDrill = true; _player.Inventory.Add("core_drill", 1); _player.Toolbelt.AutoEquip("core_drill"); break;
+            case "cannon":      _hasCannon           = true; _player.Inventory.Add("cannon", 1);     _player.Toolbelt.AutoEquip("cannon");     break;
             // Passive permanent upgrades — no slot, no inventory entry. Just a flag.
             case "lantern":     _player.HasLantern = true; break;
             case "armor":       _player.HasArmor   = true; break;
