@@ -138,12 +138,13 @@ public sealed class Cells
         return ((first + which) % nOut, cy + 1);
     }
 
-    public void Place(int cx, int cy, Material m)
+    public void Place(int cx, int cy, Material m, TileKind src = TileKind.Sky)
     {
         if (!InBounds(cx, cy)) return;
         var i = Idx(cx, cy);
         if (m != Material.Empty && _mat[i] != 0) return;
         _mat[i] = (byte)m;
+        _srcTile[i] = (byte)src;
         if (m == Material.Empty) _living.Remove(i);
         else { _living.Add(i); _active.Add(i); }
         WakeNeighbors(cx, cy);
@@ -166,6 +167,20 @@ public sealed class Cells
             var cy = c0y + _rng.Next(Density);
             Place(cx, cy, m);
         }
+    }
+
+    /// <summary>Spawn a checkerboard of dust cells filling half the polar tile, tagged with the
+    /// source TileKind so the cells render in that tile's colours and pay out that tile's drop on
+    /// pickup. Deterministic count (DustCellsPerTile = Density² / 2 = 8) so accumulation math is
+    /// exact: collecting every cell from one tile yields exactly drop.count units.</summary>
+    public void SpawnDustInTile(int tx, int ty, TileKind src)
+    {
+        var c0y = tx * Density;
+        var c0x = ty * Density;
+        for (var dy = 0; dy < Density; dy++)
+            for (var dx = 0; dx < Density; dx++)
+                if (((dx + dy) & 1) == 0)
+                    Place(c0x + dx, c0y + dy, Material.Dust, src);
     }
 
     public bool IsBlocked(int cx, int cy)
