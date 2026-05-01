@@ -121,13 +121,19 @@ public sealed class Planet
         _wall[Index(x, y)] = k;
     }
 
-    public TileKind? Mine(int x, int y, int power)
+    /// <summary>Apply <paramref name="power"/> mining damage to the tile at (x,y). Returns
+    /// the broken tile kind on shatter, or null if it just took damage. Hardness ≥ 99 is the
+    /// "anchor-class" gate (HardStone, Core, Support beams) — those won't take damage from a
+    /// regular swing. The hammer / core drill bypass that gate via
+    /// <paramref name="effectiveHardness"/>: pass a smaller value (e.g. 8) and the tile will
+    /// take damage as if it had that hardness, while still being broken by repeated hits.</summary>
+    public TileKind? Mine(int x, int y, int power, int? effectiveHardness = null)
     {
         if (!InBounds(x, y)) return null;
         var i = Index(x, y);
         var k = _tiles[i];
         if (k == TileKind.Sky) return null;
-        var hardness = Tiles.Hardness(k);
+        var hardness = effectiveHardness ?? Tiles.Hardness(k);
         if (hardness >= 99) return null;
         var dmg = _damage[i] + Math.Max(1, power * 32 / hardness);
         if (dmg >= 255)
