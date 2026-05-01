@@ -129,6 +129,11 @@ public static class Tiles
     {
         "dirt"        => BaseColor(TileKind.Dirt),
         "stone"       => BaseColor(TileKind.Stone),
+        "gravel"      => BaseColor(TileKind.Gravel),
+        "moss_stone"  => BaseColor(TileKind.MossStone),
+        "granite"     => BaseColor(TileKind.Granite),
+        "basalt"      => BaseColor(TileKind.Basalt),
+        "obsidian"    => BaseColor(TileKind.Obsidian),
         "snow"        => BaseColor(TileKind.Snow),
         "coal"        => BaseColor(TileKind.CoalOre),
         "iron"        => BaseColor(TileKind.IronOre),
