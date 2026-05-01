@@ -36,16 +36,22 @@ public static class Materials
 public sealed class Cells
 {
     public const int Density = 4;
+    /// <summary>How many dust cells one broken tile spawns. Each cell carries
+    /// drop.count / DustCellsPerTile worth of resource — 1 tile fully collected → 1 × drop.count.</summary>
+    public const int DustCellsPerTile = 8;
     public readonly int Height;        // total cell rows = RingCount × Density
     public readonly Planet Planet;
 
     private readonly int[] _cellsAt;   // cells per row
     private readonly int[] _rowOffsets; // flat-array start index per row
     private readonly byte[] _mat;
+    /// <summary>Source TileKind for dust cells. 0 (Sky) for non-dust cells.</summary>
+    private readonly byte[] _srcTile;
     private HashSet<int> _active = new();
     private HashSet<int> _next = new();
     private readonly HashSet<int> _living = new();
     private readonly Random _rng = new();
+    private readonly Dictionary<string, float> _dustAccum = new();
     private float _time;
 
     public Cells(Planet planet)
