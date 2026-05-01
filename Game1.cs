@@ -246,6 +246,14 @@ public sealed class DwarfMinerGame : Game
         _physics.Update(dt);
         _particles.Update(dt, _planet);
         _cells.Update(dt);
+
+        // Sweep dust within a body's reach into the inventory. Each cell carries a fractional
+        // resource amount tied to its source TileKind; Cells handles the per-id accumulator and
+        // hands back whole units once they cross 1.
+        var picked = _cells.CollectInRadius(_player.Position, _player.Radius + 4f);
+        if (picked is not null)
+            foreach (var (id, count) in picked)
+                _player.Inventory.Add(id, count);
         if (_physics.CollapsesThisTick > 0) _shake = MathF.Max(_shake, MathHelper.Clamp(_physics.CollapsesThisTick / 80f, 0f, 1.5f));
 
         // Earthquakes — global shake every so often.
