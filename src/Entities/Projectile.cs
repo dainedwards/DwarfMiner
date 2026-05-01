@@ -152,6 +152,10 @@ public sealed class Projectile
         if (Life <= 0)
         {
             Dead = true;
+            // Fuse-class explosives (dynamite) carve their crater on fuse-out the same way
+            // they would on contact — otherwise a stick that lands gracefully and times out
+            // would just disappear without an explosion mark.
+            if (ExplodesOnFuse) CarveCrater(planet, CraterTiles);
             return;
         }
         if (planet.IsSolidAt(Position))
