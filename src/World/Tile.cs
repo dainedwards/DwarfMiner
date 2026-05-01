@@ -87,6 +87,11 @@ public static class Tiles
         TileKind.HardStone => 99,
         TileKind.Core => 999,
         TileKind.Support => 99,
+        TileKind.ReinforcedSupport => 99,
+        TileKind.Ladder => 1,
+        TileKind.Rail => 2,
+        TileKind.Glowshroom => 1,
+        TileKind.Beacon => 3,
         _ => 0,
     };
 
