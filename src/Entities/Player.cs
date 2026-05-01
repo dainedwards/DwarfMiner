@@ -39,9 +39,11 @@ public sealed class Player
     /// <summary>Last placed Beacon tile, in world coords. Pressing T teleports to it.</summary>
     public Vector2? BeaconWorld;
 
-    /// <summary>What kind of building gets placed when the player presses E. Cycled with B.
-    /// Stone-class placement still goes through Q (uses any stone variant in inventory).</summary>
-    public BuildKind Build = BuildKind.Support;
+    /// <summary>9-slot equipment bar. Number keys 1..9 select a slot; LMB triggers the
+    /// selected slot's primary action (mine, fire, place, throw, …). Crafted equipment
+    /// auto-equips into the first empty slot via <see cref="Toolbelt.AutoEquip"/>; if all
+    /// slots are full it stays in inventory and the player drags it onto a slot manually.</summary>
+    public readonly Toolbelt Toolbelt = new();
 
     /// <summary>Hard cap on downward speed. Prevents tunneling at terminal velocity (a tile is
     /// 8 px and the body radius is ~2.6 px — uncapped, a long fall could move >8 px per frame
