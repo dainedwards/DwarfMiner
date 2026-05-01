@@ -26,6 +26,12 @@ public enum TileKind : byte
     Ruby = 19,
     Sapphire = 20,
     Diamond = 21,
+    // Player-crafted placeables.
+    Ladder = 22,
+    Rail = 23,
+    ReinforcedSupport = 24,
+    Glowshroom = 25,
+    Beacon = 26,
 }
 
 public static class Tiles
