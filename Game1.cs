@@ -943,14 +943,14 @@ public sealed class DwarfMinerGame : Game
         foreach (var id in Tiles.ResourceOrder)
         {
             var c = inv.Count(id);
-            if (c > 0) rows.Add((id, c));
+            if (c > 0 && ShouldShowInInventory(id)) rows.Add((id, c));
         }
         foreach (var (id, count) in inv.Items)
         {
             if (count <= 0) continue;
             var known = false;
             foreach (var k in Tiles.ResourceOrder) if (k == id) { known = true; break; }
-            if (!known) rows.Add((id, count));
+            if (!known && ShouldShowInInventory(id)) rows.Add((id, count));
         }
         if (rows.Count == 0) return;
 
