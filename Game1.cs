@@ -296,7 +296,7 @@ public sealed class DwarfMinerGame : Game
             }
         }
 
-        _titan.Update(dt, _planet, _physics, _player.Position, _boulders);
+        _titan.Update(dt, _planet, _physics, _cells, _player.Position, _boulders);
         if (_titan.Health <= 0)
         {
             _meta.TitansDefeated++;
