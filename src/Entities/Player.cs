@@ -300,21 +300,31 @@ public sealed class Player
                     }
                     else if (distSq <= 0.0001f)
                     {
-                        // Player center is inside the tile's local AABB. Escape via the
-                        // *closest* edge in tile-local coords (±localX or ±localY) — always-up
-                        // would push us INTO ceiling tiles, clipping through them on a jump.
-                        var dxR = halfX - pLocalX;   // distance to right edge
-                        var dxL = pLocalX + halfX;   // to left edge
-                        var dyU = halfY - pLocalY;   // to top (planet-up) edge
-                        var dyD = pLocalY + halfY;   // to bottom edge
-                        Vector2 nLocal;
-                        float minDist;
-                        if (dyU <= dxR && dyU <= dxL && dyU <= dyD) { nLocal = new Vector2(0f,  1f); minDist = dyU; }
-                        else if (dyD <= dxR && dyD <= dxL)           { nLocal = new Vector2(0f, -1f); minDist = dyD; }
-                        else if (dxR <= dxL)                          { nLocal = new Vector2( 1f, 0f); minDist = dxR; }
-                        else                                          { nLocal = new Vector2(-1f, 0f); minDist = dxL; }
+                        // Player center is inside the tile's local AABB. Escape toward the
+                        // *closest sky neighbor* — that's the direction guaranteed to lead out
+                        // of solid mass. (Local +X = +y in tile coords because Planet.TileToWorld
+                        // angles increase with y; local +Y = +x because rings grow outward
+                        // radially.) If no sky neighbor exists (player buried deep in solid),
+                        // default to planet-up: surface escape is the most common case.
+                        var skyOuter = !Tiles.IsSolid(planet.Get(x + 1, y));   // outward radial
+                        var skyInner = !Tiles.IsSolid(planet.Get(x - 1, y));   // inward radial
+                        var skyRight = !Tiles.IsSolid(planet.Get(x, y + 1));   // +tangent
+                        var skyLeft  = !Tiles.IsSolid(planet.Get(x, y - 1));   // -tangent
 
-                        var n = right * nLocal.X + up * nLocal.Y;
+                        var nLocalX = 0f; var nLocalY = 0f; var minDist = float.MaxValue;
+                        if (skyOuter && (halfY - pLocalY) < minDist) { nLocalX = 0f; nLocalY =  1f; minDist = halfY - pLocalY; }
+                        if (skyInner && (pLocalY + halfY) < minDist) { nLocalX = 0f; nLocalY = -1f; minDist = pLocalY + halfY; }
+                        if (skyRight && (halfX - pLocalX) < minDist) { nLocalX =  1f; nLocalY = 0f; minDist = halfX - pLocalX; }
+                        if (skyLeft  && (pLocalX + halfX) < minDist) { nLocalX = -1f; nLocalY = 0f; minDist = pLocalX + halfX; }
+                        if (minDist == float.MaxValue)
+                        {
+                            // Buried — no sky neighbor. Default to planet-up (handles spawn
+                            // case where the player is dropped into the surface column).
+                            nLocalY = 1f;
+                            minDist = halfY - pLocalY;
+                        }
+
+                        var n = right * nLocalX + up * nLocalY;
                         Position += n * (minDist + Radius + 0.05f);
                         var into = Vector2.Dot(Velocity, n);
                         if (into < 0) Velocity -= n * into;
