@@ -226,113 +226,41 @@ public sealed class DwarfMinerGame : Game
         var screenMouse = new Vector2(mouse.X, mouse.Y);
         var worldCursor = _camera.ScreenToWorld(screenMouse);
 
-        // Mining (left-click held) and shooting (right-click).
-        if (mouse.LeftButton == ButtonState.Pressed)
+        // Number-row 1..9 selects a toolbelt slot. Holding the slot key (or LMB on the slot in
+        // the HUD) drives the selected slot's action. Selection is sticky across frames.
+        for (var s = 0; s < Toolbelt.SlotCount; s++)
         {
-            // Drill chip-stream feedback: emit a sparking jet from the cursor every frame the
-            // mining button is held. Done before TryMine so it fires during the cooldown
-            // (continuous swing feel) but only when the player owns the drill.
-            if (_player.HasDrill && !_player.FlyMode)
-            {
-                var (ctx, cty) = _planet.WorldToTile(worldCursor);
-                if (_planet.Get(ctx, cty) != TileKind.Sky)
-                {
-                    var tilePos = _planet.TileToWorld(ctx, cty);
-                    var dir = tilePos - _player.Position;
-                    if (dir.LengthSquared() > 0.001f) dir.Normalize();
-                    _particles.EmitDrillChips(tilePos, dir, _planet.Get(ctx, cty));
-                }
-            }
-
-            var broken = _player.TryMine(_planet, _physics, worldCursor);
-            if (broken is { } bk)
-            {
-                if (Tiles.Drop(bk) is not null) _meta.TotalOreMined++;
-                var depth = _planet.Radius - (int)((_player.Position - _planet.Center).Length() / Planet.TileSize);
-                if (depth > _meta.DeepestDepth) _meta.DeepestDepth = depth;
-                var (btx, bty) = _planet.WorldToTile(worldCursor);
-                // Hammer breaks land with a heavy shard burst + screen shake; ordinary picks
-                // get the standard chip puff. Reads as "hammer hits feel weighty".
-                if (_player.HasHammer && Tiles.Hardness(bk) >= 4)
-                {
-                    _particles.EmitHammerImpact(_planet.TileToWorld(btx, bty), bk);
-                    _shake = MathF.Max(_shake, 0.4f);
-                }
-                else
-                {
-                    _particles.EmitChips(_planet.TileToWorld(btx, bty), bk);
-                }
-                // Every broken tile crumbles into a pile of dust tagged with the source kind —
-                // the player picks that dust up by walking through it (collected each frame in
-                // the cells.CollectInRadius pass below).
-                _cells.SpawnDustInTile(btx, bty, bk);
-            }
+            var k = Keys.D1 + s;
+            if (Pressed(keys, _prevKeys, k)) _player.Toolbelt.Selected = s;
+        }
+        // Mouse-wheel cycles selection — handy for fast tool swaps without leaving the home row.
+        if (mouse.ScrollWheelValue != _prevMouse.ScrollWheelValue)
+        {
+            var dir = mouse.ScrollWheelValue > _prevMouse.ScrollWheelValue ? -1 : 1;
+            _player.Toolbelt.Selected = (_player.Toolbelt.Selected + dir + Toolbelt.SlotCount) % Toolbelt.SlotCount;
         }
 
-        if (mouse.RightButton == ButtonState.Pressed && _player.ShootCooldown <= 0)
+        // Drag-and-drop UI input runs on click edges and updates the carry state. If the click
+        // landed on a UI element, we swallow it so the world doesn't also receive it as an LMB
+        // dispatch this frame.
+        var screenPos = new Vector2(mouse.X, mouse.Y);
+        var lmbPressed = mouse.LeftButton == ButtonState.Pressed && _prevMouse.LeftButton != ButtonState.Pressed;
+        var rmbPressed = mouse.RightButton == ButtonState.Pressed && _prevMouse.RightButton != ButtonState.Pressed;
+        var clickConsumed = HandleInventoryUi(screenPos, lmbPressed, rmbPressed);
+
+        // Held LMB activates the selected slot's action. UseSelectedSlot is the single place
+        // that maps id → in-world action (mine / shoot / place / throw / heal / …).
+        if (mouse.LeftButton == ButtonState.Pressed && !clickConsumed && _carry is null)
         {
-            FireWeapon(worldCursor);
+            UseSelectedSlot(worldCursor);
         }
 
-        // Held Q places a stone-class block from inventory at the cursor.
-        if (keys.IsKeyDown(Keys.Q))
-        {
-            _player.TryPlace(_planet, _physics, worldCursor);
-        }
-
-        // E places the currently-selected build item (cycled with B). Held so you can
-        // sweep ladders/rails along a line by sliding the cursor.
-        if (keys.IsKeyDown(Keys.E))
-        {
-            _player.TryPlaceBuild(_planet, _physics, worldCursor);
-        }
-
-        // B cycles the build mode (Support → Reinforced → Ladder → Rail → Glowshroom → Beacon).
-        if (Pressed(keys, _prevKeys, Keys.B)) _player.Build = _player.Build.Cycle();
-
-        // H consumes one poultice for an instant +30 HP.
-        if (Pressed(keys, _prevKeys, Keys.H) && _player.Inventory.TryConsume("poultice", 1))
-        {
-            UseHealPotion();
-        }
-
-        // Z throws a dynamite stick at the cursor — arcs under gravity, fuses out, big AoE.
-        if (Pressed(keys, _prevKeys, Keys.Z) && _player.Inventory.TryConsume("dynamite", 1))
-        {
-            FireDynamite(worldCursor);
-        }
-
-        // Y fires the anti-Titan harpoon — punches through walls and creatures.
-        if (Pressed(keys, _prevKeys, Keys.Y) && _player.Inventory.TryConsume("harpoon", 1))
-        {
-            FireHarpoon(worldCursor);
-        }
-
-        // T recalls the player to the most recently placed Beacon. Costs nothing — the
-        // beacon itself was the spend. Brief flash + sparkles to sell the teleport.
+        // T recalls to the last placed Beacon — kept as a key because recall is a unique
+        // verb that doesn't fit the "use selected slot" pattern (the beacon slot already
+        // does *placement*; recall is a different action on the same data).
         if (Pressed(keys, _prevKeys, Keys.T) && _player.BeaconWorld is { } bp)
         {
             BeaconRecall(bp);
-        }
-
-        // F fires a nuke — biggest one-shot weapon, breaks anchored tiles too.
-        if (Pressed(keys, _prevKeys, Keys.F) && _player.Inventory.TryConsume("nuke", 1))
-        {
-            FireNuke(worldCursor);
-        }
-
-        // X uses the core drill: blasts the Core tile if standing right next to it.
-        if (Pressed(keys, _prevKeys, Keys.X) && _player.HasCoreDrill)
-        {
-            TryCoreDrill();
-        }
-
-        // P places a sentry turret at the player's feet (consumes one sentry from inventory).
-        // Sentry is an entity, not a tile, so it lives in _sentries instead of being part of
-        // the build-mode tile picker.
-        if (Pressed(keys, _prevKeys, Keys.P) && _player.Inventory.TryConsume("sentry", 1))
-        {
-            PlaceSentryAtFeet();
         }
 
         // Launch rocket with L if 5 parts held and player on the surface.
