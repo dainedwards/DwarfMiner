@@ -6,31 +6,44 @@ using Microsoft.Xna.Framework;
 namespace DwarfMiner.Entities;
 
 /// <summary>
-/// Hulking six-legged creature that scuttles across the planet's surface. Body obeys
-/// gravity and tile collision; legs are procedural — each one probes the terrain for a
-/// foot anchor and steps when the body drifts too far from it. Hip-to-foot distance is
-/// not constrained, so legs visibly stretch over mountains and compress on flat ground.
-/// Anger rises with player depth, unlocking stomp earthquakes and ranged boulder hurls.
+/// Kaiju-scale quadruped boss. The body has a small physics-collision footprint; legs are
+/// procedural — each one ray-marches the terrain for a foot anchor and steps when the body
+/// drifts too far from it. Hip-to-foot distance is unconstrained, so legs visibly stretch
+/// over mountain peaks and compress on flat ground. The body is then lifted by its planted
+/// feet (spring force toward avg-foot + hover offset) so it can walk over obstacles its
+/// collision footprint alone couldn't clear. Each foot strike damages the tile underneath
+/// via Planet.Mine — soft tiles (dirt/grass/snow) crack visibly and break after a few
+/// stomps; harder tiles only crack cosmetically. Anger rises with player depth, unlocking
+/// stomp earthquakes and ranged boulder hurls.
 /// </summary>
 public sealed class Titan
 {
     public Vector2 Position;
     public Vector2 Velocity;
-    public float Radius = 125f;       // body collision + projectile-hit radius
+    public float Radius = 125f;       // hit-detection radius (projectile collisions)
+    public float BodyRadius = 60f;    // physics-collision radius (smaller, so the kaiju can scrape past terrain)
     public float Health = 2500f;
     public float MaxHealth = 2500f;
     public float Anger;               // 0..100
     public float MoveSpeed = 90f;     // tangent pixels/sec base
-    public float JumpSpeed = 340f;
     public float Gravity = 320f;
     public float HitFlash;
     public float StompCooldown = 4f;
     public float HurlCooldown = 6f;
-    public float JumpCooldown;
     public bool Grounded;
-    public float Facing = 1f;         // smoothed -1..+1; which way the head points along the local tangent
+    public float Facing = 1f;         // smoothed -1..+1; which way the head/snout points along the local tangent
     public float Pulse;               // body breathing/anger pulsation (radians, advanced each tick)
-    public TitanLeg[] Legs = null!;   // 6 procedural legs; foot positions are world-space, hips are body-local
+    public TitanLeg[] Legs = null!;   // 4 procedural legs (quadruped)
+    public Vector2[] TailNodes = null!;     // verlet chain — node 0 anchors to the body's rump
+    public Vector2[] TailPrev = null!;      // previous-frame positions for verlet integration
+
+    /// <summary>Hover height — distance the body wants to maintain above the average planted-foot
+    /// position along planet-up. Higher values let the kaiju stride over taller terrain.</summary>
+    public const float BodyHover = 105f;
+
+    /// <summary>Per-segment length of the tail.</summary>
+    private const float TailSegLen = 26f;
+    private const int TailNodeCount = 7;
 
     private readonly Planet _planet;
 
@@ -39,23 +52,22 @@ public sealed class Titan
         _planet = planet;
         Position = FindSurfaceSpawn(planet, startAngle);
         InitLegs();
+        InitTail();
     }
 
     private void InitLegs()
     {
-        // 3 legs per side, fanned forward/back along the body's tangent axis.
-        // Phase staggers the per-leg step threshold so they don't all lift at once.
+        // Quadruped: front pair (HipForward < 0) and hind pair (HipForward > 0). Phases are
+        // paired diagonally — front-left + hind-right step together, front-right + hind-left
+        // step together — which is the classic trot gait.
         Legs = new[]
         {
-            new TitanLeg { HipForward = -55f, Side = -1, Phase = 0.10f, HipUp = 14f },
-            new TitanLeg { HipForward =   0f, Side = -1, Phase = 0.55f, HipUp = 18f },
-            new TitanLeg { HipForward = +55f, Side = -1, Phase = 0.30f, HipUp = 14f },
-            new TitanLeg { HipForward = -55f, Side = +1, Phase = 0.65f, HipUp = 14f },
-            new TitanLeg { HipForward =   0f, Side = +1, Phase = 0.20f, HipUp = 18f },
-            new TitanLeg { HipForward = +55f, Side = +1, Phase = 0.85f, HipUp = 14f },
+            new TitanLeg { HipForward = -78f, Side = -1, Phase = 0.10f, HipUp = 22f },  // front-left
+            new TitanLeg { HipForward = -78f, Side = +1, Phase = 0.60f, HipUp = 22f },  // front-right
+            new TitanLeg { HipForward = +78f, Side = -1, Phase = 0.60f, HipUp = 16f },  // hind-left
+            new TitanLeg { HipForward = +78f, Side = +1, Phase = 0.10f, HipUp = 16f },  // hind-right
         };
 
-        // Seed each foot at its first ideal anchor so the legs render correctly on frame 1.
         var up = _planet.UpAt(Position);
         var right = new Vector2(-up.Y, up.X);
         foreach (var leg in Legs)
@@ -67,16 +79,32 @@ public sealed class Titan
         }
     }
 
+    private void InitTail()
+    {
+        var up = _planet.UpAt(Position);
+        var right = new Vector2(-up.Y, up.X);
+        // Lay the tail out along -tangent so it dangles behind the body at spawn. Verlet picks
+        // it up from there — drag/gravity will settle it on the next few frames.
+        TailNodes = new Vector2[TailNodeCount];
+        TailPrev = new Vector2[TailNodeCount];
+        var root = Position + right * (Facing * -90f) + up * 18f;
+        for (var i = 0; i < TailNodeCount; i++)
+        {
+            TailNodes[i] = root + right * (Facing * -i * TailSegLen) + up * (-i * 4f);
+            TailPrev[i] = TailNodes[i];
+        }
+    }
+
     private static Vector2 FindSurfaceSpawn(Planet planet, float angle)
     {
         // Step inward from far above the highest possible peak and stop at the first solid
-        // tile, then float a body's-radius above so the titan settles down under gravity.
+        // tile, then float a leg's-reach above so the kaiju settles on its feet, not its belly.
         var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
         for (var d = planet.Radius + 30; d > 10; d--)
         {
             var p = planet.Center + dir * (d * Planet.TileSize);
             if (planet.IsSolidAt(p))
-                return p + dir * 140f;
+                return p + dir * (BodyHover + 20f);
         }
         return planet.Center + dir * ((planet.Radius + 20) * Planet.TileSize);
     }
@@ -101,8 +129,8 @@ public sealed class Titan
         var toPlayer = playerPos - Position;
         var moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right));
 
-        // Decompose velocity into tangent and normal components so gravity and walking
-        // can be handled independently of where on the planet we are.
+        // Decompose velocity into tangent and normal components so gravity, walking, and the
+        // leg-spring lift can be handled independently of where on the planet we are.
         var vTangent = Vector2.Dot(Velocity, right);
         var vNormal = Vector2.Dot(Velocity, up);
 
@@ -112,24 +140,33 @@ public sealed class Titan
 
         vNormal -= Gravity * dt;
 
-        // Hop when grounded, wanting to move, but not making progress — usually means a
-        // wall/ledge in the way (often a pit dug by the player).
-        if (Grounded && JumpCooldown <= 0 && moveAxis != 0 && MathF.Abs(vTangent) < 8f)
+        // Leg-spring lift: when the average planted-foot position is higher than the body
+        // (climbing a peak), push the body upward toward (avgFoot + up * BodyHover). This
+        // replaces the old "stuck-on-wall hop" — the kaiju now strides over mountains because
+        // its forelegs plant on the high ground first, raising the avg foot, which lifts the
+        // body, which then lets the hind legs step up too.
+        var planted = AvgPlantedFoot(out var hasPlanted);
+        if (hasPlanted)
         {
-            vNormal = JumpSpeed;
-            Grounded = false;
-            JumpCooldown = 0.6f;
+            var heightAboveFeet = Vector2.Dot(Position - planted, up);
+            var deficit = BodyHover - heightAboveFeet;
+            if (deficit > 0)
+            {
+                // Lift accel scales with deficit, capped so the kaiju doesn't rocket off the
+                // ground. Critical-damping happens naturally because gravity opposes the lift.
+                var liftAccel = MathF.Min(deficit * 9f, 720f);
+                vNormal += liftAccel * dt;
+            }
         }
 
         Velocity = right * vTangent + up * vNormal;
         Position += Velocity * dt;
         ResolveCollision(planet);
 
-        // Grounded probe a little under the body, along -up.
-        Grounded = ProbeSolid(planet, Position - up * (Radius + 2f));
+        // Grounded probe a little under the body using the (smaller) body collision radius.
+        Grounded = ProbeSolid(planet, Position - up * (BodyRadius + 2f));
 
-        // Smoothly turn to face the direction of motion. When stationary, hold the last facing
-        // so the head doesn't snap when we pause between steps.
+        // Smoothly turn to face the direction of motion.
         if (MathF.Abs(vTangent) > 6f)
         {
             var targetFacing = MathF.Sign(vTangent);
@@ -137,20 +174,22 @@ public sealed class Titan
         }
         Pulse += dt * (1.4f + Anger * 0.04f);
 
-        UpdateLegs(dt, planet, up, right, vTangent);
-
-        if (JumpCooldown > 0) JumpCooldown -= dt;
+        UpdateLegs(dt, planet, physics, up, right, vTangent);
+        UpdateTail(dt, planet, up, right);
 
         StompCooldown -= dt;
         HurlCooldown -= dt;
 
-        // Stomp: earthquake centered at the titan's feet. Only when grounded — a stomp
-        // mid-air looks ridiculous and nothing's there to crack.
+        // Stomp: earthquake centered at the kaiju's standing point. Only when grounded —
+        // a stomp mid-air looks ridiculous and nothing's there to crack.
         if (StompCooldown <= 0 && Anger > 15f && Grounded)
         {
             var quakeRadius = 130f + Anger * 3f;
             var strength = 2 + (int)(Anger / 35f);
-            physics.Earthquake(Position - up * Radius, quakeRadius, strength);
+            // Use a hind foot as the stomp epicenter so the shake feels grounded in the body's
+            // actual stance, not the floating body center.
+            var epi = hasPlanted ? planted : Position - up * BodyRadius;
+            physics.Earthquake(epi, quakeRadius, strength);
             StompCooldown = MathHelper.Lerp(8f, 2.5f, Anger / 100f);
         }
 
@@ -170,10 +209,26 @@ public sealed class Titan
         if (HitFlash > 0) HitFlash -= dt;
     }
 
+    /// <summary>Mean of foot positions for legs that are currently planted (StepT ≥ 1).
+    /// Mid-step legs are excluded so the body doesn't bob each time a leg arcs.</summary>
+    private Vector2 AvgPlantedFoot(out bool hasAny)
+    {
+        var sum = Vector2.Zero;
+        var count = 0;
+        foreach (var leg in Legs)
+        {
+            if (leg.StepT >= 1f) { sum += leg.FootPos; count++; }
+        }
+        hasAny = count > 0;
+        return hasAny ? sum / count : Vector2.Zero;
+    }
+
     private void ResolveCollision(Planet planet)
     {
-        // Body radius spans several tiles, so iterate to converge on a stable rest pose.
-        var span = (int)MathF.Ceiling(Radius / Planet.TileSize) + 1;
+        // Body collision uses the smaller BodyRadius — only the kaiju's central torso bumps
+        // against terrain, so it can squeeze past obstacles its silhouette overlaps. Legs and
+        // tail handle visual contact.
+        var span = (int)MathF.Ceiling(BodyRadius / Planet.TileSize) + 1;
         for (var iter = 0; iter < 6; iter++)
         {
             var (tx, ty) = planet.WorldToTile(Position);
@@ -190,10 +245,10 @@ public sealed class Titan
                         Math.Clamp(Position.Y, rect.Y, rect.Y + rect.Height));
                     var diff = Position - closest;
                     var dist = diff.Length();
-                    if (dist < Radius && dist > 0.001f)
+                    if (dist < BodyRadius && dist > 0.001f)
                     {
                         var n = diff / dist;
-                        Position += n * (Radius - dist + 0.05f);
+                        Position += n * (BodyRadius - dist + 0.05f);
                         var into = Vector2.Dot(Velocity, n);
                         if (into < 0) Velocity -= n * into;
                         pushed = true;
@@ -238,7 +293,6 @@ public sealed class Titan
         var hipWorld = Position + right * leg.HipForward + up * leg.HipUp;
         var anchorStart = hipWorld + right * (leg.Side * legSideStride) + up * legSearchUp;
 
-        // March along -planet-up from anchorStart looking for the first solid tile.
         var found = false;
         var foot = anchorStart - up * legSearchDown;
         for (var d = 0f; d <= legSearchDown; d += legProbeStep)
@@ -246,25 +300,22 @@ public sealed class Titan
             var probe = anchorStart - up * d;
             if (_planet.IsSolidAt(probe))
             {
-                // Perch the foot a hair above the surface so it doesn't z-fight the tile.
                 foot = probe + _planet.UpAt(probe) * 5f;
                 found = true;
                 break;
             }
         }
-        // Bias the anchor forward in the body's direction of motion so feet land ahead.
-        // Only apply when we actually found ground — dangling feet shouldn't slide around.
         if (found) foot += motionBias;
         return foot;
     }
 
     /// <summary>Per-frame leg simulation. Each leg compares its current planted foot position to
     /// the freshly-resolved terrain anchor; if they've drifted past a per-leg threshold, the leg
-    /// lifts and steps to the new anchor along a sin-arc. Per-leg phase staggers thresholds so
-    /// the six legs don't all step in lockstep — at any instant some are planted, some swinging.</summary>
-    private void UpdateLegs(float dt, Planet planet, Vector2 up, Vector2 right, float vTangent)
+    /// lifts and steps to the new anchor along a sin-arc. When a step lands, the tile under the
+    /// foot takes damage via Planet.Mine — soft ground cracks visibly each stomp and breaks
+    /// after a few; hard rock just gets cosmetic cracks.</summary>
+    private void UpdateLegs(float dt, Planet planet, Physics physics, Vector2 up, Vector2 right, float vTangent)
     {
-        // Forward-step bias scales with tangential speed: at full pace, feet land ~28 px ahead.
         var biasMag = MathHelper.Clamp(vTangent / 80f, -1.4f, 1.4f);
         var motionBias = right * (biasMag * 28f);
 
@@ -274,8 +325,6 @@ public sealed class Titan
 
             if (leg.StepT >= 1f)
             {
-                // Threshold staggered per leg — phase shifts the trigger distance so adjacent
-                // legs don't lift simultaneously when the body crosses uneven terrain.
                 var threshold = 28f + leg.Phase * 22f;
                 if ((leg.FootPos - ideal).LengthSquared() > threshold * threshold)
                 {
@@ -286,25 +335,95 @@ public sealed class Titan
             }
             else
             {
-                // Step duration shortens when moving fast so legs keep up with the body.
                 var stepRate = 4.5f + MathF.Abs(vTangent) * 0.045f;
+                var prevT = leg.StepT;
                 leg.StepT = MathF.Min(1f, leg.StepT + dt * stepRate);
-                if (leg.StepT >= 1f)
+                if (leg.StepT >= 1f && prevT < 1f)
                 {
+                    // Foot just touched down — stomp the tile. Damage falls off across a small
+                    // radius so each step leaves a small footprint of cracked dirt rather than
+                    // a single gouged tile.
                     leg.FootPos = leg.StepTarget;
+                    StompTile(planet, physics, leg.FootPos);
                 }
                 else
                 {
                     var t = leg.StepT;
                     var smooth = t * t * (3f - 2f * t);
                     var pos = Vector2.Lerp(leg.StepStart, leg.StepTarget, smooth);
-                    // Lift the foot in an arc; arch peaks at t=0.5. Use the planet-up at the
-                    // foot's current position so the arc stays oriented correctly even when
-                    // the leg is far from the body on a curved planet.
                     var arc = MathF.Sin(t * MathF.PI) * 32f;
                     pos += planet.UpAt(pos) * arc;
                     leg.FootPos = pos;
                 }
+            }
+        }
+    }
+
+    /// <summary>Apply a foot-strike damage footprint at <paramref name="footPos"/>. Center
+    /// tile gets the full power; the surrounding 8 tiles get a softer hit. Power scales lightly
+    /// with anger so an angry kaiju cracks ground faster. Mine() applies hardness scaling, so
+    /// dirt/grass/snow break in a few stomps while stone/granite only get visible cracks.</summary>
+    private void StompTile(Planet planet, Physics physics, Vector2 footPos)
+    {
+        var (fx, fy) = planet.WorldToTile(footPos);
+        var centerPower = 3 + (int)(Anger / 35f);   // 3..6
+        var ringPower   = 1 + (int)(Anger / 60f);   // 1..2
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                var x = fx + dx; var y = fy + dy;
+                if (!Tiles.IsSolid(planet.Get(x, y))) continue;
+                var pow = (dx == 0 && dy == 0) ? centerPower : ringPower;
+                var broken = planet.Mine(x, y, pow);
+                if (broken.HasValue) physics.MarkDirty(x, y);
+            }
+        }
+    }
+
+    /// <summary>Verlet-integrated tail. Node 0 is hard-anchored to a point on the body's rump
+    /// (opposite the head's facing); subsequent nodes free-fall under planet gravity with
+    /// damping, then a fixed-distance constraint keeps the chain links at TailSegLen apart.
+    /// The result is a tail that drags behind the body when moving, droops downward when
+    /// idle, and curls around terrain it brushes against.</summary>
+    private void UpdateTail(float dt, Planet planet, Vector2 up, Vector2 right)
+    {
+        // Anchor the tail's root to the back of the body, opposite the head's facing.
+        var root = Position + right * (Facing * -98f) + up * 18f;
+        TailNodes[0] = root;
+        TailPrev[0] = root;
+
+        // Verlet integration on the free nodes.
+        for (var i = 1; i < TailNodes.Length; i++)
+        {
+            var temp = TailNodes[i];
+            var velocity = (TailNodes[i] - TailPrev[i]) * 0.94f;  // damping
+            var grav = planet.GravityAt(TailNodes[i]) * 380f;
+            TailNodes[i] += velocity + grav * (dt * dt);
+            TailPrev[i] = temp;
+        }
+
+        // Terrain collision: any node inside a solid tile is pushed out along the local up.
+        for (var i = 1; i < TailNodes.Length; i++)
+        {
+            for (var safety = 0; safety < 4 && planet.IsSolidAt(TailNodes[i]); safety++)
+            {
+                TailNodes[i] += planet.UpAt(TailNodes[i]) * 3f;
+            }
+        }
+
+        // Distance constraints — multiple iterations for stability.
+        for (var iter = 0; iter < 6; iter++)
+        {
+            for (var i = 1; i < TailNodes.Length; i++)
+            {
+                var d = TailNodes[i] - TailNodes[i - 1];
+                var len = d.Length();
+                if (len < 0.001f) continue;
+                var diff = (len - TailSegLen) / len;
+                // Parent stays put (it's the previous segment, already corrected this iter, or
+                // the body anchor); only the child node moves to satisfy the constraint.
+                TailNodes[i] -= d * diff;
             }
         }
     }
@@ -317,8 +436,8 @@ public sealed class Titan
 /// peaks and pits and compress on flat ground.</summary>
 public sealed class TitanLeg
 {
-    public float HipForward;       // body-tangent offset of the hip (signed: front/middle/back)
-    public float HipUp = 14f;      // body-up offset of the hip — front legs hang from the shoulder
+    public float HipForward;       // body-tangent offset of the hip (signed: front/back)
+    public float HipUp = 18f;      // body-up offset of the hip
     public int Side;               // -1 = left, +1 = right (sign of the lateral search direction)
     public float Phase;            // 0..1, staggers step thresholds so legs don't lift in lockstep
     public Vector2 FootPos;        // current world-space foot position
