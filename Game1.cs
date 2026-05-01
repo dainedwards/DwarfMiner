@@ -735,21 +735,30 @@ public sealed class DwarfMinerGame : Game
             _renderer.AddLight(p.Position, r, col);
         }
 
-        // Titan eye: gold → red as anger climbs, scales up too. The eye sits on the creature's
-        // forward-facing head bulb (tup * 18 + tright * facing * 92, plus tup * 22 for the eye
-        // socket within the head), so the lit position must match the renderer.
+        // Kaiju eyes: gold → red as anger climbs. Two sockets, both lit. Position must mirror
+        // the renderer (headBase = body + tup*26 + tright*facing*110, sockets at tup*8 ± 14).
         if (_titan.Health > 0)
         {
             var anger01 = MathHelper.Clamp(_titan.Anger / 100f, 0f, 1f);
             var tup = _planet.UpAt(_titan.Position);
             var tright = new Vector2(-tup.Y, tup.X);
-            var headBase = _titan.Position + tup * 18f + tright * (_titan.Facing * 92f);
+            var headBase = _titan.Position + tup * 26f + tright * (_titan.Facing * 110f);
             var lookDir = _player.Position - headBase;
             if (lookDir.LengthSquared() < 0.001f) lookDir = tright * _titan.Facing; else lookDir.Normalize();
-            var eyeCenter = headBase + tup * 22f;
-            var eyePos = eyeCenter + tright * Vector2.Dot(lookDir, tright) * 6f + tup * Vector2.Dot(lookDir, tup) * 4f;
-            _renderer.AddLight(eyePos, 32f + 28f * anger01,
-                Color.Lerp(new Color(255, 220, 100), new Color(255, 80, 40), anger01));
+            var lookRight = Vector2.Dot(lookDir, tright);
+            var lookUp = Vector2.Dot(lookDir, tup);
+            var eyeCol = Color.Lerp(new Color(255, 220, 100), new Color(255, 80, 40), anger01);
+            for (var ei = -1; ei <= 1; ei += 2)
+            {
+                var socket = headBase + tup * 8f + tright * (ei * 14f);
+                var pupil = socket + tright * lookRight * 3f + tup * lookUp * 2f;
+                _renderer.AddLight(pupil, 22f + 20f * anger01, eyeCol);
+            }
+            // Tail-tip glow as a bonus light source — sells the verlet drag and the kaiju's
+            // "atomic tail" look. Brightness ramps with anger.
+            var tip = _titan.TailNodes[^1];
+            _renderer.AddLight(tip, 18f + 22f * anger01,
+                Color.Lerp(new Color(80, 130, 220), new Color(255, 90, 60), anger01));
         }
 
         // Glowing particles (ore flecks, projectile sparks, explosion embers) feed back into
