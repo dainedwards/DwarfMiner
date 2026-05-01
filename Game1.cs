@@ -722,6 +722,130 @@ public sealed class DwarfMinerGame : Game
         }
     }
 
+    /// <summary>Drop a sentry just above the player's feet so the dwarf doesn't end up
+    /// standing inside it. The position is along planet-up so the turret lands on the
+    /// surface rather than burying into a slope.</summary>
+    private void PlaceSentryAtFeet()
+    {
+        var up = _planet.UpAt(_player.Position);
+        var pos = _player.Position - up * (_player.Radius + 1f);
+        _sentries.Add(new Sentry(pos));
+        _particles.EmitDust(pos, 4f);
+    }
+
+    /// <summary>Tool badge string for the HUD — one letter per crafted tool, dim if not yet
+    /// owned. Shown so the player can verify upgrades stuck across F12-screenshot or after
+    /// the spend-and-forget of a crafting menu close.</summary>
+    private string ToolBadge()
+    {
+        // Use uppercase for owned, '·' for missing — keeps the line at a fixed width so the
+        // status row doesn't visibly reflow as crafts come in.
+        var sb = new System.Text.StringBuilder();
+        sb.Append('P').Append(_player.PickaxeTier);
+        sb.Append(_player.HasDrill   ? " D" : " ·");
+        sb.Append(_player.HasHammer  ? " H" : " ·");
+        sb.Append(_player.HasLantern ? " L" : " ·");
+        sb.Append(_player.HasArmor   ? " A" : " ·");
+        sb.Append(_hasCannon         ? " C" : " ·");
+        sb.Append(_player.HasCoreDrill ? " ⌬" : " ·");
+        return sb.ToString();
+    }
+
+    /// <summary>Render the crafting menu overlay. Recipes scroll vertically with the cursor
+    /// row highlighted; cost is colour-coded per item (green if affordable, red if not).
+    /// Recipes the player already owns / can't yet craft are dimmed but still listed for
+    /// reference. Closes when ApplyCraft completes — toggled by C/Esc in UpdateCraftingMenu.</summary>
+    private void DrawCraftingMenu()
+    {
+        var sb = _renderer.Batch;
+        sb.Begin();
+        // Dim backdrop so the world reads as paused even though it's still ticking.
+        sb.Draw(_renderer.Pixel, new Rectangle(0, 0, VirtualWidth, VirtualHeight), new Color(0, 0, 0, 170));
+        sb.End();
+
+        // Layout: a centred panel with header + scrollable list. Cursor stays on the same row
+        // index but the visible window scrolls so a long recipe list still fits.
+        const int panelW = 540;
+        const int rowH = 16;
+        const int visibleRows = 18;
+        var panelH = 60 + visibleRows * rowH;
+        var panelX = (VirtualWidth - panelW) / 2;
+        var panelY = (VirtualHeight - panelH) / 2;
+
+        sb.Begin();
+        sb.Draw(_renderer.Pixel, new Rectangle(panelX, panelY, panelW, panelH), new Color(15, 15, 25, 230));
+        sb.Draw(_renderer.Pixel, new Rectangle(panelX, panelY, panelW, 1), new Color(140, 130, 200));
+        sb.Draw(_renderer.Pixel, new Rectangle(panelX, panelY + panelH - 1, panelW, 1), new Color(140, 130, 200));
+        sb.Draw(_renderer.Pixel, new Rectangle(panelX, panelY, 1, panelH), new Color(140, 130, 200));
+        sb.Draw(_renderer.Pixel, new Rectangle(panelX + panelW - 1, panelY, 1, panelH), new Color(140, 130, 200));
+        sb.End();
+
+        _renderer.DrawDebugLabel("CRAFTING — Up/Down to scroll, Enter to craft, C/Esc to close",
+            new Vector2(panelX + 12, panelY + 12), Color.White);
+
+        // Scroll the visible window so the cursor stays in view. Cursor at the top half of
+        // the visible block? Show from 0; near the end? Lock the bottom; otherwise centre.
+        var total = Crafting.All.Count;
+        var firstVisible = MathHelper.Clamp(_craftingCursor - visibleRows / 2, 0, Math.Max(0, total - visibleRows));
+
+        for (var i = 0; i < visibleRows && firstVisible + i < total; i++)
+        {
+            var idx = firstVisible + i;
+            var r = Crafting.All[idx];
+            var rowY = panelY + 44 + i * rowH;
+
+            var owned = IsOwned(r.Id);
+            var afford = Crafting.CanAfford(r, _player.Inventory) && !owned;
+
+            // Row highlight bar
+            if (idx == _craftingCursor)
+            {
+                _renderer.Batch.Begin();
+                _renderer.Batch.Draw(_renderer.Pixel,
+                    new Rectangle(panelX + 4, rowY - 1, panelW - 8, rowH),
+                    afford ? new Color(60, 90, 50, 200) : new Color(70, 50, 50, 200));
+                _renderer.Batch.End();
+            }
+
+            // Name column. Dimmed (60% grey) for owned recipes; normal for affordable; red
+            // for can't-afford. Shows recipe name + cost line under the name.
+            var nameCol = owned ? new Color(120, 120, 120)
+                       : afford ? new Color(220, 240, 200)
+                                : new Color(230, 170, 170);
+            var costStr = BuildCostString(r);
+            _renderer.DrawDebugLabel(r.Name, new Vector2(panelX + 16, rowY), nameCol);
+            _renderer.DrawDebugLabel(costStr, new Vector2(panelX + 280, rowY),
+                owned ? new Color(110, 110, 110) : afford ? new Color(180, 220, 160) : new Color(220, 130, 130));
+        }
+    }
+
+    private bool IsOwned(string id) => id switch
+    {
+        "pickaxe_ii"  => _player.PickaxeTier >= 2,
+        "pickaxe_iii" => _player.PickaxeTier >= 3,
+        "pickaxe_iv"  => _player.PickaxeTier >= 4,
+        "drill"       => _player.HasDrill,
+        "hammer"      => _player.HasHammer,
+        "lantern"     => _player.HasLantern,
+        "armor"       => _player.HasArmor,
+        "cannon"      => _hasCannon,
+        "core_drill"  => _player.HasCoreDrill,
+        _ => false,
+    };
+
+    private static string BuildCostString(Recipe r)
+    {
+        var sb = new System.Text.StringBuilder();
+        var first = true;
+        foreach (var (id, count) in r.Cost)
+        {
+            if (!first) sb.Append(' ');
+            sb.Append(count).Append('×').Append(Tiles.ResourceLabel(id));
+            first = false;
+        }
+        return sb.ToString();
+    }
+
     private void TryLaunchRocket()
     {
         if (_player.Inventory.Count("rocket_part") < 5) return;
