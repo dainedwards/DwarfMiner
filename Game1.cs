@@ -287,6 +287,7 @@ public sealed class DwarfMinerGame : Game
             {
                 _titan.Health -= p.Damage;
                 _titan.HitFlash = 0.15f;
+                _titan.OnDamage();   // wakes the kaiju up and resets its 10s aggro timer
                 if (p.Kind == ProjectileKind.Bullet) p.Dead = true;
             }
             if (p.Dead)
