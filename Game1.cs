@@ -518,130 +518,165 @@ public sealed class DwarfMinerGame : Game
             _renderer.DrawRect(c.Position, new Vector2(c.Radius * 1.8f, c.Radius * 1.8f), col, c.Rotation);
         }
 
-        // Titan: six-legged creature. Body is a hulking chitinous oval; legs are procedural —
-        // each foot's world position is set by Titan.UpdateLegs from terrain probes, and the
-        // hip→knee→foot chain is solved here per frame with 2-bone IK that allows stretching
-        // when the foot is far from the hip (so legs visibly elongate over peaks/pits).
+        // Kaiju boss. Body is a hulking scaled hulk on 4 procedural quadruped legs; tail is a
+        // verlet chain dragging behind; head is a snouted bulb in front. Legs use 2-bone IK
+        // that allows stretching when the foot is far from the hip — so the kaiju visibly
+        // elongates its limbs to crest mountains and compress them on flat ground. Foot
+        // positions, leg step state, and tail nodes are all simulated in Titan.Update; this
+        // block is rendering only.
         {
             var tup = _planet.UpAt(_titan.Position);
             var tright = new Vector2(-tup.Y, tup.X);
             var trot = MathF.Atan2(tup.X, -tup.Y);
             var tp = _titan.Position;
+            var face = _titan.Facing;
             var anger01 = MathHelper.Clamp(_titan.Anger / 100f, 0f, 1f);
-            var skin = _titan.HitFlash > 0
+            var hide = _titan.HitFlash > 0
                 ? Color.White
-                : Color.Lerp(new Color(50, 38, 58), new Color(170, 55, 45), anger01);
-            var skinDark = new Color(skin.R / 2, skin.G / 2, skin.B / 2);
-            var skinLight = new Color(
-                Math.Clamp(skin.R + 32, 0, 255),
-                Math.Clamp(skin.G + 32, 0, 255),
-                Math.Clamp(skin.B + 32, 0, 255));
-            var chitin = new Color(22, 16, 22);
+                : Color.Lerp(new Color(48, 56, 50), new Color(120, 60, 50), anger01);   // dark mossy green → angry rust
+            var hideDark = new Color(hide.R / 2, hide.G / 2, hide.B / 2);
+            var hideLight = new Color(
+                Math.Clamp(hide.R + 38, 0, 255),
+                Math.Clamp(hide.G + 38, 0, 255),
+                Math.Clamp(hide.B + 38, 0, 255));
+            var underBelly = new Color(
+                Math.Clamp(hide.R + 70, 0, 255),
+                Math.Clamp(hide.G + 60, 0, 255),
+                Math.Clamp(hide.B + 50, 0, 255));   // pale cream/yellow underbelly
+            var chitin = new Color(18, 14, 22);
+            var spineGlow = Color.Lerp(new Color(80, 130, 220), new Color(255, 90, 60), anger01);
 
-            // === Legs first, so the body draws over the hips ===
-            // Per-leg pulse adds a tiny knee-bend wobble synced to the global Pulse so the
-            // creature looks alive even when standing still.
+            // === 1. Tail (drawn first, so the body covers its root) ===
+            // Verlet chain; thickness tapers from base to tip. Trailing tip lights up as anger
+            // climbs so it reads like a kaiju "atomic" tail.
+            var tailNodes = _titan.TailNodes;
+            for (var ti = 1; ti < tailNodes.Length; ti++)
+            {
+                var fr = ti / (float)(tailNodes.Length - 1);   // 0 at root, 1 at tip
+                var thick = MathHelper.Lerp(28f, 8f, fr);
+                var tailCol = Color.Lerp(hideDark, Color.Lerp(hide, spineGlow, anger01 * 0.45f), 1f - fr * 0.6f);
+                DrawLegSegment(tailNodes[ti - 1], tailNodes[ti], thick, tailCol);
+                // Mid-segment scales/spines along the tail
+                if (ti < tailNodes.Length - 1)
+                {
+                    var mid = (tailNodes[ti] + tailNodes[ti - 1]) * 0.5f;
+                    _renderer.DrawCircle(mid, thick * 0.45f, chitin);
+                }
+            }
+            // Tail tip glow — a small radial bead on the last node, brighter when angry.
+            _renderer.DrawCircle(tailNodes[^1], 7f + anger01 * 5f, spineGlow);
+            _renderer.DrawCircle(tailNodes[^1], 3f, Color.White);
+
+            // === 2. Hind legs (behind the body) — render the two with HipForward > 0 first ===
             for (var li = 0; li < _titan.Legs.Length; li++)
             {
                 var leg = _titan.Legs[li];
-                var hipWorld = tp + tright * leg.HipForward + tup * leg.HipUp;
-                var foot = leg.FootPos;
-                var hipToFoot = foot - hipWorld;
-                var dist = hipToFoot.Length();
-                // Two-bone IK with stretchy fallback. L1 + L2 = nominal max; if |hip-foot| is
-                // greater, knee snaps to a colinear midpoint so segments visibly stretch.
-                const float L1 = 86f;
-                const float L2 = 86f;
-                Vector2 knee;
-                if (dist < 0.5f)
-                {
-                    knee = hipWorld + (tright * leg.Side + tup) * 30f;
-                }
-                else if (dist >= L1 + L2)
-                {
-                    // Stretched: knee on the line at L1/(L1+L2). Both segments visually long.
-                    knee = hipWorld + hipToFoot * (L1 / (L1 + L2));
-                }
-                else
-                {
-                    var dir = hipToFoot / dist;
-                    var perp = new Vector2(-dir.Y, dir.X);
-                    // Force knees to bend "outward + up" relative to body, so the silhouette
-                    // looks like a spider/crab — knees jut up and away from the body.
-                    var preferred = tright * leg.Side + tup * 0.7f;
-                    if (Vector2.Dot(perp, preferred) < 0) perp = -perp;
-                    var half = dist * 0.5f;
-                    var bend = MathF.Sqrt(MathF.Max(0f, L1 * L1 - half * half));
-                    // Tiny breathing wobble in the knee bend, scaled down when foot is mid-step.
-                    var breath = MathF.Sin(_titan.Pulse + leg.Phase * 6.28f) * 2.5f;
-                    var stepBlend = leg.StepT >= 1f ? 1f : 0.4f;
-                    knee = hipWorld + dir * half + perp * (bend + breath * stepBlend);
-                }
-
-                // Mid-step legs render slightly brighter so the swinging leg "pops" — sells
-                // the locomotion to the eye.
-                var stepLift = leg.StepT >= 1f ? 0f : MathF.Sin(leg.StepT * MathF.PI);
-                var thigh = stepLift > 0.05f ? skinDark : new Color(skinDark.R - 6, skinDark.G - 6, skinDark.B - 6);
-                var shin = stepLift > 0.05f ? skin : skinDark;
-
-                DrawLegSegment(hipWorld, knee, 14f, thigh);
-                DrawLegSegment(knee, foot, 11f, shin);
-                // Joint cap and foot — small dark beads to imply chitinous joints.
-                _renderer.DrawCircle(knee, 7.5f, chitin);
-                _renderer.DrawCircle(knee, 4f, skinLight);
-                _renderer.DrawCircle(foot, 9f, chitin);
-                _renderer.DrawCircle(foot, 5f, new Color(skinDark.R + 14, skinDark.G + 14, skinDark.B + 14));
+                if (leg.HipForward * face >= 0) continue; // hind legs are on the side away from facing
+                DrawTitanLeg(leg, tp, tup, tright, hide, hideDark, hideLight, chitin, _titan.Pulse);
             }
 
-            // === Body: a wide chitinous oval, sat low so the legs splay around it ===
-            // Carapace plates: stack of progressively narrower rects above the underbelly.
-            // The pulse drives a subtle vertical breath so the body inflates/deflates.
-            var breath2 = MathF.Sin(_titan.Pulse) * 1.4f;
-            _renderer.DrawRect(tp + tup * (10f + breath2), new Vector2(220f, 90f), skinDark, trot);
-            _renderer.DrawRect(tp + tup * (24f + breath2), new Vector2(200f, 70f), skin, trot);
-            _renderer.DrawRect(tp + tup * (40f + breath2), new Vector2(168f, 44f), skinLight, trot);
-            // Underbelly seam — strong dark line just under the body, helps sell volume.
-            _renderer.DrawRect(tp + tup * -28f, new Vector2(196f, 4f), chitin, trot);
-            // Back ridge: 5 spinal plates running tangentially across the carapace.
+            // === 3. Body — a wide chitinous mass, breathing with the pulse ===
+            var breath2 = MathF.Sin(_titan.Pulse) * 1.6f;
+            // Underbelly slab (low, lighter)
+            _renderer.DrawRect(tp + tup * (-18f + breath2), new Vector2(240f, 56f), underBelly, trot);
+            _renderer.DrawRect(tp + tup * (-32f + breath2), new Vector2(220f, 4f), chitin, trot);
+            // Belly scutes — horizontal banding
             for (var s = -2; s <= 2; s++)
             {
-                var plateW = 18f - MathF.Abs(s) * 2f;
-                var plateH = 14f - MathF.Abs(s) * 2f;
-                _renderer.DrawRect(tp + tup * (52f + breath2) + tright * (s * 30f),
-                    new Vector2(plateW, plateH), chitin, trot);
-                _renderer.DrawRect(tp + tup * (54f + breath2) + tright * (s * 30f),
-                    new Vector2(plateW - 6f, 2f), skinLight, trot);
+                _renderer.DrawRect(tp + tup * (-22f + breath2) + tright * (s * 38f),
+                    new Vector2(28f, 14f), new Color(underBelly.R - 24, underBelly.G - 24, underBelly.B - 24), trot);
+            }
+            // Main body (hide-colored mass on top of underbelly)
+            _renderer.DrawRect(tp + tup * (10f + breath2), new Vector2(260f, 90f), hideDark, trot);
+            _renderer.DrawRect(tp + tup * (20f + breath2), new Vector2(244f, 70f), hide, trot);
+            _renderer.DrawRect(tp + tup * (38f + breath2), new Vector2(212f, 38f), hideLight, trot);
+            // Scaled skin texture: pseudo-random stable speckle. Use position-based hash so the
+            // scales don't shimmer between frames.
+            var hashSeed = (int)(tp.X * 0.13f) ^ (int)(tp.Y * 0.17f);
+            for (var sc = 0; sc < 18; sc++)
+            {
+                var h = (hashSeed * 1664525 + sc * 1013904223) & 0x7fffffff;
+                var sx = ((h >> 3) & 0xFF) / 255f * 220f - 110f;
+                var sy = ((h >> 11) & 0x3F) / 63f * 50f - 5f;
+                var ssz = 3f + ((h >> 19) & 3);
+                _renderer.DrawRect(tp + tright * sx + tup * (sy + breath2),
+                    new Vector2(ssz, ssz),
+                    (h & 1) == 0 ? hideDark : chitin, trot);
             }
 
-            // === Head: a forward bulb on the body's facing side, with mandibles + a single eye ===
-            // Facing is smoothed -1..+1; lerp the head offset along the tangent so it slides
-            // smoothly when the creature changes direction.
-            var face = _titan.Facing;
-            var headBase = tp + tup * 18f + tright * (face * 92f);
-            _renderer.DrawRect(headBase + tup * 10f, new Vector2(70f, 56f), skinDark, trot);
-            _renderer.DrawRect(headBase + tup * 18f, new Vector2(58f, 40f), skin, trot);
-            _renderer.DrawRect(headBase + tup * 28f, new Vector2(40f, 18f), skinLight, trot);
-            // Mandibles — two short stubs flanking the front of the head; the per-side rotation
-            // wobble pulses with anger so the jaws look alive.
-            var mandTwitch = MathF.Sin(_titan.Pulse * 2.2f) * (0.05f + anger01 * 0.18f);
-            var mandOut = face * 30f;
-            _renderer.DrawRect(headBase + tup * 2f + tright * (mandOut + face * 6f),
-                new Vector2(28f, 8f), chitin, trot + face * (0.35f + mandTwitch));
-            _renderer.DrawRect(headBase + tup * 2f - tright * (-mandOut + face * 6f),
-                new Vector2(28f, 8f), chitin, trot - face * (0.35f + mandTwitch));
+            // === 4. Dorsal spines — Godzilla-style fin row along the back ===
+            // Each spine is a stacked pyramid of progressively narrower rects, glowing on the
+            // tip when angry. Three rows of 5 spines each — center row is tallest.
+            for (var s = -2; s <= 2; s++)
+            {
+                var sFr = MathF.Abs(s) / 2f;
+                var height = 32f - sFr * 12f;
+                var width = 22f - sFr * 6f;
+                var basePos = tp + tup * (54f + breath2) + tright * (s * 44f);
+                // Plate base
+                _renderer.DrawRect(basePos, new Vector2(width, 8f), chitin, trot);
+                // Plate body
+                _renderer.DrawRect(basePos + tup * (height * 0.35f), new Vector2(width * 0.8f, height * 0.55f), hideDark, trot);
+                // Plate spine tip
+                _renderer.DrawRect(basePos + tup * (height * 0.7f), new Vector2(width * 0.45f, height * 0.45f), chitin, trot);
+                // Glowing edge — anger-tinted
+                _renderer.DrawRect(basePos + tup * (height * 0.85f), new Vector2(width * 0.3f, 4f), spineGlow, trot);
+            }
 
-            // Single glowing eye, tracks the player. Project the look direction onto the head's
-            // local right/up basis so the pupil slides within the eye socket.
+            // === 5. Front legs (in front of the body) ===
+            for (var li = 0; li < _titan.Legs.Length; li++)
+            {
+                var leg = _titan.Legs[li];
+                if (leg.HipForward * face < 0) continue; // skip hind legs (already drawn)
+                DrawTitanLeg(leg, tp, tup, tright, hide, hideDark, hideLight, chitin, _titan.Pulse);
+            }
+
+            // === 6. Head — a snouted bulb in front of the body ===
+            var headBase = tp + tup * 26f + tright * (face * 110f);
+            // Neck connection (a small dark patch where head meets body)
+            _renderer.DrawRect(tp + tup * 22f + tright * (face * 60f), new Vector2(54f, 46f), hideDark, trot);
+            // Skull
+            _renderer.DrawRect(headBase + tup * 4f, new Vector2(86f, 64f), hideDark, trot);
+            _renderer.DrawRect(headBase + tup * 12f, new Vector2(72f, 48f), hide, trot);
+            _renderer.DrawRect(headBase + tup * 24f, new Vector2(54f, 22f), hideLight, trot);
+            // Brow ridge — a strong horizontal dark bar over the eyes
+            _renderer.DrawRect(headBase + tup * 18f, new Vector2(78f, 5f), chitin, trot);
+            // Snout — extends further forward, narrower and lower than the skull
+            var snoutBase = headBase + tright * (face * 38f) + tup * -4f;
+            _renderer.DrawRect(snoutBase, new Vector2(56f, 36f), hideDark, trot);
+            _renderer.DrawRect(snoutBase + tup * 6f, new Vector2(44f, 22f), hide, trot);
+            // Nostril
+            _renderer.DrawCircle(snoutBase + tright * (face * 18f) + tup * 8f, 3.5f, chitin);
+            // Jaw — a darker rect under the snout, with a tooth row
+            var jawPos = snoutBase + tup * -16f;
+            _renderer.DrawRect(jawPos, new Vector2(60f, 12f), chitin, trot);
+            // Teeth row — small white pixels along the jaw seam
+            for (var ti2 = -2; ti2 <= 2; ti2++)
+            {
+                _renderer.DrawRect(jawPos + tright * (ti2 * 10f) + tup * 4f,
+                    new Vector2(3f, 5f), Color.White, trot);
+            }
+            // Side horns — two crested ridges flaring back from the skull (kaiju cresting)
+            _renderer.DrawRect(headBase + tright * (face * -16f) + tup * 32f,
+                new Vector2(20f, 8f), chitin, trot + face * 0.5f);
+            _renderer.DrawRect(headBase + tright * (face * -16f) + tup * 24f,
+                new Vector2(28f, 6f), chitin, trot + face * 0.3f);
+
+            // === 7. Eyes — two glowing slits, anger-tinted, tracking the player ===
             var lookDir = _player.Position - headBase;
             if (lookDir.LengthSquared() < 0.001f) lookDir = tright * face;
             else lookDir.Normalize();
-            var eyeCenter = headBase + tup * 22f;
             var lookRight = Vector2.Dot(lookDir, tright);
             var lookUp = Vector2.Dot(lookDir, tup);
-            var eyePos = eyeCenter + tright * lookRight * 6f + tup * lookUp * 4f;
-            _renderer.DrawCircle(eyeCenter, 16f, chitin);
-            _renderer.DrawCircle(eyePos, 12f, Color.Lerp(new Color(255, 230, 100), new Color(255, 100, 60), anger01));
-            _renderer.DrawCircle(eyePos, 4.5f, Color.Black);
+            var eyeCol = Color.Lerp(new Color(255, 230, 100), new Color(255, 70, 50), anger01);
+            for (var ei = -1; ei <= 1; ei += 2)
+            {
+                var socket = headBase + tup * 8f + tright * (ei * 14f);
+                _renderer.DrawCircle(socket, 9f, chitin);
+                var pupil = socket + tright * lookRight * 3f + tup * lookUp * 2f;
+                _renderer.DrawCircle(pupil, 6f, eyeCol);
+                _renderer.DrawCircle(pupil, 2.5f, Color.Black);
+            }
         }
 
         // Particles drawn last so chips and sparks pop over creatures and the player.
