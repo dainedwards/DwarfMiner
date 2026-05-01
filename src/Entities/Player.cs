@@ -459,12 +459,20 @@ public sealed class Player
         }
 
         // Local power calc — tier IV gets a 2× bonus vs Obsidian (its niche). Hammer doubles
-        // power vs HardStone so each hammer-stomp is meaningful even with tier-1 base power.
+        // power vs HardStone and uses an effective-hardness override to bypass Mine's anchor
+        // gate (HardStone is hardness 99, which Mine refuses to damage by default).
         var power = EffectivePickaxePower;
+        int? effectiveHardness = null;
         if (k == TileKind.Obsidian && PickaxeTier >= 4) power *= 2;
-        if (k == TileKind.HardStone && HasHammer) power = Math.Max(power, 4);
+        if (k == TileKind.HardStone && HasHammer)
+        {
+            // Treat HardStone as basalt-class for damage scaling: each swing does ~32/8 = 4
+            // damage at tier-1 power, so a hammer-only player breaks bedrock in ~16 swings.
+            effectiveHardness = 8;
+            power = Math.Max(power, 4);
+        }
 
-        var broken = planet.Mine(x, y, power);
+        var broken = planet.Mine(x, y, power, effectiveHardness);
         MineCooldown = EffectiveMineCooldown;
         if (broken is { } bk)
         {
