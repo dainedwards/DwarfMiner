@@ -99,6 +99,28 @@ public sealed class Physics
         }
     }
 
+    /// <summary>True iff this tile has a ReinforcedSupport tile within the 8-neighbour ring.
+    /// Drives the anchor halo — one reinforced beam stabilises everything in its 3×3 footprint.
+    /// Uses the polar neighbour helpers for inner/outer so band-boundary mapping is correct.</summary>
+    private bool HasReinforcedNeighbor(int x, int y)
+    {
+        var (inR, inT) = _planet.InnerNeighbour(x, y);
+        if (_planet.Get(inR, inT) == TileKind.ReinforcedSupport) return true;
+        if (_planet.Get(inR, inT - 1) == TileKind.ReinforcedSupport) return true;
+        if (_planet.Get(inR, inT + 1) == TileKind.ReinforcedSupport) return true;
+        if (_planet.Get(x, y - 1) == TileKind.ReinforcedSupport) return true;
+        if (_planet.Get(x, y + 1) == TileKind.ReinforcedSupport) return true;
+        var oc = _planet.OuterNeighbourCount(x, y);
+        for (var i = 0; i < oc; i++)
+        {
+            var (or_, ot_) = _planet.OuterNeighbour(x, y, i);
+            if (_planet.Get(or_, ot_) == TileKind.ReinforcedSupport) return true;
+            if (_planet.Get(or_, ot_ - 1) == TileKind.ReinforcedSupport) return true;
+            if (_planet.Get(or_, ot_ + 1) == TileKind.ReinforcedSupport) return true;
+        }
+        return false;
+    }
+
     /// <summary>True iff at least one of the cardinal neighbours is non-solid. Inner/outer use
     /// the polar neighbour helpers so band-boundary radial mapping is correct.</summary>
     private bool HasEmptyCardinalNeighbor(int x, int y)
