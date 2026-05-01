@@ -28,6 +28,7 @@ public sealed class DwarfMinerGame : Game
     private readonly List<Projectile> _projectiles = new();
     private readonly List<FallingBoulder> _boulders = new();
     private readonly List<RockChunk> _rockChunks = new();
+    private readonly List<Sentry> _sentries = new();
     private readonly Particles _particles = new();
 
     private KeyboardState _prevKeys;
@@ -40,6 +41,13 @@ public sealed class DwarfMinerGame : Game
     private float _runTime;
     private bool _hasCannon;
     private bool _screenshotPending;
+
+    /// <summary>Crafting menu state. While open, mouse/movement input still drives the world
+    /// but key events route to the menu (up/down to scroll, Enter to craft, C/Esc to close).
+    /// The cursor is the index into Crafting.All; only recipes whose visibility predicate
+    /// passes (e.g. pickaxe_iv hidden until pickaxe_iii is built) are shown.</summary>
+    private bool _craftingOpen;
+    private int _craftingCursor;
 
     private const int VirtualWidth = 1280;
     private const int VirtualHeight = 720;
