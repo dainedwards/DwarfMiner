@@ -271,17 +271,21 @@ public sealed class Player
                         // Step-climb: contact is wall-like (mostly tangential, not pushing
                         // sharply downward — that would mean a ceiling), the player is
                         // grounded, and the tile's top is reachable in ≤ StepClimbHeight.
-                        // pLocalY < halfY confirms we're approaching from below the tile top
-                        // (otherwise we're already past it and shouldn't lift further).
-                        // Lift size is the full clearance (top edge + Radius + margin) so
-                        // the post-lift position is OUT of the tile entirely — no residual
+                        // pLocalY < halfY confirms we're approaching from below the tile top.
+                        // Critically, the tile *directly above* this one (outward-radial
+                        // neighbor at x+1) must be sky — otherwise this is the side of a
+                        // multi-tile wall (e.g. a mountain) and the player should have to
+                        // jump, not auto-scale it 1 tile/frame.
+                        // Lift size is the full clearance (top edge + Radius + margin) so the
+                        // post-lift position is OUT of the tile entirely — no residual
                         // standard-push afterwards that would chew into tangential velocity.
                         var nLocalX = diffX / dist;
                         var nLocalY = diffY / dist;
                         if (Grounded
                             && MathF.Abs(nLocalX) > 0.6f
                             && nLocalY > -0.3f
-                            && pLocalY < halfY)
+                            && pLocalY < halfY
+                            && !Tiles.IsSolid(planet.Get(x + 1, y)))
                         {
                             var liftToClear = (halfY - pLocalY) + Radius + 0.1f;
                             if (liftToClear <= StepClimbHeight && liftToClear <= _stepClimbBudget)
