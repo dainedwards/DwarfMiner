@@ -62,12 +62,20 @@ public sealed class Player
     }
 
     /// <param name="moveAxis">-1 left, 0 idle, +1 right (in player-local tangent)</param>
-    /// <param name="jumpPressed">true on the frame jump was pressed</param>
+    /// <param name="jumpHeld">whether the jump button is currently held (continuous, not edge).
+    /// The Player tracks the previous frame's value to derive the press edge internally — this
+    /// way variable-jump-height (hold = full apex / tap = short hop) works without the caller
+    /// having to think about it.</param>
     /// <param name="verticalAxis">-1 down, 0 idle, +1 up (along local up). Only used when <see cref="FlyMode"/> is on.</param>
-    public void Update(float dt, Planet planet, int moveAxis, bool jumpPressed, int verticalAxis = 0)
+    public void Update(float dt, Planet planet, int moveAxis, bool jumpHeld, int verticalAxis = 0)
     {
         var up = Up(planet);
         var right = new Vector2(-up.Y, up.X);
+
+        // Edge-detect jump press from the held signal. Tracked across fly-mode frames too so
+        // mode toggles don't accidentally trigger a buffered jump.
+        var jumpEdge = jumpHeld && !_jumpHeldPrev;
+        _jumpHeldPrev = jumpHeld;
 
         if (FlyMode)
         {
@@ -76,6 +84,10 @@ public sealed class Player
             Velocity = right * (moveAxis * spd) + up * (verticalAxis * spd);
             Position += Velocity * dt;
             Grounded = false;
+            // Don't carry coyote/buffer state across a fly-mode session — flipping out of fly
+            // shouldn't trigger a stale buffered jump.
+            _coyoteTimer = 0f;
+            _jumpBufferTimer = 0f;
             if (MineCooldown > 0) MineCooldown -= dt;
             if (ShootCooldown > 0) ShootCooldown -= dt;
             return;
@@ -88,25 +100,57 @@ public sealed class Player
         var vNormal = Vector2.Dot(Velocity, up);
 
         var targetTangent = moveAxis * MoveSpeed;
-        var accel = Grounded ? 600f : 250f;
+        var accel = Grounded ? 900f : 320f;   // snappier ground accel; tighter air control
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
 
-        // Gravity pulls along -up direction.
-        vNormal -= Gravity * dt;
+        // Variable jump height: extra gravity while ascending unless jump is still held. Lets
+        // the player tap-jump a short hop or hold-jump for the full arc.
+        var grav = Gravity;
+        if (vNormal > 0f && !jumpHeld) grav = Gravity * JumpReleaseGravityMul;
+        vNormal -= grav * dt;
+        // Cap fall speed — see MaxFallSpeed comment for why this is essential.
+        if (vNormal < -MaxFallSpeed) vNormal = -MaxFallSpeed;
 
-        if (jumpPressed && Grounded)
+        // Coyote time + jump buffer: classic platformer feel. Coyote keeps "still groundable"
+        // for a few frames after leaving the floor so a slightly-late jump still works; buffer
+        // remembers a slightly-early jump press until we touch ground.
+        if (Grounded) _coyoteTimer = CoyoteTime;
+        else if (_coyoteTimer > 0f) _coyoteTimer -= dt;
+        if (jumpEdge) _jumpBufferTimer = JumpBufferTime;
+        else if (_jumpBufferTimer > 0f) _jumpBufferTimer -= dt;
+
+        if (_jumpBufferTimer > 0f && _coyoteTimer > 0f)
         {
             vNormal = JumpSpeed;
+            _jumpBufferTimer = 0f;
+            _coyoteTimer = 0f;
             Grounded = false;
         }
 
         Velocity = right * vTangent + up * vNormal;
 
-        Position += Velocity * dt;
-        ResolveCollision(planet);
+        // Substepped position + collision resolution. Each substep moves at most ~Radius * 0.6
+        // so the player can never traverse a whole tile (8 px) in one substep — eliminates
+        // the tunneling that lets fast falls pass through terrain.
+        var stepVec = Velocity * dt;
+        var moveLen = stepVec.Length();
+        var maxStep = Radius * 0.6f;
+        var substeps = Math.Max(1, (int)MathF.Ceiling(moveLen / maxStep));
+        var subDt = dt / substeps;
+        for (var i = 0; i < substeps; i++)
+        {
+            Position += Velocity * subDt;
+            ResolveCollision(planet);
+        }
 
-        // Grounded probe: cast a short distance along -up, see if a solid tile blocks us.
-        Grounded = ProbeSolid(planet, Position - up * (Radius + 1.5f));
+        // Multi-point grounded probe. Sample three points under the feet (centre + left/right
+        // foot offsets) so straddling a tile edge or standing on a one-tile pillar doesn't
+        // flicker the grounded state — any solid contact counts.
+        var feetCentre = Position - up * (Radius + 1.5f);
+        var footOff = right * (Radius * 0.7f);
+        Grounded = ProbeSolid(planet, feetCentre)
+                || ProbeSolid(planet, feetCentre + footOff)
+                || ProbeSolid(planet, feetCentre - footOff);
 
         if (MineCooldown > 0) MineCooldown -= dt;
         if (ShootCooldown > 0) ShootCooldown -= dt;
