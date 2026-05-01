@@ -153,6 +153,7 @@ public static class Tiles
     public static string ResourceLabel(string id) => id switch
     {
         "rocket_part" => "ROCKET PART",
+        "moss_stone"  => "MOSS STONE",
         _             => id.ToUpperInvariant(),
     };
 
