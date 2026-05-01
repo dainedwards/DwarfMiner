@@ -57,15 +57,16 @@ public sealed class Titan
 
     private void InitLegs()
     {
-        // Quadruped: front pair (HipForward < 0) and hind pair (HipForward > 0). Phases are
-        // paired diagonally — front-left + hind-right step together, front-right + hind-left
-        // step together — which is the classic trot gait.
+        // Quadruped. HipForward is signed along the body's tangent axis; with Facing = +1 the
+        // head sits at +tangent, so legs with HipForward > 0 are the *front* legs (shoulders,
+        // higher hip attachment) and HipForward < 0 are the *hind* legs (lower hip). Phases
+        // are paired diagonally — FL+HR step together, FR+HL step together — the classic trot.
         Legs = new[]
         {
-            new TitanLeg { HipForward = -78f, Side = -1, Phase = 0.10f, HipUp = 22f },  // front-left
-            new TitanLeg { HipForward = -78f, Side = +1, Phase = 0.60f, HipUp = 22f },  // front-right
-            new TitanLeg { HipForward = +78f, Side = -1, Phase = 0.60f, HipUp = 16f },  // hind-left
-            new TitanLeg { HipForward = +78f, Side = +1, Phase = 0.10f, HipUp = 16f },  // hind-right
+            new TitanLeg { HipForward = +78f, Side = -1, Phase = 0.10f, HipUp = 22f },  // front-left
+            new TitanLeg { HipForward = +78f, Side = +1, Phase = 0.60f, HipUp = 22f },  // front-right
+            new TitanLeg { HipForward = -78f, Side = -1, Phase = 0.60f, HipUp = 16f },  // hind-left
+            new TitanLeg { HipForward = -78f, Side = +1, Phase = 0.10f, HipUp = 16f },  // hind-right
         };
 
         var up = _planet.UpAt(Position);
