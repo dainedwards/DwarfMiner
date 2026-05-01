@@ -610,49 +610,50 @@ public sealed class DwarfMinerGame : Game
         return true;
     }
 
-    /// <summary>Right-click weapon fire. With the cannon, consumes the highest-tier shell
-    /// in inventory before falling back to the regular cannon round; without the cannon,
-    /// fires plain bullets. Each shell variant has its own <see cref="ProjectileKind"/>.</summary>
-    private void FireWeapon(Vector2 worldCursor)
+    /// <summary>Fire a basic bullet from the "bullets" slot. Intrinsic — always available;
+    /// no cannon needed. Low damage, fast cadence.</summary>
+    private void FireBullet(Vector2 worldCursor)
     {
         var dir = worldCursor - _player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        if (_hasCannon)
+        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 420f, 6f, 1.4f, ProjectileKind.Bullet));
+        _player.ShootCooldown = 0.18f;
+    }
+
+    /// <summary>Fire the cannon. Consumes the highest-tier shell in inventory before falling
+    /// back to the regular cannon round. Per-shell stats are kept here so the dispatch stays
+    /// declarative.</summary>
+    private void FireCannon(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        if (_player.Inventory.TryConsume("ammo_diamond", 1))
         {
-            // Spend the strongest shell first. Diamond > sapphire > ruby > silver > base.
-            // Shell speed/damage tuned per kind so the shells feel different in flight too.
-            if (_player.Inventory.TryConsume("ammo_diamond", 1))
-            {
-                _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 300f, 80f, 1.8f, ProjectileKind.CannonDiamond));
-                _player.ShootCooldown = 0.7f;
-                _shake = MathF.Max(_shake, 0.5f);
-            }
-            else if (_player.Inventory.TryConsume("ammo_sapphire", 1))
-            {
-                _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 35f, 1.7f, ProjectileKind.CannonSapphire));
-                _player.ShootCooldown = 0.55f;
-            }
-            else if (_player.Inventory.TryConsume("ammo_ruby", 1))
-            {
-                _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 32f, 1.7f, ProjectileKind.CannonRuby));
-                _player.ShootCooldown = 0.55f;
-            }
-            else if (_player.Inventory.TryConsume("ammo_silver", 1))
-            {
-                _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 380f, 22f, 1.6f, ProjectileKind.CannonSilver));
-                _player.ShootCooldown = 0.45f;
-            }
-            else
-            {
-                _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 25f, 1.6f, ProjectileKind.Cannon));
-                _player.ShootCooldown = 0.55f;
-            }
+            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 300f, 80f, 1.8f, ProjectileKind.CannonDiamond));
+            _player.ShootCooldown = 0.7f;
+            _shake = MathF.Max(_shake, 0.5f);
+        }
+        else if (_player.Inventory.TryConsume("ammo_sapphire", 1))
+        {
+            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 35f, 1.7f, ProjectileKind.CannonSapphire));
+            _player.ShootCooldown = 0.55f;
+        }
+        else if (_player.Inventory.TryConsume("ammo_ruby", 1))
+        {
+            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 32f, 1.7f, ProjectileKind.CannonRuby));
+            _player.ShootCooldown = 0.55f;
+        }
+        else if (_player.Inventory.TryConsume("ammo_silver", 1))
+        {
+            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 380f, 22f, 1.6f, ProjectileKind.CannonSilver));
+            _player.ShootCooldown = 0.45f;
         }
         else
         {
-            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 420f, 6f, 1.4f, ProjectileKind.Bullet));
-            _player.ShootCooldown = 0.18f;
+            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 25f, 1.6f, ProjectileKind.Cannon));
+            _player.ShootCooldown = 0.55f;
         }
     }
 
