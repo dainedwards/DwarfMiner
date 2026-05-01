@@ -446,11 +446,11 @@ public sealed class Player
         return placed;
     }
 
-    /// <summary>Try to mine the tile under the cursor. Returns the tile kind if shattered.
-    /// Honours pickaxe-tool gates: HardStone needs the hammer, the Core needs the core drill.
-    /// Tier IV (diamond) gets a 2× power bonus on Obsidian so the late-game pick burns through
-    /// it noticeably faster than the early picks.</summary>
-    public TileKind? TryMine(Planet planet, Physics physics, Vector2 worldCursor)
+    /// <summary>Try to mine the tile under the cursor with a specific tool. Pickaxe is the
+    /// default; drill / hammer change cooldown + power profile. HardStone needs the hammer,
+    /// the Core needs the core drill. Tier IV gets a 2× power bonus on Obsidian; hammer
+    /// gets a flat power floor + an effective-hardness override so it bites bedrock at all.</summary>
+    public TileKind? TryMine(Planet planet, Physics physics, Vector2 worldCursor, MiningTool tool = MiningTool.Pickaxe)
     {
         if (MineCooldown > 0) return null;
         var d = worldCursor - Position;
@@ -458,28 +458,27 @@ public sealed class Player
         var (x, y) = planet.WorldToTile(worldCursor);
         var k = planet.Get(x, y);
         if (k == TileKind.Sky) return null;
-        if (!CanBreak(k))
+        if (!CanBreak(k, tool))
         {
-            MineCooldown = EffectiveMineCooldown;   // still spend a swing for feedback
+            MineCooldown = MineCooldownFor(tool);   // still spend a swing for feedback
             return null;
         }
 
-        // Local power calc — tier IV gets a 2× bonus vs Obsidian (its niche). Hammer doubles
-        // power vs HardStone and uses an effective-hardness override to bypass Mine's anchor
-        // gate (HardStone is hardness 99, which Mine refuses to damage by default).
+        // Tool-aware power. Drill matches pickaxe power but mines fast; hammer hits hard but
+        // slow; hammer is the only tool that can punch HardStone (with the hardness override).
         var power = EffectivePickaxePower;
         int? effectiveHardness = null;
         if (k == TileKind.Obsidian && PickaxeTier >= 4) power *= 2;
-        if (k == TileKind.HardStone && HasHammer)
+        if (tool == MiningTool.Hammer)
         {
-            // Treat HardStone as basalt-class for damage scaling: each swing does ~32/8 = 4
-            // damage at tier-1 power, so a hammer-only player breaks bedrock in ~16 swings.
-            effectiveHardness = 8;
             power = Math.Max(power, 4);
+            // Treat HardStone as basalt-class so the hammer's swing actually does damage.
+            // Other tiles take normal hardness — the boost is the power floor only.
+            if (k == TileKind.HardStone) effectiveHardness = 8;
         }
 
         var broken = planet.Mine(x, y, power, effectiveHardness);
-        MineCooldown = EffectiveMineCooldown;
+        MineCooldown = MineCooldownFor(tool);
         if (broken is { } bk)
         {
             physics.MarkDirty(x, y);
@@ -489,6 +488,10 @@ public sealed class Player
         }
         return null;
     }
+
+    /// <summary>Backwards-compat overload: defaults to the pickaxe.</summary>
+    public TileKind? TryMine(Planet planet, Physics physics, Vector2 worldCursor)
+        => TryMine(planet, physics, worldCursor, MiningTool.Pickaxe);
 
     /// <summary>Place a build item at the cursor by inventory id. Each placeable's id maps
     /// to a tile kind via <see cref="BuildIdToTile"/>; the inventory entry with that same id
