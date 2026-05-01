@@ -401,7 +401,7 @@ public sealed class Cells
             var size = new Vector2(chord + 0.5f, radial + 0.5f);
             var up = Planet.UpAt(centre);
             var rotation = MathF.Atan2(up.X, -up.Y);
-            var col = ColorFor(m, cx, cy);
+            var col = ColorFor(m, cx, cy, _srcTile[idx]);
             r.Batch.Draw(r.Pixel, centre, null, col, rotation,
                 new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
         }
