@@ -183,6 +183,20 @@ public sealed class DwarfMinerGame : Game
             return;
         }
 
+        // Crafting menu intercepts most input — world keeps simulating but movement/mining
+        // stops so the player isn't fighting the game while shopping for upgrades.
+        if (_craftingOpen)
+        {
+            UpdateCraftingMenu(keys);
+            _physics.Update(dt);
+            _particles.Update(dt, _planet);
+            _cells.Update(dt);
+            _prevKeys = keys; _prevMouse = mouse;
+            base.Update(gameTime);
+            return;
+        }
+        if (Pressed(keys, _prevKeys, Keys.C)) { _craftingOpen = true; _craftingCursor = 0; _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return; }
+
         _runTime += dt;
 
         // Movement input — A/D or arrows along the player's local tangent.
