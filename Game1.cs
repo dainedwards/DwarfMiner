@@ -701,16 +701,19 @@ public sealed class DwarfMinerGame : Game
             _renderer.AddLight(p.Position, r, col);
         }
 
-        // Titan eye: gold → red as anger climbs, scales up too.
+        // Titan eye: gold → red as anger climbs, scales up too. The eye sits on the creature's
+        // forward-facing head bulb (tup * 18 + tright * facing * 92, plus tup * 22 for the eye
+        // socket within the head), so the lit position must match the renderer.
         if (_titan.Health > 0)
         {
             var anger01 = MathHelper.Clamp(_titan.Anger / 100f, 0f, 1f);
             var tup = _planet.UpAt(_titan.Position);
             var tright = new Vector2(-tup.Y, tup.X);
-            var lookDir = _player.Position - _titan.Position;
-            if (lookDir.LengthSquared() < 0.001f) lookDir = new Vector2(1, 0); else lookDir.Normalize();
-            var eyeCenter = _titan.Position + tup * 79f;
-            var eyePos = eyeCenter + tright * Vector2.Dot(lookDir, tright) * 5f + tup * Vector2.Dot(lookDir, tup) * 3f;
+            var headBase = _titan.Position + tup * 18f + tright * (_titan.Facing * 92f);
+            var lookDir = _player.Position - headBase;
+            if (lookDir.LengthSquared() < 0.001f) lookDir = tright * _titan.Facing; else lookDir.Normalize();
+            var eyeCenter = headBase + tup * 22f;
+            var eyePos = eyeCenter + tright * Vector2.Dot(lookDir, tright) * 6f + tup * Vector2.Dot(lookDir, tup) * 4f;
             _renderer.AddLight(eyePos, 32f + 28f * anger01,
                 Color.Lerp(new Color(255, 220, 100), new Color(255, 80, 40), anger01));
         }
