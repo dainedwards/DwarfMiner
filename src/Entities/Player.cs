@@ -334,8 +334,8 @@ public sealed class Player
         if (broken is { } bk)
         {
             physics.MarkDirty(x, y);
-            var drop = Tiles.Drop(bk);
-            if (drop is { } d2) Inventory.Add(d2.id, d2.count);
+            // Drop is no longer credited instantly here — Game1 spawns a dust pile of `bk` and the
+            // player collects it by walking through (Cells.CollectInRadius). Mining = create dust.
             return bk;
         }
         return null;
