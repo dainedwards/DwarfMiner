@@ -765,6 +765,19 @@ public sealed class DwarfMinerGame : Game
 
     private static bool Pressed(KeyboardState now, KeyboardState prev, Keys k)
         => now.IsKeyDown(k) && !prev.IsKeyDown(k);
+
+    /// <summary>Draw a thick line segment from a→b as a single rotated rect. Used for the
+    /// titan's procedural leg bones (hip→knee, knee→foot). The rect's long axis aligns with
+    /// b−a, so the segment looks like a beam connecting the joints regardless of orientation.</summary>
+    private void DrawLegSegment(Vector2 a, Vector2 b, float thickness, Color color)
+    {
+        var d = b - a;
+        var len = d.Length();
+        if (len < 0.5f) return;
+        var mid = (a + b) * 0.5f;
+        var rot = MathF.Atan2(d.Y, d.X);
+        _renderer.DrawRect(mid, new Vector2(len, thickness), color, rot);
+    }
 }
 
 internal static class CraftingExtensions
