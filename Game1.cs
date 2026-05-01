@@ -474,10 +474,16 @@ public sealed class DwarfMinerGame : Game
 
         // Pixel-art dwarf sprite — drawn rotated to align local-up with planet's outward radial.
         // Sprite head-at-top, feet-at-bottom; the rotation maps sprite-up to world-up.
+        // Anchor offset: the sprite is 12 px tall × 0.6 scale so it extends 3.6 px below center,
+        // but the collision Radius is only 2.6 px. Without the offset the visual feet sit 1 px
+        // *inside* the tile while the collision body is correctly perched on top — looks like
+        // the dwarf is sunk into the ground. Shifting the sprite up by exactly that gap aligns
+        // visual feet with the collision bottom.
         var up = _planet.UpAt(_player.Position);
         var rot = MathF.Atan2(up.X, -up.Y);
-        const float spriteScale = 0.6f; // world units per sprite pixel
-        _renderer.Batch.Draw(_dwarfTex, _player.Position, null, Color.White, rot,
+        const float spriteScale = 0.6f;          // world units per sprite pixel
+        const float spriteFeetOffset = 1.0f;     // = (sprite_half_height * scale) − Radius
+        _renderer.Batch.Draw(_dwarfTex, _player.Position + up * spriteFeetOffset, null, Color.White, rot,
             new Vector2(_dwarfTex.Width * 0.5f, _dwarfTex.Height * 0.5f),
             spriteScale, SpriteEffects.None, 0f);
 
