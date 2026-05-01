@@ -538,6 +538,16 @@ public sealed class Renderer
         _sb.End();
     }
 
+    public void DrawDebugLabel(string text, Vector2 screenPos, Color color)
+    {
+        var w = _font.Measure(text, scale: 1) + 4;
+        var h = _font.LineHeight + 4;
+        _sb.Begin(samplerState: SamplerState.PointClamp);
+        _sb.Draw(_pixel, new Rectangle((int)screenPos.X - 2, (int)screenPos.Y - 2, w, h), new Color(0, 0, 0, 180));
+        _font.Draw(_sb, text, screenPos, color, scale: 1);
+        _sb.End();
+    }
+
     public void DrawCenteredText(string text, int viewportWidth, int viewportHeight, Color color, int scale = 3)
     {
         var w = _font.Measure(text, scale);
