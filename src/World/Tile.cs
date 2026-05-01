@@ -151,7 +151,10 @@ public static class Tiles
     {
         "diamond", "ruby", "sapphire", "platinum", "gold", "silver",
         "crystal", "iron", "coal",
-        "nuke", "rocket_part",
+        "nuke", "harpoon", "rocket_part",
+        "ammo_diamond", "ammo_sapphire", "ammo_ruby", "ammo_silver",
+        "dynamite", "poultice",
+        "ladder", "rail", "reinforced_support", "glowshroom", "beacon", "sentry",
         "obsidian", "granite", "basalt", "moss_stone", "gravel",
         "stone", "dirt", "snow",
     };
