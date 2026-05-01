@@ -7,18 +7,80 @@ public sealed record Recipe(string Id, string Name, IReadOnlyDictionary<string, 
 
 public static class Crafting
 {
+    /// <summary>Master recipe table. Order is the order shown in the in-game crafting menu —
+    /// permanent upgrades first, then placeable build items, then ammos, then consumables and
+    /// late-game super-weapons. New ids that appear in the cost / output should also be wired
+    /// into <see cref="World.Tiles.ResourceOrder"/>, <see cref="World.Tiles.ResourceColor"/>,
+    /// and <see cref="World.Tiles.ResourceLabel"/> so they render in the inventory panel.</summary>
     public static readonly IReadOnlyList<Recipe> All = new List<Recipe>
     {
-        new("pickaxe_ii", "Pickaxe II (+1 mining)",
+        // ─── Pickaxe tier ladder ──────────────────────────────────────────────
+        // Each tier sets PickaxeTier to its value; recipes are gated by tier so you can't
+        // skip — e.g. pickaxe_iv refuses to craft until you already hold pickaxe_iii's level.
+        new("pickaxe_ii", "Pickaxe II — Iron (+1 mining)",
             new Dictionary<string, int> { ["iron"] = 5 }),
-        new("cannon", "Cannon (right-click upgrade)",
-            new Dictionary<string, int> { ["iron"] = 3, ["coal"] = 5 }),
+        new("pickaxe_iii", "Pickaxe III — Platinum (+2 mining, +20% reach)",
+            new Dictionary<string, int> { ["platinum"] = 3, ["iron"] = 8 }),
+        new("pickaxe_iv", "Pickaxe IV — Diamond (+3 mining, breaks obsidian)",
+            new Dictionary<string, int> { ["diamond"] = 3, ["platinum"] = 5 }),
+
+        // ─── Specialty mining tools ───────────────────────────────────────────
+        new("drill", "Drill — continuous mining (LMB hold)",
+            new Dictionary<string, int> { ["coal"] = 6, ["iron"] = 4 }),
+        new("hammer", "Hammer — shatters bedrock",
+            new Dictionary<string, int> { ["basalt"] = 4, ["granite"] = 4 }),
+
+        // ─── Light & utility ──────────────────────────────────────────────────
+        new("lantern", "Lantern — wider headlamp aura",
+            new Dictionary<string, int> { ["coal"] = 2, ["iron"] = 1 }),
+        new("glowshroom", "Glow-shroom torch (placeable green light)",
+            new Dictionary<string, int> { ["moss_stone"] = 3 }),
+        new("beacon", "Crystal beacon (placeable; press T to recall)",
+            new Dictionary<string, int> { ["crystal"] = 1 }),
+
+        // ─── Building ─────────────────────────────────────────────────────────
         new("support", "Place support beam",
             new Dictionary<string, int> { ["stone"] = 2 }),
+        new("reinforced_support", "Reinforced support (anchors a 3×3 area)",
+            new Dictionary<string, int> { ["iron"] = 2, ["stone"] = 4 }),
+        new("ladder", "Ladder (5×) — climb without carving",
+            new Dictionary<string, int> { ["stone"] = 2 }),
+        new("rail", "Rail (5×) — speed boost where laid",
+            new Dictionary<string, int> { ["iron"] = 3 }),
+
+        // ─── Combat ───────────────────────────────────────────────────────────
+        new("armor", "Iron plate armor (−40% damage taken)",
+            new Dictionary<string, int> { ["iron"] = 8 }),
+        new("sentry", "Sentry turret (placeable, auto-fires)",
+            new Dictionary<string, int> { ["iron"] = 4, ["coal"] = 3 }),
+        new("cannon", "Cannon (right-click upgrade)",
+            new Dictionary<string, int> { ["iron"] = 3, ["coal"] = 5 }),
+        // Cannon shells — special ammo. Each is a single inventory item; firing the cannon
+        // consumes the highest-tier shell available before falling back to the base shot.
+        new("ammo_silver", "Silver shell (piercing)",
+            new Dictionary<string, int> { ["silver"] = 1, ["coal"] = 1 }),
+        new("ammo_ruby", "Ruby shell (incendiary)",
+            new Dictionary<string, int> { ["ruby"] = 1, ["coal"] = 1 }),
+        new("ammo_sapphire", "Sapphire shell (freezing)",
+            new Dictionary<string, int> { ["sapphire"] = 1, ["coal"] = 1 }),
+        new("ammo_diamond", "Diamond shell (heavy AoE)",
+            new Dictionary<string, int> { ["diamond"] = 1, ["coal"] = 2 }),
+
+        // ─── Consumables ──────────────────────────────────────────────────────
+        new("poultice", "Healing poultice (+30 HP, press H)",
+            new Dictionary<string, int> { ["moss_stone"] = 3, ["dirt"] = 2 }),
+        new("dynamite", "Dynamite (press Z to throw)",
+            new Dictionary<string, int> { ["coal"] = 3, ["gravel"] = 4 }),
+
+        // ─── Late-game ────────────────────────────────────────────────────────
         new("rocket_part", "Rocket part",
             new Dictionary<string, int> { ["iron"] = 5, ["gold"] = 3 }),
         new("nuke", "Titan-killing nuke",
             new Dictionary<string, int> { ["crystal"] = 3, ["gold"] = 10 }),
+        new("harpoon", "Anti-Titan harpoon (press Y to fire)",
+            new Dictionary<string, int> { ["platinum"] = 4, ["ruby"] = 4 }),
+        new("core_drill", "Core drill — only thing that can pierce the Core",
+            new Dictionary<string, int> { ["diamond"] = 5, ["platinum"] = 5, ["crystal"] = 3 }),
     };
 
     public static bool CanAfford(Recipe r, Inventory inv)
