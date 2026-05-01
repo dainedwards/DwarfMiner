@@ -39,6 +39,7 @@ public sealed class DwarfMinerGame : Game
     private string _gameOverReason = "";
     private float _runTime;
     private bool _hasCannon;
+    private bool _screenshotPending;
 
     private const int VirtualWidth = 1280;
     private const int VirtualHeight = 720;
