@@ -808,19 +808,28 @@ public sealed class DwarfMinerGame : Game
 
         switch (r.Id)
         {
+            // Pickaxe tiers — there's only one pickaxe slot ("pickaxe"), already on the belt
+            // from spawn. Crafting just bumps the tier; the icon updates automatically because
+            // Icons.GetForSlot keys on PickaxeTier.
             case "pickaxe_ii":  _player.PickaxeTier = 2; break;
             case "pickaxe_iii": _player.PickaxeTier = 3; break;
             case "pickaxe_iv":  _player.PickaxeTier = 4; break;
-            case "drill":       _player.HasDrill = true; break;
-            case "hammer":      _player.HasHammer = true; break;
+            // Permanent active tools — flip the flag *and* auto-equip a slot. If the toolbelt
+            // is full, the flag is still set; the player can drag the tool onto a slot later.
+            case "drill":       _player.HasDrill     = true; _player.Toolbelt.AutoEquip("drill");      break;
+            case "hammer":      _player.HasHammer    = true; _player.Toolbelt.AutoEquip("hammer");     break;
+            case "core_drill":  _player.HasCoreDrill = true; _player.Toolbelt.AutoEquip("core_drill"); break;
+            case "cannon":      _hasCannon           = true; _player.Toolbelt.AutoEquip("cannon");     break;
+            // Passive permanent upgrades — no slot, no inventory entry. Just a flag.
             case "lantern":     _player.HasLantern = true; break;
-            case "armor":       _player.HasArmor = true; break;
-            case "core_drill":  _player.HasCoreDrill = true; break;
-            case "cannon":      _hasCannon = true; break;
-            // Everything else is a stockable item — the recipe id is the inventory id. Keep
-            // this default branch as the catch-all so adding a new placeable in the recipe
-            // table doesn't require editing this switch.
-            default:            _player.Inventory.Add(r.Id, 1); break;
+            case "armor":       _player.HasArmor   = true; break;
+            // Everything else is a stockable item: the recipe id is the inventory id. The
+            // first-craft also auto-equips an empty slot so the player can use it immediately
+            // — subsequent crafts just stock more.
+            default:
+                _player.Inventory.Add(r.Id, 1);
+                _player.Toolbelt.AutoEquip(r.Id);
+                break;
         }
     }
 
