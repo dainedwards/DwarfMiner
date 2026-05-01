@@ -15,17 +15,17 @@ public enum Material : byte
     Smoke = 4,
     Dirt = 5,
     Gravel = 6,
+    /// <summary>Loose grains from a broken tile. Source TileKind is stored alongside in
+    /// Cells._srcTile so the dust falls with the right colour and gives the right drop on pickup.</summary>
+    Dust = 7,
 }
 
 public static class Materials
 {
-    public static Material LooseFor(TileKind k) => k switch
-    {
-        TileKind.Dirt or TileKind.Grass or TileKind.MossStone => Material.Dirt,
-        TileKind.Gravel => Material.Gravel,
-        TileKind.Snow => Material.Sand,
-        _ => Material.Empty,
-    };
+    /// <summary>Tiles that crumble straight to dust the moment their inward neighbour is empty.</summary>
+    public static bool IsLoose(TileKind k) => k is
+        TileKind.Dirt or TileKind.Grass or TileKind.MossStone or
+        TileKind.Gravel or TileKind.Snow;
 }
 
 /// <summary>
