@@ -206,8 +206,9 @@ public sealed class Player
                     }
                     else if (distSq <= 0.0001f)
                     {
-                        // Centre exactly inside the tile — escape along local up.
-                        Position += planet.UpAt(Position) * 1f;
+                        // Centre exactly inside the tile — escape along local up. Push enough
+                        // per iter that 4 iters can clear a deeply-embedded centre.
+                        Position += planet.UpAt(Position) * 2.5f;
                         pushed = true;
                     }
                 }
