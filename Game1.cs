@@ -801,8 +801,8 @@ public sealed class DwarfMinerGame : Game
         => now.IsKeyDown(k) && !prev.IsKeyDown(k);
 
     /// <summary>Draw a thick line segment from a→b as a single rotated rect. Used for the
-    /// titan's procedural leg bones (hip→knee, knee→foot). The rect's long axis aligns with
-    /// b−a, so the segment looks like a beam connecting the joints regardless of orientation.</summary>
+    /// kaiju's procedural leg bones (hip→knee, knee→foot) and tail links. The rect's long
+    /// axis aligns with b−a, so the segment connects the endpoints regardless of orientation.</summary>
     private void DrawLegSegment(Vector2 a, Vector2 b, float thickness, Color color)
     {
         var d = b - a;
@@ -811,6 +811,65 @@ public sealed class DwarfMinerGame : Game
         var mid = (a + b) * 0.5f;
         var rot = MathF.Atan2(d.Y, d.X);
         _renderer.DrawRect(mid, new Vector2(len, thickness), color, rot);
+    }
+
+    /// <summary>Render a single procedural leg with 2-bone IK. The knee is computed from hip+foot
+    /// using the law of cosines; if the foot is farther than the bones can normally reach, the
+    /// knee snaps to a colinear midpoint so segments visibly stretch (the "leg reaching over a
+    /// mountain" look). The knee is biased to bend outward+up so the silhouette reads as a
+    /// quadruped rather than a stick figure.</summary>
+    private void DrawTitanLeg(Entities.TitanLeg leg, Vector2 bodyPos, Vector2 bodyUp, Vector2 bodyRight,
+                              Color hide, Color hideDark, Color hideLight, Color chitin, float pulse)
+    {
+        var hipWorld = bodyPos + bodyRight * leg.HipForward + bodyUp * leg.HipUp;
+        var foot = leg.FootPos;
+        var hipToFoot = foot - hipWorld;
+        var dist = hipToFoot.Length();
+        const float L1 = 92f;
+        const float L2 = 92f;
+        Vector2 knee;
+        if (dist < 0.5f)
+        {
+            knee = hipWorld + (bodyRight * leg.Side + bodyUp) * 30f;
+        }
+        else if (dist >= L1 + L2)
+        {
+            // Stretched: legs visibly elongate when the foot is farther than the bone reach.
+            knee = hipWorld + hipToFoot * (L1 / (L1 + L2));
+        }
+        else
+        {
+            var dir = hipToFoot / dist;
+            var perp = new Vector2(-dir.Y, dir.X);
+            var preferred = bodyRight * leg.Side + bodyUp * 0.6f;
+            if (Vector2.Dot(perp, preferred) < 0) perp = -perp;
+            var half = dist * 0.5f;
+            var bend = MathF.Sqrt(MathF.Max(0f, L1 * L1 - half * half));
+            var breath = MathF.Sin(pulse + leg.Phase * 6.28f) * 2f;
+            var stepBlend = leg.StepT >= 1f ? 1f : 0.4f;
+            knee = hipWorld + dir * half + perp * (bend + breath * stepBlend);
+        }
+
+        // Mid-step legs render slightly brighter so the swinging leg pops.
+        var stepLift = leg.StepT >= 1f ? 0f : MathF.Sin(leg.StepT * MathF.PI);
+        var thigh = stepLift > 0.05f ? hideDark : new Color(hideDark.R - 6, hideDark.G - 6, hideDark.B - 6);
+        var shin = stepLift > 0.05f ? hide : hideDark;
+
+        DrawLegSegment(hipWorld, knee, 22f, thigh);
+        DrawLegSegment(knee, foot, 18f, shin);
+        // Joint cap and clawed foot.
+        _renderer.DrawCircle(knee, 11f, chitin);
+        _renderer.DrawCircle(knee, 5.5f, hideLight);
+        // Clawed foot — a wide chitin pad with three claw spikes radiating outward along the
+        // ground tangent. Claws point in the direction the leg extends from the body.
+        _renderer.DrawCircle(foot, 13f, chitin);
+        var groundTangent = new Vector2(-bodyUp.Y, bodyUp.X) * leg.Side; // outward along surface
+        for (var c = -1; c <= 1; c++)
+        {
+            var clawDir = groundTangent + bodyUp * (c * 0.6f - 0.3f);
+            if (clawDir.LengthSquared() > 0.0001f) clawDir = Vector2.Normalize(clawDir);
+            DrawLegSegment(foot, foot + clawDir * 14f, 4f, chitin);
+        }
     }
 }
 
