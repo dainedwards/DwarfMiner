@@ -547,22 +547,17 @@ public sealed class DwarfMinerGame : Game
         // LMB: pick-up vs. drop based on whether we're already carrying.
         if (_carry is null)
         {
-            // Check toolbelt first — easier to hit precisely.
+            // Click on a toolbelt slot just selects it. Rearranging is done via RMB-unequip +
+            // inventory-drag — picking up directly from a slot would conflict with select.
             for (var s = 0; s < Toolbelt.SlotCount; s++)
             {
                 if (!_toolbeltHitTest[s].Contains((int)screenPos.X, (int)screenPos.Y)) continue;
-                var id = _player.Toolbelt.Slots[s];
-                // Clicking an empty slot, or a slot of the active intrinsic, just selects it.
-                if (id is null || Toolbelt.IsPermanent(id))
-                {
-                    _player.Toolbelt.Selected = s;
-                    return true;
-                }
-                _carry = (id, s);
-                _player.Toolbelt.Slots[s] = null;
+                _player.Toolbelt.Selected = s;
                 return true;
             }
-            // Then inventory rows.
+            // Click on an inventory row picks up that id (drag begins). The pickup is non-
+            // destructive — inventory count stays the same; dropping just installs a slot
+            // pointer to the same inventory entry.
             foreach (var (id, rect) in _invHitTest)
             {
                 if (rect.Contains((int)screenPos.X, (int)screenPos.Y))
@@ -574,38 +569,26 @@ public sealed class DwarfMinerGame : Game
             return false;
         }
 
-        // Carrying — try to drop.
+        // Carrying — drop on a toolbelt slot, or cancel by clicking elsewhere.
         var carry = _carry.Value;
         for (var s = 0; s < Toolbelt.SlotCount; s++)
         {
             if (!_toolbeltHitTest[s].Contains((int)screenPos.X, (int)screenPos.Y)) continue;
             var prev = _player.Toolbelt.Slots[s];
             _player.Toolbelt.Slots[s] = carry.Id;
-            // If the destination held something else, send it back to where the carried item
-            // came from (toolbelt swap) — or, if the carry was from the inventory, send the
-            // displaced thing to the first empty slot (or back to inventory if nothing free).
-            if (prev is not null)
+            // If the destination held a permanent tool, push it to the first empty slot so
+            // the player doesn't lose it. Stackable displacement is fine — it lives in the
+            // inventory regardless of belt presence.
+            if (prev is not null && Toolbelt.IsPermanent(prev))
             {
-                if (carry.FromSlot >= 0)
-                {
-                    _player.Toolbelt.Slots[carry.FromSlot] = prev;
-                }
-                else
-                {
-                    var empty = _player.Toolbelt.FirstEmpty();
-                    if (empty >= 0) _player.Toolbelt.Slots[empty] = prev;
-                    // Permanent + no empty slot → just drop on floor (lost). Won't realistically
-                    // happen since intrinsics are pre-seeded and stackable swaps return to
-                    // inventory automatically (they live there).
-                }
+                var empty = _player.Toolbelt.FirstEmpty();
+                if (empty >= 0) _player.Toolbelt.Slots[empty] = prev;
             }
             _player.Toolbelt.Selected = s;
             _carry = null;
             return true;
         }
-        // Drop outside the toolbelt → cancel: put the carried item back where it came from.
-        if (carry.FromSlot >= 0) _player.Toolbelt.Slots[carry.FromSlot] = carry.Id;
-        // (If from inventory, the inventory still has the count — pickup was non-destructive.)
+        // Click outside any toolbelt slot → cancel the drag. Source state is unchanged.
         _carry = null;
         return true;
     }
