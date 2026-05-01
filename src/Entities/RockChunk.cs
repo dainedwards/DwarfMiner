@@ -71,7 +71,7 @@ public sealed class RockChunk
             var diff = player.Position - Position;
             if (diff.Length() < Radius + player.Radius)
             {
-                player.Health -= 8f;
+                player.TakeDamage(8f);
                 if (diff.LengthSquared() > 0.0001f)
                     player.Velocity += Vector2.Normalize(diff) * 120f;
                 Dead = true;
