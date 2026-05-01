@@ -258,22 +258,29 @@ public sealed class Particles
         switch (kind)
         {
             case ProjectileKind.Bullet:
+            case ProjectileKind.CannonSilver:   // silver shells leave a small spark trail too
                 for (var i = 0; i < 4; i++)
                 {
                     var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+                    var col = kind == ProjectileKind.CannonSilver
+                        ? new Color(220, 230, 255)
+                        : new Color(255, 220, 130);
+                    var fade = kind == ProjectileKind.CannonSilver
+                        ? new Color(80, 100, 140)
+                        : new Color(120, 60, 20);
                     _list.Add(new Particle
                     {
                         Position = pos,
                         Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (30f + (float)_rng.NextDouble() * 40f),
                         Life = 0.20f + (float)_rng.NextDouble() * 0.15f,
                         MaxLife = 0.35f,
-                        Color = new Color(255, 220, 130),
-                        FadeColor = new Color(120, 60, 20),
+                        Color = col,
+                        FadeColor = fade,
                         Size = 1f,
                         GravityScale = 0.3f,
                         Drag = 2f,
                         LightRadius = 4f,
-                        LightColor = new Color(255, 220, 130),
+                        LightColor = col,
                     });
                 }
                 break;
@@ -283,6 +290,118 @@ public sealed class Particles
             case ProjectileKind.Nuke:
                 EmitExplosion(pos, strength: 26f, sparkCount: 32, smokeCount: 26, sparkColor: new Color(255, 90, 230));
                 break;
+            case ProjectileKind.CannonRuby:
+                // Hot incendiary burst — orange-red sparks, lots of smoke, lingering embers.
+                EmitExplosion(pos, strength: 18f, sparkCount: 22, smokeCount: 14, sparkColor: new Color(255, 110, 60));
+                EmitEmbers(pos, count: 10);
+                break;
+            case ProjectileKind.CannonSapphire:
+                // Cryo burst — cool blue sparks, bright cold flash, frost shards.
+                EmitExplosion(pos, strength: 16f, sparkCount: 18, smokeCount: 8, sparkColor: new Color(140, 200, 255));
+                EmitFrostShards(pos, count: 14);
+                break;
+            case ProjectileKind.CannonDiamond:
+                // Heavy AoE — bigger sparks, prismatic flecks, longer-lived smoke.
+                EmitExplosion(pos, strength: 22f, sparkCount: 30, smokeCount: 18, sparkColor: new Color(220, 240, 255));
+                for (var i = 0; i < 8; i++)
+                {
+                    var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+                    var hue = i % 3 == 0 ? new Color(255, 180, 220)
+                            : i % 3 == 1 ? new Color(180, 220, 255)
+                            : new Color(255, 240, 200);
+                    _list.Add(new Particle
+                    {
+                        Position = pos,
+                        Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (110f + (float)_rng.NextDouble() * 80f),
+                        Life = 0.5f + (float)_rng.NextDouble() * 0.4f,
+                        MaxLife = 0.9f,
+                        Color = hue,
+                        FadeColor = Color.Black,
+                        Size = 1.2f,
+                        GravityScale = 0.4f,
+                        Drag = 1.0f,
+                        LightRadius = 6f,
+                        LightColor = hue,
+                        CollideTiles = true,
+                    });
+                }
+                break;
+            case ProjectileKind.Dynamite:
+                EmitExplosion(pos, strength: 20f, sparkCount: 26, smokeCount: 18, sparkColor: new Color(255, 170, 60));
+                break;
+            case ProjectileKind.Harpoon:
+                // Pierce trail end — sharp metallic flecks, light shockwave.
+                for (var i = 0; i < 8; i++)
+                {
+                    var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+                    _list.Add(new Particle
+                    {
+                        Position = pos,
+                        Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (60f + (float)_rng.NextDouble() * 80f),
+                        Life = 0.3f + (float)_rng.NextDouble() * 0.2f,
+                        MaxLife = 0.5f,
+                        Color = new Color(220, 200, 160),
+                        FadeColor = new Color(80, 60, 30),
+                        Size = 1.2f,
+                        GravityScale = 0.3f,
+                        Drag = 1.5f,
+                        LightRadius = 7f,
+                        LightColor = new Color(255, 200, 130),
+                        CollideTiles = true,
+                    });
+                }
+                break;
+        }
+    }
+
+    /// <summary>Long-lived embers for incendiary explosions. Each ember floats slowly,
+    /// glows, and drifts upward like cinders. Visible for ~1.5s.</summary>
+    private void EmitEmbers(Vector2 pos, int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+            var spd = 20f + (float)_rng.NextDouble() * 25f;
+            _list.Add(new Particle
+            {
+                Position = pos,
+                Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * spd,
+                Life = 1.2f + (float)_rng.NextDouble() * 0.6f,
+                MaxLife = 1.8f,
+                Color = new Color(255, 170, 80),
+                FadeColor = new Color(120, 30, 10),
+                Size = 1f,
+                GravityScale = -0.2f,
+                Drag = 0.8f,
+                LightRadius = 8f,
+                LightColor = new Color(255, 140, 60),
+            });
+        }
+    }
+
+    /// <summary>Pale-blue frost crystals that shoot outward then fade. Used by sapphire shells
+    /// to sell the "cold burst" — visually cold, no heat-trail.</summary>
+    private void EmitFrostShards(Vector2 pos, int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+            var spd = 70f + (float)_rng.NextDouble() * 60f;
+            _list.Add(new Particle
+            {
+                Position = pos,
+                Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * spd,
+                Life = 0.6f + (float)_rng.NextDouble() * 0.3f,
+                MaxLife = 0.9f,
+                Color = new Color(220, 240, 255),
+                FadeColor = new Color(60, 100, 150),
+                Size = 1.2f,
+                GravityScale = 0.3f,
+                Drag = 1.5f,
+                LightRadius = 5f,
+                LightColor = new Color(140, 200, 255),
+                CollideTiles = true,
+            });
         }
     }
 
