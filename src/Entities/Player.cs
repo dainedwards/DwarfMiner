@@ -321,7 +321,8 @@ public sealed class Player
                 for (var dx = -2; dx <= 2; dx++)
                 {
                     var x = tx + dx; var y = ty + dy;
-                    if (!Tiles.IsSolid(planet.Get(x, y))) continue;
+                    var tk = planet.Get(x, y);
+                    if (!Tiles.BlocksPlayer(tk)) continue;
 
                     var centre = planet.TileToWorld(x, y);
                     var up = planet.UpAt(centre);
