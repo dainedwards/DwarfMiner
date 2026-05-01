@@ -275,6 +275,7 @@ public sealed class Cells
                 case Material.Sand:
                 case Material.Dirt:
                 case Material.Gravel:
+                case Material.Dust:
                     TickSand(cx, cy);
                     break;
                 case Material.Water: TickLiquid(cx, cy); break;
