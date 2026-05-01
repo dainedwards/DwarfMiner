@@ -157,6 +157,10 @@ public sealed class DwarfMinerGame : Game
 
         if (keys.IsKeyDown(Keys.Escape)) Exit();
 
+        // F12 → defer one-shot screenshot until end of next Draw, where the backbuffer
+        // holds the fully composited frame (post lighting/bloom/vignette).
+        if (Pressed(keys, _prevKeys, Keys.F12)) _screenshotPending = true;
+
         if (_gameOver)
         {
             if (Pressed(keys, _prevKeys, Keys.R)) StartNewRun();
