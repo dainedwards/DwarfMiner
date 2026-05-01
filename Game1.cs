@@ -533,6 +533,15 @@ public sealed class DwarfMinerGame : Game
             _renderer.DrawRect(c.Position, new Vector2(c.Radius * 1.8f, c.Radius * 1.8f), col, c.Rotation);
         }
 
+        // Kaiju visibility cull. The kaiju's render block does 100+ draw calls (4 legs × IK +
+        // 7-node tail + dorsal spines + head + claws), so skipping it when off-screen is a
+        // large win. Camera viewport is 1280×720 at zoom 4 → ~320×180 world units, so the
+        // visible radius from the camera target is ~200 px; bump to 400 for the kaiju's
+        // silhouette (it's huge — body+legs span ~280 px) and a small margin so legs sweeping
+        // into view from off-screen aren't suddenly popped in.
+        var kaijuVisible = _titan.Health > 0
+            && (_titan.Position - _camera.Target).LengthSquared() < 400f * 400f;
+
         // Kaiju boss. Body is a hulking scaled hulk on 4 procedural quadruped legs; tail is a
         // verlet chain dragging behind; head is a snouted bulb in front. Legs use 2-bone IK
         // that allows stretching when the foot is far from the hip — so the kaiju visibly
