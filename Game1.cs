@@ -635,29 +635,23 @@ public sealed class DwarfMinerGame : Game
         _particles.EmitDust(_player.Position, 6f);
     }
 
+    /// <summary>Core drill — usable only when the player is within the innermost rings of
+    /// the planet (i.e. effectively standing on the Core's threshold). The Core is a
+    /// synthetic tile (Planet.Get returns it for x &lt; 0; it's not stored in the array), so
+    /// "drilling" it is a distance-to-centre check rather than a tile mutation. On success,
+    /// triggers the planet-pierce victory ending — biggest possible escalation.</summary>
     private void TryCoreDrill()
     {
-        // Core drill only works on the Core tile and within mining range. When it lands, it
-        // ends the run as a "felled the planet" victory state — biggest possible escalation.
-        var (px, py) = _planet.WorldToTile(_player.Position);
-        for (var dy = -2; dy <= 2; dy++)
-        {
-            for (var dx = -2; dx <= 2; dx++)
-            {
-                var x = px + dx; var y = py + dy;
-                if (_planet.Get(x, y) == TileKind.Core)
-                {
-                    _planet.Set(x, y, TileKind.Sky);
-                    _physics.MarkDirty(x, y);
-                    _particles.EmitImpact(_planet.TileToWorld(x, y), ProjectileKind.Nuke);
-                    _shake = MathF.Max(_shake, 1.5f);
-                    _meta.Save();
-                    _gameOver = true;
-                    _gameOverReason = $"You pierced the core. Run time: {_runTime:0.0}s. Press R to play again.";
-                    return;
-                }
-            }
-        }
+        var distFromCentre = (_player.Position - _planet.Center).Length() / Planet.TileSize;
+        // Innermost ~3 rings count as "at the core". Tunable; keeping it tight rewards the
+        // player for actually digging all the way to the bottom.
+        if (distFromCentre > Planet.RingMin + 3f) return;
+
+        _particles.EmitImpact(_planet.Center, ProjectileKind.Nuke);
+        _shake = MathF.Max(_shake, 1.5f);
+        _meta.Save();
+        _gameOver = true;
+        _gameOverReason = $"You pierced the core. Run time: {_runTime:0.0}s. Press R to play again.";
     }
 
     /// <summary>Crafting menu input — opens with C, scrolls with up/down, crafts with Enter,
