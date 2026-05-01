@@ -439,6 +439,94 @@ public sealed class Renderer
                         DrawDeco(centre, right, up, rotation, chord, 3, 1, 2, 6, new Color(75, 60, 45));
                         break;
                     }
+                    case TileKind.ReinforcedSupport:
+                    {
+                        // Iron-banded beam: vertical wood post with two riveted iron straps and
+                        // a corner gusset plate at each end. Reads as a much sturdier brother
+                        // of the regular Support tile — same silhouette, more bracing.
+                        var wood = new Color(120, 82, 50);
+                        var ironMid = new Color(160, 168, 178);
+                        var ironDark = new Color(90, 96, 106);
+                        var rivet = new Color(40, 40, 48);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 1, 2, 6, wood);
+                        // Iron straps (horizontal)
+                        DrawDeco(centre, right, up, rotation, chord, 1, 2, 6, 1, ironMid);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 5, 6, 1, ironMid);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 2, 6, 1, ironDark);   // bottom shadow
+                        // Rivets at strap ends
+                        DrawDeco(centre, right, up, rotation, chord, 1, 2, 1, 1, rivet);
+                        DrawDeco(centre, right, up, rotation, chord, 6, 2, 1, 1, rivet);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 5, 1, 1, rivet);
+                        DrawDeco(centre, right, up, rotation, chord, 6, 5, 1, 1, rivet);
+                        break;
+                    }
+                    case TileKind.Ladder:
+                    {
+                        // Two side rails with rungs every other row. Wood colour, brighter than
+                        // Support so the climbable tile reads as distinct ironwork-free wood.
+                        var rail2 = new Color(180, 130, 75);
+                        var rung = new Color(140, 95, 55);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 1, 8, rail2);
+                        DrawDeco(centre, right, up, rotation, chord, 6, 0, 1, 8, rail2);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 1, 4, 1, rung);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 4, 4, 1, rung);
+                        break;
+                    }
+                    case TileKind.Rail:
+                    {
+                        // Wooden ties under two iron rails. Ties run tangentially; rails are
+                        // two thin horizontal strips. Looks like a top-down minecart track at
+                        // tile scale.
+                        var tie = new Color(95, 65, 45);
+                        var ironRail = new Color(180, 185, 195);
+                        var ironRailDark = new Color(95, 100, 115);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 3, 8, 1, tie);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 5, 8, 1, tie);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 2, 8, 1, ironRail);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 6, 8, 1, ironRail);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 2, 1, 1, ironRailDark);
+                        DrawDeco(centre, right, up, rotation, chord, 7, 6, 1, 1, ironRailDark);
+                        break;
+                    }
+                    case TileKind.Glowshroom:
+                    {
+                        // Cluster of 2-3 mushrooms with bright caps. The cap colour is the
+                        // light source itself (composed multiplicatively in the lighting pass);
+                        // the bright pixels act as bloom seeds so the tile reads as luminous.
+                        var stem = new Color(220, 220, 200);
+                        var capDark = new Color(90, 180, 120);
+                        var capBright = new Color(180, 255, 200);
+                        var spot = new Color(255, 255, 230);
+                        // Big mushroom centred
+                        DrawDeco(centre, right, up, rotation, chord, 3, 4, 2, 3, stem);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 3, 4, 2, capDark);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 2, 4, 1, capBright);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 2, 1, 1, spot);
+                        DrawDeco(centre, right, up, rotation, chord, 5, 2, 1, 1, spot);
+                        // Small side mushroom
+                        DrawDeco(centre, right, up, rotation, chord, 1, 5, 1, 2, stem);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 4, 3, 1, capDark);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 4, 1, 1, capBright);
+                        break;
+                    }
+                    case TileKind.Beacon:
+                    {
+                        // Crystal pillar on a dark plinth with a bright pulsing core. Pulse is
+                        // driven by the renderer's wall-clock so a row of beacons all pulse
+                        // together — feels like a synchronised network of waypoints.
+                        var plinth = new Color(40, 32, 50);
+                        var crystalDk = new Color(85, 50, 130);
+                        var crystalLt = new Color(170, 110, 230);
+                        var pulse = (MathF.Sin(Time * 3f + (hash & 0x7F) * 0.05f) * 0.5f + 0.5f);
+                        var coreCol = Color.Lerp(crystalLt, new Color(255, 230, 255), pulse);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 6, 6, 2, plinth);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 1, 2, 5, crystalDk);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 2, 2, 3, crystalLt);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 3, 2, 1, coreCol);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 5, 1, 1, crystalDk);
+                        DrawDeco(centre, right, up, rotation, chord, 5, 5, 1, 1, crystalDk);
+                        break;
+                    }
                 }
 
                 // Ore speckles — bright sub-tile flecks at hash-stable positions.
