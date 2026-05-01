@@ -64,13 +64,70 @@ public sealed class Player
 
     /// <summary>Debug god mode: ghost flight (no gravity / no collision), super-pickaxe power,
     /// and extended mining reach. Toggled in-game with the G key. When on, mining uses the
-    /// god values below; when off, it falls back to PickaxePower/MineRange so crafted upgrades
-    /// (pickaxe_ii etc.) still persist across toggles.</summary>
+    /// god values below; when off, it falls back to the tier-derived stats so crafted
+    /// upgrades still persist across toggles.</summary>
     public bool FlyMode;
     public const int GodPickaxePower = 50;
     public const float GodMineRange = 200f;
-    public int EffectivePickaxePower => FlyMode ? GodPickaxePower : PickaxePower;
-    public float EffectiveMineRange  => FlyMode ? GodMineRange    : MineRange;
+
+    /// <summary>Mining power derived from the current pickaxe tier, plus future augment bonuses
+    /// (none yet — tier acts as the sole input). Tier 1 = 1, Tier 2 = 2, etc. When fly mode is
+    /// on, returns the god value so the dev tool always overrides crafted progress.</summary>
+    public int EffectivePickaxePower
+    {
+        get
+        {
+            if (FlyMode) return GodPickaxePower;
+            // Future: + augment bonuses (e.g. ruby tip → +0.x chain power).
+            return PickaxeTier;
+        }
+    }
+
+    /// <summary>Mining reach. Tier III adds +20% — the platinum pickaxe has a longer haft.
+    /// Future augments (e.g. crystal lens) will scale this further.</summary>
+    public float EffectiveMineRange
+    {
+        get
+        {
+            if (FlyMode) return GodMineRange;
+            var mul = PickaxeTier >= 3 ? 1.20f : 1.0f;
+            return MineRange * mul;
+        }
+    }
+
+    /// <summary>Cooldown between mining swings. The drill makes the swing nearly continuous.
+    /// Future "swift" augment would multiply this further.</summary>
+    public float EffectiveMineCooldown
+    {
+        get
+        {
+            if (FlyMode) return 0.04f;
+            return HasDrill ? 0.04f : 0.10f;
+        }
+    }
+
+    /// <summary>True iff this pickaxe can crack a tile of the given hardness/kind. Hammer
+    /// breaks HardStone (h99); core drill breaks the Core (h999); pickaxe IV breaks
+    /// obsidian fast (handled with a power bonus, not this gate).</summary>
+    public bool CanBreak(TileKind k)
+    {
+        if (FlyMode) return k != TileKind.Sky;
+        var h = Tiles.Hardness(k);
+        if (k == TileKind.Core) return HasCoreDrill;
+        if (h >= 99) return HasHammer && k != TileKind.Core;
+        return true;
+    }
+
+    /// <summary>Damage-take multiplier applied at the entity damage call sites. 1.0 = normal,
+    /// 0.6 = 40% reduction (iron plate armor).</summary>
+    public float DamageTakenMultiplier => HasArmor ? 0.6f : 1.0f;
+
+    /// <summary>Apply incoming damage with armor scaling. Centralised so all damage paths
+    /// (creature contact, boulder, falling chunk, sentry friendly-fire) honour armor.</summary>
+    public void TakeDamage(float amount)
+    {
+        Health -= amount * DamageTakenMultiplier;
+    }
 
     public readonly Inventory Inventory = new();
 
