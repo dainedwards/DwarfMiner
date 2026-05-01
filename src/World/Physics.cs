@@ -163,6 +163,15 @@ public sealed class Physics
                 foreach (var v in _floodVisited) _anchoredCache.Add(v);
                 return true;
             }
+            // ReinforcedSupport halo: any tile within a 1-tile orthogonal+diagonal radius of
+            // a placed reinforced support is anchored, even if the support itself isn't part
+            // of the connected solid region. Lets one beam stabilise a 3×3 neighbourhood
+            // including unsupported diagonal stone, which a plain Support can't.
+            if (HasReinforcedNeighbor(x, y))
+            {
+                foreach (var v in _floodVisited) _anchoredCache.Add(v);
+                return true;
+            }
             _floodRegion.Add(idx);
             if (_floodRegion.Count > CollapseBudget)
             {
