@@ -621,15 +621,14 @@ public sealed class DwarfMinerGame : Game
             _renderer.DrawRect(headBase + tup * 10f, new Vector2(70f, 56f), skinDark, trot);
             _renderer.DrawRect(headBase + tup * 18f, new Vector2(58f, 40f), skin, trot);
             _renderer.DrawRect(headBase + tup * 28f, new Vector2(40f, 18f), skinLight, trot);
-            // Mandibles — two short curved stubs flanking the front of the head, opening with
-            // anger. Idle: closed; angry: spread apart and twitch on the pulse.
-            var mandSpread = 14f + anger01 * 8f + MathF.Sin(_titan.Pulse * 2.2f) * (1f + anger01 * 2.5f);
+            // Mandibles — two short stubs flanking the front of the head; the per-side rotation
+            // wobble pulses with anger so the jaws look alive.
+            var mandTwitch = MathF.Sin(_titan.Pulse * 2.2f) * (0.05f + anger01 * 0.18f);
             var mandOut = face * 30f;
-            _renderer.DrawRect(headBase + tup * -2f + tright * (mandOut + face * 6f) + tup * 2f,
-                new Vector2(28f, 8f), chitin, trot + face * 0.35f);
-            _renderer.DrawRect(headBase + tup * -2f - tright * (-mandOut + face * 6f),
-                new Vector2(28f, 8f), chitin, trot - face * 0.35f);
-            _ = mandSpread; // reserved for future per-mandible animation if needed
+            _renderer.DrawRect(headBase + tup * 2f + tright * (mandOut + face * 6f),
+                new Vector2(28f, 8f), chitin, trot + face * (0.35f + mandTwitch));
+            _renderer.DrawRect(headBase + tup * 2f - tright * (-mandOut + face * 6f),
+                new Vector2(28f, 8f), chitin, trot - face * (0.35f + mandTwitch));
 
             // Single glowing eye, tracks the player. Project the look direction onto the head's
             // local right/up basis so the pupil slides within the eye socket.
