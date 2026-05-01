@@ -66,6 +66,7 @@ public sealed class Cells
             _rowOffsets[cy + 1] = _rowOffsets[cy] + _cellsAt[cy];
         }
         _mat = new byte[_rowOffsets[Height]];
+        _srcTile = new byte[_rowOffsets[Height]];
     }
 
     public int CellsAt(int cy) => (cy < 0 || cy >= Height) ? 1 : _cellsAt[cy];
