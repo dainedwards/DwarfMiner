@@ -168,6 +168,16 @@ public sealed class Player
                 || ProbeSolid(planet, feetCentre + footOff)
                 || ProbeSolid(planet, feetCentre - footOff);
 
+        // When grounded, scrub any residual along-up velocity (it should be zero — the player
+        // is sitting on a surface). This kills the curvature-reprojection drift that would
+        // otherwise leak a little vNormal into V each frame, and the tiny downward velocity
+        // collision can't fully cancel due to float precision. Clean rest pose.
+        if (Grounded)
+        {
+            var vN = Vector2.Dot(Velocity, up);
+            Velocity -= up * vN;
+        }
+
         if (MineCooldown > 0) MineCooldown -= dt;
         if (ShootCooldown > 0) ShootCooldown -= dt;
     }
