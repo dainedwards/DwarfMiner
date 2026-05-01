@@ -201,9 +201,14 @@ public static class Tiles
     /// <summary>HUD label for a resource id — uppercase, with underscores → spaces.</summary>
     public static string ResourceLabel(string id) => id switch
     {
-        "rocket_part" => "ROCKET PART",
-        "moss_stone"  => "MOSS STONE",
-        _             => id.ToUpperInvariant(),
+        "rocket_part"        => "ROCKET PART",
+        "moss_stone"         => "MOSS STONE",
+        "reinforced_support" => "REINFORCED SUPPORT",
+        "ammo_silver"        => "SILVER SHELL",
+        "ammo_ruby"          => "RUBY SHELL",
+        "ammo_sapphire"      => "SAPPHIRE SHELL",
+        "ammo_diamond"       => "DIAMOND SHELL",
+        _                    => id.ToUpperInvariant(),
     };
 
     // Loot dropped when mined (item id, count). Returns null for nothing.
