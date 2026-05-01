@@ -37,6 +37,16 @@ public sealed class Titan
     public Vector2[] TailNodes = null!;     // verlet chain — node 0 anchors to the body's rump
     public Vector2[] TailPrev = null!;      // previous-frame positions for verlet integration
 
+    /// <summary>Seconds of aggro remaining. While > 0, the kaiju chases the player and uses
+    /// stomp / boulder-hurl attacks; while ≤ 0, it lazily roams the planet surface in a random
+    /// direction. Reset to AggroDuration whenever OnDamage() is called.</summary>
+    public float AggroTimer;
+    public const float AggroDuration = 10f;
+    public bool IsAggro => AggroTimer > 0f;
+
+    private int _roamDir;             // -1 / 0 / +1 along the body's tangent while roaming
+    private float _roamTimer;         // seconds until the next roam-direction reroll
+
     /// <summary>Hover height — distance the body wants to maintain above the average planted-foot
     /// position along planet-up. Higher values let the kaiju stride over taller terrain.</summary>
     public const float BodyHover = 105f;
