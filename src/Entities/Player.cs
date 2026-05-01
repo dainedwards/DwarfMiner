@@ -145,7 +145,8 @@ public sealed class Player
     /// The Player tracks the previous frame's value to derive the press edge internally — this
     /// way variable-jump-height (hold = full apex / tap = short hop) works without the caller
     /// having to think about it.</param>
-    /// <param name="verticalAxis">-1 down, 0 idle, +1 up (along local up). Only used when <see cref="FlyMode"/> is on.</param>
+    /// <param name="verticalAxis">-1 down, 0 idle, +1 up (along local up). Used in fly mode and
+    /// when the player is overlapping a ladder tile (climb up/down).</param>
     public void Update(float dt, Planet planet, int moveAxis, bool jumpHeld, int verticalAxis = 0)
     {
         var up = Up(planet);
