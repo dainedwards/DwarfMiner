@@ -309,9 +309,17 @@ public sealed class Player
         var tilePos = planet.TileToWorld(x, y);
         if ((tilePos - Position).Length() < Radius + Planet.TileSize * 0.55f) return null;
 
+        // Priority: plain stone (most abundant) → richer stone variants (granite/basalt/etc) →
+        // dirt. Each variant places its own tile kind so a granite stockpile builds granite
+        // walls, not generic stone — preserves the resource's identity through placement.
         TileKind placed;
-        if (Inventory.TryConsume("stone", 1)) placed = TileKind.Stone;
-        else if (Inventory.TryConsume("dirt", 1)) placed = TileKind.Dirt;
+        if      (Inventory.TryConsume("stone", 1))      placed = TileKind.Stone;
+        else if (Inventory.TryConsume("granite", 1))    placed = TileKind.Granite;
+        else if (Inventory.TryConsume("basalt", 1))     placed = TileKind.Basalt;
+        else if (Inventory.TryConsume("moss_stone", 1)) placed = TileKind.MossStone;
+        else if (Inventory.TryConsume("obsidian", 1))   placed = TileKind.Obsidian;
+        else if (Inventory.TryConsume("gravel", 1))     placed = TileKind.Gravel;
+        else if (Inventory.TryConsume("dirt", 1))       placed = TileKind.Dirt;
         else return null;
 
         planet.Set(x, y, placed);
