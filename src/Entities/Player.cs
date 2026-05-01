@@ -486,10 +486,11 @@ public sealed class Player
         return null;
     }
 
-    /// <summary>Place the currently-selected build item at the cursor. Returns the placed
-    /// tile kind if it landed in a sky tile and the inventory had stock; null otherwise.
-    /// The build mode is set by Game1 via the B-cycle.</summary>
-    public TileKind? TryPlaceBuild(Planet planet, Physics physics, Vector2 worldCursor)
+    /// <summary>Place a build item at the cursor by inventory id. Each placeable's id maps
+    /// to a tile kind via <see cref="BuildIdToTile"/>; the inventory entry with that same id
+    /// is debited 1. Returns the placed tile kind if it landed in a sky tile and stock was
+    /// available; null otherwise.</summary>
+    public TileKind? TryPlaceBuildId(Planet planet, Physics physics, Vector2 worldCursor, string invId)
     {
         if (MineCooldown > 0) return null;
         var d = worldCursor - Position;
@@ -497,10 +498,12 @@ public sealed class Player
         var (x, y) = planet.WorldToTile(worldCursor);
         if (planet.Get(x, y) != TileKind.Sky) return null;
 
+        var placedKind = BuildIdToTile(invId);
+        if (placedKind == TileKind.Sky) return null;   // unrecognised build id
+
         // Don't seal the dwarf inside a tile — keep at least a body's distance for
         // *blocking* tiles. Passable build items (ladder/glowshroom/beacon) skip this check
         // so you can drop a torch right next to your feet.
-        var (placedKind, invId) = BuildToTile(Build);
         var passable = Tiles.IsPassable(placedKind);
         if (!passable)
         {
@@ -517,18 +520,17 @@ public sealed class Player
         return placedKind;
     }
 
-    /// <summary>Map a build-mode selection to the (tile-kind it places, inventory-item it
-    /// consumes). Each placeable is an inventory item (crafted via Crafting.cs); placement is
-    /// a 1-to-1 spend, so the player can stockpile 5 ladders and drop them where useful.</summary>
-    public static (TileKind tile, string invId) BuildToTile(BuildKind b) => b switch
+    /// <summary>Inventory id → tile kind for placeable build items. Drives both placement and
+    /// the toolbelt's icon picker. Returns Sky for ids that aren't placeable.</summary>
+    public static TileKind BuildIdToTile(string invId) => invId switch
     {
-        BuildKind.Support            => (TileKind.Support,            "support"),
-        BuildKind.ReinforcedSupport  => (TileKind.ReinforcedSupport,  "reinforced_support"),
-        BuildKind.Ladder             => (TileKind.Ladder,             "ladder"),
-        BuildKind.Rail               => (TileKind.Rail,               "rail"),
-        BuildKind.Glowshroom         => (TileKind.Glowshroom,         "glowshroom"),
-        BuildKind.Beacon             => (TileKind.Beacon,             "beacon"),
-        _                            => (TileKind.Stone,              "stone"),
+        "support"            => TileKind.Support,
+        "reinforced_support" => TileKind.ReinforcedSupport,
+        "ladder"             => TileKind.Ladder,
+        "rail"               => TileKind.Rail,
+        "glowshroom"         => TileKind.Glowshroom,
+        "beacon"             => TileKind.Beacon,
+        _                    => TileKind.Sky,
     };
 
     private static float MoveToward(float v, float target, float maxDelta)
