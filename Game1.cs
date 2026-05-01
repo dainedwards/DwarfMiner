@@ -844,22 +844,186 @@ public sealed class DwarfMinerGame : Game
         _particles.EmitDust(pos, 4f);
     }
 
-    /// <summary>Tool badge string for the HUD — one letter per crafted tool, dim if not yet
-    /// owned. Shown so the player can verify upgrades stuck across F12-screenshot or after
-    /// the spend-and-forget of a crafting menu close.</summary>
-    private string ToolBadge()
+    /// <summary>Render the toolbelt strip across the bottom of the screen — 9 slot squares
+    /// with icons, count badges, and a highlighted active slot. Hit-test rectangles are
+    /// cached in <see cref="_toolbeltHitTest"/> so the next frame's input pass can drag-drop.
+    ///
+    /// Layout: each slot is 36×36 with a 4-px gap; the strip is centred horizontally and
+    /// pinned to the bottom with a 16-px bottom margin. The active slot is drawn with a
+    /// brighter inner ring and a number-key tag above it. Empty slots are dim outlines.</summary>
+    private void DrawToolbelt()
     {
-        // Use uppercase for owned, '·' for missing — keeps the line at a fixed width so the
-        // status row doesn't visibly reflow as crafts come in.
-        var sb = new System.Text.StringBuilder();
-        sb.Append('P').Append(_player.PickaxeTier);
-        sb.Append(_player.HasDrill   ? " D" : " ·");
-        sb.Append(_player.HasHammer  ? " H" : " ·");
-        sb.Append(_player.HasLantern ? " L" : " ·");
-        sb.Append(_player.HasArmor   ? " A" : " ·");
-        sb.Append(_hasCannon         ? " C" : " ·");
-        sb.Append(_player.HasCoreDrill ? " ⌬" : " ·");
-        return sb.ToString();
+        var sb = _renderer.Batch;
+        const int slotSize = 36;
+        const int slotGap = 4;
+        const int rowH = slotSize + 18;   // includes label tag above
+        var totalW = Toolbelt.SlotCount * slotSize + (Toolbelt.SlotCount - 1) * slotGap;
+        var x0 = (VirtualWidth - totalW) / 2;
+        var y0 = VirtualHeight - rowH - 8;
+
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        for (var i = 0; i < Toolbelt.SlotCount; i++)
+        {
+            var sx = x0 + i * (slotSize + slotGap);
+            var sy = y0 + 14;
+            _toolbeltHitTest[i] = new Rectangle(sx, sy, slotSize, slotSize);
+
+            var isActive = i == _player.Toolbelt.Selected;
+            var bg = isActive ? new Color(60, 70, 90, 240) : new Color(20, 22, 32, 220);
+            var border = isActive ? new Color(255, 220, 120) : new Color(110, 115, 130);
+            sb.Draw(_renderer.Pixel, new Rectangle(sx, sy, slotSize, slotSize), bg);
+            sb.Draw(_renderer.Pixel, new Rectangle(sx, sy, slotSize, 1), border);
+            sb.Draw(_renderer.Pixel, new Rectangle(sx, sy + slotSize - 1, slotSize, 1), border);
+            sb.Draw(_renderer.Pixel, new Rectangle(sx, sy, 1, slotSize), border);
+            sb.Draw(_renderer.Pixel, new Rectangle(sx + slotSize - 1, sy, 1, slotSize), border);
+        }
+        sb.End();
+
+        // Pass 2: icon + count badge + slot number, with PointClamp sampling so the 16×16
+        // pixel-art icons stay crisp at 2× scale (32×32 inside the 36-px slot).
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        for (var i = 0; i < Toolbelt.SlotCount; i++)
+        {
+            var sx = x0 + i * (slotSize + slotGap);
+            var sy = y0 + 14;
+            var id = _player.Toolbelt.Slots[i];
+
+            // Slot number above each cell.
+            var numStr = (i + 1).ToString();
+            _renderer.Batch.End();   // brief flip so DrawDebugLabel can begin its own
+            _renderer.DrawDebugLabel(numStr,
+                new Vector2(sx + 4, sy - 12),
+                i == _player.Toolbelt.Selected ? Color.White : new Color(150, 150, 160));
+            sb.Begin(samplerState: SamplerState.PointClamp);
+
+            if (id is null) continue;
+
+            var tex = Icons.GetForSlot(id, _player.PickaxeTier);
+            if (tex is not null)
+            {
+                sb.Draw(tex, new Rectangle(sx + 2, sy + 2, slotSize - 4, slotSize - 4), Color.White);
+            }
+            else
+            {
+                // Fallback: solid swatch in the resource colour. Means an unknown id, useful
+                // while wiring new recipes before authoring an icon.
+                sb.Draw(_renderer.Pixel, new Rectangle(sx + 8, sy + 8, slotSize - 16, slotSize - 16),
+                    Tiles.ResourceColor(id));
+            }
+        }
+        sb.End();
+
+        // Pass 3: count badges (bottom-right corner of each slot for stackable items).
+        for (var i = 0; i < Toolbelt.SlotCount; i++)
+        {
+            var sx = x0 + i * (slotSize + slotGap);
+            var sy = y0 + 14;
+            var id = _player.Toolbelt.Slots[i];
+            if (id is null) continue;
+            if (Toolbelt.IsPermanent(id)) continue;
+            var count = _player.Inventory.Count(id);
+            if (count <= 0) continue;
+            _renderer.DrawDebugLabel(count.ToString(),
+                new Vector2(sx + slotSize - 14, sy + slotSize - 12),
+                count > 0 ? Color.White : new Color(255, 120, 120));
+        }
+    }
+
+    /// <summary>Custom inventory panel that supports click-to-pick-up. Replaces the old
+    /// renderer-side panel. Each row is hit-test-recorded so HandleInventoryUi can detect
+    /// which inventory id was clicked. Tool ids that live exclusively as toolbelt slots
+    /// (intrinsic stones, etc.) are skipped — drag-and-drop is for stackable items.</summary>
+    private void DrawInventoryPanel(Inventory inv)
+    {
+        _invHitTest.Clear();
+
+        var rows = new List<(string id, int count)>();
+        foreach (var id in Tiles.ResourceOrder)
+        {
+            var c = inv.Count(id);
+            if (c > 0) rows.Add((id, c));
+        }
+        foreach (var (id, count) in inv.Items)
+        {
+            if (count <= 0) continue;
+            var known = false;
+            foreach (var k in Tiles.ResourceOrder) if (k == id) { known = true; break; }
+            if (!known) rows.Add((id, count));
+        }
+        if (rows.Count == 0) return;
+
+        const int swatchSize = 14;
+        const int rowHeight = 18;
+        const int padX = 8;
+        const int padY = 6;
+
+        // Wider panel than before to fit icon + label + count cleanly.
+        const int panelW = 200;
+        var panelH = padY + rows.Count * rowHeight + padY;
+        var panelX = VirtualWidth - panelW - 12;
+        var panelY = 12;
+
+        var sb = _renderer.Batch;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(_renderer.Pixel, new Rectangle(panelX, panelY, panelW, panelH), new Color(0, 0, 0, 170));
+        sb.Draw(_renderer.Pixel, new Rectangle(panelX, panelY, panelW, 1), new Color(255, 255, 255, 60));
+        sb.Draw(_renderer.Pixel, new Rectangle(panelX, panelY + panelH - 1, panelW, 1), new Color(255, 255, 255, 60));
+        sb.Draw(_renderer.Pixel, new Rectangle(panelX, panelY, 1, panelH), new Color(255, 255, 255, 60));
+        sb.Draw(_renderer.Pixel, new Rectangle(panelX + panelW - 1, panelY, 1, panelH), new Color(255, 255, 255, 60));
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var (id, count) = rows[i];
+            var rowY = panelY + padY + i * rowHeight;
+            var rowRect = new Rectangle(panelX + 2, rowY - 1, panelW - 4, rowHeight);
+            _invHitTest[id] = rowRect;
+
+            // Hover highlight — handy feedback without a full hover system.
+            var mouse = Mouse.GetState();
+            if (rowRect.Contains(mouse.X, mouse.Y))
+                sb.Draw(_renderer.Pixel, rowRect, new Color(120, 130, 200, 60));
+
+            // Icon takes priority over swatch — looks like a real tool entry. If the id
+            // doesn't have an icon, fall back to the resource colour swatch (raw mats).
+            var iconX = panelX + padX;
+            var iconY = rowY + 1;
+            var tex = Icons.GetForSlot(id, _player.PickaxeTier);
+            if (tex is not null)
+            {
+                sb.Draw(tex, new Rectangle(iconX - 1, iconY - 2, swatchSize + 4, swatchSize + 4), Color.White);
+            }
+            else
+            {
+                sb.Draw(_renderer.Pixel, new Rectangle(iconX - 1, iconY - 1, swatchSize + 2, swatchSize + 2), new Color(0, 0, 0, 200));
+                sb.Draw(_renderer.Pixel, new Rectangle(iconX, iconY, swatchSize, swatchSize), Tiles.ResourceColor(id));
+            }
+        }
+        sb.End();
+
+        // Labels in a separate pass — DrawDebugLabel handles its own Begin/End.
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var (id, count) = rows[i];
+            var rowY = panelY + padY + i * rowHeight;
+            var line = $"{Tiles.ResourceLabel(id)}  {count}";
+            _renderer.DrawDebugLabel(line, new Vector2(panelX + padX + swatchSize + 8, rowY + 2), Color.White);
+        }
+    }
+
+    /// <summary>Render the icon currently being carried (drag-and-drop) at the cursor — gives
+    /// the player a clear visual that they have something in hand. Uses the same icon lookup
+    /// the slot/inventory uses so the appearance matches.</summary>
+    private void DrawCarry(string id)
+    {
+        var mouse = Mouse.GetState();
+        var sb = _renderer.Batch;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        var tex = Icons.GetForSlot(id, _player.PickaxeTier);
+        if (tex is not null)
+            sb.Draw(tex, new Rectangle(mouse.X - 16, mouse.Y - 16, 32, 32), new Color(255, 255, 255, 220));
+        else
+            sb.Draw(_renderer.Pixel, new Rectangle(mouse.X - 8, mouse.Y - 8, 16, 16), Tiles.ResourceColor(id));
+        sb.End();
     }
 
     /// <summary>Render the crafting menu overlay. Recipes scroll vertically with the cursor
