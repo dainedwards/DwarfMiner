@@ -187,6 +187,19 @@ public sealed class Player
     /// rotated rect aligned with its local-up; the player (a circle) projects into tile-local
     /// coords, clamps to the tile's local AABB, and gets pushed along the world-space direction
     /// of the resulting separation. Iterative for stability.
+    ///
+    /// Two notable behaviours:
+    /// <list type="bullet">
+    /// <item><b>Inside-tile escape</b>: when the player center is inside a tile's AABB
+    ///   (distSq=0), we escape via the *nearest local edge*, not always along planet-up.
+    ///   Always-up was wrong: jumping into a ceiling, the player center crosses into the
+    ///   ceiling tile and the up-push drives them deeper, clipping through.</item>
+    /// <item><b>Step-climb</b>: when the player is grounded and bumps a wall-like obstacle
+    ///   (collision normal is mostly tangential) whose top is within ~1 tile, we lift the
+    ///   player over it instead of pushing them backward. World-gen's ±1.5-tile surface
+    ///   elevation noise creates 1-tile vertical walls between adjacent surface columns;
+    ///   without auto-step the player would snag on every bump.</item>
+    /// </list>
     /// </summary>
     private void ResolveCollision(Planet planet)
     {
@@ -222,19 +235,56 @@ public sealed class Player
                     if (distSq < Radius * Radius && distSq > 0.0001f)
                     {
                         var dist = MathF.Sqrt(distSq);
-                        var pushAmount = Radius - dist + 0.05f;
+
+                        // Step-climb: contact is wall-like (mostly tangential) and the player
+                        // is grounded and the tile's top is reachable in ≤ StepClimbHeight.
+                        // pLocalY < halfY confirms we're approaching from below the tile's top.
+                        var nLocalX = diffX / dist;
+                        var nLocalY = diffY / dist;
+                        if (Grounded
+                            && MathF.Abs(nLocalX) > 0.6f
+                            && nLocalY < 0.6f
+                            && pLocalY < halfY
+                            && _stepClimbBudget > 0f)
+                        {
+                            var liftToClear = (halfY - pLocalY) + Radius * 0.4f;
+                            if (liftToClear <= StepClimbHeight)
+                            {
+                                var lift = MathF.Min(liftToClear, _stepClimbBudget);
+                                Position += up * lift;
+                                _stepClimbBudget -= lift;
+                                pushed = true;
+                                continue;   // re-evaluate this tile next outer iter
+                            }
+                        }
+
                         // World-space push direction = local separation vector mapped through (right, up).
-                        var n = right * (diffX / dist) + up * (diffY / dist);
-                        Position += n * pushAmount;
+                        var n = right * nLocalX + up * nLocalY;
+                        Position += n * (Radius - dist + 0.05f);
                         var into = Vector2.Dot(Velocity, n);
                         if (into < 0) Velocity -= n * into;
                         pushed = true;
                     }
                     else if (distSq <= 0.0001f)
                     {
-                        // Centre exactly inside the tile — escape along local up. Push enough
-                        // per iter that 4 iters can clear a deeply-embedded centre.
-                        Position += planet.UpAt(Position) * 2.5f;
+                        // Player center is inside the tile's local AABB. Escape via the
+                        // *closest* edge in tile-local coords (±localX or ±localY) — always-up
+                        // would push us INTO ceiling tiles, clipping through them on a jump.
+                        var dxR = halfX - pLocalX;   // distance to right edge
+                        var dxL = pLocalX + halfX;   // to left edge
+                        var dyU = halfY - pLocalY;   // to top (planet-up) edge
+                        var dyD = pLocalY + halfY;   // to bottom edge
+                        Vector2 nLocal;
+                        float minDist;
+                        if (dyU <= dxR && dyU <= dxL && dyU <= dyD) { nLocal = new Vector2(0f,  1f); minDist = dyU; }
+                        else if (dyD <= dxR && dyD <= dxL)           { nLocal = new Vector2(0f, -1f); minDist = dyD; }
+                        else if (dxR <= dxL)                          { nLocal = new Vector2( 1f, 0f); minDist = dxR; }
+                        else                                          { nLocal = new Vector2(-1f, 0f); minDist = dxL; }
+
+                        var n = right * nLocal.X + up * nLocal.Y;
+                        Position += n * (minDist + Radius + 0.05f);
+                        var into = Vector2.Dot(Velocity, n);
+                        if (into < 0) Velocity -= n * into;
                         pushed = true;
                     }
                 }
