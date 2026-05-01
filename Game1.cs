@@ -1114,11 +1114,17 @@ public sealed class DwarfMinerGame : Game
         // dwarf in the dim zone. ===
         _renderer.BeginLighting(_camera, new Color(180, 175, 195));
 
-        // Player aura — four nested radials stacked together for a soft, wide glow.
-        _renderer.AddLight(_player.Position, 200f, new Color(85, 70, 50));
-        _renderer.AddLight(_player.Position, 140f, new Color(140, 115, 80));
-        _renderer.AddLight(_player.Position, 90f,  new Color(200, 170, 120));
-        _renderer.AddLight(_player.Position, 50f,  new Color(245, 215, 165));
+        // Player aura — four nested radials stacked together for a soft, wide glow. Lantern
+        // upgrade makes every ring bigger and brighter — visible improvement to dark-cave
+        // navigation. Tier IV pickaxe (diamond) adds a faint icy-white sheen so the player
+        // sprite reads as freshly tooled.
+        var lanternMul = _player.HasLantern ? 1.55f : 1.0f;
+        _renderer.AddLight(_player.Position, 200f * lanternMul, new Color(85, 70, 50));
+        _renderer.AddLight(_player.Position, 140f * lanternMul, new Color(140, 115, 80));
+        _renderer.AddLight(_player.Position, 90f * lanternMul,  new Color(200, 170, 120));
+        _renderer.AddLight(_player.Position, 50f * lanternMul,  new Color(245, 215, 165));
+        if (_player.PickaxeTier >= 4)
+            _renderer.AddLight(_player.Position, 28f, new Color(180, 220, 255));
 
         // Core: molten heart of the planet.
         _renderer.AddLight(_planet.Center, 90f, new Color(255, 90, 30));
