@@ -529,6 +529,40 @@ public sealed class Player
     }
 }
 
+/// <summary>What the player builds when they press E. Cycled with B. Stone-class placement
+/// is a separate path (Q) so you don't have to flip into Stone mode just to wall something
+/// off — those raw mats place in priority order via TryPlace.</summary>
+public enum BuildKind : byte
+{
+    Support = 0,
+    ReinforcedSupport = 1,
+    Ladder = 2,
+    Rail = 3,
+    Glowshroom = 4,
+    Beacon = 5,
+}
+
+public static class BuildKindExt
+{
+    /// <summary>Display label for the HUD build-mode indicator.</summary>
+    public static string Label(this BuildKind b) => b switch
+    {
+        BuildKind.Support           => "SUPPORT",
+        BuildKind.ReinforcedSupport => "REINFORCED",
+        BuildKind.Ladder            => "LADDER",
+        BuildKind.Rail              => "RAIL",
+        BuildKind.Glowshroom        => "GLOWSHROOM",
+        BuildKind.Beacon            => "BEACON",
+        _                           => "?",
+    };
+
+    public static BuildKind Cycle(this BuildKind b)
+    {
+        var n = ((int)b + 1) % 6;
+        return (BuildKind)n;
+    }
+}
+
 public sealed class Inventory
 {
     private readonly Dictionary<string, int> _items = new();
