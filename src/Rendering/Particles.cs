@@ -136,6 +136,99 @@ public sealed class Particles
         }
     }
 
+    /// <summary>Continuous drill chip stream. Drill mining produces a steady jet of bright
+    /// orange sparks tangent to the swing direction plus tile-coloured chips falling away.
+    /// Called every frame the drill is active.</summary>
+    public void EmitDrillChips(Vector2 pos, Vector2 dirToTile, TileKind kind)
+    {
+        var baseColor = Tiles.BaseColor(kind);
+        var fade = Color.Multiply(baseColor, 0.3f);
+        // Orange spark jet along the direction of the drill bit. Two per frame, with slight
+        // angular spread so the jet reads as conical not a single beam.
+        for (var i = 0; i < 2; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.6f;
+            var rotated = new Vector2(
+                dirToTile.X * MathF.Cos(spread) - dirToTile.Y * MathF.Sin(spread),
+                dirToTile.X * MathF.Sin(spread) + dirToTile.Y * MathF.Cos(spread));
+            _list.Add(new Particle
+            {
+                Position = pos + rotated * 0.5f,
+                Velocity = -rotated * (40f + (float)_rng.NextDouble() * 30f),
+                Life = 0.08f + (float)_rng.NextDouble() * 0.10f,
+                MaxLife = 0.18f,
+                Color = new Color(255, 220, 120),
+                FadeColor = new Color(180, 60, 20),
+                Size = 1f,
+                GravityScale = 0.1f,
+                Drag = 3f,
+                LightRadius = 5f,
+                LightColor = new Color(255, 180, 80),
+            });
+        }
+        // One tile-coloured chip flung perpendicular to the drill direction so the wall
+        // reads as actively shedding fragments.
+        var perp = new Vector2(-dirToTile.Y, dirToTile.X) * (_rng.NextDouble() < 0.5 ? 1f : -1f);
+        _list.Add(new Particle
+        {
+            Position = pos,
+            Velocity = perp * (15f + (float)_rng.NextDouble() * 20f),
+            Life = 0.25f + (float)_rng.NextDouble() * 0.15f,
+            MaxLife = 0.40f,
+            Color = baseColor,
+            FadeColor = fade,
+            Size = 1f,
+            GravityScale = 1f,
+            Drag = 1.5f,
+            CollideTiles = true,
+        });
+    }
+
+    /// <summary>Hammer impact: a heavy ring of stone shards plus a dust cloud. Used when the
+    /// hammer cracks bedrock — heavier than EmitChips, lighter than an explosion.</summary>
+    public void EmitHammerImpact(Vector2 pos, TileKind kind)
+    {
+        var baseColor = Tiles.BaseColor(kind);
+        var fade = Color.Multiply(baseColor, 0.25f);
+        // Ring of shards thrown radially outward — heavier and slower than mining chips.
+        for (var i = 0; i < 14; i++)
+        {
+            var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+            var spd = 80f + (float)_rng.NextDouble() * 70f;
+            _list.Add(new Particle
+            {
+                Position = pos + Jitter(2f),
+                Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * spd,
+                Life = 0.6f + (float)_rng.NextDouble() * 0.5f,
+                MaxLife = 1.1f,
+                Color = baseColor,
+                FadeColor = fade,
+                Size = 1.5f + (float)_rng.NextDouble(),
+                GravityScale = 1f,
+                Drag = 0.8f,
+                CollideTiles = true,
+            });
+        }
+        // Dust shroud
+        for (var i = 0; i < 10; i++)
+        {
+            var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+            var spd = 18f + (float)_rng.NextDouble() * 30f;
+            _list.Add(new Particle
+            {
+                Position = pos,
+                Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * spd,
+                Life = 0.7f + (float)_rng.NextDouble() * 0.6f,
+                MaxLife = 1.3f,
+                Color = new Color(150, 140, 130),
+                FadeColor = new Color(35, 30, 30),
+                Size = 2f + (float)_rng.NextDouble() * 1.5f,
+                GravityScale = -0.05f,
+                Drag = 0.6f,
+            });
+        }
+    }
+
     /// <summary>Mining swing that didn't shatter — a tiny chip puff for click feedback.</summary>
     public void EmitMiningTick(Vector2 pos, TileKind kind)
     {
