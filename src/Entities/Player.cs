@@ -394,7 +394,18 @@ public sealed class Player
     private bool ProbeSolid(Planet planet, Vector2 worldPoint)
     {
         var (x, y) = planet.WorldToTile(worldPoint);
-        return Tiles.IsSolid(planet.Get(x, y));
+        // BlocksPlayer (not IsSolid) — ladders/glowshrooms/beacons are "solid" tiles in the
+        // data sense (rendered, anchored, mineable) but the player walks through them, so
+        // they shouldn't ground the player or count as floor.
+        return Tiles.BlocksPlayer(planet.Get(x, y));
+    }
+
+    /// <summary>Sample the tile kind at a world point. Used by Update to detect under-foot
+    /// rails (speed boost) and ladder overlap (climb mode).</summary>
+    private static TileKind ProbeTileKind(Planet planet, Vector2 worldPoint)
+    {
+        var (x, y) = planet.WorldToTile(worldPoint);
+        return planet.Get(x, y);
     }
 
     /// <summary>Place a block from inventory into a sky tile under the cursor. Stone first, then dirt.</summary>
