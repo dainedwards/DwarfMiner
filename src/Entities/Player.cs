@@ -164,7 +164,7 @@ public sealed class Player
     {
         if (MineCooldown > 0) return null;
         var d = worldCursor - Position;
-        if (d.Length() > MineRange) return null;
+        if (d.Length() > EffectiveMineRange) return null;
         var (x, y) = planet.WorldToTile(worldCursor);
         if (planet.Get(x, y) != TileKind.Sky) return null;
 
