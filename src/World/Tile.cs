@@ -40,7 +40,24 @@ public static class Tiles
 
     // Tiles that never fall, even when unsupported.
     public static bool IsAnchored(TileKind k) =>
-        k is TileKind.HardStone or TileKind.Core or TileKind.Support or TileKind.Obsidian;
+        k is TileKind.HardStone or TileKind.Core or TileKind.Support or TileKind.Obsidian
+          or TileKind.ReinforcedSupport or TileKind.Ladder or TileKind.Rail
+          or TileKind.Glowshroom or TileKind.Beacon;
+
+    /// <summary>Tiles the player walks through (climb / pass through) instead of colliding with.
+    /// Ladders are passable so the dwarf can climb; small placed lights are passable too so the
+    /// player doesn't bonk on torches in tight corridors.</summary>
+    public static bool IsPassable(TileKind k) =>
+        k is TileKind.Ladder or TileKind.Glowshroom or TileKind.Beacon;
+
+    /// <summary>Tiles that should block-place but allow the player's collision body to pass —
+    /// equivalent to "non-solid" for player physics, while staying solid for rendering and
+    /// physics-anchor purposes.</summary>
+    public static bool BlocksPlayer(TileKind k) => IsSolid(k) && !IsPassable(k);
+
+    /// <summary>Ladder-class climbable tile: while the player overlaps one, gravity is reduced
+    /// and W/S directly drive vertical motion.</summary>
+    public static bool IsClimbable(TileKind k) => k == TileKind.Ladder;
 
     public static bool IsOre(TileKind k) =>
         k is TileKind.CoalOre or TileKind.IronOre or TileKind.GoldOre or TileKind.Crystal
