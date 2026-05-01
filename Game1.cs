@@ -100,6 +100,9 @@ public sealed class DwarfMinerGame : Game
             // toggle drives ghost flight, super-pickaxe power, and extended mine range as a
             // single bundle — see Player.EffectivePickaxePower / EffectiveMineRange.
             FlyMode = true,
+            // Apply meta-progress: a player who has previously escaped starts with a
+            // higher-tier pickaxe so subsequent runs are slightly easier.
+            PickaxeTier = Math.Max(1, _meta.StartingPickaxePower),
         };
         _hasCannon = _meta.StartWithCannon;
         _titan = new Titan(_planet, MathF.PI * 0.6f);
@@ -107,12 +110,15 @@ public sealed class DwarfMinerGame : Game
         _projectiles.Clear();
         _boulders.Clear();
         _rockChunks.Clear();
+        _sentries.Clear();
         _earthquakeTimer = 25f;
         _spawnTimer = 6f;
         _shake = 0;
         _gameOver = false;
         _gameOverReason = "";
         _runTime = 0;
+        _craftingOpen = false;
+        _craftingCursor = 0;
     }
 
     protected override void LoadContent()
