@@ -1504,7 +1504,7 @@ public sealed class DwarfMinerGame : Game
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _player, (int)_titan.Anger, status, controls);
         DrawInventoryPanel(inv);
         DrawToolbelt();
-        if (_carry is { } c) DrawCarry(c.Id);
+        if (_carry is { } carry) DrawCarry(carry.Id);
 
         DrawHoverDebugLabel();
 
