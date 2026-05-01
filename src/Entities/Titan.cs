@@ -434,12 +434,9 @@ public sealed class Titan
                 if (broken.HasValue)
                 {
                     physics.MarkDirty(x, y);
-                    // Spawn loose debris in the now-empty tile so the gap fills with tumbling
-                    // cells (dust/sand/gravel/snow) rather than a clean hole. Skips materials
-                    // that have no loose form (e.g., hard stone, ores).
-                    var loose = Materials.LooseFor(broken.Value);
-                    if (loose != Material.Empty)
-                        cells.SpawnInTile(x, y, loose, Cells.Density * Cells.Density / 2);
+                    // Spawn dust in the now-empty tile so the gap fills with tumbling debris
+                    // (carrying the source tile's colour + drop) rather than a clean hole.
+                    cells.SpawnDustInTile(x, y, broken.Value);
                 }
             }
         }
