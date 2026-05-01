@@ -208,10 +208,10 @@ public sealed class DwarfMinerGame : Game
                 if (depth > _meta.DeepestDepth) _meta.DeepestDepth = depth;
                 var (btx, bty) = _planet.WorldToTile(worldCursor);
                 _particles.EmitChips(_planet.TileToWorld(btx, bty), bk);
-                // Loose ground tiles crumble into falling cells (Noita-feel pile-up).
-                var loose = Materials.LooseFor(bk);
-                if (loose != Material.Empty)
-                    _cells.SpawnInTile(btx, bty, loose, Cells.Density * Cells.Density / 2);
+                // Every broken tile crumbles into a pile of dust tagged with the source kind —
+                // the player picks that dust up by walking through it (collected each frame in
+                // the cells.CollectInRadius pass below).
+                _cells.SpawnDustInTile(btx, bty, bk);
             }
         }
 
