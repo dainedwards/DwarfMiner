@@ -120,25 +120,67 @@ public sealed class Titan
         return planet.Center + dir * ((planet.Radius + 20) * Planet.TileSize);
     }
 
+    /// <summary>Reset the aggro timer to AggroDuration. Called from the projectile-hit code
+    /// when a player projectile strikes the kaiju — that's the only thing that wakes it up.</summary>
+    public void OnDamage()
+    {
+        AggroTimer = AggroDuration;
+    }
+
+    /// <summary>Anger only rises while aggroed (driven by player depth — the deeper they go,
+    /// the angrier the kaiju gets). When de-aggroed, anger decays back toward 0 so a passive
+    /// kaiju is calm and won't trigger stomps/hurls.</summary>
     public void UpdateAnger(Vector2 playerPos)
     {
-        var fromCenter = (playerPos - _planet.Center).Length();
-        var surface = _planet.Radius * Planet.TileSize;
-        var depthFraction = MathHelper.Clamp(1f - fromCenter / surface, 0f, 1f);
-        var target = depthFraction * 110f;
-        Anger = MathHelper.Lerp(Anger, target, 0.01f);
+        if (IsAggro)
+        {
+            var fromCenter = (playerPos - _planet.Center).Length();
+            var surface = _planet.Radius * Planet.TileSize;
+            var depthFraction = MathHelper.Clamp(1f - fromCenter / surface, 0f, 1f);
+            var target = depthFraction * 110f;
+            Anger = MathHelper.Lerp(Anger, target, 0.01f);
+        }
+        else
+        {
+            Anger = MathHelper.Lerp(Anger, 0f, 0.01f);
+        }
     }
 
     public void Update(float dt, Planet planet, Physics physics, Cells cells, Vector2 playerPos, List<FallingBoulder> boulders)
     {
+        // Tick aggro/roam timers. Aggro counts down from AggroDuration; once it hits 0 the
+        // kaiju goes back to lazily roaming the surface in a random tangent direction.
+        AggroTimer -= dt;
+        _roamTimer -= dt;
+        if (!IsAggro && _roamTimer <= 0f)
+        {
+            // Re-roll roam direction. ~25% chance to stand still, then split between left/right.
+            // Hold the new direction for 4–10 seconds before re-rolling.
+            var r = Random.Shared.NextDouble();
+            _roamDir = r < 0.25 ? 0 : (r < 0.625 ? -1 : +1);
+            _roamTimer = 4f + (float)Random.Shared.NextDouble() * 6f;
+        }
+
         UpdateAnger(playerPos);
 
         var up = planet.UpAt(Position);
         var right = new Vector2(-up.Y, up.X);
 
-        // Decide tangent direction toward the player along the local surface.
-        var toPlayer = playerPos - Position;
-        var moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right));
+        // Decide tangent direction. Aggroed: chase the player along the local surface.
+        // Roaming: walk slowly in whatever direction we picked at the last roam reroll.
+        int moveAxis;
+        float speedMul;
+        if (IsAggro)
+        {
+            var toPlayer = playerPos - Position;
+            moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right));
+            speedMul = 1f;
+        }
+        else
+        {
+            moveAxis = _roamDir;
+            speedMul = 0.45f;   // slow roam — kaiju is just wandering, not hunting
+        }
 
         // Decompose velocity into tangent and normal components so gravity, walking, and the
         // leg-spring lift can be handled independently of where on the planet we are.
