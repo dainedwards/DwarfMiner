@@ -223,6 +223,108 @@ public sealed class Titan
         if (MathF.Abs(d) <= maxDelta) return target;
         return v + MathF.Sign(d) * maxDelta;
     }
+
+    /// <summary>Search for a foot anchor for one leg by ray-marching downward (along -planet-up
+    /// from the leg's lateral search start) until a solid tile is found. Returns the world-space
+    /// anchor position, biased forward by the body's tangential motion so feet step ahead of
+    /// where the body is going. If no terrain is found, returns a max-reach dangle position.</summary>
+    private Vector2 ResolveFootAnchor(TitanLeg leg, Vector2 up, Vector2 right, Vector2 motionBias)
+    {
+        const float legSideStride = 95f;
+        const float legSearchUp = 35f;
+        const float legSearchDown = 360f;
+        const float legProbeStep = 4f;
+
+        var hipWorld = Position + right * leg.HipForward + up * leg.HipUp;
+        var anchorStart = hipWorld + right * (leg.Side * legSideStride) + up * legSearchUp;
+
+        // March along -planet-up from anchorStart looking for the first solid tile.
+        var found = false;
+        var foot = anchorStart - up * legSearchDown;
+        for (var d = 0f; d <= legSearchDown; d += legProbeStep)
+        {
+            var probe = anchorStart - up * d;
+            if (_planet.IsSolidAt(probe))
+            {
+                // Perch the foot a hair above the surface so it doesn't z-fight the tile.
+                foot = probe + _planet.UpAt(probe) * 5f;
+                found = true;
+                break;
+            }
+        }
+        // Bias the anchor forward in the body's direction of motion so feet land ahead.
+        // Only apply when we actually found ground — dangling feet shouldn't slide around.
+        if (found) foot += motionBias;
+        return foot;
+    }
+
+    /// <summary>Per-frame leg simulation. Each leg compares its current planted foot position to
+    /// the freshly-resolved terrain anchor; if they've drifted past a per-leg threshold, the leg
+    /// lifts and steps to the new anchor along a sin-arc. Per-leg phase staggers thresholds so
+    /// the six legs don't all step in lockstep — at any instant some are planted, some swinging.</summary>
+    private void UpdateLegs(float dt, Planet planet, Vector2 up, Vector2 right, float vTangent)
+    {
+        // Forward-step bias scales with tangential speed: at full pace, feet land ~28 px ahead.
+        var biasMag = MathHelper.Clamp(vTangent / 80f, -1.4f, 1.4f);
+        var motionBias = right * (biasMag * 28f);
+
+        foreach (var leg in Legs)
+        {
+            var ideal = ResolveFootAnchor(leg, up, right, motionBias);
+
+            if (leg.StepT >= 1f)
+            {
+                // Threshold staggered per leg — phase shifts the trigger distance so adjacent
+                // legs don't lift simultaneously when the body crosses uneven terrain.
+                var threshold = 28f + leg.Phase * 22f;
+                if ((leg.FootPos - ideal).LengthSquared() > threshold * threshold)
+                {
+                    leg.StepStart = leg.FootPos;
+                    leg.StepTarget = ideal;
+                    leg.StepT = 0f;
+                }
+            }
+            else
+            {
+                // Step duration shortens when moving fast so legs keep up with the body.
+                var stepRate = 4.5f + MathF.Abs(vTangent) * 0.045f;
+                leg.StepT = MathF.Min(1f, leg.StepT + dt * stepRate);
+                if (leg.StepT >= 1f)
+                {
+                    leg.FootPos = leg.StepTarget;
+                }
+                else
+                {
+                    var t = leg.StepT;
+                    var smooth = t * t * (3f - 2f * t);
+                    var pos = Vector2.Lerp(leg.StepStart, leg.StepTarget, smooth);
+                    // Lift the foot in an arc; arch peaks at t=0.5. Use the planet-up at the
+                    // foot's current position so the arc stays oriented correctly even when
+                    // the leg is far from the body on a curved planet.
+                    var arc = MathF.Sin(t * MathF.PI) * 32f;
+                    pos += planet.UpAt(pos) * arc;
+                    leg.FootPos = pos;
+                }
+            }
+        }
+    }
+}
+
+/// <summary>One procedural leg of the Titan. Hip is body-local (offset along the body's tangent
+/// axis, lifted slightly above the body center); foot is world-space and persists across frames
+/// — feet stay planted until the body has moved enough to trigger a step, then arc to a new
+/// terrain-resolved anchor. Hip→foot distance is unconstrained, so legs visibly stretch over
+/// peaks and pits and compress on flat ground.</summary>
+public sealed class TitanLeg
+{
+    public float HipForward;       // body-tangent offset of the hip (signed: front/middle/back)
+    public float HipUp = 14f;      // body-up offset of the hip — front legs hang from the shoulder
+    public int Side;               // -1 = left, +1 = right (sign of the lateral search direction)
+    public float Phase;            // 0..1, staggers step thresholds so legs don't lift in lockstep
+    public Vector2 FootPos;        // current world-space foot position
+    public Vector2 StepStart;      // world-space foot position at the moment a step began
+    public Vector2 StepTarget;     // world-space anchor the step is reaching for
+    public float StepT = 1f;       // 0..1 during a step; ≥1 means planted
 }
 
 /// <summary>Boulder hurled by the Titan. Punches through tiles on impact, damages player.</summary>
