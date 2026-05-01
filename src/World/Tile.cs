@@ -119,6 +119,11 @@ public static class Tiles
         TileKind.Crystal => new Color(130, 80, 170),
         TileKind.Core => new Color(255, 90, 40),
         TileKind.Support => new Color(150, 110, 70),
+        TileKind.ReinforcedSupport => new Color(120, 105, 95),
+        TileKind.Ladder => new Color(140, 95, 55),
+        TileKind.Rail => new Color(70, 60, 55),
+        TileKind.Glowshroom => new Color(60, 110, 70),
+        TileKind.Beacon => new Color(100, 60, 150),
         _ => Color.Magenta,
     };
 
