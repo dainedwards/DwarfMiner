@@ -172,7 +172,7 @@ public sealed class Titan
         }
         Pulse += dt * (1.4f + Anger * 0.04f);
 
-        UpdateLegs(dt, planet, physics, up, right, vTangent);
+        UpdateLegs(dt, planet, physics, cells, up, right, vTangent);
         UpdateTail(dt, planet, up, right);
 
         StompCooldown -= dt;
