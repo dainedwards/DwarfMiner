@@ -128,7 +128,17 @@ public sealed class Titan
         // Grounded probe a little under the body, along -up.
         Grounded = ProbeSolid(planet, Position - up * (Radius + 2f));
 
-        if (Grounded) WalkPhase += MathF.Abs(vTangent) * dt * 0.12f;
+        // Smoothly turn to face the direction of motion. When stationary, hold the last facing
+        // so the head doesn't snap when we pause between steps.
+        if (MathF.Abs(vTangent) > 6f)
+        {
+            var targetFacing = MathF.Sign(vTangent);
+            Facing = MathHelper.Lerp(Facing, targetFacing, 1f - MathF.Exp(-3.5f * dt));
+        }
+        Pulse += dt * (1.4f + Anger * 0.04f);
+
+        UpdateLegs(dt, planet, up, right, vTangent);
+
         if (JumpCooldown > 0) JumpCooldown -= dt;
 
         StompCooldown -= dt;
