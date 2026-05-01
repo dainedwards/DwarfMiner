@@ -21,8 +21,15 @@ public sealed class Player
     public float MineCooldown;
     public float ShootCooldown;
 
-    /// <summary>Debug fly: ignores gravity and tile collision, direct velocity control.</summary>
+    /// <summary>Debug god mode: ghost flight (no gravity / no collision), super-pickaxe power,
+    /// and extended mining reach. Toggled in-game with the G key. When on, mining uses the
+    /// god values below; when off, it falls back to PickaxePower/MineRange so crafted upgrades
+    /// (pickaxe_ii etc.) still persist across toggles.</summary>
     public bool FlyMode;
+    public const int GodPickaxePower = 50;
+    public const float GodMineRange = 200f;
+    public int EffectivePickaxePower => FlyMode ? GodPickaxePower : PickaxePower;
+    public float EffectiveMineRange  => FlyMode ? GodMineRange    : MineRange;
 
     public readonly Inventory Inventory = new();
 
