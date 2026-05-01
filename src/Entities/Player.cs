@@ -548,38 +548,83 @@ public sealed class Player
     }
 }
 
-/// <summary>What the player builds when they press E. Cycled with B. Stone-class placement
-/// is a separate path (Q) so you don't have to flip into Stone mode just to wall something
-/// off — those raw mats place in priority order via TryPlace.</summary>
-public enum BuildKind : byte
-{
-    Support = 0,
-    ReinforcedSupport = 1,
-    Ladder = 2,
-    Rail = 3,
-    Glowshroom = 4,
-    Beacon = 5,
-}
+/// <summary>Which mining tool the player is using this swing. Drives cooldown, power floor,
+/// and which tile classes are breakable. Selected via the active toolbelt slot.</summary>
+public enum MiningTool { Pickaxe, Drill, Hammer }
 
-public static class BuildKindExt
+/// <summary>
+/// 9-slot equipment belt. Crafted equipment auto-equips into the first empty slot via
+/// <see cref="AutoEquip"/>. Slots store inventory ids ("pickaxe", "drill", "ladder",
+/// "ammo_diamond", …) — Game1 dispatches the slot's primary action by id when the player
+/// LMBs. Drag-and-drop UI in Game1 calls <see cref="Swap"/> / <see cref="SetSlot"/>.
+///
+/// Default loadout at construction: slot 0 = pickaxe (mine), 1 = bullets (basic shot),
+/// 2 = blocks (place stone-class blocks). All three are permanent and always available;
+/// the player can rearrange them but they can't be removed from the belt entirely (when
+/// dragged off, they relocate to the first-available empty slot).
+/// </summary>
+public sealed class Toolbelt
 {
-    /// <summary>Display label for the HUD build-mode indicator.</summary>
-    public static string Label(this BuildKind b) => b switch
-    {
-        BuildKind.Support           => "SUPPORT",
-        BuildKind.ReinforcedSupport => "REINFORCED",
-        BuildKind.Ladder            => "LADDER",
-        BuildKind.Rail              => "RAIL",
-        BuildKind.Glowshroom        => "GLOWSHROOM",
-        BuildKind.Beacon            => "BEACON",
-        _                           => "?",
-    };
+    public const int SlotCount = 9;
+    public readonly string?[] Slots = new string?[SlotCount];
+    public int Selected;
 
-    public static BuildKind Cycle(this BuildKind b)
+    public Toolbelt()
     {
-        var n = ((int)b + 1) % 6;
-        return (BuildKind)n;
+        Slots[0] = "pickaxe";
+        Slots[1] = "bullets";
+        Slots[2] = "blocks";
     }
+
+    /// <summary>Place <paramref name="id"/> into the first empty slot. No-op if the id is
+    /// already on the belt or the belt is full. Returns true on placement.</summary>
+    public bool AutoEquip(string id)
+    {
+        for (var i = 0; i < SlotCount; i++) if (Slots[i] == id) return false;
+        for (var i = 0; i < SlotCount; i++)
+            if (Slots[i] is null) { Slots[i] = id; return true; }
+        return false;
+    }
+
+    public string? Current => (Selected >= 0 && Selected < SlotCount) ? Slots[Selected] : null;
+
+    public bool Contains(string id)
+    {
+        for (var i = 0; i < SlotCount; i++) if (Slots[i] == id) return true;
+        return false;
+    }
+
+    public int FirstEmpty()
+    {
+        for (var i = 0; i < SlotCount; i++) if (Slots[i] is null) return i;
+        return -1;
+    }
+
+    /// <summary>Swap slot contents.</summary>
+    public void Swap(int a, int b)
+    {
+        if (a < 0 || a >= SlotCount || b < 0 || b >= SlotCount || a == b) return;
+        (Slots[a], Slots[b]) = (Slots[b], Slots[a]);
+    }
+
+    /// <summary>Drop <paramref name="id"/> into <paramref name="slot"/>, displacing whatever
+    /// was there. The displaced id is returned so the caller can decide where it goes (back
+    /// to inventory for stackables, first-empty-slot for permanents).</summary>
+    public string? SetSlot(int slot, string? id)
+    {
+        if (slot < 0 || slot >= SlotCount) return id;
+        var prev = Slots[slot];
+        Slots[slot] = id;
+        return prev;
+    }
+
+    /// <summary>Permanent ids: tools the player owns forever, can't be deleted from the belt.
+    /// Pickaxe / bullets / blocks are intrinsic from spawn; drill / hammer / cannon /
+    /// core_drill / sentry are unlocks that occupy a slot once crafted but stay on the belt
+    /// (dragging one onto inventory just re-routes to first empty slot instead).</summary>
+    public static bool IsPermanent(string id) => id is
+        "pickaxe" or "bullets" or "blocks" or
+        "drill" or "hammer" or "cannon" or "core_drill";
 }
 
 public sealed class Inventory
