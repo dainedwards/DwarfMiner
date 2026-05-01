@@ -440,7 +440,10 @@ public sealed class Player
         return placed;
     }
 
-    /// <summary>Try to mine the tile under the cursor. Returns the tile kind if shattered.</summary>
+    /// <summary>Try to mine the tile under the cursor. Returns the tile kind if shattered.
+    /// Honours pickaxe-tool gates: HardStone needs the hammer, the Core needs the core drill.
+    /// Tier IV (diamond) gets a 2× power bonus on Obsidian so the late-game pick burns through
+    /// it noticeably faster than the early picks.</summary>
     public TileKind? TryMine(Planet planet, Physics physics, Vector2 worldCursor)
     {
         if (MineCooldown > 0) return null;
@@ -449,8 +452,20 @@ public sealed class Player
         var (x, y) = planet.WorldToTile(worldCursor);
         var k = planet.Get(x, y);
         if (k == TileKind.Sky) return null;
-        var broken = planet.Mine(x, y, EffectivePickaxePower);
-        MineCooldown = 0.10f;
+        if (!CanBreak(k))
+        {
+            MineCooldown = EffectiveMineCooldown;   // still spend a swing for feedback
+            return null;
+        }
+
+        // Local power calc — tier IV gets a 2× bonus vs Obsidian (its niche). Hammer doubles
+        // power vs HardStone so each hammer-stomp is meaningful even with tier-1 base power.
+        var power = EffectivePickaxePower;
+        if (k == TileKind.Obsidian && PickaxeTier >= 4) power *= 2;
+        if (k == TileKind.HardStone && HasHammer) power = Math.Max(power, 4);
+
+        var broken = planet.Mine(x, y, power);
+        MineCooldown = EffectiveMineCooldown;
         if (broken is { } bk)
         {
             physics.MarkDirty(x, y);
@@ -460,6 +475,48 @@ public sealed class Player
         }
         return null;
     }
+
+    /// <summary>Place the currently-selected build item at the cursor. Returns the placed
+    /// tile kind if it landed in a sky tile and the inventory had stock; null otherwise.
+    /// The build mode is set by Game1 via the B-cycle.</summary>
+    public TileKind? TryPlaceBuild(Planet planet, Physics physics, Vector2 worldCursor)
+    {
+        if (MineCooldown > 0) return null;
+        var d = worldCursor - Position;
+        if (d.Length() > EffectiveMineRange) return null;
+        var (x, y) = planet.WorldToTile(worldCursor);
+        if (planet.Get(x, y) != TileKind.Sky) return null;
+
+        // Don't seal the dwarf inside a tile — keep at least a body's distance for
+        // *blocking* tiles. Passable build items (ladder/glowshroom/beacon) skip this check
+        // so you can drop a torch right next to your feet.
+        var (placedKind, invId) = BuildToTile(Build);
+        var passable = Tiles.IsPassable(placedKind);
+        if (!passable)
+        {
+            var tilePos = planet.TileToWorld(x, y);
+            if ((tilePos - Position).Length() < Radius + Planet.TileSize * 0.55f) return null;
+        }
+
+        if (!Inventory.TryConsume(invId, 1)) return null;
+
+        planet.Set(x, y, placedKind);
+        physics.MarkDirty(x, y);
+        if (placedKind == TileKind.Beacon) BeaconWorld = planet.TileToWorld(x, y);
+        MineCooldown = 0.10f;
+        return placedKind;
+    }
+
+    private static (TileKind tile, string invId) BuildToTile(BuildKind b) => b switch
+    {
+        BuildKind.Support            => (TileKind.Support,            "stone"),  // crafted via support recipe → 2 stone, paid up front
+        BuildKind.ReinforcedSupport  => (TileKind.ReinforcedSupport,  "reinforced_support"),
+        BuildKind.Ladder             => (TileKind.Ladder,             "ladder"),
+        BuildKind.Rail               => (TileKind.Rail,               "rail"),
+        BuildKind.Glowshroom         => (TileKind.Glowshroom,         "glowshroom"),
+        BuildKind.Beacon             => (TileKind.Beacon,             "beacon"),
+        _                            => (TileKind.Stone,              "stone"),
+    };
 
     private static float MoveToward(float v, float target, float maxDelta)
     {
