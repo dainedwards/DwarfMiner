@@ -118,7 +118,7 @@ public sealed class Titan
         Anger = MathHelper.Lerp(Anger, target, 0.01f);
     }
 
-    public void Update(float dt, Planet planet, Physics physics, Vector2 playerPos, List<FallingBoulder> boulders)
+    public void Update(float dt, Planet planet, Physics physics, Cells cells, Vector2 playerPos, List<FallingBoulder> boulders)
     {
         UpdateAnger(playerPos);
 
