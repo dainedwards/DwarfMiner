@@ -119,6 +119,7 @@ public static class Tiles
         "diamond", "ruby", "sapphire", "platinum", "gold", "silver",
         "crystal", "iron", "coal",
         "nuke", "rocket_part",
+        "obsidian", "granite", "basalt", "moss_stone", "gravel",
         "stone", "dirt", "snow",
     };
 
