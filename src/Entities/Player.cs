@@ -97,26 +97,30 @@ public sealed class Player
         }
     }
 
-    /// <summary>Cooldown between mining swings. The drill makes the swing nearly continuous.
-    /// Future "swift" augment would multiply this further.</summary>
-    public float EffectiveMineCooldown
+    /// <summary>Per-tool mining cooldown. Pickaxe is the standard rhythm; drill is a near-
+    /// continuous stream; hammer is slow but lands a heavy blow per swing. Fly mode keeps
+    /// the drill cadence so dev movement isn't gated by swing rate.</summary>
+    public float MineCooldownFor(MiningTool tool)
     {
-        get
+        if (FlyMode) return 0.04f;
+        return tool switch
         {
-            if (FlyMode) return 0.04f;
-            return HasDrill ? 0.04f : 0.10f;
-        }
+            MiningTool.Drill  => 0.04f,
+            MiningTool.Hammer => 0.30f,
+            _                 => 0.10f,
+        };
     }
 
-    /// <summary>True iff this pickaxe can crack a tile of the given hardness/kind. Hammer
-    /// breaks HardStone (h99); core drill breaks the Core (h999); pickaxe IV breaks
-    /// obsidian fast (handled with a power bonus, not this gate).</summary>
-    public bool CanBreak(TileKind k)
+    /// <summary>True iff the given <paramref name="tool"/> can crack a tile of the given kind.
+    /// Hammer is the only tool that breaks HardStone; core drill is the only thing that
+    /// breaks the Core. Pickaxe + drill handle everything else, with tier IV getting a
+    /// power bonus on Obsidian (handled inside TryMine, not here).</summary>
+    public bool CanBreak(TileKind k, MiningTool tool)
     {
         if (FlyMode) return k != TileKind.Sky;
         var h = Tiles.Hardness(k);
         if (k == TileKind.Core) return HasCoreDrill;
-        if (h >= 99) return HasHammer && k != TileKind.Core;
+        if (h >= 99) return tool == MiningTool.Hammer;
         return true;
     }
 
