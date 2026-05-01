@@ -36,19 +36,9 @@ public sealed class Player
     /// classic Mario-style variable jump (hold for full height, tap for a short hop).</summary>
     private const float JumpReleaseGravityMul = 2.4f;
 
-    /// <summary>Max upward step the player will auto-climb in one frame. World-gen makes the
-    /// surface bumpy (±1.5 tiles of noise), so adjacent surface tiles sit on different
-    /// rings — without auto-step the player snags on every 1-tile surface bump and has to
-    /// jump. Sized so a one-tile step clears in a single ResolveCollision lift (no residual
-    /// horizontal push that would shave tangential velocity). Bigger steps (≥ 2 tiles) still
-    /// require a real jump.</summary>
-    private const float StepClimbHeight = 9.0f;            // a bit over 1 tile (TileSize=8) — clears one-tile bumps cleanly
-    private const float StepClimbBudgetPerFrame = 9.0f;    // ≈ one step per frame → ~540 px/s when continuously climbing slopes
-
     private bool _jumpHeldPrev;       // for edge detection inside Update
     private float _coyoteTimer;       // counts down from CoyoteTime after leaving ground
     private float _jumpBufferTimer;   // counts down from JumpBufferTime after a jump press
-    private float _stepClimbBudget;   // px of step-climb available this frame, reset in Update
 
     /// <summary>Debug god mode: ghost flight (no gravity / no collision), super-pickaxe power,
     /// and extended mining reach. Toggled in-game with the G key. When on, mining uses the
