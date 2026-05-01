@@ -818,6 +818,8 @@ public sealed class DwarfMinerGame : Game
         var controls = "WASD/ARROWS MOVE   SPACE JUMP   LMB MINE   Q PLACE   RMB SHOOT   F NUKE   L LAUNCH ROCKET\n1 PICKAXE+   2 CANNON   3 SUPPORT BEAM   4 ROCKET PART   5 NUKE";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _player, (int)_titan.Anger, status, controls);
 
+        DrawHoverDebugLabel();
+
         if (_gameOver) DrawGameOverOverlay();
 
         if (_screenshotPending)
