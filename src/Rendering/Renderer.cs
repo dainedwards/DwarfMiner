@@ -538,6 +538,73 @@ public sealed class Renderer
         _sb.End();
     }
 
+    /// <summary>
+    /// Top-right resource panel. One row per known resource with a non-zero count: a colour
+    /// swatch (sourced from <see cref="Tiles.ResourceColor"/>), the uppercase label, and the
+    /// count. Rows are rendered in <see cref="Tiles.ResourceOrder"/> with anything else (custom
+    /// crafted items future-added) appended at the end. The panel auto-sizes to its visible rows
+    /// — collapses to nothing when the inventory is empty.
+    /// </summary>
+    public void DrawInventoryPanel(int viewportWidth, int viewportHeight, Inventory inv)
+    {
+        var rows = new System.Collections.Generic.List<(string id, int count)>();
+        foreach (var id in Tiles.ResourceOrder)
+        {
+            var c = inv.Count(id);
+            if (c > 0) rows.Add((id, c));
+        }
+        // Append anything in the inventory not in the canonical order — future-proof for custom ids.
+        foreach (var (id, count) in inv.Items)
+        {
+            if (count <= 0) continue;
+            var known = false;
+            foreach (var k in Tiles.ResourceOrder) if (k == id) { known = true; break; }
+            if (!known) rows.Add((id, count));
+        }
+
+        if (rows.Count == 0) return;
+
+        const int swatchSize = 8;
+        const int rowHeight = 11;
+        const int padX = 8;
+        const int padY = 6;
+        const int textScale = 1;
+
+        // Compute panel width from the longest row.
+        var maxTextW = 0;
+        foreach (var (id, count) in rows)
+        {
+            var line = $"{Tiles.ResourceLabel(id)} {count}";
+            var w = _font.Measure(line, textScale);
+            if (w > maxTextW) maxTextW = w;
+        }
+        var panelW = padX + swatchSize + 6 + maxTextW + padX;
+        var panelH = padY + rows.Count * rowHeight + padY;
+        var panelX = viewportWidth - panelW - 12;
+        var panelY = 12;
+
+        _sb.Begin(samplerState: SamplerState.PointClamp);
+        // Backdrop + 1px frame.
+        _sb.Draw(_pixel, new Rectangle(panelX, panelY, panelW, panelH), new Color(0, 0, 0, 170));
+        _sb.Draw(_pixel, new Rectangle(panelX, panelY, panelW, 1), new Color(255, 255, 255, 60));
+        _sb.Draw(_pixel, new Rectangle(panelX, panelY + panelH - 1, panelW, 1), new Color(255, 255, 255, 60));
+        _sb.Draw(_pixel, new Rectangle(panelX, panelY, 1, panelH), new Color(255, 255, 255, 60));
+        _sb.Draw(_pixel, new Rectangle(panelX + panelW - 1, panelY, 1, panelH), new Color(255, 255, 255, 60));
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var (id, count) = rows[i];
+            var rowY = panelY + padY + i * rowHeight;
+            // Swatch with a 1px dark border so dim swatches still pop against the dark backdrop.
+            var sx = panelX + padX;
+            _sb.Draw(_pixel, new Rectangle(sx - 1, rowY - 1, swatchSize + 2, swatchSize + 2), new Color(0, 0, 0, 200));
+            _sb.Draw(_pixel, new Rectangle(sx, rowY, swatchSize, swatchSize), Tiles.ResourceColor(id));
+            var line = $"{Tiles.ResourceLabel(id)} {count}";
+            _font.Draw(_sb, line, new Vector2(sx + swatchSize + 6, rowY + 1), Color.White, textScale);
+        }
+        _sb.End();
+    }
+
     public void DrawDebugLabel(string text, Vector2 screenPos, Color color)
     {
         var w = _font.Measure(text, scale: 1) + 4;
