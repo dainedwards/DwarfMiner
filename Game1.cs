@@ -124,6 +124,7 @@ public sealed class DwarfMinerGame : Game
     protected override void LoadContent()
     {
         _renderer = new Renderer(GraphicsDevice);
+        Icons.Build(GraphicsDevice);
         _camera = new Camera
         {
             ViewportSize = new Point(VirtualWidth, VirtualHeight),
