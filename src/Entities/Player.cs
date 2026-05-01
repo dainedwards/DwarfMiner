@@ -186,7 +186,18 @@ public sealed class Player
         var vTangent = Vector2.Dot(Velocity, right);
         var vNormal = Vector2.Dot(Velocity, up);
 
-        var targetTangent = moveAxis * MoveSpeed;
+        // Rail under-foot speed boost: walking over a Rail tile boosts MoveSpeed by 65%. The
+        // probe samples the tile one body-radius below the centre so it kicks in the moment
+        // the player lands on a rail and stops the moment they step off.
+        var onRail = ProbeTileKind(planet, Position - up * (Radius + 1.5f)) == TileKind.Rail;
+        var moveSpeed = onRail ? MoveSpeed * 1.65f : MoveSpeed;
+
+        // Ladder overlap: gravity is heavily reduced and the vertical axis directly drives
+        // up/down motion, so the player can climb without jumping. Detected by sampling the
+        // tile under the player's centre — ladders span a tile, so any centre-overlap counts.
+        var onLadder = ProbeTileKind(planet, Position) == TileKind.Ladder;
+
+        var targetTangent = moveAxis * moveSpeed;
         var accel = Grounded ? 900f : 320f;   // snappier ground accel; tighter air control
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
 
