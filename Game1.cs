@@ -495,6 +495,9 @@ public sealed class DwarfMinerGame : Game
         base.Update(gameTime);
     }
 
+    /// <summary>Right-click weapon fire. With the cannon, consumes the highest-tier shell
+    /// in inventory before falling back to the regular cannon round; without the cannon,
+    /// fires plain bullets. Each shell variant has its own <see cref="ProjectileKind"/>.</summary>
     private void FireWeapon(Vector2 worldCursor)
     {
         var dir = worldCursor - _player.Position;
@@ -502,8 +505,34 @@ public sealed class DwarfMinerGame : Game
         dir.Normalize();
         if (_hasCannon)
         {
-            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 25f, 1.6f, ProjectileKind.Cannon));
-            _player.ShootCooldown = 0.55f;
+            // Spend the strongest shell first. Diamond > sapphire > ruby > silver > base.
+            // Shell speed/damage tuned per kind so the shells feel different in flight too.
+            if (_player.Inventory.TryConsume("ammo_diamond", 1))
+            {
+                _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 300f, 80f, 1.8f, ProjectileKind.CannonDiamond));
+                _player.ShootCooldown = 0.7f;
+                _shake = MathF.Max(_shake, 0.5f);
+            }
+            else if (_player.Inventory.TryConsume("ammo_sapphire", 1))
+            {
+                _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 35f, 1.7f, ProjectileKind.CannonSapphire));
+                _player.ShootCooldown = 0.55f;
+            }
+            else if (_player.Inventory.TryConsume("ammo_ruby", 1))
+            {
+                _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 32f, 1.7f, ProjectileKind.CannonRuby));
+                _player.ShootCooldown = 0.55f;
+            }
+            else if (_player.Inventory.TryConsume("ammo_silver", 1))
+            {
+                _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 380f, 22f, 1.6f, ProjectileKind.CannonSilver));
+                _player.ShootCooldown = 0.45f;
+            }
+            else
+            {
+                _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 25f, 1.6f, ProjectileKind.Cannon));
+                _player.ShootCooldown = 0.55f;
+            }
         }
         else
         {
@@ -521,27 +550,168 @@ public sealed class DwarfMinerGame : Game
         _player.ShootCooldown = 0.6f;
     }
 
-    private void TryCraft(string id, Action onSuccess)
+    private void FireDynamite(Vector2 worldCursor)
     {
-        var recipe = Crafting.All.FirstOrDefaultRecipe(id);
-        if (recipe is null) return;
-        if (Crafting.TryPay(recipe, _player.Inventory))
+        // Dynamite is lobbed like a grenade — gravity arcs it. The launch speed is calibrated
+        // so a click within mining range lands close to the cursor; far cursors overshoot
+        // because gravity drags the shorter-flight throws.
+        var dir = worldCursor - _player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        var dist = dir.Length();
+        dir /= dist;
+        // Lob speed scales with throw distance up to a cap. Plus a small upward kick along
+        // planet-up so the stick arcs visibly instead of skimming the floor.
+        var speed = MathHelper.Clamp(110f + dist * 0.8f, 110f, 220f);
+        var up = _planet.UpAt(_player.Position);
+        var velocity = dir * speed + up * 60f;
+        _projectiles.Add(new Projectile(_player.Position + dir * 6f, velocity, 50f, 2.0f, ProjectileKind.Dynamite));
+        _player.ShootCooldown = 0.3f;
+    }
+
+    private void FireHarpoon(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 520f, 600f, 2.2f, ProjectileKind.Harpoon));
+        _player.ShootCooldown = 0.8f;
+        _shake = MathF.Max(_shake, 0.5f);
+    }
+
+    /// <summary>Sentry-emitted bullet. Lower damage and speed than the player's bullet so the
+    /// turrets feel like supplementary support, not an instant clear button.</summary>
+    private void FireSentryShot(Vector2 muzzle, Vector2 dir)
+    {
+        _projectiles.Add(new Projectile(muzzle, dir * Sentry.BulletSpeed, Sentry.BulletDamage, 1.0f, ProjectileKind.Bullet));
+    }
+
+    /// <summary>Apply radial damage from an explosive projectile that just died. The crater
+    /// (terrain dig) is handled inside Projectile; this is the creature/Titan damage step
+    /// so AoE shells can hurt a swarm even after passing through them.</summary>
+    private void ApplyExplosionDamage(Projectile p)
+    {
+        var rSq = p.ExplosionRadius * p.ExplosionRadius;
+        foreach (var c in _creatures)
         {
-            // For inventory-tracked outputs, deposit into the inventory.
-            if (id == "rocket_part") _player.Inventory.Add("rocket_part", 1);
-            else if (id == "nuke") _player.Inventory.Add("nuke", 1);
-            onSuccess();
+            if ((c.Position - p.Position).LengthSquared() < rSq)
+            {
+                c.Health -= p.Damage * 0.5f;   // half of direct hit (already took full on contact)
+                c.HitFlash = 0.15f;
+                if (p.BurnSeconds > 0f) c.BurnSeconds = MathF.Max(c.BurnSeconds, p.BurnSeconds);
+                if (p.FreezeSeconds > 0f) c.FreezeSeconds = MathF.Max(c.FreezeSeconds, p.FreezeSeconds);
+            }
+        }
+        if ((_titan.Position - p.Position).LengthSquared() < (rSq + _titan.Radius * _titan.Radius))
+        {
+            _titan.Health -= p.Damage * 0.4f;
+            _titan.HitFlash = 0.15f;
+            _titan.OnDamage();
         }
     }
 
-    private void PlaceSupportAtFeet()
+    /// <summary>Beacon recall — instant teleport to the most recent placed beacon. Visual
+    /// feedback: dust burst at the depart point, sparkles at the arrival point, brief shake.</summary>
+    private void BeaconRecall(Vector2 dest)
     {
-        // Place a support tile right at the player's feet (1 tile inward along gravity).
-        var gravDir = _planet.GravityAt(_player.Position);
-        var target = _player.Position + gravDir * (Planet.TileSize * 0.8f);
-        var (x, y) = _planet.WorldToTile(target);
-        if (_planet.Get(x, y) == TileKind.Sky)
-            _planet.Set(x, y, TileKind.Support);
+        _particles.EmitDust(_player.Position, 8f);
+        _player.Position = dest + _planet.UpAt(dest) * (_player.Radius + 2f);
+        _player.Velocity = Vector2.Zero;
+        _particles.EmitDust(_player.Position, 8f);
+        _shake = MathF.Max(_shake, 0.4f);
+    }
+
+    private void UseHealPotion()
+    {
+        _player.Health = MathF.Min(_player.MaxHealth, _player.Health + 30f);
+        // Visual: a small green sparkle puff anchored to the player.
+        _particles.EmitDust(_player.Position, 6f);
+    }
+
+    private void TryCoreDrill()
+    {
+        // Core drill only works on the Core tile and within mining range. When it lands, it
+        // ends the run as a "felled the planet" victory state — biggest possible escalation.
+        var (px, py) = _planet.WorldToTile(_player.Position);
+        for (var dy = -2; dy <= 2; dy++)
+        {
+            for (var dx = -2; dx <= 2; dx++)
+            {
+                var x = px + dx; var y = py + dy;
+                if (_planet.Get(x, y) == TileKind.Core)
+                {
+                    _planet.Set(x, y, TileKind.Sky);
+                    _physics.MarkDirty(x, y);
+                    _particles.EmitImpact(_planet.TileToWorld(x, y), ProjectileKind.Nuke);
+                    _shake = MathF.Max(_shake, 1.5f);
+                    _meta.Save();
+                    _gameOver = true;
+                    _gameOverReason = $"You pierced the core. Run time: {_runTime:0.0}s. Press R to play again.";
+                    return;
+                }
+            }
+        }
+    }
+
+    /// <summary>Crafting menu input — opens with C, scrolls with up/down, crafts with Enter,
+    /// closes with C/Esc. Recipes are dispatched through <see cref="ApplyCraft"/>; affordability
+    /// is checked there too. Shift modifies the cursor to skip/jump in 5s for fast scroll.</summary>
+    private void UpdateCraftingMenu(KeyboardState keys)
+    {
+        if (Pressed(keys, _prevKeys, Keys.C) || Pressed(keys, _prevKeys, Keys.Escape))
+        {
+            _craftingOpen = false;
+            return;
+        }
+        var step = keys.IsKeyDown(Keys.LeftShift) || keys.IsKeyDown(Keys.RightShift) ? 5 : 1;
+        if (Pressed(keys, _prevKeys, Keys.Down) || Pressed(keys, _prevKeys, Keys.S))
+            _craftingCursor = (_craftingCursor + step) % Crafting.All.Count;
+        if (Pressed(keys, _prevKeys, Keys.Up) || Pressed(keys, _prevKeys, Keys.W))
+            _craftingCursor = (_craftingCursor - step + Crafting.All.Count) % Crafting.All.Count;
+        if (Pressed(keys, _prevKeys, Keys.Enter) || Pressed(keys, _prevKeys, Keys.Space))
+        {
+            var recipe = Crafting.All[_craftingCursor];
+            ApplyCraft(recipe);
+        }
+    }
+
+    /// <summary>Spend a recipe's cost and apply its output. Permanent upgrades flip a flag on
+    /// the player; placeable / consumable / ammo recipes deposit the matching id into the
+    /// inventory. Returns silently if the player can't afford or the upgrade is already owned.</summary>
+    private void ApplyCraft(Recipe r)
+    {
+        // Block double-craft of one-time upgrades. Pickaxe tiers are gated by the *current*
+        // tier so you can only step up sequentially: II requires tier 1, III requires tier 2, etc.
+        switch (r.Id)
+        {
+            case "pickaxe_ii":   if (_player.PickaxeTier >= 2) return; break;
+            case "pickaxe_iii":  if (_player.PickaxeTier >= 3 || _player.PickaxeTier < 2) return; break;
+            case "pickaxe_iv":   if (_player.PickaxeTier >= 4 || _player.PickaxeTier < 3) return; break;
+            case "drill":        if (_player.HasDrill)   return; break;
+            case "hammer":       if (_player.HasHammer)  return; break;
+            case "lantern":      if (_player.HasLantern) return; break;
+            case "armor":        if (_player.HasArmor)   return; break;
+            case "core_drill":   if (_player.HasCoreDrill) return; break;
+            case "cannon":       if (_hasCannon)         return; break;
+        }
+
+        if (!Crafting.TryPay(r, _player.Inventory)) return;
+
+        switch (r.Id)
+        {
+            case "pickaxe_ii":  _player.PickaxeTier = 2; break;
+            case "pickaxe_iii": _player.PickaxeTier = 3; break;
+            case "pickaxe_iv":  _player.PickaxeTier = 4; break;
+            case "drill":       _player.HasDrill = true; break;
+            case "hammer":      _player.HasHammer = true; break;
+            case "lantern":     _player.HasLantern = true; break;
+            case "armor":       _player.HasArmor = true; break;
+            case "core_drill":  _player.HasCoreDrill = true; break;
+            case "cannon":      _hasCannon = true; break;
+            // Everything else is a stockable item — the recipe id is the inventory id. Keep
+            // this default branch as the catch-all so adding a new placeable in the recipe
+            // table doesn't require editing this switch.
+            default:            _player.Inventory.Add(r.Id, 1); break;
+        }
     }
 
     private void TryLaunchRocket()
