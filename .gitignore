@@ -13,6 +13,9 @@ obj/
 .DS_Store
 Thumbs.db
 
+# Claude Code project-local settings
+.claude/
+
 # MonoGame content cache
 Content/bin/
 Content/obj/

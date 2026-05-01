@@ -20,6 +20,13 @@ public sealed class Lighting
     private Point _rtSize;
     private Matrix _viewMatrix;
 
+    // Bloom ping-pong RTs (half-res of the lightmap) for multi-tap separable Gaussian blur.
+    private RenderTarget2D? _bloomA;
+    private RenderTarget2D? _bloomB;
+    private Point _bloomSize;
+    // Cached vignette (radial darkening) — generated once at a fixed res and stretched.
+    private Texture2D? _vignette;
+
     /// <summary>RGB-multiplicative blend for compositing the lightmap over the backbuffer.</summary>
     public static readonly BlendState Multiply = new()
     {
@@ -119,17 +126,117 @@ public sealed class Lighting
     }
 
     /// <summary>
-    /// Shader-free bloom: re-draw the lightmap on top of the backbuffer additively, with
-    /// linear filtering during the upscale so the small RT smears into a soft glow. Bright
-    /// regions of the lightmap (lights, lava, projectiles) contribute the most; ambient is
-    /// dim enough that the additive contribution is barely perceptible.
+    /// Shader-free bloom with a real separable Gaussian blur. The lightmap is downsampled to
+    /// a half-res ping-pong RT, blurred horizontally then vertically with a 9-tap kernel
+    /// (5 unique weights mirrored), then composited additively over the backbuffer. The
+    /// downsample + linear upscale at composite time gives a much softer falloff than the
+    /// previous single-pass linear-filter trick — bright spots actually bloom into the scene
+    /// instead of just feathering at their edges.
     /// </summary>
     public void Bloom(SpriteBatch target, Point screenSize, Color tint)
     {
         if (_rt is null) return;
+        EnsureBloomRts();
+
+        // Downsample: lightmap → bloomA at half res. Linear filter pre-smooths for free.
+        _gd.SetRenderTarget(_bloomA);
+        _gd.Clear(Color.Transparent);
+        _sb.Begin(blendState: BlendState.Opaque, samplerState: SamplerState.LinearClamp);
+        _sb.Draw(_rt!, new Rectangle(0, 0, _bloomSize.X, _bloomSize.Y), Color.White);
+        _sb.End();
+
+        // Separable Gaussian: horizontal then vertical. Two passes ping-pong between A and B.
+        SeparableBlur(_bloomA!, _bloomB!, horizontal: true);
+        SeparableBlur(_bloomB!, _bloomA!, horizontal: false);
+
+        _gd.SetRenderTarget(null);
+
+        // Composite blurred bloom additively at full screen, tinted slightly cool so the
+        // overall mood stays a touch blue rather than washing the scene yellow.
         target.Begin(blendState: ColorAdditive, samplerState: SamplerState.LinearClamp);
-        target.Draw(_rt, new Rectangle(0, 0, screenSize.X, screenSize.Y), tint);
+        target.Draw(_bloomA!, new Rectangle(0, 0, screenSize.X, screenSize.Y), tint);
         target.End();
+    }
+
+    /// <summary>Cinematic vignette — multiplicative full-screen darkening that's strongest at
+    /// the corners and tapers to identity at the centre. Sells the cave depth more than a
+    /// flat ambient does, especially at the surface where the sky is full-bright.</summary>
+    public void Vignette(SpriteBatch target, Point screenSize)
+    {
+        EnsureVignette();
+        target.Begin(blendState: Multiply, samplerState: SamplerState.LinearClamp);
+        target.Draw(_vignette!, new Rectangle(0, 0, screenSize.X, screenSize.Y), Color.White);
+        target.End();
+    }
+
+    /// <summary>Cheap colour grade: a single multiplicative tint over the whole composited
+    /// frame. Used to push shadows slightly cool/desaturated, which is most of what a real
+    /// LUT-based grade would buy at this fidelity. Pass white (255,255,255) to skip.</summary>
+    public void Grade(SpriteBatch target, Texture2D pixel, Point screenSize, Color tint)
+    {
+        target.Begin(blendState: Multiply, samplerState: SamplerState.PointClamp);
+        target.Draw(pixel, new Rectangle(0, 0, screenSize.X, screenSize.Y), tint);
+        target.End();
+    }
+
+    private void EnsureBloomRts()
+    {
+        if (_rt is null) return;
+        var w = Math.Max(1, _rtSize.X / 2);
+        var h = Math.Max(1, _rtSize.Y / 2);
+        if (_bloomA is not null && _bloomSize.X == w && _bloomSize.Y == h) return;
+        _bloomA?.Dispose();
+        _bloomB?.Dispose();
+        _bloomA = new RenderTarget2D(_gd, w, h, false, SurfaceFormat.Color, DepthFormat.None);
+        _bloomB = new RenderTarget2D(_gd, w, h, false, SurfaceFormat.Color, DepthFormat.None);
+        _bloomSize = new Point(w, h);
+    }
+
+    private void SeparableBlur(RenderTarget2D src, RenderTarget2D dst, bool horizontal)
+    {
+        // 9-tap Gaussian σ≈2: weights mirrored around centre. Sums to ~1.0.
+        // Offsets are in pixels; on the half-res bloom RT each step covers 2 source-pixels.
+        ReadOnlySpan<float> weights = stackalloc float[5] { 0.227f, 0.194f, 0.121f, 0.054f, 0.016f };
+        ReadOnlySpan<int>   offsets = stackalloc int[5]   { 0, 1, 2, 3, 4 };
+
+        _gd.SetRenderTarget(dst);
+        _gd.Clear(Color.Transparent);
+        _sb.Begin(blendState: ColorAdditive, samplerState: SamplerState.LinearClamp);
+        for (var i = 0; i < 5; i++)
+        {
+            var w = weights[i];
+            var o = offsets[i];
+            var dx = horizontal ? o : 0;
+            var dy = horizontal ? 0 : o;
+            // For i==0 the centre tap is drawn once. For i>0 we draw once on each side
+            // of the centre to mirror the kernel.
+            var col = new Color(w, w, w, w);
+            _sb.Draw(src, new Vector2(dx, dy), col);
+            if (i > 0)
+                _sb.Draw(src, new Vector2(-dx, -dy), col);
+        }
+        _sb.End();
+    }
+
+    private void EnsureVignette()
+    {
+        if (_vignette is not null) return;
+        const int s = 256;
+        var data = new Color[s * s];
+        var half = s / 2f;
+        for (var y = 0; y < s; y++)
+        for (var x = 0; x < s; x++)
+        {
+            var dx = (x - half) / half;
+            var dy = (y - half) / half;
+            var d = MathF.Min(1f, MathF.Sqrt(dx * dx + dy * dy));
+            // Multiplicative: 1.0 at centre → ~0.55 at corners. Quadratic for soft midfield.
+            var v = 1f - d * d * 0.45f;
+            var b = (byte)(v * 255);
+            data[y * s + x] = new Color(b, b, b, (byte)255);
+        }
+        _vignette = new Texture2D(_gd, s, s);
+        _vignette.SetData(data);
     }
 
     private static Texture2D MakeRadialGradient(GraphicsDevice gd, int size)

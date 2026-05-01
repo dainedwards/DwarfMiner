@@ -29,12 +29,18 @@ public sealed class Renderer
     public Texture2D Pixel => _pixel;
     public SpriteBatch Batch => _sb;
 
+    /// <summary>Wall-clock seconds, fed in once per frame by the game. Used by the world
+    /// renderer to drive sub-tile animation (waving grass, hanging vines).</summary>
+    public float Time { get; set; }
+
     public void BeginLighting(Camera cam, Color ambient) => _lighting.Begin(cam, ambient);
     public void AddLight(Vector2 worldPos, float radius, Color color) => _lighting.AddPoint(worldPos, radius, color);
     public void EndLighting() => _lighting.End();
     public void CompositeLighting(Point screenSize) => _lighting.Composite(_sb, screenSize);
     public void BloomLighting(Point screenSize, Color tint) => _lighting.Bloom(_sb, screenSize, tint);
     public void Darken(Vector2 worldPos, float radius, Color color) => _lighting.Darken(worldPos, radius, color);
+    public void VignetteScene(Point screenSize) => _lighting.Vignette(_sb, screenSize);
+    public void GradeScene(Point screenSize, Color tint) => _lighting.Grade(_sb, _pixel, screenSize, tint);
 
     public void DrawWorld(Planet planet, Camera cam)
     {
@@ -126,22 +132,85 @@ public sealed class Renderer
 
                 var up = planet.UpAt(centre);
                 var rotation = MathF.Atan2(up.X, -up.Y);
+                var right = new Vector2(-up.Y, up.X);
                 var size = new Vector2(chord + 1f, Planet.TileSize + 1f); // +1 px overlap kills sub-pixel seams between neighbours
                 var hash = (r * 73856093) ^ (t * 19349663);
 
                 // Sky tile: maybe draw the background wall (cave back-wall, Terraria style).
+                // Multi-layer composite: a deep base, a mid-depth blocky strata pattern from a
+                // coarser hash so adjacent tiles share the same big-block, and a foreground
+                // speckle layer for surface noise. Tiles whose neighbour is solid get a faint
+                // rim "lip" along the shared edge — sells the floor/wall meeting line.
                 if (k == TileKind.Sky)
                 {
                     var wallK = planet.GetWall(r, t);
                     if (wallK == TileKind.Sky) continue; // outside planet — no wall
                     var wb = Tiles.BaseColor(wallK);
                     var wjit = ((hash >> 4) & 31) - 16;
-                    var wcol = new Color(
-                        Math.Clamp((int)(wb.R * 0.40f) + wjit / 5, 0, 255),
-                        Math.Clamp((int)(wb.G * 0.40f) + wjit / 5, 0, 255),
-                        Math.Clamp((int)(wb.B * 0.40f) + wjit / 5, 0, 255));
-                    _sb.Draw(_pixel, centre, null, wcol, rotation,
+
+                    // Layer 1 — deep base. Darker than before so layered detail can sit on top
+                    // without the wall reading as too bright.
+                    var baseCol = new Color(
+                        Math.Clamp((int)(wb.R * 0.30f) + wjit / 6, 0, 255),
+                        Math.Clamp((int)(wb.G * 0.30f) + wjit / 6, 0, 255),
+                        Math.Clamp((int)(wb.B * 0.30f) + wjit / 6, 0, 255));
+                    _sb.Draw(_pixel, centre, null, baseCol, rotation,
                         new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+
+                    // Layer 2 — mid-depth strata. Coarse hash on (r/3, t/4) so the pattern
+                    // spans multiple tiles, simulating big rock slabs at depth. About 30% of
+                    // tiles get a brighter slab corner.
+                    var coarseHash = ((r / 3) * 73856093) ^ ((t / 4) * 19349663);
+                    var midCol = new Color(
+                        Math.Clamp((int)(wb.R * 0.42f) + wjit / 8, 0, 255),
+                        Math.Clamp((int)(wb.G * 0.42f) + wjit / 8, 0, 255),
+                        Math.Clamp((int)(wb.B * 0.42f) + wjit / 8, 0, 255));
+                    if ((coarseHash & 0x7) < 3)
+                    {
+                        var slx = (coarseHash >> 3) & 1; // 0 or 1
+                        var sly = (coarseHash >> 5) & 1;
+                        DrawDeco(centre, right, up, rotation, chord, slx * 4, sly * 4, 4, 4, midCol);
+                    }
+
+                    // Layer 3 — surface speckle. A handful of brighter sub-pixels at hash-stable
+                    // positions, giving the wall a grainy "rocky" feel up close.
+                    var speckCol = new Color(
+                        Math.Clamp((int)(wb.R * 0.55f) + wjit / 4, 0, 255),
+                        Math.Clamp((int)(wb.G * 0.55f) + wjit / 4, 0, 255),
+                        Math.Clamp((int)(wb.B * 0.55f) + wjit / 4, 0, 255));
+                    DrawDeco(centre, right, up, rotation, chord,
+                        1 + ((hash >> 7) & 5), 1 + ((hash >> 11) & 5), 1, 1, speckCol);
+                    DrawDeco(centre, right, up, rotation, chord,
+                        1 + ((hash >> 13) & 5), 1 + ((hash >> 17) & 5), 1, 1, speckCol);
+                    var darkSpeck = new Color(
+                        Math.Clamp((int)(wb.R * 0.18f), 0, 255),
+                        Math.Clamp((int)(wb.G * 0.18f), 0, 255),
+                        Math.Clamp((int)(wb.B * 0.18f), 0, 255));
+                    DrawDeco(centre, right, up, rotation, chord,
+                        1 + ((hash >> 19) & 5), 1 + ((hash >> 23) & 5), 1, 1, darkSpeck);
+
+                    // Edge "lip" — when this back-wall tile is adjacent to a solid tile, draw
+                    // a faint dark rim along the shared edge so the floor/wall transition reads
+                    // as a corner rather than a flat colour change.
+                    var lipCol = new Color(
+                        Math.Clamp((int)(wb.R * 0.15f), 0, 255),
+                        Math.Clamp((int)(wb.G * 0.15f), 0, 255),
+                        Math.Clamp((int)(wb.B * 0.15f), 0, 255));
+                    var ocnt = planet.OuterNeighbourCount(r, t);
+                    var outerSolid = false;
+                    for (var oi = 0; oi < ocnt; oi++)
+                    {
+                        var (o2r, o2t) = planet.OuterNeighbour(r, t, oi);
+                        if (Tiles.IsSolid(planet.Get(o2r, o2t))) { outerSolid = true; break; }
+                    }
+                    var (i2r, i2t) = planet.InnerNeighbour(r, t);
+                    var innerSolid = Tiles.IsSolid(planet.Get(i2r, i2t));
+                    var leftSolid  = Tiles.IsSolid(planet.Get(r, t - 1));
+                    var rightSolid = Tiles.IsSolid(planet.Get(r, t + 1));
+                    if (outerSolid) DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, lipCol);
+                    if (innerSolid) DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, lipCol);
+                    if (leftSolid)  DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, lipCol);
+                    if (rightSolid) DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, lipCol);
                     continue;
                 }
 
@@ -151,8 +220,6 @@ public sealed class Renderer
                     Math.Clamp(col.R + jitter / 4, 0, 255),
                     Math.Clamp(col.G + jitter / 4, 0, 255),
                     Math.Clamp(col.B + jitter / 4, 0, 255));
-
-                var right = new Vector2(-up.Y, up.X);
 
                 _sb.Draw(_pixel, centre, null, col, rotation,
                     new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
@@ -194,6 +261,27 @@ public sealed class Renderer
                 if (innerSky) DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, sh);
                 if (leftSky)  DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, rim);
                 if (rightSky) DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, sh);
+
+                // 8-neighbour ambient occlusion. Sample the 4 diagonal cells; if a corner has
+                // both adjacent rims solid but the diagonal cell is sky, paint a 1-px AO dot at
+                // that corner. This gives the soft inner-corner shading that makes Terraria's
+                // tiles look hand-painted rather than gridded.
+                var (olR, olT) = planet.OuterNeighbour(r, t - 1, 0);
+                var (orR, orT) = planet.OuterNeighbour(r, t + 1, 0);
+                var (ilR, ilT) = planet.InnerNeighbour(r, t - 1);
+                var (irR, irT) = planet.InnerNeighbour(r, t + 1);
+                var olSky = planet.Get(olR, olT) == TileKind.Sky;
+                var orSky = planet.Get(orR, orT) == TileKind.Sky;
+                var ilSky = planet.Get(ilR, ilT) == TileKind.Sky;
+                var irSky = planet.Get(irR, irT) == TileKind.Sky;
+                var ao = new Color(
+                    Math.Clamp(col.R - 38, 0, 255),
+                    Math.Clamp(col.G - 38, 0, 255),
+                    Math.Clamp(col.B - 38, 0, 255));
+                if (!outerSky && !leftSky  && olSky) DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 1, ao);
+                if (!outerSky && !rightSky && orSky) DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 1, ao);
+                if (!innerSky && !leftSky  && ilSky) DrawDeco(centre, right, up, rotation, chord, 0, 7, 1, 1, ao);
+                if (!innerSky && !rightSky && irSky) DrawDeco(centre, right, up, rotation, chord, 7, 7, 1, 1, ao);
 
                 // Per-kind decoration — every sub-rect is in 8×8 reference coords; DrawDeco
                 // scales the X axis by chord/8 so wide surface tiles spread the pattern out
@@ -278,6 +366,31 @@ public sealed class Renderer
                         DrawDeco(centre, right, up, rotation, chord, 1 + ((hash >> 2) & 5), 0, 1, 1, bc);
                         DrawDeco(centre, right, up, rotation, chord, 2 + ((hash >> 6) & 4), 1, 1, 1, bc);
                         DrawDeco(centre, right, up, rotation, chord, 4 + ((hash >> 10) & 3), 0, 1, 1, bc);
+                        // Animated tufts — only on grass tiles whose outer (sky-facing) edge is
+                        // exposed. Each tuft is a vertical pixel column above the tile that
+                        // bends with sin(time + hash); bend grows quadratically up the tuft so
+                        // tips travel further than bases. Drawn into the sky cell above (which
+                        // is already cleared, no draw conflict).
+                        if (outerSky)
+                        {
+                            var tipCol = new Color(140, 195, 95);
+                            var midCol = new Color(95, 145, 65);
+                            for (var ti2 = 0; ti2 < 3; ti2++)
+                            {
+                                var baseX = 1 + ((hash >> (3 + ti2 * 5)) & 5);
+                                var phase = ((hash >> (ti2 * 7)) & 0xFF) * 0.025f;
+                                var sway  = MathF.Sin(Time * 1.6f + phase) * 0.9f;
+                                var hgt   = 2 + ((hash >> (ti2 * 4)) & 1);
+                                for (var hy = 0; hy < hgt; hy++)
+                                {
+                                    var fr  = (hy + 1f) / hgt;
+                                    var bx  = baseX + (int)MathF.Round(sway * fr * fr);
+                                    var lyy = -1 - hy;
+                                    var c   = hy == hgt - 1 ? tipCol : midCol;
+                                    DrawDeco(centre, right, up, rotation, chord, bx, lyy, 1, 1, c);
+                                }
+                            }
+                        }
                         break;
                     }
                     case TileKind.Snow:
@@ -292,6 +405,24 @@ public sealed class Renderer
                         var mc = new Color(70, 120, 75);
                         DrawDeco(centre, right, up, rotation, chord, 1 + ((hash >> 2) & 3), 1 + ((hash >> 4) & 3), 2, 1, mc);
                         DrawDeco(centre, right, up, rotation, chord, 4 + ((hash >> 8) & 2), 4 + ((hash >> 11) & 2), 1, 2, mc);
+                        // Hanging vine — when the inner (cave-facing) edge is exposed, drop a
+                        // short pixel column down into the cave that sways slowly. A 4px vine
+                        // is enough to read as foliage without crowding the rim.
+                        if (innerSky)
+                        {
+                            var vine = new Color(60, 105, 55);
+                            var vineTip = new Color(95, 150, 85);
+                            var phase = (hash & 0xFF) * 0.025f;
+                            var sway  = MathF.Sin(Time * 1.0f + phase) * 0.7f;
+                            var baseX = 2 + ((hash >> 5) & 3);
+                            for (var hy = 0; hy < 4; hy++)
+                            {
+                                var fr = (hy + 1f) / 4f;
+                                var bx = baseX + (int)MathF.Round(sway * fr * fr);
+                                DrawDeco(centre, right, up, rotation, chord, bx, 8 + hy, 1, 1,
+                                    hy == 3 ? vineTip : vine);
+                            }
+                        }
                         break;
                     }
                     case TileKind.Core:

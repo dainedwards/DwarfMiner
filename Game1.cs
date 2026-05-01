@@ -445,6 +445,10 @@ public sealed class DwarfMinerGame : Game
 
     protected override void Draw(GameTime gameTime)
     {
+        // Feed the renderer the current wall-clock so animated decoration (waving grass,
+        // hanging vines) advances with the game time rather than the frame index.
+        _renderer.Time = (float)gameTime.TotalGameTime.TotalSeconds;
+
         // Apply shake by perturbing the camera target.
         var shakeX = (float)(Random.Shared.NextDouble() - 0.5) * _shake * 6f;
         var shakeY = (float)(Random.Shared.NextDouble() - 0.5) * _shake * 6f;
@@ -670,9 +674,13 @@ public sealed class DwarfMinerGame : Game
 
         _renderer.EndLighting();
         _renderer.CompositeLighting(new Point(VirtualWidth, VirtualHeight));
-        // Bloom: additively re-draw the lightmap with linear-filtered upscale so bright spots
-        // (lava, projectiles, headlamp core) bleed a soft glow over the scene.
-        _renderer.BloomLighting(new Point(VirtualWidth, VirtualHeight), new Color(60, 55, 70));
+        // Multi-tap separable Gaussian bloom — bright spots (lava, projectiles, headlamp core)
+        // bleed a soft glow over the scene through real downsample + 9-tap blur passes.
+        _renderer.BloomLighting(new Point(VirtualWidth, VirtualHeight), new Color(70, 65, 85));
+        // Cinematic vignette + subtle cool grade — pushes shadows slightly blue, keeps the
+        // surface readable but adds depth at the screen edges.
+        _renderer.VignetteScene(new Point(VirtualWidth, VirtualHeight));
+        _renderer.GradeScene(new Point(VirtualWidth, VirtualHeight), new Color(245, 245, 255));
 
         _camera.Target = oldTarget;
 
