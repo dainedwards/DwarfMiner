@@ -507,9 +507,12 @@ public sealed class Player
         return placedKind;
     }
 
-    private static (TileKind tile, string invId) BuildToTile(BuildKind b) => b switch
+    /// <summary>Map a build-mode selection to the (tile-kind it places, inventory-item it
+    /// consumes). Each placeable is an inventory item (crafted via Crafting.cs); placement is
+    /// a 1-to-1 spend, so the player can stockpile 5 ladders and drop them where useful.</summary>
+    public static (TileKind tile, string invId) BuildToTile(BuildKind b) => b switch
     {
-        BuildKind.Support            => (TileKind.Support,            "stone"),  // crafted via support recipe → 2 stone, paid up front
+        BuildKind.Support            => (TileKind.Support,            "support"),
         BuildKind.ReinforcedSupport  => (TileKind.ReinforcedSupport,  "reinforced_support"),
         BuildKind.Ladder             => (TileKind.Ladder,             "ladder"),
         BuildKind.Rail               => (TileKind.Rail,               "rail"),
