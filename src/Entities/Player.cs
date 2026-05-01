@@ -120,14 +120,16 @@ public sealed class Player
         var accel = Grounded ? 900f : 320f;   // snappier ground accel; tighter air control
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
 
-        // Variable jump height: extra gravity while ascending unless jump is still held. Only
-        // engages while airborne — otherwise planet curvature (the player's velocity rotates
-        // relative to the local up axis as they walk along the curved surface) makes vNormal
-        // become tiny-positive every frame during walking, triggering the gravity multiplier
-        // and producing a visible vertical jitter.
+        // Gravity only applies while airborne. When grounded, skipping it keeps vNormal at 0
+        // every frame — without this, the per-frame "drop ~0.09 px under gravity, collision
+        // shoves back up" cycle leaves the player visibly oscillating across the tile top
+        // (especially noticeable because the sprite is bigger than the collision radius). With
+        // gravity skipped, the player sits at restpoint+0.05 every frame, perfectly still.
+        // Variable jump height (extra gravity on release) only matters mid-jump anyway, so
+        // also gating it on !Grounded is correct.
         var grav = Gravity;
         if (vNormal > 0f && !jumpHeld && !Grounded) grav = Gravity * JumpReleaseGravityMul;
-        vNormal -= grav * dt;
+        if (!Grounded) vNormal -= grav * dt;
         // Cap fall speed — see MaxFallSpeed comment for why this is essential.
         if (vNormal < -MaxFallSpeed) vNormal = -MaxFallSpeed;
 
