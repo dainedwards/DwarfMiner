@@ -531,7 +531,7 @@ public sealed class FallingBoulder
         var diff = player.Position - Position;
         if (diff.Length() < Radius + player.Radius)
         {
-            player.Health -= 25f;
+            player.TakeDamage(25f);
             if (diff.LengthSquared() > 0.0001f)
                 player.Velocity += Vector2.Normalize(diff) * 220f;
             Dead = true;
