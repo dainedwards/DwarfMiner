@@ -205,18 +205,10 @@ public sealed class Player
     /// coords, clamps to the tile's local AABB, and gets pushed along the world-space direction
     /// of the resulting separation. Iterative for stability.
     ///
-    /// Two notable behaviours:
-    /// <list type="bullet">
-    /// <item><b>Inside-tile escape</b>: when the player center is inside a tile's AABB
-    ///   (distSq=0), we escape via the *nearest local edge*, not always along planet-up.
-    ///   Always-up was wrong: jumping into a ceiling, the player center crosses into the
-    ///   ceiling tile and the up-push drives them deeper, clipping through.</item>
-    /// <item><b>Step-climb</b>: when the player is grounded and bumps a wall-like obstacle
-    ///   (collision normal is mostly tangential) whose top is within ~1 tile, we lift the
-    ///   player over it instead of pushing them backward. World-gen's ±1.5-tile surface
-    ///   elevation noise creates 1-tile vertical walls between adjacent surface columns;
-    ///   without auto-step the player would snag on every bump.</item>
-    /// </list>
+    /// <b>Inside-tile escape</b>: when the player center is inside a tile's AABB (distSq=0),
+    /// escape toward the closest *sky neighbor* — not always along planet-up. Always-up
+    /// was wrong: jumping into a ceiling, the up-push drives the player deeper, clipping
+    /// through. The neighbor-aware choice picks the side that opens onto empty space.
     /// </summary>
     private void ResolveCollision(Planet planet)
     {
