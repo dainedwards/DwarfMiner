@@ -802,25 +802,113 @@ public sealed class DwarfMinerGame : Game
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
         _renderer.DrawCircle(worldCursor, 3f, new Color(255, 255, 255, 180));
 
-        // Creatures.
+        // Creatures. Burn/freeze status tints the body so the player can see at a glance who's
+        // suffering: red→orange when burning (extra ember on top), pale-blue when frozen.
         foreach (var c in _creatures)
         {
-            var col = c.HitFlash > 0 ? Color.White : new Color(180, 60, 80);
+            Color col;
+            if (c.HitFlash > 0) col = Color.White;
+            else if (c.FreezeSeconds > 0) col = new Color(150, 200, 240);
+            else if (c.BurnSeconds > 0)   col = new Color(220, 110, 70);
+            else col = new Color(180, 60, 80);
             _renderer.DrawCircle(c.Position, c.Radius, col);
             _renderer.DrawCircle(c.Position - new Vector2(0, 1f), 1.5f, Color.Black);
+            // Burning creatures get a flickering ember dot above them.
+            if (c.BurnSeconds > 0f)
+            {
+                var flick = (MathF.Sin(_runTime * 22f + c.Position.X) * 0.5f + 0.5f);
+                var emCol = Color.Lerp(new Color(255, 130, 60), new Color(255, 220, 100), flick);
+                _renderer.DrawCircle(c.Position - new Vector2(0, c.Radius + 2f), 1.2f + flick * 0.6f, emCol);
+            }
         }
 
-        // Projectiles.
+        // Sentries — chunky pixel-art turret. Base is a stout iron plinth, barrel is a long
+        // rectangle that rotates with the sentry's Aim. Tinted red on hit-flash; the glowing
+        // muzzle ring tracks the cooldown so a charging sentry shows visible "ready" feedback.
+        foreach (var s in _sentries)
+        {
+            var sup = _planet.UpAt(s.Position);
+            var srot = MathF.Atan2(sup.X, -sup.Y);
+            var bodyCol = s.HitFlash > 0 ? Color.White : new Color(120, 110, 95);
+            var rivetCol = new Color(50, 45, 40);
+            // Base plinth (slightly inset) and a darker mount cap on top.
+            _renderer.DrawRect(s.Position - sup * 1.5f, new Vector2(11f, 4f), rivetCol, srot);
+            _renderer.DrawRect(s.Position, new Vector2(10f, 6f), bodyCol, srot);
+            _renderer.DrawRect(s.Position + sup * 1.0f, new Vector2(6f, 3f), rivetCol, srot);
+            // Barrel — drawn rotated to the aim angle.
+            var barrelDir = new Vector2(MathF.Cos(s.Aim), MathF.Sin(s.Aim));
+            var barrelMid = s.Position + barrelDir * 5f;
+            _renderer.DrawRect(barrelMid, new Vector2(8f, 2.5f), bodyCol, s.Aim);
+            // Muzzle ring — pulses brighter as cooldown nears 0 (about-to-fire feel).
+            var ready = MathHelper.Clamp(1f - s.Cooldown / Sentry.FireRate, 0f, 1f);
+            var muzzleCol = Color.Lerp(new Color(120, 80, 40), new Color(255, 200, 100), ready);
+            _renderer.DrawCircle(s.Position + barrelDir * 9f, 1.3f, muzzleCol);
+            // HP pip — small bar above the body when damaged.
+            if (s.Health < s.MaxHealth)
+            {
+                var fr = MathHelper.Clamp(s.Health / s.MaxHealth, 0f, 1f);
+                _renderer.DrawRect(s.Position + sup * 6f, new Vector2(8f, 1.2f), new Color(40, 10, 10), srot);
+                _renderer.DrawRect(s.Position + sup * 6f - new Vector2((1f - fr) * 4f, 0f),
+                    new Vector2(8f * fr, 1.2f), new Color(220, 60, 60), srot);
+            }
+        }
+
+        // Projectiles. Each kind gets its own pixel motif: bullets are tiny dots, cannon shells
+        // are bigger discs, dynamite is a brown stick with a red fuse-tip, harpoon is a long
+        // pointed shaft. Special ammo glows in its element colour.
         foreach (var p in _projectiles)
         {
-            var col = p.Kind switch
+            switch (p.Kind)
             {
-                ProjectileKind.Bullet => new Color(255, 230, 120),
-                ProjectileKind.Cannon => new Color(255, 140, 60),
-                ProjectileKind.Nuke => new Color(255, 80, 200),
-                _ => Color.White,
-            };
-            _renderer.DrawCircle(p.Position, p.Radius, col);
+                case ProjectileKind.Bullet:
+                    _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 230, 120));
+                    break;
+                case ProjectileKind.Cannon:
+                    _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 140, 60));
+                    break;
+                case ProjectileKind.Nuke:
+                    _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 80, 200));
+                    break;
+                case ProjectileKind.CannonSilver:
+                    _renderer.DrawCircle(p.Position, p.Radius, new Color(220, 230, 250));
+                    _renderer.DrawCircle(p.Position, p.Radius * 0.5f, Color.White);
+                    break;
+                case ProjectileKind.CannonRuby:
+                    _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 100, 90));
+                    _renderer.DrawCircle(p.Position, p.Radius * 0.5f, new Color(255, 220, 200));
+                    break;
+                case ProjectileKind.CannonSapphire:
+                    _renderer.DrawCircle(p.Position, p.Radius, new Color(140, 180, 255));
+                    _renderer.DrawCircle(p.Position, p.Radius * 0.5f, new Color(220, 240, 255));
+                    break;
+                case ProjectileKind.CannonDiamond:
+                    _renderer.DrawCircle(p.Position, p.Radius, new Color(220, 240, 255));
+                    _renderer.DrawCircle(p.Position, p.Radius * 0.6f, Color.White);
+                    break;
+                case ProjectileKind.Dynamite:
+                {
+                    // Stick-of-dynamite sprite oriented along velocity. Fuse tip flickers.
+                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
+                    _renderer.DrawRect(p.Position, new Vector2(7f, 2.5f), new Color(180, 40, 50), ang);
+                    _renderer.DrawRect(p.Position, new Vector2(7f, 1f), new Color(120, 20, 30), ang);
+                    var fuseFlicker = (MathF.Sin(_runTime * 50f) * 0.5f + 0.5f);
+                    var fuseTip = p.Position + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * 4f;
+                    _renderer.DrawCircle(fuseTip, 1.2f + fuseFlicker * 0.6f, new Color(255, 200, 100));
+                    break;
+                }
+                case ProjectileKind.Harpoon:
+                {
+                    // Long pointed shaft with a metallic head. Drawn rotated along velocity.
+                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
+                    _renderer.DrawRect(p.Position, new Vector2(14f, 2f), new Color(140, 110, 80), ang);
+                    var head = p.Position + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * 6f;
+                    _renderer.DrawRect(head, new Vector2(5f, 3f), new Color(220, 220, 220), ang);
+                    break;
+                }
+                default:
+                    _renderer.DrawCircle(p.Position, p.Radius, Color.White);
+                    break;
+            }
         }
 
         // Boulders.
