@@ -1013,14 +1013,12 @@ public sealed class DwarfMinerGame : Game
     }
 
     /// <summary>Filter for the inventory panel: permanent tool markers (drill / hammer /
-    /// cannon / core_drill) are visible only when *not* currently on the toolbelt — picking
-    /// them up off the belt makes them reappear here so the player can drop them back.</summary>
+    /// cannon / core_drill) are visible only when *not* currently on the toolbelt. Stackable
+    /// items always show — the toolbelt slot is a *shortcut* to the inventory stack, not a
+    /// separate cache, so the count is meaningfully visible in both places at once.</summary>
     private bool ShouldShowInInventory(string id)
     {
         if (Toolbelt.IsPermanent(id) && _player.Toolbelt.Contains(id)) return false;
-        // While carrying, hide the source row to avoid the "ghost" of an item appearing in
-        // both inventory and at the cursor — feels less confusing during a drag.
-        if (_carry is { } c && c.Id == id) return false;
         return true;
     }
 
