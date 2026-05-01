@@ -140,23 +140,21 @@ public sealed class Titan
 
         vNormal -= Gravity * dt;
 
-        // Leg-spring lift: when the average planted-foot position is higher than the body
-        // (climbing a peak), push the body upward toward (avgFoot + up * BodyHover). This
-        // replaces the old "stuck-on-wall hop" — the kaiju now strides over mountains because
-        // its forelegs plant on the high ground first, raising the avg foot, which lifts the
-        // body, which then lets the hind legs step up too.
+        // Leg-spring lift: model the legs as a critically-damped active suspension that holds
+        // the body at BodyHover above the average planted foot. When feet are planted the legs
+        // cancel gravity exactly and add a spring toward target + a damping term — so the body
+        // settles at the target height with no oscillation. This is what lets the kaiju stride
+        // over mountains: forelegs plant on high ground first, raise the avg-foot, the spring
+        // lifts the body, and the hind legs then step up to the new height. With no planted
+        // feet (mid-air, all legs swinging) gravity wins and the body falls.
         var planted = AvgPlantedFoot(out var hasPlanted);
         if (hasPlanted)
         {
             var heightAboveFeet = Vector2.Dot(Position - planted, up);
             var deficit = BodyHover - heightAboveFeet;
-            if (deficit > 0)
-            {
-                // Lift accel scales with deficit, capped so the kaiju doesn't rocket off the
-                // ground. Critical-damping happens naturally because gravity opposes the lift.
-                var liftAccel = MathF.Min(deficit * 9f, 720f);
-                vNormal += liftAccel * dt;
-            }
+            var springAcc = MathHelper.Clamp(deficit * 9f, -500f, 800f);
+            var dampAcc = -vNormal * 4f;
+            vNormal += (Gravity + springAcc + dampAcc) * dt;
         }
 
         Velocity = right * vTangent + up * vNormal;
