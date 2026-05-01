@@ -86,9 +86,9 @@ public sealed class DwarfMinerGame : Game
         var surfacePos = FindSurfaceSpawn(-MathF.PI / 2f, _planet.Radius);
         _player = new Player(surfacePos)
         {
-            // World-test loadout: ghost flight + super pickaxe + long arm. Toggle fly with G.
-            PickaxePower = 50,
-            MineRange = 200f,
+            // Start in god-mode for testing; G toggles it off (and on again) in-game. The
+            // toggle drives ghost flight, super-pickaxe power, and extended mine range as a
+            // single bundle — see Player.EffectivePickaxePower / EffectiveMineRange.
             FlyMode = true,
         };
         _hasCannon = _meta.StartWithCannon;
