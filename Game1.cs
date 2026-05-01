@@ -169,7 +169,9 @@ public sealed class DwarfMinerGame : Game
         var moveAxis = 0;
         if (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left)) moveAxis -= 1;
         if (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right)) moveAxis += 1;
-        var jumpPressed = Pressed(keys, _prevKeys, Keys.Space) || Pressed(keys, _prevKeys, Keys.W) || Pressed(keys, _prevKeys, Keys.Up);
+        // Jump: pass the held state (continuous). Player.Update derives the press edge itself
+        // and uses the held state for variable jump height (hold for full apex, tap for short).
+        var jumpHeld = keys.IsKeyDown(Keys.Space) || keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up);
 
         // Vertical input for fly mode: W/Up = ascend, S/Down = descend along local up.
         var verticalAxis = 0;
@@ -179,7 +181,7 @@ public sealed class DwarfMinerGame : Game
         // G toggles fly mode for world testing.
         if (Pressed(keys, _prevKeys, Keys.G)) _player.FlyMode = !_player.FlyMode;
 
-        _player.Update(dt, _planet, moveAxis, jumpPressed, verticalAxis);
+        _player.Update(dt, _planet, moveAxis, jumpHeld, verticalAxis);
 
         // Camera follows player, rotating so up = away from planet center.
         var up = _planet.UpAt(_player.Position);
