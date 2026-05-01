@@ -342,7 +342,7 @@ public sealed class Titan
                     // radius so each step leaves a small footprint of cracked dirt rather than
                     // a single gouged tile.
                     leg.FootPos = leg.StepTarget;
-                    StompTile(planet, physics, leg.FootPos);
+                    StompTile(planet, physics, cells, leg.FootPos);
                 }
                 else
                 {
