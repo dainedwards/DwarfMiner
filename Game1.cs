@@ -826,9 +826,11 @@ public sealed class DwarfMinerGame : Game
 
         var depth = _planet.Radius - (int)((_player.Position - _planet.Center).Length() / Planet.TileSize);
         var inv = _player.Inventory;
-        var status = $"DEPTH {depth}   COAL {inv.Count("coal")}  IRON {inv.Count("iron")}  GOLD {inv.Count("gold")}  CRYSTAL {inv.Count("crystal")}\nROCKET PARTS {inv.Count("rocket_part")}/5   NUKES {inv.Count("nuke")}   TITAN HP {(int)_titan.Health}/{(int)_titan.MaxHealth}\nMETA: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
+        // Resource counts moved to the right-side panel — keep depth/run-state in this strip.
+        var status = $"DEPTH {depth}   TITAN HP {(int)_titan.Health}/{(int)_titan.MaxHealth}\nMETA: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
         var controls = "WASD/ARROWS MOVE   SPACE JUMP   LMB MINE   Q PLACE   RMB SHOOT   F NUKE   L LAUNCH ROCKET\n1 PICKAXE+   2 CANNON   3 SUPPORT BEAM   4 ROCKET PART   5 NUKE";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _player, (int)_titan.Anger, status, controls);
+        _renderer.DrawInventoryPanel(VirtualWidth, VirtualHeight, inv);
 
         DrawHoverDebugLabel();
 
