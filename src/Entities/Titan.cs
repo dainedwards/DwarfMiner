@@ -360,8 +360,10 @@ public sealed class Titan
     /// <summary>Apply a foot-strike damage footprint at <paramref name="footPos"/>. Center
     /// tile gets the full power; the surrounding 8 tiles get a softer hit. Power scales lightly
     /// with anger so an angry kaiju cracks ground faster. Mine() applies hardness scaling, so
-    /// dirt/grass/snow break in a few stomps while stone/granite only get visible cracks.</summary>
-    private void StompTile(Planet planet, Physics physics, Vector2 footPos)
+    /// dirt/grass/snow break in a few stomps while stone/granite only get visible cracks.
+    /// When a tile actually breaks, falling-cell debris of the appropriate material is spawned
+    /// in its place so the gap fills with tumbling dust rather than a clean hole.</summary>
+    private void StompTile(Planet planet, Physics physics, Cells cells, Vector2 footPos)
     {
         var (fx, fy) = planet.WorldToTile(footPos);
         var centerPower = 3 + (int)(Anger / 35f);   // 3..6
@@ -371,10 +373,20 @@ public sealed class Titan
             for (var dx = -1; dx <= 1; dx++)
             {
                 var x = fx + dx; var y = fy + dy;
-                if (!Tiles.IsSolid(planet.Get(x, y))) continue;
+                var k = planet.Get(x, y);
+                if (!Tiles.IsSolid(k)) continue;
                 var pow = (dx == 0 && dy == 0) ? centerPower : ringPower;
                 var broken = planet.Mine(x, y, pow);
-                if (broken.HasValue) physics.MarkDirty(x, y);
+                if (broken.HasValue)
+                {
+                    physics.MarkDirty(x, y);
+                    // Spawn loose debris in the now-empty tile so the gap fills with tumbling
+                    // cells (dust/sand/gravel/snow) rather than a clean hole. Skips materials
+                    // that have no loose form (e.g., hard stone, ores).
+                    var loose = Materials.LooseFor(broken.Value);
+                    if (loose != Material.Empty)
+                        cells.SpawnInTile(x, y, loose, Cells.Density * Cells.Density / 2);
+                }
             }
         }
     }
