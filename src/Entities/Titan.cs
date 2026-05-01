@@ -312,7 +312,7 @@ public sealed class Titan
     /// lifts and steps to the new anchor along a sin-arc. When a step lands, the tile under the
     /// foot takes damage via Planet.Mine — soft ground cracks visibly each stomp and breaks
     /// after a few; hard rock just gets cosmetic cracks.</summary>
-    private void UpdateLegs(float dt, Planet planet, Physics physics, Vector2 up, Vector2 right, float vTangent)
+    private void UpdateLegs(float dt, Planet planet, Physics physics, Cells cells, Vector2 up, Vector2 right, float vTangent)
     {
         var biasMag = MathHelper.Clamp(vTangent / 80f, -1.4f, 1.4f);
         var motionBias = right * (biasMag * 28f);
