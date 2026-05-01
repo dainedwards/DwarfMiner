@@ -231,9 +231,10 @@ public sealed class Titan
         StompCooldown -= dt;
         HurlCooldown -= dt;
 
-        // Stomp: earthquake centered at the kaiju's standing point. Only when grounded —
-        // a stomp mid-air looks ridiculous and nothing's there to crack.
-        if (StompCooldown <= 0 && Anger > 15f && Grounded)
+        // Stomp: earthquake centered at the kaiju's standing point. Only when aggroed and
+        // grounded — a passive kaiju doesn't pound the ground, and a stomp mid-air looks
+        // ridiculous (nothing's there to crack).
+        if (IsAggro && StompCooldown <= 0 && Anger > 15f && Grounded)
         {
             var quakeRadius = 130f + Anger * 3f;
             var strength = 2 + (int)(Anger / 35f);
@@ -244,8 +245,8 @@ public sealed class Titan
             StompCooldown = MathHelper.Lerp(8f, 2.5f, Anger / 100f);
         }
 
-        // Hurl: lobs a boulder along the line of sight to the player.
-        if (HurlCooldown <= 0 && Anger > 50f)
+        // Hurl: lobs a boulder along the line of sight to the player. Aggro-gated.
+        if (IsAggro && HurlCooldown <= 0 && Anger > 50f)
         {
             var dirToPlayer = playerPos - Position;
             if (dirToPlayer.LengthSquared() > 0.0001f)
