@@ -11,15 +11,37 @@ public sealed class Player
     public Vector2 Velocity;
     public float Radius = 2.6f;            // pixels — short and stout
     public float Health = 100f;
+    public float MaxHealth = 100f;
     public bool Grounded;
 
-    public int PickaxePower = 1;
+    /// <summary>Pickaxe tier 1..4. Drives base mining power and reach. Replaces the older
+    /// <c>PickaxePower</c> int — kept as a tier so future augments can stack on top of a tier
+    /// rather than being confused with raw power. Effective stats live in the
+    /// <c>Effective…</c> getters below; never read this field for gameplay logic, always go
+    /// through the getter so future augment modifiers slot in cleanly.</summary>
+    public int PickaxeTier = 1;
+
+    /// <summary>Tools the player has crafted. Each is a one-time flag; crafting again is a
+    /// no-op. Augments (future) will live in a separate flags struct beside these.</summary>
+    public bool HasDrill;
+    public bool HasHammer;
+    public bool HasLantern;
+    public bool HasArmor;
+    public bool HasCoreDrill;
+
     public float MineRange = 22f;          // pixels — dwarves have short reach
     public float MoveSpeed = 78f;          // shorter legs
     public float JumpSpeed = 150f;
     public float Gravity = 320f;
     public float MineCooldown;
     public float ShootCooldown;
+
+    /// <summary>Last placed Beacon tile, in world coords. Pressing T teleports to it.</summary>
+    public Vector2? BeaconWorld;
+
+    /// <summary>What kind of building gets placed when the player presses E. Cycled with B.
+    /// Stone-class placement still goes through Q (uses any stone variant in inventory).</summary>
+    public BuildKind Build = BuildKind.Support;
 
     /// <summary>Hard cap on downward speed. Prevents tunneling at terminal velocity (a tile is
     /// 8 px and the body radius is ~2.6 px — uncapped, a long fall could move >8 px per frame
