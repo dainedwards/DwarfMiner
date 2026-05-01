@@ -187,7 +187,7 @@ public sealed class Titan
         var vTangent = Vector2.Dot(Velocity, right);
         var vNormal = Vector2.Dot(Velocity, up);
 
-        var targetTangent = moveAxis * MoveSpeed * (1f + Anger / 80f);
+        var targetTangent = moveAxis * MoveSpeed * speedMul * (1f + Anger / 80f);
         var accel = Grounded ? 260f : 100f;
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
 
