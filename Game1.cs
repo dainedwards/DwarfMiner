@@ -326,6 +326,14 @@ public sealed class DwarfMinerGame : Game
             TryCoreDrill();
         }
 
+        // P places a sentry turret at the player's feet (consumes one sentry from inventory).
+        // Sentry is an entity, not a tile, so it lives in _sentries instead of being part of
+        // the build-mode tile picker.
+        if (Pressed(keys, _prevKeys, Keys.P) && _player.Inventory.TryConsume("sentry", 1))
+        {
+            PlaceSentryAtFeet();
+        }
+
         // Launch rocket with L if 5 parts held and player on the surface.
         if (Pressed(keys, _prevKeys, Keys.L)) TryLaunchRocket();
 
