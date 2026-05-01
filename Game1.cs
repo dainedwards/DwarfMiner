@@ -803,7 +803,33 @@ public sealed class DwarfMinerGame : Game
 
         if (_gameOver) DrawGameOverOverlay();
 
+        if (_screenshotPending)
+        {
+            _screenshotPending = false;
+            SaveScreenshot();
+        }
+
         base.Draw(gameTime);
+    }
+
+    private void SaveScreenshot()
+    {
+        var pp = GraphicsDevice.PresentationParameters;
+        var w = pp.BackBufferWidth;
+        var h = pp.BackBufferHeight;
+        var data = new Color[w * h];
+        GraphicsDevice.GetBackBufferData(data);
+
+        var dir = Path.Combine(AppContext.BaseDirectory, "screenshots");
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, $"screenshot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
+
+        using var tex = new Texture2D(GraphicsDevice, w, h);
+        tex.SetData(data);
+        using var fs = File.Create(path);
+        tex.SaveAsPng(fs, w, h);
+
+        Console.WriteLine($"[screenshot] {path}");
     }
 
     private void DrawGameOverOverlay()
