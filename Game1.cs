@@ -228,6 +228,21 @@ public sealed class DwarfMinerGame : Game
         // Mining (left-click held) and shooting (right-click).
         if (mouse.LeftButton == ButtonState.Pressed)
         {
+            // Drill chip-stream feedback: emit a sparking jet from the cursor every frame the
+            // mining button is held. Done before TryMine so it fires during the cooldown
+            // (continuous swing feel) but only when the player owns the drill.
+            if (_player.HasDrill && !_player.FlyMode)
+            {
+                var (ctx, cty) = _planet.WorldToTile(worldCursor);
+                if (_planet.Get(ctx, cty) != TileKind.Sky)
+                {
+                    var tilePos = _planet.TileToWorld(ctx, cty);
+                    var dir = tilePos - _player.Position;
+                    if (dir.LengthSquared() > 0.001f) dir.Normalize();
+                    _particles.EmitDrillChips(tilePos, dir, _planet.Get(ctx, cty));
+                }
+            }
+
             var broken = _player.TryMine(_planet, _physics, worldCursor);
             if (broken is { } bk)
             {
@@ -235,7 +250,17 @@ public sealed class DwarfMinerGame : Game
                 var depth = _planet.Radius - (int)((_player.Position - _planet.Center).Length() / Planet.TileSize);
                 if (depth > _meta.DeepestDepth) _meta.DeepestDepth = depth;
                 var (btx, bty) = _planet.WorldToTile(worldCursor);
-                _particles.EmitChips(_planet.TileToWorld(btx, bty), bk);
+                // Hammer breaks land with a heavy shard burst + screen shake; ordinary picks
+                // get the standard chip puff. Reads as "hammer hits feel weighty".
+                if (_player.HasHammer && Tiles.Hardness(bk) >= 4)
+                {
+                    _particles.EmitHammerImpact(_planet.TileToWorld(btx, bty), bk);
+                    _shake = MathF.Max(_shake, 0.4f);
+                }
+                else
+                {
+                    _particles.EmitChips(_planet.TileToWorld(btx, bty), bk);
+                }
                 // Every broken tile crumbles into a pile of dust tagged with the source kind —
                 // the player picks that dust up by walking through it (collected each frame in
                 // the cells.CollectInRadius pass below).
