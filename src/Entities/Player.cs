@@ -37,11 +37,13 @@ public sealed class Player
     private const float JumpReleaseGravityMul = 2.4f;
 
     /// <summary>Max upward step the player will auto-climb in one frame. World-gen makes the
-    /// surface bumpy (±1.5 tiles of noise), so adjacent surface tiles can sit on different
-    /// rings — without auto-step the player snags on every minor 1-tile bump and has to jump.
-    /// Budget is per-frame so the climb rate is decoupled from substep count.</summary>
-    private const float StepClimbHeight = 7.5f;            // ≈ 1 tile (TileSize=8) — clears one-tile surface bumps
-    private const float StepClimbBudgetPerFrame = 4.0f;    // px/frame → ~240 px/s vertical when continuously climbing
+    /// surface bumpy (±1.5 tiles of noise), so adjacent surface tiles sit on different
+    /// rings — without auto-step the player snags on every 1-tile surface bump and has to
+    /// jump. Sized so a one-tile step clears in a single ResolveCollision lift (no residual
+    /// horizontal push that would shave tangential velocity). Bigger steps (≥ 2 tiles) still
+    /// require a real jump.</summary>
+    private const float StepClimbHeight = 9.0f;            // a bit over 1 tile (TileSize=8) — clears one-tile bumps cleanly
+    private const float StepClimbBudgetPerFrame = 9.0f;    // ≈ one step per frame → ~540 px/s when continuously climbing slopes
 
     private bool _jumpHeldPrev;       // for edge detection inside Update
     private float _coyoteTimer;       // counts down from CoyoteTime after leaving ground
