@@ -30,6 +30,15 @@ public sealed class Creature
         var up = planet.UpAt(Position);
         var right = new Vector2(-up.Y, up.X);
 
+        // Status effect tick: burn drains HP per-second; freeze halves move speed.
+        if (BurnSeconds > 0f)
+        {
+            Health -= 3f * dt;
+            BurnSeconds -= dt;
+        }
+        if (FreezeSeconds > 0f) FreezeSeconds -= dt;
+        var speedMul = FreezeSeconds > 0f ? 0.5f : 1.0f;
+
         var toPlayer = player.Position - Position;
         var dist = toPlayer.Length();
 
@@ -51,7 +60,7 @@ public sealed class Creature
 
         var vT = Vector2.Dot(Velocity, right);
         var vN = Vector2.Dot(Velocity, up);
-        vT = MoveToward(vT, moveAxis * MoveSpeed, 400f * dt);
+        vT = MoveToward(vT, moveAxis * MoveSpeed * speedMul, 400f * dt);
         vN -= 320f * dt;
         Velocity = right * vT + up * vN;
 
