@@ -109,6 +109,47 @@ public static class Tiles
         _ => Color.White,
     };
 
+    /// <summary>
+    /// Display order for the inventory panel — rare/expensive resources at the top, bulk
+    /// materials at the bottom. Drives both the row order and which ids count as "known"
+    /// resources to render even at zero. Anything not listed still appears at the end.
+    /// </summary>
+    public static readonly string[] ResourceOrder =
+    {
+        "diamond", "ruby", "sapphire", "platinum", "gold", "silver",
+        "crystal", "iron", "coal",
+        "nuke", "rocket_part",
+        "stone", "dirt", "snow",
+    };
+
+    /// <summary>Display swatch colour for a resource id. Pulls from the source tile's BaseColor
+    /// where there's a clean 1:1 mapping; specials (rocket_part, nuke) use bespoke tints.</summary>
+    public static Color ResourceColor(string id) => id switch
+    {
+        "dirt"        => BaseColor(TileKind.Dirt),
+        "stone"       => BaseColor(TileKind.Stone),
+        "snow"        => BaseColor(TileKind.Snow),
+        "coal"        => BaseColor(TileKind.CoalOre),
+        "iron"        => BaseColor(TileKind.IronOre),
+        "silver"      => BaseColor(TileKind.SilverOre),
+        "gold"        => BaseColor(TileKind.GoldOre),
+        "platinum"    => BaseColor(TileKind.PlatinumOre),
+        "ruby"        => BaseColor(TileKind.Ruby),
+        "sapphire"    => BaseColor(TileKind.Sapphire),
+        "diamond"     => BaseColor(TileKind.Diamond),
+        "crystal"     => BaseColor(TileKind.Crystal),
+        "rocket_part" => new Color(190, 200, 220),
+        "nuke"        => new Color(255, 80, 200),
+        _             => Color.White,
+    };
+
+    /// <summary>HUD label for a resource id — uppercase, with underscores → spaces.</summary>
+    public static string ResourceLabel(string id) => id switch
+    {
+        "rocket_part" => "ROCKET PART",
+        _             => id.ToUpperInvariant(),
+    };
+
     // Loot dropped when mined (item id, count). Returns null for nothing.
     public static (string id, int count)? Drop(TileKind k) => k switch
     {
