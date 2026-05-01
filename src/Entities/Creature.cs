@@ -73,7 +73,7 @@ public sealed class Creature
         var diff = player.Position - Position;
         if (diff.Length() < Radius + player.Radius)
         {
-            player.Health -= ContactDamage * dt;
+            player.TakeDamage(ContactDamage * dt);
             // Knockback.
             if (diff.LengthSquared() > 0.0001f)
             {
