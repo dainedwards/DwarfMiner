@@ -6,10 +6,11 @@ using Microsoft.Xna.Framework;
 namespace DwarfMiner.Entities;
 
 /// <summary>
-/// Hulking biped that lumbers across the planet's surface. Obeys gravity and tile
-/// collision exactly like the player — gets stuck on walls and hops, falls into pits
-/// the player has dug out from underneath. Anger rises with player depth, unlocking
-/// stomp earthquakes and ranged boulder hurls.
+/// Hulking six-legged creature that scuttles across the planet's surface. Body obeys
+/// gravity and tile collision; legs are procedural — each one probes the terrain for a
+/// foot anchor and steps when the body drifts too far from it. Hip-to-foot distance is
+/// not constrained, so legs visibly stretch over mountains and compress on flat ground.
+/// Anger rises with player depth, unlocking stomp earthquakes and ranged boulder hurls.
 /// </summary>
 public sealed class Titan
 {
@@ -27,7 +28,9 @@ public sealed class Titan
     public float HurlCooldown = 6f;
     public float JumpCooldown;
     public bool Grounded;
-    public float WalkPhase;           // animates the leg swing for the renderer
+    public float Facing = 1f;         // smoothed -1..+1; which way the head points along the local tangent
+    public float Pulse;               // body breathing/anger pulsation (radians, advanced each tick)
+    public TitanLeg[] Legs = null!;   // 6 procedural legs; foot positions are world-space, hips are body-local
 
     private readonly Planet _planet;
 
@@ -35,6 +38,33 @@ public sealed class Titan
     {
         _planet = planet;
         Position = FindSurfaceSpawn(planet, startAngle);
+        InitLegs();
+    }
+
+    private void InitLegs()
+    {
+        // 3 legs per side, fanned forward/back along the body's tangent axis.
+        // Phase staggers the per-leg step threshold so they don't all lift at once.
+        Legs = new[]
+        {
+            new TitanLeg { HipForward = -55f, Side = -1, Phase = 0.10f, HipUp = 14f },
+            new TitanLeg { HipForward =   0f, Side = -1, Phase = 0.55f, HipUp = 18f },
+            new TitanLeg { HipForward = +55f, Side = -1, Phase = 0.30f, HipUp = 14f },
+            new TitanLeg { HipForward = -55f, Side = +1, Phase = 0.65f, HipUp = 14f },
+            new TitanLeg { HipForward =   0f, Side = +1, Phase = 0.20f, HipUp = 18f },
+            new TitanLeg { HipForward = +55f, Side = +1, Phase = 0.85f, HipUp = 14f },
+        };
+
+        // Seed each foot at its first ideal anchor so the legs render correctly on frame 1.
+        var up = _planet.UpAt(Position);
+        var right = new Vector2(-up.Y, up.X);
+        foreach (var leg in Legs)
+        {
+            leg.FootPos = ResolveFootAnchor(leg, up, right, Vector2.Zero);
+            leg.StepStart = leg.FootPos;
+            leg.StepTarget = leg.FootPos;
+            leg.StepT = 1f;
+        }
     }
 
     private static Vector2 FindSurfaceSpawn(Planet planet, float angle)
