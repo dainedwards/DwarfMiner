@@ -273,23 +273,57 @@ public sealed class DwarfMinerGame : Game
             FireWeapon(worldCursor);
         }
 
-        // Held Q places a block from inventory at the cursor (sky tile, in mining range).
+        // Held Q places a stone-class block from inventory at the cursor.
         if (keys.IsKeyDown(Keys.Q))
         {
             _player.TryPlace(_planet, _physics, worldCursor);
         }
 
-        // Crafting hotkeys.
-        if (Pressed(keys, _prevKeys, Keys.D1)) TryCraft("pickaxe_ii", () => _player.PickaxePower++);
-        if (Pressed(keys, _prevKeys, Keys.D2)) TryCraft("cannon", () => _hasCannon = true);
-        if (Pressed(keys, _prevKeys, Keys.D3)) TryCraft("support", () => PlaceSupportAtFeet());
-        if (Pressed(keys, _prevKeys, Keys.D4)) TryCraft("rocket_part", () => { /* counted via inventory["rocket_part"] */ });
-        if (Pressed(keys, _prevKeys, Keys.D5)) TryCraft("nuke", () => { /* nuke held in inventory */ });
+        // E places the currently-selected build item (cycled with B). Held so you can
+        // sweep ladders/rails along a line by sliding the cursor.
+        if (keys.IsKeyDown(Keys.E))
+        {
+            _player.TryPlaceBuild(_planet, _physics, worldCursor);
+        }
 
-        // Fire nuke with F (consumes one).
+        // B cycles the build mode (Support → Reinforced → Ladder → Rail → Glowshroom → Beacon).
+        if (Pressed(keys, _prevKeys, Keys.B)) _player.Build = _player.Build.Cycle();
+
+        // H consumes one poultice for an instant +30 HP.
+        if (Pressed(keys, _prevKeys, Keys.H) && _player.Inventory.TryConsume("poultice", 1))
+        {
+            UseHealPotion();
+        }
+
+        // Z throws a dynamite stick at the cursor — arcs under gravity, fuses out, big AoE.
+        if (Pressed(keys, _prevKeys, Keys.Z) && _player.Inventory.TryConsume("dynamite", 1))
+        {
+            FireDynamite(worldCursor);
+        }
+
+        // Y fires the anti-Titan harpoon — punches through walls and creatures.
+        if (Pressed(keys, _prevKeys, Keys.Y) && _player.Inventory.TryConsume("harpoon", 1))
+        {
+            FireHarpoon(worldCursor);
+        }
+
+        // T recalls the player to the most recently placed Beacon. Costs nothing — the
+        // beacon itself was the spend. Brief flash + sparkles to sell the teleport.
+        if (Pressed(keys, _prevKeys, Keys.T) && _player.BeaconWorld is { } bp)
+        {
+            BeaconRecall(bp);
+        }
+
+        // F fires a nuke — biggest one-shot weapon, breaks anchored tiles too.
         if (Pressed(keys, _prevKeys, Keys.F) && _player.Inventory.TryConsume("nuke", 1))
         {
             FireNuke(worldCursor);
+        }
+
+        // X uses the core drill: blasts the Core tile if standing right next to it.
+        if (Pressed(keys, _prevKeys, Keys.X) && _player.HasCoreDrill)
+        {
+            TryCoreDrill();
         }
 
         // Launch rocket with L if 5 parts held and player on the surface.
