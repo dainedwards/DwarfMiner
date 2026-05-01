@@ -73,15 +73,16 @@ public sealed class Physics
             var k = _planet.Get(x, y);
             if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
 
-            // Loose ground: cardinal-down (= inward radial in polar) empty → crumble to cells.
-            var loose = Materials.LooseFor(k);
-            if (loose != Material.Empty)
+            // Loose ground: cardinal-down (= inward radial in polar) empty → crumble to dust
+            // tagged with the original tile kind so it falls in the right colour and pays out
+            // that tile's drop when the player walks through it.
+            if (Materials.IsLoose(k))
             {
                 var (inX, inY) = _planet.InnerNeighbour(x, y);
                 if (!Tiles.IsSolid(_planet.Get(inX, inY)))
                 {
                     _planet.Set(x, y, TileKind.Sky);
-                    _cells.SpawnInTile(x, y, loose, Cells.Density * Cells.Density / 2);
+                    _cells.SpawnDustInTile(x, y, k);
                     CollapsesThisTick++;
                     MarkDirty(x, y);
                 }
