@@ -386,6 +386,68 @@ public sealed class Cells
         }
     }
 
+    /// <summary>
+    /// Sweep all dust cells within a world-space radius into the dust accumulator and return any
+    /// whole resource units that have built up. Each collected cell adds drop.count /
+    /// DustCellsPerTile worth of fractional resource per its source TileKind; the accumulator
+    /// rolls over to integer increments which are returned and added to the player's inventory by
+    /// the caller. Cells with no drop (Sky/Core source) are simply removed without accumulation.
+    /// Returns null when nothing was collected this call.
+    /// </summary>
+    public Dictionary<string, int>? CollectInRadius(Vector2 worldPos, float radius)
+    {
+        var rSq = radius * radius;
+        var (_, cy0) = WorldToCell(worldPos);
+        var radial = (float)Planet.TileSize / Density;
+        var rRows = (int)MathF.Ceiling(radius / radial) + 1;
+        var rel = worldPos - Planet.Center;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
+        var any = false;
+        for (var dy = -rRows; dy <= rRows; dy++)
+        {
+            var cy = cy0 + dy;
+            if (cy < 0 || cy >= Height) continue;
+            var n = _cellsAt[cy];
+            var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
+            var chord = MathHelper.TwoPi * ringRadius / n;
+            var rCols = (int)MathF.Ceiling(radius / MathF.Max(chord, 0.01f)) + 1;
+            var cx0 = (int)(ang / MathHelper.TwoPi * n);
+            for (var dx = -rCols; dx <= rCols; dx++)
+            {
+                var cx = cx0 + dx;
+                var idx = Idx(cx, cy);
+                if ((Material)_mat[idx] != Material.Dust) continue;
+                if (Vector2.DistanceSquared(CellToWorld(cx, cy), worldPos) > rSq) continue;
+                var src = (TileKind)_srcTile[idx];
+                var drop = Tiles.Drop(src);
+                if (drop is { } d)
+                {
+                    _dustAccum.TryGetValue(d.id, out var existing);
+                    _dustAccum[d.id] = existing + (float)d.count / DustCellsPerTile;
+                }
+                _mat[idx] = 0;
+                _srcTile[idx] = 0;
+                _living.Remove(idx);
+                any = true;
+            }
+        }
+        if (!any) return null;
+        Dictionary<string, int>? result = null;
+        // Snapshot keys so we can mutate values during iteration.
+        var keys = new List<string>(_dustAccum.Keys);
+        foreach (var id in keys)
+        {
+            var val = _dustAccum[id];
+            var whole = (int)MathF.Floor(val);
+            if (whole <= 0) continue;
+            result ??= new Dictionary<string, int>();
+            result[id] = whole;
+            _dustAccum[id] = val - whole;
+        }
+        return result;
+    }
+
     public void Draw(Renderer r)
     {
         var radial = (float)Planet.TileSize / Density;
