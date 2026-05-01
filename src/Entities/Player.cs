@@ -111,10 +111,13 @@ public sealed class Player
         var accel = Grounded ? 900f : 320f;   // snappier ground accel; tighter air control
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
 
-        // Variable jump height: extra gravity while ascending unless jump is still held. Lets
-        // the player tap-jump a short hop or hold-jump for the full arc.
+        // Variable jump height: extra gravity while ascending unless jump is still held. Only
+        // engages while airborne — otherwise planet curvature (the player's velocity rotates
+        // relative to the local up axis as they walk along the curved surface) makes vNormal
+        // become tiny-positive every frame during walking, triggering the gravity multiplier
+        // and producing a visible vertical jitter.
         var grav = Gravity;
-        if (vNormal > 0f && !jumpHeld) grav = Gravity * JumpReleaseGravityMul;
+        if (vNormal > 0f && !jumpHeld && !Grounded) grav = Gravity * JumpReleaseGravityMul;
         vNormal -= grav * dt;
         // Cap fall speed — see MaxFallSpeed comment for why this is essential.
         if (vNormal < -MaxFallSpeed) vNormal = -MaxFallSpeed;
