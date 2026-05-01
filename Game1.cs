@@ -1164,17 +1164,38 @@ public sealed class DwarfMinerGame : Game
             }
         }
 
-        // Projectiles in flight glow by kind.
+        // Projectiles in flight glow by kind. Special-ammo glows match their element so the
+        // player can see at a glance which shell is in flight — ruby = warm orange, sapphire =
+        // cool cyan, diamond = bright white, harpoon = warm metallic, dynamite = orange fuse.
         foreach (var p in _projectiles)
         {
             var (col, r) = p.Kind switch
             {
-                ProjectileKind.Bullet => (new Color(255, 220, 110), 8f),
-                ProjectileKind.Cannon => (new Color(255, 130, 50),  16f),
-                ProjectileKind.Nuke   => (new Color(255, 80, 220),  28f),
+                ProjectileKind.Bullet         => (new Color(255, 220, 110), 8f),
+                ProjectileKind.Cannon         => (new Color(255, 130, 50),  16f),
+                ProjectileKind.Nuke           => (new Color(255, 80, 220),  28f),
+                ProjectileKind.CannonSilver   => (new Color(220, 230, 255), 14f),
+                ProjectileKind.CannonRuby     => (new Color(255, 110, 80),  20f),
+                ProjectileKind.CannonSapphire => (new Color(140, 200, 255), 20f),
+                ProjectileKind.CannonDiamond  => (new Color(230, 245, 255), 26f),
+                ProjectileKind.Dynamite       => (new Color(255, 180, 80),  10f),
+                ProjectileKind.Harpoon        => (new Color(255, 200, 130), 14f),
                 _ => (Color.White, 6f),
             };
             _renderer.AddLight(p.Position, r, col);
+        }
+
+        // Sentry muzzle glow: a small pre-flash that ramps with cooldown — about-to-fire
+        // turrets pulse, idle ones are nearly dark. Helps the player see active overwatch in
+        // a dim cave at a glance.
+        foreach (var s in _sentries)
+        {
+            var ready = MathHelper.Clamp(1f - s.Cooldown / Sentry.FireRate, 0f, 1f);
+            if (ready > 0.05f)
+            {
+                var dir = new Vector2(MathF.Cos(s.Aim), MathF.Sin(s.Aim));
+                _renderer.AddLight(s.Position + dir * 9f, 4f + 6f * ready, new Color(255, 200, 120));
+            }
         }
 
         // Kaiju eyes: gold → red as anger climbs. Two sockets, both lit. Position must mirror
