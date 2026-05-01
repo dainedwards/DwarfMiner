@@ -444,6 +444,172 @@ public sealed class DwarfMinerGame : Game
         base.Update(gameTime);
     }
 
+    /// <summary>Dispatch the currently-selected toolbelt slot to its in-world action. This
+    /// is the single mapping table from slot id → behaviour, called every frame LMB is held
+    /// (most slots are continuous: mining drills, sweeping ladders, etc.). Stackable
+    /// consumables short-circuit if their inventory is empty.</summary>
+    private void UseSelectedSlot(Vector2 worldCursor)
+    {
+        var id = _player.Toolbelt.Current;
+        if (id is null) return;
+
+        switch (id)
+        {
+            case "pickaxe": DoMine(worldCursor, MiningTool.Pickaxe); break;
+            case "drill":   if (_player.HasDrill)  DoMine(worldCursor, MiningTool.Drill); break;
+            case "hammer":  if (_player.HasHammer) DoMine(worldCursor, MiningTool.Hammer); break;
+            case "bullets": if (_player.ShootCooldown <= 0) FireBullet(worldCursor); break;
+            case "cannon":  if (_hasCannon && _player.ShootCooldown <= 0) FireCannon(worldCursor); break;
+            case "blocks":  _player.TryPlace(_planet, _physics, worldCursor); break;
+            case "nuke":      if (_player.Inventory.TryConsume("nuke", 1))     FireNuke(worldCursor); break;
+            case "harpoon":   if (_player.Inventory.TryConsume("harpoon", 1))  FireHarpoon(worldCursor); break;
+            case "dynamite":  if (_player.Inventory.TryConsume("dynamite", 1)) FireDynamite(worldCursor); break;
+            case "poultice":  if (_player.Inventory.TryConsume("poultice", 1)) UseHealPotion(); break;
+            case "core_drill": if (_player.HasCoreDrill) TryCoreDrill(); break;
+            case "sentry":    if (_player.Inventory.TryConsume("sentry", 1))   PlaceSentryAtFeet(); break;
+            // Placeable build tiles — go through Player.TryPlaceBuildId so the passable / range
+            // / inventory rules stay in one place.
+            case "support":
+            case "reinforced_support":
+            case "ladder":
+            case "rail":
+            case "glowshroom":
+            case "beacon":
+                _player.TryPlaceBuildId(_planet, _physics, worldCursor, id);
+                break;
+        }
+    }
+
+    /// <summary>Mining wrapper for UseSelectedSlot — handles the per-tool chip / hammer-shard /
+    /// drill-jet effects that used to live inline in Update. Pulled out so the dispatcher
+    /// stays one-liner-per-case.</summary>
+    private void DoMine(Vector2 worldCursor, MiningTool tool)
+    {
+        // Continuous drill chip-stream every frame the drill is held — fires during cooldown
+        // so the swing reads as continuous.
+        if (tool == MiningTool.Drill && !_player.FlyMode)
+        {
+            var (ctx, cty) = _planet.WorldToTile(worldCursor);
+            if (_planet.Get(ctx, cty) != TileKind.Sky)
+            {
+                var tilePos = _planet.TileToWorld(ctx, cty);
+                var dir = tilePos - _player.Position;
+                if (dir.LengthSquared() > 0.001f) dir.Normalize();
+                _particles.EmitDrillChips(tilePos, dir, _planet.Get(ctx, cty));
+            }
+        }
+
+        var broken = _player.TryMine(_planet, _physics, worldCursor, tool);
+        if (broken is { } bk)
+        {
+            if (Tiles.Drop(bk) is not null) _meta.TotalOreMined++;
+            var depth = _planet.Radius - (int)((_player.Position - _planet.Center).Length() / Planet.TileSize);
+            if (depth > _meta.DeepestDepth) _meta.DeepestDepth = depth;
+            var (btx, bty) = _planet.WorldToTile(worldCursor);
+            if (tool == MiningTool.Hammer && Tiles.Hardness(bk) >= 4)
+            {
+                _particles.EmitHammerImpact(_planet.TileToWorld(btx, bty), bk);
+                _shake = MathF.Max(_shake, 0.4f);
+            }
+            else
+            {
+                _particles.EmitChips(_planet.TileToWorld(btx, bty), bk);
+            }
+            _cells.SpawnDustInTile(btx, bty, bk);
+        }
+    }
+
+    /// <summary>Drag-and-drop UI handler. Returns true iff the click landed on a UI element
+    /// (so the world doesn't also receive it as an LMB world-action this frame). Click on
+    /// inventory/toolbelt → pick up; click on toolbelt slot while carrying → drop. Right-click
+    /// a toolbelt slot → unequip back to inventory (stackables only). Click outside any UI
+    /// while carrying → cancel.</summary>
+    private bool HandleInventoryUi(Vector2 screenPos, bool lmbPressed, bool rmbPressed)
+    {
+        if (!lmbPressed && !rmbPressed) return false;
+
+        // RMB on a toolbelt slot: unequip stackable items back to inventory. Permanent slots
+        // stay put — there's nowhere else for them to live.
+        if (rmbPressed)
+        {
+            for (var s = 0; s < Toolbelt.SlotCount; s++)
+            {
+                if (!_toolbeltHitTest[s].Contains((int)screenPos.X, (int)screenPos.Y)) continue;
+                var id = _player.Toolbelt.Slots[s];
+                if (id is null) return true;
+                if (Toolbelt.IsPermanent(id)) return true;
+                _player.Toolbelt.Slots[s] = null;
+                return true;
+            }
+            return false;
+        }
+
+        // LMB: pick-up vs. drop based on whether we're already carrying.
+        if (_carry is null)
+        {
+            // Check toolbelt first — easier to hit precisely.
+            for (var s = 0; s < Toolbelt.SlotCount; s++)
+            {
+                if (!_toolbeltHitTest[s].Contains((int)screenPos.X, (int)screenPos.Y)) continue;
+                var id = _player.Toolbelt.Slots[s];
+                // Clicking an empty slot, or a slot of the active intrinsic, just selects it.
+                if (id is null || Toolbelt.IsPermanent(id))
+                {
+                    _player.Toolbelt.Selected = s;
+                    return true;
+                }
+                _carry = (id, s);
+                _player.Toolbelt.Slots[s] = null;
+                return true;
+            }
+            // Then inventory rows.
+            foreach (var (id, rect) in _invHitTest)
+            {
+                if (rect.Contains((int)screenPos.X, (int)screenPos.Y))
+                {
+                    _carry = (id, -1);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Carrying — try to drop.
+        var carry = _carry.Value;
+        for (var s = 0; s < Toolbelt.SlotCount; s++)
+        {
+            if (!_toolbeltHitTest[s].Contains((int)screenPos.X, (int)screenPos.Y)) continue;
+            var prev = _player.Toolbelt.Slots[s];
+            _player.Toolbelt.Slots[s] = carry.Id;
+            // If the destination held something else, send it back to where the carried item
+            // came from (toolbelt swap) — or, if the carry was from the inventory, send the
+            // displaced thing to the first empty slot (or back to inventory if nothing free).
+            if (prev is not null)
+            {
+                if (carry.FromSlot >= 0)
+                {
+                    _player.Toolbelt.Slots[carry.FromSlot] = prev;
+                }
+                else
+                {
+                    var empty = _player.Toolbelt.FirstEmpty();
+                    if (empty >= 0) _player.Toolbelt.Slots[empty] = prev;
+                    // Permanent + no empty slot → just drop on floor (lost). Won't realistically
+                    // happen since intrinsics are pre-seeded and stackable swaps return to
+                    // inventory automatically (they live there).
+                }
+            }
+            _player.Toolbelt.Selected = s;
+            _carry = null;
+            return true;
+        }
+        // Drop outside the toolbelt → cancel: put the carried item back where it came from.
+        if (carry.FromSlot >= 0) _player.Toolbelt.Slots[carry.FromSlot] = carry.Id;
+        // (If from inventory, the inventory still has the count — pickup was non-destructive.)
+        _carry = null;
+        return true;
+    }
+
     /// <summary>Right-click weapon fire. With the cannon, consumes the highest-tier shell
     /// in inventory before falling back to the regular cannon round; without the cannon,
     /// fires plain bullets. Each shell variant has its own <see cref="ProjectileKind"/>.</summary>
