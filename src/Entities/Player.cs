@@ -238,25 +238,28 @@ public sealed class Player
                     {
                         var dist = MathF.Sqrt(distSq);
 
-                        // Step-climb: contact is wall-like (mostly tangential) and the player
-                        // is grounded and the tile's top is reachable in ≤ StepClimbHeight.
-                        // pLocalY < halfY confirms we're approaching from below the tile's top.
+                        // Step-climb: contact is wall-like (mostly tangential, not pushing
+                        // sharply downward — that would mean a ceiling), the player is
+                        // grounded, and the tile's top is reachable in ≤ StepClimbHeight.
+                        // pLocalY < halfY confirms we're approaching from below the tile top
+                        // (otherwise we're already past it and shouldn't lift further).
+                        // Lift size is the full clearance (top edge + Radius + margin) so
+                        // the post-lift position is OUT of the tile entirely — no residual
+                        // standard-push afterwards that would chew into tangential velocity.
                         var nLocalX = diffX / dist;
                         var nLocalY = diffY / dist;
                         if (Grounded
                             && MathF.Abs(nLocalX) > 0.6f
-                            && nLocalY < 0.6f
-                            && pLocalY < halfY
-                            && _stepClimbBudget > 0f)
+                            && nLocalY > -0.3f
+                            && pLocalY < halfY)
                         {
-                            var liftToClear = (halfY - pLocalY) + Radius * 0.4f;
-                            if (liftToClear <= StepClimbHeight)
+                            var liftToClear = (halfY - pLocalY) + Radius + 0.1f;
+                            if (liftToClear <= StepClimbHeight && liftToClear <= _stepClimbBudget)
                             {
-                                var lift = MathF.Min(liftToClear, _stepClimbBudget);
-                                Position += up * lift;
-                                _stepClimbBudget -= lift;
+                                Position += up * liftToClear;
+                                _stepClimbBudget -= liftToClear;
                                 pushed = true;
-                                continue;   // re-evaluate this tile next outer iter
+                                continue;   // re-evaluate this tile in the next outer iter
                             }
                         }
 
