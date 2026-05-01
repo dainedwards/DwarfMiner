@@ -15,6 +15,14 @@ public sealed class Creature
     public float HitFlash;
     public float Wander;
 
+    /// <summary>Burning debuff. While > 0, ticks ~3 HP per second and emits ember light. Set
+    /// by ruby cannon shells / incendiary hits. Decays linearly with dt.</summary>
+    public float BurnSeconds;
+
+    /// <summary>Freezing debuff. While > 0, MoveSpeed is halved and the creature is rendered
+    /// with a pale-blue tint. Set by sapphire cannon shells.</summary>
+    public float FreezeSeconds;
+
     public Creature(Vector2 pos) { Position = pos; }
 
     public void Update(float dt, Planet planet, Player player)
