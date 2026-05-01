@@ -441,7 +441,7 @@ public sealed class Cells
         }
     }
 
-    private Color ColorFor(Material m, int cx, int cy)
+    private Color ColorFor(Material m, int cx, int cy, byte srcByte)
     {
         var hash = (cx * 73856093) ^ (cy * 19349663);
         var jitter = ((hash >> 4) & 31) - 16;
@@ -463,6 +463,18 @@ public sealed class Cells
             }
             case Material.Dirt:    return Tint(new Color(115, 75, 42), jitter / 3);
             case Material.Gravel:  return Tint(new Color(125, 120, 110), jitter / 3);
+            case Material.Dust:
+            {
+                // Lighten the source tile's base colour so dust reads as granular crumb rather
+                // than a tile facsimile. Sky source (= no tag) falls back to a generic sand tone.
+                var src = (TileKind)srcByte;
+                var b = src == TileKind.Sky ? new Color(190, 158, 92) : Tiles.BaseColor(src);
+                var lit = new Color(
+                    Math.Min(255, b.R + 24),
+                    Math.Min(255, b.G + 24),
+                    Math.Min(255, b.B + 24));
+                return Tint(lit, jitter / 3);
+            }
             default: return Color.Magenta;
         }
     }
