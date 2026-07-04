@@ -1284,11 +1284,23 @@ public sealed class DwarfMinerGame : Game
         for (var i = 0; i < 10; i++) TrySpawnCreature();
     }
 
+    /// <summary>Angle a few hundred px along the surface from the player — fauna spawns in
+    /// the player's neighbourhood (just off-screen), not at a random point on the planet.</summary>
+    private float NearbySurfaceAngle(float minArc, float maxArc)
+    {
+        var rel = _player.Position - _planet.Center;
+        var playerAng = MathF.Atan2(rel.Y, rel.X);
+        var surfaceRadius = MathF.Max(rel.Length(), Planet.RingMin * Planet.TileSize);
+        var arc = minArc + (float)Random.Shared.NextDouble() * (maxArc - minArc);
+        var sign = Random.Shared.Next(2) == 0 ? 1f : -1f;
+        return playerAng + sign * (arc / surfaceRadius);
+    }
+
     private void TrySpawnSurfaceAnimal()
     {
-        var angle = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
+        var angle = NearbySurfaceAngle(220f, 550f);
         var pos = FindSurfaceSpawn(angle, _planet.Radius);
-        if ((pos - _player.Position).Length() < 80f) return; // don't pop in on-screen
+        if ((pos - _player.Position).Length() < 160f) return; // don't pop in on-screen
         var kind = Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper;
         var c = new Creature(pos, kind);
         ClearSpawnSpace(pos, c.Radius);
@@ -1297,7 +1309,7 @@ public sealed class DwarfMinerGame : Game
 
     private void TrySpawnSkyAnimal()
     {
-        var angle = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
+        var angle = NearbySurfaceAngle(220f, 550f);
         var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
         var ground = FindSurfaceSpawn(angle, _planet.Radius);
         // 60–200 px above the local terrain, capped inside the tile grid so the flyer's
@@ -1305,6 +1317,7 @@ public sealed class DwarfMinerGame : Game
         var alt = (ground - _planet.Center).Length() + 60f + (float)Random.Shared.NextDouble() * 140f;
         alt = MathF.Min(alt, (_planet.Radius - 6) * Planet.TileSize);
         var pos = _planet.Center + dir * alt;
+        if ((pos - _player.Position).Length() < 160f) return;
         var kind = Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth : CreatureKind.SkyStinger;
         var c = new Creature(pos, kind);
         ClearSpawnSpace(pos, c.Radius); // altitude is above local ground, but a mountain flank can still clip the band
