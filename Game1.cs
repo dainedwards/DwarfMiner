@@ -1151,22 +1151,87 @@ public sealed class DwarfMinerGame : Game
         return _planet.Center + dir * ((radius + 12) * Planet.TileSize);
     }
 
+    private int CountKinds(bool cave = false, bool surface = false, bool sky = false)
+    {
+        var n = 0;
+        foreach (var c in _creatures)
+            if ((cave && c.IsCaveKind) || (surface && c.IsSurfaceKind) || (sky && c.IsSkyKind))
+                n++;
+        return n;
+    }
+
     private void TrySpawnCreature()
     {
-        // Pick a random polar tile (ring, angle) that is sky (cave) and far enough from surface.
+        // Pick a random polar tile (ring, angle) that is a cave — Sky foreground with a rock
+        // wall behind it, so we never seed cave dwellers floating in the open air above ground.
         for (var attempt = 0; attempt < 30; attempt++)
         {
             var r = Random.Shared.Next(Planet.RingCount);
             var t = Random.Shared.Next(Planet.TilesAt(r));
             if (_planet.Get(r, t) != TileKind.Sky) continue;
+            if (_planet.GetWall(r, t) == TileKind.Sky) continue;
             var pos = _planet.TileToWorld(r, t);
-            var fromCenter = (pos - _planet.Center).Length();
-            var surface = _planet.Radius * Planet.TileSize;
-            if (fromCenter > surface - Planet.TileSize * 8f) continue;
             if ((pos - _player.Position).Length() < 100f) continue;
-            _creatures.Add(new Creature(pos));
+
+            // Roster shifts with depth: skitterers infest the upper crust, borers and eyes
+            // roam the middle, magma slugs own the lava zone.
+            var fromCenter = (pos - _planet.Center).Length() / Planet.TileSize;
+            var depth = 129f - (fromCenter - Planet.RingMin); // tiles below the baseline surface
+            var roll = Random.Shared.NextDouble();
+            CreatureKind kind;
+            if (depth > 45f)
+            {
+                kind = roll < 0.45 ? CreatureKind.MagmaSlug
+                     : roll < 0.70 ? CreatureKind.CaveEye
+                     : CreatureKind.Grub;
+            }
+            else if (depth > 20f)
+            {
+                kind = roll < 0.30 ? CreatureKind.Grub
+                     : roll < 0.55 ? CreatureKind.Borer
+                     : roll < 0.80 ? CreatureKind.CaveEye
+                     : CreatureKind.Skitterer;
+            }
+            else
+            {
+                kind = roll < 0.40 ? CreatureKind.Skitterer
+                     : roll < 0.70 ? CreatureKind.Grub
+                     : CreatureKind.CaveEye;
+            }
+            _creatures.Add(new Creature(pos, kind));
             return;
         }
+    }
+
+    /// <summary>Populate the fresh planet with ambient life: herds on the surface, flyers in
+    /// the sky. Run-start only; the fauna timer keeps numbers topped up afterwards.</summary>
+    private void SpawnInitialFauna()
+    {
+        for (var i = 0; i < 7; i++) TrySpawnSurfaceAnimal();
+        for (var i = 0; i < 6; i++) TrySpawnSkyAnimal();
+    }
+
+    private void TrySpawnSurfaceAnimal()
+    {
+        var angle = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
+        var pos = FindSurfaceSpawn(angle, _planet.Radius);
+        if ((pos - _player.Position).Length() < 80f) return; // don't pop in on-screen
+        var kind = Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper;
+        _creatures.Add(new Creature(pos, kind));
+    }
+
+    private void TrySpawnSkyAnimal()
+    {
+        var angle = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
+        var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+        var ground = FindSurfaceSpawn(angle, _planet.Radius);
+        // 60–200 px above the local terrain, capped inside the tile grid so the flyer's
+        // collision probes stay in-bounds.
+        var alt = (ground - _planet.Center).Length() + 60f + (float)Random.Shared.NextDouble() * 140f;
+        alt = MathF.Min(alt, (_planet.Radius - 6) * Planet.TileSize);
+        var pos = _planet.Center + dir * alt;
+        var kind = Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth : CreatureKind.SkyStinger;
+        _creatures.Add(new Creature(pos, kind));
     }
 
     protected override void Draw(GameTime gameTime)
