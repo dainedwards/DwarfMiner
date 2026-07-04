@@ -205,10 +205,18 @@ public static class WorldGen
 
                 var bigN = SampleNoise(bigCave, wx * 0.05f, wy * 0.05f);
                 var smallN = SampleNoise(smallCave, wx * 0.18f, wy * 0.18f);
-                if (depth > 5f)
+                if (depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
                 {
-                    if (bigN > 0.84f && depth > 8f) k = TileKind.Sky;
-                    else if (smallN > 0.88f) k = TileKind.Sky;
+                    k = TileKind.Sky;
+                    // Reservoirs: a slow water-noise channel floods whole cave pockets in the
+                    // crust band (below the dirt, above the lava zone that Game1 fills at
+                    // ~45% radius) so some caverns are found brimming rather than dry. Water
+                    // is seeded as cells and settles to each pocket's floor on its own.
+                    if (depth > 10f && depth < 44f
+                        && SampleNoise(waterNoise, wx * 0.05f, wy * 0.05f) > 0.62f)
+                    {
+                        planet.WaterSeeds.Add((r, t));
+                    }
                 }
 
                 if (k == TileKind.Stone && depth > 12f)
