@@ -446,7 +446,9 @@ public sealed class Creature
             {
                 digDir = right * moveAxis;
             }
-            Chew(dt, planet, physics, cells, digDir, 0.38f, 3);
+            // Pickaxe reach matches the player's mine range, so a delver can clear a
+            // ceiling two tiles overhead the same way a dwarf would.
+            Chew(dt, planet, physics, cells, digDir, 0.38f, 3, reach: 22f);
 
             // Scramble upward into headroom it just cut so staircase digs actually ascend.
             if (nDist > 10f && MathF.Abs(tDist) < 30f && IsGrounded(planet, up)
