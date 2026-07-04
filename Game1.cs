@@ -1267,7 +1267,9 @@ public sealed class DwarfMinerGame : Game
         var pos = FindSurfaceSpawn(angle, _planet.Radius);
         if ((pos - _player.Position).Length() < 80f) return; // don't pop in on-screen
         var kind = Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper;
-        _creatures.Add(new Creature(pos, kind));
+        var c = new Creature(pos, kind);
+        ClearSpawnSpace(pos, c.Radius);
+        _creatures.Add(c);
     }
 
     private void TrySpawnSkyAnimal()
