@@ -19,15 +19,18 @@ namespace DwarfMiner.Entities;
 /// </summary>
 public enum CreatureKind : byte
 {
-    Grub,        // classic cave chaser blob
-    Skitterer,   // fast cave spider — pounces
-    Borer,       // armoured rock-worm — chews its own tunnels
-    CaveEye,     // floating eyeball — patrols existing tunnels
-    MagmaSlug,   // deep-cave slug, cracked hide glows like a coal
-    Grazer,      // placid six-legged surface herbivore, flees
-    Hopper,      // tiny surface bouncer, harmless
-    SkyMoth,     // pale high-altitude flyer, drifts in lazy orbits
-    SkyStinger,  // territorial flyer — dives at the dwarf, then climbs away
+    Grub,         // classic cave chaser blob
+    Skitterer,    // fast cave spider — pounces
+    Borer,        // armoured rock-worm — chews its own tunnels
+    CaveEye,      // floating eyeball — patrols existing tunnels
+    MagmaSlug,    // deep-cave slug, cracked hide glows like a coal
+    Grazer,       // placid six-legged surface herbivore, flees
+    Hopper,       // tiny surface bouncer, harmless
+    SkyMoth,      // pale high-altitude flyer, drifts in lazy orbits
+    SkyStinger,   // territorial flyer — dives at the dwarf, then climbs away
+    HornedDelver, // horned humanoid miner — swings a pickaxe, tunnels toward aggroed prey
+    Centipede,    // long segmented tunneller — chews fast winding galleries
+    MoleBeast,    // alien mole — digs burrows, shy unless cornered or provoked
 }
 
 public sealed class Creature
