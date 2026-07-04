@@ -370,7 +370,7 @@ public sealed class Creature
         }
 
         // Chew the tile ahead of the snout.
-        Chew(dt, planet, physics, cells, _digDir, 0.22f, 2);
+        Chew(dt, planet, physics, cells, _digDir, 0.22f, 6);
     }
 
     /// <summary>Shared excavation bite for every digger (Borer, Centipede, MoleBeast, and the
@@ -445,7 +445,7 @@ public sealed class Creature
             }
             // Pickaxe reach matches the player's mine range, so a delver can clear a
             // ceiling two tiles overhead the same way a dwarf would.
-            Chew(dt, planet, physics, cells, digDir, 0.38f, 3, reach: 22f);
+            Chew(dt, planet, physics, cells, digDir, 0.38f, 9, reach: 22f);
 
             // Scramble upward into headroom it just cut so staircase digs actually ascend.
             if (nDist > 10f && MathF.Abs(tDist) < 30f && IsGrounded(planet, up)
@@ -465,7 +465,7 @@ public sealed class Creature
             GroundMove(dt, planet, up, right, _amble, speedMul);
             // A patrolling delver blocked by rock keeps extending its gallery.
             if (_amble != 0 && planet.IsSolidAt(Position + right * (_amble * (Radius + 4f))))
-                Chew(dt, planet, physics, cells, right * _amble, 0.55f, 2, reach: 12f);
+                Chew(dt, planet, physics, cells, right * _amble, 0.55f, 6, reach: 12f);
         }
     }
 
@@ -503,7 +503,7 @@ public sealed class Creature
             var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
             Velocity = right * vT + up * vN;
         }
-        Chew(dt, planet, physics, cells, _digDir, 0.15f, 2);
+        Chew(dt, planet, physics, cells, _digDir, 0.15f, 6);
     }
 
     /// <summary>MoleBeast: an alien mole that mostly wants nothing to do with you. It chews
@@ -540,7 +540,7 @@ public sealed class Creature
             Velocity = right * vT + up * vN;
         }
         // Big claws — digs faster than a borer bites.
-        Chew(dt, planet, physics, cells, _digDir, 0.2f, 3);
+        Chew(dt, planet, physics, cells, _digDir, 0.2f, 9);
     }
 
     /// <summary>CaveEye: hovers through open tunnels. Never digs — it steers by probing ahead

@@ -90,6 +90,27 @@ public static class SimTest
             }
         }
 
+        // --- 4. Cell-sim perf: replicate StartNewRun's lava + water seeding on a fresh world
+        // and time the settle. The first ticks carry every seeded cell awake; steady state
+        // must come back under a frame budget or Density is too high for the machine.
+        {
+            var perfPlanet = WorldGen.Generate(7);
+            var perfCells = new Cells(perfPlanet);
+            perfCells.FillSkyTilesWithin(perfPlanet.Radius * 0.45f, Material.Lava);
+            foreach (var (wsx, wsy) in perfPlanet.WaterSeeds)
+                perfCells.FillTile(wsx, wsy, Material.Water);
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            for (var i = 0; i < 60; i++) perfCells.Update(dt);
+            var first = sw.Elapsed.TotalMilliseconds / 60.0;
+            for (var i = 0; i < 240; i++) perfCells.Update(dt);
+            sw.Restart();
+            for (var i = 0; i < 120; i++) perfCells.Update(dt);
+            var steady = sw.Elapsed.TotalMilliseconds / 120.0;
+            Console.WriteLine($"  [info] cells: first-second avg {first:0.00} ms/tick, steady {steady:0.00} ms/tick");
+            Check("perf: steady-state cell tick under 6 ms", steady < 6.0, $"{steady:0.00} ms");
+        }
+
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
         Environment.Exit(_failed ? 1 : 0);
     }
