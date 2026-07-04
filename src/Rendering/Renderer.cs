@@ -18,6 +18,7 @@ public sealed class Renderer
     private readonly Texture2D _coreTex;
     private readonly PixelFont _font;
     private readonly Lighting _lighting;
+    private readonly Texture2D _tileAtlas;
 
     public Renderer(GraphicsDevice gd)
     {
@@ -29,7 +30,15 @@ public sealed class Renderer
         _coreTex = MakeCircle(gd, 256);
         _font = new PixelFont(gd);
         _lighting = new Lighting(gd);
+        TileAtlas.Build(gd);
+        _tileAtlas = TileAtlas.Texture;
     }
+
+    /// <summary>Kinds whose tile art stays hand-authored + animated in DrawWorld (supports,
+    /// ladders, rails, glowing placeables) rather than sampled from the texture atlas.</summary>
+    private static bool UsesAuthoredArt(TileKind k) => k is
+        TileKind.Core or TileKind.Support or TileKind.ReinforcedSupport or
+        TileKind.Ladder or TileKind.Rail or TileKind.Glowshroom or TileKind.Beacon;
 
     public Texture2D Pixel => _pixel;
     public SpriteBatch Batch => _sb;
