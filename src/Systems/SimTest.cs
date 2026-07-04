@@ -69,7 +69,16 @@ public static class SimTest
                 var before = CountSolidAround(planet, p, 10);
                 var c = new Creature(p, CreatureKind.HornedDelver);
                 for (var step = 0; step < 60 * 20; step++)
+                {
                     c.Update(dt, planet, physics, cells, closePlayer);
+                    if (step % 300 == 0)
+                    {
+                        var rel = c.Position - p;
+                        var solidUp = planet.IsSolidAt(c.Position + up * 12f);
+                        Console.WriteLine($"    t={step / 60f:0.0}s rel=({rel.X:0.0},{rel.Y:0.0}) " +
+                            $"distToPlayer={(closePlayer.Position - c.Position).Length():0.0} solid@12up={solidUp}");
+                    }
+                }
                 var after = CountSolidAround(planet, p, 10);
                 Check($"delver: mined toward aggro target (before {before} → after {after})", after < before);
             }
