@@ -468,7 +468,7 @@ public sealed class Creature
             GroundMove(dt, planet, up, right, _amble, speedMul);
             // A patrolling delver blocked by rock keeps extending its gallery.
             if (_amble != 0 && planet.IsSolidAt(Position + right * (_amble * (Radius + 4f))))
-                Chew(dt, planet, physics, cells, right * _amble, 0.55f, 2);
+                Chew(dt, planet, physics, cells, right * _amble, 0.55f, 2, reach: 12f);
         }
     }
 
