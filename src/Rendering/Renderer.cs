@@ -302,89 +302,14 @@ public sealed class Renderer
                 if (!innerSky && !leftSky  && ilSky) DrawDeco(centre, right, up, rotation, chord, 0, 7, 1, 1, ao);
                 if (!innerSky && !rightSky && irSky) DrawDeco(centre, right, up, rotation, chord, 7, 7, 1, 1, ao);
 
-                // Per-kind decoration — every sub-rect is in 8×8 reference coords; DrawDeco
-                // scales the X axis by chord/8 so wide surface tiles spread the pattern out
-                // proportionally without distorting Y.
+                // Per-kind decoration — static material texture now lives in the atlas; what
+                // remains here is either animated (grass tufts, vines, beacon pulse) or the
+                // hand-authored art of the placeable kinds. Sub-rects are in 8×8 reference
+                // coords; DrawDeco scales X by chord/8.
                 switch (k)
                 {
-                    case TileKind.Stone:
-                    case TileKind.PlanetCore:
-                    {
-                        var jy = 2 + ((hash >> 5) & 3);
-                        var jc = new Color(
-                            Math.Clamp(col.R - 28, 0, 255),
-                            Math.Clamp(col.G - 28, 0, 255),
-                            Math.Clamp(col.B - 28, 0, 255));
-                        DrawDeco(centre, right, up, rotation, chord, 1, jy, 6, 1, jc);
-                        var gx = (hash >> 9) & 5;
-                        var gy = (hash >> 13) & 5;
-                        DrawDeco(centre, right, up, rotation, chord, 1 + gx, 1 + gy, 1, 1, topShade);
-                        break;
-                    }
-                    case TileKind.Granite:
-                    {
-                        // Pink/grey speckled grain — scatter light + dark mineral flecks.
-                        var lt = new Color(
-                            Math.Clamp(col.R + 32, 0, 255),
-                            Math.Clamp(col.G + 18, 0, 255),
-                            Math.Clamp(col.B + 18, 0, 255));
-                        var dk = new Color(
-                            Math.Clamp(col.R - 30, 0, 255),
-                            Math.Clamp(col.G - 28, 0, 255),
-                            Math.Clamp(col.B - 22, 0, 255));
-                        DrawDeco(centre, right, up, rotation, chord, 1 + ((hash >> 2) & 5), 1 + ((hash >> 5) & 5), 1, 1, lt);
-                        DrawDeco(centre, right, up, rotation, chord, 2 + ((hash >> 9) & 4), 2 + ((hash >> 12) & 4), 1, 1, dk);
-                        DrawDeco(centre, right, up, rotation, chord, 4 + ((hash >> 14) & 2), 1 + ((hash >> 17) & 4), 1, 1, lt);
-                        break;
-                    }
-                    case TileKind.Basalt:
-                    {
-                        // Dark angular fracture lines — two short diagonal slashes.
-                        var crack = new Color(
-                            Math.Clamp(col.R - 32, 0, 255),
-                            Math.Clamp(col.G - 32, 0, 255),
-                            Math.Clamp(col.B - 32, 0, 255));
-                        var jy = 1 + ((hash >> 5) & 4);
-                        DrawDeco(centre, right, up, rotation, chord, 1, jy, 2, 1, crack);
-                        DrawDeco(centre, right, up, rotation, chord, 3, jy + 1, 2, 1, crack);
-                        DrawDeco(centre, right, up, rotation, chord, 5, jy + 2, 2, 1, crack);
-                        var hi = new Color(
-                            Math.Clamp(col.R + 22, 0, 255),
-                            Math.Clamp(col.G + 22, 0, 255),
-                            Math.Clamp(col.B + 28, 0, 255));
-                        DrawDeco(centre, right, up, rotation, chord, 2 + ((hash >> 11) & 4), 1 + ((hash >> 14) & 4), 1, 1, hi);
-                        break;
-                    }
-                    case TileKind.Obsidian:
-                    {
-                        // Glassy black with bright sub-tile glints.
-                        var glint = new Color(180, 190, 220);
-                        var dx = 1 + ((hash >> 3) & 5);
-                        var dy = 1 + ((hash >> 7) & 5);
-                        DrawDeco(centre, right, up, rotation, chord, dx, dy, 1, 1, glint);
-                        DrawDeco(centre, right, up, rotation, chord, dx + 1, dy, 1, 1, new Color(120, 130, 170));
-                        var dx2 = 2 + ((hash >> 13) & 3);
-                        var dy2 = 4 + ((hash >> 17) & 2);
-                        DrawDeco(centre, right, up, rotation, chord, dx2, dy2, 1, 1, glint);
-                        break;
-                    }
-                    case TileKind.Dirt:
-                    case TileKind.Gravel:
-                    {
-                        var pc = new Color(
-                            Math.Clamp(col.R - 24, 0, 255),
-                            Math.Clamp(col.G - 22, 0, 255),
-                            Math.Clamp(col.B - 18, 0, 255));
-                        DrawDeco(centre, right, up, rotation, chord, 1 + ((hash >> 2) & 4), 2 + ((hash >> 5) & 3), 2, 1, pc);
-                        DrawDeco(centre, right, up, rotation, chord, 3 + ((hash >> 9) & 3), 4 + ((hash >> 12) & 2), 1, 1, pc);
-                        break;
-                    }
                     case TileKind.Grass:
                     {
-                        var bc = new Color(110, 160, 80);
-                        DrawDeco(centre, right, up, rotation, chord, 1 + ((hash >> 2) & 5), 0, 1, 1, bc);
-                        DrawDeco(centre, right, up, rotation, chord, 2 + ((hash >> 6) & 4), 1, 1, 1, bc);
-                        DrawDeco(centre, right, up, rotation, chord, 4 + ((hash >> 10) & 3), 0, 1, 1, bc);
                         // Animated tufts — only on grass tiles whose outer (sky-facing) edge is
                         // exposed. Each tuft is a vertical pixel column above the tile that
                         // bends with sin(time + hash); bend grows quadratically up the tuft so
