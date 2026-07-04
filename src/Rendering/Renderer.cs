@@ -218,6 +218,12 @@ public sealed class Renderer
                     continue;
                 }
 
+                // Condemned tiles oscillate before crumbling — shift the whole tile (base
+                // quad, shades and rims all draw from `centre`) by a small random offset.
+                if (TrembleTiles is { Count: > 0 } && TrembleTiles.Contains(planet.Index(r, t)))
+                    centre += right * ((Random.Shared.NextSingle() - 0.5f) * 1.6f)
+                            + up * ((Random.Shared.NextSingle() - 0.5f) * 1.6f);
+
                 var jitter = ((hash >> 4) & 31) - 16;
                 var col = Tiles.BaseColor(k);
                 col = new Color(
