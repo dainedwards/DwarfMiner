@@ -925,6 +925,13 @@ public sealed class Creature
             case CreatureKind.CaveEye:
                 r.AddLight(Position, 14f, new Color(170, 180, 220));
                 break;
+            case CreatureKind.HornedDelver:
+                // Hunting delvers announce themselves with a red eye-gleam in the dark.
+                if (_aggroT > 0f) r.AddLight(Position, 12f, new Color(255, 60, 40));
+                break;
+            case CreatureKind.MoleBeast:
+                if (_provokedT > 0f) r.AddLight(Position, 10f, new Color(255, 70, 50));
+                break;
         }
     }
 
