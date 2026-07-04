@@ -31,7 +31,13 @@ public sealed class Physics
     private readonly List<int> _floodRegion = new();
     private float _settleAccum;
     public const float SettleInterval = 0.05f; // seconds between settle ticks
-    public const int CollapseBudget = 96;       // max region size we'll evaluate; bigger = treated as supported
+    /// <summary>Max collapsible region size for baseline rock (Stone, hardness 2). Regions
+    /// bigger than their strength-derived budget are treated as supported.</summary>
+    public const int StoneCollapseBudget = 48;
+    /// <summary>Budget shaved off per hardness tier above Stone — stronger material holds
+    /// larger unsupported spans, so only smaller pockets of it can cave in.</summary>
+    public const int BudgetPerHardness = 8;
+    private int _regionBudgetSum;
     public int CollapsesThisTick { get; private set; }
 
     public Physics(Planet planet, Cells cells) { _planet = planet; _cells = cells; }
