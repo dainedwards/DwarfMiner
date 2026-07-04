@@ -127,10 +127,6 @@ public static class WorldGen
                 {
                     k = TileKind.Dirt;
                 }
-                else if (globalR < hardCoreRadiusTiles)
-                {
-                    k = TileKind.PlanetCore;
-                }
                 else
                 {
                     // Depth-graded base rock: Stone in the upper crust grades through Granite
