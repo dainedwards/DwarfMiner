@@ -78,7 +78,6 @@ public sealed class Cells
     private readonly sbyte[] _flow;
     private HashSet<int> _active = new();
     private HashSet<int> _next = new();
-    private readonly HashSet<int> _living = new();
     private readonly Random _rng = new();
     private readonly Dictionary<string, float> _dustAccum = new();
     private float _time;
