@@ -413,19 +413,6 @@ public sealed class DwarfMinerGame : Game
             }
         }
 
-        for (var i = _rockChunks.Count - 1; i >= 0; i--)
-        {
-            var c = _rockChunks[i];
-            c.Update(dt, _planet, _physics, _player);
-            if (c.Dead)
-            {
-                _particles.EmitChips(c.Position, c.Kind);
-                _particles.EmitDust(c.Position, 4f);
-                _shake = MathF.Max(_shake, 0.25f);
-                _rockChunks.RemoveAt(i);
-            }
-        }
-
         if (_player.Health <= 0)
         {
             _meta.Deaths++;
