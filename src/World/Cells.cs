@@ -575,7 +575,6 @@ public sealed class Cells
             var i = Idx(cx, cy);
             _mat[i] = 0;
             ClearKinetics(i);
-            _living.Remove(i);
             WakeNeighbors(cx, cy);
         }
         else _next.Add(Idx(cx, cy));
