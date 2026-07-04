@@ -1215,8 +1215,11 @@ public sealed class DwarfMinerGame : Game
     /// the sky. Run-start only; the fauna timer keeps numbers topped up afterwards.</summary>
     private void SpawnInitialFauna()
     {
-        for (var i = 0; i < 7; i++) TrySpawnSurfaceAnimal();
-        for (var i = 0; i < 6; i++) TrySpawnSkyAnimal();
+        for (var i = 0; i < 10; i++) TrySpawnSurfaceAnimal();
+        for (var i = 0; i < 8; i++) TrySpawnSkyAnimal();
+        // Pre-seed the caves too so the underground is alive from the first shaft down,
+        // instead of filling in one spawn-timer tick at a time.
+        for (var i = 0; i < 10; i++) TrySpawnCreature();
     }
 
     private void TrySpawnSurfaceAnimal()
