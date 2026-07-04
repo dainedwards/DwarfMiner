@@ -8,7 +8,7 @@ namespace DwarfMiner.World;
 /// elev variation only). Mountains are placed as a small set of explicit narrow spikes at
 /// random angles, so each peak is a pointy stone column rising sharply from the otherwise
 /// smooth grass surface. Underground: deep dirt layer, then stone with sparse caves, dirt
-/// seams, gravel pockets, ores, and the PlanetCore core.
+/// seams, gravel pockets, ores, and a solid PlanetCore ball at the centre.
 /// </summary>
 public static class WorldGen
 {
