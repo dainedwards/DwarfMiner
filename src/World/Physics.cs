@@ -76,11 +76,44 @@ public sealed class Physics
 
     public void Update(float dt)
     {
-        _settleAccum += dt;
         CollapsesThisTick = 0;
+        TickPendingCollapses(dt);
+        _settleAccum += dt;
         if (_settleAccum < SettleInterval) return;
         _settleAccum = 0f;
         Settle();
+    }
+
+    /// <summary>Run pending collapses: count down each region's tremble, then crumble it
+    /// one ring at a time from the innermost (bottom) up, so cave-ins sweep upward.</summary>
+    private void TickPendingCollapses(float dt)
+    {
+        for (var i = _pendingCollapses.Count - 1; i >= 0; i--)
+        {
+            var p = _pendingCollapses[i];
+            p.Timer -= dt;
+            while (p.Timer <= 0f && p.Next < p.Tiles.Count)
+            {
+                var ring = _planet.UnIndex(p.Tiles[p.Next]).x;
+                while (p.Next < p.Tiles.Count && _planet.UnIndex(p.Tiles[p.Next]).x == ring)
+                    Crumble(p.Tiles[p.Next++]);
+                p.Timer += CrumbleRingInterval;
+            }
+            if (p.Next >= p.Tiles.Count) _pendingCollapses.RemoveAt(i);
+        }
+    }
+
+    private void Crumble(int idx)
+    {
+        _pendingTiles.Remove(idx);
+        var (x, y) = _planet.UnIndex(idx);
+        var k = _planet.Get(x, y);
+        // The tile may have been mined (or melted) during the tremble — nothing to do.
+        if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) return;
+        _planet.Set(x, y, TileKind.Sky);
+        _cells.SpawnDustInTile(x, y, k);
+        CollapsesThisTick++;
+        MarkDirty(x, y); // wake neighbours — adjacent regions may now be unanchored too.
     }
 
     private void Settle()
