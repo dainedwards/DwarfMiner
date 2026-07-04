@@ -164,6 +164,7 @@ public sealed class Physics
         _floodVisited.Clear();
         _floodStack.Clear();
         _floodRegion.Clear();
+        _regionBudgetSum = 0;
 
         var startIdx = _planet.Index(sx, sy);
         _floodStack.Push(startIdx);
