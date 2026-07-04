@@ -278,8 +278,12 @@ public sealed class Cells
         var si = Idx(sCx, sCy);
         _mat[di] = _mat[si];
         _srcTile[di] = _srcTile[si];
+        _velR[di] = _velR[si];
+        _travel[di] = _travel[si];
+        _flow[di] = _flow[si];
         _mat[si] = 0;
         _srcTile[si] = 0;
+        ClearKinetics(si);
         _living.Remove(si); _living.Add(di);
         _next.Add(di);
         WakeNeighbors(sCx, sCy);
