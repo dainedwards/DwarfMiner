@@ -298,7 +298,9 @@ public sealed class Physics
     /// (hardness 2) gets the baseline, each tier above shaves a little off, and soft
     /// hardness-1 ground gets a little extra. Floored so exotic kinds can still cave.</summary>
     private static int BudgetFor(TileKind k) =>
-        Math.Max(BudgetPerHardness, StoneCollapseBudget - BudgetPerHardness * (Tiles.Hardness(k) - 2));
+        k == TileKind.Obsidian
+            ? ObsidianCollapseBudget
+            : Math.Max(BudgetPerHardness, StoneCollapseBudget - BudgetPerHardness * (Tiles.Hardness(k) - 2));
 
     /// <summary>Condemn a region: enqueue it to tremble, then crumble bottom-to-top. Tiles
     /// already pending from an earlier settle pass are skipped, so the re-detection that
