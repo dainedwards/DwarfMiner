@@ -1306,9 +1306,14 @@ public sealed class DwarfMinerGame : Game
 
         _renderer.BeginEntities(_camera);
 
+        // View circle for the culled cell passes: centre + a radius that covers the screen
+        // corners at any camera rotation. The cell grid is far too fine to draw planet-wide.
+        var viewCentre = _camera.ScreenToWorld(new Vector2(VirtualWidth / 2f, VirtualHeight / 2f));
+        var viewRadius = (viewCentre - _camera.ScreenToWorld(Vector2.Zero)).Length() + Planet.TileSize * 2f;
+
         // Cells (sand/water/lava/smoke) draw above tiles but below entities so the dwarf walks
         // in front of his own debris pile.
-        _cells.Draw(_renderer);
+        _cells.Draw(_renderer, viewCentre, viewRadius);
 
         // Pixel-art dwarf sprite — drawn rotated to align local-up with planet's outward radial.
         // Sprite head-at-top, feet-at-bottom; the rotation maps sprite-up to world-up.
