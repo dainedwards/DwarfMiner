@@ -238,6 +238,12 @@ public sealed class Physics
         return false;
     }
 
+    /// <summary>Collapse budget for one tile, derived from its mining hardness: Stone
+    /// (hardness 2) gets the baseline, each tier above shaves a little off, and soft
+    /// hardness-1 ground gets a little extra. Floored so exotic kinds can still cave.</summary>
+    private static int BudgetFor(TileKind k) =>
+        Math.Max(BudgetPerHardness, StoneCollapseBudget - BudgetPerHardness * (Tiles.Hardness(k) - 2));
+
     private void CollapseRegion(List<int> region)
     {
         foreach (var idx in region)
