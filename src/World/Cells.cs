@@ -35,22 +35,27 @@ public static class Materials
 /// </summary>
 public sealed class Cells
 {
-    public const int Density = 4;
-    /// <summary>How many dust cells one broken tile spawns. Each cell carries
-    /// drop.count / DustCellsPerTile worth of resource — 1 tile fully collected → 1 × drop.count.</summary>
-    public const int DustCellsPerTile = 8;
+    /// <summary>Cells per tile edge. 8 → 1-px grains (Noita-style fine sand); the sim and
+    /// draw loops are view-culled and hemmed liquids sleep, which is what makes this
+    /// resolution affordable.</summary>
+    public const int Density = 8;
+    /// <summary>How many dust cells one broken tile spawns (checkerboard = Density²/2). Each
+    /// cell carries drop.count / DustCellsPerTile worth of resource — 1 tile fully collected
+    /// → 1 × drop.count.</summary>
+    public const int DustCellsPerTile = Density * Density / 2;
 
-    // --- Per-cell velocity tuning (cells/sec units, radial axis) ---
-    /// <summary>Inward acceleration while freefalling. At 60fps a cell reaches 1 cell/frame
-    /// after ~12 frames, so disturbed material visibly picks up speed instead of instantly
-    /// ticking downward.</summary>
-    private const float GravityCells = 300f;
-    /// <summary>Terminal fall speed — 4 cells/frame at 60fps.</summary>
-    private const float TerminalCells = 240f;
+    // --- Per-cell velocity tuning (cells/sec units, radial axis). Expressed relative to
+    // Density so the *world-space* fall speed and spread stay identical if the grain
+    // resolution changes: px/s = cells/s × (TileSize / Density). ---
+    /// <summary>Inward acceleration while freefalling (600 px/s² equivalent), so disturbed
+    /// material visibly picks up speed instead of instantly ticking downward.</summary>
+    private const float GravityCells = 75f * Density;
+    /// <summary>Terminal fall speed (480 px/s equivalent).</summary>
+    private const float TerminalCells = 60f * Density;
     /// <summary>Hard cap on rows traversed per tick so lag frames can't tunnel through floors.</summary>
     private const int MaxStepsPerTick = Density * 2;
-    /// <summary>Base lateral cells a supported liquid tries to flow per tick.</summary>
-    private const int LiquidDispersion = 3;
+    /// <summary>Base lateral cells a supported liquid tries to flow per tick (~6 px equivalent).</summary>
+    private const int LiquidDispersion = Density * 3 / 4;
     /// <summary>Extra lateral spread per cell/sec of fall speed at the moment of landing —
     /// fast-landing water sprays outward, gently pooling water barely spreads.</summary>
     private const float SplashScale = 1f / 48f;
