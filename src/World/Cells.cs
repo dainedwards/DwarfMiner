@@ -91,6 +91,16 @@ public sealed class Cells
         }
         _mat = new byte[_rowOffsets[Height]];
         _srcTile = new byte[_rowOffsets[Height]];
+        _velR = new float[_rowOffsets[Height]];
+        _travel = new float[_rowOffsets[Height]];
+        _flow = new sbyte[_rowOffsets[Height]];
+    }
+
+    private void ClearKinetics(int i)
+    {
+        _velR[i] = 0f;
+        _travel[i] = 0f;
+        _flow[i] = 0;
     }
 
     public int CellsAt(int cy) => (cy < 0 || cy >= Height) ? 1 : _cellsAt[cy];
