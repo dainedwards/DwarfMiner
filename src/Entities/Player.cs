@@ -320,13 +320,23 @@ public sealed class Player
     {
         for (var iter = 0; iter < 4; iter++)
         {
-            var (tx, ty) = planet.WorldToTile(Position);
+            var (tx, _) = planet.WorldToTile(Position);
+            // Neighbour columns are recomputed per ring from the true world angle: rings
+            // have different tile counts, so reusing this ring's ty index drifts by whole
+            // tiles near the angle-2π wrap and leaves collision holes.
+            var relC = Position - planet.Center;
+            var ang = MathF.Atan2(relC.Y, relC.X);
+            if (ang < 0) ang += MathHelper.TwoPi;
             var pushed = false;
-            for (var dy = -2; dy <= 2; dy++)
+            for (var dx = -2; dx <= 2; dx++)
             {
-                for (var dx = -2; dx <= 2; dx++)
+                var x = tx + dx;
+                if (x < 0 || x >= Planet.RingCount) continue;
+                var nRing = Planet.TilesAt(x);
+                var ty0 = (int)(ang / MathHelper.TwoPi * nRing);
+                for (var dy = -2; dy <= 2; dy++)
                 {
-                    var x = tx + dx; var y = ty + dy;
+                    var y = ty0 + dy;
                     var tk = planet.Get(x, y);
                     if (!Tiles.BlocksPlayer(tk)) continue;
 
