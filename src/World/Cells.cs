@@ -682,48 +682,83 @@ public sealed class Cells
         return result;
     }
 
-    public void Draw(Renderer r)
+    /// <summary>Row window + camera polar coords for the view circle, shared by the culled
+    /// draw/light passes. Iterating the whole grid stopped being an option at Density 8
+    /// (~10M cells), so both passes walk only rows and arcs that can intersect the view.</summary>
+    private (int cyMin, int cyMax) VisibleRows(Vector2 viewCentre, float viewRadius, out float camAng)
+    {
+        var rel = viewCentre - Planet.Center;
+        var camDist = rel.Length();
+        camAng = MathF.Atan2(rel.Y, rel.X);
+        if (camAng < 0) camAng += MathHelper.TwoPi;
+        var radial = (float)Planet.TileSize / Density;
+        var inner = Planet.RingMin * Planet.TileSize;
+        var cyMin = Math.Max(0, (int)((camDist - viewRadius - inner) / radial));
+        var cyMax = Math.Min(Height - 1, (int)((camDist + viewRadius - inner) / radial) + 1);
+        return (cyMin, cyMax);
+    }
+
+    public void Draw(Renderer r, Vector2 viewCentre, float viewRadius)
     {
         var radial = (float)Planet.TileSize / Density;
-        foreach (var idx in _living)
+        var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
+        for (var cy = cyMin; cy <= cyMax; cy++)
         {
-            var m = (Material)_mat[idx];
-            if (m == Material.Empty) continue;
-            var (cx, cy) = UnIdx(idx);
-            var centre = CellToWorld(cx, cy);
             var n = _cellsAt[cy];
             var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
             var chord = MathHelper.TwoPi * ringRadius / n;
             var size = new Vector2(chord + 0.5f, radial + 0.5f);
-            var up = Planet.UpAt(centre);
-            var rotation = MathF.Atan2(up.X, -up.Y);
-            // Sub-cell offset: _travel is progress toward the next inward row, so falling
-            // cells glide smoothly between rows instead of ticking a whole cell at a time.
-            var frac = MathF.Min(_travel[idx], 1f);
-            if (frac > 0f) centre -= up * (frac * radial);
-            var col = ColorFor(m, cx, cy, _srcTile[idx]);
-            r.Batch.Draw(r.Pixel, centre, null, col, rotation,
-                new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+            var halfAng = MathF.Min(MathF.PI, viewRadius / MathF.Max(ringRadius, 1f));
+            var cx0 = (int)(camAng / MathHelper.TwoPi * n);
+            var range = Math.Min(n / 2, (int)(halfAng / MathHelper.TwoPi * n) + 2);
+            for (var d = -range; d <= range; d++)
+            {
+                var cx = cx0 + d;
+                var idx = Idx(cx, cy);
+                var m = (Material)_mat[idx];
+                if (m == Material.Empty) continue;
+                var centre = CellToWorld(cx, cy);
+                var up = Planet.UpAt(centre);
+                var rotation = MathF.Atan2(up.X, -up.Y);
+                // Sub-cell offset: _travel is progress toward the next inward row, so falling
+                // cells glide smoothly between rows instead of ticking a whole cell at a time.
+                var frac = MathF.Min(_travel[idx], 1f);
+                if (frac > 0f) centre -= up * (frac * radial);
+                var col = ColorFor(m, cx, cy, _srcTile[idx]);
+                r.Batch.Draw(r.Pixel, centre, null, col, rotation,
+                    new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+            }
         }
     }
 
-    public void AddLights(Renderer r)
+    public void AddLights(Renderer r, Vector2 viewCentre, float viewRadius)
     {
+        var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
         var step = 0;
-        foreach (var idx in _living)
+        for (var cy = cyMin; cy <= cyMax; cy++)
         {
-            if ((Material)_mat[idx] != Material.Lava) continue;
-            var (cx, cy) = UnIdx(idx);
-            // Skip interior pool cells whose four cardinal neighbours are all blocked.
-            var (icx, icy) = InnerCell(cx, cy);
-            var allBlocked = IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy) && IsBlocked(icx, icy);
-            if (allBlocked && cy < Height - 1)
+            var n = _cellsAt[cy];
+            var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
+            var halfAng = MathF.Min(MathF.PI, viewRadius / MathF.Max(ringRadius, 1f));
+            var cx0 = (int)(camAng / MathHelper.TwoPi * n);
+            var range = Math.Min(n / 2, (int)(halfAng / MathHelper.TwoPi * n) + 2);
+            for (var d = -range; d <= range; d++)
             {
-                var (ocx, ocy) = OuterCell(cx, cy, 0);
-                if (IsBlocked(ocx, ocy)) continue;
+                var cx = cx0 + d;
+                if ((Material)_mat[Idx(cx, cy)] != Material.Lava) continue;
+                // Skip interior pool cells whose four cardinal neighbours are all blocked.
+                var (icx, icy) = InnerCell(cx, cy);
+                var allBlocked = IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy) && IsBlocked(icx, icy);
+                if (allBlocked && cy < Height - 1)
+                {
+                    var (ocx, ocy) = OuterCell(cx, cy, 0);
+                    if (IsBlocked(ocx, ocy)) continue;
+                }
+                // Thin the emitters with grain resolution — a pool surface has Density/2 more
+                // cells per world unit than the old 2-px grid, and each light is a lightmap blit.
+                if ((step++ % (Density / 2)) != 0) continue;
+                r.AddLight(CellToWorld(cx, cy), 10f, new Color(255, 130, 40));
             }
-            if ((step++ % 2) != 0) continue;
-            r.AddLight(CellToWorld(cx, cy), 10f, new Color(255, 130, 40));
         }
     }
 
