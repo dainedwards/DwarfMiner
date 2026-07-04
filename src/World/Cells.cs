@@ -39,6 +39,23 @@ public sealed class Cells
     /// <summary>How many dust cells one broken tile spawns. Each cell carries
     /// drop.count / DustCellsPerTile worth of resource — 1 tile fully collected → 1 × drop.count.</summary>
     public const int DustCellsPerTile = 8;
+
+    // --- Per-cell velocity tuning (cells/sec units, radial axis) ---
+    /// <summary>Inward acceleration while freefalling. At 60fps a cell reaches 1 cell/frame
+    /// after ~12 frames, so disturbed material visibly picks up speed instead of instantly
+    /// ticking downward.</summary>
+    private const float GravityCells = 300f;
+    /// <summary>Terminal fall speed — 4 cells/frame at 60fps.</summary>
+    private const float TerminalCells = 240f;
+    /// <summary>Hard cap on rows traversed per tick so lag frames can't tunnel through floors.</summary>
+    private const int MaxStepsPerTick = Density * 2;
+    /// <summary>Base lateral cells a supported liquid tries to flow per tick.</summary>
+    private const int LiquidDispersion = 3;
+    /// <summary>Extra lateral spread per cell/sec of fall speed at the moment of landing —
+    /// fast-landing water sprays outward, gently pooling water barely spreads.</summary>
+    private const float SplashScale = 1f / 48f;
+    /// <summary>Fall speed kept when a falling cell deflects diagonally off an obstacle.</summary>
+    private const float ImpactDamping = 0.5f;
     public readonly int Height;        // total cell rows = RingCount × Density
     public readonly Planet Planet;
 
