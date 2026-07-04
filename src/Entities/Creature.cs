@@ -816,6 +816,89 @@ public sealed class Creature
                 r.DrawCircle(Position + vDir * 2.2f, 1.5f, Tinted(new Color(120, 78, 40)));
                 break;
             }
+            case CreatureKind.HornedDelver:
+            {
+                var skin = Tinted(new Color(152, 140, 152));
+                var cloth = Tinted(new Color(70, 50, 82));
+                var horn = Tinted(new Color(222, 210, 188));
+                // Legs — stride keyed to actual tangent speed so idle delvers stand still.
+                var stride = MathF.Min(MathF.Abs(Vector2.Dot(Velocity, right)) / 40f, 1f);
+                for (var i = -1; i <= 1; i += 2)
+                {
+                    var a = MathF.Sin(t * 12f + _phase + i * 1.6f) * 0.5f * stride;
+                    r.DrawRect(Position - up * 1.4f + right * (i * 1.2f), new Vector2(1.1f, 3.4f), cloth, rot + a);
+                }
+                r.DrawRect(Position + up * 1.6f, new Vector2(4.6f, 5.2f), cloth, rot);
+                var head = Position + up * 5.2f;
+                r.DrawCircle(head, 2.2f, skin);
+                r.DrawRect(head + up * 1.9f + right * 1.5f, new Vector2(0.9f, 2.8f), horn, rot + 0.55f);
+                r.DrawRect(head + up * 1.9f - right * 1.5f, new Vector2(0.9f, 2.8f), horn, rot - 0.55f);
+                // Eyes smoulder brighter while it's hunting.
+                var eyeCol = _aggroT > 0f ? new Color(255, 70, 40) : new Color(190, 90, 60);
+                r.DrawCircle(head + right * (facing * 1.1f) + up * 0.2f, 0.7f, eyeCol);
+                r.DrawCircle(head + right * (facing * 0.1f) + up * 0.2f, 0.6f, eyeCol);
+                // Pickaxe: rests on the shoulder, arcs hard when a swing lands.
+                var swingA = _swing > 0f ? MathF.Sin(_swing * 20f) * 1.2f : MathF.Sin(t * 2f + _phase) * 0.12f;
+                var handleDir = Rotate(up, facing * (0.95f - swingA));
+                var gripPos = Position + right * (facing * 3.0f) + up * 2.0f;
+                var hAng = MathF.Atan2(handleDir.Y, handleDir.X);
+                r.DrawRect(gripPos + handleDir * 2.8f, new Vector2(6.4f, 1.0f), Tinted(new Color(130, 95, 55)), hAng);
+                r.DrawRect(gripPos + handleDir * 5.8f, new Vector2(1.2f, 4.6f), Tinted(new Color(160, 165, 178)), hAng);
+                break;
+            }
+            case CreatureKind.Centipede:
+            {
+                // Body tail-first along the breadcrumb trail so the head overlaps the neck.
+                for (var s = SegCount; s >= 1; s--)
+                {
+                    var seg = SegPos(s);
+                    var next = s > 1 ? SegPos(s - 1) : Position;
+                    var d = next - seg;
+                    var perp = d.LengthSquared() > 0.001f ? Vector2.Normalize(new Vector2(-d.Y, d.X)) : right;
+                    var pAng = MathF.Atan2(perp.Y, perp.X);
+                    var la = MathF.Sin(t * 14f + _phase + s * 1.7f) * 0.5f;
+                    var legCol = Tinted(new Color(84, 38, 32));
+                    r.DrawRect(seg + perp * 2.0f, new Vector2(2.6f, 0.7f), legCol, pAng + la);
+                    r.DrawRect(seg - perp * 2.0f, new Vector2(2.6f, 0.7f), legCol, pAng - la);
+                    var col = (s & 1) == 0 ? new Color(148, 66, 52) : new Color(114, 48, 40);
+                    r.DrawCircle(seg, 2.7f - s * 0.12f, Tinted(col));
+                }
+                var hd = _digDir.LengthSquared() > 0.01f ? Vector2.Normalize(_digDir) : right * facing;
+                var hPerp = new Vector2(-hd.Y, hd.X);
+                var hAng2 = MathF.Atan2(hd.Y, hd.X);
+                r.DrawCircle(Position, 3.2f, Tinted(new Color(162, 78, 58)));
+                // Antennae sweeping ahead, mandibles working while it chews.
+                var chomp2 = 0.3f + MathF.Abs(MathF.Sin(t * 12f + _phase)) * 0.35f;
+                r.DrawRect(Position + hd * 3.2f + hPerp * 1.2f, new Vector2(3.0f, 0.7f), Tinted(new Color(84, 38, 32)), hAng2 + chomp2);
+                r.DrawRect(Position + hd * 3.2f - hPerp * 1.2f, new Vector2(3.0f, 0.7f), Tinted(new Color(84, 38, 32)), hAng2 - chomp2);
+                r.DrawRect(Position + hd * 2.6f + hPerp * 2.2f, new Vector2(3.6f, 0.5f), Tinted(new Color(190, 120, 90)), hAng2 + 0.7f);
+                r.DrawRect(Position + hd * 2.6f - hPerp * 2.2f, new Vector2(3.6f, 0.5f), Tinted(new Color(190, 120, 90)), hAng2 - 0.7f);
+                r.DrawCircle(Position + hd * 1.6f + hPerp * 1.1f, 0.6f, Color.Black);
+                r.DrawCircle(Position + hd * 1.6f - hPerp * 1.1f, 0.6f, Color.Black);
+                break;
+            }
+            case CreatureKind.MoleBeast:
+            {
+                var dir = _digDir.LengthSquared() > 0.01f ? Vector2.Normalize(_digDir) : right * facing;
+                var perp = new Vector2(-dir.Y, dir.X);
+                var dAng = MathF.Atan2(dir.Y, dir.X);
+                var fur = Tinted(new Color(96, 88, 118));
+                r.DrawCircle(Position - dir * 2.2f, Radius, fur);
+                r.DrawCircle(Position + dir * 1.0f, Radius - 1.0f, fur);
+                var snout = Position + dir * (Radius + 0.4f);
+                r.DrawCircle(snout, 1.8f, Tinted(new Color(122, 112, 142)));
+                r.DrawCircle(snout + dir * 1.4f, 1.0f, Tinted(new Color(228, 142, 152))); // star-nose
+                // Pale digging claws churning ahead of the snout.
+                var churn = MathF.Sin(t * 11f + _phase) * 0.4f;
+                var claw = Tinted(new Color(214, 200, 172));
+                r.DrawRect(Position + dir * (Radius + 1.6f) + perp * 1.7f, new Vector2(2.9f, 1.1f), claw, dAng + 0.5f + churn);
+                r.DrawRect(Position + dir * (Radius + 1.6f) - perp * 1.7f, new Vector2(2.9f, 1.1f), claw, dAng - 0.5f - churn);
+                // Near-blind beady eyes — glowing red while it holds a grudge.
+                var moleEye = _provokedT > 0f ? new Color(255, 70, 50) : Color.Black;
+                r.DrawCircle(Position + dir * 2.0f + perp * 1.3f, 0.5f, moleEye);
+                r.DrawCircle(Position + dir * 2.0f - perp * 1.3f, 0.5f, moleEye);
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
