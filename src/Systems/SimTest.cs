@@ -44,43 +44,49 @@ public static class SimTest
         Check("collision: no creature embedded in rock after 8s", embedded == 0,
             $"{embedded}/{tested} embedded");
 
-        // --- 2. Digging: seal a borer/centipede/mole/delver in a small pocket deep in stone;
-        // after a while the solid tile count around it must have dropped.
+        // --- 2. Digging: drop each digger into a cave pocket; after a while the planet-wide
+        // solid tile count must have dropped (window-relative counts miss wandering diggers).
         foreach (var kind in new[] { CreatureKind.Borer, CreatureKind.Centipede, CreatureKind.MoleBeast })
         {
             var pos = FindCavePos(planet, seedOffset: (int)kind * 211);
             if (pos is not { } p) { Check($"digging: {kind} pocket found", false, "no cave"); continue; }
-            var before = CountSolidAround(planet, p, 12);
+            var before = CountSolidPlanet(planet);
             var c = new Creature(p, kind);
             for (var step = 0; step < 60 * 20; step++)
                 c.Update(dt, planet, physics, cells, player);
-            var after = CountSolidAround(planet, p, 12);
+            var after = CountSolidPlanet(planet);
             Check($"digging: {kind} removed tiles (before {before} → after {after})", after < before);
             Check($"digging: {kind} not embedded in rock", !planet.IsSolidAt(c.Position));
         }
 
-        // --- 3. Delver: aggro-mines toward a player standing behind rock.
+        // --- 3. Delver: aggro-mines toward a player separated from it by real rock. Pick a
+        // cave site with a verified solid band overhead so there is actually something to dig.
         {
-            var pos = FindCavePos(planet, seedOffset: 999);
-            if (pos is { } p)
+            Vector2? site = null;
+            var up = Vector2.Zero;
+            for (var s = 0; s < 300 && site is null; s++)
             {
-                var up = planet.UpAt(p);
-                var closePlayer = new Player(p + up * 40f); // 5 tiles of rock above, inside aggro radius
-                var before = CountSolidAround(planet, p, 10);
+                if (FindCavePos(planet, seedOffset: 999 + s * 13) is not { } q) continue;
+                var u = planet.UpAt(q);
+                if (planet.IsSolidAt(q + u * 14f) && planet.IsSolidAt(q + u * 22f) && planet.IsSolidAt(q + u * 30f))
+                {
+                    site = q;
+                    up = u;
+                }
+            }
+            if (site is { } p)
+            {
+                var closePlayer = new Player(p + up * 40f); // behind ≥2 tiles of rock, inside aggro radius
+                var before = CountSolidPlanet(planet);
                 var c = new Creature(p, CreatureKind.HornedDelver);
                 for (var step = 0; step < 60 * 20; step++)
-                {
                     c.Update(dt, planet, physics, cells, closePlayer);
-                    if (step % 300 == 0)
-                    {
-                        var rel = c.Position - p;
-                        var solidUp = planet.IsSolidAt(c.Position + up * 12f);
-                        Console.WriteLine($"    t={step / 60f:0.0}s rel=({rel.X:0.0},{rel.Y:0.0}) " +
-                            $"distToPlayer={(closePlayer.Position - c.Position).Length():0.0} solid@12up={solidUp}");
-                    }
-                }
-                var after = CountSolidAround(planet, p, 10);
+                var after = CountSolidPlanet(planet);
                 Check($"delver: mined toward aggro target (before {before} → after {after})", after < before);
+            }
+            else
+            {
+                Check("delver: test site with rock band overhead found", false);
             }
         }
 
