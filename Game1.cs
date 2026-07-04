@@ -41,6 +41,9 @@ public sealed class DwarfMinerGame : Game
     private float _runTime;
     private bool _hasCannon;
     private bool _screenshotPending;
+    private float _autoShotAt =
+        float.TryParse(Environment.GetEnvironmentVariable("DM_AUTOSHOT"), out var s)
+            ? s : float.PositiveInfinity;
 
     /// <summary>Crafting menu state. While open, mouse/movement input still drives the world
     /// but key events route to the menu (up/down to scroll, Enter to craft, C/Esc to close).
