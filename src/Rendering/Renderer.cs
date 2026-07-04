@@ -42,6 +42,10 @@ public sealed class Renderer
     public void VignetteScene(Point screenSize) => _lighting.Vignette(_sb, screenSize);
     public void GradeScene(Point screenSize, Color tint) => _lighting.Grade(_sb, _pixel, screenSize, tint);
 
+    /// <summary>Planet indices of tiles trembling before a cave-in — Game1 wires this to
+    /// Physics.TremblingTiles. Tiles in the set are drawn with a per-frame position jitter.</summary>
+    public HashSet<int>? TrembleTiles;
+
     public void DrawWorld(Planet planet, Camera cam)
     {
         var view = cam.View;
