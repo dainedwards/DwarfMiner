@@ -632,13 +632,16 @@ public sealed class Creature
     private bool IsGrounded(Planet planet, Vector2 up) =>
         planet.IsSolidAt(Position - up * (Radius + 1.5f));
 
+    /// <summary>Digger grip sense: probe a ring of world-space points just outside the body
+    /// for solid rock. Any contact lets a tunneller cling and inch along its dig heading.</summary>
     private bool AnySolidNear(Planet planet)
     {
-        var (tx, ty) = planet.WorldToTile(Position);
-        for (var dy = -1; dy <= 1; dy++)
-            for (var dx = -1; dx <= 1; dx++)
-                if (Tiles.IsSolid(planet.Get(tx + dx, ty + dy)))
-                    return true;
+        for (var i = 0; i < 8; i++)
+        {
+            var a = i * (MathF.Tau / 8f);
+            var probe = Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * (Radius + 2.5f);
+            if (planet.IsSolidAt(probe)) return true;
+        }
         return false;
     }
 
