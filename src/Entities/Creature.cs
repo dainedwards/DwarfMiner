@@ -383,25 +383,33 @@ public sealed class Creature
     /// (core, supports) refuse the bite and force a heading re-pick. Pass null to just tick
     /// the cooldown without biting.</summary>
     private void Chew(float dt, Planet planet, Physics physics, Cells cells,
-        Vector2? dir, float interval, int power)
+        Vector2? dir, float interval, int power, float reach = 0f)
     {
         _cd -= dt;
         if (dir is not { } d || _cd > 0f) return;
-        var probe = Position + d * (Radius + 4f);
-        var (tx, ty) = planet.WorldToTile(probe);
-        var k = planet.Get(tx, ty);
-        if (!Tiles.IsSolid(k)) return;
-        _cd = interval;
-        _swing = 0.3f;
-        if (Tiles.Hardness(k) >= 90)
+        if (reach <= 0f) reach = Radius + 12f; // worms: snout contact plus ~1.5 tiles
+        // Scan along the heading in half-tile steps and bite the first solid tile in reach —
+        // a single fixed-offset probe missed the rock whenever the body wasn't in flush
+        // contact (tall ceilings, glancing angles), leaving diggers idling in open pockets.
+        for (var distAlong = Radius + 3f; distAlong <= reach; distAlong += Planet.TileSize * 0.5f)
         {
-            _retarget = 0f; // core / support beam — bounce off, pick a new heading
+            var probe = Position + d * distAlong;
+            var (tx, ty) = planet.WorldToTile(probe);
+            var k = planet.Get(tx, ty);
+            if (!Tiles.IsSolid(k)) continue;
+            _cd = interval;
+            _swing = 0.3f;
+            if (Tiles.Hardness(k) >= 90)
+            {
+                _retarget = 0f; // core / support beam — bounce off, pick a new heading
+                return;
+            }
+            if (planet.Mine(tx, ty, power) is { } broken)
+            {
+                physics.MarkDirty(tx, ty);
+                cells.SpawnDustInTile(tx, ty, broken);
+            }
             return;
-        }
-        if (planet.Mine(tx, ty, power) is { } broken)
-        {
-            physics.MarkDirty(tx, ty);
-            cells.SpawnDustInTile(tx, ty, broken);
         }
     }
 
