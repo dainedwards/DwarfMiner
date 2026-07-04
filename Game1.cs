@@ -1276,24 +1276,11 @@ public sealed class DwarfMinerGame : Game
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
         _renderer.DrawCircle(worldCursor, 3f, new Color(255, 255, 255, 180));
 
-        // Creatures. Burn/freeze status tints the body so the player can see at a glance who's
-        // suffering: red→orange when burning (extra ember on top), pale-blue when frozen.
+        // Creatures — each kind draws its own procedural sprite, including the burn/freeze
+        // status tinting and the burning-ember flicker.
         foreach (var c in _creatures)
         {
-            Color col;
-            if (c.HitFlash > 0) col = Color.White;
-            else if (c.FreezeSeconds > 0) col = new Color(150, 200, 240);
-            else if (c.BurnSeconds > 0)   col = new Color(220, 110, 70);
-            else col = new Color(180, 60, 80);
-            _renderer.DrawCircle(c.Position, c.Radius, col);
-            _renderer.DrawCircle(c.Position - new Vector2(0, 1f), 1.5f, Color.Black);
-            // Burning creatures get a flickering ember dot above them.
-            if (c.BurnSeconds > 0f)
-            {
-                var flick = (MathF.Sin(_runTime * 22f + c.Position.X) * 0.5f + 0.5f);
-                var emCol = Color.Lerp(new Color(255, 130, 60), new Color(255, 220, 100), flick);
-                _renderer.DrawCircle(c.Position - new Vector2(0, c.Radius + 2f), 1.2f + flick * 0.6f, emCol);
-            }
+            c.Draw(_renderer, _planet, _player);
         }
 
         // Sentries — chunky pixel-art turret. Base is a stout iron plinth, barrel is a long
