@@ -55,6 +55,11 @@ public sealed class Planet
     public int Radius => RingMin + RingCount;
     public int Size => RingCount;
 
+    /// <summary>Tiles world gen wants filled with water cells (surface lakes + underground
+    /// reservoirs). Water lives exclusively in the cell sim — never as solid tiles — so gen
+    /// only records the sites here and Game1 pours the cells in once Cells exists.</summary>
+    public readonly List<(int x, int y)> WaterSeeds = new();
+
     private readonly TileKind[] _tiles;
     private readonly byte[] _damage;
     /// <summary>Background "wall" tile kind per cell — what was there before caves were carved.
