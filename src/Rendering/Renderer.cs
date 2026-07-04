@@ -337,18 +337,8 @@ public sealed class Renderer
                         }
                         break;
                     }
-                    case TileKind.Snow:
-                    {
-                        var sx = (hash >> 3) & 5;
-                        var sy = (hash >> 7) & 3;
-                        DrawDeco(centre, right, up, rotation, chord, 1 + sx, 1 + sy, 1, 1, Color.White);
-                        break;
-                    }
                     case TileKind.MossStone:
                     {
-                        var mc = new Color(70, 120, 75);
-                        DrawDeco(centre, right, up, rotation, chord, 1 + ((hash >> 2) & 3), 1 + ((hash >> 4) & 3), 2, 1, mc);
-                        DrawDeco(centre, right, up, rotation, chord, 4 + ((hash >> 8) & 2), 4 + ((hash >> 11) & 2), 1, 2, mc);
                         // Hanging vine — when the inner (cave-facing) edge is exposed, drop a
                         // short pixel column down into the cave that sways slowly. A 4px vine
                         // is enough to read as foliage without crowding the rim.
