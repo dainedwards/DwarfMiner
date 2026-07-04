@@ -109,6 +109,12 @@ public sealed class DwarfMinerGame : Game
         foreach (var (wsx, wsy) in _planet.WaterSeeds)
             _cells.FillTile(wsx, wsy, Material.Water);
 
+        // Pre-settle the seeded liquids during load: the first ~2s of cell ticks carry every
+        // seeded cell awake (tens of ms per tick at Density 8). Burning them here turns a
+        // visible gameplay stutter into a slightly longer world-gen pause; after settling,
+        // hemmed pool interiors sleep and the steady-state tick is cheap.
+        for (var i = 0; i < 120; i++) _cells.Update(1f / 60f);
+
         // Spawn the dwarf on top of whatever mountain is at angle -π/2 — walk down from
         // far above until the first solid tile, then float a few pixels above it.
         var surfacePos = FindSurfaceSpawn(-MathF.PI / 2f, _planet.Radius);
