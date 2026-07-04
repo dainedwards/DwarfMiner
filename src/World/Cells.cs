@@ -64,6 +64,13 @@ public sealed class Cells
     private readonly byte[] _mat;
     /// <summary>Source TileKind for dust cells. 0 (Sky) for non-dust cells.</summary>
     private readonly byte[] _srcTile;
+    /// <summary>Inward radial speed per cell, cells/sec. 0 for resting cells.</summary>
+    private readonly float[] _velR;
+    /// <summary>Fractional rows accumulated toward the next inward step. Doubles as the
+    /// sub-cell draw offset so falling cells glide between rows instead of ticking.</summary>
+    private readonly float[] _travel;
+    /// <summary>Persistent lateral flow direction for liquids (-1/+1, 0 = unset).</summary>
+    private readonly sbyte[] _flow;
     private HashSet<int> _active = new();
     private HashSet<int> _next = new();
     private readonly HashSet<int> _living = new();
