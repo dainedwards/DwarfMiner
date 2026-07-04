@@ -102,6 +102,12 @@ public sealed class DwarfMinerGame : Game
         // lava pooled in any cavities, with the densest lava near the Core.
         _cells.FillSkyTilesWithin(_planet.Radius * 0.45f, Material.Lava);
 
+        // Water seeding: world gen recorded lake-basin and reservoir tiles; pour the cells in
+        // now. Water is always sim cells (never solid tiles), so it settles, flows into player
+        // tunnels, and quenches lava per the cell rules.
+        foreach (var (wsx, wsy) in _planet.WaterSeeds)
+            _cells.FillTile(wsx, wsy, Material.Water);
+
         // Spawn the dwarf on top of whatever mountain is at angle -π/2 — walk down from
         // far above until the first solid tile, then float a few pixels above it.
         var surfacePos = FindSurfaceSpawn(-MathF.PI / 2f, _planet.Radius);
