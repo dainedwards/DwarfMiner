@@ -647,6 +647,10 @@ public sealed class Cells
             var size = new Vector2(chord + 0.5f, radial + 0.5f);
             var up = Planet.UpAt(centre);
             var rotation = MathF.Atan2(up.X, -up.Y);
+            // Sub-cell offset: _travel is progress toward the next inward row, so falling
+            // cells glide smoothly between rows instead of ticking a whole cell at a time.
+            var frac = MathF.Min(_travel[idx], 1f);
+            if (frac > 0f) centre -= up * (frac * radial);
             var col = ColorFor(m, cx, cy, _srcTile[idx]);
             r.Batch.Draw(r.Pixel, centre, null, col, rotation,
                 new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
