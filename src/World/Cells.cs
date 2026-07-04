@@ -315,10 +315,10 @@ public sealed class Cells
                 case Material.Dirt:
                 case Material.Gravel:
                 case Material.Dust:
-                    TickSand(cx, cy);
+                    TickSand(cx, cy, dt);
                     break;
-                case Material.Water: TickLiquid(cx, cy); break;
-                case Material.Lava:  TickLava(cx, cy); break;
+                case Material.Water: TickLiquid(cx, cy, dt); break;
+                case Material.Lava:  TickLava(cx, cy, dt); break;
                 case Material.Smoke: TickSmoke(cx, cy); break;
             }
         }
