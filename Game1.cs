@@ -127,8 +127,10 @@ public sealed class DwarfMinerGame : Game
         _projectiles.Clear();
         _boulders.Clear();
         _sentries.Clear();
+        SpawnInitialFauna();
         _earthquakeTimer = 25f;
         _spawnTimer = 6f;
+        _faunaTimer = 8f;
         _shake = 0;
         _gameOver = false;
         _gameOverReason = "";
