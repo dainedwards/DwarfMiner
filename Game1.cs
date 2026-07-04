@@ -1243,7 +1243,9 @@ public sealed class DwarfMinerGame : Game
                      : roll < 0.85 ? CreatureKind.CaveEye
                      : CreatureKind.HornedDelver;
             }
-            _creatures.Add(new Creature(pos, kind));
+            var c = new Creature(pos, kind);
+            ClearSpawnSpace(pos, c.Radius);
+            _creatures.Add(c);
             return;
         }
     }
