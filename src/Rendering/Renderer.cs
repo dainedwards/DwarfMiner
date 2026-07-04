@@ -178,48 +178,15 @@ public sealed class Renderer
                     var wallK = planet.GetWall(r, t);
                     if (wallK == TileKind.Sky) continue; // outside planet — no wall
                     var wb = Tiles.BaseColor(wallK);
-                    var wjit = ((hash >> 4) & 31) - 16;
 
-                    // Layer 1 — deep base. Darker than before so layered detail can sit on top
-                    // without the wall reading as too bright.
-                    var baseCol = new Color(
-                        Math.Clamp((int)(wb.R * 0.30f) + wjit / 6, 0, 255),
-                        Math.Clamp((int)(wb.G * 0.30f) + wjit / 6, 0, 255),
-                        Math.Clamp((int)(wb.B * 0.30f) + wjit / 6, 0, 255));
-                    _sb.Draw(_pixel, centre, null, baseCol, rotation,
-                        new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
-
-                    // Layer 2 — mid-depth strata. Coarse hash on (r/3, t/4) so the pattern
-                    // spans multiple tiles, simulating big rock slabs at depth. About 30% of
-                    // tiles get a brighter slab corner.
-                    var coarseHash = ((r / 3) * 73856093) ^ ((t / 4) * 19349663);
-                    var midCol = new Color(
-                        Math.Clamp((int)(wb.R * 0.42f) + wjit / 8, 0, 255),
-                        Math.Clamp((int)(wb.G * 0.42f) + wjit / 8, 0, 255),
-                        Math.Clamp((int)(wb.B * 0.42f) + wjit / 8, 0, 255));
-                    if ((coarseHash & 0x7) < 3)
-                    {
-                        var slx = (coarseHash >> 3) & 1; // 0 or 1
-                        var sly = (coarseHash >> 5) & 1;
-                        DrawDeco(centre, right, up, rotation, chord, slx * 4, sly * 4, 4, 4, midCol);
-                    }
-
-                    // Layer 3 — surface speckle. A handful of brighter sub-pixels at hash-stable
-                    // positions, giving the wall a grainy "rocky" feel up close.
-                    var speckCol = new Color(
-                        Math.Clamp((int)(wb.R * 0.55f) + wjit / 4, 0, 255),
-                        Math.Clamp((int)(wb.G * 0.55f) + wjit / 4, 0, 255),
-                        Math.Clamp((int)(wb.B * 0.55f) + wjit / 4, 0, 255));
-                    DrawDeco(centre, right, up, rotation, chord,
-                        1 + ((hash >> 7) & 5), 1 + ((hash >> 11) & 5), 1, 1, speckCol);
-                    DrawDeco(centre, right, up, rotation, chord,
-                        1 + ((hash >> 13) & 5), 1 + ((hash >> 17) & 5), 1, 1, speckCol);
-                    var darkSpeck = new Color(
-                        Math.Clamp((int)(wb.R * 0.18f), 0, 255),
-                        Math.Clamp((int)(wb.G * 0.18f), 0, 255),
-                        Math.Clamp((int)(wb.B * 0.18f), 0, 255));
-                    DrawDeco(centre, right, up, rotation, chord,
-                        1 + ((hash >> 19) & 5), 1 + ((hash >> 23) & 5), 1, 1, darkSpeck);
+                    // Back wall = the same atlas texture the material uses in the foreground,
+                    // multiplied down to ~35% brightness. Keeps all the baked grain/strata
+                    // detail while clearly reading as background rock.
+                    _sb.Draw(_tileAtlas, centre, TileAtlas.Source(wallK, (hash >> 6) & 3),
+                        new Color(88, 88, 100), rotation,
+                        new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
+                        new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
+                        SpriteEffects.None, 0f);
 
                     // Edge "lip" — when this back-wall tile is adjacent to a solid tile, draw
                     // a faint dark rim along the shared edge so the floor/wall transition reads
