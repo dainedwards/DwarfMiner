@@ -40,7 +40,7 @@ public static class Tiles
 
     // Tiles that never fall, even when unsupported.
     public static bool IsAnchored(TileKind k) =>
-        k is TileKind.HardStone or TileKind.Core or TileKind.Support or TileKind.Obsidian
+        k is TileKind.HardStone or TileKind.Core or TileKind.Support
           or TileKind.ReinforcedSupport or TileKind.Ladder or TileKind.Rail
           or TileKind.Glowshroom or TileKind.Beacon;
 
