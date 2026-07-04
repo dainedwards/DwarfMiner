@@ -88,6 +88,20 @@ public sealed class Renderer
         _gd.Clear(new Color(8, 10, 18));
         _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view);
 
+        // Solid PlanetCore ball filling the space inside the innermost tile ring, so the
+        // planet centre reads as a sphere the rock layers butt against, not a hole. A hot
+        // inner disc marks the drillable Core itself. Edge tucks 0.6 tiles under ring 0.
+        if (minRing == 0)
+        {
+            var origin = new Vector2(_coreTex.Width / 2f, _coreTex.Height / 2f);
+            var outerR = (Planet.RingMin + 0.6f) * Planet.TileSize;
+            _sb.Draw(_coreTex, planet.Center, null, Tiles.BaseColor(TileKind.PlanetCore), 0f,
+                origin, outerR * 2f / _coreTex.Width, SpriteEffects.None, 0f);
+            var innerR = Planet.RingMin * Planet.TileSize * 0.55f;
+            _sb.Draw(_coreTex, planet.Center, null, Tiles.BaseColor(TileKind.Core), 0f,
+                origin, innerR * 2f / _coreTex.Width, SpriteEffects.None, 0f);
+        }
+
         var camAngle = MathF.Atan2(cam.Target.Y - planet.Center.Y, cam.Target.X - planet.Center.X);
 
         for (var r = minRing; r <= maxRing; r++)
