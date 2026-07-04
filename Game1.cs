@@ -201,6 +201,14 @@ public sealed class DwarfMinerGame : Game
         // holds the fully composited frame (post lighting/bloom/vignette).
         if (Pressed(keys, _prevKeys, Keys.F12)) _screenshotPending = true;
 
+        // Headless verification hook: DM_AUTOSHOT=<seconds> takes a screenshot at that run
+        // time and every 5s after — lets tooling capture frames without input access.
+        if (_autoShotAt <= _runTime)
+        {
+            _screenshotPending = true;
+            _autoShotAt += 5f;
+        }
+
         if (_gameOver)
         {
             if (Pressed(keys, _prevKeys, Keys.R)) StartNewRun();
