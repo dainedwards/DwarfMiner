@@ -8,7 +8,7 @@ namespace DwarfMiner.World;
 /// elev variation only). Mountains are placed as a small set of explicit narrow spikes at
 /// random angles, so each peak is a pointy stone column rising sharply from the otherwise
 /// smooth grass surface. Underground: deep dirt layer, then stone with sparse caves, dirt
-/// seams, gravel pockets, ores, and the HardStone core.
+/// seams, gravel pockets, ores, and the PlanetCore core.
 /// </summary>
 public static class WorldGen
 {
@@ -117,7 +117,7 @@ public static class WorldGen
                 }
                 else if (globalR < hardCoreRadiusTiles)
                 {
-                    k = TileKind.HardStone;
+                    k = TileKind.PlanetCore;
                 }
                 else
                 {
@@ -200,7 +200,7 @@ public static class WorldGen
 
     /// <summary>Base rocks that ore deposits can replace during world gen.</summary>
     private static bool IsOreHost(TileKind k) => k is
-        TileKind.Stone or TileKind.HardStone or TileKind.MossStone or
+        TileKind.Stone or TileKind.PlanetCore or TileKind.MossStone or
         TileKind.Granite or TileKind.Basalt or TileKind.Obsidian;
 
     private static float[] MakeAngularNoise(Random rng, int samples)

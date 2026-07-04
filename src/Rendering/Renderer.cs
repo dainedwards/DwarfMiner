@@ -300,7 +300,7 @@ public sealed class Renderer
                 switch (k)
                 {
                     case TileKind.Stone:
-                    case TileKind.HardStone:
+                    case TileKind.PlanetCore:
                     {
                         var jy = 2 + ((hash >> 5) & 3);
                         var jc = new Color(

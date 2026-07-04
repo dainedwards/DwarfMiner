@@ -10,7 +10,7 @@ namespace DwarfMiner.World;
 ///     the moment their cardinal-down neighbour is empty — the tile vanishes and a half
 ///     tile's worth of Material cells spawn in its place, then flow with angle of repose.
 ///   • Stone-like tiles (Stone, ores) use a connectivity check: flood-fill the connected
-///     non-anchored solid region and if no path reaches an anchored tile (HardStone/Core/
+///     non-anchored solid region and if no path reaches an anchored tile (PlanetCore/Core/
 ///     Support) or the world edge within budget, the *whole region* crumbles into the cell
 ///     sim as dust tagged with each tile's kind — it rains down as granular debris under
 ///     the velocity sim and pays out the tile's drop on pickup, same as loose ground.
@@ -37,6 +37,8 @@ public sealed class Physics
     /// <summary>Budget shaved off per hardness tier above Stone — stronger material holds
     /// larger unsupported spans, so only smaller pockets of it can cave in.</summary>
     public const int BudgetPerHardness = 8;
+    /// <summary>Obsidian is brittle: any unsupported span bigger than this caves in.</summary>
+    public const int ObsidianCollapseBudget = 6;
     private int _regionBudgetSum;
 
     /// <summary>Seconds a condemned region trembles before it starts crumbling — the

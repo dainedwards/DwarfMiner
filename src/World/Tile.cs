@@ -7,7 +7,7 @@ public enum TileKind : byte
     Sky = 0,
     Dirt = 1,
     Stone = 2,
-    HardStone = 3,
+    PlanetCore = 3,
     CoalOre = 4,
     IronOre = 5,
     GoldOre = 6,
@@ -40,7 +40,7 @@ public static class Tiles
 
     // Tiles that never fall, even when unsupported.
     public static bool IsAnchored(TileKind k) =>
-        k is TileKind.HardStone or TileKind.Core or TileKind.Support
+        k is TileKind.PlanetCore or TileKind.Core or TileKind.Support
           or TileKind.ReinforcedSupport or TileKind.Ladder or TileKind.Rail
           or TileKind.Glowshroom or TileKind.Beacon;
 
@@ -84,7 +84,7 @@ public static class Tiles
         TileKind.Sapphire => 5,
         TileKind.Diamond => 6,
         TileKind.Crystal => 5,
-        TileKind.HardStone => 99,
+        TileKind.PlanetCore => 99,
         TileKind.Core => 999,
         TileKind.Support => 99,
         TileKind.ReinforcedSupport => 99,
@@ -107,7 +107,7 @@ public static class Tiles
         TileKind.Granite => new Color(140, 110, 110),
         TileKind.Basalt => new Color(60, 58, 70),
         TileKind.Obsidian => new Color(28, 24, 38),
-        TileKind.HardStone => new Color(60, 60, 70),
+        TileKind.PlanetCore => new Color(60, 60, 70),
         TileKind.CoalOre => new Color(55, 55, 62),
         TileKind.IronOre => new Color(150, 110, 90),
         TileKind.SilverOre => new Color(180, 185, 200),
@@ -223,7 +223,7 @@ public static class Tiles
         TileKind.Granite => ("granite", 1),
         TileKind.Basalt => ("basalt", 1),
         TileKind.Obsidian => ("obsidian", 1),
-        TileKind.HardStone => ("stone", 3),
+        TileKind.PlanetCore => ("stone", 3),
         TileKind.Support => ("stone", 2),
         TileKind.CoalOre => ("coal", 1),
         TileKind.IronOre => ("iron", 1),

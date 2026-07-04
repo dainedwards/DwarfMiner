@@ -123,7 +123,7 @@ public sealed class Planet
 
     /// <summary>Apply <paramref name="power"/> mining damage to the tile at (x,y). Returns
     /// the broken tile kind on shatter, or null if it just took damage. Hardness ≥ 99 is the
-    /// "anchor-class" gate (HardStone, Core, Support beams) — those won't take damage from a
+    /// "anchor-class" gate (PlanetCore, Core, Support beams) — those won't take damage from a
     /// regular swing. The hammer / core drill bypass that gate via
     /// <paramref name="effectiveHardness"/>: pass a smaller value (e.g. 8) and the tile will
     /// take damage as if it had that hardness, while still being broken by repeated hits.</summary>

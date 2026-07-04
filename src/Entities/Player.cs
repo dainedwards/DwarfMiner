@@ -112,7 +112,7 @@ public sealed class Player
     }
 
     /// <summary>True iff the given <paramref name="tool"/> can crack a tile of the given kind.
-    /// Hammer is the only tool that breaks HardStone; core drill is the only thing that
+    /// Hammer is the only tool that breaks PlanetCore; core drill is the only thing that
     /// breaks the Core. Pickaxe + drill handle everything else, with tier IV getting a
     /// power bonus on Obsidian (handled inside TryMine, not here).</summary>
     public bool CanBreak(TileKind k, MiningTool tool)
@@ -447,7 +447,7 @@ public sealed class Player
     }
 
     /// <summary>Try to mine the tile under the cursor with a specific tool. Pickaxe is the
-    /// default; drill / hammer change cooldown + power profile. HardStone needs the hammer,
+    /// default; drill / hammer change cooldown + power profile. PlanetCore needs the hammer,
     /// the Core needs the core drill. Tier IV gets a 2× power bonus on Obsidian; hammer
     /// gets a flat power floor + an effective-hardness override so it bites bedrock at all.</summary>
     public TileKind? TryMine(Planet planet, Physics physics, Vector2 worldCursor, MiningTool tool = MiningTool.Pickaxe)
@@ -465,16 +465,16 @@ public sealed class Player
         }
 
         // Tool-aware power. Drill matches pickaxe power but mines fast; hammer hits hard but
-        // slow; hammer is the only tool that can punch HardStone (with the hardness override).
+        // slow; hammer is the only tool that can punch PlanetCore (with the hardness override).
         var power = EffectivePickaxePower;
         int? effectiveHardness = null;
         if (k == TileKind.Obsidian && PickaxeTier >= 4) power *= 2;
         if (tool == MiningTool.Hammer)
         {
             power = Math.Max(power, 4);
-            // Treat HardStone as basalt-class so the hammer's swing actually does damage.
+            // Treat PlanetCore as basalt-class so the hammer's swing actually does damage.
             // Other tiles take normal hardness — the boost is the power floor only.
-            if (k == TileKind.HardStone) effectiveHardness = 8;
+            if (k == TileKind.PlanetCore) effectiveHardness = 8;
         }
 
         var broken = planet.Mine(x, y, power, effectiveHardness);
