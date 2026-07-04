@@ -124,6 +124,32 @@ public static class WorldGen
 
                 // Below the surface: layered ground.
                 var depth = surfaceR - r;
+
+                // Lake basin: carve the bowl out of the surface and seed it with water. The
+                // top course (depth < 1) stays air so the waterline sits just below the shore.
+                if (mountainHeight <= 0.5f)
+                {
+                    var lakeDepth = 0f;
+                    foreach (var l in lakes)
+                    {
+                        var angDiff = MathF.Abs(ang - l.ang);
+                        if (angDiff > MathF.PI) angDiff = MathHelper.TwoPi - angDiff;
+                        if (angDiff < l.w)
+                        {
+                            var f = angDiff / l.w;
+                            var d = (1f - f * f) * l.depth;
+                            if (d > lakeDepth) lakeDepth = d;
+                        }
+                    }
+                    if (lakeDepth > 0.5f && depth < lakeDepth)
+                    {
+                        planet.SetWall(r, t, TileKind.Dirt);
+                        planet.Set(r, t, TileKind.Sky);
+                        if (depth >= 1f) planet.WaterSeeds.Add((r, t));
+                        continue;
+                    }
+                }
+
                 var pos = planet.TileToWorld(r, t);
                 var wx = (pos.X - planet.Center.X) / Planet.TileSize;
                 var wy = (pos.Y - planet.Center.Y) / Planet.TileSize;
