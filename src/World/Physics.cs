@@ -38,6 +38,27 @@ public sealed class Physics
     /// larger unsupported spans, so only smaller pockets of it can cave in.</summary>
     public const int BudgetPerHardness = 8;
     private int _regionBudgetSum;
+
+    /// <summary>Seconds a condemned region trembles before it starts crumbling — the
+    /// Terraria-style warning window for the player to step out from under it.</summary>
+    public const float TrembleTime = 0.35f;
+    /// <summary>Seconds between successive rings crumbling, pacing the bottom-to-top cascade.</summary>
+    public const float CrumbleRingInterval = 0.05f;
+
+    /// <summary>A condemned region mid-collapse: tiles sorted innermost-ring-first, a timer
+    /// that runs down the tremble and then paces the ring-by-ring crumble.</summary>
+    private sealed class PendingCollapse
+    {
+        public readonly List<int> Tiles = new();
+        public float Timer = TrembleTime;
+        public int Next;
+    }
+
+    private readonly List<PendingCollapse> _pendingCollapses = new();
+    private readonly HashSet<int> _pendingTiles = new();
+    /// <summary>Planet indices of tiles condemned but not yet crumbled. The renderer reads
+    /// this to jitter their draw position (tremble telegraph).</summary>
+    public HashSet<int> TremblingTiles => _pendingTiles;
     public int CollapsesThisTick { get; private set; }
 
     public Physics(Planet planet, Cells cells) { _planet = planet; _cells = cells; }
