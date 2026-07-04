@@ -1151,6 +1151,43 @@ public sealed class DwarfMinerGame : Game
         return _planet.Center + dir * ((radius + 12) * Planet.TileSize);
     }
 
+    /// <summary>Carve out any solid tiles overlapping a freshly spawned body so nothing starts
+    /// life embedded in rock — an embedded spawn forces the collider's inside-tile escape
+    /// push on its first frame, which reads as teleporting/clipping through the world.
+    /// Overlap uses the same polar-rect math as the collider; anchored tiles are left alone
+    /// and physics is dirty-marked so any overhang this opens up settles normally.</summary>
+    private void ClearSpawnSpace(Vector2 pos, float radius)
+    {
+        var (tx, ty) = _planet.WorldToTile(pos);
+        var rSq = (radius + 0.5f) * (radius + 0.5f);
+        for (var dy = -2; dy <= 2; dy++)
+        {
+            for (var dx = -2; dx <= 2; dx++)
+            {
+                var x = tx + dx; var y = ty + dy;
+                if (x < 0 || x >= Planet.RingCount) continue;
+                var k = _planet.Get(x, y);
+                if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
+
+                var centre = _planet.TileToWorld(x, y);
+                var up = _planet.UpAt(centre);
+                var right = new Vector2(-up.Y, up.X);
+                var rel = pos - centre;
+                var lx = Vector2.Dot(rel, right);
+                var ly = Vector2.Dot(rel, up);
+                var ringRadius = (Planet.RingMin + x + 0.5f) * Planet.TileSize;
+                var halfX = MathHelper.TwoPi * ringRadius / Planet.TilesAt(x) * 0.5f;
+                var halfY = Planet.TileSize * 0.5f;
+                var ox = lx - MathHelper.Clamp(lx, -halfX, halfX);
+                var oy = ly - MathHelper.Clamp(ly, -halfY, halfY);
+                if (ox * ox + oy * oy >= rSq) continue;
+
+                _planet.Set(x, y, TileKind.Sky);
+                _physics.MarkDirty(x, y);
+            }
+        }
+    }
+
     private int CountKinds(bool cave = false, bool surface = false, bool sky = false)
     {
         var n = 0;
