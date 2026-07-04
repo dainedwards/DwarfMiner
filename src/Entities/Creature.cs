@@ -161,10 +161,26 @@ public sealed class Creature
             case CreatureKind.CaveEye:    TickCaveEye(dt, planet, toPlayer, dist, speedMul); break;
             case CreatureKind.SkyMoth:
             case CreatureKind.SkyStinger: TickFlyer(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.HornedDelver: TickDelver(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.Centipede:  TickCentipede(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.MoleBeast:  TickMole(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
         }
 
         Position += Velocity * dt;
         ResolveTileCollision(planet);
+
+        // Drop breadcrumbs after the head's final position is known so the centipede's body
+        // threads the tunnel the head actually took.
+        if (_crumbs is not null)
+        {
+            while ((Position - _crumbs[_crumbHead]).LengthSquared() >= CrumbSpacing * CrumbSpacing)
+            {
+                var prev = _crumbs[_crumbHead];
+                var step = Position - prev;
+                _crumbHead = (_crumbHead + 1) % CrumbCount;
+                _crumbs[_crumbHead] = prev + Vector2.Normalize(step) * CrumbSpacing;
+            }
+        }
 
         // Damage player on contact — hostile kinds only. Fauna just bumps past.
         if (Hostile && ContactDamage > 0f)
