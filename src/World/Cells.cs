@@ -467,6 +467,7 @@ public sealed class Cells
                 }
                 _mat[idx] = 0;
                 _srcTile[idx] = 0;
+                ClearKinetics(idx);
                 _living.Remove(idx);
                 // Wake the surrounding cells so anything resting on this one re-runs its fall
                 // logic — without this, a collected cell at the bottom of a column leaves the
