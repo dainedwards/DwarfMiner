@@ -298,18 +298,26 @@ public sealed class Physics
     private static int BudgetFor(TileKind k) =>
         Math.Max(BudgetPerHardness, StoneCollapseBudget - BudgetPerHardness * (Tiles.Hardness(k) - 2));
 
+    /// <summary>Condemn a region: enqueue it to tremble, then crumble bottom-to-top. Tiles
+    /// already pending from an earlier settle pass are skipped, so the re-detection that
+    /// happens every settle tick while the region still stands doesn't restart the timer.</summary>
     private void CollapseRegion(List<int> region)
     {
+        PendingCollapse? p = null;
         foreach (var idx in region)
         {
+            if (_pendingTiles.Contains(idx)) continue;
             var (x, y) = _planet.UnIndex(idx);
             var k = _planet.Get(x, y);
             if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
-            _planet.Set(x, y, TileKind.Sky);
-            _cells.SpawnDustInTile(x, y, k);
-            CollapsesThisTick++;
-            MarkDirty(x, y); // wake neighbours — adjacent regions may now be unanchored too.
+            p ??= new PendingCollapse();
+            p.Tiles.Add(idx);
+            _pendingTiles.Add(idx);
         }
+        if (p is null) return;
+        // Innermost ring first = "bottom" in polar gravity, so the crumble sweeps upward.
+        p.Tiles.Sort((a, b) => _planet.UnIndex(a).x.CompareTo(_planet.UnIndex(b).x));
+        _pendingCollapses.Add(p);
     }
 
     private static (int x, int y) SnapToCardinal(Vector2 v)
