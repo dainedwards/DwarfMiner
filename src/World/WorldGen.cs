@@ -83,7 +83,6 @@ public static class WorldGen
 
                 var surfaceR = baselineR + elev;
                 var peakR = surfaceR + mountainHeight;
-                var globalR = r + Planet.RingMin;
 
                 // Above the mountain peak (or above the smooth surface): Sky.
                 if (r > peakR)
