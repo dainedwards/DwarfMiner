@@ -463,21 +463,7 @@ public sealed class Renderer
                     }
                 }
 
-                // Ore speckles — bright sub-tile flecks at hash-stable positions.
-                if (Tiles.IsOre(k))
-                {
-                    var spec = Tiles.OreSpeckle(k);
-                    var sx1 = (hash >> 1) & 5;
-                    var sy1 = (hash >> 4) & 5;
-                    var sx2 = (hash >> 7) & 5;
-                    var sy2 = (hash >> 10) & 5;
-                    DrawDeco(centre, right, up, rotation, chord, 1 + sx1, 1 + sy1, 2, 2, spec);
-                    DrawDeco(centre, right, up, rotation, chord, 1 + sx2, 1 + sy2, 1, 1, spec);
-                    if (k is TileKind.Crystal or TileKind.GoldOre or TileKind.PlatinumOre
-                          or TileKind.Diamond or TileKind.Ruby or TileKind.Sapphire
-                          or TileKind.SilverOre)
-                        DrawDeco(centre, right, up, rotation, chord, 2 + sx1, 2 + sy1, 1, 1, Color.White);
-                }
+                // (Ore veins and sparkles are baked into the atlas patterns.)
 
                 // Damage overlay + cracks once past the halfway mark.
                 var dmg = planet.Damage(r, t);
