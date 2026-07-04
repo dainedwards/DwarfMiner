@@ -168,8 +168,16 @@ public sealed class Creature
             case CreatureKind.MoleBeast:  TickMole(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
         }
 
-        Position += Velocity * dt;
-        ResolveTileCollision(planet);
+        // Substepped integration: each step moves at most ~60% of the body radius so a fast
+        // fall or pounce can never tunnel through a tile between collision checks.
+        var moveLen = Velocity.Length() * dt;
+        var substeps = Math.Clamp((int)MathF.Ceiling(moveLen / MathF.Max(Radius * 0.6f, 1.5f)), 1, 8);
+        var subDt = dt / substeps;
+        for (var s = 0; s < substeps; s++)
+        {
+            Position += Velocity * subDt;
+            ResolveTileCollision(planet);
+        }
 
         // Drop breadcrumbs after the head's final position is known so the centipede's body
         // threads the tunnel the head actually took.
