@@ -1283,7 +1283,9 @@ public sealed class DwarfMinerGame : Game
         alt = MathF.Min(alt, (_planet.Radius - 6) * Planet.TileSize);
         var pos = _planet.Center + dir * alt;
         var kind = Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth : CreatureKind.SkyStinger;
-        _creatures.Add(new Creature(pos, kind));
+        var c = new Creature(pos, kind);
+        ClearSpawnSpace(pos, c.Radius); // altitude is above local ground, but a mountain flank can still clip the band
+        _creatures.Add(c);
     }
 
     protected override void Draw(GameTime gameTime)
