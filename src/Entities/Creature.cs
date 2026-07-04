@@ -197,8 +197,27 @@ public sealed class Creature
                 // A stinger that connects breaks off and climbs back to altitude.
                 if (Kind == CreatureKind.SkyStinger) _cd = 2.2f;
             }
+
+            // Centipede body segments sting too — brushing the trailing coils hurts, at half
+            // the head's bite. Checked on every other segment to keep it cheap.
+            if (_crumbs is not null)
+            {
+                for (var s = 2; s <= SegCount; s += 2)
+                {
+                    var seg = SegPos(s);
+                    var d = player.Position - seg;
+                    if (d.Length() < Radius + player.Radius)
+                    {
+                        player.TakeDamage(ContactDamage * 0.5f * dt);
+                        break;
+                    }
+                }
+            }
         }
     }
+
+    private Vector2 SegPos(int i) =>
+        _crumbs![((_crumbHead - i * 2) % CrumbCount + CrumbCount) % CrumbCount];
 
     // ---------------------------------------------------------------- cave walkers
 
