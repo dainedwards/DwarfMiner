@@ -1304,20 +1304,6 @@ public sealed class DwarfMinerGame : Game
             _renderer.DrawCircle(b.Position, b.Radius, new Color(80, 70, 60));
         }
 
-        // Falling rock chunks from stone collapses — drawn as tumbling squares of the original
-        // tile colour with per-chunk jitter so a 50-chunk collapse reads as fragments, not a
-        // uniform stamp. During the tremble warning, the chunk is at its tile spot oscillating.
-        foreach (var c in _rockChunks)
-        {
-            var col = Tiles.BaseColor(c.Kind);
-            var jit = (int)(c.ColorJitter * 12f);
-            col = new Color(
-                Math.Clamp(col.R + jit, 0, 255),
-                Math.Clamp(col.G + jit, 0, 255),
-                Math.Clamp(col.B + jit, 0, 255));
-            _renderer.DrawRect(c.Position, new Vector2(c.Radius * 1.8f, c.Radius * 1.8f), col, c.Rotation);
-        }
-
         // Kaiju visibility cull. The kaiju's render block does 100+ draw calls (4 legs × IK +
         // 7-node tail + dorsal spines + head + claws), so skipping it when off-screen is a
         // large win. Camera viewport is 1280×720 at zoom 4 → ~320×180 world units, so the
