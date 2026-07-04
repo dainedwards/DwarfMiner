@@ -299,7 +299,6 @@ public sealed class Cells
         _mat[si] = 0;
         _srcTile[si] = 0;
         ClearKinetics(si);
-        _living.Remove(si); _living.Add(di);
         _next.Add(di);
         WakeNeighbors(sCx, sCy);
         WakeNeighbors(dCx, dCy);
