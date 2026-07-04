@@ -352,10 +352,7 @@ public sealed class Creature
         else if (_retarget <= 0f)
         {
             _retarget = 4f + (float)Random.Shared.NextDouble() * 4f;
-            // Bias tunnels tangentially (gallery-like) with a random radial tilt.
-            var baseDir = right * (Random.Shared.Next(2) == 0 ? 1f : -1f);
-            var tilt = ((float)Random.Shared.NextDouble() - 0.5f) * 1.6f;
-            _digDir = Rotate(baseDir, tilt);
+            _digDir = PickDigHeading(planet, right, 1.6f);
         }
 
         // Grip: with any solid tile in the surrounding 3×3 it clings and inches along its
