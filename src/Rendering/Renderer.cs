@@ -26,6 +26,7 @@ public sealed class Renderer
         _pixel = new Texture2D(gd, 1, 1);
         _pixel.SetData(new[] { Color.White });
         _circle = MakeCircle(gd, 32);
+        _coreTex = MakeCircle(gd, 256);
         _font = new PixelFont(gd);
         _lighting = new Lighting(gd);
     }
