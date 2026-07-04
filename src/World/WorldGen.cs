@@ -45,6 +45,7 @@ public static class WorldGen
         var smallCave = new float[64, 64];
         var oreNoise = new float[64, 64];
         var pocketNoise = new float[64, 64];
+        var waterNoise = new float[64, 64];
         for (var j = 0; j < 64; j++)
             for (var i = 0; i < 64; i++)
             {
@@ -52,7 +53,29 @@ public static class WorldGen
                 smallCave[i, j] = (float)rng.NextDouble();
                 oreNoise[i, j] = (float)rng.NextDouble();
                 pocketNoise[i, j] = (float)rng.NextDouble();
+                waterNoise[i, j] = (float)rng.NextDouble();
             }
+
+        // Surface lakes — 3-4 shallow basins scooped out of the smooth surface, placed by
+        // rejection sampling so they never overlap a mountain's footprint. The basin profile
+        // is a rounded dome (1-(d/w)²) rather than the mountains' pointy parabola. The carved
+        // tiles are recorded as WaterSeeds; the water itself is poured in as sim cells later.
+        var lakeCount = 3 + rng.Next(2);
+        var lakes = new (float ang, float depth, float w)[lakeCount];
+        for (var i = 0; i < lakeCount; i++)
+        {
+            float ang;
+            var tries = 0;
+            do
+            {
+                ang = (float)(rng.NextDouble() * MathHelper.TwoPi);
+                tries++;
+            } while (tries < 40 && NearMountain(mountains, ang, 0.14f));
+            lakes[i] = (
+                ang,
+                depth: 3.5f + (float)rng.NextDouble() * 3.5f,   // 3.5–7 tiles deep at centre
+                w: 0.055f + (float)rng.NextDouble() * 0.05f);   // ≈ 3°–6° half-width
+        }
 
         const int baselineR = 129;
 
