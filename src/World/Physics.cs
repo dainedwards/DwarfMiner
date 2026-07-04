@@ -35,9 +35,6 @@ public sealed class Physics
     public const int CollapseBudget = 96;       // max region size we'll evaluate; bigger = treated as supported
     public int CollapsesThisTick { get; private set; }
 
-    /// <summary>Game1 wires this to a List&lt;RockChunk&gt; so collapses can spawn falling chunks.</summary>
-    public List<RockChunk>? ChunkSink;
-
     public Physics(Planet planet, Cells cells) { _planet = planet; _cells = cells; }
 
     public void MarkDirty(int x, int y)
