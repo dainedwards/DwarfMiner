@@ -483,7 +483,14 @@ public sealed class Creature
         else if (_retarget <= 0f)
         {
             _retarget = 3f + (float)Random.Shared.NextDouble() * 3f;
-            _digDir = Rotate(_digDir, ((float)Random.Shared.NextDouble() - 0.5f) * 2.2f);
+            // Curve the existing heading (winding galleries), preferring a bend that meets rock.
+            var best = _digDir;
+            for (var i = 0; i < 5; i++)
+            {
+                best = Rotate(_digDir, ((float)Random.Shared.NextDouble() - 0.5f) * 2.2f);
+                if (planet.IsSolidAt(Position + best * (Radius + 6f))) break;
+            }
+            _digDir = best;
         }
 
         if (AnySolidNear(planet))
