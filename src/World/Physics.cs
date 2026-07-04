@@ -198,9 +198,13 @@ public sealed class Physics
                 return true;
             }
             _floodRegion.Add(idx);
-            if (_floodRegion.Count > CollapseBudget)
+            _regionBudgetSum += BudgetFor(k);
+            // Compare region size against the average per-material budget of its members
+            // (count > sum/count, kept in integers as count² > sum) — a mixed seam of stone
+            // and ore gets a threshold between the two, weighted by composition.
+            if (_floodRegion.Count * _floodRegion.Count > _regionBudgetSum)
             {
-                // Region too big to safely collapse — bail out as anchored.
+                // Region too big for its material strength — treat as supported.
                 foreach (var v in _floodVisited) _anchoredCache.Add(v);
                 return true;
             }
