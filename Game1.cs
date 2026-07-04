@@ -323,7 +323,7 @@ public sealed class DwarfMinerGame : Game
         // Spawn creatures inside caves. Cap counts cave dwellers only — surface/sky fauna
         // have their own population loop below.
         _spawnTimer -= dt;
-        if (_spawnTimer <= 0 && CountKinds(cave: true) < 33)
+        if (_spawnTimer <= 0 && CountKindsNear(550f, cave: true) < 14)
         {
             TrySpawnCreature();
             _spawnTimer = 2.3f + (float)Random.Shared.NextDouble() * 1.7f;
@@ -334,17 +334,24 @@ public sealed class DwarfMinerGame : Game
         _faunaTimer -= dt;
         if (_faunaTimer <= 0)
         {
-            _faunaTimer = 8f + (float)Random.Shared.NextDouble() * 5f;
-            if (CountKinds(surface: true) < 12) TrySpawnSurfaceAnimal();
-            if (CountKinds(sky: true) < 10) TrySpawnSkyAnimal();
+            _faunaTimer = 6f + (float)Random.Shared.NextDouble() * 4f;
+            if (CountKindsNear(700f, surface: true) < 7) TrySpawnSurfaceAnimal();
+            if (CountKindsNear(700f, sky: true) < 6) TrySpawnSkyAnimal();
         }
 
-        // Update entities.
+        // Update entities. Creatures that have drifted far outside the player's neighbourhood
+        // are recycled — they'd never be met again, they eat sim time, and every recycled
+        // body frees local-population budget so the spawner keeps the area around the player
+        // stocked as they travel.
         for (var i = _creatures.Count - 1; i >= 0; i--)
         {
             var c = _creatures[i];
             c.Update(dt, _planet, _physics, _cells, _player);
-            if (c.Health <= 0) _creatures.RemoveAt(i);
+            if (c.Health <= 0
+                || (c.Position - _player.Position).LengthSquared() > 1000f * 1000f)
+            {
+                _creatures.RemoveAt(i);
+            }
         }
 
         for (var i = _projectiles.Count - 1; i >= 0; i--)
