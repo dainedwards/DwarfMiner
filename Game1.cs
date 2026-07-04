@@ -1161,6 +1161,8 @@ public sealed class DwarfMinerGame : Game
         var oldTarget = _camera.Target;
         _camera.Target = oldTarget + new Vector2(shakeX, shakeY);
 
+        // Re-wired every frame because _physics is recreated on restart while _renderer persists.
+        _renderer.TrembleTiles = _physics.TremblingTiles;
         _renderer.DrawWorld(_planet, _camera);
 
         _renderer.BeginEntities(_camera);
