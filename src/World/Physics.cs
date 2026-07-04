@@ -230,16 +230,13 @@ public sealed class Physics
 
     private void CollapseRegion(List<int> region)
     {
-        if (ChunkSink is null) return;
         foreach (var idx in region)
         {
             var (x, y) = _planet.UnIndex(idx);
             var k = _planet.Get(x, y);
             if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
-            var pos = _planet.TileToWorld(x, y);
-            // Chunk handles its own tremble + initial nudge; we just place it at the tile centre.
-            ChunkSink.Add(new RockChunk(pos, k));
             _planet.Set(x, y, TileKind.Sky);
+            _cells.SpawnDustInTile(x, y, k);
             CollapsesThisTick++;
             MarkDirty(x, y); // wake neighbours — adjacent regions may now be unanchored too.
         }
