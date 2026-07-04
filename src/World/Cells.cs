@@ -218,6 +218,18 @@ public sealed class Cells
                     Place(c0x + dx, c0y + dy, Material.Dust, src);
     }
 
+    /// <summary>Fill every sub-cell of the polar tile with material — used for water seeding
+    /// at world start, where the random scatter of <see cref="SpawnInTile"/> would leave
+    /// lakes visibly frothy with holes.</summary>
+    public void FillTile(int tx, int ty, Material m)
+    {
+        var c0y = tx * Density;
+        var c0x = ty * Density;
+        for (var dy = 0; dy < Density; dy++)
+            for (var dx = 0; dx < Density; dx++)
+                Place(c0x + dx, c0y + dy, m);
+    }
+
     public bool IsBlocked(int cx, int cy)
     {
         if (cy < 0) return true;
