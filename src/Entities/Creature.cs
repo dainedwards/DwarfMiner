@@ -329,7 +329,9 @@ public sealed class Creature
         }
         else
         {
-            Velocity -= up * (320f * dt); // mid-hop: ballistic
+            // Mid-hop: ballistic, with the shared terminal-velocity cap.
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
+            Velocity = right * Vector2.Dot(Velocity, right) + up * vN;
         }
     }
 
