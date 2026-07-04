@@ -525,8 +525,7 @@ public sealed class Creature
         else if (_retarget <= 0f)
         {
             _retarget = 4f + (float)Random.Shared.NextDouble() * 4f;
-            var baseDir = right * (Random.Shared.Next(2) == 0 ? 1f : -1f);
-            _digDir = Rotate(baseDir, ((float)Random.Shared.NextDouble() - 0.5f) * 0.9f);
+            _digDir = PickDigHeading(planet, right, 0.9f);
         }
 
         var haste = angry ? 1.5f : 1f;
