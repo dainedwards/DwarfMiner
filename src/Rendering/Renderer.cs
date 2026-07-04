@@ -226,21 +226,35 @@ public sealed class Renderer
                     Math.Clamp(col.G + jitter / 4, 0, 255),
                     Math.Clamp(col.B + jitter / 4, 0, 255));
 
-                _sb.Draw(_pixel, centre, null, col, rotation,
-                    new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
-
-                // Top/bottom shade — bright band on the outer (sky-facing) side, dark on the
-                // inner (centre-facing) side. Bakes ambient sky-light into every solid tile.
-                var topShade = new Color(
-                    Math.Clamp(col.R + 16, 0, 255),
-                    Math.Clamp(col.G + 16, 0, 255),
-                    Math.Clamp(col.B + 16, 0, 255));
-                var botShade = new Color(
-                    Math.Clamp(col.R - 16, 0, 255),
-                    Math.Clamp(col.G - 16, 0, 255),
-                    Math.Clamp(col.B - 16, 0, 255));
-                DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 2, topShade);
-                DrawDeco(centre, right, up, rotation, chord, 0, 6, 8, 2, botShade);
+                if (UsesAuthoredArt(k))
+                {
+                    // Placeables keep their hand-authored DrawDeco art below; flat base +
+                    // dynamic shade bands, as before.
+                    _sb.Draw(_pixel, centre, null, col, rotation,
+                        new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+                    var topShade = new Color(
+                        Math.Clamp(col.R + 16, 0, 255),
+                        Math.Clamp(col.G + 16, 0, 255),
+                        Math.Clamp(col.B + 16, 0, 255));
+                    var botShade = new Color(
+                        Math.Clamp(col.R - 16, 0, 255),
+                        Math.Clamp(col.G - 16, 0, 255),
+                        Math.Clamp(col.B - 16, 0, 255));
+                    DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 2, topShade);
+                    DrawDeco(centre, right, up, rotation, chord, 0, 6, 8, 2, botShade);
+                }
+                else
+                {
+                    // Natural materials sample the 16×16 atlas — 2× the tile's world
+                    // resolution, so ground reads as textured pixel art. The variant is
+                    // hash-stable per tile; grain, strata, ore veins and the top-lit
+                    // gradient are baked into the pattern.
+                    _sb.Draw(_tileAtlas, centre, TileAtlas.Source(k, (hash >> 6) & 3),
+                        Color.White, rotation,
+                        new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
+                        new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
+                        SpriteEffects.None, 0f);
+                }
 
                 // Edge rims — outer/inner radial + tangential to either side.
                 var rim = new Color(
