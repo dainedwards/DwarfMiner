@@ -563,6 +563,29 @@ public sealed class Cells
         TileKind.Dirt or TileKind.Grass or TileKind.Gravel or
         TileKind.MossStone or TileKind.Snow or TileKind.Support;
 
+    /// <summary>Tile kind under the given cell (Sky when off-grid).</summary>
+    private TileKind TileAt(int cx, int cy) =>
+        (cy < 0 || cy >= Height) ? TileKind.Sky : Planet.Get(cy / Density, WrapX(cx, _cellsAt[cy]) / Density);
+
+    /// <summary>True if any cardinal-neighbour cell of (cx,cy) sits in a meltable tile —
+    /// gates the lava sleep so pooled lava keeps gnawing at dirt it touches.</summary>
+    private bool HasMeltableNeighbour(int cx, int cy)
+    {
+        if (IsMeltable(TileAt(cx + 1, cy)) || IsMeltable(TileAt(cx - 1, cy))) return true;
+        var (icx, icy) = InnerCell(cx, cy);
+        if (IsMeltable(TileAt(icx, icy))) return true;
+        if (cy < Height - 1)
+        {
+            var oc = OuterCellCount(cx, cy);
+            for (var i = 0; i < oc; i++)
+            {
+                var (ocx, ocy) = OuterCell(cx, cy, i);
+                if (IsMeltable(TileAt(ocx, ocy))) return true;
+            }
+        }
+        return false;
+    }
+
     private void TickSmoke(int cx, int cy)
     {
         if (cy < Height - 1)
