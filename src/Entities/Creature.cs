@@ -361,26 +361,161 @@ public sealed class Creature
         }
 
         // Chew the tile ahead of the snout.
+        Chew(dt, planet, physics, cells, _digDir, 0.22f, 2);
+    }
+
+    /// <summary>Shared excavation bite for every digger (Borer, Centipede, MoleBeast, and the
+    /// HornedDelver's pickaxe). Chips the tile one reach ahead along <paramref name="dir"/>
+    /// through the same physics path as player mining: Planet.Mine damage, dirty-mark on
+    /// break so collapse checks run, and debris spilled into the cell sim. Anchor-class tiles
+    /// (core, supports) refuse the bite and force a heading re-pick. Pass null to just tick
+    /// the cooldown without biting.</summary>
+    private void Chew(float dt, Planet planet, Physics physics, Cells cells,
+        Vector2? dir, float interval, int power)
+    {
         _cd -= dt;
-        if (_cd <= 0f)
+        if (dir is not { } d || _cd > 0f) return;
+        var probe = Position + d * (Radius + 4f);
+        var (tx, ty) = planet.WorldToTile(probe);
+        var k = planet.Get(tx, ty);
+        if (!Tiles.IsSolid(k)) return;
+        _cd = interval;
+        _swing = 0.3f;
+        if (Tiles.Hardness(k) >= 90)
         {
-            var probe = Position + _digDir * (Radius + 4f);
-            var (tx, ty) = planet.WorldToTile(probe);
-            var k = planet.Get(tx, ty);
-            if (Tiles.IsSolid(k))
+            _retarget = 0f; // core / support beam — bounce off, pick a new heading
+            return;
+        }
+        if (planet.Mine(tx, ty, power) is { } broken)
+        {
+            physics.MarkDirty(tx, ty);
+            cells.SpawnDustInTile(tx, ty, broken);
+        }
+    }
+
+    /// <summary>HornedDelver: a pick-swinging humanoid miner. Walks and hops like the dwarf;
+    /// once the player enters its aggro radius it holds a grudge for several seconds (memory
+    /// survives losing sight) and mines whatever separates them — clearing walls ahead,
+    /// sinking straight shafts when the prey is below, cutting diagonal stairs when above.
+    /// Off aggro it patrols its gallery and keeps extending it rather than turning back.</summary>
+    private void TickDelver(float dt, Planet planet, Physics physics, Cells cells,
+        Vector2 up, Vector2 right, Vector2 toPlayer, float dist, float speedMul)
+    {
+        if (_swing > 0f) _swing -= dt;
+        if (dist < 150f) _aggroT = 6f; else _aggroT -= dt;
+
+        if (_aggroT > 0f)
+        {
+            var tDist = Vector2.Dot(toPlayer, right);
+            var nDist = Vector2.Dot(toPlayer, up);
+            var moveAxis = MathF.Abs(tDist) > 6f ? MathF.Sign(tDist) : 0f;
+            GroundMove(dt, planet, up, right, moveAxis, speedMul);
+
+            // Choose what to mine: mostly-vertical separation digs a shaft (straight down,
+            // or a diagonal staircase when there's sideways ground to cover), otherwise
+            // clear the wall in the walking direction.
+            Vector2? digDir = null;
+            if (MathF.Abs(nDist) > 10f && MathF.Abs(nDist) > MathF.Abs(tDist) * 0.7f)
             {
-                _cd = 0.22f;
-                if (Tiles.Hardness(k) >= 90)
-                {
-                    _retarget = 0f; // core / support beam — bounce off, pick a new heading
-                }
-                else if (planet.Mine(tx, ty, 2) is { } broken)
-                {
-                    physics.MarkDirty(tx, ty);
-                    cells.SpawnDustInTile(tx, ty, broken);
-                }
+                var vert = up * MathF.Sign(nDist);
+                digDir = MathF.Abs(tDist) > 6f
+                    ? Vector2.Normalize(right * (MathF.Sign(tDist) * 0.7f) + vert)
+                    : vert;
+            }
+            else if (moveAxis != 0f && planet.IsSolidAt(Position + right * (moveAxis * (Radius + 4f))))
+            {
+                digDir = right * moveAxis;
+            }
+            Chew(dt, planet, physics, cells, digDir, 0.38f, 3);
+
+            // Scramble upward into headroom it just cut so staircase digs actually ascend.
+            if (nDist > 10f && MathF.Abs(tDist) < 30f && IsGrounded(planet, up)
+                && !planet.IsSolidAt(Position + up * (Radius + 5f)))
+            {
+                Velocity += up * 130f;
             }
         }
+        else
+        {
+            Wander -= dt;
+            if (Wander <= 0f)
+            {
+                Wander = 2.5f + (float)Random.Shared.NextDouble() * 3.5f;
+                _amble = Random.Shared.Next(3) - 1;
+            }
+            GroundMove(dt, planet, up, right, _amble, speedMul);
+            // A patrolling delver blocked by rock keeps extending its gallery.
+            if (_amble != 0 && planet.IsSolidAt(Position + right * (_amble * (Radius + 4f))))
+                Chew(dt, planet, physics, cells, right * _amble, 0.55f, 2);
+        }
+    }
+
+    /// <summary>Centipede: a long segmented tunneller. The head digs like a fast borer but its
+    /// idle headings *rotate* rather than reset, so its galleries curve and meander. The body
+    /// follows the breadcrumb trail laid by the head — always inside the tunnel it chewed.</summary>
+    private void TickCentipede(float dt, Planet planet, Physics physics, Cells cells,
+        Vector2 up, Vector2 right, Vector2 toPlayer, float dist, float speedMul)
+    {
+        _retarget -= dt;
+        if (dist < 130f && dist > 0.01f)
+        {
+            _digDir = toPlayer / dist;
+        }
+        else if (_retarget <= 0f)
+        {
+            _retarget = 3f + (float)Random.Shared.NextDouble() * 3f;
+            _digDir = Rotate(_digDir, ((float)Random.Shared.NextDouble() - 0.5f) * 2.2f);
+        }
+
+        if (AnySolidNear(planet))
+        {
+            Velocity = Vector2.Lerp(Velocity, _digDir * MoveSpeed * speedMul, MathF.Min(1f, 7f * dt));
+        }
+        else
+        {
+            var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 100f * dt);
+            var vN = Vector2.Dot(Velocity, up) - 320f * dt;
+            Velocity = right * vT + up * vN;
+        }
+        Chew(dt, planet, physics, cells, _digDir, 0.15f, 2);
+    }
+
+    /// <summary>MoleBeast: an alien mole that mostly wants nothing to do with you. It chews
+    /// shallow, mostly-level burrows; a dwarf crowding it makes it dig *away*, and it only
+    /// turns hostile at point-blank range or after taking a hit (8s grudge).</summary>
+    private void TickMole(float dt, Planet planet, Physics physics, Cells cells,
+        Vector2 up, Vector2 right, Vector2 toPlayer, float dist, float speedMul)
+    {
+        _retarget -= dt;
+        var angry = _provokedT > 0f || dist < 30f;
+        if (angry && dist > 0.01f)
+        {
+            _digDir = toPlayer / dist;
+        }
+        else if (dist < 70f && dist > 0.01f)
+        {
+            _digDir = -toPlayer / dist; // crowded — burrow away from the noise
+        }
+        else if (_retarget <= 0f)
+        {
+            _retarget = 4f + (float)Random.Shared.NextDouble() * 4f;
+            var baseDir = right * (Random.Shared.Next(2) == 0 ? 1f : -1f);
+            _digDir = Rotate(baseDir, ((float)Random.Shared.NextDouble() - 0.5f) * 0.9f);
+        }
+
+        var haste = angry ? 1.5f : 1f;
+        if (AnySolidNear(planet))
+        {
+            Velocity = Vector2.Lerp(Velocity, _digDir * MoveSpeed * haste * speedMul, MathF.Min(1f, 6f * dt));
+        }
+        else
+        {
+            var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 100f * dt);
+            var vN = Vector2.Dot(Velocity, up) - 320f * dt;
+            Velocity = right * vT + up * vN;
+        }
+        // Big claws — digs faster than a borer bites.
+        Chew(dt, planet, physics, cells, _digDir, 0.2f, 3);
     }
 
     /// <summary>CaveEye: hovers through open tunnels. Never digs — it steers by probing ahead
