@@ -324,7 +324,7 @@ public sealed class Creature
             }
             // Resting between hops: bleed tangent speed, keep gravity glue.
             var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 300f * dt);
-            var vN = Vector2.Dot(Velocity, up) - 320f * dt;
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
             Velocity = right * vT + up * vN;
         }
         else
@@ -366,7 +366,7 @@ public sealed class Creature
         else
         {
             var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 100f * dt);
-            var vN = Vector2.Dot(Velocity, up) - 320f * dt;
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
             Velocity = right * vT + up * vN;
         }
 
@@ -484,7 +484,7 @@ public sealed class Creature
         else
         {
             var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 100f * dt);
-            var vN = Vector2.Dot(Velocity, up) - 320f * dt;
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
             Velocity = right * vT + up * vN;
         }
         Chew(dt, planet, physics, cells, _digDir, 0.15f, 2);
@@ -521,7 +521,7 @@ public sealed class Creature
         else
         {
             var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 100f * dt);
-            var vN = Vector2.Dot(Velocity, up) - 320f * dt;
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
             Velocity = right * vT + up * vN;
         }
         // Big claws — digs faster than a borer bites.
