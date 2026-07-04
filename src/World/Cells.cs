@@ -385,7 +385,8 @@ public sealed class Cells
         var i = Idx(cx, cy);
         var impact = 0f;
 
-        if (cy > 0 && !IsBlocked(InnerCell(cx, cy).cx, InnerCell(cx, cy).cy))
+        var (bcx, bcy) = InnerCell(cx, cy);
+        if (cy > 0 && !IsBlocked(bcx, bcy))
         {
             // Airborne: same fall integrator as sand.
             _velR[i] = MathF.Min(_velR[i] + GravityCells * dt, TerminalCells);
