@@ -555,8 +555,8 @@ public sealed class Cells
         var k = Planet.Get(tx, ty);
         if (!IsMeltable(k)) return;
         Planet.Set(tx, ty, TileKind.Sky);
-        SpawnInTile(tx, ty, Material.Smoke, 4);
-        if (_rng.Next(3) == 0) SpawnInTile(tx, ty, Material.Lava, 1);
+        SpawnInTile(tx, ty, Material.Smoke, Density); // scaled so a melt puff reads the same at any grain size
+        if (_rng.Next(3) == 0) SpawnInTile(tx, ty, Material.Lava, Density / 4);
     }
 
     private static bool IsMeltable(TileKind k) => k is
