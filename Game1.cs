@@ -1173,30 +1173,38 @@ public sealed class DwarfMinerGame : Game
             var pos = _planet.TileToWorld(r, t);
             if ((pos - _player.Position).Length() < 100f) continue;
 
-            // Roster shifts with depth: skitterers infest the upper crust, borers and eyes
-            // roam the middle, magma slugs own the lava zone.
+            // Roster shifts with depth: moles and skitterers riddle the upper crust, the
+            // mid-band belongs to the diggers (delvers, centipedes, borers, moles), and the
+            // lava zone is magma slugs plus hardened delver war-parties.
             var fromCenter = (pos - _planet.Center).Length() / Planet.TileSize;
             var depth = 129f - (fromCenter - Planet.RingMin); // tiles below the baseline surface
             var roll = Random.Shared.NextDouble();
             CreatureKind kind;
             if (depth > 45f)
             {
-                kind = roll < 0.45 ? CreatureKind.MagmaSlug
-                     : roll < 0.70 ? CreatureKind.CaveEye
+                kind = roll < 0.35 ? CreatureKind.MagmaSlug
+                     : roll < 0.55 ? CreatureKind.HornedDelver
+                     : roll < 0.70 ? CreatureKind.Centipede
+                     : roll < 0.85 ? CreatureKind.CaveEye
                      : CreatureKind.Grub;
             }
             else if (depth > 20f)
             {
-                kind = roll < 0.30 ? CreatureKind.Grub
-                     : roll < 0.55 ? CreatureKind.Borer
-                     : roll < 0.80 ? CreatureKind.CaveEye
+                kind = roll < 0.20 ? CreatureKind.HornedDelver
+                     : roll < 0.35 ? CreatureKind.Centipede
+                     : roll < 0.50 ? CreatureKind.Borer
+                     : roll < 0.65 ? CreatureKind.MoleBeast
+                     : roll < 0.78 ? CreatureKind.Grub
+                     : roll < 0.90 ? CreatureKind.CaveEye
                      : CreatureKind.Skitterer;
             }
             else
             {
-                kind = roll < 0.40 ? CreatureKind.Skitterer
+                kind = roll < 0.30 ? CreatureKind.Skitterer
+                     : roll < 0.55 ? CreatureKind.MoleBeast
                      : roll < 0.70 ? CreatureKind.Grub
-                     : CreatureKind.CaveEye;
+                     : roll < 0.85 ? CreatureKind.CaveEye
+                     : CreatureKind.HornedDelver;
             }
             _creatures.Add(new Creature(pos, kind));
             return;
