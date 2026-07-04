@@ -250,6 +250,19 @@ public static class WorldGen
         return planet;
     }
 
+    /// <summary>True if <paramref name="ang"/> falls within <paramref name="margin"/> radians
+    /// of any mountain's footprint — used to keep lakes off the peaks.</summary>
+    private static bool NearMountain((float ang, float h, float w)[] mountains, float ang, float margin)
+    {
+        foreach (var m in mountains)
+        {
+            var d = MathF.Abs(ang - m.ang);
+            if (d > MathF.PI) d = MathHelper.TwoPi - d;
+            if (d < m.w + margin) return true;
+        }
+        return false;
+    }
+
     /// <summary>Base rocks that ore deposits can replace during world gen.</summary>
     private static bool IsOreHost(TileKind k) => k is
         TileKind.Stone or TileKind.MossStone or
