@@ -208,7 +208,7 @@ public static class WorldGen
 
     /// <summary>Base rocks that ore deposits can replace during world gen.</summary>
     private static bool IsOreHost(TileKind k) => k is
-        TileKind.Stone or TileKind.PlanetCore or TileKind.MossStone or
+        TileKind.Stone or TileKind.MossStone or
         TileKind.Granite or TileKind.Basalt or TileKind.Obsidian;
 
     private static float[] MakeAngularNoise(Random rng, int samples)
