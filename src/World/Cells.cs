@@ -441,15 +441,19 @@ public sealed class Cells
             if (TryMoveTo(cx, cy, icx - dd, icy)) return;
         }
 
-        // Fully hemmed-in water sleeps: supported below and walled both sides (rock or other
+        // Fully hemmed-in liquid sleeps: supported below and walled both sides (rock or other
         // liquid) means it cannot move until a neighbour changes — and any change wakes it via
-        // WakeNeighbors. Keeps large seeded lakes/reservoirs from ticking every interior cell
-        // forever. Lava is excluded: its melt/quench checks need the per-tick wakeups.
+        // WakeNeighbors. Keeps large pools from ticking every interior cell forever. Lava
+        // additionally stays awake while any adjacent tile is meltable, so pooled lava still
+        // eats through dirt floors and roofs; quenching needs no wakeup because arriving
+        // water is itself a neighbour change.
         i = Idx(cx, cy);
-        if ((Material)_mat[i] == Material.Water)
+        var self = (Material)_mat[i];
+        if (self == Material.Water || self == Material.Lava)
         {
             var (scx, scy) = InnerCell(cx, cy);
-            if ((cy <= 0 || IsBlocked(scx, scy)) && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy))
+            if ((cy <= 0 || IsBlocked(scx, scy)) && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy)
+                && (self == Material.Water || !HasMeltableNeighbour(cx, cy)))
                 return;
         }
 
