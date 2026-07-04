@@ -334,6 +334,8 @@ public sealed class DwarfMinerGame : Game
         _faunaTimer -= dt;
         if (_faunaTimer <= 0)
         {
+            Console.WriteLine($"[spawn-debug] t={_runTime:0}s total={_creatures.Count} " +
+                $"near550: cave={CountKindsNear(550f, cave: true)} surf={CountKindsNear(700f, surface: true)} sky={CountKindsNear(700f, sky: true)}");
             _faunaTimer = 6f + (float)Random.Shared.NextDouble() * 4f;
             if (CountKindsNear(700f, surface: true) < 7) TrySpawnSurfaceAnimal();
             if (CountKindsNear(700f, sky: true) < 6) TrySpawnSkyAnimal();
