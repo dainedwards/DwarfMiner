@@ -439,9 +439,20 @@ public sealed class Cells
             if (TryMoveTo(cx, cy, icx - dd, icy)) return;
         }
 
+        // Fully hemmed-in water sleeps: supported below and walled both sides (rock or other
+        // liquid) means it cannot move until a neighbour changes — and any change wakes it via
+        // WakeNeighbors. Keeps large seeded lakes/reservoirs from ticking every interior cell
+        // forever. Lava is excluded: its melt/quench checks need the per-tick wakeups.
+        i = Idx(cx, cy);
+        if ((Material)_mat[i] == Material.Water)
+        {
+            var (scx, scy) = InnerCell(cx, cy);
+            if ((cy <= 0 || IsBlocked(scx, scy)) && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy))
+                return;
+        }
+
         // Lateral dispersion: flow several cells per tick in a persistent direction so pools
         // level out quickly, plus a splash bonus proportional to how hard the cell just landed.
-        i = Idx(cx, cy);
         var dir = (int)_flow[i];
         if (dir == 0) dir = _rng.Next(2) == 0 ? 1 : -1;
         var spread = LiquidDispersion + (int)(impact * SplashScale);
