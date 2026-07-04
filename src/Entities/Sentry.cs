@@ -53,6 +53,7 @@ public sealed class Sentry
         var bestSq = ScanRange * ScanRange;
         foreach (var c in creatures)
         {
+            if (!c.Hostile) continue; // don't waste shells on grazing fauna
             var dSq = (c.Position - Position).LengthSquared();
             if (dSq < bestSq)
             {
