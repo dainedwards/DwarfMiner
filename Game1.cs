@@ -97,7 +97,7 @@ public sealed class DwarfMinerGame : Game
         var seed = (int)DateTime.Now.Ticks;
         _planet = WorldGen.Generate(seed);
         _cells = new Cells(_planet);
-        _physics = new Physics(_planet, _cells) { ChunkSink = _rockChunks };
+        _physics = new Physics(_planet, _cells);
         // Lava seeding: any cave (Sky tile) within 45% of the planet radius gets filled with
         // lava. So the inner half of the planet — from roughly the middle layer inward — has
         // lava pooled in any cavities, with the densest lava near the Core.
