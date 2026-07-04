@@ -116,14 +116,12 @@ public static class SimTest
         return null;
     }
 
-    private static int CountSolidAround(Planet planet, Vector2 world, int radiusTiles)
+    private static int CountSolidPlanet(Planet planet)
     {
-        var (cx, cy) = planet.WorldToTile(world);
         var n = 0;
-        for (var dy = -radiusTiles; dy <= radiusTiles; dy++)
-            for (var dx = -radiusTiles; dx <= radiusTiles; dx++)
-                if (planet.InBounds(cx + dx, cy + dy) && Tiles.IsSolid(planet.Get(cx + dx, cy + dy)))
-                    n++;
+        foreach (var (x, y) in planet.AllTiles())
+            if (Tiles.IsSolid(planet.Get(x, y)))
+                n++;
         return n;
     }
 }
