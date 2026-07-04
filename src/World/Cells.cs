@@ -337,14 +337,47 @@ public sealed class Cells
         return (idx - _rowOffsets[lo], lo);
     }
 
-    private void TickSand(int cx, int cy)
+    private void TickSand(int cx, int cy, float dt)
     {
         if (cy <= 0) return;
+        var i = Idx(cx, cy);
         var (icx, icy) = InnerCell(cx, cy);
-        if (TryMoveTo(cx, cy, icx, icy)) return;
-        var first = _rng.Next(2) == 0 ? 1 : -1;
-        if (TryMoveTo(cx, cy, icx + first, icy)) return;
-        if (TryMoveTo(cx, cy, icx - first, icy)) return;
+
+        if (IsBlocked(icx, icy))
+        {
+            // Resting on something: classic single-step angle-of-repose slip.
+            _velR[i] = 0f;
+            _travel[i] = 0f;
+            var first = _rng.Next(2) == 0 ? 1 : -1;
+            if (TryMoveTo(cx, cy, icx + first, icy)) return;
+            TryMoveTo(cx, cy, icx - first, icy);
+            return;
+        }
+
+        // Freefall: accelerate inward and traverse multiple rows per tick at speed.
+        // Rows are stepped one at a time because InnerCell remaps cx at band-halving
+        // boundaries, and per-step collision prevents tunneling through thin floors.
+        _velR[i] = MathF.Min(_velR[i] + GravityCells * dt, TerminalCells);
+        _travel[i] += _velR[i] * dt;
+        var steps = Math.Min((int)_travel[i], MaxStepsPerTick);
+        _travel[i] = MathF.Min(_travel[i] - steps, 1f);
+        if (steps == 0) { _next.Add(i); return; } // still gaining speed — stay awake
+
+        for (var s = 0; s < steps && cy > 0; s++)
+        {
+            (icx, icy) = InnerCell(cx, cy);
+            if (TryMoveTo(cx, cy, icx, icy)) { cx = icx; cy = icy; continue; }
+            // Blocked mid-flight: deflect diagonally, bleeding off speed on the impact.
+            var d = _rng.Next(2) == 0 ? 1 : -1;
+            if (TryMoveTo(cx, cy, icx + d, icy)) { _velR[Idx(icx + d, icy)] *= ImpactDamping; return; }
+            if (TryMoveTo(cx, cy, icx - d, icy)) { _velR[Idx(icx - d, icy)] *= ImpactDamping; return; }
+            // Landed hard: kill velocity so the cell can sleep.
+            i = Idx(cx, cy);
+            _velR[i] = 0f;
+            _travel[i] = 0f;
+            return;
+        }
+        // Covered the full distance without obstruction — TryMoveTo kept the cell awake.
     }
 
     private void TickLiquid(int cx, int cy)
