@@ -632,28 +632,77 @@ public sealed class Creature
         return false;
     }
 
+    /// <summary>Push the creature out of any solid tile it overlaps. Tiles are rotated rects
+    /// in polar space — centre at TileToWorld, local basis (tangent, radial-up), extents
+    /// chord × TileSize — mirroring Player.ResolveCollision. (The previous Cartesian
+    /// x*TileSize rects were only meaningful near angle zero, so creatures phased straight
+    /// through the world almost everywhere.)</summary>
     private void ResolveTileCollision(Planet planet)
     {
-        var (tx, ty) = planet.WorldToTile(Position);
-        for (var iter = 0; iter < 3; iter++)
+        for (var iter = 0; iter < 4; iter++)
         {
+            var (tx, ty) = planet.WorldToTile(Position);
             var pushed = false;
             for (var dy = -2; dy <= 2; dy++)
             {
                 for (var dx = -2; dx <= 2; dx++)
                 {
                     var x = tx + dx; var y = ty + dy;
-                    if (!Tiles.IsSolid(planet.Get(x, y))) continue;
-                    var rect = new Rectangle(x * Planet.TileSize, y * Planet.TileSize, Planet.TileSize, Planet.TileSize);
-                    var closest = new Vector2(
-                        Math.Clamp(Position.X, rect.X, rect.X + rect.Width),
-                        Math.Clamp(Position.Y, rect.Y, rect.Y + rect.Height));
-                    var diff = Position - closest;
-                    var dist = diff.Length();
-                    if (dist < Radius && dist > 0.001f)
+                    // Below ring 0 Planet.Get reports the synthetic Core pseudo-tile, which
+                    // has no world-space rect — skip rather than collide with garbage.
+                    if (x < 0 || x >= Planet.RingCount) continue;
+                    if (!Tiles.BlocksPlayer(planet.Get(x, y))) continue;
+
+                    var centre = planet.TileToWorld(x, y);
+                    var tUp = planet.UpAt(centre);
+                    var tRight = new Vector2(-tUp.Y, tUp.X);
+                    var rel = Position - centre;
+                    var pLocalX = Vector2.Dot(rel, tRight);
+                    var pLocalY = Vector2.Dot(rel, tUp);
+
+                    // Tile-local extents: chord (arc width) × TileSize (radial).
+                    var ringRadius = (Planet.RingMin + x + 0.5f) * Planet.TileSize;
+                    var halfX = MathHelper.TwoPi * ringRadius / Planet.TilesAt(x) * 0.5f;
+                    var halfY = Planet.TileSize * 0.5f;
+
+                    var cLocalX = MathHelper.Clamp(pLocalX, -halfX, halfX);
+                    var cLocalY = MathHelper.Clamp(pLocalY, -halfY, halfY);
+                    var diffX = pLocalX - cLocalX;
+                    var diffY = pLocalY - cLocalY;
+                    var distSq = diffX * diffX + diffY * diffY;
+
+                    if (distSq < Radius * Radius && distSq > 0.0001f)
                     {
-                        var n = diff / dist;
+                        var dist = MathF.Sqrt(distSq);
+                        var n = tRight * (diffX / dist) + tUp * (diffY / dist);
                         Position += n * (Radius - dist + 0.05f);
+                        var into = Vector2.Dot(Velocity, n);
+                        if (into < 0) Velocity -= n * into;
+                        pushed = true;
+                    }
+                    else if (distSq <= 0.0001f)
+                    {
+                        // Centre is inside the tile (fresh spawn, cave-in, or a digger whose
+                        // tunnel collapsed on it). Escape toward the nearest open neighbour;
+                        // if fully buried, push outward radially.
+                        var skyOuter = !Tiles.IsSolid(planet.Get(x + 1, y));
+                        var skyInner = !Tiles.IsSolid(planet.Get(x - 1, y));
+                        var skyRight = !Tiles.IsSolid(planet.Get(x, y + 1));
+                        var skyLeft  = !Tiles.IsSolid(planet.Get(x, y - 1));
+
+                        var nLocalX = 0f; var nLocalY = 0f; var minDist = float.MaxValue;
+                        if (skyOuter && (halfY - pLocalY) < minDist) { nLocalX = 0f; nLocalY =  1f; minDist = halfY - pLocalY; }
+                        if (skyInner && (pLocalY + halfY) < minDist) { nLocalX = 0f; nLocalY = -1f; minDist = pLocalY + halfY; }
+                        if (skyRight && (halfX - pLocalX) < minDist) { nLocalX =  1f; nLocalY = 0f; minDist = halfX - pLocalX; }
+                        if (skyLeft  && (pLocalX + halfX) < minDist) { nLocalX = -1f; nLocalY = 0f; minDist = pLocalX + halfX; }
+                        if (minDist == float.MaxValue)
+                        {
+                            nLocalY = 1f;
+                            minDist = halfY - pLocalY;
+                        }
+
+                        var n = tRight * nLocalX + tUp * nLocalY;
+                        Position += n * (minDist + Radius + 0.05f);
                         var into = Vector2.Dot(Velocity, n);
                         if (into < 0) Velocity -= n * into;
                         pushed = true;
