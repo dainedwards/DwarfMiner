@@ -184,8 +184,7 @@ public sealed class Cells
         _mat[i] = (byte)m;
         _srcTile[i] = (byte)src;
         ClearKinetics(i);
-        if (m == Material.Empty) _living.Remove(i);
-        else { _living.Add(i); _active.Add(i); }
+        if (m != Material.Empty) _active.Add(i);
         WakeNeighbors(cx, cy);
     }
 
