@@ -120,7 +120,6 @@ public sealed class DwarfMinerGame : Game
         _creatures.Clear();
         _projectiles.Clear();
         _boulders.Clear();
-        _rockChunks.Clear();
         _sentries.Clear();
         _earthquakeTimer = 25f;
         _spawnTimer = 6f;
