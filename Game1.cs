@@ -1672,6 +1672,9 @@ public sealed class DwarfMinerGame : Game
                 Color.Lerp(new Color(80, 130, 220), new Color(255, 90, 60), anger01));
         }
 
+        // Glowing creatures — magma slugs read as drifting coals, cave eyes as a faint gleam.
+        foreach (var c in _creatures) c.AddLight(_renderer);
+
         // Glowing particles (ore flecks, projectile sparks, explosion embers) feed back into
         // the lightmap so they actually illuminate the cave wall behind them.
         _particles.AddLights(_renderer);
