@@ -682,16 +682,25 @@ public sealed class Creature
     {
         for (var iter = 0; iter < 4; iter++)
         {
-            var (tx, ty) = planet.WorldToTile(Position);
+            var (tx, _) = planet.WorldToTile(Position);
+            // Neighbour columns must be recomputed per ring from the true world angle:
+            // rings have different tile counts, so reusing this ring's ty index drifts by
+            // whole tiles near the angle-2π wrap and leaves collision holes.
+            var relC = Position - planet.Center;
+            var ang = MathF.Atan2(relC.Y, relC.X);
+            if (ang < 0) ang += MathHelper.TwoPi;
             var pushed = false;
-            for (var dy = -2; dy <= 2; dy++)
+            for (var dx = -2; dx <= 2; dx++)
             {
-                for (var dx = -2; dx <= 2; dx++)
+                var x = tx + dx;
+                // Below ring 0 Planet.Get reports the synthetic Core pseudo-tile, which
+                // has no world-space rect — skip rather than collide with garbage.
+                if (x < 0 || x >= Planet.RingCount) continue;
+                var nRing = Planet.TilesAt(x);
+                var ty0 = (int)(ang / MathHelper.TwoPi * nRing);
+                for (var dy = -2; dy <= 2; dy++)
                 {
-                    var x = tx + dx; var y = ty + dy;
-                    // Below ring 0 Planet.Get reports the synthetic Core pseudo-tile, which
-                    // has no world-space rect — skip rather than collide with garbage.
-                    if (x < 0 || x >= Planet.RingCount) continue;
+                    var y = ty0 + dy;
                     if (!Tiles.BlocksPlayer(planet.Get(x, y))) continue;
 
                     var centre = planet.TileToWorld(x, y);
