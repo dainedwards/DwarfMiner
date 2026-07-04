@@ -53,7 +53,10 @@ public static class WorldGen
                 pocketNoise[i, j] = (float)rng.NextDouble();
             }
 
-        const float hardCoreRadiusTiles = 30f;
+        // Global radius (tiles from planet centre) of the PlanetCore ball. Together with the
+        // renderer's filled disc inside RingMin it reads as one solid sphere; the layered rock
+        // butts directly up against it. Sized to just cover the core-drill zone (RingMin + 3).
+        const float coreBallRadiusTiles = 24f;
         const int baselineR = 129;
 
         for (var r = 0; r < Planet.RingCount; r++)
