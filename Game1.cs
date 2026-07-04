@@ -121,7 +121,6 @@ public sealed class DwarfMinerGame : Game
         // Spawn the dwarf on top of whatever mountain is at angle -π/2 — walk down from
         // far above until the first solid tile, then float a few pixels above it.
         var surfacePos = FindSurfaceSpawn(-MathF.PI / 2f, _planet.Radius);
-        surfacePos -= _planet.UpAt(surfacePos) * (45 * Planet.TileSize); // TEMP: deep-spawn for atlas check
         _player = new Player(surfacePos)
         {
             // Start in god-mode for testing; G toggles it off (and on again) in-game. The
