@@ -43,7 +43,7 @@ public sealed class Physics
     /// Terraria-style warning window for the player to step out from under it.</summary>
     public const float TrembleTime = 0.35f;
     /// <summary>Seconds between successive rings crumbling, pacing the bottom-to-top cascade.</summary>
-    public const float CrumbleRingInterval = 0.05f;
+    public const float CrumbleRingInterval = 0.03f;
 
     /// <summary>A condemned region mid-collapse: tiles sorted innermost-ring-first, a timer
     /// that runs down the tremble and then paces the ring-by-ring crumble.</summary>
