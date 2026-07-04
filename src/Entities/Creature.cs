@@ -645,6 +645,21 @@ public sealed class Creature
     private bool IsGrounded(Planet planet, Vector2 up) =>
         planet.IsSolidAt(Position - up * (Radius + 1.5f));
 
+    /// <summary>Pick a wander heading for a digger: tangent-biased with a random radial tilt,
+    /// sampled a few times preferring a heading that points into nearby rock — so tunnellers
+    /// spend their time tunnelling instead of pinballing around open caverns.</summary>
+    private Vector2 PickDigHeading(Planet planet, Vector2 right, float tiltRange)
+    {
+        var pick = right;
+        for (var i = 0; i < 6; i++)
+        {
+            var baseDir = right * (Random.Shared.Next(2) == 0 ? 1f : -1f);
+            pick = Rotate(baseDir, ((float)Random.Shared.NextDouble() - 0.5f) * tiltRange);
+            if (planet.IsSolidAt(Position + pick * (Radius + 6f))) return pick;
+        }
+        return pick;
+    }
+
     /// <summary>Digger grip sense: probe a ring of world-space points just outside the body
     /// for solid rock. Any contact lets a tunneller cling and inch along its dig heading.</summary>
     private bool AnySolidNear(Planet planet)
