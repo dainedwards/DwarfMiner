@@ -99,15 +99,6 @@ public static class WorldGen
                     continue;
                 }
 
-                // PlanetCore ball — pristine core material only; caves, seams, and ores
-                // never replace it.
-                if (globalR < coreBallRadiusTiles)
-                {
-                    planet.SetWall(r, t, TileKind.PlanetCore);
-                    planet.Set(r, t, TileKind.PlanetCore);
-                    continue;
-                }
-
                 // Below the surface: layered ground.
                 var depth = surfaceR - r;
                 var pos = planet.TileToWorld(r, t);
