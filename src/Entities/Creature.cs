@@ -9,10 +9,12 @@ namespace DwarfMiner.Entities;
 /// The planet's bestiary. Three broad habitats, each with its own movement physics:
 ///   • Cave dwellers (Grub, Skitterer, MagmaSlug) — walkers: gravity toward the core,
 ///     tangent locomotion, tile collision.
-///   • Tunnellers/explorers (Borer digs its own tunnels through real tiles via Planet.Mine —
-///     debris crumbles into the cell sim and collapse checks run, so its tunnels obey the
-///     same physics as player mining; CaveEye floats through tunnels that already exist,
-///     steering along open space and never phasing through walls).
+///   • Tunnellers/explorers (Borer, Centipede and MoleBeast dig their own tunnels through
+///     real tiles via Planet.Mine — debris crumbles into the cell sim and collapse checks
+///     run, so their tunnels obey the same physics as player mining; the HornedDelver is a
+///     walker that mines with a pickaxe to reach aggroed prey; CaveEye floats through
+///     tunnels that already exist, steering along open space and never phasing through
+///     walls).
 ///   • Surface fauna (Grazer, Hopper — passive walkers that flee) and sky fauna (SkyMoth
 ///     passive, SkyStinger dive-bomber) — flyers hold an altitude band, collide with
 ///     terrain, and climb over mountains rather than clipping them.
