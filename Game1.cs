@@ -317,10 +317,10 @@ public sealed class DwarfMinerGame : Game
         // Spawn creatures inside caves. Cap counts cave dwellers only — surface/sky fauna
         // have their own population loop below.
         _spawnTimer -= dt;
-        if (_spawnTimer <= 0 && CountKinds(cave: true) < 14)
+        if (_spawnTimer <= 0 && CountKinds(cave: true) < 22)
         {
             TrySpawnCreature();
-            _spawnTimer = 5f + (float)Random.Shared.NextDouble() * 4f;
+            _spawnTimer = 3.5f + (float)Random.Shared.NextDouble() * 2.5f;
         }
 
         // Fauna upkeep: keep the surface grazed and the sky populated. Slow cadence — these
@@ -328,9 +328,9 @@ public sealed class DwarfMinerGame : Game
         _faunaTimer -= dt;
         if (_faunaTimer <= 0)
         {
-            _faunaTimer = 9f + (float)Random.Shared.NextDouble() * 6f;
-            if (CountKinds(surface: true) < 8) TrySpawnSurfaceAnimal();
-            if (CountKinds(sky: true) < 8) TrySpawnSkyAnimal();
+            _faunaTimer = 8f + (float)Random.Shared.NextDouble() * 5f;
+            if (CountKinds(surface: true) < 12) TrySpawnSurfaceAnimal();
+            if (CountKinds(sky: true) < 10) TrySpawnSkyAnimal();
         }
 
         // Update entities.
