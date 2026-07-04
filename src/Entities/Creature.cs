@@ -65,6 +65,16 @@ public sealed class Creature
     private float _prefAlt;        // flyers: preferred distance from planet centre (px)
     private int _orbitSign = 1;    // flyers: orbit direction around the planet
     private readonly float _phase; // per-creature animation phase offset
+    private float _aggroT;         // HornedDelver: seconds of aggro memory remaining
+    private float _swing;          // HornedDelver: pickaxe swing animation timer
+    private float _provokedT;      // MoleBeast: seconds of rage remaining after being hit
+    // Centipede body: breadcrumb ring buffer of past head positions; segments sit along the
+    // trail so the body snakes through the exact tunnel the head chewed, never through rock.
+    private const int CrumbCount = 64;
+    private const float CrumbSpacing = 2f;
+    private const int SegCount = 8;
+    private Vector2[]? _crumbs;
+    private int _crumbHead;
 
     public Creature(Vector2 pos, CreatureKind kind = CreatureKind.Grub)
     {
