@@ -12,9 +12,10 @@ namespace DwarfMiner.World;
 ///     tile's worth of Material cells spawn in its place, then flow with angle of repose.
 ///   • Stone-like tiles (Stone, ores) use a connectivity check: flood-fill the connected
 ///     non-anchored solid region and if no path reaches an anchored tile (HardStone/Core/
-///     Support) or the world edge within budget, the *whole region* collapses as a swarm
-///     of <see cref="RockChunk"/> entities that fall under gravity and re-tile-ify on
-///     landing. Anchored kinds never move.
+///     Support) or the world edge within budget, the *whole region* crumbles into the cell
+///     sim as dust tagged with each tile's kind — it rains down as granular debris under
+///     the velocity sim and pays out the tile's drop on pickup, same as loose ground.
+///     Anchored kinds never move.
 ///
 /// Driven by a dirty queue so we only revisit recently disturbed tiles. Within a single
 /// settle pass, anchored regions are cached so repeated floods short-circuit.
