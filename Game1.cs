@@ -1202,27 +1202,36 @@ public sealed class DwarfMinerGame : Game
         }
     }
 
-    private int CountKinds(bool cave = false, bool surface = false, bool sky = false)
+    /// <summary>Population count within a radius of the player. Spawning is budgeted on the
+    /// *local* population, not the planet-wide one — a planet-wide cap fills up with
+    /// creatures scattered across ~150k underground tiles and the player never meets any.</summary>
+    private int CountKindsNear(float radius, bool cave = false, bool surface = false, bool sky = false)
     {
+        var rSq = radius * radius;
         var n = 0;
         foreach (var c in _creatures)
             if ((cave && c.IsCaveKind) || (surface && c.IsSurfaceKind) || (sky && c.IsSkyKind))
-                n++;
+                if ((c.Position - _player.Position).LengthSquared() < rSq)
+                    n++;
         return n;
     }
 
     private void TrySpawnCreature()
     {
-        // Pick a random polar tile (ring, angle) that is a cave — Sky foreground with a rock
-        // wall behind it, so we never seed cave dwellers floating in the open air above ground.
-        for (var attempt = 0; attempt < 30; attempt++)
+        // Pick a cave tile (Sky foreground with a rock wall behind it) in a donut around the
+        // player: close enough to be met within a minute of wandering, far enough to never
+        // pop in on-screen.
+        for (var attempt = 0; attempt < 40; attempt++)
         {
-            var r = Random.Shared.Next(Planet.RingCount);
-            var t = Random.Shared.Next(Planet.TilesAt(r));
+            var a = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
+            var d = 200f + (float)Random.Shared.NextDouble() * 250f;
+            var candidate = _player.Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * d;
+            var (r, t) = _planet.WorldToTile(candidate);
+            if (r < 0 || r >= Planet.RingCount) continue;
             if (_planet.Get(r, t) != TileKind.Sky) continue;
             if (_planet.GetWall(r, t) == TileKind.Sky) continue;
             var pos = _planet.TileToWorld(r, t);
-            if ((pos - _player.Position).Length() < 100f) continue;
+            if ((pos - _player.Position).Length() < 180f) continue;
 
             // Roster shifts with depth: moles and skitterers riddle the upper crust, the
             // mid-band belongs to the diggers (delvers, centipedes, borers, moles), and the
