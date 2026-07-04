@@ -13,6 +13,9 @@ public sealed class Renderer
     private readonly SpriteBatch _sb;
     private readonly Texture2D _pixel;
     private readonly Texture2D _circle;
+    // High-res disc for the planet-core ball — the 32px _circle scaled to core size would
+    // show visible stair-stepping.
+    private readonly Texture2D _coreTex;
     private readonly PixelFont _font;
     private readonly Lighting _lighting;
 
