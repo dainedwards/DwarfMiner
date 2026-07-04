@@ -452,8 +452,10 @@ public sealed class Cells
         _next.Add(Idx(cx, cy)); // liquids stay awake, as before
     }
 
-    private void TickLava(int cx, int cy)
+    private void TickLava(int cx, int cy, float dt)
     {
+        if (QuenchIfWet(cx, cy)) return;
+
         TryMelt(InnerCell(cx, cy));
         TryMelt((cx + 1, cy));
         TryMelt((cx - 1, cy));
@@ -464,7 +466,55 @@ public sealed class Cells
         }
 
         if (_rng.Next(2) == 0) { _next.Add(Idx(cx, cy)); return; }
-        TickLiquid(cx, cy);
+        TickLiquid(cx, cy, dt);
+    }
+
+    /// <summary>Water contact: the lava cell cools to gravel and the touching water cell
+    /// flashes to smoke (steam) — one-for-one, so lava/water fronts eat each other and leave
+    /// a rubble crust behind. Probabilistic per tick so the reaction sizzles over several
+    /// frames instead of converting a whole front instantly.</summary>
+    private bool QuenchIfWet(int cx, int cy)
+    {
+        var wi = FindNeighbour(cx, cy, Material.Water);
+        if (wi < 0) return false;
+        if (_rng.Next(3) != 0) { _next.Add(Idx(cx, cy)); return true; } // stay awake, react soon
+
+        _mat[wi] = (byte)Material.Smoke;
+        _srcTile[wi] = 0;
+        ClearKinetics(wi);
+        _next.Add(wi);
+        var (wcx, wcy) = UnIdx(wi);
+        WakeNeighbors(wcx, wcy);
+
+        var i = Idx(cx, cy);
+        _mat[i] = (byte)Material.Gravel;
+        _srcTile[i] = 0;
+        ClearKinetics(i);
+        _next.Add(i);
+        WakeNeighbors(cx, cy);
+        return true;
+    }
+
+    /// <summary>Flat index of the first cardinal neighbour holding material m, or -1.</summary>
+    private int FindNeighbour(int cx, int cy, Material m)
+    {
+        if (Get(cx + 1, cy) == m) return Idx(cx + 1, cy);
+        if (Get(cx - 1, cy) == m) return Idx(cx - 1, cy);
+        if (cy > 0)
+        {
+            var (icx, icy) = InnerCell(cx, cy);
+            if (Get(icx, icy) == m) return Idx(icx, icy);
+        }
+        if (cy < Height - 1)
+        {
+            var oc = OuterCellCount(cx, cy);
+            for (var k = 0; k < oc; k++)
+            {
+                var (ocx, ocy) = OuterCell(cx, cy, k);
+                if (Get(ocx, ocy) == m) return Idx(ocx, ocy);
+            }
+        }
+        return -1;
     }
 
     private void TryMelt((int cx, int cy) c)
