@@ -102,6 +102,17 @@ public sealed class Creature
             case CreatureKind.SkyStinger:
                 Radius = 3.5f; Health = 10f; MoveSpeed = 40f; ContactDamage = 9f;
                 break;
+            case CreatureKind.HornedDelver:
+                Radius = 4f; Health = 28f; MoveSpeed = 46f; ContactDamage = 12f;
+                break;
+            case CreatureKind.Centipede:
+                Radius = 3.2f; Health = 26f; MoveSpeed = 30f; ContactDamage = 9f;
+                _crumbs = new Vector2[CrumbCount];
+                for (var i = 0; i < CrumbCount; i++) _crumbs[i] = pos;
+                break;
+            case CreatureKind.MoleBeast:
+                Radius = 4.2f; Health = 22f; MoveSpeed = 26f; ContactDamage = 8f;
+                break;
         }
     }
 
