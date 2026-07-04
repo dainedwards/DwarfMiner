@@ -1158,14 +1158,22 @@ public sealed class DwarfMinerGame : Game
     /// and physics is dirty-marked so any overhang this opens up settles normally.</summary>
     private void ClearSpawnSpace(Vector2 pos, float radius)
     {
-        var (tx, ty) = _planet.WorldToTile(pos);
+        var (tx, _) = _planet.WorldToTile(pos);
+        var relC = pos - _planet.Center;
+        var ang = MathF.Atan2(relC.Y, relC.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
         var rSq = (radius + 0.5f) * (radius + 0.5f);
-        for (var dy = -2; dy <= 2; dy++)
+        for (var dx = -2; dx <= 2; dx++)
         {
-            for (var dx = -2; dx <= 2; dx++)
+            var x = tx + dx;
+            if (x < 0 || x >= Planet.RingCount) continue;
+            // Per-ring column from the true world angle — ring tile counts differ, so a
+            // shared ty index would drift near the angle wrap and miss overlapped tiles.
+            var nRing = Planet.TilesAt(x);
+            var ty0 = (int)(ang / MathHelper.TwoPi * nRing);
+            for (var dy = -2; dy <= 2; dy++)
             {
-                var x = tx + dx; var y = ty + dy;
-                if (x < 0 || x >= Planet.RingCount) continue;
+                var y = ty0 + dy;
                 var k = _planet.Get(x, y);
                 if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
 
