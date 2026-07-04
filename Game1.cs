@@ -34,6 +34,7 @@ public sealed class DwarfMinerGame : Game
     private MouseState _prevMouse;
     private float _earthquakeTimer;
     private float _spawnTimer;
+    private float _faunaTimer;
     private float _shake;
     private bool _gameOver;
     private string _gameOverReason = "";
