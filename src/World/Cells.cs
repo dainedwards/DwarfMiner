@@ -380,20 +380,75 @@ public sealed class Cells
         // Covered the full distance without obstruction — TryMoveTo kept the cell awake.
     }
 
-    private void TickLiquid(int cx, int cy)
+    private void TickLiquid(int cx, int cy, float dt)
     {
+        var i = Idx(cx, cy);
+        var impact = 0f;
+
+        if (cy > 0 && !IsBlocked(InnerCell(cx, cy).cx, InnerCell(cx, cy).cy))
+        {
+            // Airborne: same fall integrator as sand.
+            _velR[i] = MathF.Min(_velR[i] + GravityCells * dt, TerminalCells);
+            _travel[i] += _velR[i] * dt;
+            var steps = Math.Min((int)_travel[i], MaxStepsPerTick);
+            _travel[i] = MathF.Min(_travel[i] - steps, 1f);
+            if (steps == 0) { _next.Add(i); return; }
+
+            for (var s = 0; s < steps && cy > 0; s++)
+            {
+                var (icx, icy) = InnerCell(cx, cy);
+                if (TryMoveTo(cx, cy, icx, icy)) { cx = icx; cy = icy; continue; }
+                var dd = _rng.Next(2) == 0 ? 1 : -1;
+                if (TryMoveTo(cx, cy, icx + dd, icy)) { cx = WrapX(icx + dd, CellsAt(icy)); cy = icy; continue; }
+                if (TryMoveTo(cx, cy, icx - dd, icy)) { cx = WrapX(icx - dd, CellsAt(icy)); cy = icy; continue; }
+                // Hit the surface: remaining fall speed becomes lateral splash below.
+                i = Idx(cx, cy);
+                impact = _velR[i];
+                _velR[i] = 0f;
+                _travel[i] = 0f;
+                break;
+            }
+            if (impact == 0f) { _next.Add(Idx(cx, cy)); return; } // still airborne
+        }
+        else
+        {
+            impact = _velR[i];
+            _velR[i] = 0f;
+            _travel[i] = 0f;
+        }
+
+        // Supported: diagonal-down slip first, as before.
         if (cy > 0)
         {
             var (icx, icy) = InnerCell(cx, cy);
-            if (TryMoveTo(cx, cy, icx, icy)) return;
-            var firstD = _rng.Next(2) == 0 ? 1 : -1;
-            if (TryMoveTo(cx, cy, icx + firstD, icy)) return;
-            if (TryMoveTo(cx, cy, icx - firstD, icy)) return;
+            var dd = _rng.Next(2) == 0 ? 1 : -1;
+            if (TryMoveTo(cx, cy, icx + dd, icy)) return;
+            if (TryMoveTo(cx, cy, icx - dd, icy)) return;
         }
-        var first = _rng.Next(2) == 0 ? 1 : -1;
-        if (TryMoveTo(cx, cy, cx + first, cy)) return;
-        if (TryMoveTo(cx, cy, cx - first, cy)) return;
-        _next.Add(Idx(cx, cy));
+
+        // Lateral dispersion: flow several cells per tick in a persistent direction so pools
+        // level out quickly, plus a splash bonus proportional to how hard the cell just landed.
+        i = Idx(cx, cy);
+        var dir = (int)_flow[i];
+        if (dir == 0) dir = _rng.Next(2) == 0 ? 1 : -1;
+        var spread = LiquidDispersion + (int)(impact * SplashScale);
+        var bounced = false;
+        for (var s = 0; s < spread; s++)
+        {
+            if (TryMoveTo(cx, cy, cx + dir, cy))
+            {
+                cx = WrapX(cx + dir, CellsAt(cy));
+                // Found an edge to pour over — let gravity take it next tick.
+                var (icx, icy) = InnerCell(cx, cy);
+                if (cy > 0 && !IsBlocked(icx, icy)) break;
+                continue;
+            }
+            if (bounced) break;
+            bounced = true;
+            dir = -dir;
+        }
+        _flow[Idx(cx, cy)] = (sbyte)dir;
+        _next.Add(Idx(cx, cy)); // liquids stay awake, as before
     }
 
     private void TickLava(int cx, int cy)
