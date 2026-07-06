@@ -159,7 +159,7 @@ public static class WorldGen
                 {
                     k = TileKind.Grass;
                 }
-                else if (depth < 14f + AngularSample(surfC, ang) * 2f)
+                else if (depth < 10f + AngularSample(surfC, ang) * 2f)
                 {
                     k = TileKind.Dirt;
                 }
