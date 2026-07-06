@@ -351,6 +351,16 @@ public sealed class Cells
         return (idx - _rowOffsets[lo], lo);
     }
 
+    /// <summary>Chance (percent) that a resting grain takes an available diagonal slip on a
+    /// given tick. Failing the roll leaves it asleep until a neighbour disturbs it. Sand
+    /// pours loosest; gravel locks up quickest; dirt and tile dust sit between.</summary>
+    private static int SlipChance(Material m) => m switch
+    {
+        Material.Sand => 80,
+        Material.Gravel => 35,
+        _ => 55, // Dirt, Dust
+    };
+
     private void TickSand(int cx, int cy, float dt)
     {
         if (cy <= 0) return;
