@@ -374,11 +374,12 @@ public sealed class Creature
     }
 
     /// <summary>Shared excavation bite for every digger (Borer, Centipede, MoleBeast, and the
-    /// HornedDelver's pickaxe). Chips the tile one reach ahead along <paramref name="dir"/>
-    /// through the same physics path as player mining: Planet.Mine damage, dirty-mark on
-    /// break so collapse checks run, and debris spilled into the cell sim. Anchor-class tiles
-    /// (core, supports) refuse the bite and force a heading re-pick. Pass null to just tick
-    /// the cooldown without biting.</summary>
+    /// HornedDelver's pickaxe). Chips a disc of tiles around the first solid contact along
+    /// <paramref name="dir"/> (or around the leading edge when the ray finds nothing) through
+    /// the same physics path as player mining: Planet.Mine damage, dirty-mark on break so
+    /// collapse checks run, and debris spilled into the cell sim. Anchor-class tiles (core,
+    /// supports) refuse the bite and, with nothing else to chew, force a heading re-pick.
+    /// Pass null to just tick the cooldown without biting.</summary>
     private void Chew(float dt, Planet planet, Physics physics, Cells cells,
         Vector2? dir, float interval, int power, float reach = 0f)
     {
