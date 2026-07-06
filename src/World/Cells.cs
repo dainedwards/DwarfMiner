@@ -783,7 +783,14 @@ public sealed class Cells
         switch (m)
         {
             case Material.Sand:    return Tint(new Color(190, 158, 92), jitter / 3);
-            case Material.Water:   return Tint(new Color(58, 100, 190), jitter / 4);
+            case Material.Water:
+            {
+                // Translucent body with slow-moving shimmer bands — tiles and back-wall
+                // ghost through, and pools read as liquid even while the sim has them
+                // asleep (colour is computed at draw time, not sim time).
+                var shimmer = (int)(MathF.Sin(_time * 1.6f + ((hash >> 3) & 7) * 0.8f + cy * 0.3f) * 9f);
+                return Tint(new Color(46, 90, 178), jitter / 5 + shimmer) * 0.78f;
+            }
             case Material.Lava:
             {
                 var t = (int)(_time * 8f);
