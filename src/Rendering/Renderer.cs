@@ -561,6 +561,41 @@ public sealed class Renderer
     private static int VariantFor(TileKind k, int r, int t, int hash) =>
         TileAtlas.HasExternal(k) ? (t & 1) | ((r & 1) << 1) : (hash >> 6) & 3;
 
+    /// <summary>Material families for merge dithering. Boundaries between different families
+    /// get stippled; same-family boundaries (stone↔granite, ore veins in rock) stay clean.
+    /// 0 = never merges (sky, placeables, core).</summary>
+    private static int MergeGroup(TileKind k) => k switch
+    {
+        TileKind.Dirt or TileKind.Grass => 1,
+        TileKind.Snow => 2,
+        TileKind.Gravel => 3,
+        TileKind.Stone or TileKind.MossStone or TileKind.Granite or TileKind.Basalt
+            or TileKind.Obsidian or TileKind.PlanetCore => 4,
+        _ when Tiles.IsOre(k) => 4,
+        _ => 0,
+    };
+
+    private static bool Merges(int myGroup, TileKind neighbour)
+    {
+        var ng = MergeGroup(neighbour);
+        return ng > 0 && ng != myGroup;
+    }
+
+    /// <summary>Stipple 1-px dots of a neighbouring material's colour along one tile edge
+    /// (8×8 reference coords) — every other pixel, phase-flipped by tile hash so runs of
+    /// boundary tiles don't line their dots up into a solid stripe.</summary>
+    private void DitherEdge(Vector2 centre, Vector2 right, Vector2 up, float rotation,
+        float chord, int hash, Color c, bool horizontal, int edge)
+    {
+        var phase = (hash >> 8) & 1;
+        for (var i = 0; i < 4; i++)
+        {
+            var a = i * 2 + phase;
+            if (horizontal) DrawDeco(centre, right, up, rotation, chord, a, edge, 1, 1, c);
+            else DrawDeco(centre, right, up, rotation, chord, edge, a, 1, 1, c);
+        }
+    }
+
     private void DrawDeco(Vector2 tileCentre, Vector2 right, Vector2 up, float rotation, float chord,
                           float lx, float ly, float lw, float lh, Color color)
     {
