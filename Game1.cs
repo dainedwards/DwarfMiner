@@ -1383,11 +1383,26 @@ public sealed class DwarfMinerGame : Game
         // visual feet with the collision bottom.
         var up = _planet.UpAt(_player.Position);
         var rot = MathF.Atan2(up.X, -up.Y);
-        const float spriteScale = 0.6f;          // world units per sprite pixel
-        const float spriteFeetOffset = 1.0f;     // = (sprite_half_height * scale) − Radius
-        _renderer.Batch.Draw(_dwarfTex, _player.Position + up * spriteFeetOffset, null, Color.White, rot,
-            new Vector2(_dwarfTex.Width * 0.5f, _dwarfTex.Height * 0.5f),
-            spriteScale, SpriteEffects.None, 0f);
+        if (_playerSprite is { } ps)
+        {
+            // Animated pack sprite: pick a frame from grounded/tangent/radial motion, flip
+            // toward the last direction the dwarf actually walked.
+            var pRight = new Vector2(-up.Y, up.X);
+            var vT = Vector2.Dot(_player.Velocity, pRight);
+            if (MathF.Abs(vT) > 8f) _playerFacing = MathF.Sign(vT);
+            var frame = ps.Frame(_player.Grounded, vT, Vector2.Dot(_player.Velocity, up), _runTime);
+            _renderer.Batch.Draw(frame, _player.Position + up * ps.FeetOffset(_player.Radius), null,
+                Color.White, rot, new Vector2(frame.Width * 0.5f, frame.Height * 0.5f), ps.Scale,
+                _playerFacing < 0 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
+        }
+        else
+        {
+            const float spriteScale = 0.6f;          // world units per sprite pixel
+            const float spriteFeetOffset = 1.0f;     // = (sprite_half_height * scale) − Radius
+            _renderer.Batch.Draw(_dwarfTex, _player.Position + up * spriteFeetOffset, null, Color.White, rot,
+                new Vector2(_dwarfTex.Width * 0.5f, _dwarfTex.Height * 0.5f),
+                spriteScale, SpriteEffects.None, 0f);
+        }
 
         // Reticle.
         var mouse = Mouse.GetState();
