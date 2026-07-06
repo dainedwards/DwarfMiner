@@ -561,6 +561,41 @@ public sealed class Renderer
     private static int VariantFor(TileKind k, int r, int t, int hash) =>
         TileAtlas.HasExternal(k) ? (t & 1) | ((r & 1) << 1) : (hash >> 6) & 3;
 
+    /// <summary>Large, soft brightness blobs over world space (wavelengths ≈ 7 and 3 tiles),
+    /// multiplied onto the atlas draw. The pack art's seamless pattern repeats every 2 tiles;
+    /// this low-frequency modulation is what keeps a big rock face from reading as wallpaper —
+    /// the same trick as Terraria's broad light/dark patches inside otherwise uniform stone.
+    /// Darkens only (up to ~12%), so the palette never blows out.</summary>
+    private static float BlobShade(Vector2 world) =>
+        1f - 0.12f * (ValueNoise(world * (1f / 56f)) * 0.7f + ValueNoise(world * (1f / 23f)) * 0.3f);
+
+    /// <summary>Smooth bilinear value noise in [0,1] from a hashed integer lattice.</summary>
+    private static float ValueNoise(Vector2 p)
+    {
+        var x0 = (int)MathF.Floor(p.X);
+        var y0 = (int)MathF.Floor(p.Y);
+        var fx = p.X - x0;
+        var fy = p.Y - y0;
+        fx = fx * fx * (3f - 2f * fx);
+        fy = fy * fy * (3f - 2f * fy);
+        static float H(int x, int y)
+        {
+            unchecked
+            {
+                var h = x * 374761393 + y * 668265263;
+                h = (h ^ (h >> 13)) * 1274126177;
+                return ((h ^ (h >> 16)) & 0xFFFF) / 65535f;
+            }
+        }
+        var a = H(x0, y0);
+        var b = H(x0 + 1, y0);
+        var c = H(x0, y0 + 1);
+        var d = H(x0 + 1, y0 + 1);
+        var top = a + (b - a) * fx;
+        var bot = c + (d - c) * fx;
+        return top + (bot - top) * fy;
+    }
+
     /// <summary>Material families for merge dithering. Boundaries between different families
     /// get stippled; same-family boundaries (stone↔granite, ore veins in rock) stay clean.
     /// 0 = never merges (sky, placeables, core).</summary>
