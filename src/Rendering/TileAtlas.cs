@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using DwarfMiner.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,12 +8,16 @@ using Microsoft.Xna.Framework.Graphics;
 namespace DwarfMiner.Rendering;
 
 /// <summary>
-/// Procedurally generated tile texture atlas — the "texture pack" is authored in code at
-/// startup, so there are no external assets and no licensing. Each TileKind gets
-/// <see cref="VariantCount"/> 16×16 patterns from a deterministic per-kind seed; DrawWorld
-/// picks a variant by tile hash and maps it onto the rotated polar tile quad. At 2× the
-/// tile's world resolution (16px art on an 8px tile) the ground reads as textured pixel art
-/// instead of flat jittered quads.
+/// Hybrid tile texture atlas. Detail comes from CC0 texture-pack art under assets/tiles
+/// (see assets/CREDITS.md) when present; colour identity stays the game's: each source
+/// pixel's luminance is remapped onto <see cref="Tiles.BaseColor"/> (ore nuggets onto
+/// <see cref="Tiles.OreSpeckle"/>), so depth shading, lighting and the minimap keep reading
+/// the same palette they always did. Kinds without an external source — and every kind when
+/// the assets folder is missing — fall back to the original procedural generator, so the
+/// game still runs asset-free. Each TileKind gets <see cref="VariantCount"/> 16×16 patterns;
+/// DrawWorld picks a variant by tile hash and maps it onto the rotated polar tile quad. At
+/// 2× the tile's world resolution (16px art on an 8px tile) the ground reads as textured
+/// pixel art instead of flat jittered quads.
 ///
 /// Row 0 of each pattern is the outer, sky-facing edge after rotation (same convention as
 /// the old DrawDeco 8×8 reference coords), so the baked top-lit gradient replaces the old
