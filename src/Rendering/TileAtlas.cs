@@ -47,22 +47,34 @@ public static class TileAtlas
         var px = new Color[w * h];
 
         var external = LoadExternalSources(gd);
+        _externalKinds.Clear();
         foreach (var k in kinds)
         {
             if (k == TileKind.Sky) continue;
             for (var v = 0; v < VariantCount; v++)
             {
-                var rng = new Random((int)k * 97 + v * 13 + 1);
                 if (external.TryGetValue(k, out var src))
-                    ComposeHybrid(px, w, v * Res, (int)k * Res, k, src, v, rng);
+                {
+                    ComposeHybrid(px, w, v * Res, (int)k * Res, k, src, v);
+                    _externalKinds.Add(k);
+                }
                 else
-                    GenerateTile(px, w, v * Res, (int)k * Res, k, rng);
+                {
+                    GenerateTile(px, w, v * Res, (int)k * Res, k, new Random((int)k * 97 + v * 13 + 1));
+                }
             }
         }
 
         Texture = new Texture2D(gd, w, h);
         Texture.SetData(px);
     }
+
+    private static readonly HashSet<TileKind> _externalKinds = new();
+
+    /// <summary>True when this kind's atlas rows came from external pack art. Those variants
+    /// are positional half-rolls meant to be picked by tile parity for cross-tile pattern
+    /// continuity; procedural rows are independent patterns better picked by hash.</summary>
+    public static bool HasExternal(TileKind k) => _externalKinds.Contains(k);
 
     /// <summary>Which external texture feeds which kind. Ores share one nugget/one crystal
     /// stone — the palette remap in ComposeHybrid recolours them per kind.</summary>
