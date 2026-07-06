@@ -725,6 +725,18 @@ public sealed class Cells
                 var frac = MathF.Min(_travel[idx], 1f);
                 if (frac > 0f) centre -= up * (frac * radial);
                 var col = ColorFor(m, cx, cy, _srcTile[idx]);
+                // Waterline: water open to air above draws as a brighter band that bobs with
+                // a travelling wave, so pools get a live surface instead of a flat blue slab.
+                if (m == Material.Water)
+                {
+                    var (ocx, ocy) = OuterCell(cx, cy, 0);
+                    if (!IsBlocked(ocx, ocy))
+                    {
+                        var wave = MathF.Sin(_time * 2.4f - WrapX(cx, n) * 0.55f + cy * 0.2f);
+                        col = Tint(new Color(96, 158, 214), (int)(wave * 14f)) * 0.9f;
+                        centre += up * (wave * 0.35f);
+                    }
+                }
                 r.Batch.Draw(r.Pixel, centre, null, col, rotation,
                     new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
             }
