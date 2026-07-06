@@ -189,7 +189,9 @@ public static class TileAtlas
                 else if (k == TileKind.MossStone && green) target = new Color(70, 120, 75);
                 else target = baseCol;
 
-                var d = (int)((lum - src.meanLum) * 0.85f);
+                // Half-strength detail: Terraria concentrates contrast at tile edges (the
+                // dynamic outline/lip framing in DrawWorld), so interiors stay soft.
+                var d = (int)((lum - src.meanLum) * 0.5f);
                 px[(oy + y) * stride + ox + x] = new Color(
                     Math.Clamp(target.R + d, 0, 255),
                     Math.Clamp(target.G + d, 0, 255),
