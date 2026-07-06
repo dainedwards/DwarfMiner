@@ -17,6 +17,8 @@ public sealed class DwarfMinerGame : Game
     private Renderer _renderer = null!;
     private Camera _camera = null!;
     private Texture2D _dwarfTex = null!;
+    private PlayerSprite? _playerSprite;
+    private float _playerFacing = 1f;
     private Planet _planet = null!;
     private Physics _physics = null!;
     private Player _player = null!;
