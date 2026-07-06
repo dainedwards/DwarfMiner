@@ -137,8 +137,13 @@ public sealed class Physics
             // that tile's drop when the player walks through it.
             if (Materials.IsLoose(k))
             {
+                // Cohesion: loose ground holds if anything solid sits below it — straight
+                // down or either inner diagonal. Only fully undercut tiles crumble, so a
+                // tunnel through dirt self-arches instead of cascading the whole layer down.
                 var (inX, inY) = _planet.InnerNeighbour(x, y);
-                if (!Tiles.IsSolid(_planet.Get(inX, inY)))
+                if (!Tiles.IsSolid(_planet.Get(inX, inY))
+                    && !Tiles.IsSolid(_planet.Get(inX, inY - 1))
+                    && !Tiles.IsSolid(_planet.Get(inX, inY + 1)))
                 {
                     _planet.Set(x, y, TileKind.Sky);
                     _cells.SpawnDustInTile(x, y, k);
