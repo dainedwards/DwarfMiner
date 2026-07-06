@@ -46,15 +46,138 @@ public static class TileAtlas
         var h = rows * Res;
         var px = new Color[w * h];
 
+        var external = LoadExternalSources(gd);
         foreach (var k in kinds)
         {
             if (k == TileKind.Sky) continue;
             for (var v = 0; v < VariantCount; v++)
-                GenerateTile(px, w, v * Res, (int)k * Res, k, new Random((int)k * 97 + v * 13 + 1));
+            {
+                var rng = new Random((int)k * 97 + v * 13 + 1);
+                if (external.TryGetValue(k, out var src))
+                    ComposeHybrid(px, w, v * Res, (int)k * Res, k, src, v, rng);
+                else
+                    GenerateTile(px, w, v * Res, (int)k * Res, k, rng);
+            }
         }
 
         Texture = new Texture2D(gd, w, h);
         Texture.SetData(px);
+    }
+
+    /// <summary>Which external texture feeds which kind. Ores share one nugget/one crystal
+    /// stone — the palette remap in ComposeHybrid recolours them per kind.</summary>
+    private static readonly (TileKind kind, string file)[] ExternalMap =
+    {
+        (TileKind.Dirt, "dirt.png"),
+        (TileKind.Grass, "grass.png"),
+        (TileKind.Stone, "stone.png"),
+        (TileKind.PlanetCore, "stone.png"),
+        (TileKind.Granite, "granite.png"),
+        (TileKind.Basalt, "basalt.png"),
+        (TileKind.Obsidian, "obsidian.png"),
+        (TileKind.Gravel, "gravel.png"),
+        (TileKind.Snow, "snow.png"),
+        (TileKind.MossStone, "mossstone.png"),
+        (TileKind.CoalOre, "ore_nuggets.png"),
+        (TileKind.IronOre, "ore_nuggets.png"),
+        (TileKind.SilverOre, "ore_nuggets.png"),
+        (TileKind.GoldOre, "ore_nuggets.png"),
+        (TileKind.PlatinumOre, "ore_nuggets.png"),
+        (TileKind.Ruby, "ore_crystal.png"),
+        (TileKind.Sapphire, "ore_crystal.png"),
+        (TileKind.Diamond, "ore_crystal.png"),
+        (TileKind.Crystal, "ore_crystal.png"),
+    };
+
+    /// <summary>Locate assets/tiles next to the binary (or the working directory when run
+    /// via `dotnet run`) and decode every mapped 16×16 PNG once. Missing folder, missing
+    /// files, or wrong-sized art simply drop back to the procedural generator.</summary>
+    private static Dictionary<TileKind, (Color[] pix, float meanLum)> LoadExternalSources(GraphicsDevice gd)
+    {
+        var result = new Dictionary<TileKind, (Color[], float)>();
+        string? dir = null;
+        foreach (var root in new[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
+        {
+            var d = Path.Combine(root, "assets", "tiles");
+            if (Directory.Exists(d)) { dir = d; break; }
+        }
+        if (dir is null) return result;
+
+        var byFile = new Dictionary<string, (Color[], float)?>();
+        foreach (var (kind, file) in ExternalMap)
+        {
+            if (!byFile.TryGetValue(file, out var loaded))
+            {
+                loaded = LoadSource(gd, Path.Combine(dir, file));
+                byFile[file] = loaded;
+            }
+            if (loaded is { } src) result[kind] = src;
+        }
+        return result;
+    }
+
+    private static (Color[] pix, float meanLum)? LoadSource(GraphicsDevice gd, string path)
+    {
+        if (!File.Exists(path)) return null;
+        try
+        {
+            using var fs = File.OpenRead(path);
+            using var tex = Texture2D.FromStream(gd, fs);
+            if (tex.Width != Res || tex.Height != Res) return null;
+            var pix = new Color[Res * Res];
+            tex.GetData(pix);
+            var sum = 0L;
+            foreach (var c in pix) sum += (c.R * 30 + c.G * 59 + c.B * 11) / 100;
+            return (pix, sum / (float)pix.Length);
+        }
+        catch (Exception)
+        {
+            return null; // unreadable file — procedural fallback covers it
+        }
+    }
+
+    /// <summary>Compose one atlas variant from an external source: pack art supplies the
+    /// per-pixel detail (as luminance deviation from the source's mean), the game palette
+    /// supplies the colour. The pack tiles seamlessly, so variants sample at wrapped offsets
+    /// (odd ones mirrored) to differ without extra art; Grass rolls only sideways so its
+    /// sky-edge blade strip stays on row 0. The baked top-lit gradient and a light grain
+    /// match the procedural tiles' conventions.</summary>
+    private static void ComposeHybrid(Color[] px, int stride, int ox, int oy, TileKind k,
+        (Color[] pix, float meanLum) src, int variant, Random rng)
+    {
+        var baseCol = Tiles.BaseColor(k);
+        var isOre = Tiles.IsOre(k);
+        var dirtCol = Tiles.BaseColor(TileKind.Dirt);
+        var rollX = variant * 5;
+        var rollY = k == TileKind.Grass ? 0 : variant * 3;
+        var mirror = variant % 2 == 1;
+
+        for (var y = 0; y < Res; y++)
+        {
+            for (var x = 0; x < Res; x++)
+            {
+                var sx = ((mirror ? Res - 1 - x : x) + rollX) % Res;
+                var sy = (y + rollY) % Res;
+                var s = src.pix[sy * Res + sx];
+                var lum = (s.R * 30 + s.G * 59 + s.B * 11) / 100;
+                var sat = Math.Max(s.R, Math.Max(s.G, s.B)) - Math.Min(s.R, Math.Min(s.G, s.B));
+                var green = s.G > s.R + 10 && s.G > s.B + 10;
+
+                Color target;
+                if (isOre && sat > 45) target = Tiles.OreSpeckle(k);          // nugget/crystal pixels
+                else if (k == TileKind.Grass && !green) target = dirtCol;      // root-line dirt
+                else if (k == TileKind.MossStone && green) target = new Color(70, 120, 75);
+                else target = baseCol;
+
+                var d = (int)((lum - src.meanLum) * 0.85f)
+                        + 12 - 24 * y / (Res - 1)
+                        + rng.Next(-4, 5);
+                px[(oy + y) * stride + ox + x] = new Color(
+                    Math.Clamp(target.R + d, 0, 255),
+                    Math.Clamp(target.G + d, 0, 255),
+                    Math.Clamp(target.B + d, 0, 255));
+            }
+        }
     }
 
     private static void GenerateTile(Color[] px, int stride, int ox, int oy, TileKind k, Random rng)
