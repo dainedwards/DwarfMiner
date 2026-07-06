@@ -55,7 +55,13 @@ public static class TileAtlas
             {
                 if (external.TryGetValue(k, out var src))
                 {
-                    ComposeHybrid(px, w, v * Res, (int)k * Res, k, src, v);
+                    // Ores draw their background detail from the stone source so a vein sits
+                    // seamlessly in the surrounding rock instead of standing out as a square
+                    // patch of different stone texture.
+                    var bg = Tiles.IsOre(k) && external.TryGetValue(TileKind.Stone, out var stoneSrc)
+                        ? stoneSrc
+                        : src;
+                    ComposeHybrid(px, w, v * Res, (int)k * Res, k, src, bg, v);
                     _externalKinds.Add(k);
                 }
                 else
