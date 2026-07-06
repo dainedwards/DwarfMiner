@@ -162,6 +162,9 @@ public sealed class DwarfMinerGame : Game
         };
         _camera.SnapTo(_player.Position, 0f);
 
+        // Animated CC0 sprite pack when assets/player is present; string-art dwarf otherwise.
+        _playerSprite = PlayerSprite.TryLoad(GraphicsDevice);
+
         // Pixel-art dwarf — 8 wide × 12 tall. Drawn rotated so local-up always points at outward radial.
         _dwarfTex = Renderer.BuildSprite(GraphicsDevice, new[]
         {
