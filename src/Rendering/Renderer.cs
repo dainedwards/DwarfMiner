@@ -256,30 +256,92 @@ public sealed class Renderer
                         SpriteEffects.None, 0f);
                 }
 
-                // Edge rims — outer/inner radial + tangential to either side.
-                var rim = new Color(
-                    Math.Clamp(col.R + 44, 0, 255),
-                    Math.Clamp(col.G + 44, 0, 255),
-                    Math.Clamp(col.B + 44, 0, 255));
-                var sh = new Color(
-                    Math.Clamp(col.R - 36, 0, 255),
-                    Math.Clamp(col.G - 36, 0, 255),
-                    Math.Clamp(col.B - 36, 0, 255));
+                // Neighbour kinds drive both the air-facing edge framing and the material
+                // merge dithering. Outer band boundaries can have two neighbours: any sky
+                // counts as exposed, and the first solid one supplies the merge colour.
+                var outerK = TileKind.Sky;
                 var outerSky = false;
                 var outerCount = planet.OuterNeighbourCount(r, t);
                 for (var oi = 0; oi < outerCount; oi++)
                 {
                     var (or_, ot_) = planet.OuterNeighbour(r, t, oi);
-                    if (planet.Get(or_, ot_) == TileKind.Sky) { outerSky = true; break; }
+                    var onk = planet.Get(or_, ot_);
+                    if (onk == TileKind.Sky) outerSky = true;
+                    else if (outerK == TileKind.Sky) outerK = onk;
                 }
                 var (ir_, it_) = planet.InnerNeighbour(r, t);
-                var innerSky = planet.Get(ir_, it_) == TileKind.Sky;
-                var leftSky  = planet.Get(r, t - 1) == TileKind.Sky;
-                var rightSky = planet.Get(r, t + 1) == TileKind.Sky;
-                if (outerSky) DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, rim);
-                if (innerSky) DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, sh);
-                if (leftSky)  DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, rim);
-                if (rightSky) DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, sh);
+                var innerK = planet.Get(ir_, it_);
+                var leftK  = planet.Get(r, t - 1);
+                var rightK = planet.Get(r, t + 1);
+                var innerSky = innerK == TileKind.Sky;
+                var leftSky  = leftK == TileKind.Sky;
+                var rightSky = rightK == TileKind.Sky;
+
+                // Terraria-style edge framing: every air-facing edge gets a dark 1-px
+                // outline; the sun-facing outer edge adds a bright lip inside it, the sides
+                // a fainter bevel, the underside an inner shade. Interiors are baked soft
+                // (TileAtlas halves the pack detail), so this frame is what defines form.
+                var outline = new Color((int)(col.R * 0.45f), (int)(col.G * 0.45f), (int)(col.B * 0.45f));
+                var lip = new Color(
+                    Math.Clamp(col.R + 42, 0, 255),
+                    Math.Clamp(col.G + 42, 0, 255),
+                    Math.Clamp(col.B + 42, 0, 255));
+                var bevel = new Color(
+                    Math.Clamp(col.R + 20, 0, 255),
+                    Math.Clamp(col.G + 20, 0, 255),
+                    Math.Clamp(col.B + 20, 0, 255));
+                var under = new Color(
+                    Math.Clamp(col.R - 26, 0, 255),
+                    Math.Clamp(col.G - 26, 0, 255),
+                    Math.Clamp(col.B - 26, 0, 255));
+                if (outerSky)
+                {
+                    DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, outline);
+                    DrawDeco(centre, right, up, rotation, chord, 0, 1, 8, 1, lip);
+                }
+                if (innerSky)
+                {
+                    DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, outline);
+                    DrawDeco(centre, right, up, rotation, chord, 0, 6, 8, 1, under);
+                }
+                if (leftSky)
+                {
+                    DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, outline);
+                    DrawDeco(centre, right, up, rotation, chord, 1, 0, 1, 8, bevel);
+                }
+                if (rightSky)
+                {
+                    DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, outline);
+                    DrawDeco(centre, right, up, rotation, chord, 6, 0, 1, 8, bevel);
+                }
+
+                // Grass hugs exposed edges, Terraria-style: the green wraps down exposed
+                // sides and along a dug-out underside instead of showing bare dirt in
+                // cross-section. Drawn over the outline so the silhouette stays green.
+                if (k == TileKind.Grass)
+                {
+                    var wrap = new Color(95, 145, 65);
+                    if (leftSky)  DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, wrap);
+                    if (rightSky) DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, wrap);
+                    if (innerSky) DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, wrap);
+                }
+
+                // Merge dithering: where two different material families touch (dirt seam in
+                // stone, gravel pocket, snow cap), stipple this tile's edge with the
+                // neighbour's colour. Both sides stipple with each other's colour, giving a
+                // 2-px interleaved transition — the cheap version of Terraria's merge frames.
+                var mg = MergeGroup(k);
+                if (mg > 0)
+                {
+                    if (!outerSky && Merges(mg, outerK))
+                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(outerK), horizontal: true, edge: 0);
+                    if (!innerSky && Merges(mg, innerK))
+                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(innerK), horizontal: true, edge: 7);
+                    if (!leftSky && Merges(mg, leftK))
+                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(leftK), horizontal: false, edge: 0);
+                    if (!rightSky && Merges(mg, rightK))
+                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(rightK), horizontal: false, edge: 7);
+                }
 
                 // 8-neighbour ambient occlusion. Sample the 4 diagonal cells; if a corner has
                 // both adjacent rims solid but the diagonal cell is sky, paint a 1-px AO dot at
