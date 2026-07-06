@@ -385,28 +385,55 @@ public sealed class Creature
         _cd -= dt;
         if (dir is not { } d || _cd > 0f) return;
         if (reach <= 0f) reach = Radius + 12f; // worms: snout contact plus ~1.5 tiles
-        // Scan along the heading in half-tile steps and bite the first solid tile in reach —
-        // a single fixed-offset probe missed the rock whenever the body wasn't in flush
-        // contact (tall ceilings, glancing angles), leaving diggers idling in open pockets.
+        // Scan along the heading in half-tile steps for the first solid contact. If the ray
+        // threads open air (glancing corner contact), fall back to the leading edge so the
+        // area bite below still clears whatever is clipping the body.
+        var centre = Position + d * (Radius + 3f);
         for (var distAlong = Radius + 3f; distAlong <= reach; distAlong += Planet.TileSize * 0.5f)
         {
             var probe = Position + d * distAlong;
-            var (tx, ty) = planet.WorldToTile(probe);
-            var k = planet.Get(tx, ty);
-            if (!Tiles.IsSolid(k)) continue;
+            if (planet.IsSolidAt(probe)) { centre = probe; break; }
+        }
+
+        // Bite an area, not a single tile: chip every mineable tile whose centre falls within
+        // the bite disc. The disc spans the body cross-section plus the adjacent corner tiles,
+        // so a digger can't be pinned by a block a single-tile probe would miss.
+        var biteR = Radius + Planet.TileSize * 0.9f;
+        var relC = centre - planet.Center;
+        var ang = MathF.Atan2(relC.Y, relC.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
+        var (cx, _) = planet.WorldToTile(centre);
+        var bit = false;
+        var blocked = false;
+        for (var dx = -2; dx <= 2; dx++)
+        {
+            var x = cx + dx;
+            if (x < 0 || x >= Planet.RingCount) continue;
+            // Angular index recomputed per ring — rings have different tile counts.
+            var ty0 = (int)(ang / MathHelper.TwoPi * Planet.TilesAt(x));
+            for (var dy = -2; dy <= 2; dy++)
+            {
+                var y = ty0 + dy;
+                var k = planet.Get(x, y);
+                if (!Tiles.IsSolid(k)) continue;
+                if ((planet.TileToWorld(x, y) - centre).LengthSquared() > biteR * biteR) continue;
+                if (Tiles.Hardness(k) >= 90) { blocked = true; continue; } // core / support beam
+                if (planet.Mine(x, y, power) is { } broken)
+                {
+                    physics.MarkDirty(x, y);
+                    cells.SpawnDustInTile(x, y, broken);
+                }
+                bit = true;
+            }
+        }
+        if (bit)
+        {
             _cd = interval;
             _swing = 0.3f;
-            if (Tiles.Hardness(k) >= 90)
-            {
-                _retarget = 0f; // core / support beam — bounce off, pick a new heading
-                return;
-            }
-            if (planet.Mine(tx, ty, power) is { } broken)
-            {
-                physics.MarkDirty(tx, ty);
-                cells.SpawnDustInTile(tx, ty, broken);
-            }
-            return;
+        }
+        else if (blocked)
+        {
+            _retarget = 0f; // only unbiteable anchors ahead — bounce off, pick a new heading
         }
     }
 
