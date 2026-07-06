@@ -359,12 +359,17 @@ public sealed class Cells
 
         if (IsBlocked(icx, icy))
         {
-            // Resting on something: classic single-step angle-of-repose slip.
+            // Resting: angle-of-repose slip with granular flavour. One random side per tick
+            // (not both), the grain must fit past the side cell on its own row (no squeezing
+            // through sealed corner gaps), and per-material friction lets grains simply hold
+            // where they lie. A grain that holds goes back to sleep untried — piles keep
+            // their craggy, interlocked shape until a neighbour's move wakes them again,
+            // instead of levelling out like a liquid.
             _velR[i] = 0f;
             _travel[i] = 0f;
-            var first = _rng.Next(2) == 0 ? 1 : -1;
-            if (TryMoveTo(cx, cy, icx + first, icy)) return;
-            TryMoveTo(cx, cy, icx - first, icy);
+            var d = _rng.Next(2) == 0 ? 1 : -1;
+            if (_rng.Next(100) < SlipChance((Material)_mat[i]) && !IsBlocked(cx + d, cy))
+                TryMoveTo(cx, cy, icx + d, icy);
             return;
         }
 
