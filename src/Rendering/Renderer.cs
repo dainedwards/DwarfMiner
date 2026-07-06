@@ -491,6 +491,14 @@ public sealed class Renderer
     /// (0,0) at the outer-tangent-left corner; X scales by chord/8 so wide surface tiles
     /// spread their decoration proportionally.
     /// </summary>
+    /// <summary>Atlas variant for a tile. Pack-art kinds bake their variants as half-size
+    /// rolls of one seamless texture, so picking by tile parity makes a 2×2 tile block span
+    /// the source exactly once — the pattern flows across tile boundaries and terrain reads
+    /// as continuous mass. Procedural kinds have four unrelated patterns; parity would tile
+    /// them with an obvious 2-tile period, so they keep the hash pick.</summary>
+    private static int VariantFor(TileKind k, int r, int t, int hash) =>
+        TileAtlas.HasExternal(k) ? (t & 1) | ((r & 1) << 1) : (hash >> 6) & 3;
+
     private void DrawDeco(Vector2 tileCentre, Vector2 right, Vector2 up, float rotation, float chord,
                           float lx, float ly, float lw, float lh, Color color)
     {
