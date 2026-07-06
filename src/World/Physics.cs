@@ -7,8 +7,10 @@ namespace DwarfMiner.World;
 /// <summary>
 /// Tile collapse, two flavours per material class:
 ///   • Loose tiles (Dirt/Grass/Gravel/Snow/MossStone) crumble straight into the cell sim
-///     the moment their cardinal-down neighbour is empty — the tile vanishes and a half
-///     tile's worth of Material cells spawn in its place, then flow with angle of repose.
+///     once fully undercut — nothing solid below them, straight down or diagonally — the
+///     tile vanishes and a half tile's worth of Material cells spawn in its place, then
+///     flow with angle of repose. Diagonal support means dirt tunnels arch instead of
+///     raining the entire layer down.
 ///   • Stone-like tiles (Stone, ores) use a connectivity check: flood-fill the connected
 ///     non-anchored solid region and if no path reaches an anchored tile (PlanetCore/Core/
 ///     Support) or the world edge within budget, the *whole region* crumbles into the cell
