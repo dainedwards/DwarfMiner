@@ -138,25 +138,33 @@ public static class TileAtlas
 
     /// <summary>Compose one atlas variant from an external source: pack art supplies the
     /// per-pixel detail (as luminance deviation from the source's mean), the game palette
-    /// supplies the colour. The pack tiles seamlessly, so variants sample at wrapped offsets
-    /// (odd ones mirrored) to differ without extra art; Grass rolls only sideways so its
-    /// sky-edge blade strip stays on row 0. The baked top-lit gradient and a light grain
-    /// match the procedural tiles' conventions.</summary>
+    /// supplies the colour.
+    ///
+    /// Variants are the four half-size rolls of the seamless source — (0,0), (8,0), (0,8),
+    /// (8,8). DrawWorld picks the variant from tile parity ((t&amp;1) | (r&amp;1)&lt;&lt;1), and
+    /// because the art is 2× the tile's world resolution, a 2×2 block of tiles then spans
+    /// the source exactly once and the pattern flows continuously across tile boundaries —
+    /// terrain reads as one rock mass, Terraria-style, instead of a wall of repeated blocks.
+    /// Grass pins its sky-edge blade strip to row 0, so it only rolls horizontally.
+    ///
+    /// Deliberately no baked top-lit gradient or per-variant grain here (unlike the
+    /// procedural fallback): a per-tile gradient repeats every tile and redraws the grid the
+    /// positional rolls just erased; the dynamic edge rims and the lighting pass carry form
+    /// instead.</summary>
     private static void ComposeHybrid(Color[] px, int stride, int ox, int oy, TileKind k,
-        (Color[] pix, float meanLum) src, int variant, Random rng)
+        (Color[] pix, float meanLum) src, int variant)
     {
         var baseCol = Tiles.BaseColor(k);
         var isOre = Tiles.IsOre(k);
         var dirtCol = Tiles.BaseColor(TileKind.Dirt);
-        var rollX = variant * 5;
-        var rollY = k == TileKind.Grass ? 0 : variant * 3;
-        var mirror = variant % 2 == 1;
+        var rollX = (variant & 1) * (Res / 2);
+        var rollY = k == TileKind.Grass ? 0 : (variant >> 1) * (Res / 2);
 
         for (var y = 0; y < Res; y++)
         {
             for (var x = 0; x < Res; x++)
             {
-                var sx = ((mirror ? Res - 1 - x : x) + rollX) % Res;
+                var sx = (x + rollX) % Res;
                 var sy = (y + rollY) % Res;
                 var s = src.pix[sy * Res + sx];
                 var lum = (s.R * 30 + s.G * 59 + s.B * 11) / 100;
@@ -169,9 +177,7 @@ public static class TileAtlas
                 else if (k == TileKind.MossStone && green) target = new Color(70, 120, 75);
                 else target = baseCol;
 
-                var d = (int)((lum - src.meanLum) * 0.85f)
-                        + 12 - 24 * y / (Res - 1)
-                        + rng.Next(-4, 5);
+                var d = (int)((lum - src.meanLum) * 0.85f);
                 px[(oy + y) * stride + ox + x] = new Color(
                     Math.Clamp(target.R + d, 0, 255),
                     Math.Clamp(target.G + d, 0, 255),
