@@ -246,10 +246,10 @@ public sealed class Renderer
                 else
                 {
                     // Natural materials sample the 16×16 atlas — 2× the tile's world
-                    // resolution, so ground reads as textured pixel art. The variant is
-                    // hash-stable per tile; grain, strata, ore veins and the top-lit
-                    // gradient are baked into the pattern.
-                    _sb.Draw(_tileAtlas, centre, TileAtlas.Source(k, (hash >> 6) & 3),
+                    // resolution, so ground reads as textured pixel art. Pack-art kinds pick
+                    // their variant from tile parity so the seamless pattern continues across
+                    // neighbours; procedural kinds keep the hash-stable random pick.
+                    _sb.Draw(_tileAtlas, centre, TileAtlas.Source(k, VariantFor(k, r, t, hash)),
                         Color.White, rotation,
                         new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
                         new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
