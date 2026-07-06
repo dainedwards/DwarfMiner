@@ -170,7 +170,7 @@ public static class TileAtlas
     /// positional rolls just erased; the dynamic edge rims and the lighting pass carry form
     /// instead.</summary>
     private static void ComposeHybrid(Color[] px, int stride, int ox, int oy, TileKind k,
-        (Color[] pix, float meanLum) src, int variant)
+        (Color[] pix, float meanLum) src, (Color[] pix, float meanLum) bg, int variant)
     {
         var baseCol = Tiles.BaseColor(k);
         var isOre = Tiles.IsOre(k);
@@ -186,18 +186,31 @@ public static class TileAtlas
                 var sy = (y + rollY) % Res;
                 var s = src.pix[sy * Res + sx];
                 var lum = (s.R * 30 + s.G * 59 + s.B * 11) / 100;
+                var mean = src.meanLum;
                 var sat = Math.Max(s.R, Math.Max(s.G, s.B)) - Math.Min(s.R, Math.Min(s.G, s.B));
                 var green = s.G > s.R + 10 && s.G > s.B + 10;
 
                 Color target;
-                if (isOre && sat > 45) target = Tiles.OreSpeckle(k);          // nugget/crystal pixels
+                if (isOre && sat > 45)
+                {
+                    target = Tiles.OreSpeckle(k); // nugget/crystal pixels
+                }
+                else if (isOre)
+                {
+                    // Non-nugget ore pixels take their detail from the *stone* source, so the
+                    // vein's host rock is texture-continuous with the stone around the tile.
+                    var b = bg.pix[sy * Res + sx];
+                    lum = (b.R * 30 + b.G * 59 + b.B * 11) / 100;
+                    mean = bg.meanLum;
+                    target = baseCol;
+                }
                 else if (k == TileKind.Grass && !green) target = dirtCol;      // root-line dirt
                 else if (k == TileKind.MossStone && green) target = new Color(70, 120, 75);
                 else target = baseCol;
 
                 // Half-strength detail: Terraria concentrates contrast at tile edges (the
                 // dynamic outline/lip framing in DrawWorld), so interiors stay soft.
-                var d = (int)((lum - src.meanLum) * 0.5f);
+                var d = (int)((lum - mean) * 0.5f);
                 px[(oy + y) * stride + ox + x] = new Color(
                     Math.Clamp(target.R + d, 0, 255),
                     Math.Clamp(target.G + d, 0, 255),
