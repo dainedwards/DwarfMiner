@@ -250,8 +250,9 @@ public sealed class Renderer
                     // resolution, so ground reads as textured pixel art. Pack-art kinds pick
                     // their variant from tile parity so the seamless pattern continues across
                     // neighbours; procedural kinds keep the hash-stable random pick.
+                    var shade = (int)(255 * BlobShade(centre));
                     _sb.Draw(_tileAtlas, centre, TileAtlas.Source(k, VariantFor(k, r, t, hash)),
-                        Color.White, rotation,
+                        new Color(shade, shade, shade), rotation,
                         new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
                         new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
                         SpriteEffects.None, 0f);
