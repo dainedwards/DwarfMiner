@@ -182,7 +182,7 @@ public sealed class Renderer
                     // Back wall = the same atlas texture the material uses in the foreground,
                     // multiplied down to ~35% brightness. Keeps all the baked grain/strata
                     // detail while clearly reading as background rock.
-                    _sb.Draw(_tileAtlas, centre, TileAtlas.Source(wallK, (hash >> 6) & 3),
+                    _sb.Draw(_tileAtlas, centre, TileAtlas.Source(wallK, VariantFor(wallK, r, t, hash)),
                         new Color(88, 88, 100), rotation,
                         new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
                         new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
