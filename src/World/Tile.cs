@@ -201,6 +201,10 @@ public static class Tiles
         "glowshroom"  => BaseColor(TileKind.Glowshroom),
         "beacon"      => BaseColor(TileKind.Beacon),
         "sentry"      => new Color(160, 140, 90),
+        "meat"        => new Color(205, 95, 95),
+        "hide"        => new Color(165, 125, 85),
+        "chitin"      => new Color(105, 125, 90),
+        "feast"       => new Color(230, 150, 90),
         _             => Color.White,
     };
 
