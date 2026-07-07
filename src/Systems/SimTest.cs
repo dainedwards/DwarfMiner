@@ -211,6 +211,35 @@ public static class SimTest
                 }
                 Check("explosion: settle physics + cells ticked clean after blast", true);
             }
+
+            // 5e. Gun rounds chip blocks: repeated pistol fire into the same wall face must
+            // eventually break through (Mine damage accumulates tile-side between hits).
+            if (site is { } gunPos)
+            {
+                var before = CountSolidPlanet(pPlanet);
+                for (var shot = 0; shot < 10; shot++)
+                {
+                    var round = new Projectile(gunPos, up * 480f, 14f, 1.5f, ProjectileKind.Pistol);
+                    for (var step = 0; step < 120 && !round.Dead; step++)
+                        round.Update(dt, pPlanet, pPhysics, pCells);
+                }
+                var after = CountSolidPlanet(pPlanet);
+                Check("guns: sustained pistol fire breaks blocks", after < before, $"{before} → {after}");
+            }
+
+            // 5f. Laser cannon drills through the whole rock band instead of stopping at it,
+            // vaporising a tunnel along the way.
+            if (site is { } lancePos)
+            {
+                var before = CountSolidPlanet(pPlanet);
+                var lance = new Projectile(lancePos, up * 800f, 40f, 1.0f, ProjectileKind.LaserCannon);
+                for (var step = 0; step < 90 && !lance.Dead; step++)
+                    lance.Update(dt, pPlanet, pPhysics, pCells);
+                var travelled = (lance.Position - lancePos).Length();
+                var after = CountSolidPlanet(pPlanet);
+                Check("laser cannon: drills through many blocks", travelled > 60f && after < before,
+                    $"travelled {travelled:0}px, solids {before} → {after}");
+            }
         }
 
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
