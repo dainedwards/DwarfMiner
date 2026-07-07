@@ -1636,6 +1636,15 @@ public sealed class DwarfMinerGame : Game
                     _renderer.DrawRect(p.Position, new Vector2(14f, 1f), new Color(255, 210, 210), ang);
                     break;
                 }
+                case ProjectileKind.LaserCannon:
+                {
+                    // Heavy lance: a longer, thicker cyan beam with a blinding core — reads
+                    // as a drill of light punching through terrain.
+                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
+                    _renderer.DrawRect(p.Position, new Vector2(26f, 4f), new Color(80, 220, 255, 190), ang);
+                    _renderer.DrawRect(p.Position, new Vector2(20f, 1.8f), new Color(230, 250, 255), ang);
+                    break;
+                }
                 case ProjectileKind.Rocket:
                 {
                     // Finned round with a flickering exhaust flame at the tail.
