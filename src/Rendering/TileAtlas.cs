@@ -127,40 +127,6 @@ public static class TileAtlas
         }
     }
 
-    /// <summary>Copy one composed tile into the wall half of the atlas, baking a soft
-    /// ragged occlusion gradient along every edge that borders solid ground (set mask
-    /// bits): ~45% darker right at the edge, fading to full brightness over ~4 px, with a
-    /// hash-jiggled falloff start per column. Reads as the dug-out pocket's recess shadow —
-    /// a gradient, so no hard strip and no rectangle. Adjacent-edge gradients multiply, so
-    /// corners and single dug tiles darken naturally toward their rims.</summary>
-    private static void BlitWallShaded(Color[] px, int stride, int ox, int oy,
-        Color[] tile, TileKind k, int variant, int mask)
-    {
-        var seed = (int)k * 733 + variant * 149 + 31; // separate stream from erosion
-        for (var y = 0; y < Res; y++)
-        {
-            for (var x = 0; x < Res; x++)
-            {
-                var shade = 1f;
-                if ((mask & 1) != 0) shade *= RimShade(y + RaggedOffset(seed, 0, x));
-                if ((mask & 2) != 0) shade *= RimShade(Res - 1 - y + RaggedOffset(seed, 1, x));
-                if ((mask & 4) != 0) shade *= RimShade(x + RaggedOffset(seed, 2, y));
-                if ((mask & 8) != 0) shade *= RimShade(Res - 1 - x + RaggedOffset(seed, 3, y));
-                var c = tile[y * Res + x];
-                px[(oy + y) * stride + ox + x] = new Color(
-                    (int)(c.R * shade), (int)(c.G * shade), (int)(c.B * shade), c.A);
-            }
-        }
-    }
-
-    /// <summary>Occlusion falloff by distance from a solid-bordering wall edge:
-    /// 0.55 at the edge, back to 1.0 four pixels in.</summary>
-    private static float RimShade(int d) => d >= 4 ? 1f : 0.55f + 0.1125f * d;
-
-    /// <summary>0 or 1, hash-stable — jiggles where each column's rim falloff starts so the
-    /// baked wall shadow has a ragged inner boundary instead of a straight line.</summary>
-    private static int RaggedOffset(int seed, int edge, int i) => EdgeDepth(seed, edge + 8, i) > 0 ? 1 : 0;
-
     /// <summary>Ragged erosion depth for one position along one edge: 0 half the time,
     /// 1 a third, 2 the rest — hash-stable so the same tile always erodes the same way.</summary>
     private static int EdgeDepth(int seed, int edge, int i)
