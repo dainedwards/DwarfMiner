@@ -953,6 +953,7 @@ public sealed class DwarfMinerGame : Game
             case "pistol":          _player.HasPistol         = true; _player.Inventory.Add("pistol", 1);          _player.Toolbelt.AutoEquip("pistol");          break;
             case "machine_gun":     _player.HasMachineGun     = true; _player.Inventory.Add("machine_gun", 1);     _player.Toolbelt.AutoEquip("machine_gun");     break;
             case "laser":           _player.HasLaser          = true; _player.Inventory.Add("laser", 1);           _player.Toolbelt.AutoEquip("laser");           break;
+            case "laser_cannon":    _player.HasLaserCannon    = true; _player.Inventory.Add("laser_cannon", 1);    _player.Toolbelt.AutoEquip("laser_cannon");    break;
             case "rocket_launcher": _player.HasRocketLauncher = true; _player.Inventory.Add("rocket_launcher", 1); _player.Toolbelt.AutoEquip("rocket_launcher"); break;
             // Rockets craft in threes — a launcher shot costs real resources but not a
             // whole crafting trip each.
