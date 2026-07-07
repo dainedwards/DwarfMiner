@@ -20,6 +20,8 @@ public sealed class Renderer
     private readonly Lighting _lighting;
     private readonly Texture2D _tileAtlas;
     private readonly Texture2D _stars;
+    private readonly Texture2D _atmoTex;
+    private readonly Texture2D _wispTex;
 
     public Renderer(GraphicsDevice gd)
     {
