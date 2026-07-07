@@ -1324,22 +1324,67 @@ public sealed class DwarfMinerGame : Game
         return sb.ToString();
     }
 
-    private void TryLaunchRocket()
+    /// <summary>Board and launch the completed ship — the escape ending. Needs all three
+    /// stages installed and the dwarf standing at the pad. Unlocks the next planet on the
+    /// star-map chain and banks the same meta bonuses the old rocket escape granted.</summary>
+    private void TryLaunchShip()
     {
-        if (_run.Player.Inventory.Count("rocket_part") < 5) return;
-        // Must be near the surface — within 5 tiles of the surface ring.
-        var fromCenter = (_run.Player.Position - _run.Planet.Center).Length();
-        var surface = _run.Planet.Radius * Planet.TileSize;
-        if (surface - fromCenter > Planet.TileSize * 5f && fromCenter < surface + Planet.TileSize * 6f)
-            return;
+        if (_run.ShipStage < 3 || _run.PadPos is not { } pad) return;
+        if ((_run.Player.Position - pad).Length() > 60f) return;
 
         _meta.Escapes++;
+        if (!_meta.PlanetsEscaped.Contains(_run.Def.Id)) _meta.PlanetsEscaped.Add(_run.Def.Id);
+        var idx = PlanetDefs.IndexOf(_run.Def);
+        _meta.PlanetsUnlocked = Math.Max(_meta.PlanetsUnlocked,
+            Math.Min(PlanetDefs.All.Length, idx + 2));
         if (_meta.Escapes >= 1) _meta.StartingPickaxePower = Math.Max(_meta.StartingPickaxePower, 2);
         if (_meta.Escapes >= 3) _meta.StartWithCannon = true;
         _meta.Save();
-        _gameOver = true;
-        _gameOverReason = $"Escape! Rocket launched. Run time: {_run.RunTime:0.0}s. Press R to play again.";
+        _screen = GameScreen.GameOver;
+        _gameOverReason = $"Liftoff! You escaped {_run.Def.Name} in {_run.RunTime:0.0}s. Press R for the star map.";
     }
+
+    /// <summary>True when nothing solid hangs above this position for a dozen tiles along
+    /// local up — i.e. open sky. The pad-placement gate: valleys, plains, and mountain tops
+    /// all qualify; caves and overhangs don't.</summary>
+    private bool OpenToSky(Vector2 pos)
+    {
+        var up = _run.Planet.UpAt(pos);
+        for (var i = 1; i <= 12; i++)
+        {
+            var probe = pos + up * (i * Planet.TileSize);
+            var (x, y) = _run.Planet.WorldToTile(probe);
+            if (x >= Planet.RingCount) return true;
+            if (Tiles.IsSolid(_run.Planet.Get(x, y))) return false;
+        }
+        return true;
+    }
+
+    /// <summary>Plant the launch pad at the player's feet: walk down along local gravity to
+    /// the first solid tile and sit the pad on top of it, so the ship rests on the ground
+    /// rather than hovering at whatever height the dwarf was standing.</summary>
+    private void PlaceLaunchPad()
+    {
+        var up = _run.Planet.UpAt(_run.Player.Position);
+        var pos = _run.Player.Position;
+        for (var i = 0; i < 8 * Planet.TileSize; i++)
+        {
+            var probe = pos - up * i;
+            if (_run.Planet.IsSolidAt(probe))
+            {
+                pos = probe + up * (Planet.TileSize * 0.7f);
+                break;
+            }
+        }
+        _run.PadPos = pos;
+        _particles.EmitDust(pos, 10f);
+        _run.Shake = MathF.Max(_run.Shake, 0.3f);
+    }
+
+    /// <summary>Ship stages are crafted standing at the pad — the ship is a physical build
+    /// site, not an inventory item.</summary>
+    private bool NearPad() =>
+        _run.PadPos is { } pad && (_run.Player.Position - pad).Length() < 120f;
 
     private Vector2 FindSurfaceSpawn(float angle, int radius)
     {
