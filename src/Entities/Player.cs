@@ -31,6 +31,7 @@ public sealed class Player
     public bool HasPistol;
     public bool HasMachineGun;
     public bool HasLaser;
+    public bool HasLaserCannon;
     public bool HasRocketLauncher;
 
     public float MineRange = 22f;          // pixels — dwarves have short reach
