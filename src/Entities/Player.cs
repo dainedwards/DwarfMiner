@@ -14,6 +14,19 @@ public sealed class Player
     public float MaxHealth = 100f;
     public bool Grounded;
 
+    /// <summary>Breathable air supply. Refills fast at the surface, drains with depth (faster
+    /// the deeper you dig; scaled per-planet by <see cref="World.PlanetDef.OxygenDrainScale"/>).
+    /// At zero the dwarf suffocates — HP bleeds until they climb back toward the surface. The
+    /// air-tank upgrade raises the ceiling via <see cref="EffectiveMaxOxygen"/>.</summary>
+    public float Oxygen = 100f;
+    public const float BaseMaxOxygen = 100f;
+
+    /// <summary>Crafted air-tank upgrade — one-time, raises the oxygen ceiling so deep dives
+    /// last roughly twice as long before you must surface.</summary>
+    public bool HasAirTank;
+
+    public float EffectiveMaxOxygen => HasAirTank ? BaseMaxOxygen * 2f : BaseMaxOxygen;
+
     /// <summary>Pickaxe tier 1..4. Drives base mining power and reach. Replaces the older
     /// <c>PickaxePower</c> int — kept as a tier so future augments can stack on top of a tier
     /// rather than being confused with raw power. Effective stats live in the
