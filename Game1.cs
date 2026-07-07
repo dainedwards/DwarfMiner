@@ -146,6 +146,7 @@ public sealed partial class DwarfMinerGame : Game
             // higher-tier pickaxe so subsequent runs are slightly easier.
             PickaxeTier = Math.Max(1, _meta.StartingPickaxePower),
         };
+        _run.Player.Oxygen = _run.Player.EffectiveMaxOxygen * 0.18f; // TEMP: verify low-air bar
         _run.HasCannon = _meta.StartWithCannon;
         // God mode carries the full armoury — load every weapon onto the belt from frame
         // one (toggling god off strips the unowned loaners).
