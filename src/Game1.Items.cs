@@ -171,6 +171,13 @@ public sealed partial class DwarfMinerGame
             ["lantern"]      = new() { Owned = () => _run.Player.HasLantern, OnCraft = () => _run.Player.HasLantern = true },
             ["armor"]        = new() { Owned = () => _run.Player.HasArmor,   OnCraft = () => _run.Player.HasArmor = true },
             ["chitin_armor"] = new() { Owned = () => _run.Player.HasArmor,   OnCraft = () => _run.Player.HasArmor = true },
+            // Air tank tops the supply to the new (doubled) ceiling on craft, so it's an
+            // immediate breather as well as a permanent capacity bump.
+            ["air_tank"] = new()
+            {
+                Owned = () => _run.Player.HasAirTank,
+                OnCraft = () => { _run.Player.HasAirTank = true; _run.Player.Oxygen = _run.Player.EffectiveMaxOxygen; },
+            },
 
             // ─── Ship build chain (see PlaceLaunchPad / InstallShipStage) ─────────
             ["launch_pad"] = new()
