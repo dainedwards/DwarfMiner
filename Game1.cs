@@ -389,11 +389,36 @@ public sealed class DwarfMinerGame : Game
         {
             var c = _creatures[i];
             c.Update(dt, _planet, _physics, _cells, _player);
-            if (c.Health <= 0
-                || (c.Position - _player.Position).LengthSquared() > 1000f * 1000f)
+            if (c.Health <= 0)
+            {
+                // Killed — leave a harvestable corpse where it fell. Distance culls (below)
+                // don't: those creatures just wandered out of the simulation bubble.
+                _corpses.Add(new Corpse(c.Position, c.Kind, c.Radius));
+                _particles.EmitDust(c.Position, 5f);
+                _creatures.RemoveAt(i);
+            }
+            else if ((c.Position - _player.Position).LengthSquared() > 1000f * 1000f)
             {
                 _creatures.RemoveAt(i);
             }
+        }
+
+        // Corpses — settle under gravity, decay on a timer, and are harvested for materials
+        // by walking over them (same sweep-up feel as dust collection).
+        for (var i = _corpses.Count - 1; i >= 0; i--)
+        {
+            var corpse = _corpses[i];
+            corpse.Update(dt, _planet);
+            var reach = _player.Radius + corpse.Radius + 3f;
+            if (!corpse.Harvested && (corpse.Position - _player.Position).LengthSquared() < reach * reach)
+            {
+                foreach (var (id, count) in Corpse.DropsFor(corpse.Kind))
+                    _player.Inventory.Add(id, count);
+                corpse.Harvested = true;
+                _particles.EmitDust(corpse.Position, 6f);
+            }
+            if (corpse.Expired || (corpse.Position - _player.Position).LengthSquared() > 1200f * 1200f)
+                _corpses.RemoveAt(i);
         }
 
         for (var i = _projectiles.Count - 1; i >= 0; i--)
