@@ -118,6 +118,16 @@ public sealed class Renderer
 
         _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view);
 
+        // Noita-style layered backdrop, back to front: starfield (screen-space, above) →
+        // atmosphere shell → drifting haze wisps → terrain. The atmosphere is a radial
+        // gradient hugging the surface — dusky teal at the horizon shading into violet and
+        // thinning to space by ~0.93 planet radii, so the world reads as a planet wrapped
+        // in air, with mountain peaks poking out of the haze and stars dimming behind it.
+        var atmoScale = planet.Radius * Planet.TileSize * 2f / _atmoTex.Width;
+        _sb.Draw(_atmoTex, planet.Center, null, Color.White, 0f,
+            new Vector2(_atmoTex.Width / 2f, _atmoTex.Height / 2f), atmoScale, SpriteEffects.None, 0f);
+        DrawHazeWisps(planet);
+
         // Solid PlanetCore ball filling the space inside the innermost tile ring, so the
         // planet centre reads as a sphere the rock layers butt against, not a hole. A hot
         // inner disc marks the drillable Core itself. Edge tucks 0.6 tiles under ring 0.
