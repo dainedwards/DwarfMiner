@@ -186,8 +186,8 @@ public static class SimTest
             // 5d. Explosion craters: tiles removed, rim crumbled into dust cells, and the
             // settle physics + cell sim tick clean afterwards.
             {
-                var start = pPlanet.Center + new Vector2(0, (Planet.RingMin + 145) * Planet.TileSize);
-                var rocket = new Projectile(start, pPlanet.GravityAt(start) * 250f, 60f, 3f, ProjectileKind.Rocket);
+                var launch = pPlanet.Center + new Vector2(0, (Planet.RingMin + 145) * Planet.TileSize);
+                var rocket = new Projectile(launch, pPlanet.GravityAt(launch) * 250f, 60f, 3f, ProjectileKind.Rocket);
                 var before = CountSolidPlanet(pPlanet);
                 for (var step = 0; step < 60 * 3 && !rocket.Dead; step++)
                     rocket.Update(dt, pPlanet, pPhysics, pCells);
