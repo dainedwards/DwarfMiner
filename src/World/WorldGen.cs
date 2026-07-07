@@ -29,7 +29,7 @@ public static class WorldGen
         // Explicit mountain placements — 4-6 narrow spikes at random angles, each with its
         // own height and angular width. Drives a much narrower silhouette than what angular
         // noise interpolation could produce, since width is a per-mountain parameter.
-        var mountainCount = 6 + rng.Next(4);
+        var mountainCount = def.MountainMin + rng.Next(def.MountainExtra + 1);
         var mountains = new (float ang, float h, float w)[mountainCount];
         for (var i = 0; i < mountainCount; i++)
         {
