@@ -1323,6 +1323,10 @@ public sealed class DwarfMinerGame : Game
         "armor"       => _run.Player.HasArmor,
         "cannon"      => _run.HasCannon,
         "core_drill"  => _run.Player.HasCoreDrill,
+        "launch_pad"  => _run.PadPos is not null,
+        "ship_hull"   => _run.ShipStage >= 1,
+        "ship_engine" => _run.ShipStage >= 2,
+        "ship_nav"    => _run.ShipStage >= 3,
         _ => false,
     };
 
