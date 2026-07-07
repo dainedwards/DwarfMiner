@@ -469,10 +469,13 @@ public sealed class DwarfMinerGame : Game
         base.Update(gameTime);
     }
 
-    /// <summary>Weapon ids god mode loans out, in belt-fill order. Six entries — exactly the
-    /// free slots left beside the three intrinsic tools on a fresh belt.</summary>
+    /// <summary>Weapon ids god mode loans out, in belt-fill order — the complete armoury.
+    /// Ten entries — exactly the free slots left beside the three intrinsic tools.</summary>
     private static readonly string[] GodWeaponIds =
-        { "pistol", "machine_gun", "laser", "rocket_launcher", "cannon", "tnt" };
+    {
+        "pistol", "machine_gun", "laser", "laser_cannon", "rocket_launcher",
+        "cannon", "dynamite", "tnt", "harpoon", "nuke",
+    };
 
     /// <summary>True when this belt id is a god-mode loaner the player doesn't actually own —
     /// the ones to sweep off the belt when god mode ends.</summary>
@@ -481,11 +484,37 @@ public sealed class DwarfMinerGame : Game
         "pistol"          => !_player.HasPistol,
         "machine_gun"     => !_player.HasMachineGun,
         "laser"           => !_player.HasLaser,
+        "laser_cannon"    => !_player.HasLaserCannon,
         "rocket_launcher" => !_player.HasRocketLauncher,
         "cannon"          => !_hasCannon,
+        "dynamite"        => _player.Inventory.Count("dynamite") <= 0,
         "tnt"             => _player.Inventory.Count("tnt") <= 0,
+        "harpoon"         => _player.Inventory.Count("harpoon") <= 0,
+        "nuke"            => _player.Inventory.Count("nuke") <= 0,
         _                 => false,
     };
+
+    /// <summary>Belt ids the Q/E weapon-cycle steps through — anything that shoots or throws.
+    /// Tools, placeables, and consumables are skipped so combat swaps stay fast.</summary>
+    private static bool IsWeaponId(string id) => id is
+        "bullets" or "pistol" or "machine_gun" or "laser" or "laser_cannon" or
+        "rocket_launcher" or "cannon" or "dynamite" or "tnt" or "harpoon" or "nuke";
+
+    /// <summary>Step the belt selection to the next/previous slot holding a weapon, wrapping
+    /// around and skipping tools/placeables. No-op if no weapon is on the belt.</summary>
+    private void CycleWeapon(int dir)
+    {
+        var belt = _player.Toolbelt;
+        for (var step = 1; step <= Toolbelt.SlotCount; step++)
+        {
+            var s = (((belt.Selected + dir * step) % Toolbelt.SlotCount) + Toolbelt.SlotCount) % Toolbelt.SlotCount;
+            if (belt.Slots[s] is { } id && IsWeaponId(id))
+            {
+                belt.Selected = s;
+                return;
+            }
+        }
+    }
 
     /// <summary>Dispatch the currently-selected toolbelt slot to its in-world action. This
     /// is the single mapping table from slot id → behaviour, called every frame LMB is held
