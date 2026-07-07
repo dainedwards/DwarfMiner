@@ -162,6 +162,35 @@ public static class Icons
         ['g'] = new Color(70, 48, 30),
     });
 
+    private static Texture2D BuildLaserCannon(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        ".MMMMMMMMMM.....",
+        ".MmmmmmmmmMCC...",
+        ".MmmCCCCmmMCCbbb",
+        ".MmmmmmmmmMCC...",
+        ".MMMMMMMMMM.....",
+        ".....GGg........",
+        ".....GGg........",
+        "....GGg.........",
+        "....GG..........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['M'] = new Color(170, 185, 205),
+        ['m'] = new Color(105, 120, 145),
+        ['C'] = new Color(120, 225, 255),
+        ['b'] = new Color(80, 200, 255),
+        ['G'] = new Color(105, 75, 50),
+        ['g'] = new Color(70, 48, 30),
+    });
+
     private static Texture2D BuildRocketLauncher(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
     {
         "................",
