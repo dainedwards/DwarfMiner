@@ -226,7 +226,7 @@ public sealed class DwarfMinerGame : Game
 
         if (_screen == GameScreen.Overworld)
         {
-            UpdateOverworld(keys);
+            UpdateOverworld(keys, mouse);
             _prevKeys = keys; _prevMouse = mouse;
             base.Update(gameTime);
             return;
