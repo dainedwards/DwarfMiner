@@ -788,6 +788,18 @@ public sealed class Renderer
         _sb.End();
     }
 
+    /// <summary>Screen-space text at an arbitrary position and scale — no backing box.
+    /// Used by full-screen UI (star map) where DrawDebugLabel's black plate would clutter.</summary>
+    public void DrawText(string text, Vector2 screenPos, Color color, int scale = 1)
+    {
+        _sb.Begin(samplerState: SamplerState.PointClamp);
+        _font.Draw(_sb, text, screenPos, color, scale);
+        _sb.End();
+    }
+
+    /// <summary>Pixel width of <paramref name="text"/> at <paramref name="scale"/> — for centring.</summary>
+    public int MeasureText(string text, int scale = 1) => _font.Measure(text, scale);
+
     public void DrawCenteredText(string text, int viewportWidth, int viewportHeight, Color color, int scale = 3)
     {
         var w = _font.Measure(text, scale);
