@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DwarfMiner.Entities;
+using DwarfMiner.Rendering;
 using DwarfMiner.World;
 using Microsoft.Xna.Framework;
 
