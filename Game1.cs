@@ -33,7 +33,7 @@ public sealed partial class DwarfMinerGame : Game
     private Session _run = null!;
 
     private GameScreen _screen = GameScreen.Overworld;
-    private int _overworldCursor = 3; // TEMP: default-select Slag for hazard-panel screenshot
+    private int _overworldCursor;
 
     private KeyboardState _prevKeys;
     private MouseState _prevMouse;
