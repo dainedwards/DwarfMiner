@@ -618,21 +618,15 @@ public sealed class Renderer
         return ng > 0 && ng != myGroup;
     }
 
-    /// <summary>Stipple 1-px dots along one tile edge (8×8 reference coords) where two
-    /// material families meet. The dots are a half-blend of the two materials nudged dark
-    /// like a seam shadow — not the neighbour's raw palette, which read as a bright dotted
-    /// stripe — and a quarter of them are hash-dropped so the boundary stays ragged rather
-    /// than periodic. The phase flip per tile keeps runs of boundary tiles from lining
-    /// their dots up into a solid line.</summary>
+    /// <summary>Stipple 1-px dots of a neighbouring material's colour along one tile edge
+    /// (8×8 reference coords) — every other pixel, phase-flipped by tile hash so runs of
+    /// boundary tiles don't line their dots up into a solid stripe.</summary>
     private void DitherEdge(Vector2 centre, Vector2 right, Vector2 up, float rotation,
-        float chord, int hash, Color own, Color neighbour, bool horizontal, int edge)
+        float chord, int hash, Color c, bool horizontal, int edge)
     {
-        var blend = Color.Lerp(own, neighbour, 0.55f);
-        var c = new Color((int)(blend.R * 0.9f), (int)(blend.G * 0.9f), (int)(blend.B * 0.9f));
         var phase = (hash >> 8) & 1;
         for (var i = 0; i < 4; i++)
         {
-            if (((hash >> (10 + i * 2)) & 3) == 0) continue; // ragged: drop ~¼ of the dots
             var a = i * 2 + phase;
             if (horizontal) DrawDeco(centre, right, up, rotation, chord, a, edge, 1, 1, c);
             else DrawDeco(centre, right, up, rotation, chord, edge, a, 1, 1, c);
