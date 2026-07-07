@@ -109,6 +109,8 @@ public sealed class Titan
         _planet = planet;
         Kind = kind;
         EggHealth = EggMaxHealth;
+        // Hydra's spine is its whole body (long, many nodes); the others just drag a tail.
+        (_tailNodeCount, _tailSeg) = kind == TitanKind.Hydra ? (13, 30f) : (7, 26f);
         // Rest the egg near the ground; the hatched boss rises to hover height on its own once
         // its legs plant and the suspension lifts it.
         var hover = FindSurfaceSpawn(planet, startAngle);
