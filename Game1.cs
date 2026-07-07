@@ -770,28 +770,6 @@ public sealed partial class DwarfMinerGame : Game
         _gameOverReason = $"You pierced the core. Run time: {_run.RunTime:0.0}s. Press R for the star map.";
     }
 
-    /// <summary>Crafting menu input — opens with C, scrolls with up/down, crafts with Enter,
-    /// closes with C/Esc. Recipes are dispatched through <see cref="ApplyCraft"/>; affordability
-    /// is checked there too. Shift modifies the cursor to skip/jump in 5s for fast scroll.</summary>
-    private void UpdateCraftingMenu(KeyboardState keys)
-    {
-        if (Pressed(keys, _prevKeys, Keys.C) || Pressed(keys, _prevKeys, Keys.Escape))
-        {
-            _craftingOpen = false;
-            return;
-        }
-        var step = keys.IsKeyDown(Keys.LeftShift) || keys.IsKeyDown(Keys.RightShift) ? 5 : 1;
-        if (Pressed(keys, _prevKeys, Keys.Down) || Pressed(keys, _prevKeys, Keys.S))
-            _craftingCursor = (_craftingCursor + step) % Crafting.All.Count;
-        if (Pressed(keys, _prevKeys, Keys.Up) || Pressed(keys, _prevKeys, Keys.W))
-            _craftingCursor = (_craftingCursor - step + Crafting.All.Count) % Crafting.All.Count;
-        if (Pressed(keys, _prevKeys, Keys.Enter) || Pressed(keys, _prevKeys, Keys.Space))
-        {
-            var recipe = Crafting.All[_craftingCursor];
-            ApplyCraft(recipe);
-        }
-    }
-
     /// <summary>Install the next ship stage at the pad — the crafted stage goes straight
     /// into the world build site, never through the inventory.</summary>
     private void InstallShipStage()
