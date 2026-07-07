@@ -273,7 +273,7 @@ public sealed class Titan
         // lifts the body, and the hind legs then step up to the new height. With no planted
         // feet (mid-air, all legs swinging) gravity wins and the body falls.
         var planted = AvgPlantedFoot(out var hasPlanted);
-        if (hasPlanted)
+        if (hasPlanted && !Leaping)   // a leaping Kong ignores its suspension so it can launch
         {
             var heightAboveFeet = Vector2.Dot(Position - planted, up);
             var deficit = BodyHover - heightAboveFeet;
