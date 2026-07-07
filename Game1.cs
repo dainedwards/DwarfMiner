@@ -1348,6 +1348,24 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.DrawCircle(b.Position, b.Radius, new Color(80, 70, 60));
         }
 
+        // Titan ranged shots — Godzilla flame (layered orange/yellow flicker) and Mecha laser
+        // (cyan bolt with a white core drawn along its velocity).
+        foreach (var shot in _run.TitanShots)
+        {
+            if (shot.Kind == TitanShotKind.Flame)
+            {
+                var flick = (float)Random.Shared.NextDouble() * 1.6f;
+                _renderer.DrawCircle(shot.Position, shot.Radius + flick, new Color(230, 90, 30));
+                _renderer.DrawCircle(shot.Position, shot.Radius * 0.6f, new Color(255, 210, 90));
+            }
+            else
+            {
+                var ang = MathF.Atan2(shot.Velocity.Y, shot.Velocity.X);
+                _renderer.DrawRect(shot.Position, new Vector2(20f, 3.5f), new Color(120, 230, 255, 200), ang);
+                _renderer.DrawRect(shot.Position, new Vector2(15f, 1.6f), Color.White, ang);
+            }
+        }
+
         // Spaceship build site — the pad plus however many stages are installed. Drawn as
         // world-space rects rotated to local-up, same as every other surface structure.
         if (_run.PadPos is { } shipPos) DrawShip(shipPos, _run.ShipStage);
