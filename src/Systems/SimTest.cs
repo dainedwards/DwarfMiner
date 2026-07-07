@@ -339,7 +339,7 @@ public static class SimTest
                     if (loaded.Cells.Get(cx, cy) == Material.Water) { waterFound = true; break; }
             Check("save: spilled water present after load", waterFound);
             Check("save: ship progress survives",
-                loaded.ShipStage == 2 && loaded.PadPos == run.PadPos && loaded.HasCannon && System.Math.Abs(loaded.RunTime - 123.5f) < 0.01f);
+                loaded.ShipStage == 2 && loaded.ShipFuel == 7 && loaded.PadPos == run.PadPos && loaded.HasCannon && System.Math.Abs(loaded.RunTime - 123.5f) < 0.01f);
             var p = loaded.Player;
             Check("save: player stats survive",
                 p.Position == run.Player.Position && System.Math.Abs(p.Health - 61.5f) < 0.01f
