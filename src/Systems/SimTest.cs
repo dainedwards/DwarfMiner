@@ -294,6 +294,7 @@ public static class SimTest
                 RunTime = 123.5f,
                 HasCannon = true,
                 ShipStage = 2,
+                ShipFuel = 7,
                 PadPos = new Vector2(2400, 1200),
             };
             run.Cells = new Cells(run.Planet);
