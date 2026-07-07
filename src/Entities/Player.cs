@@ -643,7 +643,7 @@ public sealed class Toolbelt
     public static bool IsPermanent(string id) => id is
         "pickaxe" or "bullets" or "blocks" or
         "drill" or "hammer" or "cannon" or "core_drill" or
-        "pistol" or "machine_gun" or "laser" or "rocket_launcher";
+        "pistol" or "machine_gun" or "laser" or "laser_cannon" or "rocket_launcher";
 }
 
 public sealed class Inventory
