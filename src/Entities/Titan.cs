@@ -280,18 +280,18 @@ public sealed class Titan
 
         vNormal -= Gravity * dt;
 
-        // Leg-spring lift: model the legs as a critically-damped active suspension that holds
-        // the body at BodyHover above the average planted foot. When feet are planted the legs
-        // cancel gravity exactly and add a spring toward target + a damping term — so the body
-        // settles at the target height with no oscillation. This is what lets the kaiju stride
-        // over mountains: forelegs plant on high ground first, raise the avg-foot, the spring
-        // lifts the body, and the hind legs then step up to the new height. With no planted
-        // feet (mid-air, all legs swinging) gravity wins and the body falls.
-        var planted = AvgPlantedFoot(out var hasPlanted);
+        // Body suspension: a critically-damped spring holds the body at Hover above its support
+        // point. Bipeds support on the average of their planted feet; the legless Hydra supports
+        // on the ground directly below its belly. When feet are planted the spring cancels
+        // gravity and pulls toward the target height with no oscillation; with no support
+        // (mid-leap, mid-fall) gravity wins and the body drops.
+        var planted = Kind == TitanKind.Hydra
+            ? GroundBelow(up, out var hasPlanted)
+            : AvgPlantedFoot(out hasPlanted);
         if (hasPlanted && !Leaping)   // a leaping Kong ignores its suspension so it can launch
         {
             var heightAboveFeet = Vector2.Dot(Position - planted, up);
-            var deficit = BodyHover - heightAboveFeet;
+            var deficit = Hover - heightAboveFeet;
             var springAcc = MathHelper.Clamp(deficit * 9f, -500f, 800f);
             var dampAcc = -vNormal * 4f;
             vNormal += (Gravity + springAcc + dampAcc) * dt;
@@ -299,7 +299,11 @@ public sealed class Titan
 
         Velocity = right * vTangent + up * vNormal;
         Position += Velocity * dt;
-        ResolveCollision(planet);
+        // Smash through terrain rather than being shoved around by it: the body bulldozes any
+        // non-anchored tile it overlaps, carving a body-sized tunnel through mountains it walks
+        // into. On flat ground the body rides high enough that its plow radius never reaches the
+        // floor, so it doesn't dig itself under.
+        Plow(planet, physics, cells);
 
         // Grounded probe a little under the body using the (smaller) body collision radius.
         Grounded = ProbeSolid(planet, Position - up * (BodyRadius + 2f));
