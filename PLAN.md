@@ -5,11 +5,14 @@
 > and the staged spaceship escape (launch pad → hull → engine → nav core → L to launch).
 > Section 2 is done: the ItemDef registry (`src/Game1.Items.cs`) replaced the four per-item
 > switches; god mode is opt-in (survival default); Game1 is split — `UI/CraftingMenu`,
-> `UI/InventoryUi`, `Systems/SpawnDirector`, `Session`, `Game1.Items`. Next up: Section 3,
-> starting with in-run save/load.
-> Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id>`
-> skips the star map (ids: verdant, frost, ember, slag, core); `DM_GOD=1` starts runs in
-> god mode (fly, free weapons).
+> `UI/InventoryUi`, `Systems/SpawnDirector`, `Session`, `Game1.Items`.
+> Section 3: **in-run save/load is done** (`Systems/RunSave`) — F5 or quitting suspends the
+> run (single gzip slot, ~150 KB); R on the star map resumes; any run ending voids the save.
+> Also fixed: Esc now closes the crafting menu instead of quitting the game.
+> Next up: oxygen/depth pressure, or hazard cells, or per-planet mini-bosses.
+> Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
+> skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
+> suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
 
 Current state: circular polar planet with a Noita-style cell sim (water/lava/dust), structural
 physics with collapses, a Titan boss, cave/surface/sky fauna, a 30+ recipe crafting tree, three
