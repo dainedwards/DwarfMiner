@@ -524,12 +524,35 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
-        _run.Titan.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player.Position, _run.Boulders);
+        var wasHatched = _run.Titan.Hatched;
+        _run.Titan.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player.Position, _run.Boulders, _run.TitanShots);
+        // Hatch feedback: a heavy shake + shell-burst the frame the egg cracks open.
+        if (_run.Titan.JustHatched)
+        {
+            _run.Titan.JustHatched = false;
+            _run.Shake = MathF.Max(_run.Shake, 1.4f);
+            _particles.EmitDust(_run.Titan.Position, 30f);
+        }
+        // Melee shockwave from a Kong slam / Hydra eruption — quake already fired inside the
+        // Titan; here we knock back and hurt the player if they're inside the radius.
+        if (_run.Titan.PendingShockwave is { } sw)
+        {
+            _run.Titan.PendingShockwave = null;
+            _run.Shake = MathF.Max(_run.Shake, 1.0f);
+            _particles.EmitDust(sw.pos, 24f);
+            var toPlayer = _run.Player.Position - sw.pos;
+            var d = toPlayer.Length();
+            if (d < sw.radius)
+            {
+                _run.Player.TakeDamage(sw.damage * (1f - d / sw.radius));
+                if (d > 0.01f) _run.Player.Velocity += toPlayer / d * 260f;
+            }
+        }
         if (_run.Titan.Health <= 0)
         {
             _meta.TitansDefeated++;
             _meta.Save();
-            EndRun($"You felled the Titan! Run time: {_run.RunTime:0.0}s. Press R for the star map.");
+            EndRun($"You felled the {TitanName(_run.Def.Titan)}! Run time: {_run.RunTime:0.0}s. Press R for the star map.");
         }
 
         for (var i = _run.Boulders.Count - 1; i >= 0; i--)
@@ -541,6 +564,19 @@ public sealed partial class DwarfMinerGame : Game
                 _particles.EmitDust(b.Position, 14f);
                 _run.Shake = MathF.Max(_run.Shake, 0.6f);
                 _run.Boulders.RemoveAt(i);
+            }
+        }
+
+        // Titan ranged attacks (Godzilla flame, Mecha laser) — self-contained enemy shots.
+        for (var i = _run.TitanShots.Count - 1; i >= 0; i--)
+        {
+            var shot = _run.TitanShots[i];
+            shot.Update(dt, _run.Planet, _run.Cells, _run.Player);
+            if (shot.Kind == TitanShotKind.Flame) _particles.EmitDust(shot.Position, 2f);
+            if (shot.Dead)
+            {
+                _particles.EmitImpact(shot.Position, ProjectileKind.Cannon);
+                _run.TitanShots.RemoveAt(i);
             }
         }
 
