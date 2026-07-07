@@ -135,14 +135,13 @@ public sealed partial class DwarfMinerGame : Game
         if (_run.Player.FlyMode)
             foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
         _run.Titan = new Titan(_run.Planet, MathF.PI * 0.6f);
-        SpawnInitialFauna();
+        SpawnDirector.SpawnInitialFauna(_run);
         _run.EarthquakeTimer = 25f * def.QuakeScale;
         _run.SpawnTimer = 6f;
         _run.FaunaTimer = 8f;
         _gameOverReason = "";
-        _craftingOpen = false;
-        _craftingCursor = 0;
-        _carry = null;
+        _craftingMenu.Reset();
+        _invUi.Reset();
         _screen = GameScreen.Playing;
         // Camera exists except when DM_AUTOSTART triggers a run during Initialize —
         // LoadContent snaps it then.
