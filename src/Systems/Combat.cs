@@ -92,9 +92,11 @@ public static class Combat
                 if (p.FreezeSeconds > 0f) c.FreezeSeconds = MathF.Max(c.FreezeSeconds, p.FreezeSeconds);
                 break;
             case Titan t:
-                t.Health -= p.Damage;
-                t.HitFlash = 0.15f;
                 t.OnDamage();   // wakes the kaiju up and resets its 10s aggro timer
+                // Before hatching, hits chip the egg (and can crack it open early); after,
+                // they wound the boss.
+                if (!t.Hatched) t.DamageEgg(p.Damage);
+                else { t.Health -= p.Damage; t.HitFlash = 0.15f; }
                 break;
         }
     }
