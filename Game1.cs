@@ -158,6 +158,24 @@ public sealed partial class DwarfMinerGame : Game
         _camera?.SnapTo(_run.Player.Position, 0f);
     }
 
+    /// <summary>Resume the suspended run from disk — RunSave rebuilt the Session; this does
+    /// the same post-worldgen wiring StartNewRun does. Wildlife starts empty and SpawnDirector
+    /// restocks it over the first minute.</summary>
+    private void ResumeRun()
+    {
+        var run = RunSave.TryRead();
+        if (run is null) return;  // corrupt/stale save — the map hint disappears next frame
+        _run = run;
+        Crafting.SetPlanet(run.Def);
+        // Loading woke every cell; burn the resettle here like world gen's pre-settle pass.
+        for (var i = 0; i < 45; i++) _run.Cells.Update(1f / 60f);
+        _gameOverReason = "";
+        _craftingMenu.Reset();
+        _invUi.Reset();
+        _screen = GameScreen.Playing;
+        _camera?.SnapTo(_run.Player.Position, 0f);
+    }
+
     protected override void LoadContent()
     {
         _renderer = new Renderer(GraphicsDevice);
