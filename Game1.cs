@@ -731,6 +731,19 @@ public sealed class DwarfMinerGame : Game
         _player.ShootCooldown = 0.14f;
     }
 
+    /// <summary>Laser cannon: a heavy energy lance that drills straight through wall after
+    /// wall and skewers whole columns of creatures, vaporising a thin tunnel as it goes.
+    /// Slow cadence — one deliberate beam, not a stream.</summary>
+    private void FireLaserCannon(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 800f, 40f, 1.0f, ProjectileKind.LaserCannon));
+        _player.ShootCooldown = 0.55f;
+        _shake = MathF.Max(_shake, 0.25f);
+    }
+
     /// <summary>Rocket: straight-flying launcher round; explodes on contact with a real
     /// crater. Ammo consumption is handled by the dispatcher (god mode fires free).</summary>
     private void FireRocket(Vector2 worldCursor)
