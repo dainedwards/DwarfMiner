@@ -206,8 +206,20 @@ public sealed class Titan
         }
     }
 
-    public void Update(float dt, Planet planet, Physics physics, Cells cells, Vector2 playerPos, List<FallingBoulder> boulders)
+    public void Update(float dt, Planet planet, Physics physics, Cells cells, Vector2 playerPos,
+        List<FallingBoulder> boulders, List<TitanProjectile> shots)
     {
+        // Egg phase: dormant until the timer runs out or the egg is beaten open. The body
+        // doesn't move, attack, or fall — only the shell wobbles (Pulse) and flashes on hits.
+        if (!Hatched)
+        {
+            EggTimer -= dt;
+            Pulse += dt * 1.2f;
+            if (HitFlash > 0) HitFlash -= dt;
+            if (EggTimer <= 0f) Hatch();
+            return;
+        }
+
         // Tick aggro/roam timers. Aggro counts down from AggroDuration; once it hits 0 the
         // kaiju goes back to lazily roaming the surface in a random tangent direction.
         AggroTimer -= dt;
