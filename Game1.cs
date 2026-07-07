@@ -45,24 +45,11 @@ public sealed partial class DwarfMinerGame : Game
         float.TryParse(Environment.GetEnvironmentVariable("DM_AUTOSHOT"), out var s)
             ? s : float.PositiveInfinity;
 
-    /// <summary>Crafting menu state. While open, mouse/movement input still drives the world
-    /// but key events route to the menu (up/down to scroll, Enter to craft, C/Esc to close).
-    /// The cursor is the index into Crafting.All; only recipes whose visibility predicate
-    /// passes (e.g. pickaxe_iv hidden until pickaxe_iii is built) are shown.</summary>
-    private bool _craftingOpen;
-    private int _craftingCursor;
-
-    /// <summary>Drag-and-drop carry state for the inventory/toolbelt UI. While non-null, the
-    /// player has picked up an item: <c>Id</c> is the inventory id; <c>FromSlot</c> is the
-    /// toolbelt slot it came from (-1 if from the inventory panel). Dropping clears this.
-    /// Click-outside cancels and returns the item to its source.</summary>
-    private (string Id, int FromSlot)? _carry;
-
-    /// <summary>Cached screen-space rectangles for inventory + toolbelt hit-testing. Rebuilt
-    /// every Draw and consumed by HandleInventoryUi on the next Update — the layout doesn't
-    /// move per frame so 1-frame staleness is invisible.</summary>
-    private readonly Dictionary<string, Rectangle> _invHitTest = new();
-    private readonly Rectangle[] _toolbeltHitTest = new Rectangle[Toolbelt.SlotCount];
+    /// <summary>The crafting overlay and the inventory/toolbelt drag-drop UI — see
+    /// src/UI. While the menu is open, mouse/movement input still drives the world but key
+    /// events route to the menu.</summary>
+    private readonly CraftingMenu _craftingMenu = new();
+    private readonly InventoryUi _invUi = new();
 
     private const int VirtualWidth = 1280;
     private const int VirtualHeight = 720;
