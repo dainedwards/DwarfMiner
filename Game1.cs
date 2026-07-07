@@ -212,7 +212,12 @@ public sealed partial class DwarfMinerGame : Game
         var mouse = Mouse.GetState();
         _totalTime += dt;
 
-        if (keys.IsKeyDown(Keys.Escape)) Exit();
+        // Esc quits — except while the crafting menu is open, where the menu's own handler
+        // consumes the same press edge to close itself (previously Esc quit the whole game
+        // out from under the menu). Edge-triggered so the close-press doesn't also quit.
+        if (Pressed(keys, _prevKeys, Keys.Escape)
+            && !(_screen == GameScreen.Playing && _craftingMenu.Open))
+            Exit();
 
         // F12 → defer one-shot screenshot until end of next Draw, where the backbuffer
         // holds the fully composited frame (post lighting/bloom/vignette).
