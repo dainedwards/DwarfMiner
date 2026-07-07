@@ -499,8 +499,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             _meta.Deaths++;
             _meta.Save();
-            _screen = GameScreen.GameOver;
-            _gameOverReason = "You died. Press R for the star map.";
+            EndRun("You died. Press R for the star map.");
         }
 
         // Apply shake decay to camera.
