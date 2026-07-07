@@ -60,7 +60,7 @@ public static class TileAtlas
         var kinds = Enum.GetValues<TileKind>();
         var rows = 0;
         foreach (var k in kinds) rows = Math.Max(rows, (int)k + 1);
-        var w = VariantCount * MaskCount * Res;
+        var w = VariantCount * MaskCount * Res * 2; // foreground erosion frames + wall shadow frames
         var h = rows * Res;
         var px = new Color[w * h];
 
