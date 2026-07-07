@@ -1436,7 +1436,6 @@ public sealed partial class DwarfMinerGame : Game
         _camera.Target = oldTarget;
 
         var depth = _run.Planet.Radius - (int)((_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize);
-        var inv = _run.Player.Inventory;
         // Top-left status: planet, ship progress, depth, titan HP, run meta. The toolbelt at
         // the bottom of the screen carries the per-tool readout, so we don't duplicate it here.
         var ship = _run.PadPos is null ? "NO PAD" : _run.ShipStage switch
