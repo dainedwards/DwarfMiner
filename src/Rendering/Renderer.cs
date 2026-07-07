@@ -294,6 +294,24 @@ public sealed class Renderer
                     if (rightSky) DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, wrap);
                     if (innerSky) DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, wrap);
                 }
+                // Crumb accretion: a pinch of the tile's own material scattered on exposed
+                // top surfaces — scree on stone ledges, soil on dirt runs. Material-coloured
+                // single grains at hash positions (many tiles get none), so flat runs lose
+                // their ruler line without any edge strip. Grass grows tufts instead.
+                else if (outerSky)
+                {
+                    var crumbs = (hash >> 9) & 3;
+                    for (var ci = 0; ci < crumbs; ci++)
+                    {
+                        var lx = (hash >> (11 + ci * 5)) & 7;
+                        var cj = (((hash >> (14 + ci * 3)) & 7) - 3) * 4;
+                        var cc = new Color(
+                            Math.Clamp(col.R + cj, 0, 255),
+                            Math.Clamp(col.G + cj, 0, 255),
+                            Math.Clamp(col.B + cj, 0, 255));
+                        DrawDeco(centre, right, up, rotation, chord, lx, -1, 1, 1, cc);
+                    }
+                }
 
                 // Material separation — no painted boundary line. Where two families meet,
                 // the softer material's colour bites a ragged tooth-row into the harder
