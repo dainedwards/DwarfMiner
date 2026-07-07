@@ -416,6 +416,15 @@ public static class SimTest
             if (cells.Get(cx, cy) != Material.Gas) burned = true;
         }
         Check("hazard: gas flash-burns beside lava", burned);
+
+        // --- Planet gating: the right worlds seed the right hazards ---
+        Check("hazard: ember world seeds gas pockets",
+            WorldGen.Generate(5, PlanetDefs.ById("ember")).GasSeeds.Count > 0);
+        Check("hazard: slag world seeds acid pools",
+            WorldGen.Generate(5, PlanetDefs.ById("slag")).AcidSeeds.Count > 0);
+        var verdant = WorldGen.Generate(5, PlanetDefs.ById("verdant"));
+        Check("hazard: temperate world seeds no gas/acid",
+            verdant.GasSeeds.Count == 0 && verdant.AcidSeeds.Count == 0);
     }
 
     /// <summary>Acid over a granite tile must leave it intact — hard rock resists corrosion.</summary>
