@@ -337,8 +337,8 @@ public sealed class DwarfMinerGame : Game
             BeaconRecall(bp);
         }
 
-        // Launch rocket with L if 5 parts held and player on the surface.
-        if (Pressed(keys, _prevKeys, Keys.L)) TryLaunchRocket();
+        // Launch the completed ship with L while standing at the pad.
+        if (Pressed(keys, _prevKeys, Keys.L)) TryLaunchShip();
 
         // Physics + particles + cells update.
         _run.Physics.Update(dt);
