@@ -1826,6 +1826,10 @@ public sealed class DwarfMinerGame : Game
             _renderer.DrawCircle(b.Position, b.Radius, new Color(80, 70, 60));
         }
 
+        // Spaceship build site — the pad plus however many stages are installed. Drawn as
+        // world-space rects rotated to local-up, same as every other surface structure.
+        if (_run.PadPos is { } shipPos) DrawShip(shipPos, _run.ShipStage);
+
         // Kaiju visibility cull. The kaiju's render block does 100+ draw calls (4 legs × IK +
         // 7-node tail + dorsal spines + head + claws), so skipping it when off-screen is a
         // large win. Camera viewport is 1280×720 at zoom 4 → ~320×180 world units, so the
