@@ -984,6 +984,12 @@ public sealed class DwarfMinerGame : Game
             case "laser":           if (_run.Player.HasLaser)          return; break;
             case "laser_cannon":    if (_run.Player.HasLaserCannon)    return; break;
             case "rocket_launcher": if (_run.Player.HasRocketLauncher) return; break;
+            // Ship build chain: pad needs open sky overhead and no existing pad; stages are
+            // strictly sequential and must be crafted standing at the pad.
+            case "launch_pad":  if (_run.PadPos is not null || !OpenToSky(_run.Player.Position)) return; break;
+            case "ship_hull":   if (_run.ShipStage != 0 || !NearPad()) return; break;
+            case "ship_engine": if (_run.ShipStage != 1 || !NearPad()) return; break;
+            case "ship_nav":    if (_run.ShipStage != 2 || !NearPad()) return; break;
         }
 
         if (!Crafting.TryPay(r, _run.Player.Inventory)) return;
