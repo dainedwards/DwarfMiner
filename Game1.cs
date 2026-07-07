@@ -1170,24 +1170,6 @@ public sealed class DwarfMinerGame : Game
         }
     }
 
-    private bool IsOwned(string id) => id switch
-    {
-        "pickaxe_ii"  => _run.Player.PickaxeTier >= 2,
-        "pickaxe_iii" => _run.Player.PickaxeTier >= 3,
-        "pickaxe_iv"  => _run.Player.PickaxeTier >= 4,
-        "drill"       => _run.Player.HasDrill,
-        "hammer"      => _run.Player.HasHammer,
-        "lantern"     => _run.Player.HasLantern,
-        "armor"       => _run.Player.HasArmor,
-        "cannon"      => _run.HasCannon,
-        "core_drill"  => _run.Player.HasCoreDrill,
-        "launch_pad"  => _run.PadPos is not null,
-        "ship_hull"   => _run.ShipStage >= 1,
-        "ship_engine" => _run.ShipStage >= 2,
-        "ship_nav"    => _run.ShipStage >= 3,
-        _ => false,
-    };
-
     private static string BuildCostString(Recipe r)
     {
         var sb = new System.Text.StringBuilder();
