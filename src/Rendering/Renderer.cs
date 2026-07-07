@@ -34,6 +34,8 @@ public sealed class Renderer
         TileAtlas.Build(gd);
         _tileAtlas = TileAtlas.Texture;
         _stars = MakeStarfield(gd, 256);
+        _atmoTex = MakeAtmosphere(gd, 512);
+        _wispTex = MakeSoftBlob(gd, 64);
     }
 
     /// <summary>Kinds whose tile art stays hand-authored + animated in DrawWorld (supports,
