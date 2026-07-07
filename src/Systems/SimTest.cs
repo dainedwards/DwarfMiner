@@ -338,6 +338,9 @@ public static class SimTest
                 p.Position == run.Player.Position && System.Math.Abs(p.Health - 61.5f) < 0.01f
                 && p.PickaxeTier == 3 && p.HasDrill && p.HasLaser && !p.HasHammer
                 && p.BeaconWorld == run.Player.BeaconWorld);
+            Check("save: oxygen + air tank survive",
+                System.Math.Abs(p.Oxygen - 44.25f) < 0.01f && p.HasAirTank
+                && System.Math.Abs(p.EffectiveMaxOxygen - 200f) < 0.01f);
             Check("save: inventory survives",
                 p.Inventory.Count("iron") == 14 && p.Inventory.Count("ruby") == 4);
             Check("save: toolbelt survives",
