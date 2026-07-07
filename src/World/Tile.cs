@@ -64,7 +64,8 @@ public static class Tiles
     public static bool IsOre(TileKind k) =>
         k is TileKind.CoalOre or TileKind.IronOre or TileKind.GoldOre or TileKind.Crystal
           or TileKind.SilverOre or TileKind.PlatinumOre
-          or TileKind.Ruby or TileKind.Sapphire or TileKind.Diamond;
+          or TileKind.Ruby or TileKind.Sapphire or TileKind.Diamond
+          or TileKind.FuelOre;
 
     public static int Hardness(TileKind k) => k switch
     {
