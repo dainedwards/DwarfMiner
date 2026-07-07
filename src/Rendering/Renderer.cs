@@ -169,33 +169,15 @@ public sealed class Renderer
                 var hash = (r * 73856093) ^ (t * 19349663);
 
                 // Sky tile: maybe draw the background wall (cave back-wall, Terraria style).
-                // Multi-layer composite: a deep base, a mid-depth blocky strata pattern from a
-                // coarser hash so adjacent tiles share the same big-block, and a foreground
-                // speckle layer for surface noise. Tiles whose neighbour is solid get a faint
-                // rim "lip" along the shared edge — sells the floor/wall meeting line.
                 if (k == TileKind.Sky)
                 {
                     var wallK = planet.GetWall(r, t);
                     if (wallK == TileKind.Sky) continue; // outside planet — no wall
-                    var wb = Tiles.BaseColor(wallK);
 
-                    // Back wall = the same atlas texture the material uses in the foreground,
-                    // multiplied down to ~35% brightness. Keeps all the baked grain/strata
-                    // detail while clearly reading as background rock.
-                    var wallShade = BlobShade(centre);
-                    _sb.Draw(_tileAtlas, centre, TileAtlas.Source(wallK, VariantFor(wallK, r, t, hash)),
-                        new Color((int)(88 * wallShade), (int)(88 * wallShade), (int)(100 * wallShade)), rotation,
-                        new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
-                        new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
-                        SpriteEffects.None, 0f);
-
-                    // Edge "lip" — when this back-wall tile is adjacent to a solid tile, draw
-                    // a faint dark rim along the shared edge so the floor/wall transition reads
-                    // as a corner rather than a flat colour change.
-                    var lipCol = new Color(
-                        Math.Clamp((int)(wb.R * 0.15f), 0, 255),
-                        Math.Clamp((int)(wb.G * 0.15f), 0, 255),
-                        Math.Clamp((int)(wb.B * 0.15f), 0, 255));
+                    // Recess shadow: sides bordering solid ground pick the wall frame with a
+                    // soft ragged occlusion gradient baked along that edge — a dug-out pocket
+                    // darkens smoothly toward its rim instead of being outlined by hard lip
+                    // strips, which framed every dug tile as its own rectangle.
                     var ocnt = planet.OuterNeighbourCount(r, t);
                     var outerSolid = false;
                     for (var oi = 0; oi < ocnt; oi++)
@@ -204,13 +186,21 @@ public sealed class Renderer
                         if (Tiles.IsSolid(planet.Get(o2r, o2t))) { outerSolid = true; break; }
                     }
                     var (i2r, i2t) = planet.InnerNeighbour(r, t);
-                    var innerSolid = Tiles.IsSolid(planet.Get(i2r, i2t));
-                    var leftSolid  = Tiles.IsSolid(planet.Get(r, t - 1));
-                    var rightSolid = Tiles.IsSolid(planet.Get(r, t + 1));
-                    if (outerSolid) DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, lipCol);
-                    if (innerSolid) DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, lipCol);
-                    if (leftSolid)  DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, lipCol);
-                    if (rightSolid) DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, lipCol);
+                    var solidMask = (outerSolid ? 1 : 0)
+                                  | (Tiles.IsSolid(planet.Get(i2r, i2t)) ? 2 : 0)
+                                  | (Tiles.IsSolid(planet.Get(r, t - 1)) ? 4 : 0)
+                                  | (Tiles.IsSolid(planet.Get(r, t + 1)) ? 8 : 0);
+
+                    // Back wall = the same atlas texture the material uses in the foreground,
+                    // multiplied down to ~35% brightness. Keeps all the baked grain/strata
+                    // detail while clearly reading as background rock.
+                    var wallShade = BlobShade(centre);
+                    _sb.Draw(_tileAtlas, centre,
+                        TileAtlas.WallSource(wallK, VariantFor(wallK, r, t, hash), solidMask),
+                        new Color((int)(88 * wallShade), (int)(88 * wallShade), (int)(100 * wallShade)), rotation,
+                        new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
+                        new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
+                        SpriteEffects.None, 0f);
                     continue;
                 }
 
