@@ -19,31 +19,24 @@ public sealed class DwarfMinerGame : Game
     private Texture2D _dwarfTex = null!;
     private PlayerSprite? _playerSprite;
     private float _playerFacing = 1f;
-    private Planet _planet = null!;
-    private Physics _physics = null!;
-    private Player _player = null!;
-    private Titan _titan = null!;
     private MetaSave _meta = null!;
-    private Cells _cells = null!;
-
-    private readonly List<Creature> _creatures = new();
-    private readonly List<Corpse> _corpses = new();
-    private readonly List<Projectile> _projectiles = new();
-    private readonly List<FallingBoulder> _boulders = new();
-    private readonly List<Sentry> _sentries = new();
     private readonly Particles _particles = new();
+
+    /// <summary>The current planet visit. Everything per-run lives here — swapped atomically
+    /// when the player picks a planet on the star map. Null only while on the star map before
+    /// the first run; Playing/GameOver screens always have one.</summary>
+    private Session _run = null!;
+
+    private GameScreen _screen = GameScreen.Overworld;
+    private int _overworldCursor;
 
     private KeyboardState _prevKeys;
     private MouseState _prevMouse;
-    private float _earthquakeTimer;
-    private float _spawnTimer;
-    private float _faunaTimer;
-    private float _shake;
-    private bool _gameOver;
     private string _gameOverReason = "";
-    private float _runTime;
-    private bool _hasCannon;
     private bool _screenshotPending;
+    /// <summary>Wall-clock seconds since launch — drives the DM_AUTOSHOT capture schedule so
+    /// tooling can screenshot any screen, including the star map before a run starts.</summary>
+    private float _totalTime;
     private float _autoShotAt =
         float.TryParse(Environment.GetEnvironmentVariable("DM_AUTOSHOT"), out var s)
             ? s : float.PositiveInfinity;
@@ -101,30 +94,30 @@ public sealed class DwarfMinerGame : Game
     private void StartNewRun()
     {
         var seed = (int)DateTime.Now.Ticks;
-        _planet = WorldGen.Generate(seed);
-        _cells = new Cells(_planet);
-        _physics = new Physics(_planet, _cells);
+        _run.Planet = WorldGen.Generate(seed);
+        _run.Cells = new Cells(_run.Planet);
+        _run.Physics = new Physics(_run.Planet, _run.Cells);
         // Lava seeding: any cave (Sky tile) within 45% of the planet radius gets filled with
         // lava. So the inner half of the planet — from roughly the middle layer inward — has
         // lava pooled in any cavities, with the densest lava near the Core.
-        _cells.FillSkyTilesWithin(_planet.Radius * 0.45f, Material.Lava);
+        _run.Cells.FillSkyTilesWithin(_run.Planet.Radius * 0.45f, Material.Lava);
 
         // Water seeding: world gen recorded lake-basin and reservoir tiles; pour the cells in
         // now. Water is always sim cells (never solid tiles), so it settles, flows into player
         // tunnels, and quenches lava per the cell rules.
-        foreach (var (wsx, wsy) in _planet.WaterSeeds)
-            _cells.FillTile(wsx, wsy, Material.Water);
+        foreach (var (wsx, wsy) in _run.Planet.WaterSeeds)
+            _run.Cells.FillTile(wsx, wsy, Material.Water);
 
         // Pre-settle the seeded liquids during load: the first ~2s of cell ticks carry every
         // seeded cell awake (tens of ms per tick at Density 8). Burning them here turns a
         // visible gameplay stutter into a slightly longer world-gen pause; after settling,
         // hemmed pool interiors sleep and the steady-state tick is cheap.
-        for (var i = 0; i < 120; i++) _cells.Update(1f / 60f);
+        for (var i = 0; i < 120; i++) _run.Cells.Update(1f / 60f);
 
         // Spawn the dwarf on top of whatever mountain is at angle -π/2 — walk down from
         // far above until the first solid tile, then float a few pixels above it.
-        var surfacePos = FindSurfaceSpawn(-MathF.PI / 2f, _planet.Radius);
-        _player = new Player(surfacePos)
+        var surfacePos = FindSurfaceSpawn(-MathF.PI / 2f, _run.Planet.Radius);
+        _run.Player = new Player(surfacePos)
         {
             // Start in god-mode for testing; G toggles it off (and on again) in-game. The
             // toggle drives ghost flight, super-pickaxe power, and extended mine range as a
@@ -134,24 +127,24 @@ public sealed class DwarfMinerGame : Game
             // higher-tier pickaxe so subsequent runs are slightly easier.
             PickaxeTier = Math.Max(1, _meta.StartingPickaxePower),
         };
-        _hasCannon = _meta.StartWithCannon;
+        _run.HasCannon = _meta.StartWithCannon;
         // Runs start in god mode, and god mode carries the full armoury — load every weapon
         // onto the belt from frame one (toggling god off strips the unowned loaners).
-        foreach (var w in GodWeaponIds) _player.Toolbelt.AutoEquip(w);
-        _titan = new Titan(_planet, MathF.PI * 0.6f);
-        _creatures.Clear();
-        _corpses.Clear();
-        _projectiles.Clear();
-        _boulders.Clear();
-        _sentries.Clear();
+        foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
+        _run.Titan = new Titan(_run.Planet, MathF.PI * 0.6f);
+        _run.Creatures.Clear();
+        _run.Corpses.Clear();
+        _run.Projectiles.Clear();
+        _run.Boulders.Clear();
+        _run.Sentries.Clear();
         SpawnInitialFauna();
-        _earthquakeTimer = 25f;
-        _spawnTimer = 6f;
-        _faunaTimer = 8f;
-        _shake = 0;
+        _run.EarthquakeTimer = 25f;
+        _run.SpawnTimer = 6f;
+        _run.FaunaTimer = 8f;
+        _run.Shake = 0;
         _gameOver = false;
         _gameOverReason = "";
-        _runTime = 0;
+        _run.RunTime = 0;
         _craftingOpen = false;
         _craftingCursor = 0;
     }
@@ -165,7 +158,7 @@ public sealed class DwarfMinerGame : Game
             ViewportSize = new Point(VirtualWidth, VirtualHeight),
             Zoom = 4.0f,
         };
-        _camera.SnapTo(_player.Position, 0f);
+        _camera.SnapTo(_run.Player.Position, 0f);
 
         // Animated CC0 sprite pack when assets/player is present; string-art dwarf otherwise.
         _playerSprite = PlayerSprite.TryLoad(GraphicsDevice);
@@ -216,7 +209,7 @@ public sealed class DwarfMinerGame : Game
 
         // Headless verification hook: DM_AUTOSHOT=<seconds> takes a screenshot at that run
         // time and every 5s after — lets tooling capture frames without input access.
-        if (_autoShotAt <= _runTime)
+        if (_autoShotAt <= _run.RunTime)
         {
             _screenshotPending = true;
             _autoShotAt += 5f;
@@ -235,16 +228,16 @@ public sealed class DwarfMinerGame : Game
         if (_craftingOpen)
         {
             UpdateCraftingMenu(keys);
-            _physics.Update(dt);
-            _particles.Update(dt, _planet);
-            _cells.Update(dt);
+            _run.Physics.Update(dt);
+            _particles.Update(dt, _run.Planet);
+            _run.Cells.Update(dt);
             _prevKeys = keys; _prevMouse = mouse;
             base.Update(gameTime);
             return;
         }
         if (Pressed(keys, _prevKeys, Keys.C)) { _craftingOpen = true; _craftingCursor = 0; _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return; }
 
-        _runTime += dt;
+        _run.RunTime += dt;
 
         // Movement input — A/D or arrows along the player's local tangent.
         var moveAxis = 0;
@@ -262,27 +255,27 @@ public sealed class DwarfMinerGame : Game
         // G toggles fly mode for world testing.
         if (Pressed(keys, _prevKeys, Keys.G))
         {
-            _player.FlyMode = !_player.FlyMode;
+            _run.Player.FlyMode = !_run.Player.FlyMode;
             // God mode carries the full armoury: entering fills empty belt slots with every
             // weapon; leaving strips the ones the player doesn't actually own, so the loaner
             // guns vanish with the mode while crafted gear stays put.
-            if (_player.FlyMode)
+            if (_run.Player.FlyMode)
             {
-                foreach (var w in GodWeaponIds) _player.Toolbelt.AutoEquip(w);
+                foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
             }
             else
             {
                 for (var s = 0; s < Toolbelt.SlotCount; s++)
-                    if (_player.Toolbelt.Slots[s] is { } wid && IsGodLoanerWeapon(wid))
-                        _player.Toolbelt.Slots[s] = null;
+                    if (_run.Player.Toolbelt.Slots[s] is { } wid && IsGodLoanerWeapon(wid))
+                        _run.Player.Toolbelt.Slots[s] = null;
             }
         }
 
-        _player.Update(dt, _planet, moveAxis, jumpHeld, verticalAxis);
+        _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, verticalAxis);
 
         // Camera follows player, rotating so up = away from planet center.
-        var up = _planet.UpAt(_player.Position);
-        _camera.Follow(_player.Position, up, dt);
+        var up = _run.Planet.UpAt(_run.Player.Position);
+        _camera.Follow(_run.Player.Position, up, dt);
 
         // Mouse → world cursor. Account for screen shake.
         var screenMouse = new Vector2(mouse.X, mouse.Y);
@@ -294,13 +287,13 @@ public sealed class DwarfMinerGame : Game
         for (var s = 0; s < Math.Min(9, Toolbelt.SlotCount); s++)
         {
             var k = Keys.D1 + s;
-            if (Pressed(keys, _prevKeys, k)) _player.Toolbelt.Selected = s;
+            if (Pressed(keys, _prevKeys, k)) _run.Player.Toolbelt.Selected = s;
         }
         // Mouse-wheel cycles selection — handy for fast tool swaps without leaving the home row.
         if (mouse.ScrollWheelValue != _prevMouse.ScrollWheelValue)
         {
             var dir = mouse.ScrollWheelValue > _prevMouse.ScrollWheelValue ? -1 : 1;
-            _player.Toolbelt.Selected = (_player.Toolbelt.Selected + dir + Toolbelt.SlotCount) % Toolbelt.SlotCount;
+            _run.Player.Toolbelt.Selected = (_run.Player.Toolbelt.Selected + dir + Toolbelt.SlotCount) % Toolbelt.SlotCount;
         }
         // Q/E cycle through *weapons only*, skipping tools and placeables — the fast way to
         // switch guns mid-fight now that the armoury outgrows the number row.
@@ -325,7 +318,7 @@ public sealed class DwarfMinerGame : Game
         // T recalls to the last placed Beacon — kept as a key because recall is a unique
         // verb that doesn't fit the "use selected slot" pattern (the beacon slot already
         // does *placement*; recall is a different action on the same data).
-        if (Pressed(keys, _prevKeys, Keys.T) && _player.BeaconWorld is { } bp)
+        if (Pressed(keys, _prevKeys, Keys.T) && _run.Player.BeaconWorld is { } bp)
         {
             BeaconRecall(bp);
         }
@@ -334,8 +327,8 @@ public sealed class DwarfMinerGame : Game
         if (Pressed(keys, _prevKeys, Keys.L)) TryLaunchRocket();
 
         // Physics + particles + cells update.
-        _physics.Update(dt);
-        _particles.Update(dt, _planet);
+        _run.Physics.Update(dt);
+        _particles.Update(dt, _run.Planet);
 
         // Sweep dust within a body's reach into the inventory. Each cell carries a fractional
         // resource amount tied to its source TileKind; Cells handles the per-id accumulator and
@@ -343,40 +336,40 @@ public sealed class DwarfMinerGame : Game
         // collection's WakeNeighbors calls land in `_next`, which the upcoming Update swaps into
         // `_active` and processes immediately — dust above a collected cell falls the same frame
         // instead of one frame later.
-        var picked = _cells.CollectInRadius(_player.Position, _player.Radius + 4f);
+        var picked = _run.Cells.CollectInRadius(_run.Player.Position, _run.Player.Radius + 4f);
         if (picked is not null)
             foreach (var (id, count) in picked)
-                _player.Inventory.Add(id, count);
+                _run.Player.Inventory.Add(id, count);
 
-        _cells.Update(dt);
-        if (_physics.CollapsesThisTick > 0) _shake = MathF.Max(_shake, MathHelper.Clamp(_physics.CollapsesThisTick / 80f, 0f, 1.5f));
+        _run.Cells.Update(dt);
+        if (_run.Physics.CollapsesThisTick > 0) _run.Shake = MathF.Max(_run.Shake, MathHelper.Clamp(_run.Physics.CollapsesThisTick / 80f, 0f, 1.5f));
 
         // Earthquakes — global shake every so often.
-        _earthquakeTimer -= dt;
-        if (_earthquakeTimer <= 0)
+        _run.EarthquakeTimer -= dt;
+        if (_run.EarthquakeTimer <= 0)
         {
             var anglesAround = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
-            var pos = _planet.Center + new Vector2(MathF.Cos(anglesAround), MathF.Sin(anglesAround)) * _planet.Radius * Planet.TileSize * 0.5f;
-            _physics.Earthquake(pos, 200f, 2);
-            _earthquakeTimer = 30f + (float)Random.Shared.NextDouble() * 20f;
-            _shake = MathF.Max(_shake, 1.0f);
+            var pos = _run.Planet.Center + new Vector2(MathF.Cos(anglesAround), MathF.Sin(anglesAround)) * _run.Planet.Radius * Planet.TileSize * 0.5f;
+            _run.Physics.Earthquake(pos, 200f, 2);
+            _run.EarthquakeTimer = 30f + (float)Random.Shared.NextDouble() * 20f;
+            _run.Shake = MathF.Max(_run.Shake, 1.0f);
         }
 
         // Spawn creatures inside caves. Cap counts cave dwellers only — surface/sky fauna
         // have their own population loop below.
-        _spawnTimer -= dt;
-        if (_spawnTimer <= 0 && CountKindsNear(550f, cave: true) < 14)
+        _run.SpawnTimer -= dt;
+        if (_run.SpawnTimer <= 0 && CountKindsNear(550f, cave: true) < 14)
         {
             TrySpawnCreature();
-            _spawnTimer = 2.3f + (float)Random.Shared.NextDouble() * 1.7f;
+            _run.SpawnTimer = 2.3f + (float)Random.Shared.NextDouble() * 1.7f;
         }
 
         // Fauna upkeep: keep the surface grazed and the sky populated. Slow cadence — these
         // are ambience, not a threat escalation.
-        _faunaTimer -= dt;
-        if (_faunaTimer <= 0)
+        _run.FaunaTimer -= dt;
+        if (_run.FaunaTimer <= 0)
         {
-            _faunaTimer = 6f + (float)Random.Shared.NextDouble() * 4f;
+            _run.FaunaTimer = 6f + (float)Random.Shared.NextDouble() * 4f;
             if (CountKindsNear(700f, surface: true) < 7) TrySpawnSurfaceAnimal();
             if (CountKindsNear(700f, sky: true) < 6) TrySpawnSkyAnimal();
         }
@@ -385,46 +378,46 @@ public sealed class DwarfMinerGame : Game
         // are recycled — they'd never be met again, they eat sim time, and every recycled
         // body frees local-population budget so the spawner keeps the area around the player
         // stocked as they travel.
-        for (var i = _creatures.Count - 1; i >= 0; i--)
+        for (var i = _run.Creatures.Count - 1; i >= 0; i--)
         {
-            var c = _creatures[i];
-            c.Update(dt, _planet, _physics, _cells, _player);
+            var c = _run.Creatures[i];
+            c.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player);
             if (c.Health <= 0)
             {
                 // Killed — leave a harvestable corpse where it fell. Distance culls (below)
                 // don't: those creatures just wandered out of the simulation bubble.
-                _corpses.Add(new Corpse(c.Position, c.Kind, c.Radius));
+                _run.Corpses.Add(new Corpse(c.Position, c.Kind, c.Radius));
                 _particles.EmitDust(c.Position, 5f);
-                _creatures.RemoveAt(i);
+                _run.Creatures.RemoveAt(i);
             }
-            else if ((c.Position - _player.Position).LengthSquared() > 1000f * 1000f)
+            else if ((c.Position - _run.Player.Position).LengthSquared() > 1000f * 1000f)
             {
-                _creatures.RemoveAt(i);
+                _run.Creatures.RemoveAt(i);
             }
         }
 
         // Corpses — settle under gravity, decay on a timer, and are harvested for materials
         // by walking over them (same sweep-up feel as dust collection).
-        for (var i = _corpses.Count - 1; i >= 0; i--)
+        for (var i = _run.Corpses.Count - 1; i >= 0; i--)
         {
-            var corpse = _corpses[i];
-            corpse.Update(dt, _planet);
-            var reach = _player.Radius + corpse.Radius + 3f;
-            if (!corpse.Harvested && (corpse.Position - _player.Position).LengthSquared() < reach * reach)
+            var corpse = _run.Corpses[i];
+            corpse.Update(dt, _run.Planet);
+            var reach = _run.Player.Radius + corpse.Radius + 3f;
+            if (!corpse.Harvested && (corpse.Position - _run.Player.Position).LengthSquared() < reach * reach)
             {
                 foreach (var (id, count) in Corpse.DropsFor(corpse.Kind))
-                    _player.Inventory.Add(id, count);
+                    _run.Player.Inventory.Add(id, count);
                 corpse.Harvested = true;
                 _particles.EmitDust(corpse.Position, 6f);
             }
-            if (corpse.Expired || (corpse.Position - _player.Position).LengthSquared() > 1200f * 1200f)
-                _corpses.RemoveAt(i);
+            if (corpse.Expired || (corpse.Position - _run.Player.Position).LengthSquared() > 1200f * 1200f)
+                _run.Corpses.RemoveAt(i);
         }
 
-        for (var i = _projectiles.Count - 1; i >= 0; i--)
+        for (var i = _run.Projectiles.Count - 1; i >= 0; i--)
         {
-            var p = _projectiles[i];
-            p.Update(dt, _planet, _physics, _cells, _particles);
+            var p = _run.Projectiles[i];
+            p.Update(dt, _run.Planet, _run.Physics, _run.Cells, _particles);
             _particles.EmitTrail(p);   // rocket exhaust, fuse sparks, beam motes, …
 
             // Body hits (creatures + titan): Combat sweeps the frame's travel segment so fast
@@ -432,25 +425,25 @@ public sealed class DwarfMinerGame : Game
             // detonates contact explosives on the first body struck, and applies blast AoE
             // when an explosive dies. Sentries stay projectile-transparent — creature contact
             // damage to them is handled in the sentry-update block below.
-            Combat.ResolveHits(p, _creatures, _titan, _planet, _physics, _cells, _particles);
+            Combat.ResolveHits(p, _run.Creatures, _run.Titan, _run.Planet, _run.Physics, _run.Cells, _particles);
 
             if (p.Dead)
             {
                 _particles.EmitImpact(p.Position, p.Kind);
                 if (p.ExplosionRadius > 0f)
-                    _shake = MathF.Max(_shake, MathF.Min(1.5f, p.ExplosionRadius / 60f));
-                _projectiles.RemoveAt(i);
+                    _run.Shake = MathF.Max(_run.Shake, MathF.Min(1.5f, p.ExplosionRadius / 60f));
+                _run.Projectiles.RemoveAt(i);
             }
         }
 
         // Sentries — auto-fire at nearby creatures, take contact damage, expire when dead.
-        for (var i = _sentries.Count - 1; i >= 0; i--)
+        for (var i = _run.Sentries.Count - 1; i >= 0; i--)
         {
-            var s = _sentries[i];
-            s.Update(dt, _planet, _creatures, FireSentryShot);
+            var s = _run.Sentries[i];
+            s.Update(dt, _run.Planet, _run.Creatures, FireSentryShot);
             // Creatures that touch a sentry chew it down. Each contact frame deals
             // 8 dmg/sec → ~3.7s to kill a fresh sentry.
-            foreach (var c in _creatures)
+            foreach (var c in _run.Creatures)
             {
                 if ((c.Position - s.Position).LengthSquared() < (c.Radius + s.Radius) * (c.Radius + s.Radius))
                 {
@@ -460,33 +453,33 @@ public sealed class DwarfMinerGame : Game
             if (s.Dead)
             {
                 _particles.EmitDust(s.Position, 8f);
-                _shake = MathF.Max(_shake, 0.3f);
-                _sentries.RemoveAt(i);
+                _run.Shake = MathF.Max(_run.Shake, 0.3f);
+                _run.Sentries.RemoveAt(i);
             }
         }
 
-        _titan.Update(dt, _planet, _physics, _cells, _player.Position, _boulders);
-        if (_titan.Health <= 0)
+        _run.Titan.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player.Position, _run.Boulders);
+        if (_run.Titan.Health <= 0)
         {
             _meta.TitansDefeated++;
             _meta.Save();
             _gameOver = true;
-            _gameOverReason = $"You felled the Titan! Run time: {_runTime:0.0}s. Press R to play again.";
+            _gameOverReason = $"You felled the Titan! Run time: {_run.RunTime:0.0}s. Press R to play again.";
         }
 
-        for (var i = _boulders.Count - 1; i >= 0; i--)
+        for (var i = _run.Boulders.Count - 1; i >= 0; i--)
         {
-            var b = _boulders[i];
-            b.Update(dt, _planet, _physics, _player);
+            var b = _run.Boulders[i];
+            b.Update(dt, _run.Planet, _run.Physics, _run.Player);
             if (b.Dead)
             {
                 _particles.EmitDust(b.Position, 14f);
-                _shake = MathF.Max(_shake, 0.6f);
-                _boulders.RemoveAt(i);
+                _run.Shake = MathF.Max(_run.Shake, 0.6f);
+                _run.Boulders.RemoveAt(i);
             }
         }
 
-        if (_player.Health <= 0)
+        if (_run.Player.Health <= 0)
         {
             _meta.Deaths++;
             _meta.Save();
@@ -495,7 +488,7 @@ public sealed class DwarfMinerGame : Game
         }
 
         // Apply shake decay to camera.
-        _shake = MathF.Max(0, _shake - dt * 1.4f);
+        _run.Shake = MathF.Max(0, _run.Shake - dt * 1.4f);
 
         _prevKeys = keys;
         _prevMouse = mouse;
@@ -514,16 +507,16 @@ public sealed class DwarfMinerGame : Game
     /// the ones to sweep off the belt when god mode ends.</summary>
     private bool IsGodLoanerWeapon(string id) => id switch
     {
-        "pistol"          => !_player.HasPistol,
-        "machine_gun"     => !_player.HasMachineGun,
-        "laser"           => !_player.HasLaser,
-        "laser_cannon"    => !_player.HasLaserCannon,
-        "rocket_launcher" => !_player.HasRocketLauncher,
-        "cannon"          => !_hasCannon,
-        "dynamite"        => _player.Inventory.Count("dynamite") <= 0,
-        "tnt"             => _player.Inventory.Count("tnt") <= 0,
-        "harpoon"         => _player.Inventory.Count("harpoon") <= 0,
-        "nuke"            => _player.Inventory.Count("nuke") <= 0,
+        "pistol"          => !_run.Player.HasPistol,
+        "machine_gun"     => !_run.Player.HasMachineGun,
+        "laser"           => !_run.Player.HasLaser,
+        "laser_cannon"    => !_run.Player.HasLaserCannon,
+        "rocket_launcher" => !_run.Player.HasRocketLauncher,
+        "cannon"          => !_run.HasCannon,
+        "dynamite"        => _run.Player.Inventory.Count("dynamite") <= 0,
+        "tnt"             => _run.Player.Inventory.Count("tnt") <= 0,
+        "harpoon"         => _run.Player.Inventory.Count("harpoon") <= 0,
+        "nuke"            => _run.Player.Inventory.Count("nuke") <= 0,
         _                 => false,
     };
 
@@ -537,7 +530,7 @@ public sealed class DwarfMinerGame : Game
     /// around and skipping tools/placeables. No-op if no weapon is on the belt.</summary>
     private void CycleWeapon(int dir)
     {
-        var belt = _player.Toolbelt;
+        var belt = _run.Player.Toolbelt;
         for (var step = 1; step <= Toolbelt.SlotCount; step++)
         {
             var s = (((belt.Selected + dir * step) % Toolbelt.SlotCount) + Toolbelt.SlotCount) % Toolbelt.SlotCount;
@@ -555,38 +548,38 @@ public sealed class DwarfMinerGame : Game
     /// consumables short-circuit if their inventory is empty.</summary>
     private void UseSelectedSlot(Vector2 worldCursor)
     {
-        var id = _player.Toolbelt.Current;
+        var id = _run.Player.Toolbelt.Current;
         if (id is null) return;
 
         // God mode is a full armoury pass: ownership flags are ignored and weapon ammo
         // isn't consumed, so every weapon on the belt just works.
-        var god = _player.FlyMode;
+        var god = _run.Player.FlyMode;
 
         switch (id)
         {
             case "pickaxe": DoMine(worldCursor, MiningTool.Pickaxe); break;
-            case "drill":   if (_player.HasDrill)  DoMine(worldCursor, MiningTool.Drill); break;
-            case "hammer":  if (_player.HasHammer) DoMine(worldCursor, MiningTool.Hammer); break;
-            case "bullets": if (_player.ShootCooldown <= 0) FireBullet(worldCursor); break;
-            case "pistol":      if ((god || _player.HasPistol) && _player.ShootCooldown <= 0) FirePistol(worldCursor); break;
-            case "machine_gun": if ((god || _player.HasMachineGun) && _player.ShootCooldown <= 0) FireMachineGun(worldCursor); break;
-            case "laser":       if ((god || _player.HasLaser) && _player.ShootCooldown <= 0) FireLaser(worldCursor); break;
-            case "laser_cannon": if ((god || _player.HasLaserCannon) && _player.ShootCooldown <= 0) FireLaserCannon(worldCursor); break;
+            case "drill":   if (_run.Player.HasDrill)  DoMine(worldCursor, MiningTool.Drill); break;
+            case "hammer":  if (_run.Player.HasHammer) DoMine(worldCursor, MiningTool.Hammer); break;
+            case "bullets": if (_run.Player.ShootCooldown <= 0) FireBullet(worldCursor); break;
+            case "pistol":      if ((god || _run.Player.HasPistol) && _run.Player.ShootCooldown <= 0) FirePistol(worldCursor); break;
+            case "machine_gun": if ((god || _run.Player.HasMachineGun) && _run.Player.ShootCooldown <= 0) FireMachineGun(worldCursor); break;
+            case "laser":       if ((god || _run.Player.HasLaser) && _run.Player.ShootCooldown <= 0) FireLaser(worldCursor); break;
+            case "laser_cannon": if ((god || _run.Player.HasLaserCannon) && _run.Player.ShootCooldown <= 0) FireLaserCannon(worldCursor); break;
             case "rocket_launcher":
-                if ((god || _player.HasRocketLauncher) && _player.ShootCooldown <= 0
-                    && (god || _player.Inventory.TryConsume("rocket", 1)))
+                if ((god || _run.Player.HasRocketLauncher) && _run.Player.ShootCooldown <= 0
+                    && (god || _run.Player.Inventory.TryConsume("rocket", 1)))
                     FireRocket(worldCursor);
                 break;
-            case "cannon":  if ((god || _hasCannon) && _player.ShootCooldown <= 0) FireCannon(worldCursor); break;
-            case "blocks":  _player.TryPlace(_planet, _physics, worldCursor); break;
-            case "nuke":      if (_player.ShootCooldown <= 0 && (god || _player.Inventory.TryConsume("nuke", 1)))     FireNuke(worldCursor); break;
-            case "harpoon":   if (_player.ShootCooldown <= 0 && (god || _player.Inventory.TryConsume("harpoon", 1)))  FireHarpoon(worldCursor); break;
-            case "dynamite":  if (_player.ShootCooldown <= 0 && (god || _player.Inventory.TryConsume("dynamite", 1))) FireDynamite(worldCursor); break;
-            case "tnt":       if (_player.ShootCooldown <= 0 && (god || _player.Inventory.TryConsume("tnt", 1)))      FireTnt(worldCursor); break;
-            case "poultice":  if (_player.Inventory.TryConsume("poultice", 1)) UseHealPotion(); break;
-            case "feast":     if (_player.Inventory.TryConsume("feast", 1))    UseFeast();      break;
-            case "core_drill": if (_player.HasCoreDrill) TryCoreDrill(); break;
-            case "sentry":    if (_player.Inventory.TryConsume("sentry", 1))   PlaceSentryAtFeet(); break;
+            case "cannon":  if ((god || _run.HasCannon) && _run.Player.ShootCooldown <= 0) FireCannon(worldCursor); break;
+            case "blocks":  _run.Player.TryPlace(_run.Planet, _run.Physics, worldCursor); break;
+            case "nuke":      if (_run.Player.ShootCooldown <= 0 && (god || _run.Player.Inventory.TryConsume("nuke", 1)))     FireNuke(worldCursor); break;
+            case "harpoon":   if (_run.Player.ShootCooldown <= 0 && (god || _run.Player.Inventory.TryConsume("harpoon", 1)))  FireHarpoon(worldCursor); break;
+            case "dynamite":  if (_run.Player.ShootCooldown <= 0 && (god || _run.Player.Inventory.TryConsume("dynamite", 1))) FireDynamite(worldCursor); break;
+            case "tnt":       if (_run.Player.ShootCooldown <= 0 && (god || _run.Player.Inventory.TryConsume("tnt", 1)))      FireTnt(worldCursor); break;
+            case "poultice":  if (_run.Player.Inventory.TryConsume("poultice", 1)) UseHealPotion(); break;
+            case "feast":     if (_run.Player.Inventory.TryConsume("feast", 1))    UseFeast();      break;
+            case "core_drill": if (_run.Player.HasCoreDrill) TryCoreDrill(); break;
+            case "sentry":    if (_run.Player.Inventory.TryConsume("sentry", 1))   PlaceSentryAtFeet(); break;
             // Placeable build tiles — go through Player.TryPlaceBuildId so the passable / range
             // / inventory rules stay in one place.
             case "support":
@@ -595,7 +588,7 @@ public sealed class DwarfMinerGame : Game
             case "rail":
             case "glowshroom":
             case "beacon":
-                _player.TryPlaceBuildId(_planet, _physics, worldCursor, id);
+                _run.Player.TryPlaceBuildId(_run.Planet, _run.Physics, worldCursor, id);
                 break;
         }
     }
@@ -607,35 +600,35 @@ public sealed class DwarfMinerGame : Game
     {
         // Continuous drill chip-stream every frame the drill is held — fires during cooldown
         // so the swing reads as continuous.
-        if (tool == MiningTool.Drill && !_player.FlyMode)
+        if (tool == MiningTool.Drill && !_run.Player.FlyMode)
         {
-            var (ctx, cty) = _planet.WorldToTile(worldCursor);
-            if (_planet.Get(ctx, cty) != TileKind.Sky)
+            var (ctx, cty) = _run.Planet.WorldToTile(worldCursor);
+            if (_run.Planet.Get(ctx, cty) != TileKind.Sky)
             {
-                var tilePos = _planet.TileToWorld(ctx, cty);
-                var dir = tilePos - _player.Position;
+                var tilePos = _run.Planet.TileToWorld(ctx, cty);
+                var dir = tilePos - _run.Player.Position;
                 if (dir.LengthSquared() > 0.001f) dir.Normalize();
-                _particles.EmitDrillChips(tilePos, dir, _planet.Get(ctx, cty));
+                _particles.EmitDrillChips(tilePos, dir, _run.Planet.Get(ctx, cty));
             }
         }
 
-        var broken = _player.TryMine(_planet, _physics, worldCursor, tool);
+        var broken = _run.Player.TryMine(_run.Planet, _run.Physics, worldCursor, tool);
         if (broken is { } bk)
         {
             if (Tiles.Drop(bk) is not null) _meta.TotalOreMined++;
-            var depth = _planet.Radius - (int)((_player.Position - _planet.Center).Length() / Planet.TileSize);
+            var depth = _run.Planet.Radius - (int)((_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize);
             if (depth > _meta.DeepestDepth) _meta.DeepestDepth = depth;
-            var (btx, bty) = _planet.WorldToTile(worldCursor);
+            var (btx, bty) = _run.Planet.WorldToTile(worldCursor);
             if (tool == MiningTool.Hammer && Tiles.Hardness(bk) >= 4)
             {
-                _particles.EmitHammerImpact(_planet.TileToWorld(btx, bty), bk);
-                _shake = MathF.Max(_shake, 0.4f);
+                _particles.EmitHammerImpact(_run.Planet.TileToWorld(btx, bty), bk);
+                _run.Shake = MathF.Max(_run.Shake, 0.4f);
             }
             else
             {
-                _particles.EmitChips(_planet.TileToWorld(btx, bty), bk);
+                _particles.EmitChips(_run.Planet.TileToWorld(btx, bty), bk);
             }
-            _cells.SpawnDustInTile(btx, bty, bk);
+            _run.Cells.SpawnDustInTile(btx, bty, bk);
         }
     }
 
@@ -655,10 +648,10 @@ public sealed class DwarfMinerGame : Game
             for (var s = 0; s < Toolbelt.SlotCount; s++)
             {
                 if (!_toolbeltHitTest[s].Contains((int)screenPos.X, (int)screenPos.Y)) continue;
-                var id = _player.Toolbelt.Slots[s];
+                var id = _run.Player.Toolbelt.Slots[s];
                 if (id is null) return true;
                 if (Toolbelt.IsPermanent(id)) return true;
-                _player.Toolbelt.Slots[s] = null;
+                _run.Player.Toolbelt.Slots[s] = null;
                 return true;
             }
             return false;
@@ -672,7 +665,7 @@ public sealed class DwarfMinerGame : Game
             for (var s = 0; s < Toolbelt.SlotCount; s++)
             {
                 if (!_toolbeltHitTest[s].Contains((int)screenPos.X, (int)screenPos.Y)) continue;
-                _player.Toolbelt.Selected = s;
+                _run.Player.Toolbelt.Selected = s;
                 return true;
             }
             // Click on an inventory row picks up that id (drag begins). The pickup is non-
@@ -694,17 +687,17 @@ public sealed class DwarfMinerGame : Game
         for (var s = 0; s < Toolbelt.SlotCount; s++)
         {
             if (!_toolbeltHitTest[s].Contains((int)screenPos.X, (int)screenPos.Y)) continue;
-            var prev = _player.Toolbelt.Slots[s];
-            _player.Toolbelt.Slots[s] = carry.Id;
+            var prev = _run.Player.Toolbelt.Slots[s];
+            _run.Player.Toolbelt.Slots[s] = carry.Id;
             // If the destination held a permanent tool, push it to the first empty slot so
             // the player doesn't lose it. Stackable displacement is fine — it lives in the
             // inventory regardless of belt presence.
             if (prev is not null && Toolbelt.IsPermanent(prev))
             {
-                var empty = _player.Toolbelt.FirstEmpty();
-                if (empty >= 0) _player.Toolbelt.Slots[empty] = prev;
+                var empty = _run.Player.Toolbelt.FirstEmpty();
+                if (empty >= 0) _run.Player.Toolbelt.Slots[empty] = prev;
             }
-            _player.Toolbelt.Selected = s;
+            _run.Player.Toolbelt.Selected = s;
             _carry = null;
             return true;
         }
@@ -717,51 +710,51 @@ public sealed class DwarfMinerGame : Game
     /// no cannon needed. Low damage, fast cadence.</summary>
     private void FireBullet(Vector2 worldCursor)
     {
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 220, 110));
-        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 420f, 6f, 1.4f, ProjectileKind.Bullet));
-        _player.ShootCooldown = 0.18f;
+        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 220, 110));
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 420f, 6f, 1.4f, ProjectileKind.Bullet));
+        _run.Player.ShootCooldown = 0.18f;
     }
 
     /// <summary>Pistol: the crafted sidearm — twice the bullet's punch at half the cadence.</summary>
     private void FirePistol(Vector2 worldCursor)
     {
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 235, 160));
-        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 480f, 14f, 1.5f, ProjectileKind.Pistol));
-        _player.ShootCooldown = 0.32f;
+        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 235, 160));
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 480f, 14f, 1.5f, ProjectileKind.Pistol));
+        _run.Player.ShootCooldown = 0.32f;
     }
 
     /// <summary>Machine gun: weak rounds at a blistering cadence with a small random spread,
     /// so held fire hoses an area rather than drilling one pixel.</summary>
     private void FireMachineGun(Vector2 worldCursor)
     {
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
         var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.14f;
         var c = MathF.Cos(spread);
         var s = MathF.Sin(spread);
         dir = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 210, 120));
-        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 460f, 4f, 1.2f, ProjectileKind.MachineGun));
-        _player.ShootCooldown = 0.06f;
+        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 210, 120));
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 460f, 4f, 1.2f, ProjectileKind.MachineGun));
+        _run.Player.ShootCooldown = 0.06f;
     }
 
     /// <summary>Laser: near-instant energy bolt that pierces up to three creatures. No
     /// crater — it cooks flesh, not rock.</summary>
     private void FireLaser(Vector2 worldCursor)
     {
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 90, 90));
-        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 900f, 18f, 0.6f, ProjectileKind.Laser));
-        _player.ShootCooldown = 0.14f;
+        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 90, 90));
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 900f, 18f, 0.6f, ProjectileKind.Laser));
+        _run.Player.ShootCooldown = 0.14f;
     }
 
     /// <summary>Laser cannon: a heavy energy lance that drills straight through wall after
@@ -769,38 +762,38 @@ public sealed class DwarfMinerGame : Game
     /// Slow cadence — one deliberate beam, not a stream.</summary>
     private void FireLaserCannon(Vector2 worldCursor)
     {
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(120, 225, 255));
-        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 800f, 40f, 1.0f, ProjectileKind.LaserCannon));
-        _player.ShootCooldown = 0.55f;
-        _shake = MathF.Max(_shake, 0.25f);
+        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(120, 225, 255));
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 800f, 40f, 1.0f, ProjectileKind.LaserCannon));
+        _run.Player.ShootCooldown = 0.55f;
+        _run.Shake = MathF.Max(_run.Shake, 0.25f);
     }
 
     /// <summary>Rocket: straight-flying launcher round; explodes on contact with a real
     /// crater. Ammo consumption is handled by the dispatcher (god mode fires free).</summary>
     private void FireRocket(Vector2 worldCursor)
     {
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 160, 70));
-        _projectiles.Add(new Projectile(_player.Position + dir * 8f, dir * 250f, 60f, 2.5f, ProjectileKind.Rocket));
-        _player.ShootCooldown = 0.75f;
-        _shake = MathF.Max(_shake, 0.3f);
+        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 160, 70));
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 8f, dir * 250f, 60f, 2.5f, ProjectileKind.Rocket));
+        _run.Player.ShootCooldown = 0.75f;
+        _run.Shake = MathF.Max(_run.Shake, 0.3f);
     }
 
     /// <summary>TNT: a heavy satchel charge. Barely throwable — a short weighty lob with a
     /// long fuse — but the biggest non-nuke blast in the game. Placement tool, not artillery.</summary>
     private void FireTnt(Vector2 worldCursor)
     {
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        var up = _planet.UpAt(_player.Position);
-        _projectiles.Add(new Projectile(_player.Position + dir * 5f, dir * 70f + up * 50f, 120f, 2.5f, ProjectileKind.Tnt));
-        _player.ShootCooldown = 0.6f;
+        var up = _run.Planet.UpAt(_run.Player.Position);
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 5f, dir * 70f + up * 50f, 120f, 2.5f, ProjectileKind.Tnt));
+        _run.Player.ShootCooldown = 0.6f;
     }
 
     /// <summary>Fire the cannon. Consumes the highest-tier shell in inventory before falling
@@ -808,46 +801,46 @@ public sealed class DwarfMinerGame : Game
     /// declarative.</summary>
     private void FireCannon(Vector2 worldCursor)
     {
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 130, 50));
-        if (_player.Inventory.TryConsume("ammo_diamond", 1))
+        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 130, 50));
+        if (_run.Player.Inventory.TryConsume("ammo_diamond", 1))
         {
-            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 300f, 80f, 1.8f, ProjectileKind.CannonDiamond));
-            _player.ShootCooldown = 0.7f;
-            _shake = MathF.Max(_shake, 0.5f);
+            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 300f, 80f, 1.8f, ProjectileKind.CannonDiamond));
+            _run.Player.ShootCooldown = 0.7f;
+            _run.Shake = MathF.Max(_run.Shake, 0.5f);
         }
-        else if (_player.Inventory.TryConsume("ammo_sapphire", 1))
+        else if (_run.Player.Inventory.TryConsume("ammo_sapphire", 1))
         {
-            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 35f, 1.7f, ProjectileKind.CannonSapphire));
-            _player.ShootCooldown = 0.55f;
+            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 320f, 35f, 1.7f, ProjectileKind.CannonSapphire));
+            _run.Player.ShootCooldown = 0.55f;
         }
-        else if (_player.Inventory.TryConsume("ammo_ruby", 1))
+        else if (_run.Player.Inventory.TryConsume("ammo_ruby", 1))
         {
-            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 32f, 1.7f, ProjectileKind.CannonRuby));
-            _player.ShootCooldown = 0.55f;
+            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 320f, 32f, 1.7f, ProjectileKind.CannonRuby));
+            _run.Player.ShootCooldown = 0.55f;
         }
-        else if (_player.Inventory.TryConsume("ammo_silver", 1))
+        else if (_run.Player.Inventory.TryConsume("ammo_silver", 1))
         {
-            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 380f, 22f, 1.6f, ProjectileKind.CannonSilver));
-            _player.ShootCooldown = 0.45f;
+            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 380f, 22f, 1.6f, ProjectileKind.CannonSilver));
+            _run.Player.ShootCooldown = 0.45f;
         }
         else
         {
-            _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 320f, 25f, 1.6f, ProjectileKind.Cannon));
-            _player.ShootCooldown = 0.55f;
+            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 320f, 25f, 1.6f, ProjectileKind.Cannon));
+            _run.Player.ShootCooldown = 0.55f;
         }
     }
 
     private void FireNuke(Vector2 worldCursor)
     {
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 90, 230));
-        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 240f, 1500f, 3f, ProjectileKind.Nuke));
-        _player.ShootCooldown = 0.6f;
+        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 90, 230));
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 240f, 1500f, 3f, ProjectileKind.Nuke));
+        _run.Player.ShootCooldown = 0.6f;
     }
 
     private void FireDynamite(Vector2 worldCursor)
@@ -855,28 +848,28 @@ public sealed class DwarfMinerGame : Game
         // Dynamite is lobbed like a grenade — gravity arcs it. The launch speed is calibrated
         // so a click within mining range lands close to the cursor; far cursors overshoot
         // because gravity drags the shorter-flight throws.
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         var dist = dir.Length();
         dir /= dist;
         // Lob speed scales with throw distance up to a cap. Plus a small upward kick along
         // planet-up so the stick arcs visibly instead of skimming the floor.
         var speed = MathHelper.Clamp(110f + dist * 0.8f, 110f, 220f);
-        var up = _planet.UpAt(_player.Position);
+        var up = _run.Planet.UpAt(_run.Player.Position);
         var velocity = dir * speed + up * 60f;
-        _projectiles.Add(new Projectile(_player.Position + dir * 6f, velocity, 50f, 2.0f, ProjectileKind.Dynamite));
-        _player.ShootCooldown = 0.3f;
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, velocity, 50f, 2.0f, ProjectileKind.Dynamite));
+        _run.Player.ShootCooldown = 0.3f;
     }
 
     private void FireHarpoon(Vector2 worldCursor)
     {
-        var dir = worldCursor - _player.Position;
+        var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 200, 130));
-        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 520f, 600f, 2.2f, ProjectileKind.Harpoon));
-        _player.ShootCooldown = 0.8f;
-        _shake = MathF.Max(_shake, 0.5f);
+        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 200, 130));
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 520f, 600f, 2.2f, ProjectileKind.Harpoon));
+        _run.Player.ShootCooldown = 0.8f;
+        _run.Shake = MathF.Max(_run.Shake, 0.5f);
     }
 
     /// <summary>Sentry-emitted bullet. Lower damage and speed than the player's bullet so the
@@ -884,32 +877,32 @@ public sealed class DwarfMinerGame : Game
     private void FireSentryShot(Vector2 muzzle, Vector2 dir)
     {
         _particles.EmitMuzzleFlash(muzzle, dir, new Color(255, 220, 110));
-        _projectiles.Add(new Projectile(muzzle, dir * Sentry.BulletSpeed, Sentry.BulletDamage, 1.0f, ProjectileKind.Bullet));
+        _run.Projectiles.Add(new Projectile(muzzle, dir * Sentry.BulletSpeed, Sentry.BulletDamage, 1.0f, ProjectileKind.Bullet));
     }
 
     /// <summary>Beacon recall — instant teleport to the most recent placed beacon. Visual
     /// feedback: dust burst at the depart point, sparkles at the arrival point, brief shake.</summary>
     private void BeaconRecall(Vector2 dest)
     {
-        _particles.EmitDust(_player.Position, 8f);
-        _player.Position = dest + _planet.UpAt(dest) * (_player.Radius + 2f);
-        _player.Velocity = Vector2.Zero;
-        _particles.EmitDust(_player.Position, 8f);
-        _shake = MathF.Max(_shake, 0.4f);
+        _particles.EmitDust(_run.Player.Position, 8f);
+        _run.Player.Position = dest + _run.Planet.UpAt(dest) * (_run.Player.Radius + 2f);
+        _run.Player.Velocity = Vector2.Zero;
+        _particles.EmitDust(_run.Player.Position, 8f);
+        _run.Shake = MathF.Max(_run.Shake, 0.4f);
     }
 
     private void UseHealPotion()
     {
-        _player.Health = MathF.Min(_player.MaxHealth, _player.Health + 30f);
+        _run.Player.Health = MathF.Min(_run.Player.MaxHealth, _run.Player.Health + 30f);
         // Visual: a small green sparkle puff anchored to the player.
-        _particles.EmitDust(_player.Position, 6f);
+        _particles.EmitDust(_run.Player.Position, 6f);
     }
 
     /// <summary>Hearty feast — the big heal cooked from harvested creature meat.</summary>
     private void UseFeast()
     {
-        _player.Health = MathF.Min(_player.MaxHealth, _player.Health + 60f);
-        _particles.EmitDust(_player.Position, 8f);
+        _run.Player.Health = MathF.Min(_run.Player.MaxHealth, _run.Player.Health + 60f);
+        _particles.EmitDust(_run.Player.Position, 8f);
     }
 
     /// <summary>Core drill — usable only when the player is within the innermost rings of
@@ -919,16 +912,16 @@ public sealed class DwarfMinerGame : Game
     /// triggers the planet-pierce victory ending — biggest possible escalation.</summary>
     private void TryCoreDrill()
     {
-        var distFromCentre = (_player.Position - _planet.Center).Length() / Planet.TileSize;
+        var distFromCentre = (_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize;
         // Innermost ~3 rings count as "at the core". Tunable; keeping it tight rewards the
         // player for actually digging all the way to the bottom.
         if (distFromCentre > Planet.RingMin + 3f) return;
 
-        _particles.EmitImpact(_planet.Center, ProjectileKind.Nuke);
-        _shake = MathF.Max(_shake, 1.5f);
+        _particles.EmitImpact(_run.Planet.Center, ProjectileKind.Nuke);
+        _run.Shake = MathF.Max(_run.Shake, 1.5f);
         _meta.Save();
         _gameOver = true;
-        _gameOverReason = $"You pierced the core. Run time: {_runTime:0.0}s. Press R to play again.";
+        _gameOverReason = $"You pierced the core. Run time: {_run.RunTime:0.0}s. Press R to play again.";
     }
 
     /// <summary>Crafting menu input — opens with C, scrolls with up/down, crafts with Enter,
@@ -962,59 +955,59 @@ public sealed class DwarfMinerGame : Game
         // tier so you can only step up sequentially: II requires tier 1, III requires tier 2, etc.
         switch (r.Id)
         {
-            case "pickaxe_ii":   if (_player.PickaxeTier >= 2) return; break;
-            case "pickaxe_iii":  if (_player.PickaxeTier >= 3 || _player.PickaxeTier < 2) return; break;
-            case "pickaxe_iv":   if (_player.PickaxeTier >= 4 || _player.PickaxeTier < 3) return; break;
-            case "drill":        if (_player.HasDrill)   return; break;
-            case "hammer":       if (_player.HasHammer)  return; break;
-            case "lantern":      if (_player.HasLantern) return; break;
-            case "armor":        if (_player.HasArmor)   return; break;
-            case "chitin_armor": if (_player.HasArmor)   return; break;
-            case "core_drill":   if (_player.HasCoreDrill) return; break;
-            case "cannon":       if (_hasCannon)         return; break;
-            case "pistol":          if (_player.HasPistol)         return; break;
-            case "machine_gun":     if (_player.HasMachineGun)     return; break;
-            case "laser":           if (_player.HasLaser)          return; break;
-            case "laser_cannon":    if (_player.HasLaserCannon)    return; break;
-            case "rocket_launcher": if (_player.HasRocketLauncher) return; break;
+            case "pickaxe_ii":   if (_run.Player.PickaxeTier >= 2) return; break;
+            case "pickaxe_iii":  if (_run.Player.PickaxeTier >= 3 || _run.Player.PickaxeTier < 2) return; break;
+            case "pickaxe_iv":   if (_run.Player.PickaxeTier >= 4 || _run.Player.PickaxeTier < 3) return; break;
+            case "drill":        if (_run.Player.HasDrill)   return; break;
+            case "hammer":       if (_run.Player.HasHammer)  return; break;
+            case "lantern":      if (_run.Player.HasLantern) return; break;
+            case "armor":        if (_run.Player.HasArmor)   return; break;
+            case "chitin_armor": if (_run.Player.HasArmor)   return; break;
+            case "core_drill":   if (_run.Player.HasCoreDrill) return; break;
+            case "cannon":       if (_run.HasCannon)         return; break;
+            case "pistol":          if (_run.Player.HasPistol)         return; break;
+            case "machine_gun":     if (_run.Player.HasMachineGun)     return; break;
+            case "laser":           if (_run.Player.HasLaser)          return; break;
+            case "laser_cannon":    if (_run.Player.HasLaserCannon)    return; break;
+            case "rocket_launcher": if (_run.Player.HasRocketLauncher) return; break;
         }
 
-        if (!Crafting.TryPay(r, _player.Inventory)) return;
+        if (!Crafting.TryPay(r, _run.Player.Inventory)) return;
 
         switch (r.Id)
         {
             // Pickaxe tiers — there's only one pickaxe slot ("pickaxe"), already on the belt
             // from spawn. Crafting just bumps the tier; the icon updates automatically because
             // Icons.GetForSlot keys on PickaxeTier.
-            case "pickaxe_ii":  _player.PickaxeTier = 2; break;
-            case "pickaxe_iii": _player.PickaxeTier = 3; break;
-            case "pickaxe_iv":  _player.PickaxeTier = 4; break;
+            case "pickaxe_ii":  _run.Player.PickaxeTier = 2; break;
+            case "pickaxe_iii": _run.Player.PickaxeTier = 3; break;
+            case "pickaxe_iv":  _run.Player.PickaxeTier = 4; break;
             // Permanent active tools — flip the flag, auto-equip a slot, and stash a marker
             // entry in inventory so the panel surfaces them when not on the belt. The marker
             // is only displayed (filtered out by DrawInventoryPanel when the belt holds it)
             // and never consumed by TryConsume — count stays at 1 for the run.
-            case "drill":       _player.HasDrill     = true; _player.Inventory.Add("drill", 1);      _player.Toolbelt.AutoEquip("drill");      break;
-            case "hammer":      _player.HasHammer    = true; _player.Inventory.Add("hammer", 1);     _player.Toolbelt.AutoEquip("hammer");     break;
-            case "core_drill":  _player.HasCoreDrill = true; _player.Inventory.Add("core_drill", 1); _player.Toolbelt.AutoEquip("core_drill"); break;
-            case "cannon":      _hasCannon           = true; _player.Inventory.Add("cannon", 1);     _player.Toolbelt.AutoEquip("cannon");     break;
-            case "pistol":          _player.HasPistol         = true; _player.Inventory.Add("pistol", 1);          _player.Toolbelt.AutoEquip("pistol");          break;
-            case "machine_gun":     _player.HasMachineGun     = true; _player.Inventory.Add("machine_gun", 1);     _player.Toolbelt.AutoEquip("machine_gun");     break;
-            case "laser":           _player.HasLaser          = true; _player.Inventory.Add("laser", 1);           _player.Toolbelt.AutoEquip("laser");           break;
-            case "laser_cannon":    _player.HasLaserCannon    = true; _player.Inventory.Add("laser_cannon", 1);    _player.Toolbelt.AutoEquip("laser_cannon");    break;
-            case "rocket_launcher": _player.HasRocketLauncher = true; _player.Inventory.Add("rocket_launcher", 1); _player.Toolbelt.AutoEquip("rocket_launcher"); break;
+            case "drill":       _run.Player.HasDrill     = true; _run.Player.Inventory.Add("drill", 1);      _run.Player.Toolbelt.AutoEquip("drill");      break;
+            case "hammer":      _run.Player.HasHammer    = true; _run.Player.Inventory.Add("hammer", 1);     _run.Player.Toolbelt.AutoEquip("hammer");     break;
+            case "core_drill":  _run.Player.HasCoreDrill = true; _run.Player.Inventory.Add("core_drill", 1); _run.Player.Toolbelt.AutoEquip("core_drill"); break;
+            case "cannon":      _run.HasCannon           = true; _run.Player.Inventory.Add("cannon", 1);     _run.Player.Toolbelt.AutoEquip("cannon");     break;
+            case "pistol":          _run.Player.HasPistol         = true; _run.Player.Inventory.Add("pistol", 1);          _run.Player.Toolbelt.AutoEquip("pistol");          break;
+            case "machine_gun":     _run.Player.HasMachineGun     = true; _run.Player.Inventory.Add("machine_gun", 1);     _run.Player.Toolbelt.AutoEquip("machine_gun");     break;
+            case "laser":           _run.Player.HasLaser          = true; _run.Player.Inventory.Add("laser", 1);           _run.Player.Toolbelt.AutoEquip("laser");           break;
+            case "laser_cannon":    _run.Player.HasLaserCannon    = true; _run.Player.Inventory.Add("laser_cannon", 1);    _run.Player.Toolbelt.AutoEquip("laser_cannon");    break;
+            case "rocket_launcher": _run.Player.HasRocketLauncher = true; _run.Player.Inventory.Add("rocket_launcher", 1); _run.Player.Toolbelt.AutoEquip("rocket_launcher"); break;
             // Rockets craft in threes — a launcher shot costs real resources but not a
             // whole crafting trip each.
-            case "rocket": _player.Inventory.Add("rocket", 3); break;
+            case "rocket": _run.Player.Inventory.Add("rocket", 3); break;
             // Passive permanent upgrades — no slot, no inventory entry. Just a flag.
-            case "lantern":     _player.HasLantern = true; break;
-            case "armor":       _player.HasArmor   = true; break;
-            case "chitin_armor": _player.HasArmor  = true; break;   // same plating, hunted materials
+            case "lantern":     _run.Player.HasLantern = true; break;
+            case "armor":       _run.Player.HasArmor   = true; break;
+            case "chitin_armor": _run.Player.HasArmor  = true; break;   // same plating, hunted materials
             // Everything else is a stockable item: the recipe id is the inventory id. The
             // first-craft also auto-equips an empty slot so the player can use it immediately
             // — subsequent crafts just stock more.
             default:
-                _player.Inventory.Add(r.Id, 1);
-                _player.Toolbelt.AutoEquip(r.Id);
+                _run.Player.Inventory.Add(r.Id, 1);
+                _run.Player.Toolbelt.AutoEquip(r.Id);
                 break;
         }
     }
@@ -1024,9 +1017,9 @@ public sealed class DwarfMinerGame : Game
     /// surface rather than burying into a slope.</summary>
     private void PlaceSentryAtFeet()
     {
-        var up = _planet.UpAt(_player.Position);
-        var pos = _player.Position - up * (_player.Radius + 1f);
-        _sentries.Add(new Sentry(pos));
+        var up = _run.Planet.UpAt(_run.Player.Position);
+        var pos = _run.Player.Position - up * (_run.Player.Radius + 1f);
+        _run.Sentries.Add(new Sentry(pos));
         _particles.EmitDust(pos, 4f);
     }
 
@@ -1054,7 +1047,7 @@ public sealed class DwarfMinerGame : Game
             var sy = y0 + 14;
             _toolbeltHitTest[i] = new Rectangle(sx, sy, slotSize, slotSize);
 
-            var isActive = i == _player.Toolbelt.Selected;
+            var isActive = i == _run.Player.Toolbelt.Selected;
             var bg = isActive ? new Color(60, 70, 90, 240) : new Color(20, 22, 32, 220);
             var border = isActive ? new Color(255, 220, 120) : new Color(110, 115, 130);
             sb.Draw(_renderer.Pixel, new Rectangle(sx, sy, slotSize, slotSize), bg);
@@ -1072,19 +1065,19 @@ public sealed class DwarfMinerGame : Game
         {
             var sx = x0 + i * (slotSize + slotGap);
             var sy = y0 + 14;
-            var id = _player.Toolbelt.Slots[i];
+            var id = _run.Player.Toolbelt.Slots[i];
 
             // Slot number above each cell.
             var numStr = (i + 1).ToString();
             _renderer.Batch.End();   // brief flip so DrawDebugLabel can begin its own
             _renderer.DrawDebugLabel(numStr,
                 new Vector2(sx + 4, sy - 12),
-                i == _player.Toolbelt.Selected ? Color.White : new Color(150, 150, 160));
+                i == _run.Player.Toolbelt.Selected ? Color.White : new Color(150, 150, 160));
             sb.Begin(samplerState: SamplerState.PointClamp);
 
             if (id is null) continue;
 
-            var tex = Icons.GetForSlot(id, _player.PickaxeTier);
+            var tex = Icons.GetForSlot(id, _run.Player.PickaxeTier);
             if (tex is not null)
             {
                 sb.Draw(tex, new Rectangle(sx + 2, sy + 2, slotSize - 4, slotSize - 4), Color.White);
@@ -1104,10 +1097,10 @@ public sealed class DwarfMinerGame : Game
         {
             var sx = x0 + i * (slotSize + slotGap);
             var sy = y0 + 14;
-            var id = _player.Toolbelt.Slots[i];
+            var id = _run.Player.Toolbelt.Slots[i];
             if (id is null) continue;
             if (Toolbelt.IsPermanent(id)) continue;
-            var count = _player.Inventory.Count(id);
+            var count = _run.Player.Inventory.Count(id);
             if (count <= 0) continue;
             _renderer.DrawDebugLabel(count.ToString(),
                 new Vector2(sx + slotSize - 14, sy + slotSize - 12),
@@ -1173,7 +1166,7 @@ public sealed class DwarfMinerGame : Game
             // doesn't have an icon, fall back to the resource colour swatch (raw mats).
             var iconX = panelX + padX;
             var iconY = rowY + 1;
-            var tex = Icons.GetForSlot(id, _player.PickaxeTier);
+            var tex = Icons.GetForSlot(id, _run.Player.PickaxeTier);
             if (tex is not null)
             {
                 sb.Draw(tex, new Rectangle(iconX - 1, iconY - 2, swatchSize + 4, swatchSize + 4), Color.White);
@@ -1202,7 +1195,7 @@ public sealed class DwarfMinerGame : Game
     /// separate cache, so the count is meaningfully visible in both places at once.</summary>
     private bool ShouldShowInInventory(string id)
     {
-        if (Toolbelt.IsPermanent(id) && _player.Toolbelt.Contains(id)) return false;
+        if (Toolbelt.IsPermanent(id) && _run.Player.Toolbelt.Contains(id)) return false;
         return true;
     }
 
@@ -1214,7 +1207,7 @@ public sealed class DwarfMinerGame : Game
         var mouse = Mouse.GetState();
         var sb = _renderer.Batch;
         sb.Begin(samplerState: SamplerState.PointClamp);
-        var tex = Icons.GetForSlot(id, _player.PickaxeTier);
+        var tex = Icons.GetForSlot(id, _run.Player.PickaxeTier);
         if (tex is not null)
             sb.Draw(tex, new Rectangle(mouse.X - 16, mouse.Y - 16, 32, 32), new Color(255, 255, 255, 220));
         else
@@ -1266,7 +1259,7 @@ public sealed class DwarfMinerGame : Game
             var rowY = panelY + 44 + i * rowH;
 
             var owned = IsOwned(r.Id);
-            var afford = Crafting.CanAfford(r, _player.Inventory) && !owned;
+            var afford = Crafting.CanAfford(r, _run.Player.Inventory) && !owned;
 
             // Row highlight bar
             if (idx == _craftingCursor)
@@ -1292,15 +1285,15 @@ public sealed class DwarfMinerGame : Game
 
     private bool IsOwned(string id) => id switch
     {
-        "pickaxe_ii"  => _player.PickaxeTier >= 2,
-        "pickaxe_iii" => _player.PickaxeTier >= 3,
-        "pickaxe_iv"  => _player.PickaxeTier >= 4,
-        "drill"       => _player.HasDrill,
-        "hammer"      => _player.HasHammer,
-        "lantern"     => _player.HasLantern,
-        "armor"       => _player.HasArmor,
-        "cannon"      => _hasCannon,
-        "core_drill"  => _player.HasCoreDrill,
+        "pickaxe_ii"  => _run.Player.PickaxeTier >= 2,
+        "pickaxe_iii" => _run.Player.PickaxeTier >= 3,
+        "pickaxe_iv"  => _run.Player.PickaxeTier >= 4,
+        "drill"       => _run.Player.HasDrill,
+        "hammer"      => _run.Player.HasHammer,
+        "lantern"     => _run.Player.HasLantern,
+        "armor"       => _run.Player.HasArmor,
+        "cannon"      => _run.HasCannon,
+        "core_drill"  => _run.Player.HasCoreDrill,
         _ => false,
     };
 
@@ -1319,10 +1312,10 @@ public sealed class DwarfMinerGame : Game
 
     private void TryLaunchRocket()
     {
-        if (_player.Inventory.Count("rocket_part") < 5) return;
+        if (_run.Player.Inventory.Count("rocket_part") < 5) return;
         // Must be near the surface — within 5 tiles of the surface ring.
-        var fromCenter = (_player.Position - _planet.Center).Length();
-        var surface = _planet.Radius * Planet.TileSize;
+        var fromCenter = (_run.Player.Position - _run.Planet.Center).Length();
+        var surface = _run.Planet.Radius * Planet.TileSize;
         if (surface - fromCenter > Planet.TileSize * 5f && fromCenter < surface + Planet.TileSize * 6f)
             return;
 
@@ -1331,7 +1324,7 @@ public sealed class DwarfMinerGame : Game
         if (_meta.Escapes >= 3) _meta.StartWithCannon = true;
         _meta.Save();
         _gameOver = true;
-        _gameOverReason = $"Escape! Rocket launched. Run time: {_runTime:0.0}s. Press R to play again.";
+        _gameOverReason = $"Escape! Rocket launched. Run time: {_run.RunTime:0.0}s. Press R to play again.";
     }
 
     private Vector2 FindSurfaceSpawn(float angle, int radius)
@@ -1340,11 +1333,11 @@ public sealed class DwarfMinerGame : Game
         // Start well above the highest possible peak and step inward until we hit solid.
         for (var d = radius + 30; d > 10; d--)
         {
-            var p = _planet.Center + dir * (d * Planet.TileSize);
-            if (_planet.IsSolidAt(p))
+            var p = _run.Planet.Center + dir * (d * Planet.TileSize);
+            if (_run.Planet.IsSolidAt(p))
                 return p - dir * (Planet.TileSize * 1.5f);
         }
-        return _planet.Center + dir * ((radius + 12) * Planet.TileSize);
+        return _run.Planet.Center + dir * ((radius + 12) * Planet.TileSize);
     }
 
     /// <summary>Carve out any solid tiles overlapping a freshly spawned body so nothing starts
@@ -1354,8 +1347,8 @@ public sealed class DwarfMinerGame : Game
     /// and physics is dirty-marked so any overhang this opens up settles normally.</summary>
     private void ClearSpawnSpace(Vector2 pos, float radius)
     {
-        var (tx, _) = _planet.WorldToTile(pos);
-        var relC = pos - _planet.Center;
+        var (tx, _) = _run.Planet.WorldToTile(pos);
+        var relC = pos - _run.Planet.Center;
         var ang = MathF.Atan2(relC.Y, relC.X);
         if (ang < 0) ang += MathHelper.TwoPi;
         var rSq = (radius + 0.5f) * (radius + 0.5f);
@@ -1370,11 +1363,11 @@ public sealed class DwarfMinerGame : Game
             for (var dy = -2; dy <= 2; dy++)
             {
                 var y = ty0 + dy;
-                var k = _planet.Get(x, y);
+                var k = _run.Planet.Get(x, y);
                 if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
 
-                var centre = _planet.TileToWorld(x, y);
-                var up = _planet.UpAt(centre);
+                var centre = _run.Planet.TileToWorld(x, y);
+                var up = _run.Planet.UpAt(centre);
                 var right = new Vector2(-up.Y, up.X);
                 var rel = pos - centre;
                 var lx = Vector2.Dot(rel, right);
@@ -1386,8 +1379,8 @@ public sealed class DwarfMinerGame : Game
                 var oy = ly - MathHelper.Clamp(ly, -halfY, halfY);
                 if (ox * ox + oy * oy >= rSq) continue;
 
-                _planet.Set(x, y, TileKind.Sky);
-                _physics.MarkDirty(x, y);
+                _run.Planet.Set(x, y, TileKind.Sky);
+                _run.Physics.MarkDirty(x, y);
             }
         }
     }
@@ -1399,9 +1392,9 @@ public sealed class DwarfMinerGame : Game
     {
         var rSq = radius * radius;
         var n = 0;
-        foreach (var c in _creatures)
+        foreach (var c in _run.Creatures)
             if ((cave && c.IsCaveKind) || (surface && c.IsSurfaceKind) || (sky && c.IsSkyKind))
-                if ((c.Position - _player.Position).LengthSquared() < rSq)
+                if ((c.Position - _run.Player.Position).LengthSquared() < rSq)
                     n++;
         return n;
     }
@@ -1415,18 +1408,18 @@ public sealed class DwarfMinerGame : Game
         {
             var a = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
             var d = 200f + (float)Random.Shared.NextDouble() * 250f;
-            var candidate = _player.Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * d;
-            var (r, t) = _planet.WorldToTile(candidate);
+            var candidate = _run.Player.Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * d;
+            var (r, t) = _run.Planet.WorldToTile(candidate);
             if (r < 0 || r >= Planet.RingCount) continue;
-            if (_planet.Get(r, t) != TileKind.Sky) continue;
-            if (_planet.GetWall(r, t) == TileKind.Sky) continue;
-            var pos = _planet.TileToWorld(r, t);
-            if ((pos - _player.Position).Length() < 180f) continue;
+            if (_run.Planet.Get(r, t) != TileKind.Sky) continue;
+            if (_run.Planet.GetWall(r, t) == TileKind.Sky) continue;
+            var pos = _run.Planet.TileToWorld(r, t);
+            if ((pos - _run.Player.Position).Length() < 180f) continue;
 
             // Roster shifts with depth: moles and skitterers riddle the upper crust, the
             // mid-band belongs to the diggers (delvers, centipedes, borers, moles), and the
             // lava zone is magma slugs plus hardened delver war-parties.
-            var fromCenter = (pos - _planet.Center).Length() / Planet.TileSize;
+            var fromCenter = (pos - _run.Planet.Center).Length() / Planet.TileSize;
             var depth = 129f - (fromCenter - Planet.RingMin); // tiles below the baseline surface
             var roll = Random.Shared.NextDouble();
             CreatureKind kind;
@@ -1458,7 +1451,7 @@ public sealed class DwarfMinerGame : Game
             }
             var c = new Creature(pos, kind);
             ClearSpawnSpace(pos, c.Radius);
-            _creatures.Add(c);
+            _run.Creatures.Add(c);
             return;
         }
     }
@@ -1478,7 +1471,7 @@ public sealed class DwarfMinerGame : Game
     /// the player's neighbourhood (just off-screen), not at a random point on the planet.</summary>
     private float NearbySurfaceAngle(float minArc, float maxArc)
     {
-        var rel = _player.Position - _planet.Center;
+        var rel = _run.Player.Position - _run.Planet.Center;
         var playerAng = MathF.Atan2(rel.Y, rel.X);
         var surfaceRadius = MathF.Max(rel.Length(), Planet.RingMin * Planet.TileSize);
         var arc = minArc + (float)Random.Shared.NextDouble() * (maxArc - minArc);
@@ -1489,29 +1482,29 @@ public sealed class DwarfMinerGame : Game
     private void TrySpawnSurfaceAnimal()
     {
         var angle = NearbySurfaceAngle(220f, 550f);
-        var pos = FindSurfaceSpawn(angle, _planet.Radius);
-        if ((pos - _player.Position).Length() < 160f) return; // don't pop in on-screen
+        var pos = FindSurfaceSpawn(angle, _run.Planet.Radius);
+        if ((pos - _run.Player.Position).Length() < 160f) return; // don't pop in on-screen
         var kind = Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper;
         var c = new Creature(pos, kind);
         ClearSpawnSpace(pos, c.Radius);
-        _creatures.Add(c);
+        _run.Creatures.Add(c);
     }
 
     private void TrySpawnSkyAnimal()
     {
         var angle = NearbySurfaceAngle(220f, 550f);
         var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-        var ground = FindSurfaceSpawn(angle, _planet.Radius);
+        var ground = FindSurfaceSpawn(angle, _run.Planet.Radius);
         // 60–200 px above the local terrain, capped inside the tile grid so the flyer's
         // collision probes stay in-bounds.
-        var alt = (ground - _planet.Center).Length() + 60f + (float)Random.Shared.NextDouble() * 140f;
-        alt = MathF.Min(alt, (_planet.Radius - 6) * Planet.TileSize);
-        var pos = _planet.Center + dir * alt;
-        if ((pos - _player.Position).Length() < 160f) return;
+        var alt = (ground - _run.Planet.Center).Length() + 60f + (float)Random.Shared.NextDouble() * 140f;
+        alt = MathF.Min(alt, (_run.Planet.Radius - 6) * Planet.TileSize);
+        var pos = _run.Planet.Center + dir * alt;
+        if ((pos - _run.Player.Position).Length() < 160f) return;
         var kind = Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth : CreatureKind.SkyStinger;
         var c = new Creature(pos, kind);
         ClearSpawnSpace(pos, c.Radius); // altitude is above local ground, but a mountain flank can still clip the band
-        _creatures.Add(c);
+        _run.Creatures.Add(c);
     }
 
     protected override void Draw(GameTime gameTime)
@@ -1521,14 +1514,14 @@ public sealed class DwarfMinerGame : Game
         _renderer.Time = (float)gameTime.TotalGameTime.TotalSeconds;
 
         // Apply shake by perturbing the camera target.
-        var shakeX = (float)(Random.Shared.NextDouble() - 0.5) * _shake * 6f;
-        var shakeY = (float)(Random.Shared.NextDouble() - 0.5) * _shake * 6f;
+        var shakeX = (float)(Random.Shared.NextDouble() - 0.5) * _run.Shake * 6f;
+        var shakeY = (float)(Random.Shared.NextDouble() - 0.5) * _run.Shake * 6f;
         var oldTarget = _camera.Target;
         _camera.Target = oldTarget + new Vector2(shakeX, shakeY);
 
-        // Re-wired every frame because _physics is recreated on restart while _renderer persists.
-        _renderer.TrembleTiles = _physics.TremblingTiles;
-        _renderer.DrawWorld(_planet, _camera);
+        // Re-wired every frame because _run.Physics is recreated on restart while _renderer persists.
+        _renderer.TrembleTiles = _run.Physics.TremblingTiles;
+        _renderer.DrawWorld(_run.Planet, _camera);
 
         _renderer.BeginEntities(_camera);
 
@@ -1539,7 +1532,7 @@ public sealed class DwarfMinerGame : Game
 
         // Cells (sand/water/lava/smoke) draw above tiles but below entities so the dwarf walks
         // in front of his own debris pile.
-        _cells.Draw(_renderer, viewCentre, viewRadius);
+        _run.Cells.Draw(_renderer, viewCentre, viewRadius);
 
         // Pixel-art dwarf sprite — drawn rotated to align local-up with planet's outward radial.
         // Sprite head-at-top, feet-at-bottom; the rotation maps sprite-up to world-up.
@@ -1548,17 +1541,17 @@ public sealed class DwarfMinerGame : Game
         // *inside* the tile while the collision body is correctly perched on top — looks like
         // the dwarf is sunk into the ground. Shifting the sprite up by exactly that gap aligns
         // visual feet with the collision bottom.
-        var up = _planet.UpAt(_player.Position);
+        var up = _run.Planet.UpAt(_run.Player.Position);
         var rot = MathF.Atan2(up.X, -up.Y);
         if (_playerSprite is { } ps)
         {
             // Animated pack sprite: pick a frame from grounded/tangent/radial motion, flip
             // toward the last direction the dwarf actually walked.
             var pRight = new Vector2(-up.Y, up.X);
-            var vT = Vector2.Dot(_player.Velocity, pRight);
+            var vT = Vector2.Dot(_run.Player.Velocity, pRight);
             if (MathF.Abs(vT) > 8f) _playerFacing = MathF.Sign(vT);
-            var frame = ps.Frame(_player.Grounded, vT, Vector2.Dot(_player.Velocity, up), _runTime);
-            _renderer.Batch.Draw(frame, _player.Position + up * ps.FeetOffset(_player.Radius), null,
+            var frame = ps.Frame(_run.Player.Grounded, vT, Vector2.Dot(_run.Player.Velocity, up), _run.RunTime);
+            _renderer.Batch.Draw(frame, _run.Player.Position + up * ps.FeetOffset(_run.Player.Radius), null,
                 Color.White, rot, new Vector2(frame.Width * 0.5f, frame.Height * 0.5f), ps.Scale,
                 _playerFacing < 0 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
         }
@@ -1566,7 +1559,7 @@ public sealed class DwarfMinerGame : Game
         {
             const float spriteScale = 0.6f;          // world units per sprite pixel
             const float spriteFeetOffset = 1.0f;     // = (sprite_half_height * scale) − Radius
-            _renderer.Batch.Draw(_dwarfTex, _player.Position + up * spriteFeetOffset, null, Color.White, rot,
+            _renderer.Batch.Draw(_dwarfTex, _run.Player.Position + up * spriteFeetOffset, null, Color.White, rot,
                 new Vector2(_dwarfTex.Width * 0.5f, _dwarfTex.Height * 0.5f),
                 spriteScale, SpriteEffects.None, 0f);
         }
@@ -1579,10 +1572,10 @@ public sealed class DwarfMinerGame : Game
         // Corpses — drawn under the living so a fresh kill layers naturally. A flattened
         // slab of the creature's (desaturated) body colour lying along the local tangent,
         // with a paler belly stripe. Blinks during the last seconds before decay.
-        foreach (var corpse in _corpses)
+        foreach (var corpse in _run.Corpses)
         {
             if (corpse.Life < Corpse.BlinkTime && (int)(corpse.Life * 6f) % 2 == 0) continue;
-            var cup = _planet.UpAt(corpse.Position);
+            var cup = _run.Planet.UpAt(corpse.Position);
             var crot = MathF.Atan2(cup.X, -cup.Y);
             var col = Corpse.BodyColor(corpse.Kind);
             _renderer.DrawRect(corpse.Position, new Vector2(corpse.Radius * 2.2f, corpse.Radius * 0.9f), col, crot);
@@ -1593,17 +1586,17 @@ public sealed class DwarfMinerGame : Game
 
         // Creatures — each kind draws its own procedural sprite, including the burn/freeze
         // status tinting and the burning-ember flicker.
-        foreach (var c in _creatures)
+        foreach (var c in _run.Creatures)
         {
-            c.Draw(_renderer, _planet, _player);
+            c.Draw(_renderer, _run.Planet, _run.Player);
         }
 
         // Sentries — chunky pixel-art turret. Base is a stout iron plinth, barrel is a long
         // rectangle that rotates with the sentry's Aim. Tinted red on hit-flash; the glowing
         // muzzle ring tracks the cooldown so a charging sentry shows visible "ready" feedback.
-        foreach (var s in _sentries)
+        foreach (var s in _run.Sentries)
         {
-            var sup = _planet.UpAt(s.Position);
+            var sup = _run.Planet.UpAt(s.Position);
             var srot = MathF.Atan2(sup.X, -sup.Y);
             var bodyCol = s.HitFlash > 0 ? Color.White : new Color(120, 110, 95);
             var rivetCol = new Color(50, 45, 40);
@@ -1632,7 +1625,7 @@ public sealed class DwarfMinerGame : Game
         // Projectiles. Each kind gets its own pixel motif: bullets are tiny dots, cannon shells
         // are bigger discs, dynamite is a brown stick with a red fuse-tip, harpoon is a long
         // pointed shaft. Special ammo glows in its element colour.
-        foreach (var p in _projectiles)
+        foreach (var p in _run.Projectiles)
         {
             switch (p.Kind)
             {
@@ -1667,7 +1660,7 @@ public sealed class DwarfMinerGame : Game
                     var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
                     _renderer.DrawRect(p.Position, new Vector2(7f, 2.5f), new Color(180, 40, 50), ang);
                     _renderer.DrawRect(p.Position, new Vector2(7f, 1f), new Color(120, 20, 30), ang);
-                    var fuseFlicker = (MathF.Sin(_runTime * 50f) * 0.5f + 0.5f);
+                    var fuseFlicker = (MathF.Sin(_run.RunTime * 50f) * 0.5f + 0.5f);
                     var fuseTip = p.Position + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * 4f;
                     _renderer.DrawCircle(fuseTip, 1.2f + fuseFlicker * 0.6f, new Color(255, 200, 100));
                     break;
@@ -1715,7 +1708,7 @@ public sealed class DwarfMinerGame : Game
                     var fwd = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
                     _renderer.DrawRect(p.Position, new Vector2(9f, 3f), new Color(180, 185, 200), ang);
                     _renderer.DrawRect(p.Position + fwd * 4.5f, new Vector2(3f, 2f), new Color(200, 80, 60), ang);
-                    var flick = MathF.Sin(_runTime * 40f) * 0.5f + 0.5f;
+                    var flick = MathF.Sin(_run.RunTime * 40f) * 0.5f + 0.5f;
                     _renderer.DrawCircle(p.Position - fwd * 5.5f, 1.6f + flick * 1.2f, new Color(255, 170, 70));
                     break;
                 }
@@ -1726,8 +1719,8 @@ public sealed class DwarfMinerGame : Game
                     _renderer.DrawRect(p.Position, new Vector2(6f, 5f), new Color(180, 45, 45), ang);
                     _renderer.DrawRect(p.Position, new Vector2(6f, 1f), new Color(120, 25, 25), ang);
                     _renderer.DrawRect(p.Position, new Vector2(1.4f, 5f), new Color(90, 70, 45), ang);
-                    var spark = MathF.Sin(_runTime * 60f) * 0.5f + 0.5f;
-                    var up2 = _planet.UpAt(p.Position);
+                    var spark = MathF.Sin(_run.RunTime * 60f) * 0.5f + 0.5f;
+                    var up2 = _run.Planet.UpAt(p.Position);
                     _renderer.DrawCircle(p.Position + up2 * 3.5f, 1f + spark * 0.8f, new Color(255, 230, 130));
                     break;
                 }
@@ -1738,7 +1731,7 @@ public sealed class DwarfMinerGame : Game
         }
 
         // Boulders.
-        foreach (var b in _boulders)
+        foreach (var b in _run.Boulders)
         {
             _renderer.DrawCircle(b.Position, b.Radius, new Color(80, 70, 60));
         }
@@ -1749,8 +1742,8 @@ public sealed class DwarfMinerGame : Game
         // visible radius from the camera target is ~200 px; bump to 400 for the kaiju's
         // silhouette (it's huge — body+legs span ~280 px) and a small margin so legs sweeping
         // into view from off-screen aren't suddenly popped in.
-        var kaijuVisible = _titan.Health > 0
-            && (_titan.Position - _camera.Target).LengthSquared() < 400f * 400f;
+        var kaijuVisible = _run.Titan.Health > 0
+            && (_run.Titan.Position - _camera.Target).LengthSquared() < 400f * 400f;
 
         // Kaiju boss. Body is a hulking scaled hulk on 4 procedural quadruped legs; tail is a
         // verlet chain dragging behind; head is a snouted bulb in front. Legs use 2-bone IK
@@ -1760,13 +1753,13 @@ public sealed class DwarfMinerGame : Game
         // block is rendering only.
         if (kaijuVisible)
         {
-            var tup = _planet.UpAt(_titan.Position);
+            var tup = _run.Planet.UpAt(_run.Titan.Position);
             var tright = new Vector2(-tup.Y, tup.X);
             var trot = MathF.Atan2(tup.X, -tup.Y);
-            var tp = _titan.Position;
-            var face = _titan.Facing;
-            var anger01 = MathHelper.Clamp(_titan.Anger / 100f, 0f, 1f);
-            var hide = _titan.HitFlash > 0
+            var tp = _run.Titan.Position;
+            var face = _run.Titan.Facing;
+            var anger01 = MathHelper.Clamp(_run.Titan.Anger / 100f, 0f, 1f);
+            var hide = _run.Titan.HitFlash > 0
                 ? Color.White
                 : Color.Lerp(new Color(48, 56, 50), new Color(120, 60, 50), anger01);   // dark mossy green → angry rust
             var hideDark = new Color(hide.R / 2, hide.G / 2, hide.B / 2);
@@ -1784,7 +1777,7 @@ public sealed class DwarfMinerGame : Game
             // === 1. Tail (drawn first, so the body covers its root) ===
             // Verlet chain; thickness tapers from base to tip. Trailing tip lights up as anger
             // climbs so it reads like a kaiju "atomic" tail.
-            var tailNodes = _titan.TailNodes;
+            var tailNodes = _run.Titan.TailNodes;
             for (var ti = 1; ti < tailNodes.Length; ti++)
             {
                 var fr = ti / (float)(tailNodes.Length - 1);   // 0 at root, 1 at tip
@@ -1803,15 +1796,15 @@ public sealed class DwarfMinerGame : Game
             _renderer.DrawCircle(tailNodes[^1], 3f, Color.White);
 
             // === 2. Hind legs (behind the body) — render the two with HipForward > 0 first ===
-            for (var li = 0; li < _titan.Legs.Length; li++)
+            for (var li = 0; li < _run.Titan.Legs.Length; li++)
             {
-                var leg = _titan.Legs[li];
+                var leg = _run.Titan.Legs[li];
                 if (leg.HipForward * face >= 0) continue; // hind legs are on the side away from facing
-                DrawTitanLeg(leg, tp, tup, tright, hide, hideDark, hideLight, chitin, _titan.Pulse);
+                DrawTitanLeg(leg, tp, tup, tright, hide, hideDark, hideLight, chitin, _run.Titan.Pulse);
             }
 
             // === 3. Body — a wide chitinous mass, breathing with the pulse ===
-            var breath2 = MathF.Sin(_titan.Pulse) * 1.6f;
+            var breath2 = MathF.Sin(_run.Titan.Pulse) * 1.6f;
             // Underbelly slab (low, lighter)
             _renderer.DrawRect(tp + tup * (-18f + breath2), new Vector2(240f, 56f), underBelly, trot);
             _renderer.DrawRect(tp + tup * (-32f + breath2), new Vector2(220f, 4f), chitin, trot);
@@ -1859,11 +1852,11 @@ public sealed class DwarfMinerGame : Game
             }
 
             // === 5. Front legs (in front of the body) ===
-            for (var li = 0; li < _titan.Legs.Length; li++)
+            for (var li = 0; li < _run.Titan.Legs.Length; li++)
             {
-                var leg = _titan.Legs[li];
+                var leg = _run.Titan.Legs[li];
                 if (leg.HipForward * face < 0) continue; // skip hind legs (already drawn)
-                DrawTitanLeg(leg, tp, tup, tright, hide, hideDark, hideLight, chitin, _titan.Pulse);
+                DrawTitanLeg(leg, tp, tup, tright, hide, hideDark, hideLight, chitin, _run.Titan.Pulse);
             }
 
             // === 6. Head — a snouted bulb in front of the body ===
@@ -1898,7 +1891,7 @@ public sealed class DwarfMinerGame : Game
                 new Vector2(28f, 6f), chitin, trot + face * 0.3f);
 
             // === 7. Eyes — two glowing slits, anger-tinted, tracking the player ===
-            var lookDir = _player.Position - headBase;
+            var lookDir = _run.Player.Position - headBase;
             if (lookDir.LengthSquared() < 0.001f) lookDir = tright * face;
             else lookDir.Normalize();
             var lookRight = Vector2.Dot(lookDir, tright);
@@ -1930,28 +1923,28 @@ public sealed class DwarfMinerGame : Game
         // upgrade makes every ring bigger and brighter — visible improvement to dark-cave
         // navigation. Tier IV pickaxe (diamond) adds a faint icy-white sheen so the player
         // sprite reads as freshly tooled.
-        var lanternMul = _player.HasLantern ? 1.55f : 1.0f;
-        _renderer.AddLight(_player.Position, 200f * lanternMul, new Color(85, 70, 50));
-        _renderer.AddLight(_player.Position, 140f * lanternMul, new Color(140, 115, 80));
-        _renderer.AddLight(_player.Position, 90f * lanternMul,  new Color(200, 170, 120));
-        _renderer.AddLight(_player.Position, 50f * lanternMul,  new Color(245, 215, 165));
-        if (_player.PickaxeTier >= 4)
-            _renderer.AddLight(_player.Position, 28f, new Color(180, 220, 255));
+        var lanternMul = _run.Player.HasLantern ? 1.55f : 1.0f;
+        _renderer.AddLight(_run.Player.Position, 200f * lanternMul, new Color(85, 70, 50));
+        _renderer.AddLight(_run.Player.Position, 140f * lanternMul, new Color(140, 115, 80));
+        _renderer.AddLight(_run.Player.Position, 90f * lanternMul,  new Color(200, 170, 120));
+        _renderer.AddLight(_run.Player.Position, 50f * lanternMul,  new Color(245, 215, 165));
+        if (_run.Player.PickaxeTier >= 4)
+            _renderer.AddLight(_run.Player.Position, 28f, new Color(180, 220, 255));
 
         // Core: molten heart of the planet.
-        _renderer.AddLight(_planet.Center, 90f, new Color(255, 90, 30));
+        _renderer.AddLight(_run.Planet.Center, 90f, new Color(255, 90, 30));
 
         // Visible ores within a tile-radius of the player so we don't scan the whole map.
         // Same pass picks up player-placed lights (Glowshroom, Beacon) so a torch-lit room
         // illuminates correctly without us having to track each placeable separately.
-        var (ptx, pty) = _planet.WorldToTile(_player.Position);
+        var (ptx, pty) = _run.Planet.WorldToTile(_run.Player.Position);
         const int oreScanR = 14;
         for (var dy = -oreScanR; dy <= oreScanR; dy++)
         {
             for (var dx = -oreScanR; dx <= oreScanR; dx++)
             {
                 if (dx * dx + dy * dy > oreScanR * oreScanR) continue;
-                var k = _planet.Get(ptx + dx, pty + dy);
+                var k = _run.Planet.Get(ptx + dx, pty + dy);
                 Color glow; float r;
                 switch (k)
                 {
@@ -1971,7 +1964,7 @@ public sealed class DwarfMinerGame : Game
                         break;
                     default: continue;
                 }
-                var op = _planet.TileToWorld(ptx + dx, pty + dy);
+                var op = _run.Planet.TileToWorld(ptx + dx, pty + dy);
                 _renderer.AddLight(op, r, glow);
             }
         }
@@ -1979,7 +1972,7 @@ public sealed class DwarfMinerGame : Game
         // Projectiles in flight glow by kind. Special-ammo glows match their element so the
         // player can see at a glance which shell is in flight — ruby = warm orange, sapphire =
         // cool cyan, diamond = bright white, harpoon = warm metallic, dynamite = orange fuse.
-        foreach (var p in _projectiles)
+        foreach (var p in _run.Projectiles)
         {
             var (col, r) = p.Kind switch
             {
@@ -2006,7 +1999,7 @@ public sealed class DwarfMinerGame : Game
         // Sentry muzzle glow: a small pre-flash that ramps with cooldown — about-to-fire
         // turrets pulse, idle ones are nearly dark. Helps the player see active overwatch in
         // a dim cave at a glance.
-        foreach (var s in _sentries)
+        foreach (var s in _run.Sentries)
         {
             var ready = MathHelper.Clamp(1f - s.Cooldown / Sentry.FireRate, 0f, 1f);
             if (ready > 0.05f)
@@ -2021,12 +2014,12 @@ public sealed class DwarfMinerGame : Game
         // Same visibility cull as the body — no point lighting an off-screen kaiju.
         if (kaijuVisible)
         {
-            var anger01 = MathHelper.Clamp(_titan.Anger / 100f, 0f, 1f);
-            var tup = _planet.UpAt(_titan.Position);
+            var anger01 = MathHelper.Clamp(_run.Titan.Anger / 100f, 0f, 1f);
+            var tup = _run.Planet.UpAt(_run.Titan.Position);
             var tright = new Vector2(-tup.Y, tup.X);
-            var headBase = _titan.Position + tup * 26f + tright * (_titan.Facing * 110f);
-            var lookDir = _player.Position - headBase;
-            if (lookDir.LengthSquared() < 0.001f) lookDir = tright * _titan.Facing; else lookDir.Normalize();
+            var headBase = _run.Titan.Position + tup * 26f + tright * (_run.Titan.Facing * 110f);
+            var lookDir = _run.Player.Position - headBase;
+            if (lookDir.LengthSquared() < 0.001f) lookDir = tright * _run.Titan.Facing; else lookDir.Normalize();
             var lookRight = Vector2.Dot(lookDir, tright);
             var lookUp = Vector2.Dot(lookDir, tup);
             var eyeCol = Color.Lerp(new Color(255, 220, 100), new Color(255, 80, 40), anger01);
@@ -2038,26 +2031,26 @@ public sealed class DwarfMinerGame : Game
             }
             // Tail-tip glow as a bonus light source — sells the verlet drag and the kaiju's
             // "atomic tail" look. Brightness ramps with anger.
-            var tip = _titan.TailNodes[^1];
+            var tip = _run.Titan.TailNodes[^1];
             _renderer.AddLight(tip, 18f + 22f * anger01,
                 Color.Lerp(new Color(80, 130, 220), new Color(255, 90, 60), anger01));
         }
 
         // Glowing creatures — magma slugs read as drifting coals, cave eyes as a faint gleam.
-        foreach (var c in _creatures) c.AddLight(_renderer);
+        foreach (var c in _run.Creatures) c.AddLight(_renderer);
 
         // Glowing particles (ore flecks, projectile sparks, explosion embers) feed back into
         // the lightmap so they actually illuminate the cave wall behind them.
         _particles.AddLights(_renderer);
         // Lava cells along their pool surface light up the cave roof (view-culled).
-        _cells.AddLights(_renderer, viewCentre, viewRadius);
+        _run.Cells.AddLights(_renderer, viewCentre, viewRadius);
 
         // Depth darkness: subtract a radial gradient centred at the planet so deep tiles
         // dim toward black while the surface stays at full ambient. Radius = surfaceRadius
         // means the gradient tapers to zero exactly at the surface; falloff is quadratic
         // inward so most of the dimming concentrates near the inner half.
-        var surfaceRadius = _planet.Radius * Planet.TileSize;
-        _renderer.Darken(_planet.Center, surfaceRadius, new Color(170, 165, 185));
+        var surfaceRadius = _run.Planet.Radius * Planet.TileSize;
+        _renderer.Darken(_run.Planet.Center, surfaceRadius, new Color(170, 165, 185));
 
         _renderer.EndLighting();
         _renderer.CompositeLighting(new Point(VirtualWidth, VirtualHeight));
@@ -2071,15 +2064,15 @@ public sealed class DwarfMinerGame : Game
 
         _camera.Target = oldTarget;
 
-        var depth = _planet.Radius - (int)((_player.Position - _planet.Center).Length() / Planet.TileSize);
-        var inv = _player.Inventory;
+        var depth = _run.Planet.Radius - (int)((_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize);
+        var inv = _run.Player.Inventory;
         // Top-left status: depth, titan HP, run meta. The toolbelt at the bottom of the
         // screen now carries the per-tool readout, so we don't duplicate it here.
-        var status = $"DEPTH {depth}   TITAN HP {(int)_titan.Health}/{(int)_titan.MaxHealth}\n" +
+        var status = $"DEPTH {depth}   TITAN HP {(int)_run.Titan.Health}/{(int)_run.Titan.MaxHealth}\n" +
                      $"META: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
         var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE  Q/E WEAPONS\n" +
                        "C CRAFT  T BEACON RECALL  L LAUNCH ROCKET  G GOD MODE  R RESTART";
-        _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _player, (int)_titan.Anger, status, controls);
+        _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _run.Player, (int)_run.Titan.Anger, status, controls);
         DrawInventoryPanel(inv);
         DrawToolbelt();
         if (_carry is { } carry) DrawCarry(carry.Id);
@@ -2130,19 +2123,19 @@ public sealed class DwarfMinerGame : Game
         // Cell-grid material wins over the underlying tile, so hovering a sand pile shows
         // "SAND" rather than the dirt tile beneath it.
         string label;
-        var (cx, cy) = _cells.WorldToCell(worldCursor);
-        var mat = _cells.Get(cx, cy);
+        var (cx, cy) = _run.Cells.WorldToCell(worldCursor);
+        var mat = _run.Cells.Get(cx, cy);
         if (mat != Material.Empty)
         {
             label = $"MATERIAL: {mat}";
         }
         else
         {
-            var (tx, ty) = _planet.WorldToTile(worldCursor);
-            var tile = _planet.Get(tx, ty);
+            var (tx, ty) = _run.Planet.WorldToTile(worldCursor);
+            var tile = _run.Planet.Get(tx, ty);
             if (tile == TileKind.Sky)
             {
-                var wall = _planet.GetWall(tx, ty);
+                var wall = _run.Planet.GetWall(tx, ty);
                 label = wall == TileKind.Sky ? "SKY" : $"SKY (WALL: {wall})";
             }
             else
