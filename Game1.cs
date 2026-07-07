@@ -787,8 +787,16 @@ public sealed partial class DwarfMinerGame : Game
         _particles.EmitImpact(_run.Planet.Center, ProjectileKind.Nuke);
         _run.Shake = MathF.Max(_run.Shake, 1.5f);
         _meta.Save();
+        EndRun($"You pierced the core. Run time: {_run.RunTime:0.0}s. Press R for the star map.");
+    }
+
+    /// <summary>Every run ending funnels through here: show the game-over overlay and void
+    /// the suspend save — a finished run can't be resumed.</summary>
+    private void EndRun(string reason)
+    {
+        _gameOverReason = reason;
         _screen = GameScreen.GameOver;
-        _gameOverReason = $"You pierced the core. Run time: {_run.RunTime:0.0}s. Press R for the star map.";
+        RunSave.Delete();
     }
 
     /// <summary>Install the next ship stage at the pad — the crafted stage goes straight
