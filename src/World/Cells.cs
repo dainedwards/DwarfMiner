@@ -963,6 +963,19 @@ public sealed class Cells
                 var b = new Color(80, 75, 80);
                 return new Color(b.R + jitter / 6, b.G + jitter / 6, b.B + jitter / 6, (byte)200);
             }
+            case Material.Acid:
+            {
+                // Sickly green with a slow toxic shimmer, semi-translucent like water.
+                var shimmer = (int)(MathF.Sin(_time * 2.0f + ((hash >> 3) & 7) * 0.7f + cy * 0.3f) * 12f);
+                return Tint(new Color(120, 200, 40), jitter / 5 + shimmer) * 0.82f;
+            }
+            case Material.Gas:
+            {
+                // Faint yellow-green haze — low alpha so the wall behind reads through it.
+                var swirl = (int)(MathF.Sin(_time * 1.2f + ((hash >> 2) & 15) * 0.5f) * 10f);
+                var g = new Color(150, 190, 70);
+                return new Color(g.R + jitter / 5, g.G + jitter / 5 + swirl, g.B + jitter / 5, (byte)110);
+            }
             case Material.Dirt:    return Tint(new Color(115, 75, 42), jitter / 3);
             case Material.Gravel:  return Tint(new Color(125, 120, 110), jitter / 3);
             case Material.Dust:
