@@ -129,6 +129,7 @@ public static class RunSave
                 RunTime = r.ReadSingle(),
                 HasCannon = r.ReadBoolean(),
                 ShipStage = r.ReadInt32(),
+                ShipFuel = r.ReadInt32(),
             };
             if (r.ReadBoolean()) run.PadPos = new Vector2(r.ReadSingle(), r.ReadSingle());
 
