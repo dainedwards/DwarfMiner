@@ -312,7 +312,10 @@ public static class SimTest
             run.Player.Inventory.Add("ruby", 4);
             run.Player.Toolbelt.AutoEquip("drill");
             run.Player.Toolbelt.Selected = 2;
-            run.Titan = new Titan(run.Planet, 1.2f) { Health = 1234f, Anger = 42f };
+            run.Titan = new Titan(run.Planet, 1.2f, TitanKind.Hydra)
+            {
+                Health = 1234f, Anger = 42f, EggTimer = 222f, EggHealth = 333f,
+            };
             run.Sentries.Add(new Sentry(new Vector2(2100, 2100)) { Health = 17f });
 
             RunSave.Write(run);
