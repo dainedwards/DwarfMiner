@@ -19,7 +19,16 @@
 >   `Game1.TickHazardContact` (this also finally makes LAVA damage the player). Worldgen seeds
 >   per-planet (`PlanetDef.SeedsGas`/`SeedsAcid`: ember=gas, slag=acid, core=both); star map
 >   shows TOXINS + THIN ATMOSPHERE warnings. Cells serialize for free in the save.
-> Next up: per-planet mini-bosses, or sound, or surface base (storage depot).
+> - **Boss variants + egg done** — Titan now hatches from a giant egg (`Titan.Hatched`/`EggTimer`
+>   10-min / `EggHealth` attackable to hatch early; Combat routes hits to the egg while unhatched).
+>   Four variants (`TitanKind`, per-planet via `PlanetDef.Titan`): Godzilla fire-breath + Mecha
+>   mouth-laser (both spawn `TitanProjectile` enemy shots), Hydra burrow→erupt, Kong leap→quake
+>   (melee AoE via `Titan.PendingShockwave`, consumed in Game1). Shared quadruped chassis
+>   re-tinted per kind (`TitanPalette`). `DM_HATCH=<s>` shortens the egg timer for testing.
+>   NOTE: the boss's shallow `Grounded` probe rarely reaches ground under the hovering body;
+>   grounded-gated specials use the deeper `Titan.Standing()` probe instead (the pre-existing
+>   Stomp still uses `Grounded` and so under-fires — candidate cleanup).
+> Next up: sound (still no audio at all), or surface base (storage depot), or ambient events.
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
