@@ -39,6 +39,10 @@ public sealed partial class DwarfMinerGame : Game
     private MouseState _prevMouse;
     private string _gameOverReason = "";
     private bool _screenshotPending;
+
+    /// <summary>Transient HUD toast ("RUN SAVED") — drawn top-centre while the timer runs.</summary>
+    private string _toast = "";
+    private float _toastTimer;
     /// <summary>Wall-clock seconds since launch — drives the DM_AUTOSHOT capture schedule so
     /// tooling can screenshot any screen, including the star map before a run starts.</summary>
     private float _totalTime;
