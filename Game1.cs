@@ -1295,8 +1295,13 @@ public sealed partial class DwarfMinerGame : Game
         // visible radius from the camera target is ~200 px; bump to 400 for the kaiju's
         // silhouette (it's huge — body+legs span ~280 px) and a small margin so legs sweeping
         // into view from off-screen aren't suddenly popped in.
-        var kaijuVisible = _run.Titan.Health > 0
-            && (_run.Titan.Position - _camera.Target).LengthSquared() < 400f * 400f;
+        var titanOnScreen = (_run.Titan.Position - _camera.Target).LengthSquared() < 400f * 400f;
+        // Egg phase draws a giant egg instead of the boss; a burrowed Hydra draws a travelling
+        // dirt mound instead of its body.
+        if (titanOnScreen && !_run.Titan.Hatched) DrawTitanEgg();
+        else if (titanOnScreen && _run.Titan.Submerged) DrawBurrowMound();
+        var kaijuVisible = _run.Titan.Health > 0 && _run.Titan.Hatched && !_run.Titan.Submerged
+            && titanOnScreen;
 
         // Kaiju boss. Body is a hulking scaled hulk on 4 procedural quadruped legs; tail is a
         // verlet chain dragging behind; head is a snouted bulb in front. Legs use 2-bone IK
