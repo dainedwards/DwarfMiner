@@ -161,7 +161,8 @@ public sealed class DwarfMinerGame : Game
             ViewportSize = new Point(VirtualWidth, VirtualHeight),
             Zoom = 4.0f,
         };
-        _camera.SnapTo(_run.Player.Position, 0f);
+        // No run yet when the game boots to the star map; StartNewRun snaps on planet entry.
+        if (_run is not null) _camera.SnapTo(_run.Player.Position, 0f);
 
         // Animated CC0 sprite pack when assets/player is present; string-art dwarf otherwise.
         _playerSprite = PlayerSprite.TryLoad(GraphicsDevice);
