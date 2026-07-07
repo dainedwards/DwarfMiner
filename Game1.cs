@@ -262,6 +262,16 @@ public sealed partial class DwarfMinerGame : Game
         }
         if (Pressed(keys, _prevKeys, Keys.C)) { _craftingMenu.Show(); _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return; }
 
+        // F5 — suspend-save in place (also happens automatically on quit). Resume from the
+        // star map with R.
+        if (Pressed(keys, _prevKeys, Keys.F5))
+        {
+            RunSave.Write(_run);
+            _toast = "RUN SAVED";
+            _toastTimer = 2.5f;
+        }
+        _toastTimer -= dt;
+
         _run.RunTime += dt;
 
         // Movement input — A/D or arrows along the player's local tangent.
