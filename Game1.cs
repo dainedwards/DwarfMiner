@@ -11,6 +11,10 @@ using Microsoft.Xna.Framework.Input;
 
 namespace DwarfMiner;
 
+/// <summary>Top-level screen state. Overworld is the star map (entry screen and post-run
+/// hub); Playing is a live run; GameOver overlays the frozen run until R returns to the map.</summary>
+public enum GameScreen { Overworld, Playing, GameOver }
+
 public sealed class DwarfMinerGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
