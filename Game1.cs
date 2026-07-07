@@ -140,6 +140,7 @@ public sealed class DwarfMinerGame : Game
         foreach (var w in GodWeaponIds) _player.Toolbelt.AutoEquip(w);
         _titan = new Titan(_planet, MathF.PI * 0.6f);
         _creatures.Clear();
+        _corpses.Clear();
         _projectiles.Clear();
         _boulders.Clear();
         _sentries.Clear();
