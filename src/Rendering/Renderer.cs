@@ -789,6 +789,118 @@ public sealed class Renderer
         return tex;
     }
 
+    private struct Wisp
+    {
+        public float Angle, RadiusFrac, Len, Thick, Speed;
+        public Color Col;
+    }
+
+    private Wisp[]? _wisps;
+
+    /// <summary>The moving middle layer of the backdrop — Noita's parallax sheets, adapted
+    /// to a round world: translucent haze wisps orbiting slowly through the atmosphere band
+    /// at staggered radii, speeds and tints (pale mist / dusky violet). Each is a soft blob
+    /// stretched along its orbit tangent so it reads as drifting fog, not a sprite.</summary>
+    private void DrawHazeWisps(Planet planet)
+    {
+        if (_wisps is null)
+        {
+            var rng = new Random(4242);
+            _wisps = new Wisp[44];
+            for (var i = 0; i < _wisps.Length; i++)
+            {
+                var pale = rng.Next(3) > 0;
+                var baseCol = pale ? new Color(150, 175, 205) : new Color(96, 82, 138);
+                _wisps[i] = new Wisp
+                {
+                    Angle = (float)(rng.NextDouble() * MathHelper.TwoPi),
+                    RadiusFrac = 0.695f + (float)rng.NextDouble() * 0.16f,
+                    Len = 60f + (float)rng.NextDouble() * 140f,
+                    Thick = 5f + (float)rng.NextDouble() * 9f,
+                    Speed = 0.004f + (float)rng.NextDouble() * 0.010f,
+                    Col = baseCol * (0.10f + (float)rng.NextDouble() * 0.12f),
+                };
+            }
+        }
+
+        var rad = planet.Radius * Planet.TileSize;
+        var origin = new Vector2(_wispTex.Width / 2f, _wispTex.Height / 2f);
+        foreach (var w in _wisps)
+        {
+            var ang = w.Angle + Time * w.Speed;
+            var pos = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (w.RadiusFrac * rad);
+            _sb.Draw(_wispTex, pos, null, w.Col, ang + MathHelper.PiOver2, origin,
+                new Vector2(w.Len / _wispTex.Width, w.Thick / _wispTex.Width), SpriteEffects.None, 0f);
+        }
+    }
+
+    /// <summary>Radial atmosphere shell baked as a premultiplied RGBA disc; the texture
+    /// edge maps to the planet's outermost ring. Alpha is zero through the crust (caves
+    /// keep the space backdrop), rises to a peak just above the mean surface (~0.68 of
+    /// planet radius) and thins to nothing by ~0.93, so the tallest mountains break out of
+    /// the haze. Colour grades dusky teal at the horizon into deep violet aloft.</summary>
+    private static Texture2D MakeAtmosphere(GraphicsDevice gd, int size)
+    {
+        var data = new Color[size * size];
+        var half = size / 2f;
+        var horizon = new Vector3(64, 100, 138);
+        var aloft = new Vector3(46, 32, 86);
+        for (var y = 0; y < size; y++)
+        {
+            for (var x = 0; x < size; x++)
+            {
+                var dx = x - half + 0.5f;
+                var dy = y - half + 0.5f;
+                var d = MathF.Sqrt(dx * dx + dy * dy) / half;
+                float band;
+                if (d < 0.60f || d > 0.93f) band = 0f;
+                else if (d < 0.68f) band = Smooth((d - 0.60f) / 0.08f);
+                else band = 1f - Smooth((d - 0.68f) / 0.25f);
+                if (band <= 0f)
+                {
+                    data[y * size + x] = Color.Transparent;
+                    continue;
+                }
+                var t = MathHelper.Clamp((d - 0.64f) / 0.26f, 0f, 1f);
+                var c = Vector3.Lerp(horizon, aloft, t);
+                var alpha = band * 0.55f;
+                data[y * size + x] = new Color(
+                    (int)(c.X * alpha), (int)(c.Y * alpha), (int)(c.Z * alpha), (int)(alpha * 255));
+            }
+        }
+        var tex = new Texture2D(gd, size, size);
+        tex.SetData(data);
+        return tex;
+    }
+
+    private static float Smooth(float t)
+    {
+        t = MathHelper.Clamp(t, 0f, 1f);
+        return t * t * (3f - 2f * t);
+    }
+
+    /// <summary>Soft radial blob (quadratic falloff to transparent) for haze wisps.</summary>
+    private static Texture2D MakeSoftBlob(GraphicsDevice gd, int size)
+    {
+        var data = new Color[size * size];
+        var half = size / 2f;
+        for (var y = 0; y < size; y++)
+        {
+            for (var x = 0; x < size; x++)
+            {
+                var dx = (x - half + 0.5f) / half;
+                var dy = (y - half + 0.5f) / half;
+                var t = Math.Clamp(1f - MathF.Sqrt(dx * dx + dy * dy), 0f, 1f);
+                t *= t;
+                var b = (byte)(t * 255);
+                data[y * size + x] = new Color(b, b, b, b);
+            }
+        }
+        var tex = new Texture2D(gd, size, size);
+        tex.SetData(data);
+        return tex;
+    }
+
     /// <summary>Tileable pixel-art night sky: deep space base, a few barely-there nebula
     /// washes (toroidal so the tile wraps seamlessly), and three brightness tiers of
     /// single-pixel stars — the brightest tier gets tiny cross glints. Drawn with PointWrap
