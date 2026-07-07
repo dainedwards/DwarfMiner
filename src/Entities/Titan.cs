@@ -142,17 +142,17 @@ public sealed class Titan
 
     private void InitLegs()
     {
-        // Quadruped. HipForward is signed along the body's tangent axis; with Facing = +1 the
-        // head sits at +tangent, so legs with HipForward > 0 are the *front* legs (shoulders,
-        // higher hip attachment) and HipForward < 0 are the *hind* legs (lower hip). Phases
-        // are paired diagonally — FL+HR step together, FR+HL step together — the classic trot.
-        Legs = new[]
-        {
-            new TitanLeg { HipForward = +78f, Side = -1, Phase = 0.10f, HipUp = 22f },  // front-left
-            new TitanLeg { HipForward = +78f, Side = +1, Phase = 0.60f, HipUp = 22f },  // front-right
-            new TitanLeg { HipForward = -78f, Side = -1, Phase = 0.60f, HipUp = 16f },  // hind-left
-            new TitanLeg { HipForward = -78f, Side = +1, Phase = 0.10f, HipUp = 16f },  // hind-right
-        };
+        // Skeleton per kind. Bipeds (Godzilla/Mecha/Kong) stand on two legs planted under the
+        // body, stepping in alternation; the Hydra is legless and slithers on its belly, so it
+        // gets no legs at all (surface-follow locomotion + verlet body instead). HipForward is
+        // signed along the tangent; Side is the lateral stance sign.
+        Legs = Kind == TitanKind.Hydra
+            ? System.Array.Empty<TitanLeg>()
+            : new[]
+            {
+                new TitanLeg { HipForward = 6f, Side = -1, Phase = 0.00f, HipUp = 8f },   // left
+                new TitanLeg { HipForward = 6f, Side = +1, Phase = 0.50f, HipUp = 8f },   // right
+            };
 
         var up = _planet.UpAt(Position);
         var right = new Vector2(-up.Y, up.X);
