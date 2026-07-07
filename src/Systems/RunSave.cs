@@ -89,6 +89,12 @@ public static class RunSave
             w.Write(run.Titan.Position.X); w.Write(run.Titan.Position.Y);
             w.Write(run.Titan.Health);
             w.Write(run.Titan.Anger);
+            // Boss variant + egg state. The kind comes from the planet def but is saved too so
+            // a future def re-map doesn't retroactively change an in-progress run.
+            w.Write((int)run.Titan.Kind);
+            w.Write(run.Titan.Hatched);
+            w.Write(run.Titan.EggTimer);
+            w.Write(run.Titan.EggHealth);
 
             w.Write(run.Sentries.Count);
             foreach (var s in run.Sentries)
