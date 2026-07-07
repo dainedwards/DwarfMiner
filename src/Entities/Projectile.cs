@@ -291,8 +291,11 @@ public sealed class Projectile
     /// angular index directly would shear the crater sideways at any angle far from 0.
     /// Rim tiles crumble into collectible dust cells (their drops survive the blast); the
     /// core is vaporised outright. Every removed tile wakes the settle physics so terrain
-    /// undercut by the blast trembles and caves instead of hanging in the air.</summary>
-    private void CarveCrater(Planet planet, Physics physics, Cells cells, int tiles, bool dust = true)
+    /// undercut by the blast trembles and caves instead of hanging in the air. Destroyed
+    /// tiles also fling chips in their own material colour (budget-capped so a nuke doesn't
+    /// drown the particle pool).</summary>
+    private void CarveCrater(Planet planet, Physics physics, Cells cells, int tiles,
+        Particles? particles = null, bool dust = true)
     {
         if (tiles <= 0) return;
         var maxDist = tiles * Planet.TileSize;
@@ -301,6 +304,7 @@ public sealed class Projectile
         var centerRing = (int)(rel.Length() / Planet.TileSize) - Planet.RingMin;
         var ang = MathF.Atan2(rel.Y, rel.X);
         if (ang < 0) ang += MathHelper.TwoPi;
+        var chipBudget = 24;   // tiles that get a particle burst; ~2-3 particles each
         for (var r = centerRing - tiles; r <= centerRing + tiles; r++)
         {
             if (r < 0 || r >= Planet.RingCount) continue;
@@ -308,7 +312,8 @@ public sealed class Projectile
             for (var dt2 = -(tiles + 1); dt2 <= tiles + 1; dt2++)
             {
                 var t = ct + dt2;
-                var distSq = (planet.TileToWorld(r, t) - Position).LengthSquared();
+                var world = planet.TileToWorld(r, t);
+                var distSq = (world - Position).LengthSquared();
                 if (distSq > maxDistSq) continue;
                 var k = planet.Get(r, t);
                 if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
@@ -316,6 +321,11 @@ public sealed class Projectile
                 // Outer ~45% of the radius crumbles to dust; inside that, vaporised.
                 if (dust && distSq > maxDistSq * 0.3f) cells.SpawnDustInTile(r, t, k);
                 physics.MarkDirty(r, t);
+                if (particles is not null && chipBudget > 0)
+                {
+                    chipBudget--;
+                    particles.EmitCraterChips(world, k, world - Position);
+                }
             }
         }
     }
