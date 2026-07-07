@@ -138,21 +138,18 @@ public sealed class DwarfMinerGame : Game
         // onto the belt from frame one (toggling god off strips the unowned loaners).
         foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
         _run.Titan = new Titan(_run.Planet, MathF.PI * 0.6f);
-        _run.Creatures.Clear();
-        _run.Corpses.Clear();
-        _run.Projectiles.Clear();
-        _run.Boulders.Clear();
-        _run.Sentries.Clear();
         SpawnInitialFauna();
-        _run.EarthquakeTimer = 25f;
+        _run.EarthquakeTimer = 25f * def.QuakeScale;
         _run.SpawnTimer = 6f;
         _run.FaunaTimer = 8f;
-        _run.Shake = 0;
-        _gameOver = false;
         _gameOverReason = "";
-        _run.RunTime = 0;
         _craftingOpen = false;
         _craftingCursor = 0;
+        _carry = null;
+        _screen = GameScreen.Playing;
+        // Camera exists except when DM_AUTOSTART triggers a run during Initialize —
+        // LoadContent snaps it then.
+        _camera?.SnapTo(_run.Player.Position, 0f);
     }
 
     protected override void LoadContent()
