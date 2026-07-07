@@ -487,17 +487,30 @@ public sealed class DwarfMinerGame : Game
         var id = _player.Toolbelt.Current;
         if (id is null) return;
 
+        // God mode is a full armoury pass: ownership flags are ignored and weapon ammo
+        // isn't consumed, so every weapon on the belt just works.
+        var god = _player.FlyMode;
+
         switch (id)
         {
             case "pickaxe": DoMine(worldCursor, MiningTool.Pickaxe); break;
             case "drill":   if (_player.HasDrill)  DoMine(worldCursor, MiningTool.Drill); break;
             case "hammer":  if (_player.HasHammer) DoMine(worldCursor, MiningTool.Hammer); break;
             case "bullets": if (_player.ShootCooldown <= 0) FireBullet(worldCursor); break;
-            case "cannon":  if (_hasCannon && _player.ShootCooldown <= 0) FireCannon(worldCursor); break;
+            case "pistol":      if ((god || _player.HasPistol) && _player.ShootCooldown <= 0) FirePistol(worldCursor); break;
+            case "machine_gun": if ((god || _player.HasMachineGun) && _player.ShootCooldown <= 0) FireMachineGun(worldCursor); break;
+            case "laser":       if ((god || _player.HasLaser) && _player.ShootCooldown <= 0) FireLaser(worldCursor); break;
+            case "rocket_launcher":
+                if ((god || _player.HasRocketLauncher) && _player.ShootCooldown <= 0
+                    && (god || _player.Inventory.TryConsume("rocket", 1)))
+                    FireRocket(worldCursor);
+                break;
+            case "cannon":  if ((god || _hasCannon) && _player.ShootCooldown <= 0) FireCannon(worldCursor); break;
             case "blocks":  _player.TryPlace(_planet, _physics, worldCursor); break;
-            case "nuke":      if (_player.Inventory.TryConsume("nuke", 1))     FireNuke(worldCursor); break;
-            case "harpoon":   if (_player.Inventory.TryConsume("harpoon", 1))  FireHarpoon(worldCursor); break;
-            case "dynamite":  if (_player.Inventory.TryConsume("dynamite", 1)) FireDynamite(worldCursor); break;
+            case "nuke":      if (_player.ShootCooldown <= 0 && (god || _player.Inventory.TryConsume("nuke", 1)))     FireNuke(worldCursor); break;
+            case "harpoon":   if (_player.ShootCooldown <= 0 && (god || _player.Inventory.TryConsume("harpoon", 1)))  FireHarpoon(worldCursor); break;
+            case "dynamite":  if (_player.ShootCooldown <= 0 && (god || _player.Inventory.TryConsume("dynamite", 1))) FireDynamite(worldCursor); break;
+            case "tnt":       if (_player.ShootCooldown <= 0 && (god || _player.Inventory.TryConsume("tnt", 1)))      FireTnt(worldCursor); break;
             case "poultice":  if (_player.Inventory.TryConsume("poultice", 1)) UseHealPotion(); break;
             case "core_drill": if (_player.HasCoreDrill) TryCoreDrill(); break;
             case "sentry":    if (_player.Inventory.TryConsume("sentry", 1))   PlaceSentryAtFeet(); break;
