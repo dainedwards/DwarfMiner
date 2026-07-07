@@ -214,6 +214,8 @@ public static class Tiles
         "ammo_ruby"          => "RUBY SHELL",
         "ammo_sapphire"      => "SAPPHIRE SHELL",
         "ammo_diamond"       => "DIAMOND SHELL",
+        "machine_gun"        => "MACHINE GUN",
+        "rocket_launcher"    => "ROCKET LAUNCHER",
         _                    => id.ToUpperInvariant(),
     };
 
