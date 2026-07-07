@@ -347,7 +347,7 @@ public sealed class Titan
             case TitanKind.Godzilla: TickFireBreath(dt, playerPos, shots); break;
             case TitanKind.Mecha:    TickMechaLaser(dt, playerPos, shots); break;
             case TitanKind.Hydra:    TickHydra(dt, planet, physics, playerPos); break;
-            case TitanKind.Kong:     TickKong(physics, playerPos); break;
+            case TitanKind.Kong:     TickKong(dt, physics, playerPos); break;
         }
     }
 
