@@ -84,6 +84,8 @@ public static class Crafting
             new Dictionary<string, int> { ["moss_stone"] = 3, ["dirt"] = 2 }),
         new("dynamite", "Dynamite (press Z to throw)",
             new Dictionary<string, int> { ["coal"] = 3, ["gravel"] = 4 }),
+        new("tnt", "TNT satchel — short toss, huge blast",
+            new Dictionary<string, int> { ["coal"] = 6, ["gravel"] = 6, ["iron"] = 2 }),
 
         // ─── Late-game ────────────────────────────────────────────────────────
         new("rocket_part", "Rocket part",
