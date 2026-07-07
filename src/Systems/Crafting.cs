@@ -51,6 +51,9 @@ public static class Crafting
         // ─── Combat ───────────────────────────────────────────────────────────
         new("armor", "Iron plate armor (−40% damage taken)",
             new Dictionary<string, int> { ["iron"] = 8 }),
+        // Hunter's path to armour: same protection as iron plate, paid in creature parts.
+        new("chitin_armor", "Chitin armor (−40% damage taken) — hunted, not mined",
+            new Dictionary<string, int> { ["chitin"] = 8, ["hide"] = 3 }),
         new("sentry", "Sentry turret (placeable, auto-fires)",
             new Dictionary<string, int> { ["iron"] = 4, ["coal"] = 3 }),
         // Firearm ladder — each weapon has its own resource profile: the pistol is cheap
