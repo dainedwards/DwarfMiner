@@ -54,6 +54,24 @@ public sealed class Projectile
     public float Radius = 1.5f;
     public ProjectileKind Kind;
 
+    /// <summary>Where this projectile started the current frame. Combat sweeps the
+    /// PrevPosition→Position segment against bodies so fast rounds can't skip over them.</summary>
+    public Vector2 PrevPosition;
+
+    /// <summary>Bodies (creatures / the Titan) already damaged by this projectile. A piercer
+    /// overlaps the same body for several frames while passing through — it must pay its
+    /// damage once per body, not once per frame.</summary>
+    public readonly HashSet<object> HitVictims = new();
+
+    /// <summary>Contact explosives (rocket, cannon shells, nuke) blow up on the first body
+    /// they touch. Fuse explosives (dynamite, TNT) tumble past bodies and only explode on
+    /// terrain or fuse-out.</summary>
+    public bool DetonatesOnContact => ExplosionRadius > 0f && !ExplodesOnFuse;
+
+    /// <summary>True while the projectile is inside solid rock spending a wall-pierce charge.
+    /// Charges are burned per wall *entered* (air→solid transition), not per frame.</summary>
+    private bool _inWall;
+
     /// <summary>How many more creature hits this projectile can take before it dies. -1 means
     /// "never dies on creature hit" (used by AoE explosions whose damage is dealt at impact).
     /// 1 = standard one-shot bullet; 3 = silver shell pierce.</summary>
