@@ -302,7 +302,8 @@ public static class SimTest
 
             run.Player = new Player(new Vector2(2400, 1300))
             {
-                Health = 61.5f, PickaxeTier = 3, HasDrill = true, HasLaser = true,
+                Health = 61.5f, Oxygen = 44.25f, HasAirTank = true,
+                PickaxeTier = 3, HasDrill = true, HasLaser = true,
                 BeaconWorld = new Vector2(2000, 2000),
             };
             run.Player.Inventory.Add("iron", 14);
