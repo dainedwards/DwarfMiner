@@ -13,7 +13,10 @@ namespace DwarfMiner.World;
 /// </summary>
 public static class WorldGen
 {
-    public static Planet Generate(int seed)
+    /// <summary>Legacy overload — the starter planet's tuning (used by SimTest).</summary>
+    public static Planet Generate(int seed) => Generate(seed, PlanetDefs.All[0]);
+
+    public static Planet Generate(int seed, PlanetDef def)
     {
         var planet = new Planet(new Vector2(2400, 2400));
         var rng = new Random(seed);
