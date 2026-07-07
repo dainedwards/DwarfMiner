@@ -224,6 +224,21 @@ public static class WorldGen
                     {
                         planet.WaterSeeds.Add((r, t));
                     }
+
+                    // Hazard pockets (planet-gated). Gas collects in the deeper, hotter caves
+                    // near the lava zone; acid pools in the mid-crust. Decorrelated noise
+                    // channels so a cave isn't both at once. Never overlaps a water reservoir.
+                    var isReservoir = planet.WaterSeeds.Count > 0
+                        && planet.WaterSeeds[^1] == (r, t);
+                    if (!isReservoir)
+                    {
+                        if (def.SeedsGas && depth > 34f
+                            && SampleNoise(pocketNoise, wx * 0.06f + 21f, wy * 0.06f + 21f) > 0.80f)
+                            planet.GasSeeds.Add((r, t));
+                        else if (def.SeedsAcid && depth > 18f && depth < 78f
+                            && SampleNoise(oreNoise, wx * 0.06f + 31f, wy * 0.06f + 31f) > 0.82f)
+                            planet.AcidSeeds.Add((r, t));
+                    }
                 }
 
                 if (k == TileKind.Stone && depth > 12f)
