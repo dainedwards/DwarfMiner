@@ -521,29 +521,6 @@ public sealed class DwarfMinerGame : Game
         "cannon", "dynamite", "tnt", "harpoon", "nuke",
     };
 
-    /// <summary>True when this belt id is a god-mode loaner the player doesn't actually own —
-    /// the ones to sweep off the belt when god mode ends.</summary>
-    private bool IsGodLoanerWeapon(string id) => id switch
-    {
-        "pistol"          => !_run.Player.HasPistol,
-        "machine_gun"     => !_run.Player.HasMachineGun,
-        "laser"           => !_run.Player.HasLaser,
-        "laser_cannon"    => !_run.Player.HasLaserCannon,
-        "rocket_launcher" => !_run.Player.HasRocketLauncher,
-        "cannon"          => !_run.HasCannon,
-        "dynamite"        => _run.Player.Inventory.Count("dynamite") <= 0,
-        "tnt"             => _run.Player.Inventory.Count("tnt") <= 0,
-        "harpoon"         => _run.Player.Inventory.Count("harpoon") <= 0,
-        "nuke"            => _run.Player.Inventory.Count("nuke") <= 0,
-        _                 => false,
-    };
-
-    /// <summary>Belt ids the Q/E weapon-cycle steps through — anything that shoots or throws.
-    /// Tools, placeables, and consumables are skipped so combat swaps stay fast.</summary>
-    private static bool IsWeaponId(string id) => id is
-        "bullets" or "pistol" or "machine_gun" or "laser" or "laser_cannon" or
-        "rocket_launcher" or "cannon" or "dynamite" or "tnt" or "harpoon" or "nuke";
-
     /// <summary>Step the belt selection to the next/previous slot holding a weapon, wrapping
     /// around and skipping tools/placeables. No-op if no weapon is on the belt.</summary>
     private void CycleWeapon(int dir)
