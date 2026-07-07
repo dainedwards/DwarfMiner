@@ -398,6 +398,7 @@ public sealed class DwarfMinerGame : Game
         {
             var p = _projectiles[i];
             p.Update(dt, _planet, _physics, _cells);
+            _particles.EmitTrail(p);   // rocket exhaust, fuse sparks, beam motes, …
 
             // Body hits (creatures + titan): Combat sweeps the frame's travel segment so fast
             // rounds can't skip over bodies, lands hits in path order with pierce accounting,
