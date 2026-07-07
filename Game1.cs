@@ -49,6 +49,9 @@ public sealed partial class DwarfMinerGame : Game
     private float _autoShotAt =
         float.TryParse(Environment.GetEnvironmentVariable("DM_AUTOSHOT"), out var s)
             ? s : float.PositiveInfinity;
+    private float _autoSaveAt =
+        float.TryParse(Environment.GetEnvironmentVariable("DM_AUTOSAVE"), out var sv)
+            ? sv : float.PositiveInfinity;
 
     /// <summary>The crafting overlay and the inventory/toolbelt drag-drop UI — see
     /// src/UI. While the menu is open, mouse/movement input still drives the world but key
