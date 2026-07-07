@@ -18,6 +18,12 @@ public enum Material : byte
     /// <summary>Loose grains from a broken tile. Source TileKind is stored alongside in
     /// Cells._srcTile so the dust falls with the right colour and gives the right drop on pickup.</summary>
     Dust = 7,
+    /// <summary>Corrosive liquid. Flows like water and eats through soft tiles it touches (like
+    /// lava melts, but a different tile set and no light); burns bodies on contact.</summary>
+    Acid = 8,
+    /// <summary>Flammable gas pocket. Rises like smoke and lingers; chokes the dwarf (drains
+    /// air) and flash-burns to smoke when it meets lava.</summary>
+    Gas = 9,
 }
 
 public static class Materials
