@@ -950,6 +950,13 @@ public sealed class DwarfMinerGame : Game
             case "hammer":      _player.HasHammer    = true; _player.Inventory.Add("hammer", 1);     _player.Toolbelt.AutoEquip("hammer");     break;
             case "core_drill":  _player.HasCoreDrill = true; _player.Inventory.Add("core_drill", 1); _player.Toolbelt.AutoEquip("core_drill"); break;
             case "cannon":      _hasCannon           = true; _player.Inventory.Add("cannon", 1);     _player.Toolbelt.AutoEquip("cannon");     break;
+            case "pistol":          _player.HasPistol         = true; _player.Inventory.Add("pistol", 1);          _player.Toolbelt.AutoEquip("pistol");          break;
+            case "machine_gun":     _player.HasMachineGun     = true; _player.Inventory.Add("machine_gun", 1);     _player.Toolbelt.AutoEquip("machine_gun");     break;
+            case "laser":           _player.HasLaser          = true; _player.Inventory.Add("laser", 1);           _player.Toolbelt.AutoEquip("laser");           break;
+            case "rocket_launcher": _player.HasRocketLauncher = true; _player.Inventory.Add("rocket_launcher", 1); _player.Toolbelt.AutoEquip("rocket_launcher"); break;
+            // Rockets craft in threes — a launcher shot costs real resources but not a
+            // whole crafting trip each.
+            case "rocket": _player.Inventory.Add("rocket", 3); break;
             // Passive permanent upgrades — no slot, no inventory entry. Just a flag.
             case "lantern":     _player.HasLantern = true; break;
             case "armor":       _player.HasArmor   = true; break;
