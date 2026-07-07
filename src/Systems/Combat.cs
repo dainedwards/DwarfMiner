@@ -118,7 +118,6 @@ public static class Combat
         if (titan is not null && !p.HitVictims.Contains(titan)
             && (titan.Position - p.Position).Length() < r + titan.Radius)
         {
-            _ = 0; // (kept minimal: titan blast tuning below)
             titan.Health -= p.Damage * 0.4f;
             titan.HitFlash = 0.15f;
             titan.OnDamage();
