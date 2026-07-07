@@ -329,6 +329,31 @@ public sealed class Particles
             case ProjectileKind.Dynamite:
                 EmitExplosion(pos, strength: 20f, sparkCount: 26, smokeCount: 18, sparkColor: new Color(255, 170, 60));
                 break;
+            case ProjectileKind.Laser:
+            case ProjectileKind.LaserCannon:
+                // Energy scorch — a hot flash of ionised flecks in the beam's colour.
+                for (var i = 0; i < (kind == ProjectileKind.LaserCannon ? 10 : 5); i++)
+                {
+                    var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+                    var col = kind == ProjectileKind.LaserCannon
+                        ? new Color(140, 230, 255)
+                        : new Color(255, 120, 120);
+                    _list.Add(new Particle
+                    {
+                        Position = pos,
+                        Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (40f + (float)_rng.NextDouble() * 60f),
+                        Life = 0.15f + (float)_rng.NextDouble() * 0.15f,
+                        MaxLife = 0.3f,
+                        Color = col,
+                        FadeColor = new Color(40, 30, 60),
+                        Size = 1f,
+                        GravityScale = 0.1f,
+                        Drag = 2.5f,
+                        LightRadius = 6f,
+                        LightColor = col,
+                    });
+                }
+                break;
             case ProjectileKind.Harpoon:
                 // Pierce trail end — sharp metallic flecks, light shockwave.
                 for (var i = 0; i < 8; i++)
