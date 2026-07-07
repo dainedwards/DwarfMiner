@@ -261,6 +261,9 @@ public static class WorldGen
                     }
 
                     if (oreN > 0.88f - boost - Bias(TileKind.CoalOre) && depth > 6f) k = TileKind.CoalOre;
+                    // Fuel ore sits in a broad shallow band — you need a good stockpile to launch,
+                    // so it's common enough to gather without a deep dive.
+                    if (oreN > 0.905f - boost - Bias(TileKind.FuelOre) && depth > 12f) k = TileKind.FuelOre;
                     if (oreN > 0.92f - boost - Bias(TileKind.IronOre) && depth > 16f) k = TileKind.IronOre;
                     if (oreN > 0.94f - boost * 0.8f - Bias(TileKind.SilverOre) && depth > 30f) k = TileKind.SilverOre;
                     if (oreN > 0.955f - boost * 0.7f - Bias(TileKind.GoldOre) && depth > 40f) k = TileKind.GoldOre;
