@@ -254,6 +254,7 @@ public static class Tiles
         TileKind.Sapphire => ("sapphire", 1),
         TileKind.Diamond => ("diamond", 1),
         TileKind.Crystal => ("crystal", 1),
+        TileKind.FuelOre => ("fuel", 1),
         // Player-built tiles drop their craft input back when mined — lets you reposition
         // a misplaced ladder / torch without losing the resource.
         TileKind.Ladder => ("ladder", 1),
