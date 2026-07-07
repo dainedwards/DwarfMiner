@@ -325,8 +325,6 @@ public static class SimTest
                     || run.Planet.Damage(x, y) != loaded.Planet.Damage(x, y))
                 { tilesMatch = false; break; }
             Check("save: every tile/wall/damage matches", tilesMatch);
-            Check("save: water cells survive", loaded.Cells.Get(125 * Cells.Density + 4,
-                0) is Material.Water or Material.Empty || true); // placement-dependent; real check below
             var waterFound = false;
             for (var cy = 0; cy < loaded.Cells.Height && !waterFound; cy++)
                 for (var cx = 0; cx < loaded.Cells.CellsAt(cy); cx += 3)
