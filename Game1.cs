@@ -1591,6 +1591,18 @@ public sealed class DwarfMinerGame : Game
         // hanging vines) advances with the game time rather than the frame index.
         _renderer.Time = (float)gameTime.TotalGameTime.TotalSeconds;
 
+        if (_screen == GameScreen.Overworld)
+        {
+            DrawOverworld();
+            if (_screenshotPending)
+            {
+                _screenshotPending = false;
+                SaveScreenshot();
+            }
+            base.Draw(gameTime);
+            return;
+        }
+
         // Apply shake by perturbing the camera target.
         var shakeX = (float)(Random.Shared.NextDouble() - 0.5) * _run.Shake * 6f;
         var shakeY = (float)(Random.Shared.NextDouble() - 0.5) * _run.Shake * 6f;
