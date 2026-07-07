@@ -524,7 +524,6 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
-        var wasHatched = _run.Titan.Hatched;
         _run.Titan.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player.Position, _run.Boulders, _run.TitanShots);
         // Hatch feedback: a heavy shake + shell-burst the frame the egg cracks open.
         if (_run.Titan.JustHatched)
