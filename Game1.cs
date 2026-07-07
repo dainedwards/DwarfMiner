@@ -1566,6 +1566,21 @@ public sealed class DwarfMinerGame : Game
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
         _renderer.DrawCircle(worldCursor, 3f, new Color(255, 255, 255, 180));
 
+        // Corpses — drawn under the living so a fresh kill layers naturally. A flattened
+        // slab of the creature's (desaturated) body colour lying along the local tangent,
+        // with a paler belly stripe. Blinks during the last seconds before decay.
+        foreach (var corpse in _corpses)
+        {
+            if (corpse.Life < Corpse.BlinkTime && (int)(corpse.Life * 6f) % 2 == 0) continue;
+            var cup = _planet.UpAt(corpse.Position);
+            var crot = MathF.Atan2(cup.X, -cup.Y);
+            var col = Corpse.BodyColor(corpse.Kind);
+            _renderer.DrawRect(corpse.Position, new Vector2(corpse.Radius * 2.2f, corpse.Radius * 0.9f), col, crot);
+            _renderer.DrawRect(corpse.Position - cup * corpse.Radius * 0.2f,
+                new Vector2(corpse.Radius * 1.6f, corpse.Radius * 0.4f),
+                Color.Lerp(col, Color.White, 0.18f), crot);
+        }
+
         // Creatures — each kind draws its own procedural sprite, including the burn/freeze
         // status tinting and the burning-ember flicker.
         foreach (var c in _creatures)
