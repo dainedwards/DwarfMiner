@@ -117,7 +117,7 @@ public sealed partial class DwarfMinerGame : Game
 
         // Spawn the dwarf on top of whatever mountain is at angle -π/2 — walk down from
         // far above until the first solid tile, then float a few pixels above it.
-        var surfacePos = FindSurfaceSpawn(-MathF.PI / 2f, _run.Planet.Radius);
+        var surfacePos = SpawnDirector.FindSurfaceSpawn(_run.Planet, -MathF.PI / 2f, _run.Planet.Radius);
         _run.Player = new Player(surfacePos)
         {
             // Survival by default; DM_GOD=1 starts runs in god mode for testing, and G
