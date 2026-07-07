@@ -1841,7 +1841,7 @@ public sealed partial class DwarfMinerGame : Game
             0 => "PAD READY",
             1 => "HULL BUILT",
             2 => "ENGINE IN",
-            _ => "READY - PRESS L AT PAD",
+            _ => $"FUEL {_run.ShipFuel}/{FuelToLaunch} - L AT PAD TO FUEL/LAUNCH",
         };
         string titanStatus;
         if (!_run.Titan.Hatched)
