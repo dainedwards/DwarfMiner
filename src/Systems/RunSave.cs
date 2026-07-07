@@ -43,7 +43,10 @@ public static class RunSave
     {
         try
         {
-            using var w = new BinaryWriter(File.Create(SavePath));
+            // Gzip shrinks the save ~50×: the payload is dominated by the cell grid, which
+            // is overwhelmingly zero bytes.
+            using var w = new BinaryWriter(new System.IO.Compression.GZipStream(
+                File.Create(SavePath), System.IO.Compression.CompressionLevel.Fastest));
             w.Write(Magic);
             w.Write(Version);
             w.Write(run.Def.Id);
