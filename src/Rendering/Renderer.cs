@@ -227,6 +227,27 @@ public sealed class Renderer
                     Math.Clamp(col.G + jitter / 4, 0, 255),
                     Math.Clamp(col.B + jitter / 4, 0, 255));
 
+                // Neighbour kinds drive the erosion mask, the grass wrap and the material
+                // bite-rows. Outer band boundaries can have two neighbours: any sky counts
+                // as exposed, and the first solid one supplies the merge colour.
+                var outerK = TileKind.Sky;
+                var outerSky = false;
+                var outerCount = planet.OuterNeighbourCount(r, t);
+                for (var oi = 0; oi < outerCount; oi++)
+                {
+                    var (or_, ot_) = planet.OuterNeighbour(r, t, oi);
+                    var onk = planet.Get(or_, ot_);
+                    if (onk == TileKind.Sky) outerSky = true;
+                    else if (outerK == TileKind.Sky) outerK = onk;
+                }
+                var (ir_, it_) = planet.InnerNeighbour(r, t);
+                var innerK = planet.Get(ir_, it_);
+                var leftK  = planet.Get(r, t - 1);
+                var rightK = planet.Get(r, t + 1);
+                var innerSky = innerK == TileKind.Sky;
+                var leftSky  = leftK == TileKind.Sky;
+                var rightSky = rightK == TileKind.Sky;
+
                 if (UsesAuthoredArt(k))
                 {
                     // Placeables keep their hand-authored DrawDeco art below; flat base +
@@ -249,39 +270,19 @@ public sealed class Renderer
                     // Natural materials sample the 16×16 atlas — 2× the tile's world
                     // resolution, so ground reads as textured pixel art. Pack-art kinds pick
                     // their variant from tile parity so the seamless pattern continues across
-                    // neighbours; procedural kinds keep the hash-stable random pick.
+                    // neighbours; procedural kinds keep the hash-stable random pick. The
+                    // exposure mask selects the frame whose air-facing edges are baked with
+                    // ragged alpha erosion — silhouettes round off with no edge paint at all.
+                    var exposeMask = (outerSky ? 1 : 0) | (innerSky ? 2 : 0)
+                                   | (leftSky ? 4 : 0) | (rightSky ? 8 : 0);
                     var shade = (int)(255 * BlobShade(centre));
-                    _sb.Draw(_tileAtlas, centre, TileAtlas.Source(k, VariantFor(k, r, t, hash)),
+                    _sb.Draw(_tileAtlas, centre,
+                        TileAtlas.Source(k, VariantFor(k, r, t, hash), exposeMask),
                         new Color(shade, shade, shade), rotation,
                         new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
                         new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
                         SpriteEffects.None, 0f);
                 }
-
-                // Neighbour kinds drive both the air-facing edge framing and the material
-                // merge dithering. Outer band boundaries can have two neighbours: any sky
-                // counts as exposed, and the first solid one supplies the merge colour.
-                var outerK = TileKind.Sky;
-                var outerSky = false;
-                var outerCount = planet.OuterNeighbourCount(r, t);
-                for (var oi = 0; oi < outerCount; oi++)
-                {
-                    var (or_, ot_) = planet.OuterNeighbour(r, t, oi);
-                    var onk = planet.Get(or_, ot_);
-                    if (onk == TileKind.Sky) outerSky = true;
-                    else if (outerK == TileKind.Sky) outerK = onk;
-                }
-                var (ir_, it_) = planet.InnerNeighbour(r, t);
-                var innerK = planet.Get(ir_, it_);
-                var leftK  = planet.Get(r, t - 1);
-                var rightK = planet.Get(r, t + 1);
-                var innerSky = innerK == TileKind.Sky;
-                var leftSky  = leftK == TileKind.Sky;
-                var rightSky = rightK == TileKind.Sky;
-
-                // No edge decoration at air boundaries — outlines and highlights both read
-                // as painted rectangles per block; the world lighting pass and the dim
-                // back-walls carry the block-versus-air contrast on their own.
 
                 // Grass hugs exposed edges, Terraria-style: the green wraps down exposed
                 // sides and along a dug-out underside instead of showing bare dirt in
