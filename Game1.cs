@@ -126,6 +126,13 @@ public sealed partial class DwarfMinerGame : Game
         foreach (var (wsx, wsy) in _run.Planet.WaterSeeds)
             _run.Cells.FillTile(wsx, wsy, Material.Water);
 
+        // Hazard cells: gas rises to the cave roofs, acid settles to the floors. Poured after
+        // water so the pre-settle below carries them to rest alongside it.
+        foreach (var (gx, gy) in _run.Planet.GasSeeds)
+            _run.Cells.FillTile(gx, gy, Material.Gas);
+        foreach (var (ax, ay) in _run.Planet.AcidSeeds)
+            _run.Cells.FillTile(ax, ay, Material.Acid);
+
         // Pre-settle the seeded liquids during load: the first ~2s of cell ticks carry every
         // seeded cell awake (tens of ms per tick at Density 8). Burning them here turns a
         // visible gameplay stutter into a slightly longer world-gen pause; after settling,
