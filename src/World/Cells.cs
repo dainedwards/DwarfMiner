@@ -363,6 +363,8 @@ public sealed class Cells
                     break;
                 case Material.Water: TickLiquid(cx, cy, dt); break;
                 case Material.Lava:  TickLava(cx, cy, dt); break;
+                case Material.Acid:  TickAcid(cx, cy, dt); break;
+                case Material.Gas:   TickGas(cx, cy); break;
                 case Material.Smoke: TickSmoke(cx, cy); break;
             }
         }
