@@ -118,12 +118,12 @@ public static class Combat
             if (p.BurnSeconds > 0f) c.BurnSeconds = MathF.Max(c.BurnSeconds, p.BurnSeconds);
             if (p.FreezeSeconds > 0f) c.FreezeSeconds = MathF.Max(c.FreezeSeconds, p.FreezeSeconds);
         }
-        if (titan is not null && !p.HitVictims.Contains(titan)
+        if (titan is not null && titan.Targetable && !p.HitVictims.Contains(titan)
             && (titan.Position - p.Position).Length() < r + titan.Radius)
         {
-            titan.Health -= p.Damage * 0.4f;
-            titan.HitFlash = 0.15f;
             titan.OnDamage();
+            if (!titan.Hatched) titan.DamageEgg(p.Damage * 0.4f);
+            else { titan.Health -= p.Damage * 0.4f; titan.HitFlash = 0.15f; }
         }
     }
 
