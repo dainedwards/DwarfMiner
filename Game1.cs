@@ -81,6 +81,12 @@ public sealed partial class DwarfMinerGame : Game
         // Item table lambdas capture `this` (they read _run at call time), so this can't be
         // a field initializer — C# forbids `this` there.
         _items = BuildItems();
+        // Suspend-save on window close / Esc quit, so a long run survives quitting. Finished
+        // runs never reach this in Playing — EndRun already deleted the save.
+        Exiting += (_, _) =>
+        {
+            if (_screen == GameScreen.Playing && _run is not null) RunSave.Write(_run);
+        };
     }
 
     protected override void Initialize()
