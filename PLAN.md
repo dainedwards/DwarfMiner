@@ -3,10 +3,10 @@
 > **Status (2026-07-07):** Section 1 is implemented — GameScreen state machine, Session
 > extraction, PlanetConfig (`PlanetDef`) with 5 planet archetypes, the star-map overworld,
 > and the staged spaceship escape (launch pad → hull → engine → nav core → L to launch).
-> Section 2 items 2, 3, 5 are done: the ItemDef registry (`src/Game1.Items.cs`) replaced the
-> four per-item switches; god mode is now opt-in (survival default). Next up: finish the
-> Game1 split (UI/CraftingMenu, UI/InventoryUi, SpawnDirector), then Section 3 (save/load
-> first).
+> Section 2 is done: the ItemDef registry (`src/Game1.Items.cs`) replaced the four per-item
+> switches; god mode is opt-in (survival default); Game1 is split — `UI/CraftingMenu`,
+> `UI/InventoryUi`, `Systems/SpawnDirector`, `Session`, `Game1.Items`. Next up: Section 3,
+> starting with in-run save/load.
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id>`
 > skips the star map (ids: verdant, frost, ember, slag, core); `DM_GOD=1` starts runs in
 > god mode (fly, free weapons).
