@@ -1888,10 +1888,12 @@ public sealed partial class DwarfMinerGame : Game
             if (toxins.Length > 0)
                 _renderer.DrawText(toxins,
                     new Vector2((VirtualWidth - _renderer.MeasureText(toxins)) / 2f, infoY + 66), new Color(180, 210, 120));
-            var thinAir = sel.OxygenDrainScale >= 1.5f;
-            if (thinAir)
-                _renderer.DrawText("THIN ATMOSPHERE — AIR BURNS FAST AT DEPTH",
-                    new Vector2((VirtualWidth - _renderer.MeasureText("THIN ATMOSPHERE — AIR BURNS FAST AT DEPTH")) / 2f, infoY + (toxins.Length > 0 ? 84 : 66)), new Color(200, 180, 130));
+            if (sel.OxygenDrainScale >= 1.5f)
+            {
+                const string air = "THIN ATMOSPHERE: AIR BURNS FAST AT DEPTH";
+                _renderer.DrawText(air,
+                    new Vector2((VirtualWidth - _renderer.MeasureText(air)) / 2f, infoY + (toxins.Length > 0 ? 84 : 66)), new Color(200, 180, 130));
+            }
         }
 
         var meta = $"ESCAPES {_meta.Escapes}   TITAN KILLS {_meta.TitansDefeated}   DEEPEST {_meta.DeepestDepth}   DEATHS {_meta.Deaths}";
