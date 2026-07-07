@@ -456,6 +456,62 @@ public sealed class Particles
 
     private void EmitExplosion(Vector2 pos, float strength, int sparkCount, int smokeCount, Color sparkColor)
     {
+        // Flash core — one big, near-instant blob of light at the epicentre. Sells the "bang"
+        // frame before the sparks/smoke read as an aftermath.
+        _list.Add(new Particle
+        {
+            Position = pos,
+            Velocity = Vector2.Zero,
+            Life = 0.1f,
+            MaxLife = 0.1f,
+            Color = Color.White,
+            FadeColor = sparkColor,
+            Size = strength * 0.55f,
+            GravityScale = 0f,
+            Drag = 0f,
+            LightRadius = strength * 3.5f,
+            LightColor = sparkColor,
+        });
+        // Shockwave ring — evenly spaced fast radial particles with hard drag, so a crisp
+        // circle expands a short distance and dies. No gravity: the wavefront stays round.
+        var ringCount = (int)(strength * 1.3f);
+        for (var i = 0; i < ringCount; i++)
+        {
+            var ang = i / (float)ringCount * MathHelper.TwoPi + (float)(_rng.NextDouble() * 0.12);
+            _list.Add(new Particle
+            {
+                Position = pos,
+                Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * strength * 14f,
+                Life = 0.18f + (float)_rng.NextDouble() * 0.08f,
+                MaxLife = 0.26f,
+                Color = Color.White,
+                FadeColor = sparkColor,
+                Size = 1.5f,
+                GravityScale = 0f,
+                Drag = 6f,
+            });
+        }
+        // Debris chunks — heavy scorched-rock lumps lobbed out of the blast; full gravity,
+        // bounce on terrain, long life so they visibly rain back down around the crater.
+        var debrisCount = (int)(strength * 0.6f);
+        for (var i = 0; i < debrisCount; i++)
+        {
+            var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+            var shade = 55 + _rng.Next(50);
+            _list.Add(new Particle
+            {
+                Position = pos + Jitter(3f),
+                Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (strength * 4f + (float)_rng.NextDouble() * strength * 5f),
+                Life = 1.0f + (float)_rng.NextDouble() * 0.9f,
+                MaxLife = 1.9f,
+                Color = new Color(shade + 25, shade + 10, shade),
+                FadeColor = new Color(25, 20, 18),
+                Size = 2f + (float)_rng.NextDouble() * 1.6f,
+                GravityScale = 1.2f,
+                Drag = 0.3f,
+                CollideTiles = true,
+            });
+        }
         for (var i = 0; i < sparkCount; i++)
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
