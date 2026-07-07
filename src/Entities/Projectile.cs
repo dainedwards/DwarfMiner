@@ -249,16 +249,17 @@ public sealed class Projectile
                             {
                                 cells.SpawnDustInTile(tx, ty, chipped);
                                 physics.MarkDirty(tx, ty);
+                                particles?.EmitChips(planet.TileToWorld(tx, ty), chipped);
                             }
                         }
-                        Explode(planet, physics, cells);
+                        Explode(planet, physics, cells, particles);
                         return;
                     }
                     WallPiercesLeft--;   // one charge per wall entered, however thick
                     _inWall = true;
                 }
                 // Drill a visible puncture along the path through the rock.
-                CarveCrater(planet, physics, cells, 1, dust: false);
+                CarveCrater(planet, physics, cells, 1, particles, dust: false);
             }
             else
             {
