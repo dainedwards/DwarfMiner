@@ -2160,12 +2160,19 @@ public sealed class DwarfMinerGame : Game
 
         var depth = _run.Planet.Radius - (int)((_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize);
         var inv = _run.Player.Inventory;
-        // Top-left status: depth, titan HP, run meta. The toolbelt at the bottom of the
-        // screen now carries the per-tool readout, so we don't duplicate it here.
-        var status = $"DEPTH {depth}   TITAN HP {(int)_run.Titan.Health}/{(int)_run.Titan.MaxHealth}\n" +
+        // Top-left status: planet, ship progress, depth, titan HP, run meta. The toolbelt at
+        // the bottom of the screen carries the per-tool readout, so we don't duplicate it here.
+        var ship = _run.PadPos is null ? "NO PAD" : _run.ShipStage switch
+        {
+            0 => "PAD READY",
+            1 => "HULL BUILT",
+            2 => "ENGINE IN",
+            _ => "READY - PRESS L AT PAD",
+        };
+        var status = $"{_run.Def.Name.ToUpperInvariant()}   DEPTH {depth}   SHIP: {ship}   TITAN HP {(int)_run.Titan.Health}/{(int)_run.Titan.MaxHealth}\n" +
                      $"META: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
         var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE  Q/E WEAPONS\n" +
-                       "C CRAFT  T BEACON RECALL  L LAUNCH ROCKET  G GOD MODE  R RESTART";
+                       "C CRAFT  T BEACON RECALL  L LAUNCH SHIP  G GOD MODE";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _run.Player, (int)_run.Titan.Anger, status, controls);
         DrawInventoryPanel(inv);
         DrawToolbelt();
