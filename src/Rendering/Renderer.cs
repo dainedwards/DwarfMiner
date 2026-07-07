@@ -336,13 +336,13 @@ public sealed class Renderer
                 if (mg > 0)
                 {
                     if (!outerSky && Merges(mg, outerK))
-                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(outerK), horizontal: true, edge: 0);
+                        DitherEdge(centre, right, up, rotation, chord, hash, col, Tiles.BaseColor(outerK), horizontal: true, edge: 0);
                     if (!innerSky && Merges(mg, innerK))
-                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(innerK), horizontal: true, edge: 7);
+                        DitherEdge(centre, right, up, rotation, chord, hash, col, Tiles.BaseColor(innerK), horizontal: true, edge: 7);
                     if (!leftSky && Merges(mg, leftK))
-                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(leftK), horizontal: false, edge: 0);
+                        DitherEdge(centre, right, up, rotation, chord, hash, col, Tiles.BaseColor(leftK), horizontal: false, edge: 0);
                     if (!rightSky && Merges(mg, rightK))
-                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(rightK), horizontal: false, edge: 7);
+                        DitherEdge(centre, right, up, rotation, chord, hash, col, Tiles.BaseColor(rightK), horizontal: false, edge: 7);
                 }
 
                 // 8-neighbour ambient occlusion. Sample the 4 diagonal cells; if a corner has
