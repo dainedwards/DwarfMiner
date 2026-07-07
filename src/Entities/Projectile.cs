@@ -212,7 +212,7 @@ public sealed class Projectile
         }
     }
 
-    public void Update(float dt, Planet planet, Physics physics, Cells cells)
+    public void Update(float dt, Planet planet, Physics physics, Cells cells, Particles? particles = null)
     {
         // Thrown explosives arc — gravity pulls them down so the throw feels weighty. TNT is
         // a heavy satchel, so it drops harder than a dynamite stick. Other projectiles travel
