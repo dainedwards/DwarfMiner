@@ -1617,6 +1617,47 @@ public sealed class DwarfMinerGame : Game
                     _renderer.DrawRect(head, new Vector2(5f, 3f), new Color(220, 220, 220), ang);
                     break;
                 }
+                case ProjectileKind.Pistol:
+                    _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 240, 180));
+                    break;
+                case ProjectileKind.MachineGun:
+                {
+                    // Short tracer streak so held fire reads as a stream.
+                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
+                    _renderer.DrawRect(p.Position, new Vector2(5f, 1.2f), new Color(255, 210, 120), ang);
+                    break;
+                }
+                case ProjectileKind.Laser:
+                {
+                    // Energy beam segment: long red bolt with a white-hot core.
+                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
+                    _renderer.DrawRect(p.Position, new Vector2(18f, 2.2f), new Color(255, 70, 70, 200), ang);
+                    _renderer.DrawRect(p.Position, new Vector2(14f, 1f), new Color(255, 210, 210), ang);
+                    break;
+                }
+                case ProjectileKind.Rocket:
+                {
+                    // Finned round with a flickering exhaust flame at the tail.
+                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
+                    var fwd = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
+                    _renderer.DrawRect(p.Position, new Vector2(9f, 3f), new Color(180, 185, 200), ang);
+                    _renderer.DrawRect(p.Position + fwd * 4.5f, new Vector2(3f, 2f), new Color(200, 80, 60), ang);
+                    var flick = MathF.Sin(_runTime * 40f) * 0.5f + 0.5f;
+                    _renderer.DrawCircle(p.Position - fwd * 5.5f, 1.6f + flick * 1.2f, new Color(255, 170, 70));
+                    break;
+                }
+                case ProjectileKind.Tnt:
+                {
+                    // Strapped bundle of three sticks with a sparking fuse.
+                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
+                    _renderer.DrawRect(p.Position, new Vector2(6f, 5f), new Color(180, 45, 45), ang);
+                    _renderer.DrawRect(p.Position, new Vector2(6f, 1f), new Color(120, 25, 25), ang);
+                    _renderer.DrawRect(p.Position, new Vector2(1.4f, 5f), new Color(90, 70, 45), ang);
+                    var spark = MathF.Sin(_runTime * 60f) * 0.5f + 0.5f;
+                    var up2 = _planet.UpAt(p.Position);
+                    _renderer.DrawCircle(p.Position + up2 * 3.5f, 1f + spark * 0.8f, new Color(255, 230, 130));
+                    break;
+                }
                 default:
                     _renderer.DrawCircle(p.Position, p.Radius, Color.White);
                     break;
