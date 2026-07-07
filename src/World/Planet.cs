@@ -244,4 +244,40 @@ public sealed class Planet
                 yield return (x, y);
         }
     }
+
+    /// <summary>Serialize the full mutable tile state (foreground, damage, walls) for the
+    /// run save. Array lengths are derived from the static ring geometry, so only the raw
+    /// bytes are written.</summary>
+    public void WriteState(System.IO.BinaryWriter w)
+    {
+        var tiles = new byte[_totalTiles];
+        var walls = new byte[_totalTiles];
+        for (var i = 0; i < _totalTiles; i++)
+        {
+            tiles[i] = (byte)_tiles[i];
+            walls[i] = (byte)_wall[i];
+        }
+        w.Write(_totalTiles);
+        w.Write(tiles);
+        w.Write(_damage);
+        w.Write(walls);
+    }
+
+    /// <summary>Restore state written by <see cref="WriteState"/>. Throws on a geometry
+    /// mismatch (save from an incompatible build).</summary>
+    public void ReadState(System.IO.BinaryReader r)
+    {
+        var n = r.ReadInt32();
+        if (n != _totalTiles)
+            throw new System.IO.InvalidDataException($"planet tile count mismatch: {n} vs {_totalTiles}");
+        var tiles = r.ReadBytes(_totalTiles);
+        var damage = r.ReadBytes(_totalTiles);
+        var walls = r.ReadBytes(_totalTiles);
+        for (var i = 0; i < _totalTiles; i++)
+        {
+            _tiles[i] = (TileKind)tiles[i];
+            _damage[i] = damage[i];
+            _wall[i] = (TileKind)walls[i];
+        }
+    }
 }
