@@ -830,6 +830,41 @@ public sealed class Cells
         return result;
     }
 
+    /// <summary>Hazardous cell counts within a world-space radius — the body-contact probe the
+    /// player/creatures use to take lava/acid burn and gas choke. Same polar row/col walk as
+    /// <see cref="CollectInRadius"/>, counting only the three hazard materials.</summary>
+    public (int lava, int acid, int gas) SampleHazardsNear(Vector2 worldPos, float radius)
+    {
+        var rSq = radius * radius;
+        var (_, cy0) = WorldToCell(worldPos);
+        var radial = (float)Planet.TileSize / Density;
+        var rRows = (int)MathF.Ceiling(radius / radial) + 1;
+        var rel = worldPos - Planet.Center;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
+        int lava = 0, acid = 0, gas = 0;
+        for (var dy = -rRows; dy <= rRows; dy++)
+        {
+            var cy = cy0 + dy;
+            if (cy < 0 || cy >= Height) continue;
+            var n = _cellsAt[cy];
+            var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
+            var chord = MathHelper.TwoPi * ringRadius / n;
+            var rCols = (int)MathF.Ceiling(radius / MathF.Max(chord, 0.01f)) + 1;
+            var cx0 = (int)(ang / MathHelper.TwoPi * n);
+            for (var dx = -rCols; dx <= rCols; dx++)
+            {
+                var m = (Material)_mat[Idx(cx0 + dx, cy)];
+                if (m != Material.Lava && m != Material.Acid && m != Material.Gas) continue;
+                if (Vector2.DistanceSquared(CellToWorld(cx0 + dx, cy), worldPos) > rSq) continue;
+                if (m == Material.Lava) lava++;
+                else if (m == Material.Acid) acid++;
+                else gas++;
+            }
+        }
+        return (lava, acid, gas);
+    }
+
     /// <summary>Row window + camera polar coords for the view circle, shared by the culled
     /// draw/light passes. Iterating the whole grid stopped being an option at Density 8
     /// (~10M cells), so both passes walk only rows and arcs that can intersect the view.</summary>
