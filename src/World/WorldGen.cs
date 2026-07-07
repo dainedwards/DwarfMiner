@@ -35,7 +35,7 @@ public static class WorldGen
         {
             // Per-mountain height scale 0.5–1.5 multiplied against a 28–46 base — final
             // heights span ~14–69 tiles, so the planet has a mix of short and tall peaks.
-            var baseH = 28f + (float)rng.NextDouble() * 18f;
+            var baseH = (28f + (float)rng.NextDouble() * 18f) * def.MountainHeightScale;
             var scaleH = 0.5f + (float)rng.NextDouble() * 1.0f;
             mountains[i] = (
                 ang: (float)(rng.NextDouble() * MathHelper.TwoPi),
