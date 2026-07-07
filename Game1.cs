@@ -584,6 +584,7 @@ public sealed class DwarfMinerGame : Game
             case "dynamite":  if (_player.ShootCooldown <= 0 && (god || _player.Inventory.TryConsume("dynamite", 1))) FireDynamite(worldCursor); break;
             case "tnt":       if (_player.ShootCooldown <= 0 && (god || _player.Inventory.TryConsume("tnt", 1)))      FireTnt(worldCursor); break;
             case "poultice":  if (_player.Inventory.TryConsume("poultice", 1)) UseHealPotion(); break;
+            case "feast":     if (_player.Inventory.TryConsume("feast", 1))    UseFeast();      break;
             case "core_drill": if (_player.HasCoreDrill) TryCoreDrill(); break;
             case "sentry":    if (_player.Inventory.TryConsume("sentry", 1))   PlaceSentryAtFeet(); break;
             // Placeable build tiles — go through Player.TryPlaceBuildId so the passable / range
