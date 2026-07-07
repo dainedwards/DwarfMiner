@@ -121,6 +121,7 @@ public static class Tiles
         TileKind.Sapphire => new Color(50, 70, 170),
         TileKind.Diamond => new Color(180, 220, 230),
         TileKind.Crystal => new Color(130, 80, 170),
+        TileKind.FuelOre => new Color(45, 80, 70),
         TileKind.Core => new Color(255, 90, 40),
         TileKind.Support => new Color(150, 110, 70),
         TileKind.ReinforcedSupport => new Color(120, 105, 95),
