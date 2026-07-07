@@ -1317,9 +1317,11 @@ public sealed partial class DwarfMinerGame : Game
             var tp = _run.Titan.Position;
             var face = _run.Titan.Facing;
             var anger01 = MathHelper.Clamp(_run.Titan.Anger / 100f, 0f, 1f);
+            // Per-variant palette: calm→angry hide and spine-glow colours.
+            var (hideCalm, hideAngry, glowCalm, glowAngry) = TitanPalette(_run.Titan.Kind);
             var hide = _run.Titan.HitFlash > 0
                 ? Color.White
-                : Color.Lerp(new Color(48, 56, 50), new Color(120, 60, 50), anger01);   // dark mossy green → angry rust
+                : Color.Lerp(hideCalm, hideAngry, anger01);
             var hideDark = new Color(hide.R / 2, hide.G / 2, hide.B / 2);
             var hideLight = new Color(
                 Math.Clamp(hide.R + 38, 0, 255),
@@ -1329,8 +1331,8 @@ public sealed partial class DwarfMinerGame : Game
                 Math.Clamp(hide.R + 70, 0, 255),
                 Math.Clamp(hide.G + 60, 0, 255),
                 Math.Clamp(hide.B + 50, 0, 255));   // pale cream/yellow underbelly
-            var chitin = new Color(18, 14, 22);
-            var spineGlow = Color.Lerp(new Color(80, 130, 220), new Color(255, 90, 60), anger01);
+            var chitin = _run.Titan.Kind == TitanKind.Mecha ? new Color(30, 34, 44) : new Color(18, 14, 22);
+            var spineGlow = Color.Lerp(glowCalm, glowAngry, anger01);
 
             // === 1. Tail (drawn first, so the body covers its root) ===
             // Verlet chain; thickness tapers from base to tip. Trailing tip lights up as anger
