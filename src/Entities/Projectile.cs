@@ -179,13 +179,21 @@ public sealed class Projectile
                 break;
             case ProjectileKind.Pistol:
                 Radius = 1.6f;
+                MinePower = 3;
                 break;
             case ProjectileKind.MachineGun:
                 Radius = 1.3f;
+                MinePower = 1;               // weak per round, but the cadence adds up
                 break;
             case ProjectileKind.Laser:
                 Radius = 1.2f;
                 CreaturePierces = 3;         // burns through a short line of bodies
+                MinePower = 4;               // and scorches a decent bite out of the wall
+                break;
+            case ProjectileKind.LaserCannon:
+                Radius = 2f;
+                CreaturePierces = 6;         // lances a whole column of bodies
+                WallPiercesLeft = 24;        // drills through wall after wall after wall
                 break;
             case ProjectileKind.Rocket:
                 Radius = 2.5f;
