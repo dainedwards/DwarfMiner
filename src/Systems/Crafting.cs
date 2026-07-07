@@ -87,6 +87,8 @@ public static class Crafting
         // ─── Consumables ──────────────────────────────────────────────────────
         new("poultice", "Healing poultice (+30 HP, press H)",
             new Dictionary<string, int> { ["moss_stone"] = 3, ["dirt"] = 2 }),
+        new("feast", "Hearty feast (+60 HP) — cooked from harvested meat",
+            new Dictionary<string, int> { ["meat"] = 4, ["coal"] = 1 }),
         new("dynamite", "Dynamite (press Z to throw)",
             new Dictionary<string, int> { ["coal"] = 3, ["gravel"] = 4 }),
         new("tnt", "TNT satchel — short toss, huge blast",
