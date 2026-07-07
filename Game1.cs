@@ -934,8 +934,8 @@ public sealed class DwarfMinerGame : Game
         _particles.EmitImpact(_run.Planet.Center, ProjectileKind.Nuke);
         _run.Shake = MathF.Max(_run.Shake, 1.5f);
         _meta.Save();
-        _gameOver = true;
-        _gameOverReason = $"You pierced the core. Run time: {_run.RunTime:0.0}s. Press R to play again.";
+        _screen = GameScreen.GameOver;
+        _gameOverReason = $"You pierced the core. Run time: {_run.RunTime:0.0}s. Press R for the star map.";
     }
 
     /// <summary>Crafting menu input — opens with C, scrolls with up/down, crafts with Enter,
