@@ -1067,14 +1067,86 @@ public sealed partial class DwarfMinerGame : Game
             p.Oxygen = MathF.Max(0f, p.Oxygen - GasChokeOxygen * dt);
     }
 
-    /// <summary>Board and launch the completed ship — the escape ending. Needs all three
-    /// stages installed and the dwarf standing at the pad. Unlocks the next planet on the
-    /// star-map chain and banks the same meta bonuses the old rocket escape granted.</summary>
+    /// <summary>L at the finished pad: pour any mined fuel into the tanks, and once they're
+    /// full, fire the liftoff cinematic. Needs all three stages installed and the dwarf
+    /// standing at the pad. Fuel loads incrementally, so partial progress survives wandering
+    /// off to mine more.</summary>
     private void TryLaunchShip()
     {
+        if (_launching) return;
         if (_run.ShipStage < 3 || _run.PadPos is not { } pad) return;
         if ((_run.Player.Position - pad).Length() > 60f) return;
 
+        // Top up the tanks from carried fuel, capped at the launch requirement.
+        var need = FuelToLaunch - _run.ShipFuel;
+        if (need > 0)
+        {
+            var have = _run.Player.Inventory.Count("fuel");
+            var load = Math.Min(need, have);
+            if (load > 0 && _run.Player.Inventory.TryConsume("fuel", load))
+            {
+                _run.ShipFuel += load;
+                need -= load;
+                _particles.EmitDust(pad, 6f);
+            }
+        }
+
+        if (_run.ShipFuel < FuelToLaunch)
+        {
+            _toast = $"FUEL {_run.ShipFuel}/{FuelToLaunch} — MINE {FuelToLaunch - _run.ShipFuel} MORE";
+            _toastTimer = 2.5f;
+            return;
+        }
+
+        BeginLaunch(pad);
+    }
+
+    /// <summary>Kick off the liftoff cinematic from the pad. From here <see cref="UpdateLaunch"/>
+    /// drives the climb; <see cref="FinishLaunch"/> banks the escape once the ship clears the sky.</summary>
+    private void BeginLaunch(Vector2 pad)
+    {
+        _launching = true;
+        _launchElapsed = 0f;
+        _launchVel = 0f;
+        _launchShipPos = pad;
+        _launchUp = _run.Planet.UpAt(pad);
+    }
+
+    /// <summary>One frame of the liftoff climb: build thrust, ride the dwarf up with the ship,
+    /// spew exhaust, shake the screen, and hand off to <see cref="FinishLaunch"/> once the
+    /// rocket has cleared the surface.</summary>
+    private void UpdateLaunch(float dt)
+    {
+        _launchElapsed += dt;
+        // Thrust ramps in over the first moment, then holds — a slow, weighty liftoff building
+        // into a real climb rather than an instant jump.
+        _launchVel += 150f * dt;
+        _launchShipPos += _launchUp * _launchVel * dt;
+
+        // The dwarf rides the ship, so the camera tracks the ascent.
+        _run.Player.Position = _launchShipPos + _launchUp * 8f;
+        _run.Player.Velocity = Vector2.Zero;
+        _camera.Follow(_run.Player.Position, _launchUp, dt);
+
+        // Exhaust plume out of the nozzle, downward along local gravity.
+        _particles.EmitRocketExhaust(_launchShipPos - _launchUp * 2f, -_launchUp);
+        _run.Shake = MathF.Max(_run.Shake, 0.7f);
+
+        // Keep the world alive underneath the rising ship.
+        _run.Physics.Update(dt);
+        _particles.Update(dt, _run.Planet);
+        _run.Cells.Update(dt);
+        _run.RunTime += dt;
+
+        if (_launchElapsed > 3.4f) FinishLaunch();
+    }
+
+    /// <summary>The escape ending, reached once the ship has flown clear. Unlocks the next
+    /// planet on the star-map chain and banks the same meta bonuses the old rocket escape
+    /// granted.</summary>
+    private void FinishLaunch()
+    {
+        _launching = false;
         _meta.Escapes++;
         if (!_meta.PlanetsEscaped.Contains(_run.Def.Id)) _meta.PlanetsEscaped.Add(_run.Def.Id);
         var idx = PlanetDefs.IndexOf(_run.Def);
