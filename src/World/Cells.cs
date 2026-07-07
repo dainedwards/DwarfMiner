@@ -613,6 +613,104 @@ public sealed class Cells
         TileKind.Dirt or TileKind.Grass or TileKind.Gravel or
         TileKind.MossStone or TileKind.Snow or TileKind.Support;
 
+    /// <summary>Tiles acid can dissolve — the soft-to-medium set. Hard rock (granite/basalt/
+    /// obsidian) and ores resist it, so acid carves through dirt seams and stone but can't
+    /// chew an unbounded hole through the deep crust.</summary>
+    private static bool IsCorrodible(TileKind k) => k is
+        TileKind.Dirt or TileKind.Grass or TileKind.Gravel or TileKind.MossStone or
+        TileKind.Snow or TileKind.Stone or TileKind.Support;
+
+    /// <summary>Acid: corrode a touching soft tile now and then, otherwise flow like water.
+    /// Mirrors <see cref="TickLava"/>'s structure (eat-then-flow) but with no self-light and a
+    /// different tile set. Non-depleting like lava — it sleeps once hemmed with nothing left
+    /// to eat (see the sleep clause in <see cref="TickLiquid"/>).</summary>
+    private void TickAcid(int cx, int cy, float dt)
+    {
+        TryCorrode(InnerCell(cx, cy));
+        TryCorrode((cx + 1, cy));
+        TryCorrode((cx - 1, cy));
+        if (cy < Height - 1)
+        {
+            var oc = OuterCellCount(cx, cy);
+            for (var i = 0; i < oc; i++) TryCorrode(OuterCell(cx, cy, i));
+        }
+
+        if (_rng.Next(2) == 0) { _next.Add(Idx(cx, cy)); return; }
+        TickLiquid(cx, cy, dt);
+    }
+
+    private void TryCorrode((int cx, int cy) c)
+    {
+        // Slower than lava melt — acid sizzles a tile away over a couple of seconds.
+        if (_rng.Next(90) != 0) return;
+        if (c.cy < 0 || c.cy >= Height) return;
+        var tx = c.cy / Density;
+        var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
+        var k = Planet.Get(tx, ty);
+        if (!IsCorrodible(k)) return;
+        Planet.Set(tx, ty, TileKind.Sky);
+        SpawnInTile(tx, ty, Material.Smoke, Density / 2); // acrid fizz
+    }
+
+    private bool HasCorrodibleNeighbour(int cx, int cy)
+    {
+        if (IsCorrodible(TileAt(cx + 1, cy)) || IsCorrodible(TileAt(cx - 1, cy))) return true;
+        var (icx, icy) = InnerCell(cx, cy);
+        if (IsCorrodible(TileAt(icx, icy))) return true;
+        if (cy < Height - 1)
+        {
+            var oc = OuterCellCount(cx, cy);
+            for (var i = 0; i < oc; i++)
+            {
+                var (ocx, ocy) = OuterCell(cx, cy, i);
+                if (IsCorrodible(TileAt(ocx, ocy))) return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>Flammable gas: rise outward like smoke, but flash-burn to smoke the moment it
+    /// touches lava — a gas pocket you tunnel lava into (or vent onto the surface toward a lava
+    /// flow) goes up in a puff. Lingers far longer than smoke so pockets survive to be found.</summary>
+    private void TickGas(int cx, int cy)
+    {
+        // Ignition: any adjacent lava sets it off. Convert to smoke; neighbours are woken by
+        // the tile change, so an adjacent gas cell ignites on its own next tick — the burn
+        // walks through the cloud one ring per tick.
+        if (FindNeighbour(cx, cy, Material.Lava) >= 0)
+        {
+            var bi = Idx(cx, cy);
+            _mat[bi] = (byte)Material.Smoke;
+            ClearKinetics(bi);
+            _next.Add(bi);
+            WakeNeighbors(cx, cy);
+            return;
+        }
+
+        // Rising movement — outward (away from core), same probes as smoke.
+        if (cy < Height - 1)
+        {
+            var oc = OuterCellCount(cx, cy);
+            var (ocx, ocy) = OuterCell(cx, cy, _rng.Next(oc));
+            if (TryMoveTo(cx, cy, ocx, ocy)) return;
+            var first = _rng.Next(2) == 0 ? 1 : -1;
+            if (TryMoveTo(cx, cy, ocx + first, ocy)) return;
+            if (TryMoveTo(cx, cy, ocx - first, ocy)) return;
+            // Trapped under a roof: seep sideways so a pocket spreads along the ceiling.
+            if (TryMoveTo(cx, cy, cx + first, cy)) return;
+            if (TryMoveTo(cx, cy, cx - first, cy)) return;
+        }
+        // Very slow dissipation so pockets persist until disturbed (smoke fades ~50× faster).
+        if (_rng.Next(2200) == 0)
+        {
+            var i = Idx(cx, cy);
+            _mat[i] = 0;
+            ClearKinetics(i);
+            WakeNeighbors(cx, cy);
+        }
+        else _next.Add(Idx(cx, cy));
+    }
+
     /// <summary>Tile kind under the given cell (Sky when off-grid).</summary>
     private TileKind TileAt(int cx, int cy) =>
         (cy < 0 || cy >= Height) ? TileKind.Sky : Planet.Get(cy / Density, WrapX(cx, _cellsAt[cy]) / Density);
