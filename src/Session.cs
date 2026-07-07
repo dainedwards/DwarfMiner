@@ -41,5 +41,9 @@ public sealed class Session
     public Vector2? PadPos;
     public int ShipStage;
 
+    /// <summary>Fuel units loaded into the ship. The rocket only lifts off once this reaches
+    /// the launch requirement; refuelling pulls mined "fuel" out of the inventory.</summary>
+    public int ShipFuel;
+
     public Session(PlanetDef def) => Def = def;
 }
