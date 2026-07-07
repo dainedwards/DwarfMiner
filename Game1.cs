@@ -87,20 +87,26 @@ public sealed class DwarfMinerGame : Game
     protected override void Initialize()
     {
         _meta = MetaSave.Load();
-        StartNewRun();
+        // DM_AUTOSTART=<planet-id|1> skips the star map and jumps straight into a run —
+        // keeps DM_AUTOSHOT-driven gameplay verification working without menu input.
+        if (Environment.GetEnvironmentVariable("DM_AUTOSTART") is { Length: > 0 } auto)
+            StartNewRun(PlanetDefs.ById(auto));
         base.Initialize();
     }
 
-    private void StartNewRun()
+    private void StartNewRun(PlanetDef def)
     {
         var seed = (int)DateTime.Now.Ticks;
-        _run.Planet = WorldGen.Generate(seed);
+        _run = new Session(def);
+        // Ship-stage recipes (nav core cost) vary per planet — rebuild the crafting table.
+        Crafting.SetPlanet(def);
+        _run.Planet = WorldGen.Generate(seed, def);
         _run.Cells = new Cells(_run.Planet);
         _run.Physics = new Physics(_run.Planet, _run.Cells);
-        // Lava seeding: any cave (Sky tile) within 45% of the planet radius gets filled with
-        // lava. So the inner half of the planet — from roughly the middle layer inward — has
-        // lava pooled in any cavities, with the densest lava near the Core.
-        _run.Cells.FillSkyTilesWithin(_run.Planet.Radius * 0.45f, Material.Lava);
+        // Lava seeding: any cave (Sky tile) within the def's lava fraction of the planet
+        // radius gets filled with lava — volcanic worlds flood far shallower cavities.
+        if (def.LavaFillFrac > 0f)
+            _run.Cells.FillSkyTilesWithin(_run.Planet.Radius * def.LavaFillFrac, Material.Lava);
 
         // Water seeding: world gen recorded lake-basin and reservoir tiles; pour the cells in
         // now. Water is always sim cells (never solid tiles), so it settles, flows into player
