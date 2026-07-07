@@ -365,24 +365,8 @@ public sealed partial class DwarfMinerGame : Game
             _run.Shake = MathF.Max(_run.Shake, 1.0f);
         }
 
-        // Spawn creatures inside caves. Cap counts cave dwellers only — surface/sky fauna
-        // have their own population loop below.
-        _run.SpawnTimer -= dt;
-        if (_run.SpawnTimer <= 0 && CountKindsNear(550f, cave: true) < _run.Def.CaveSpawnCap)
-        {
-            TrySpawnCreature();
-            _run.SpawnTimer = 2.3f + (float)Random.Shared.NextDouble() * 1.7f;
-        }
-
-        // Fauna upkeep: keep the surface grazed and the sky populated. Slow cadence — these
-        // are ambience, not a threat escalation.
-        _run.FaunaTimer -= dt;
-        if (_run.FaunaTimer <= 0)
-        {
-            _run.FaunaTimer = 6f + (float)Random.Shared.NextDouble() * 4f;
-            if (CountKindsNear(700f, surface: true) < 7) TrySpawnSurfaceAnimal();
-            if (CountKindsNear(700f, sky: true) < 6) TrySpawnSkyAnimal();
-        }
+        // Population upkeep — cave dwellers, surface herds, sky flyers (see SpawnDirector).
+        SpawnDirector.Update(dt, _run);
 
         // Update entities. Creatures that have drifted far outside the player's neighbourhood
         // are recycled — they'd never be met again, they eat sim time, and every recycled
