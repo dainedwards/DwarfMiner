@@ -1513,7 +1513,7 @@ public sealed partial class DwarfMinerGame : Game
         var status = $"{_run.Def.Name.ToUpperInvariant()}   DEPTH {depth}   SHIP: {ship}   TITAN HP {(int)_run.Titan.Health}/{(int)_run.Titan.MaxHealth}\n" +
                      $"META: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
         var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE  Q/E WEAPONS\n" +
-                       "C CRAFT  T BEACON RECALL  L LAUNCH SHIP  G GOD MODE";
+                       "C CRAFT  T BEACON RECALL  L LAUNCH SHIP  F5 SAVE  G GOD MODE";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _run.Player, (int)_run.Titan.Anger, status, controls);
         if (_toastTimer > 0)
             _renderer.DrawText(_toast,
