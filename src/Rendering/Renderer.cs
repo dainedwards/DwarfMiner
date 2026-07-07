@@ -689,24 +689,38 @@ public sealed class Renderer
     public void DrawHudBars(int viewportWidth, int viewportHeight, Player player, int titanAnger, string status, string controls)
     {
         _sb.Begin(samplerState: SamplerState.PointClamp);
-        // Health bar
         var barW = 220; var barH = 14;
+
+        // Health bar
         _sb.Draw(_pixel, new Rectangle(12, 12, barW, barH), new Color(40, 10, 10));
-        var hp = (int)(barW * MathHelper.Clamp(player.Health / 100f, 0f, 1f));
+        var hp = (int)(barW * MathHelper.Clamp(player.Health / player.MaxHealth, 0f, 1f));
         _sb.Draw(_pixel, new Rectangle(12, 12, hp, barH), new Color(220, 60, 60));
         _sb.Draw(_pixel, new Rectangle(12, 12, barW, 1), Color.Black);
         _sb.Draw(_pixel, new Rectangle(12, 12 + barH - 1, barW, 1), Color.Black);
         _font.Draw(_sb, "HP", new Vector2(barW + 18, 13), Color.White, scale: 1);
 
-        // Anger bar
-        _sb.Draw(_pixel, new Rectangle(12, 32, barW, barH), new Color(40, 30, 10));
-        var ang = (int)(barW * MathHelper.Clamp(titanAnger / 100f, 0f, 1f));
-        _sb.Draw(_pixel, new Rectangle(12, 32, ang, barH), new Color(240, 140, 40));
+        // Oxygen bar — cyan, flashing to a warning red as the supply runs low.
+        var oxFrac = MathHelper.Clamp(player.Oxygen / player.EffectiveMaxOxygen, 0f, 1f);
+        var oxFill = (int)(barW * oxFrac);
+        var oxLow = oxFrac < 0.25f;
+        var oxColor = oxLow
+            ? Color.Lerp(new Color(120, 180, 210), new Color(230, 70, 60), MathF.Sin(Time * 8f) * 0.5f + 0.5f)
+            : new Color(90, 190, 220);
+        _sb.Draw(_pixel, new Rectangle(12, 32, barW, barH), new Color(12, 30, 38));
+        _sb.Draw(_pixel, new Rectangle(12, 32, oxFill, barH), oxColor);
         _sb.Draw(_pixel, new Rectangle(12, 32, barW, 1), Color.Black);
         _sb.Draw(_pixel, new Rectangle(12, 32 + barH - 1, barW, 1), Color.Black);
-        _font.Draw(_sb, "TITAN ANGER", new Vector2(barW + 18, 33), Color.White, scale: 1);
+        _font.Draw(_sb, "AIR", new Vector2(barW + 18, 33), Color.White, scale: 1);
 
-        _font.Draw(_sb, status, new Vector2(12, 56), Color.White, scale: 1);
+        // Anger bar
+        _sb.Draw(_pixel, new Rectangle(12, 52, barW, barH), new Color(40, 30, 10));
+        var ang = (int)(barW * MathHelper.Clamp(titanAnger / 100f, 0f, 1f));
+        _sb.Draw(_pixel, new Rectangle(12, 52, ang, barH), new Color(240, 140, 40));
+        _sb.Draw(_pixel, new Rectangle(12, 52, barW, 1), Color.Black);
+        _sb.Draw(_pixel, new Rectangle(12, 52 + barH - 1, barW, 1), Color.Black);
+        _font.Draw(_sb, "TITAN ANGER", new Vector2(barW + 18, 53), Color.White, scale: 1);
+
+        _font.Draw(_sb, status, new Vector2(12, 76), Color.White, scale: 1);
         _font.Draw(_sb, controls, new Vector2(12, viewportHeight - 56), new Color(200, 200, 220), scale: 1);
         _sb.End();
     }
