@@ -869,19 +869,9 @@ public sealed partial class DwarfMinerGame : Game
         return surfaceRings - ringsFromCenter;
     }
 
-    // Oxygen tuning. Above AirDepth (a few tiles into the ground) the surface air refills the
-    // supply; below it the drain ramps linearly to MaxDrain at DeepDepth. God mode never
-    // suffocates. Numbers chosen so a base 100-air dwarf can reach the mid-crust ore band and
-    // return, while the deep gem/diamond bands genuinely require the air-tank upgrade.
-    private const float AirDepth = 6f;
-    private const float DeepDepth = 120f;
-    private const float OxygenRefillRate = 45f;
-    private const float OxygenMaxDrain = 7.5f;
-    private const float SuffocationDps = 6f;
-
-    /// <summary>Advance the air supply: refill near the surface, drain with depth, and bleed
-    /// HP once it's empty. Skipped in god mode (kept topped up so re-entering survival is
-    /// never an instant suffocation).</summary>
+    /// <summary>Advance the air supply: refill near the surface, drain with depth (see
+    /// <see cref="OxygenRules"/>), and bleed HP once it's empty. Skipped in god mode (kept
+    /// topped up so re-entering survival is never an instant suffocation).</summary>
     private void TickOxygen(float dt)
     {
         var p = _run.Player;
@@ -893,21 +883,15 @@ public sealed partial class DwarfMinerGame : Game
         }
 
         var depth = DepthBelowSurface();
-        if (depth <= AirDepth)
-        {
-            p.Oxygen = MathF.Min(max, p.Oxygen + OxygenRefillRate * dt);
-        }
+        if (OxygenRules.AtSurfaceAir(depth))
+            p.Oxygen = MathF.Min(max, p.Oxygen + OxygenRules.RefillRate * dt);
         else
-        {
-            var t = MathHelper.Clamp((depth - AirDepth) / (DeepDepth - AirDepth), 0f, 1f);
-            var drain = OxygenMaxDrain * t * _run.Def.OxygenDrainScale;
-            p.Oxygen = MathF.Max(0f, p.Oxygen - drain * dt);
-        }
+            p.Oxygen = MathF.Max(0f, p.Oxygen - OxygenRules.DrainPerSecond(depth, _run.Def.OxygenDrainScale) * dt);
 
         if (p.Oxygen <= 0f)
         {
             // Suffocation ignores armor — no plate stops you drowning in rock.
-            p.Health -= SuffocationDps * dt;
+            p.Health -= OxygenRules.SuffocationDps * dt;
             // Occasional gasp puff so the cause of death reads on-screen.
             if (Random.Shared.NextDouble() < dt * 3f) _particles.EmitDust(p.Position, 3f);
         }
