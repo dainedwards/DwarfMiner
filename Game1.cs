@@ -890,85 +890,13 @@ public sealed class DwarfMinerGame : Game
         }
     }
 
-    /// <summary>Spend a recipe's cost and apply its output. Permanent upgrades flip a flag on
-    /// the player; placeable / consumable / ammo recipes deposit the matching id into the
-    /// inventory. Returns silently if the player can't afford or the upgrade is already owned.</summary>
-    private void ApplyCraft(Recipe r)
+    /// <summary>Install the next ship stage at the pad — the crafted stage goes straight
+    /// into the world build site, never through the inventory.</summary>
+    private void InstallShipStage()
     {
-        // Block double-craft of one-time upgrades. Pickaxe tiers are gated by the *current*
-        // tier so you can only step up sequentially: II requires tier 1, III requires tier 2, etc.
-        switch (r.Id)
-        {
-            case "pickaxe_ii":   if (_run.Player.PickaxeTier >= 2) return; break;
-            case "pickaxe_iii":  if (_run.Player.PickaxeTier >= 3 || _run.Player.PickaxeTier < 2) return; break;
-            case "pickaxe_iv":   if (_run.Player.PickaxeTier >= 4 || _run.Player.PickaxeTier < 3) return; break;
-            case "drill":        if (_run.Player.HasDrill)   return; break;
-            case "hammer":       if (_run.Player.HasHammer)  return; break;
-            case "lantern":      if (_run.Player.HasLantern) return; break;
-            case "armor":        if (_run.Player.HasArmor)   return; break;
-            case "chitin_armor": if (_run.Player.HasArmor)   return; break;
-            case "core_drill":   if (_run.Player.HasCoreDrill) return; break;
-            case "cannon":       if (_run.HasCannon)         return; break;
-            case "pistol":          if (_run.Player.HasPistol)         return; break;
-            case "machine_gun":     if (_run.Player.HasMachineGun)     return; break;
-            case "laser":           if (_run.Player.HasLaser)          return; break;
-            case "laser_cannon":    if (_run.Player.HasLaserCannon)    return; break;
-            case "rocket_launcher": if (_run.Player.HasRocketLauncher) return; break;
-            // Ship build chain: pad needs open sky overhead and no existing pad; stages are
-            // strictly sequential and must be crafted standing at the pad.
-            case "launch_pad":  if (_run.PadPos is not null || !OpenToSky(_run.Player.Position)) return; break;
-            case "ship_hull":   if (_run.ShipStage != 0 || !NearPad()) return; break;
-            case "ship_engine": if (_run.ShipStage != 1 || !NearPad()) return; break;
-            case "ship_nav":    if (_run.ShipStage != 2 || !NearPad()) return; break;
-        }
-
-        if (!Crafting.TryPay(r, _run.Player.Inventory)) return;
-
-        switch (r.Id)
-        {
-            // Pickaxe tiers — there's only one pickaxe slot ("pickaxe"), already on the belt
-            // from spawn. Crafting just bumps the tier; the icon updates automatically because
-            // Icons.GetForSlot keys on PickaxeTier.
-            case "pickaxe_ii":  _run.Player.PickaxeTier = 2; break;
-            case "pickaxe_iii": _run.Player.PickaxeTier = 3; break;
-            case "pickaxe_iv":  _run.Player.PickaxeTier = 4; break;
-            // Permanent active tools — flip the flag, auto-equip a slot, and stash a marker
-            // entry in inventory so the panel surfaces them when not on the belt. The marker
-            // is only displayed (filtered out by DrawInventoryPanel when the belt holds it)
-            // and never consumed by TryConsume — count stays at 1 for the run.
-            case "drill":       _run.Player.HasDrill     = true; _run.Player.Inventory.Add("drill", 1);      _run.Player.Toolbelt.AutoEquip("drill");      break;
-            case "hammer":      _run.Player.HasHammer    = true; _run.Player.Inventory.Add("hammer", 1);     _run.Player.Toolbelt.AutoEquip("hammer");     break;
-            case "core_drill":  _run.Player.HasCoreDrill = true; _run.Player.Inventory.Add("core_drill", 1); _run.Player.Toolbelt.AutoEquip("core_drill"); break;
-            case "cannon":      _run.HasCannon           = true; _run.Player.Inventory.Add("cannon", 1);     _run.Player.Toolbelt.AutoEquip("cannon");     break;
-            case "pistol":          _run.Player.HasPistol         = true; _run.Player.Inventory.Add("pistol", 1);          _run.Player.Toolbelt.AutoEquip("pistol");          break;
-            case "machine_gun":     _run.Player.HasMachineGun     = true; _run.Player.Inventory.Add("machine_gun", 1);     _run.Player.Toolbelt.AutoEquip("machine_gun");     break;
-            case "laser":           _run.Player.HasLaser          = true; _run.Player.Inventory.Add("laser", 1);           _run.Player.Toolbelt.AutoEquip("laser");           break;
-            case "laser_cannon":    _run.Player.HasLaserCannon    = true; _run.Player.Inventory.Add("laser_cannon", 1);    _run.Player.Toolbelt.AutoEquip("laser_cannon");    break;
-            case "rocket_launcher": _run.Player.HasRocketLauncher = true; _run.Player.Inventory.Add("rocket_launcher", 1); _run.Player.Toolbelt.AutoEquip("rocket_launcher"); break;
-            // Rockets craft in threes — a launcher shot costs real resources but not a
-            // whole crafting trip each.
-            case "rocket": _run.Player.Inventory.Add("rocket", 3); break;
-            // Passive permanent upgrades — no slot, no inventory entry. Just a flag.
-            case "lantern":     _run.Player.HasLantern = true; break;
-            case "armor":       _run.Player.HasArmor   = true; break;
-            case "chitin_armor": _run.Player.HasArmor  = true; break;   // same plating, hunted materials
-            // Ship stages install into the world immediately — nothing enters the inventory.
-            case "launch_pad":  PlaceLaunchPad(); break;
-            case "ship_hull":
-            case "ship_engine":
-            case "ship_nav":
-                _run.ShipStage++;
-                if (_run.PadPos is { } sp) _particles.EmitDust(sp, 12f);
-                _run.Shake = MathF.Max(_run.Shake, 0.35f);
-                break;
-            // Everything else is a stockable item: the recipe id is the inventory id. The
-            // first-craft also auto-equips an empty slot so the player can use it immediately
-            // — subsequent crafts just stock more.
-            default:
-                _run.Player.Inventory.Add(r.Id, 1);
-                _run.Player.Toolbelt.AutoEquip(r.Id);
-                break;
-        }
+        _run.ShipStage++;
+        if (_run.PadPos is { } sp) _particles.EmitDust(sp, 12f);
+        _run.Shake = MathF.Max(_run.Shake, 0.35f);
     }
 
     /// <summary>Drop a sentry just above the player's feet so the dwarf doesn't end up
