@@ -38,7 +38,7 @@ public static class Combat
     /// pierces or detonates. Terrain impact has already truncated the segment, so a round
     /// that died on a wall still credits the bodies it passed through before hitting it.</summary>
     private static void SweepBodies(Projectile p, List<Creature> creatures, Titan? titan,
-        Planet planet, Physics physics, Cells cells)
+        Planet planet, Physics physics, Cells cells, Particles? particles)
     {
         var seg = p.Position - p.PrevPosition;
         var segLenSq = seg.LengthSquared();
