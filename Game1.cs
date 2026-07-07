@@ -397,7 +397,7 @@ public sealed class DwarfMinerGame : Game
         for (var i = _projectiles.Count - 1; i >= 0; i--)
         {
             var p = _projectiles[i];
-            p.Update(dt, _planet, _physics, _cells);
+            p.Update(dt, _planet, _physics, _cells, _particles);
             _particles.EmitTrail(p);   // rocket exhaust, fuse sparks, beam motes, …
 
             // Body hits (creatures + titan): Combat sweeps the frame's travel segment so fast
