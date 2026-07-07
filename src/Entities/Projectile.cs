@@ -274,16 +274,16 @@ public sealed class Projectile
             // Fuse-class explosives (dynamite/TNT) carve their crater on fuse-out the same
             // way they would on contact — otherwise a stick that lands gracefully and times
             // out would just disappear without an explosion mark.
-            if (ExplodesOnFuse) CarveCrater(planet, physics, cells, CraterTiles);
+            if (ExplodesOnFuse) CarveCrater(planet, physics, cells, CraterTiles, particles);
         }
     }
 
     /// <summary>Kill the projectile and carve its full crater at the current position. Called
     /// on terrain impact, and by Combat when a contact explosive detonates on a body.</summary>
-    public void Explode(Planet planet, Physics physics, Cells cells)
+    public void Explode(Planet planet, Physics physics, Cells cells, Particles? particles = null)
     {
         Dead = true;
-        CarveCrater(planet, physics, cells, CraterTiles);
+        CarveCrater(planet, physics, cells, CraterTiles, particles);
     }
 
     /// <summary>Blast a roughly circular hole of the given tile radius around Position.
