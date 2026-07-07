@@ -136,6 +136,8 @@ public static class RunSave
             {
                 Velocity = new Vector2(r.ReadSingle(), r.ReadSingle()),
                 Health = r.ReadSingle(),
+                Oxygen = r.ReadSingle(),
+                HasAirTank = r.ReadBoolean(),
                 PickaxeTier = r.ReadInt32(),
                 HasDrill = r.ReadBoolean(), HasHammer = r.ReadBoolean(), HasLantern = r.ReadBoolean(),
                 HasArmor = r.ReadBoolean(), HasCoreDrill = r.ReadBoolean(),
