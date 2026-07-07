@@ -54,6 +54,7 @@ public static class RunSave
             w.Write(run.RunTime);
             w.Write(run.HasCannon);
             w.Write(run.ShipStage);
+            w.Write(run.ShipFuel);
             w.Write(run.PadPos.HasValue);
             if (run.PadPos is { } pad) { w.Write(pad.X); w.Write(pad.Y); }
 
