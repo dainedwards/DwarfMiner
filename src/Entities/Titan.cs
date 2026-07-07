@@ -469,7 +469,7 @@ public sealed class Titan
             }
             return;
         }
-        if (!IsAggro || SpecialCooldown > 0f || !Grounded) return;
+        if (!IsAggro || SpecialCooldown > 0f || !Standing()) return;
         if ((playerPos - Position).Length() > 700f) return;
         var u = _planet.UpAt(Position);
         var right = new Vector2(-u.Y, u.X);
