@@ -19,6 +19,7 @@ public sealed class Renderer
     private readonly PixelFont _font;
     private readonly Lighting _lighting;
     private readonly Texture2D _tileAtlas;
+    private readonly Texture2D _stars;
 
     public Renderer(GraphicsDevice gd)
     {
@@ -32,6 +33,7 @@ public sealed class Renderer
         _lighting = new Lighting(gd);
         TileAtlas.Build(gd);
         _tileAtlas = TileAtlas.Texture;
+        _stars = MakeStarfield(gd, 256);
     }
 
     /// <summary>Kinds whose tile art stays hand-authored + animated in DrawWorld (supports,
