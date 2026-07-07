@@ -651,6 +651,66 @@ public sealed class DwarfMinerGame : Game
         _player.ShootCooldown = 0.18f;
     }
 
+    /// <summary>Pistol: the crafted sidearm — twice the bullet's punch at half the cadence.</summary>
+    private void FirePistol(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 480f, 14f, 1.5f, ProjectileKind.Pistol));
+        _player.ShootCooldown = 0.32f;
+    }
+
+    /// <summary>Machine gun: weak rounds at a blistering cadence with a small random spread,
+    /// so held fire hoses an area rather than drilling one pixel.</summary>
+    private void FireMachineGun(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.14f;
+        var c = MathF.Cos(spread);
+        var s = MathF.Sin(spread);
+        dir = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 460f, 4f, 1.2f, ProjectileKind.MachineGun));
+        _player.ShootCooldown = 0.06f;
+    }
+
+    /// <summary>Laser: near-instant energy bolt that pierces up to three creatures. No
+    /// crater — it cooks flesh, not rock.</summary>
+    private void FireLaser(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 900f, 18f, 0.6f, ProjectileKind.Laser));
+        _player.ShootCooldown = 0.14f;
+    }
+
+    /// <summary>Rocket: straight-flying launcher round; explodes on contact with a real
+    /// crater. Ammo consumption is handled by the dispatcher (god mode fires free).</summary>
+    private void FireRocket(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        _projectiles.Add(new Projectile(_player.Position + dir * 8f, dir * 250f, 60f, 2.5f, ProjectileKind.Rocket));
+        _player.ShootCooldown = 0.75f;
+        _shake = MathF.Max(_shake, 0.3f);
+    }
+
+    /// <summary>TNT: a heavy satchel charge. Barely throwable — a short weighty lob with a
+    /// long fuse — but the biggest non-nuke blast in the game. Placement tool, not artillery.</summary>
+    private void FireTnt(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        var up = _planet.UpAt(_player.Position);
+        _projectiles.Add(new Projectile(_player.Position + dir * 5f, dir * 70f + up * 50f, 120f, 2.5f, ProjectileKind.Tnt));
+        _player.ShootCooldown = 0.6f;
+    }
+
     /// <summary>Fire the cannon. Consumes the highest-tier shell in inventory before falling
     /// back to the regular cannon round. Per-shell stats are kept here so the dispatch stays
     /// declarative.</summary>
