@@ -148,6 +148,29 @@ public sealed class Projectile
                 CreaturePierces = -1;        // skewers everything in its path
                 WallPiercesLeft = 8;          // travels through stone like a railgun
                 break;
+            case ProjectileKind.Pistol:
+                Radius = 1.6f;
+                break;
+            case ProjectileKind.MachineGun:
+                Radius = 1.3f;
+                break;
+            case ProjectileKind.Laser:
+                Radius = 1.2f;
+                CreaturePierces = 3;         // burns through a short line of bodies
+                break;
+            case ProjectileKind.Rocket:
+                Radius = 2.5f;
+                CraterTiles = 3;
+                ExplosionRadius = 42f;
+                CreaturePierces = -1;
+                break;
+            case ProjectileKind.Tnt:
+                Radius = 3f;
+                CraterTiles = 6;
+                ExplosionRadius = 70f;
+                ExplodesOnFuse = true;
+                CreaturePierces = -1;
+                break;
         }
     }
 
