@@ -204,6 +204,7 @@ public sealed class DwarfMinerGame : Game
         var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         var keys = Keyboard.GetState();
         var mouse = Mouse.GetState();
+        _totalTime += dt;
 
         if (keys.IsKeyDown(Keys.Escape)) Exit();
 
@@ -211,17 +212,26 @@ public sealed class DwarfMinerGame : Game
         // holds the fully composited frame (post lighting/bloom/vignette).
         if (Pressed(keys, _prevKeys, Keys.F12)) _screenshotPending = true;
 
-        // Headless verification hook: DM_AUTOSHOT=<seconds> takes a screenshot at that run
+        // Headless verification hook: DM_AUTOSHOT=<seconds> takes a screenshot at that wall
         // time and every 5s after — lets tooling capture frames without input access.
-        if (_autoShotAt <= _run.RunTime)
+        if (_autoShotAt <= _totalTime)
         {
             _screenshotPending = true;
             _autoShotAt += 5f;
         }
 
-        if (_gameOver)
+        if (_screen == GameScreen.Overworld)
         {
-            if (Pressed(keys, _prevKeys, Keys.R)) StartNewRun();
+            UpdateOverworld(keys);
+            _prevKeys = keys; _prevMouse = mouse;
+            base.Update(gameTime);
+            return;
+        }
+
+        if (_screen == GameScreen.GameOver)
+        {
+            // R returns to the star map — a fresh attempt (or the next planet) is picked there.
+            if (Pressed(keys, _prevKeys, Keys.R)) _screen = GameScreen.Overworld;
             _prevKeys = keys; _prevMouse = mouse;
             base.Update(gameTime);
             return;
