@@ -775,6 +775,73 @@ public sealed class Renderer
         return tex;
     }
 
+    /// <summary>Tileable pixel-art night sky: deep space base, a few barely-there nebula
+    /// washes (toroidal so the tile wraps seamlessly), and three brightness tiers of
+    /// single-pixel stars — the brightest tier gets tiny cross glints. Drawn with PointWrap
+    /// at integer zoom, so it stays chunky like the rest of the world.</summary>
+    private static Texture2D MakeStarfield(GraphicsDevice gd, int size)
+    {
+        var rng = new Random(929);
+        var data = new Color[size * size];
+        var baseCol = new Color(9, 11, 20);
+        for (var i = 0; i < data.Length; i++) data[i] = baseCol;
+
+        // Nebula washes: soft toroidal blobs a handful of shades above the base, some
+        // nudged violet, some teal. Enough to keep big sky areas from reading flat.
+        for (var n = 0; n < 26; n++)
+        {
+            var cx = rng.Next(size);
+            var cy = rng.Next(size);
+            var rad = 10 + rng.Next(22);
+            var violet = rng.Next(2) == 0;
+            for (var dy = -rad; dy <= rad; dy++)
+            {
+                for (var dx = -rad; dx <= rad; dx++)
+                {
+                    var dSq = dx * dx + dy * dy;
+                    if (dSq > rad * rad) continue;
+                    var f = 1f - (float)Math.Sqrt(dSq) / rad;
+                    var amp = (int)(f * f * 7f);
+                    if (amp <= 0) continue;
+                    var idx = ((cy + dy + size) % size) * size + (cx + dx + size) % size;
+                    var c = data[idx];
+                    data[idx] = violet
+                        ? new Color(Math.Min(255, c.R + amp), c.G, Math.Min(255, c.B + amp + 2))
+                        : new Color(c.R, Math.Min(255, c.G + amp), Math.Min(255, c.B + amp + 2));
+                }
+            }
+        }
+
+        void Set(int x, int y, Color c) => data[((y + size) % size) * size + (x + size) % size] = c;
+        for (var s = 0; s < 150; s++)
+        {
+            var x = rng.Next(size);
+            var y = rng.Next(size);
+            var tier = rng.Next(10);
+            if (tier < 6)
+            {
+                Set(x, y, new Color(74, 80, 108));
+            }
+            else if (tier < 9)
+            {
+                Set(x, y, new Color(140, 150, 182));
+            }
+            else
+            {
+                Set(x, y, new Color(224, 228, 244));
+                var glint = new Color(96, 102, 134);
+                Set(x + 1, y, glint);
+                Set(x - 1, y, glint);
+                Set(x, y + 1, glint);
+                Set(x, y - 1, glint);
+            }
+        }
+
+        var tex = new Texture2D(gd, size, size);
+        tex.SetData(data);
+        return tex;
+    }
+
     private static Texture2D MakeCircle(GraphicsDevice gd, int size)
     {
         var tex = new Texture2D(gd, size, size);
