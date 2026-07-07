@@ -354,6 +354,10 @@ public static class SimTest
                 loaded.Titan.Position == run.Titan.Position
                 && System.Math.Abs(loaded.Titan.Health - 1234f) < 0.01f
                 && System.Math.Abs(loaded.Titan.Anger - 42f) < 0.01f);
+            Check("save: titan kind + egg state survive",
+                loaded.Titan.Kind == TitanKind.Hydra && !loaded.Titan.Hatched
+                && System.Math.Abs(loaded.Titan.EggTimer - 222f) < 0.01f
+                && System.Math.Abs(loaded.Titan.EggHealth - 333f) < 0.01f);
             Check("save: sentries survive",
                 loaded.Sentries.Count == 1 && System.Math.Abs(loaded.Sentries[0].Health - 17f) < 0.01f);
 
