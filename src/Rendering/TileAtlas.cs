@@ -28,13 +28,18 @@ public static class TileAtlas
 {
     public const int Res = 16;          // atlas pixels per tile edge (2× world resolution)
     public const int VariantCount = 4;
+    /// <summary>Erosion-mask combinations per variant: a 4-bit cardinal air-exposure mask
+    /// (bit 0 = outer, 1 = inner, 2 = left, 3 = right). Mask 0 is the untouched interior;
+    /// exposed edges are baked with ragged alpha cut-outs and rounded corners, so block
+    /// silhouettes read organic instead of razor-square — erosion, not edge paint.</summary>
+    public const int MaskCount = 16;
 
     public static Texture2D Texture { get; private set; } = null!;
 
-    public static Rectangle Source(TileKind k, int variant)
+    public static Rectangle Source(TileKind k, int variant, int mask = 0)
     {
         var v = ((variant % VariantCount) + VariantCount) % VariantCount;
-        return new Rectangle(v * Res, (int)k * Res, Res, Res);
+        return new Rectangle((v * MaskCount + (mask & 15)) * Res, (int)k * Res, Res, Res);
     }
 
     public static void Build(GraphicsDevice gd)
