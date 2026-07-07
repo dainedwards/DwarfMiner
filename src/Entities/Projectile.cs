@@ -128,6 +128,7 @@ public sealed class Projectile
         {
             case ProjectileKind.Bullet:
                 Radius = 1.5f;
+                MinePower = 2;
                 break;
             case ProjectileKind.Cannon:
                 Radius = 3f;
