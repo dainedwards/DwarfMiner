@@ -152,7 +152,7 @@ public sealed partial class DwarfMinerGame : Game
         _run.SpawnTimer = 6f;
         _run.FaunaTimer = 8f;
         _gameOverReason = "";
-        _craftingOpen = false;
+        _craftingOpen = true; // TEMP: verification only — force menu open for screenshot
         _craftingCursor = 0;
         _carry = null;
         _screen = GameScreen.Playing;
