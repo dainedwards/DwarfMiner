@@ -797,30 +797,6 @@ public sealed class DwarfMinerGame : Game
         _projectiles.Add(new Projectile(muzzle, dir * Sentry.BulletSpeed, Sentry.BulletDamage, 1.0f, ProjectileKind.Bullet));
     }
 
-    /// <summary>Apply radial damage from an explosive projectile that just died. The crater
-    /// (terrain dig) is handled inside Projectile; this is the creature/Titan damage step
-    /// so AoE shells can hurt a swarm even after passing through them.</summary>
-    private void ApplyExplosionDamage(Projectile p)
-    {
-        var rSq = p.ExplosionRadius * p.ExplosionRadius;
-        foreach (var c in _creatures)
-        {
-            if ((c.Position - p.Position).LengthSquared() < rSq)
-            {
-                c.Health -= p.Damage * 0.5f;   // half of direct hit (already took full on contact)
-                c.HitFlash = 0.15f;
-                if (p.BurnSeconds > 0f) c.BurnSeconds = MathF.Max(c.BurnSeconds, p.BurnSeconds);
-                if (p.FreezeSeconds > 0f) c.FreezeSeconds = MathF.Max(c.FreezeSeconds, p.FreezeSeconds);
-            }
-        }
-        if ((_titan.Position - p.Position).LengthSquared() < (rSq + _titan.Radius * _titan.Radius))
-        {
-            _titan.Health -= p.Damage * 0.4f;
-            _titan.HitFlash = 0.15f;
-            _titan.OnDamage();
-        }
-    }
-
     /// <summary>Beacon recall — instant teleport to the most recent placed beacon. Visual
     /// feedback: dust burst at the depart point, sparkles at the arrival point, brief shake.</summary>
     private void BeaconRecall(Vector2 dest)
