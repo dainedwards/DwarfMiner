@@ -368,6 +368,29 @@ public static class SimTest
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "DwarfMiner", "run.sav");
 
+    /// <summary>Air-supply rules: refill at the surface, monotonic drain with depth, and
+    /// thin-atmosphere planets draining faster than the temperate starter.</summary>
+    private static void TestOxygen()
+    {
+        Check("oxygen: surface breathes (no drain)",
+            OxygenRules.AtSurfaceAir(0f) && OxygenRules.DrainPerSecond(2f, 1f) == 0f);
+        Check("oxygen: deep drains", OxygenRules.DrainPerSecond(60f, 1f) > 0f);
+        Check("oxygen: drain rises with depth",
+            OxygenRules.DrainPerSecond(100f, 1f) > OxygenRules.DrainPerSecond(40f, 1f));
+        Check("oxygen: drain caps at MaxDrain",
+            System.Math.Abs(OxygenRules.DrainPerSecond(500f, 1f) - OxygenRules.MaxDrain) < 0.001f);
+
+        var verdant = PlanetDefs.ById("verdant").OxygenDrainScale;
+        var slag = PlanetDefs.ById("slag").OxygenDrainScale;
+        Check("oxygen: thin-atmosphere world drains faster",
+            OxygenRules.DrainPerSecond(80f, slag) > OxygenRules.DrainPerSecond(80f, verdant));
+
+        // A full base tank at a steady mid-depth should last a meaningful but finite dive.
+        var seconds = Player.BaseMaxOxygen / OxygenRules.DrainPerSecond(70f, 1f);
+        Check($"oxygen: base tank lasts a sensible mid-depth window ({seconds:0}s)",
+            seconds is > 15f and < 90f);
+    }
+
     private static void Check(string name, bool ok, string detail = "")
     {
         if (!ok) _failed = true;
