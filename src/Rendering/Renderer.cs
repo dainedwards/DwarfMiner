@@ -586,18 +586,42 @@ public sealed class Renderer
         return ng > 0 && ng != myGroup;
     }
 
-    /// <summary>Stipple 1-px dots of a neighbouring material's colour along one tile edge
-    /// (8×8 reference coords) — every other pixel, phase-flipped by tile hash so runs of
-    /// boundary tiles don't line their dots up into a solid stripe.</summary>
-    private void DitherEdge(Vector2 centre, Vector2 right, Vector2 up, float rotation,
+    /// <summary>True when material a visually overlaps material b at a shared boundary:
+    /// the softer material's texture bites into the harder one (dirt into stone, snow over
+    /// rock), with enum order as the tie-break so the choice is deterministic — exactly one
+    /// side of any mergeable boundary grows teeth.</summary>
+    private static bool Bites(TileKind a, TileKind b)
+    {
+        var ha = Tiles.Hardness(a);
+        var hb = Tiles.Hardness(b);
+        return ha != hb ? ha < hb : (int)a < (int)b;
+    }
+
+    /// <summary>Paint a ragged tooth-row of the softer neighbouring material's colour along
+    /// this tile's edge (8×8 reference coords): roughly two thirds of the positions get a
+    /// 1-px tooth, the occasional one runs 2 px deep, all hash-stable with a slight colour
+    /// jitter per tooth. The neighbour appears to finger into this tile, so the boundary
+    /// reads as interlocking materials with no outline or brightness change.</summary>
+    private void BiteEdge(Vector2 centre, Vector2 right, Vector2 up, float rotation,
         float chord, int hash, Color c, bool horizontal, int edge)
     {
-        var phase = (hash >> 8) & 1;
-        for (var i = 0; i < 4; i++)
+        var inward = edge == 0 ? 1 : -1;
+        for (var i = 0; i < 8; i++)
         {
-            var a = i * 2 + phase;
-            if (horizontal) DrawDeco(centre, right, up, rotation, chord, a, edge, 1, 1, c);
-            else DrawDeco(centre, right, up, rotation, chord, edge, a, 1, 1, c);
+            var bits = (hash >> (i * 3)) & 7;
+            if (bits < 3) continue;          // gap — keeps the row ragged
+            var len = bits == 7 ? 2 : 1;     // occasional deeper finger
+            var jit = (((hash >> (i * 2 + 5)) & 7) - 3) * 2;
+            var tooth = new Color(
+                Math.Clamp(c.R + jit, 0, 255),
+                Math.Clamp(c.G + jit, 0, 255),
+                Math.Clamp(c.B + jit, 0, 255));
+            for (var l = 0; l < len; l++)
+            {
+                var off = edge + inward * l;
+                if (horizontal) DrawDeco(centre, right, up, rotation, chord, i, off, 1, 1, tooth);
+                else DrawDeco(centre, right, up, rotation, chord, off, i, 1, 1, tooth);
+            }
         }
     }
 
