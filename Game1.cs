@@ -27,6 +27,7 @@ public sealed class DwarfMinerGame : Game
     private Cells _cells = null!;
 
     private readonly List<Creature> _creatures = new();
+    private readonly List<Corpse> _corpses = new();
     private readonly List<Projectile> _projectiles = new();
     private readonly List<FallingBoulder> _boulders = new();
     private readonly List<Sentry> _sentries = new();
