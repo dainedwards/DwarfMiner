@@ -92,10 +92,14 @@ public sealed partial class DwarfMinerGame : Game
     protected override void Initialize()
     {
         _meta = MetaSave.Load();
-        // DM_AUTOSTART=<planet-id|1> skips the star map and jumps straight into a run —
-        // keeps DM_AUTOSHOT-driven gameplay verification working without menu input.
+        // DM_AUTOSTART=<planet-id|resume> skips the star map and jumps straight into a run
+        // (or resumes the suspend save) — keeps DM_AUTOSHOT-driven gameplay verification
+        // working without menu input.
         if (Environment.GetEnvironmentVariable("DM_AUTOSTART") is { Length: > 0 } auto)
-            StartNewRun(PlanetDefs.ById(auto));
+        {
+            if (auto == "resume") ResumeRun();
+            else StartNewRun(PlanetDefs.ById(auto));
+        }
         base.Initialize();
     }
 
