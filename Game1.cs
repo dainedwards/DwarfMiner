@@ -692,6 +692,7 @@ public sealed class DwarfMinerGame : Game
         var dir = worldCursor - _player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
+        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 220, 110));
         _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 420f, 6f, 1.4f, ProjectileKind.Bullet));
         _player.ShootCooldown = 0.18f;
     }
@@ -702,6 +703,7 @@ public sealed class DwarfMinerGame : Game
         var dir = worldCursor - _player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
+        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 235, 160));
         _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 480f, 14f, 1.5f, ProjectileKind.Pistol));
         _player.ShootCooldown = 0.32f;
     }
@@ -717,6 +719,7 @@ public sealed class DwarfMinerGame : Game
         var c = MathF.Cos(spread);
         var s = MathF.Sin(spread);
         dir = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 210, 120));
         _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 460f, 4f, 1.2f, ProjectileKind.MachineGun));
         _player.ShootCooldown = 0.06f;
     }
@@ -728,6 +731,7 @@ public sealed class DwarfMinerGame : Game
         var dir = worldCursor - _player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
+        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 90, 90));
         _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 900f, 18f, 0.6f, ProjectileKind.Laser));
         _player.ShootCooldown = 0.14f;
     }
@@ -740,6 +744,7 @@ public sealed class DwarfMinerGame : Game
         var dir = worldCursor - _player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
+        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(120, 225, 255));
         _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 800f, 40f, 1.0f, ProjectileKind.LaserCannon));
         _player.ShootCooldown = 0.55f;
         _shake = MathF.Max(_shake, 0.25f);
@@ -752,6 +757,7 @@ public sealed class DwarfMinerGame : Game
         var dir = worldCursor - _player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
+        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 160, 70));
         _projectiles.Add(new Projectile(_player.Position + dir * 8f, dir * 250f, 60f, 2.5f, ProjectileKind.Rocket));
         _player.ShootCooldown = 0.75f;
         _shake = MathF.Max(_shake, 0.3f);
@@ -777,6 +783,7 @@ public sealed class DwarfMinerGame : Game
         var dir = worldCursor - _player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
+        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 130, 50));
         if (_player.Inventory.TryConsume("ammo_diamond", 1))
         {
             _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 300f, 80f, 1.8f, ProjectileKind.CannonDiamond));
@@ -810,6 +817,7 @@ public sealed class DwarfMinerGame : Game
         var dir = worldCursor - _player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
+        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 90, 230));
         _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 240f, 1500f, 3f, ProjectileKind.Nuke));
         _player.ShootCooldown = 0.6f;
     }
@@ -837,6 +845,7 @@ public sealed class DwarfMinerGame : Game
         var dir = worldCursor - _player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
+        _particles.EmitMuzzleFlash(_player.Position + dir * 7f, dir, new Color(255, 200, 130));
         _projectiles.Add(new Projectile(_player.Position + dir * 6f, dir * 520f, 600f, 2.2f, ProjectileKind.Harpoon));
         _player.ShootCooldown = 0.8f;
         _shake = MathF.Max(_shake, 0.5f);
@@ -846,6 +855,7 @@ public sealed class DwarfMinerGame : Game
     /// turrets feel like supplementary support, not an instant clear button.</summary>
     private void FireSentryShot(Vector2 muzzle, Vector2 dir)
     {
+        _particles.EmitMuzzleFlash(muzzle, dir, new Color(255, 220, 110));
         _projectiles.Add(new Projectile(muzzle, dir * Sentry.BulletSpeed, Sentry.BulletDamage, 1.0f, ProjectileKind.Bullet));
     }
 

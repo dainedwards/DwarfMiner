@@ -577,6 +577,56 @@ public sealed class Particles
         }
     }
 
+    /// <summary>Tile-coloured chips flung out of an explosion crater — the actual destroyed
+    /// material visibly blasting away. Direction is biased outward from the epicentre so the
+    /// crater reads as erupting. Ore tiles add a glowing speckle so blasted seams sparkle.</summary>
+    public void EmitCraterChips(Vector2 pos, TileKind kind, Vector2 outward)
+    {
+        var baseColor = Tiles.BaseColor(kind);
+        var fade = Color.Multiply(baseColor, 0.35f);
+        if (outward.LengthSquared() < 0.01f) outward = Jitter(1f);
+        outward.Normalize();
+        for (var i = 0; i < 2; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * 1.1f;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(outward.X * c - outward.Y * s, outward.X * s + outward.Y * c);
+            _list.Add(new Particle
+            {
+                Position = pos + Jitter(2f),
+                Velocity = d * (60f + (float)_rng.NextDouble() * 90f),
+                Life = 0.7f + (float)_rng.NextDouble() * 0.6f,
+                MaxLife = 1.3f,
+                Color = baseColor,
+                FadeColor = fade,
+                Size = 1.5f + (float)_rng.NextDouble(),
+                GravityScale = 1f,
+                Drag = 0.5f,
+                CollideTiles = true,
+            });
+        }
+        if (Tiles.IsOre(kind))
+        {
+            var spec = Tiles.OreSpeckle(kind);
+            _list.Add(new Particle
+            {
+                Position = pos,
+                Velocity = outward * (80f + (float)_rng.NextDouble() * 60f) + Jitter(20f),
+                Life = 0.4f + (float)_rng.NextDouble() * 0.3f,
+                MaxLife = 0.7f,
+                Color = spec,
+                FadeColor = Color.Black,
+                Size = 1f,
+                GravityScale = 0.5f,
+                Drag = 1f,
+                LightRadius = 6f,
+                LightColor = spec,
+                CollideTiles = true,
+            });
+        }
+    }
+
     /// <summary>Short forward cone of hot sparks + a one-frame flash at a gun's muzzle.
     /// Called once per shot; colour matches the weapon's projectile glow.</summary>
     public void EmitMuzzleFlash(Vector2 pos, Vector2 dir, Color color)
