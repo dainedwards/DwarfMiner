@@ -86,6 +86,9 @@ public sealed partial class DwarfMinerGame : Game
         TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
         Window.Title = "Dwarf Miner";
         Window.AllowUserResizing = false;
+        // Item table lambdas capture `this` (they read _run at call time), so this can't be
+        // a field initializer — C# forbids `this` there.
+        _items = BuildItems();
     }
 
     protected override void Initialize()
