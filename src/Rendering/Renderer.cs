@@ -279,28 +279,13 @@ public sealed class Renderer
                 var leftSky  = leftK == TileKind.Sky;
                 var rightSky = rightK == TileKind.Sky;
 
-                // Edge framing: every air-facing edge gets a dark 1-px outline, and dug-out
-                // undersides an inner shade. No light accents — a bright lip highlighted
-                // every block as its own rectangle (worst on mountain-top staircases); the
-                // dark outline alone carries the silhouette, and darker always reads as
-                // shadow rather than paint.
-                var outline = new Color((int)(col.R * 0.45f), (int)(col.G * 0.45f), (int)(col.B * 0.45f));
-                var under = new Color(
-                    Math.Clamp(col.R - 26, 0, 255),
-                    Math.Clamp(col.G - 26, 0, 255),
-                    Math.Clamp(col.B - 26, 0, 255));
-                if (outerSky) DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, outline);
-                if (innerSky)
-                {
-                    DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, outline);
-                    DrawDeco(centre, right, up, rotation, chord, 0, 6, 8, 1, under);
-                }
-                if (leftSky)  DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, outline);
-                if (rightSky) DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, outline);
+                // No edge decoration at air boundaries — outlines and highlights both read
+                // as painted rectangles per block; the world lighting pass and the dim
+                // back-walls carry the block-vs-空 contrast on their own.
 
                 // Grass hugs exposed edges, Terraria-style: the green wraps down exposed
                 // sides and along a dug-out underside instead of showing bare dirt in
-                // cross-section. Drawn over the outline so the silhouette stays green.
+                // cross-section.
                 if (k == TileKind.Grass)
                 {
                     var wrap = new Color(95, 145, 65);
@@ -309,21 +294,23 @@ public sealed class Renderer
                     if (innerSky) DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, wrap);
                 }
 
-                // Merge dithering: where two different material families touch (dirt seam in
-                // stone, gravel pocket, snow cap), stipple this tile's edge with the
-                // neighbour's colour. Both sides stipple with each other's colour, giving a
-                // 2-px interleaved transition — the cheap version of Terraria's merge frames.
+                // Material separation — no painted boundary line. Where two families meet,
+                // the softer material's colour bites a ragged tooth-row into the harder
+                // tile's edge (dirt fingers into stone, snow over rock), so the join reads
+                // as the materials interlocking — worldgen-style jaggedness — rather than
+                // any drawn edge. Each tile only paints inside its own bounds: teeth pushed
+                // into a neighbour's area would be overdrawn when that neighbour renders.
                 var mg = MergeGroup(k);
                 if (mg > 0)
                 {
-                    if (!outerSky && Merges(mg, outerK))
-                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(outerK), horizontal: true, edge: 0);
-                    if (!innerSky && Merges(mg, innerK))
-                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(innerK), horizontal: true, edge: 7);
-                    if (!leftSky && Merges(mg, leftK))
-                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(leftK), horizontal: false, edge: 0);
-                    if (!rightSky && Merges(mg, rightK))
-                        DitherEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(rightK), horizontal: false, edge: 7);
+                    if (!outerSky && Merges(mg, outerK) && Bites(outerK, k))
+                        BiteEdge(centre, right, up, rotation, chord, hash, Tiles.BaseColor(outerK), horizontal: true, edge: 0);
+                    if (!innerSky && Merges(mg, innerK) && Bites(innerK, k))
+                        BiteEdge(centre, right, up, rotation, chord, hash ^ 0x2D, Tiles.BaseColor(innerK), horizontal: true, edge: 7);
+                    if (!leftSky && Merges(mg, leftK) && Bites(leftK, k))
+                        BiteEdge(centre, right, up, rotation, chord, hash ^ 0x53, Tiles.BaseColor(leftK), horizontal: false, edge: 0);
+                    if (!rightSky && Merges(mg, rightK) && Bites(rightK, k))
+                        BiteEdge(centre, right, up, rotation, chord, hash ^ 0x71, Tiles.BaseColor(rightK), horizontal: false, edge: 7);
                 }
 
                 // 8-neighbour ambient occlusion. Sample the 4 diagonal cells; if a corner has
