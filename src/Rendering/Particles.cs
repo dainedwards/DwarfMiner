@@ -498,8 +498,37 @@ public sealed class Particles
             LightRadius = strength * 3.5f,
             LightColor = sparkColor,
         });
+        // Fireball — a cluster of fat white-yellow→orange→red blobs boiling out of the
+        // centre. Tinted slightly toward the shell's colour so elemental blasts keep their
+        // identity, but the body of every explosion reads as fire.
+        var fireCount = (int)(strength * 0.6f);
+        for (var i = 0; i < fireCount; i++)
+        {
+            var hot = _rng.Next(3) switch
+            {
+                0 => new Color(255, 245, 160),
+                1 => new Color(255, 180, 70),
+                _ => new Color(255, 110, 40),
+            };
+            var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+            _list.Add(new Particle
+            {
+                Position = pos + Jitter(3f),
+                Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (strength * 2.5f + (float)_rng.NextDouble() * strength * 3f),
+                Life = 0.25f + (float)_rng.NextDouble() * 0.25f,
+                MaxLife = 0.5f,
+                Color = Color.Lerp(hot, sparkColor, 0.3f),
+                FadeColor = new Color(120, 25, 10),
+                Size = 2.5f + (float)_rng.NextDouble() * 2.5f,
+                GravityScale = -0.1f,
+                Drag = 2.5f,
+                LightRadius = 12f,
+                LightColor = Color.Lerp(hot, sparkColor, 0.3f),
+            });
+        }
         // Shockwave ring — evenly spaced fast radial particles with hard drag, so a crisp
         // circle expands a short distance and dies. No gravity: the wavefront stays round.
+        // White-hot cooling to fire orange.
         var ringCount = (int)(strength * 1.3f);
         for (var i = 0; i < ringCount; i++)
         {
@@ -510,8 +539,8 @@ public sealed class Particles
                 Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * strength * 14f,
                 Life = 0.18f + (float)_rng.NextDouble() * 0.08f,
                 MaxLife = 0.26f,
-                Color = Color.White,
-                FadeColor = sparkColor,
+                Color = new Color(255, 250, 220),
+                FadeColor = Color.Lerp(new Color(255, 150, 50), sparkColor, 0.4f),
                 Size = 1.5f,
                 GravityScale = 0f,
                 Drag = 6f,
