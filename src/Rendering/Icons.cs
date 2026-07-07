@@ -60,6 +60,12 @@ public static class Icons
         _icons["rail"]       = BuildRail(gd);
         _icons["support"]    = BuildSupport(gd);
         _icons["reinforced_support"] = BuildReinforcedSupport(gd);
+        _icons["pistol"]          = BuildPistol(gd);
+        _icons["machine_gun"]     = BuildMachineGun(gd);
+        _icons["laser"]           = BuildLaser(gd);
+        _icons["rocket_launcher"] = BuildRocketLauncher(gd);
+        _icons["rocket"]          = BuildRocket(gd);
+        _icons["tnt"]             = BuildTnt(gd);
         _icons["ammo_silver"]   = BuildAmmo(gd, new Color(220, 225, 240), new Color(150, 155, 170));
         _icons["ammo_ruby"]     = BuildAmmo(gd, new Color(255, 110, 90), new Color(160, 30, 40));
         _icons["ammo_sapphire"] = BuildAmmo(gd, new Color(140, 180, 255), new Color(40, 70, 160));
