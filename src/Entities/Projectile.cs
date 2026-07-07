@@ -35,8 +35,12 @@ public enum ProjectileKind
     Pistol,
     /// <summary>Machine-gun round: weak, fast, sprayed with a small random spread.</summary>
     MachineGun,
-    /// <summary>Energy bolt: very fast, no crater, pierces several creatures in a line.</summary>
+    /// <summary>Energy bolt: very fast, pierces several creatures in a line and chips the
+    /// tile it finally hits.</summary>
     Laser,
+    /// <summary>Heavy energy lance: drills straight through many walls and bodies alike,
+    /// vaporising a thin tunnel along its path. The mining-laser endgame gun.</summary>
+    LaserCannon,
     /// <summary>Launcher round: straight flight, explodes on contact with a proper crater.</summary>
     Rocket,
     /// <summary>Heavy satchel charge: barely throwable (strong gravity, short lob), long
