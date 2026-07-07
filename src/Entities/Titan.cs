@@ -358,6 +358,12 @@ public sealed class Titan
         return Position + up * 26f + right * (Facing * 130f);
     }
 
+    /// <summary>True when the boss is planted on the ground (probing past the hover height,
+    /// unlike the shallow <see cref="Grounded"/> body-collision probe which rarely reaches the
+    /// terrain under a hovering body). Gates the launch of grounded specials — fire breath and
+    /// the Kong leap — and reads false mid-leap/mid-fall so they can't re-trigger in the air.</summary>
+    private bool Standing() => ProbeSolid(_planet, Position - _planet.UpAt(Position) * (BodyHover + 12f));
+
     /// <summary>Godzilla: a ~1.1s cone of flame cells sprayed from the mouth toward the player.</summary>
     private void TickFireBreath(float dt, Vector2 playerPos, List<TitanProjectile> shots)
     {
