@@ -270,6 +270,16 @@ public static class SimTest
             }
         }
 
+        // --- 7. Fuel ore: a fresh world must seed enough mineable fuel to actually launch.
+        {
+            var fuelPlanet = WorldGen.Generate(31);
+            var fuelTiles = 0;
+            foreach (var (x, y) in fuelPlanet.AllTiles())
+                if (fuelPlanet.Get(x, y) == TileKind.FuelOre) fuelTiles++;
+            Check($"fuel: world seeds mineable fuel ore ({fuelTiles} tiles)",
+                fuelTiles >= DwarfMinerGame.FuelToLaunch, $"{fuelTiles} tiles");
+        }
+
         TestRunSave();
         TestOxygen();
         TestHazards();
