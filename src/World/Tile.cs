@@ -144,6 +144,7 @@ public static class Tiles
         TileKind.Sapphire => new Color(140, 180, 255),
         TileKind.Diamond => new Color(255, 255, 255),
         TileKind.Crystal => new Color(230, 180, 255),
+        TileKind.FuelOre => new Color(120, 255, 190),
         _ => Color.White,
     };
 
