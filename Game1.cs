@@ -2388,12 +2388,3 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 }
-
-internal static class CraftingExtensions
-{
-    public static Recipe? FirstOrDefaultRecipe(this IReadOnlyList<Recipe> all, string id)
-    {
-        foreach (var r in all) if (r.Id == id) return r;
-        return null;
-    }
-}
