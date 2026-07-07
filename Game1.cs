@@ -961,6 +961,7 @@ public sealed class DwarfMinerGame : Game
             case "hammer":       if (_player.HasHammer)  return; break;
             case "lantern":      if (_player.HasLantern) return; break;
             case "armor":        if (_player.HasArmor)   return; break;
+            case "chitin_armor": if (_player.HasArmor)   return; break;
             case "core_drill":   if (_player.HasCoreDrill) return; break;
             case "cannon":       if (_hasCannon)         return; break;
             case "pistol":          if (_player.HasPistol)         return; break;
