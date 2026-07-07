@@ -43,6 +43,18 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>Transient HUD toast ("RUN SAVED") — drawn top-centre while the timer runs.</summary>
     private string _toast = "";
     private float _toastTimer;
+
+    /// <summary>Fuel units the ship must hold before it can lift off.</summary>
+    public const int FuelToLaunch = 12;
+
+    /// <summary>Liftoff cinematic state. While <see cref="_launching"/> is set, normal play is
+    /// suspended: the rocket climbs along <see cref="_launchUp"/> under <see cref="_launchVel"/>,
+    /// trailing exhaust, until it clears the sky and the run ends.</summary>
+    private bool _launching;
+    private float _launchElapsed;
+    private float _launchVel;
+    private Vector2 _launchShipPos;
+    private Vector2 _launchUp;
     /// <summary>Wall-clock seconds since launch — drives the DM_AUTOSHOT capture schedule so
     /// tooling can screenshot any screen, including the star map before a run starts.</summary>
     private float _totalTime;
