@@ -865,6 +865,33 @@ public sealed class Cells
         return (lava, acid, gas);
     }
 
+    /// <summary>Flash-burn any gas cells within a small world-space radius (Godzilla's breath
+    /// igniting a pocket). Gas → smoke, waking neighbours so the burn chains through the cloud
+    /// on subsequent ticks exactly like a lava-triggered ignition.</summary>
+    public void IgniteGasNear(Vector2 worldPos, float radius)
+    {
+        var (cx0, cy0) = WorldToCell(worldPos);
+        var radial = (float)Planet.TileSize / Density;
+        var rRows = (int)MathF.Ceiling(radius / radial) + 1;
+        var rSq = radius * radius;
+        for (var dy = -rRows; dy <= rRows; dy++)
+        {
+            var cy = cy0 + dy;
+            if (cy < 0 || cy >= Height) continue;
+            for (var dx = -rRows; dx <= rRows; dx++)
+            {
+                var cx = cx0 + dx;
+                var idx = Idx(cx, cy);
+                if ((Material)_mat[idx] != Material.Gas) continue;
+                if (Vector2.DistanceSquared(CellToWorld(cx, cy), worldPos) > rSq) continue;
+                _mat[idx] = (byte)Material.Smoke;
+                ClearKinetics(idx);
+                _next.Add(idx);
+                WakeNeighbors(cx, cy);
+            }
+        }
+    }
+
     /// <summary>Row window + camera polar coords for the view circle, shared by the culled
     /// draw/light passes. Iterating the whole grid stopped being an option at Density 8
     /// (~10M cells), so both passes walk only rows and arcs that can intersect the view.</summary>
