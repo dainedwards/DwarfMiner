@@ -387,7 +387,7 @@ public sealed class Titan
             if (SpecialState <= 0f) SpecialCooldown = 6f;
             return;
         }
-        if (!IsAggro || SpecialCooldown > 0f || !Grounded) return;
+        if (!IsAggro || SpecialCooldown > 0f || !Standing()) return;
         if ((playerPos - Position).Length() > 560f) return;
         SpecialState = 1.1f;
     }
