@@ -286,9 +286,10 @@ public sealed class DwarfMinerGame : Game
         var screenMouse = new Vector2(mouse.X, mouse.Y);
         var worldCursor = _camera.ScreenToWorld(screenMouse);
 
-        // Number-row 1..9 selects a toolbelt slot. Holding the slot key (or LMB on the slot in
-        // the HUD) drives the selected slot's action. Selection is sticky across frames.
-        for (var s = 0; s < Toolbelt.SlotCount; s++)
+        // Number-row 1..9 selects the first nine toolbelt slots (the belt is wider than the
+        // number row; slots past 9 are reached by wheel, Q/E, or clicking the HUD). Holding
+        // the slot key (or LMB on the slot in the HUD) drives the selected slot's action.
+        for (var s = 0; s < Math.Min(9, Toolbelt.SlotCount); s++)
         {
             var k = Keys.D1 + s;
             if (Pressed(keys, _prevKeys, k)) _player.Toolbelt.Selected = s;
@@ -299,6 +300,10 @@ public sealed class DwarfMinerGame : Game
             var dir = mouse.ScrollWheelValue > _prevMouse.ScrollWheelValue ? -1 : 1;
             _player.Toolbelt.Selected = (_player.Toolbelt.Selected + dir + Toolbelt.SlotCount) % Toolbelt.SlotCount;
         }
+        // Q/E cycle through *weapons only*, skipping tools and placeables — the fast way to
+        // switch guns mid-fight now that the armoury outgrows the number row.
+        if (Pressed(keys, _prevKeys, Keys.Q)) CycleWeapon(-1);
+        if (Pressed(keys, _prevKeys, Keys.E)) CycleWeapon(+1);
 
         // Drag-and-drop UI input runs on click edges and updates the carry state. If the click
         // landed on a UI element, we swallow it so the world doesn't also receive it as an LMB
