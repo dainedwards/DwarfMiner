@@ -334,6 +334,7 @@ public sealed partial class DwarfMinerGame : Game
         }
 
         _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, verticalAxis);
+        TickOxygen(dt);
 
         // Camera follows player, rotating so up = away from planet center.
         var up = _run.Planet.UpAt(_run.Player.Position);
