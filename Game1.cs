@@ -477,8 +477,8 @@ public sealed class DwarfMinerGame : Game
         {
             _meta.TitansDefeated++;
             _meta.Save();
-            _gameOver = true;
-            _gameOverReason = $"You felled the Titan! Run time: {_run.RunTime:0.0}s. Press R to play again.";
+            _screen = GameScreen.GameOver;
+            _gameOverReason = $"You felled the Titan! Run time: {_run.RunTime:0.0}s. Press R for the star map.";
         }
 
         for (var i = _run.Boulders.Count - 1; i >= 0; i--)
