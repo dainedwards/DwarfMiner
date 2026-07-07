@@ -16,7 +16,7 @@ namespace DwarfMiner.Systems;
 public static class RunSave
 {
     // Bump when the format or the planet/cell geometry changes — old saves are discarded.
-    private const int Version = 3;
+    private const int Version = 4;
     private const uint Magic = 0x444D5253; // "DMRS"
 
     private static string SavePath
