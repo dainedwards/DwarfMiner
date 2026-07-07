@@ -233,17 +233,23 @@ public static class WorldGen
                     var oreN = SampleNoise(oreNoise, wx * 0.31f, wy * 0.31f);
                     // Depth bonus lowers thresholds so deeper tiles produce more ore overall.
                     // Rarer tiers (gems) get a smaller bonus to keep them genuinely rare.
+                    // The planet def's OreBias lowers thresholds further for signature ores.
                     var boost = MathHelper.Clamp((depth - 6f) / 110f, 0f, 1f) * 0.10f;
+                    float Bias(TileKind ore)
+                    {
+                        foreach (var (o, b) in def.OreBias) if (o == ore) return b;
+                        return 0f;
+                    }
 
-                    if (oreN > 0.88f - boost && depth > 6f) k = TileKind.CoalOre;
-                    if (oreN > 0.92f - boost && depth > 16f) k = TileKind.IronOre;
-                    if (oreN > 0.94f - boost * 0.8f && depth > 30f) k = TileKind.SilverOre;
-                    if (oreN > 0.955f - boost * 0.7f && depth > 40f) k = TileKind.GoldOre;
-                    if (oreN > 0.965f - boost * 0.6f && depth > 55f) k = TileKind.PlatinumOre;
-                    if (oreN > 0.972f - boost * 0.5f && depth > 65f) k = TileKind.Ruby;
-                    if (oreN > 0.978f - boost * 0.4f && depth > 75f) k = TileKind.Sapphire;
-                    if (oreN > 0.984f - boost * 0.3f && depth > 42f) k = TileKind.Crystal;
-                    if (oreN > 0.989f - boost * 0.2f && depth > 95f) k = TileKind.Diamond;
+                    if (oreN > 0.88f - boost - Bias(TileKind.CoalOre) && depth > 6f) k = TileKind.CoalOre;
+                    if (oreN > 0.92f - boost - Bias(TileKind.IronOre) && depth > 16f) k = TileKind.IronOre;
+                    if (oreN > 0.94f - boost * 0.8f - Bias(TileKind.SilverOre) && depth > 30f) k = TileKind.SilverOre;
+                    if (oreN > 0.955f - boost * 0.7f - Bias(TileKind.GoldOre) && depth > 40f) k = TileKind.GoldOre;
+                    if (oreN > 0.965f - boost * 0.6f - Bias(TileKind.PlatinumOre) && depth > 55f) k = TileKind.PlatinumOre;
+                    if (oreN > 0.972f - boost * 0.5f - Bias(TileKind.Ruby) && depth > 65f) k = TileKind.Ruby;
+                    if (oreN > 0.978f - boost * 0.4f - Bias(TileKind.Sapphire) && depth > 75f) k = TileKind.Sapphire;
+                    if (oreN > 0.984f - boost * 0.3f - Bias(TileKind.Crystal) && depth > 42f) k = TileKind.Crystal;
+                    if (oreN > 0.989f - boost * 0.2f - Bias(TileKind.Diamond) && depth > 95f) k = TileKind.Diamond;
                 }
 
                 planet.Set(r, t, k);
