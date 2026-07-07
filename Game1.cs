@@ -2014,7 +2014,7 @@ public sealed class DwarfMinerGame : Game
         // screen now carries the per-tool readout, so we don't duplicate it here.
         var status = $"DEPTH {depth}   TITAN HP {(int)_titan.Health}/{(int)_titan.MaxHealth}\n" +
                      $"META: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
-        var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE\n" +
+        var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE  Q/E WEAPONS\n" +
                        "C CRAFT  T BEACON RECALL  L LAUNCH ROCKET  G GOD MODE  R RESTART";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _player, (int)_titan.Anger, status, controls);
         DrawInventoryPanel(inv);
