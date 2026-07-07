@@ -1624,6 +1624,13 @@ public sealed partial class DwarfMinerGame : Game
     {
         var count = PlanetDefs.All.Length;
         var unlocked = Math.Min(_meta.PlanetsUnlocked, count);
+
+        // R resumes the suspended run, if any.
+        if (Pressed(keys, _prevKeys, Keys.R) && RunSave.Exists)
+        {
+            ResumeRun();
+            return;
+        }
         if (Pressed(keys, _prevKeys, Keys.Left) || Pressed(keys, _prevKeys, Keys.A))
             _overworldCursor = (_overworldCursor - 1 + count) % count;
         if (Pressed(keys, _prevKeys, Keys.Right) || Pressed(keys, _prevKeys, Keys.D))
