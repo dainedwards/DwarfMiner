@@ -537,57 +537,6 @@ public sealed class DwarfMinerGame : Game
         }
     }
 
-    /// <summary>Dispatch the currently-selected toolbelt slot to its in-world action. This
-    /// is the single mapping table from slot id → behaviour, called every frame LMB is held
-    /// (most slots are continuous: mining drills, sweeping ladders, etc.). Stackable
-    /// consumables short-circuit if their inventory is empty.</summary>
-    private void UseSelectedSlot(Vector2 worldCursor)
-    {
-        var id = _run.Player.Toolbelt.Current;
-        if (id is null) return;
-
-        // God mode is a full armoury pass: ownership flags are ignored and weapon ammo
-        // isn't consumed, so every weapon on the belt just works.
-        var god = _run.Player.FlyMode;
-
-        switch (id)
-        {
-            case "pickaxe": DoMine(worldCursor, MiningTool.Pickaxe); break;
-            case "drill":   if (_run.Player.HasDrill)  DoMine(worldCursor, MiningTool.Drill); break;
-            case "hammer":  if (_run.Player.HasHammer) DoMine(worldCursor, MiningTool.Hammer); break;
-            case "bullets": if (_run.Player.ShootCooldown <= 0) FireBullet(worldCursor); break;
-            case "pistol":      if ((god || _run.Player.HasPistol) && _run.Player.ShootCooldown <= 0) FirePistol(worldCursor); break;
-            case "machine_gun": if ((god || _run.Player.HasMachineGun) && _run.Player.ShootCooldown <= 0) FireMachineGun(worldCursor); break;
-            case "laser":       if ((god || _run.Player.HasLaser) && _run.Player.ShootCooldown <= 0) FireLaser(worldCursor); break;
-            case "laser_cannon": if ((god || _run.Player.HasLaserCannon) && _run.Player.ShootCooldown <= 0) FireLaserCannon(worldCursor); break;
-            case "rocket_launcher":
-                if ((god || _run.Player.HasRocketLauncher) && _run.Player.ShootCooldown <= 0
-                    && (god || _run.Player.Inventory.TryConsume("rocket", 1)))
-                    FireRocket(worldCursor);
-                break;
-            case "cannon":  if ((god || _run.HasCannon) && _run.Player.ShootCooldown <= 0) FireCannon(worldCursor); break;
-            case "blocks":  _run.Player.TryPlace(_run.Planet, _run.Physics, worldCursor); break;
-            case "nuke":      if (_run.Player.ShootCooldown <= 0 && (god || _run.Player.Inventory.TryConsume("nuke", 1)))     FireNuke(worldCursor); break;
-            case "harpoon":   if (_run.Player.ShootCooldown <= 0 && (god || _run.Player.Inventory.TryConsume("harpoon", 1)))  FireHarpoon(worldCursor); break;
-            case "dynamite":  if (_run.Player.ShootCooldown <= 0 && (god || _run.Player.Inventory.TryConsume("dynamite", 1))) FireDynamite(worldCursor); break;
-            case "tnt":       if (_run.Player.ShootCooldown <= 0 && (god || _run.Player.Inventory.TryConsume("tnt", 1)))      FireTnt(worldCursor); break;
-            case "poultice":  if (_run.Player.Inventory.TryConsume("poultice", 1)) UseHealPotion(); break;
-            case "feast":     if (_run.Player.Inventory.TryConsume("feast", 1))    UseFeast();      break;
-            case "core_drill": if (_run.Player.HasCoreDrill) TryCoreDrill(); break;
-            case "sentry":    if (_run.Player.Inventory.TryConsume("sentry", 1))   PlaceSentryAtFeet(); break;
-            // Placeable build tiles — go through Player.TryPlaceBuildId so the passable / range
-            // / inventory rules stay in one place.
-            case "support":
-            case "reinforced_support":
-            case "ladder":
-            case "rail":
-            case "glowshroom":
-            case "beacon":
-                _run.Player.TryPlaceBuildId(_run.Planet, _run.Physics, worldCursor, id);
-                break;
-        }
-    }
-
     /// <summary>Mining wrapper for UseSelectedSlot — handles the per-tool chip / hammer-shard /
     /// drill-jet effects that used to live inline in Update. Pulled out so the dispatcher
     /// stays one-liner-per-case.</summary>
