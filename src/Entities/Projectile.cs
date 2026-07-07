@@ -239,6 +239,17 @@ public sealed class Projectile
                     // Out of pierce charges → die at the face of this wall, crater and all.
                     if (WallPiercesLeft <= 0)
                     {
+                        // Gun rounds chip the tile they hit like a mining swing before dying,
+                        // so sustained fire eventually shoots through a wall.
+                        if (MinePower > 0)
+                        {
+                            var (tx, ty) = planet.WorldToTile(Position);
+                            if (planet.Mine(tx, ty, MinePower) is { } chipped)
+                            {
+                                cells.SpawnDustInTile(tx, ty, chipped);
+                                physics.MarkDirty(tx, ty);
+                            }
+                        }
                         Explode(planet, physics, cells);
                         return;
                     }
