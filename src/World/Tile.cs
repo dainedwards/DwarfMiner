@@ -26,6 +26,8 @@ public enum TileKind : byte
     Ruby = 19,
     Sapphire = 20,
     Diamond = 21,
+    // Volatile mineral refined into rocket fuel — mined, not crafted.
+    FuelOre = 27,
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
