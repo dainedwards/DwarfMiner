@@ -66,7 +66,7 @@ public static class Combat
             if (p.DetonatesOnContact)
             {
                 p.Position = p.PrevPosition + seg * t;   // blast centred where it struck
-                p.Explode(planet, physics, cells);
+                p.Explode(planet, physics, cells, particles);
                 return;
             }
             if (p.CreaturePierces > 0 && --p.CreaturePierces == 0)
