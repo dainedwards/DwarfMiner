@@ -169,14 +169,14 @@ public sealed class Titan
     {
         var up = _planet.UpAt(Position);
         var right = new Vector2(-up.Y, up.X);
-        // Lay the tail out along -tangent so it dangles behind the body at spawn. Verlet picks
+        // Lay the chain out along -tangent so it dangles behind the body at spawn. Verlet picks
         // it up from there — drag/gravity will settle it on the next few frames.
-        TailNodes = new Vector2[TailNodeCount];
-        TailPrev = new Vector2[TailNodeCount];
+        TailNodes = new Vector2[_tailNodeCount];
+        TailPrev = new Vector2[_tailNodeCount];
         var root = Position + right * (Facing * -90f) + up * 18f;
-        for (var i = 0; i < TailNodeCount; i++)
+        for (var i = 0; i < _tailNodeCount; i++)
         {
-            TailNodes[i] = root + right * (Facing * -i * TailSegLen) + up * (-i * 4f);
+            TailNodes[i] = root + right * (Facing * -i * _tailSeg) + up * (-i * 4f);
             TailPrev[i] = TailNodes[i];
         }
     }
