@@ -132,18 +132,20 @@ public sealed partial class DwarfMinerGame : Game
         var surfacePos = FindSurfaceSpawn(-MathF.PI / 2f, _run.Planet.Radius);
         _run.Player = new Player(surfacePos)
         {
-            // Start in god-mode for testing; G toggles it off (and on again) in-game. The
-            // toggle drives ghost flight, super-pickaxe power, and extended mine range as a
-            // single bundle — see Player.EffectivePickaxePower / EffectiveMineRange.
-            FlyMode = true,
+            // Survival by default; DM_GOD=1 starts runs in god mode for testing, and G
+            // toggles it in-game either way. The toggle drives ghost flight, super-pickaxe
+            // power, and extended mine range as a single bundle — see
+            // Player.EffectivePickaxePower / EffectiveMineRange.
+            FlyMode = Environment.GetEnvironmentVariable("DM_GOD") is { Length: > 0 },
             // Apply meta-progress: a player who has previously escaped starts with a
             // higher-tier pickaxe so subsequent runs are slightly easier.
             PickaxeTier = Math.Max(1, _meta.StartingPickaxePower),
         };
         _run.HasCannon = _meta.StartWithCannon;
-        // Runs start in god mode, and god mode carries the full armoury — load every weapon
-        // onto the belt from frame one (toggling god off strips the unowned loaners).
-        foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
+        // God mode carries the full armoury — load every weapon onto the belt from frame
+        // one (toggling god off strips the unowned loaners).
+        if (_run.Player.FlyMode)
+            foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
         _run.Titan = new Titan(_run.Planet, MathF.PI * 0.6f);
         SpawnInitialFauna();
         _run.EarthquakeTimer = 25f * def.QuakeScale;
