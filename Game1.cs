@@ -1876,6 +1876,22 @@ public sealed partial class DwarfMinerGame : Game
             var line3 = $"HAZARD: {hazard}   WATER: {(sel.HasWater ? "YES" : "NONE")}   QUAKES: {(sel.QuakeScale < 0.7f ? "FREQUENT" : "OCCASIONAL")}";
             _renderer.DrawText(line3,
                 new Vector2((VirtualWidth - _renderer.MeasureText(line3)) / 2f, infoY + 48), new Color(150, 155, 175));
+            // Toxin warning line — only shown for worlds that seed gas/acid so it reads as a
+            // genuine caution rather than boilerplate.
+            var toxins = (sel.SeedsGas, sel.SeedsAcid) switch
+            {
+                (true, true)  => "TOXINS: FLAMMABLE GAS + CORROSIVE ACID",
+                (true, false) => "TOXINS: FLAMMABLE GAS POCKETS",
+                (false, true) => "TOXINS: CORROSIVE ACID POOLS",
+                _             => "",
+            };
+            if (toxins.Length > 0)
+                _renderer.DrawText(toxins,
+                    new Vector2((VirtualWidth - _renderer.MeasureText(toxins)) / 2f, infoY + 66), new Color(180, 210, 120));
+            var thinAir = sel.OxygenDrainScale >= 1.5f;
+            if (thinAir)
+                _renderer.DrawText("THIN ATMOSPHERE — AIR BURNS FAST AT DEPTH",
+                    new Vector2((VirtualWidth - _renderer.MeasureText("THIN ATMOSPHERE — AIR BURNS FAST AT DEPTH")) / 2f, infoY + (toxins.Length > 0 ? 84 : 66)), new Color(200, 180, 130));
         }
 
         var meta = $"ESCAPES {_meta.Escapes}   TITAN KILLS {_meta.TitansDefeated}   DEEPEST {_meta.DeepestDepth}   DEATHS {_meta.Deaths}";
