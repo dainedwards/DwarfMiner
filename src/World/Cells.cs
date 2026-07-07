@@ -496,12 +496,15 @@ public sealed class Cells
         // water is itself a neighbour change.
         i = Idx(cx, cy);
         var self = (Material)_mat[i];
-        if (self == Material.Water || self == Material.Lava)
+        if (self == Material.Water || self == Material.Lava || self == Material.Acid)
         {
             var (scx, scy) = InnerCell(cx, cy);
-            if ((cy <= 0 || IsBlocked(scx, scy)) && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy)
-                && (self == Material.Water || !HasMeltableNeighbour(cx, cy)))
-                return;
+            var hemmed = (cy <= 0 || IsBlocked(scx, scy)) && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy);
+            // Lava and acid stay awake while there's still something adjacent to eat, so a
+            // hemmed pool keeps gnawing at the tile it rests against instead of sleeping on it.
+            var stillEating = (self == Material.Lava && HasMeltableNeighbour(cx, cy))
+                           || (self == Material.Acid && HasCorrodibleNeighbour(cx, cy));
+            if (hemmed && !stillEating) return;
         }
 
         // Lateral dispersion: flow several cells per tick in a persistent direction so pools
