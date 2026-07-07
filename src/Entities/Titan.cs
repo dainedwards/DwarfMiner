@@ -445,12 +445,15 @@ public sealed class Titan
 
     /// <summary>Kong: leap toward the player, then slam down with a heavy quake + shockwave on
     /// landing. The leap suppresses the leg-spring (via <see cref="Leaping"/>) so it launches.</summary>
-    private void TickKong(Physics physics, Vector2 playerPos)
+    private void TickKong(float dt, Physics physics, Vector2 playerPos)
     {
         if (Leaping)
         {
-            // Airtime is bounded by SpecialState; the slam fires once we touch back down.
-            if (Grounded && SpecialState < 1.4f)
+            SpecialState -= dt;
+            // Slam once we touch back down after a moment of airtime — or forcibly at the end
+            // of the airtime window so a Kong wedged against terrain still resolves its leap.
+            var airborneLongEnough = SpecialState < 1.4f;
+            if ((Grounded && airborneLongEnough) || SpecialState <= 0f)
             {
                 var up = _planet.UpAt(Position);
                 physics.Earthquake(Position - up * BodyRadius, 260f, 4);
