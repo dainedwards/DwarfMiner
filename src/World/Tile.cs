@@ -153,7 +153,7 @@ public static class Tiles
         "crystal", "iron", "coal",
         "nuke", "harpoon", "rocket_part",
         "ammo_diamond", "ammo_sapphire", "ammo_ruby", "ammo_silver",
-        "dynamite", "poultice",
+        "rocket", "tnt", "dynamite", "poultice",
         "ladder", "rail", "reinforced_support", "glowshroom", "beacon", "sentry",
         "obsidian", "granite", "basalt", "moss_stone", "gravel",
         "stone", "dirt", "snow",
