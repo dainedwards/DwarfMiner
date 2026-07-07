@@ -494,6 +494,24 @@ public sealed class DwarfMinerGame : Game
         base.Update(gameTime);
     }
 
+    /// <summary>Weapon ids god mode loans out, in belt-fill order. Six entries — exactly the
+    /// free slots left beside the three intrinsic tools on a fresh belt.</summary>
+    private static readonly string[] GodWeaponIds =
+        { "pistol", "machine_gun", "laser", "rocket_launcher", "cannon", "tnt" };
+
+    /// <summary>True when this belt id is a god-mode loaner the player doesn't actually own —
+    /// the ones to sweep off the belt when god mode ends.</summary>
+    private bool IsGodLoanerWeapon(string id) => id switch
+    {
+        "pistol"          => !_player.HasPistol,
+        "machine_gun"     => !_player.HasMachineGun,
+        "laser"           => !_player.HasLaser,
+        "rocket_launcher" => !_player.HasRocketLauncher,
+        "cannon"          => !_hasCannon,
+        "tnt"             => _player.Inventory.Count("tnt") <= 0,
+        _                 => false,
+    };
+
     /// <summary>Dispatch the currently-selected toolbelt slot to its in-world action. This
     /// is the single mapping table from slot id → behaviour, called every frame LMB is held
     /// (most slots are continuous: mining drills, sweeping ladders, etc.). Stackable
