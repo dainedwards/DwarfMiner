@@ -62,6 +62,8 @@ public static class Crafting
             new Dictionary<string, int> { ["iron"] = 6, ["silver"] = 2, ["coal"] = 4 }),
         new("laser", "Laser — piercing energy beam",
             new Dictionary<string, int> { ["crystal"] = 2, ["ruby"] = 1, ["iron"] = 3 }),
+        new("laser_cannon", "Laser cannon — lance that drills through walls",
+            new Dictionary<string, int> { ["crystal"] = 4, ["diamond"] = 1, ["iron"] = 6 }),
         new("rocket_launcher", "Rocket launcher — fires crafted rockets",
             new Dictionary<string, int> { ["iron"] = 5, ["gold"] = 2, ["coal"] = 3 }),
         new("rocket", "Rocket (3×) — launcher ammo",
