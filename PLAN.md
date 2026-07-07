@@ -13,7 +13,13 @@
 > - **Oxygen/depth pressure done** (`Systems/OxygenRules`, `Player.Oxygen`) — air refills at
 >   the surface, drains with depth (per-planet `OxygenDrainScale`: slag 1.7 thinnest), empties
 >   into suffocation HP loss. `air_tank` recipe doubles the ceiling. AIR bar in the HUD.
-> Next up: hazard cells (gas/acid), or per-planet mini-bosses, or sound.
+> - **Hazard cells done** — two new `Material`s in the cell sim: `Acid` (flows, dissolves soft
+>   tiles incl. stone but not hard rock/ore, burns on contact) and `Gas` (rises, chokes = extra
+>   air drain, flash-burns to smoke beside lava). Body-contact via `Cells.SampleHazardsNear` →
+>   `Game1.TickHazardContact` (this also finally makes LAVA damage the player). Worldgen seeds
+>   per-planet (`PlanetDef.SeedsGas`/`SeedsAcid`: ember=gas, slag=acid, core=both); star map
+>   shows TOXINS + THIN ATMOSPHERE warnings. Cells serialize for free in the save.
+> Next up: per-planet mini-bosses, or sound, or surface base (storage depot).
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
