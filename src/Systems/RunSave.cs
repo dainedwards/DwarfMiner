@@ -172,11 +172,17 @@ public static class RunSave
             // body state — legs/tail are verlet-simulated and re-plant within a few frames.
             var titanPos = new Vector2(r.ReadSingle(), r.ReadSingle());
             var rel = titanPos - run.Planet.Center;
-            run.Titan = new Titan(run.Planet, MathF.Atan2(rel.Y, rel.X))
+            var titanHealth = r.ReadSingle();
+            var titanAnger = r.ReadSingle();
+            var titanKind = (TitanKind)r.ReadInt32();
+            run.Titan = new Titan(run.Planet, MathF.Atan2(rel.Y, rel.X), titanKind)
             {
                 Position = titanPos,
-                Health = r.ReadSingle(),
-                Anger = r.ReadSingle(),
+                Health = titanHealth,
+                Anger = titanAnger,
+                Hatched = r.ReadBoolean(),
+                EggTimer = r.ReadSingle(),
+                EggHealth = r.ReadSingle(),
             };
 
             var sentryCount = r.ReadInt32();
