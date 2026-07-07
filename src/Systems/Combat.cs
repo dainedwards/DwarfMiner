@@ -51,7 +51,7 @@ public static class Combat
             if (SegmentHitT(p.PrevPosition, seg, segLenSq, c.Position, c.Radius + p.Radius) is { } t)
                 _hits.Add((t, c));
         }
-        if (titan is not null && titan.Health > 0 && !p.HitVictims.Contains(titan)
+        if (titan is not null && titan.Health > 0 && titan.Targetable && !p.HitVictims.Contains(titan)
             && SegmentHitT(p.PrevPosition, seg, segLenSq, titan.Position, titan.Radius + p.Radius) is { } tt)
         {
             _hits.Add((tt, titan));
