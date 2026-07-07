@@ -1022,6 +1022,15 @@ public sealed class DwarfMinerGame : Game
             case "lantern":     _run.Player.HasLantern = true; break;
             case "armor":       _run.Player.HasArmor   = true; break;
             case "chitin_armor": _run.Player.HasArmor  = true; break;   // same plating, hunted materials
+            // Ship stages install into the world immediately — nothing enters the inventory.
+            case "launch_pad":  PlaceLaunchPad(); break;
+            case "ship_hull":
+            case "ship_engine":
+            case "ship_nav":
+                _run.ShipStage++;
+                if (_run.PadPos is { } sp) _particles.EmitDust(sp, 12f);
+                _run.Shake = MathF.Max(_run.Shake, 0.35f);
+                break;
             // Everything else is a stockable item: the recipe id is the inventory id. The
             // first-craft also auto-equips an empty slot so the player can use it immediately
             // — subsequent crafts just stock more.
