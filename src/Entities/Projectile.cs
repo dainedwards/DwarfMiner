@@ -30,6 +30,17 @@ public enum ProjectileKind
     /// <summary>Anti-Titan harpoon: punches through tiles + creatures alike, big damage to
     /// the Titan specifically. One-shot heavy spear.</summary>
     Harpoon,
+    /// <summary>Sidearm round: slower cadence than the intrinsic bullet but a solid punch.</summary>
+    Pistol,
+    /// <summary>Machine-gun round: weak, fast, sprayed with a small random spread.</summary>
+    MachineGun,
+    /// <summary>Energy bolt: very fast, no crater, pierces several creatures in a line.</summary>
+    Laser,
+    /// <summary>Launcher round: straight flight, explodes on contact with a proper crater.</summary>
+    Rocket,
+    /// <summary>Heavy satchel charge: barely throwable (strong gravity, short lob), long
+    /// fuse, and the biggest non-nuke blast in the game.</summary>
+    Tnt,
 }
 
 public sealed class Projectile
