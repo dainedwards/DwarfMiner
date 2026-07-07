@@ -168,41 +168,10 @@ public sealed class Renderer
                 var size = new Vector2(chord + 1f, Planet.TileSize + 1f); // +1 px overlap kills sub-pixel seams between neighbours
                 var hash = (r * 73856093) ^ (t * 19349663);
 
-                // Sky tile: maybe draw the background wall (cave back-wall, Terraria style).
-                if (k == TileKind.Sky)
-                {
-                    var wallK = planet.GetWall(r, t);
-                    if (wallK == TileKind.Sky) continue; // outside planet — no wall
-
-                    // Recess shadow: sides bordering solid ground pick the wall frame with a
-                    // soft ragged occlusion gradient baked along that edge — a dug-out pocket
-                    // darkens smoothly toward its rim instead of being outlined by hard lip
-                    // strips, which framed every dug tile as its own rectangle.
-                    var ocnt = planet.OuterNeighbourCount(r, t);
-                    var outerSolid = false;
-                    for (var oi = 0; oi < ocnt; oi++)
-                    {
-                        var (o2r, o2t) = planet.OuterNeighbour(r, t, oi);
-                        if (Tiles.IsSolid(planet.Get(o2r, o2t))) { outerSolid = true; break; }
-                    }
-                    var (i2r, i2t) = planet.InnerNeighbour(r, t);
-                    var solidMask = (outerSolid ? 1 : 0)
-                                  | (Tiles.IsSolid(planet.Get(i2r, i2t)) ? 2 : 0)
-                                  | (Tiles.IsSolid(planet.Get(r, t - 1)) ? 4 : 0)
-                                  | (Tiles.IsSolid(planet.Get(r, t + 1)) ? 8 : 0);
-
-                    // Back wall = the same atlas texture the material uses in the foreground,
-                    // multiplied down to ~35% brightness. Keeps all the baked grain/strata
-                    // detail while clearly reading as background rock.
-                    var wallShade = BlobShade(centre);
-                    _sb.Draw(_tileAtlas, centre,
-                        TileAtlas.WallSource(wallK, VariantFor(wallK, r, t, hash), solidMask),
-                        new Color((int)(88 * wallShade), (int)(88 * wallShade), (int)(100 * wallShade)), rotation,
-                        new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
-                        new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
-                        SpriteEffects.None, 0f);
-                    continue;
-                }
+                // Sky tile: nothing to draw. Back-walls are gone — dug-out openings and the
+                // horizon both show the pixelated space skybox drawn under the world, so
+                // excavations read as holes into the night rather than blocky dim rock.
+                if (k == TileKind.Sky) continue;
 
                 // Condemned tiles oscillate before crumbling — shift the whole tile (base
                 // quad, shades and rims all draw from `centre`) by a small random offset.
