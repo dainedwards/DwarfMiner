@@ -2103,6 +2103,15 @@ public sealed class DwarfMinerGame : Game
             }
         }
 
+        // Completed ship's beacon light — a slow warm pulse at the nose so the finished
+        // ride home is visible from a ridge away.
+        if (_run.PadPos is { } beaconPad && _run.ShipStage >= 3)
+        {
+            var bUp = _run.Planet.UpAt(beaconPad);
+            var pulse = MathF.Sin(_run.RunTime * 2.5f) * 0.5f + 0.5f;
+            _renderer.AddLight(beaconPad + bUp * 34f, 18f + pulse * 10f, new Color(255, 190, 90));
+        }
+
         // Kaiju eyes: gold → red as anger climbs. Two sockets, both lit. Position must mirror
         // the renderer (headBase = body + tup*26 + tright*facing*110, sockets at tup*8 ± 14).
         // Same visibility cull as the body — no point lighting an off-screen kaiju.
