@@ -107,6 +107,30 @@ public sealed class Cells
         _flow[i] = 0;
     }
 
+    /// <summary>Serialize the cell materials + source tiles for the run save. Kinetics
+    /// (velocity/travel/flow) are deliberately dropped — they're sub-second transients.</summary>
+    public void WriteState(System.IO.BinaryWriter w)
+    {
+        w.Write(_mat.Length);
+        w.Write(_mat);
+        w.Write(_srcTile);
+    }
+
+    /// <summary>Restore state written by <see cref="WriteState"/> into a freshly constructed
+    /// grid. Every occupied cell is woken so anything saved mid-flight resettles over the
+    /// next ticks (the caller should burn a few pre-settle updates, like world gen does);
+    /// hemmed pool interiors go back to sleep on their own.</summary>
+    public void ReadState(System.IO.BinaryReader r)
+    {
+        var n = r.ReadInt32();
+        if (n != _mat.Length)
+            throw new System.IO.InvalidDataException($"cell count mismatch: {n} vs {_mat.Length}");
+        r.ReadBytes(n).CopyTo(_mat, 0);
+        r.ReadBytes(n).CopyTo(_srcTile, 0);
+        for (var i = 0; i < n; i++)
+            if (_mat[i] != 0) _next.Add(i);
+    }
+
     public int CellsAt(int cy) => (cy < 0 || cy >= Height) ? 1 : _cellsAt[cy];
 
     private int WrapX(int cx, int n) => ((cx % n) + n) % n;
