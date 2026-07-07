@@ -89,7 +89,10 @@ public static class TileAtlas
                     GenerateTile(tile, Res, 0, 0, k, new Random((int)k * 97 + v * 13 + 1));
                 }
                 for (var mask = 0; mask < MaskCount; mask++)
+                {
                     BlitEroded(px, w, (v * MaskCount + mask) * Res, (int)k * Res, tile, k, v, mask);
+                    BlitWallShaded(px, w, (WallColumnOffset + v * MaskCount + mask) * Res, (int)k * Res, tile, k, v, mask);
+                }
             }
         }
 
