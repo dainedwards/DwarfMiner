@@ -1,5 +1,12 @@
 # Dwarf Miner — Roadmap
 
+> **Status (2026-07-07):** Section 1 is implemented — GameScreen state machine, Session
+> extraction, PlanetConfig (`PlanetDef`) with 5 planet archetypes, the star-map overworld,
+> and the staged spaceship escape (launch pad → hull → engine → nav core → L to launch).
+> Next up: Section 2 item 2 (ItemDef registry), then Section 3.
+> Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id>`
+> skips the star map (ids: verdant, frost, ember, slag, core).
+
 Current state: circular polar planet with a Noita-style cell sim (water/lava/dust), structural
 physics with collapses, a Titan boss, cave/surface/sky fauna, a 30+ recipe crafting tree, three
 endings (kill Titan, pierce core, launch rocket with 5 rocket_parts), and cross-run meta
