@@ -537,7 +537,9 @@ public sealed partial class DwarfMinerGame : Game
         {
             _meta.Deaths++;
             _meta.Save();
-            EndRun("You died. Press R for the star map.");
+            EndRun(_run.Player.Oxygen <= 0f
+                ? "You suffocated in the deep. Press R for the star map."
+                : "You died. Press R for the star map.");
         }
 
         // Apply shake decay to camera.
