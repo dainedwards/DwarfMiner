@@ -2266,6 +2266,210 @@ public sealed class DwarfMinerGame : Game
         _renderer.DrawCenteredText(_gameOverReason, VirtualWidth, VirtualHeight, Color.White, scale: 3);
     }
 
+    /// <summary>Render the ship build site: the pad slab always, then hull / engine / nose
+    /// as stages install. All rects are rotated to local-up so the ship stands on the planet
+    /// like everything else. Proportions: pad ~30 px wide, finished ship ~36 px tall — a
+    /// landmark next to the ~7 px dwarf without dwarfing the mountains.</summary>
+    private void DrawShip(Vector2 pos, int stage)
+    {
+        var up = _run.Planet.UpAt(pos);
+        var right = new Vector2(-up.Y, up.X);
+        var rot = MathF.Atan2(up.X, -up.Y);
+        var steel = new Color(150, 155, 170);
+        var steelDark = new Color(95, 100, 115);
+        var frame = new Color(70, 60, 50);
+
+        // Pad: a broad slab on two squat legs, with hazard-stripe ends.
+        _renderer.DrawRect(pos - up * 3f + right * 10f, new Vector2(3f, 4f), frame, rot);
+        _renderer.DrawRect(pos - up * 3f - right * 10f, new Vector2(3f, 4f), frame, rot);
+        _renderer.DrawRect(pos, new Vector2(30f, 3f), steelDark, rot);
+        _renderer.DrawRect(pos + right * 13f, new Vector2(4f, 3f), new Color(200, 170, 60), rot);
+        _renderer.DrawRect(pos - right * 13f, new Vector2(4f, 3f), new Color(200, 170, 60), rot);
+
+        if (stage >= 1)
+        {
+            // Hull: the main fuselage cylinder with a lighter wall highlight.
+            _renderer.DrawRect(pos + up * 13f, new Vector2(13f, 20f), steelDark, rot);
+            _renderer.DrawRect(pos + up * 13f - right * 2f, new Vector2(7f, 18f), steel, rot);
+        }
+        if (stage >= 2)
+        {
+            // Engine: nozzle bell under the hull plus two swept tail fins.
+            _renderer.DrawRect(pos + up * 2.5f, new Vector2(9f, 4f), frame, rot);
+            _renderer.DrawRect(pos + up * 1f, new Vector2(12f, 2.5f), new Color(50, 45, 42), rot);
+            _renderer.DrawRect(pos + up * 6f + right * 8f, new Vector2(6f, 8f), steelDark, rot + 0.5f);
+            _renderer.DrawRect(pos + up * 6f - right * 8f, new Vector2(6f, 8f), steelDark, rot - 0.5f);
+        }
+        if (stage >= 3)
+        {
+            // Nav core: nose cone, porthole, and the blinking launch-ready beacon.
+            _renderer.DrawRect(pos + up * 25f, new Vector2(10f, 5f), new Color(180, 80, 60), rot);
+            _renderer.DrawRect(pos + up * 29f, new Vector2(6f, 4f), new Color(180, 80, 60), rot);
+            _renderer.DrawRect(pos + up * 32f, new Vector2(3f, 3f), new Color(220, 110, 80), rot);
+            _renderer.DrawCircle(pos + up * 16f - right * 1f, 2.4f, new Color(140, 200, 230));
+            var blink = MathF.Sin(_run.RunTime * 2.5f) * 0.5f + 0.5f;
+            _renderer.DrawCircle(pos + up * 34f, 1.2f + blink, new Color(255, 190, 90));
+        }
+    }
+
+    // ─── Star map (overworld) ─────────────────────────────────────────────────
+
+    private void UpdateOverworld(KeyboardState keys, MouseState mouse)
+    {
+        var count = PlanetDefs.All.Length;
+        var unlocked = Math.Min(_meta.PlanetsUnlocked, count);
+        if (Pressed(keys, _prevKeys, Keys.Left) || Pressed(keys, _prevKeys, Keys.A))
+            _overworldCursor = (_overworldCursor - 1 + count) % count;
+        if (Pressed(keys, _prevKeys, Keys.Right) || Pressed(keys, _prevKeys, Keys.D))
+            _overworldCursor = (_overworldCursor + 1) % count;
+
+        // Mouse: click a planet to select it; click the selected planet to depart.
+        var clicked = mouse.LeftButton == ButtonState.Pressed && _prevMouse.LeftButton != ButtonState.Pressed;
+        var launch = Pressed(keys, _prevKeys, Keys.Enter) || Pressed(keys, _prevKeys, Keys.Space);
+        if (clicked)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                if ((new Vector2(mouse.X, mouse.Y) - PlanetMapCentre(i)).Length() > PlanetMapRadius + 10f) continue;
+                if (i == _overworldCursor) launch = true;
+                else _overworldCursor = i;
+                break;
+            }
+        }
+
+        if (launch && _overworldCursor < unlocked)
+            StartNewRun(PlanetDefs.All[_overworldCursor]);
+    }
+
+    private const float PlanetMapRadius = 38f;
+
+    /// <summary>Screen position of planet i on the star map — evenly spaced along a gentle
+    /// sine arc so the chain reads as a route, not a menu row.</summary>
+    private static Vector2 PlanetMapCentre(int i)
+    {
+        var count = PlanetDefs.All.Length;
+        var x = (i + 1f) / (count + 1f) * VirtualWidth;
+        var y = VirtualHeight * 0.42f + MathF.Sin(i * 1.9f) * 55f;
+        return new Vector2(x, y);
+    }
+
+    private void DrawOverworld()
+    {
+        GraphicsDevice.Clear(new Color(6, 7, 14));
+        var sb = _renderer.Batch;
+        var count = PlanetDefs.All.Length;
+        var unlocked = Math.Min(_meta.PlanetsUnlocked, count);
+
+        sb.Begin(samplerState: SamplerState.PointClamp);
+
+        // Starfield — hashed positions, twinkling with wall time.
+        for (var i = 0; i < 170; i++)
+        {
+            var h = (i * 1013904223 + 1664525) & 0x7fffffff;
+            var x = (h >> 7) % VirtualWidth;
+            var y = (h >> 17) % VirtualHeight;
+            var tw = MathF.Sin(_totalTime * (0.6f + (h & 3) * 0.5f) + i) * 0.5f + 0.5f;
+            var bright = 0.25f + tw * 0.55f;
+            var size = (h & 15) == 0 ? 2 : 1;
+            sb.Draw(_renderer.Pixel, new Rectangle(x, y, size, size), new Color(200, 210, 235) * bright);
+        }
+
+        // Route line between stops — dotted, dimmer past the unlock frontier.
+        for (var i = 0; i < count - 1; i++)
+        {
+            var a = PlanetMapCentre(i);
+            var b = PlanetMapCentre(i + 1);
+            var col = i < unlocked - 1 ? new Color(120, 130, 160) : new Color(45, 48, 62);
+            for (var t = 0.12f; t < 0.9f; t += 0.07f)
+            {
+                var p = Vector2.Lerp(a, b, t);
+                sb.Draw(_renderer.Pixel, new Rectangle((int)p.X, (int)p.Y, 2, 2), col);
+            }
+        }
+
+        for (var i = 0; i < count; i++)
+        {
+            var def = PlanetDefs.All[i];
+            var c = PlanetMapCentre(i);
+            var locked = i >= unlocked;
+
+            // Selection halo behind the disc.
+            if (i == _overworldCursor)
+                FillCircleScreen(sb, c, PlanetMapRadius + 5f, new Color(255, 225, 140, 90));
+
+            var body = locked ? new Color(40, 42, 52) : def.MapColor;
+            var accent = locked ? new Color(60, 62, 72) : def.MapAccent;
+            FillCircleScreen(sb, c, PlanetMapRadius, body);
+            // Terminator shading: darker offset disc clipped by drawing it after the body.
+            FillCircleScreen(sb, c + new Vector2(9, 7), PlanetMapRadius - 10f,
+                new Color(body.R / 2, body.G / 2, body.B / 2));
+            // Polar highlight.
+            FillCircleScreen(sb, c - new Vector2(10, 9), PlanetMapRadius * 0.32f, accent);
+        }
+        sb.End();
+
+        // Text pass — DrawText handles its own batches.
+        var title = "STAR MAP";
+        _renderer.DrawText(title, new Vector2((VirtualWidth - _renderer.MeasureText(title, 4)) / 2f, 46), Color.White, 4);
+        var subtitle = "A/D SELECT   ENTER DEPART   BUILD A SHIP TO REACH THE NEXT WORLD";
+        _renderer.DrawText(subtitle, new Vector2((VirtualWidth - _renderer.MeasureText(subtitle)) / 2f, 88), new Color(150, 155, 175));
+
+        for (var i = 0; i < count; i++)
+        {
+            var def = PlanetDefs.All[i];
+            var c = PlanetMapCentre(i);
+            var locked = i >= unlocked;
+            var name = locked ? "???" : def.Name.ToUpperInvariant();
+            _renderer.DrawText(name,
+                new Vector2(c.X - _renderer.MeasureText(name, 2) / 2f, c.Y + PlanetMapRadius + 12), locked ? new Color(110, 112, 125) : Color.White, 2);
+            if (_meta.PlanetsEscaped.Contains(def.Id))
+                _renderer.DrawText("ESCAPED",
+                    new Vector2(c.X - _renderer.MeasureText("ESCAPED") / 2f, c.Y + PlanetMapRadius + 34), new Color(140, 220, 140));
+        }
+
+        // Info panel for the selected planet.
+        var sel = PlanetDefs.All[_overworldCursor];
+        var selLocked = _overworldCursor >= unlocked;
+        var infoY = VirtualHeight - 130f;
+        if (selLocked)
+        {
+            var lockedMsg = "LOCKED — ESCAPE THE PREVIOUS WORLD TO CHART A COURSE HERE";
+            _renderer.DrawText(lockedMsg,
+                new Vector2((VirtualWidth - _renderer.MeasureText(lockedMsg, 2)) / 2f, infoY), new Color(200, 130, 120), 2);
+        }
+        else
+        {
+            var line1 = sel.Name.ToUpperInvariant() + " — " + sel.Tagline.ToUpperInvariant();
+            _renderer.DrawText(line1,
+                new Vector2((VirtualWidth - _renderer.MeasureText(line1, 2)) / 2f, infoY), Color.White, 2);
+            var line2 = $"SHIP NAV CORE NEEDS: {sel.ShipOreCount} {Tiles.ResourceLabel(sel.ShipOre)} + 3 CRYSTAL";
+            _renderer.DrawText(line2,
+                new Vector2((VirtualWidth - _renderer.MeasureText(line2)) / 2f, infoY + 30), new Color(190, 195, 215));
+            var hazard = sel.LavaFillFrac >= 0.55f ? "EXTREME" : sel.CaveSpawnCap >= 18 ? "HIGH" : "MODERATE";
+            var line3 = $"HAZARD: {hazard}   WATER: {(sel.HasWater ? "YES" : "NONE")}   QUAKES: {(sel.QuakeScale < 0.7f ? "FREQUENT" : "OCCASIONAL")}";
+            _renderer.DrawText(line3,
+                new Vector2((VirtualWidth - _renderer.MeasureText(line3)) / 2f, infoY + 48), new Color(150, 155, 175));
+        }
+
+        var meta = $"ESCAPES {_meta.Escapes}   TITAN KILLS {_meta.TitansDefeated}   DEEPEST {_meta.DeepestDepth}   DEATHS {_meta.Deaths}";
+        _renderer.DrawText(meta,
+            new Vector2((VirtualWidth - _renderer.MeasureText(meta)) / 2f, VirtualHeight - 34), new Color(120, 125, 145));
+    }
+
+    /// <summary>Filled circle in screen space, one horizontal strip per row — the star map's
+    /// only primitive (world-space DrawCircle goes through the camera transform, so it can't
+    /// be reused here).</summary>
+    private void FillCircleScreen(SpriteBatch sb, Vector2 centre, float radius, Color color)
+    {
+        var r = (int)radius;
+        for (var dy = -r; dy <= r; dy++)
+        {
+            var half = (int)MathF.Sqrt(radius * radius - dy * dy);
+            sb.Draw(_renderer.Pixel,
+                new Rectangle((int)centre.X - half, (int)centre.Y + dy, half * 2, 1), color);
+        }
+    }
+
     private static bool Pressed(KeyboardState now, KeyboardState prev, Keys k)
         => now.IsKeyDown(k) && !prev.IsKeyDown(k);
 
