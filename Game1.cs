@@ -372,7 +372,7 @@ public sealed class DwarfMinerGame : Game
         // Spawn creatures inside caves. Cap counts cave dwellers only — surface/sky fauna
         // have their own population loop below.
         _run.SpawnTimer -= dt;
-        if (_run.SpawnTimer <= 0 && CountKindsNear(550f, cave: true) < 14)
+        if (_run.SpawnTimer <= 0 && CountKindsNear(550f, cave: true) < _run.Def.CaveSpawnCap)
         {
             TrySpawnCreature();
             _run.SpawnTimer = 2.3f + (float)Random.Shared.NextDouble() * 1.7f;
