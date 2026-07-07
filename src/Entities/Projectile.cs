@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DwarfMiner.World;
 using Microsoft.Xna.Framework;
 
@@ -8,8 +9,8 @@ namespace DwarfMiner.Entities;
 /// Projectile species. Each kind has a fixed set of behaviours wired in <see cref="Projectile"/>:
 /// muzzle radius, gravity-aware path, terrain interaction (some carve craters, some pierce,
 /// some bounce, some explode on a fuse), and a hit policy (single creature vs. piercing
-/// through several). The Game1 hit-loop reads <see cref="PiercesCreatures"/> /
-/// <see cref="PiercesTiles"/> to decide whether a hit consumes the projectile.
+/// through several). Body hits are resolved by <see cref="Systems.Combat"/>, which sweeps the
+/// per-frame travel segment and reads the pierce/explosion fields here.
 /// </summary>
 public enum ProjectileKind
 {
