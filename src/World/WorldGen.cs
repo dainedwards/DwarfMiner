@@ -13,6 +13,10 @@ namespace DwarfMiner.World;
 /// </summary>
 public static class WorldGen
 {
+    /// <summary>Ring index of the planet's baseline surface (before mountains/lakes). The
+    /// natural round edge sits here; oxygen and depth math measure "below surface" from it.</summary>
+    public const int BaselineSurfaceRing = 129;
+
     /// <summary>Legacy overload — the starter planet's tuning (used by SimTest).</summary>
     public static Planet Generate(int seed) => Generate(seed, PlanetDefs.All[0]);
 
