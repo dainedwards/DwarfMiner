@@ -714,7 +714,7 @@ public sealed class Titan
                 var d = TailNodes[i] - TailNodes[i - 1];
                 var len = d.Length();
                 if (len < 0.001f) continue;
-                var diff = (len - TailSegLen) / len;
+                var diff = (len - _tailSeg) / len;
                 // Parent stays put (it's the previous segment, already corrected this iter, or
                 // the body anchor); only the child node moves to satisfy the constraint.
                 TailNodes[i] -= d * diff;
