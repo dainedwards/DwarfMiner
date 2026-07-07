@@ -193,7 +193,7 @@ public sealed class Projectile
         }
     }
 
-    public void Update(float dt, Planet planet)
+    public void Update(float dt, Planet planet, Physics physics, Cells cells)
     {
         // Thrown explosives arc — gravity pulls them down so the throw feels weighty. TNT is
         // a heavy satchel, so it drops harder than a dynamite stick. Other projectiles travel
@@ -203,44 +203,88 @@ public sealed class Projectile
         else if (Kind == ProjectileKind.Tnt)
             Velocity += planet.GravityAt(Position) * 380f * dt;
 
-        Position += Velocity * dt;
+        PrevPosition = Position;
+        // Substep the move so fast rounds can't tunnel: the laser covers ~2 tiles per frame,
+        // so a single end-point check would skip 1-tile walls entirely. Each substep advances
+        // at most half a tile. On terrain impact the projectile stops at the contact face —
+        // Combat then sweeps the truncated PrevPosition→Position segment for body hits.
+        var move = Velocity * dt;
+        var steps = Math.Max(1, (int)MathF.Ceiling(move.Length() / (Planet.TileSize * 0.5f)));
+        var step = move / steps;
+        for (var i = 0; i < steps; i++)
+        {
+            Position += step;
+            if (planet.IsSolidAt(Position))
+            {
+                if (!_inWall)
+                {
+                    // Out of pierce charges → die at the face of this wall, crater and all.
+                    if (WallPiercesLeft <= 0)
+                    {
+                        Explode(planet, physics, cells);
+                        return;
+                    }
+                    WallPiercesLeft--;   // one charge per wall entered, however thick
+                    _inWall = true;
+                }
+                // Drill a visible puncture along the path through the rock.
+                CarveCrater(planet, physics, cells, 1, dust: false);
+            }
+            else
+            {
+                _inWall = false;
+            }
+        }
+
         Life -= dt;
         if (Life <= 0)
         {
             Dead = true;
-            // Fuse-class explosives (dynamite) carve their crater on fuse-out the same way
-            // they would on contact — otherwise a stick that lands gracefully and times out
-            // would just disappear without an explosion mark.
-            if (ExplodesOnFuse) CarveCrater(planet, CraterTiles);
-            return;
-        }
-        if (planet.IsSolidAt(Position))
-        {
-            // Wall-piercing projectiles burn one charge and keep going. Once charges are out,
-            // the next solid hit kills the projectile and may carve a crater.
-            if (WallPiercesLeft > 0)
-            {
-                WallPiercesLeft--;
-                CarveCrater(planet, 1);   // tiny puncture so the path is visible
-                return;
-            }
-            Dead = true;
-            CarveCrater(planet, CraterTiles);
+            // Fuse-class explosives (dynamite/TNT) carve their crater on fuse-out the same
+            // way they would on contact — otherwise a stick that lands gracefully and times
+            // out would just disappear without an explosion mark.
+            if (ExplodesOnFuse) CarveCrater(planet, physics, cells, CraterTiles);
         }
     }
 
-    private void CarveCrater(Planet planet, int tiles)
+    /// <summary>Kill the projectile and carve its full crater at the current position. Called
+    /// on terrain impact, and by Combat when a contact explosive detonates on a body.</summary>
+    public void Explode(Planet planet, Physics physics, Cells cells)
+    {
+        Dead = true;
+        CarveCrater(planet, physics, cells, CraterTiles);
+    }
+
+    /// <summary>Blast a roughly circular hole of the given tile radius around Position.
+    /// Works ring by ring in world distance — tile counts differ per ring, so offsetting the
+    /// angular index directly would shear the crater sideways at any angle far from 0.
+    /// Rim tiles crumble into collectible dust cells (their drops survive the blast); the
+    /// core is vaporised outright. Every removed tile wakes the settle physics so terrain
+    /// undercut by the blast trembles and caves instead of hanging in the air.</summary>
+    private void CarveCrater(Planet planet, Physics physics, Cells cells, int tiles, bool dust = true)
     {
         if (tiles <= 0) return;
-        var (tx, ty) = planet.WorldToTile(Position);
-        for (var dy = -tiles; dy <= tiles; dy++)
+        var maxDist = tiles * Planet.TileSize;
+        var maxDistSq = maxDist * maxDist;
+        var rel = Position - planet.Center;
+        var centerRing = (int)(rel.Length() / Planet.TileSize) - Planet.RingMin;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
+        for (var r = centerRing - tiles; r <= centerRing + tiles; r++)
         {
-            for (var dx = -tiles; dx <= tiles; dx++)
+            if (r < 0 || r >= Planet.RingCount) continue;
+            var ct = (int)(ang / MathHelper.TwoPi * Planet.TilesAt(r));
+            for (var dt2 = -(tiles + 1); dt2 <= tiles + 1; dt2++)
             {
-                if (dx * dx + dy * dy > tiles * tiles) continue;
-                var k = planet.Get(tx + dx, ty + dy);
-                if (Tiles.IsSolid(k) && !Tiles.IsAnchored(k))
-                    planet.Set(tx + dx, ty + dy, TileKind.Sky);
+                var t = ct + dt2;
+                var distSq = (planet.TileToWorld(r, t) - Position).LengthSquared();
+                if (distSq > maxDistSq) continue;
+                var k = planet.Get(r, t);
+                if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
+                planet.Set(r, t, TileKind.Sky);
+                // Outer ~45% of the radius crumbles to dust; inside that, vaporised.
+                if (dust && distSq > maxDistSq * 0.3f) cells.SpawnDustInTile(r, t, k);
+                physics.MarkDirty(r, t);
             }
         }
     }
