@@ -62,7 +62,7 @@ public static class PlanetDefs
             MountainHeightScale: 1.25f, LavaFillFrac: 0.30f, HasWater: true,
             OreBias: new[] { (TileKind.Sapphire, 0.030f), (TileKind.SilverOre, 0.020f) },
             QuakeScale: 1.2f, CaveSpawnCap: 16,
-            ShipOre: "sapphire", ShipOreCount: 4, OxygenDrainScale: 1.1f),
+            ShipOre: "sapphire", ShipOreCount: 4, OxygenDrainScale: 1.1f, Titan: TitanKind.Hydra),
 
         new("ember", "Ember", "Volcanic furnace, lava high, rubies below",
             new Color(190, 90, 50), new Color(255, 170, 90),
