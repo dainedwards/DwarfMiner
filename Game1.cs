@@ -1919,6 +1919,11 @@ public sealed class DwarfMinerGame : Game
                 ProjectileKind.CannonDiamond  => (new Color(230, 245, 255), 26f),
                 ProjectileKind.Dynamite       => (new Color(255, 180, 80),  10f),
                 ProjectileKind.Harpoon        => (new Color(255, 200, 130), 14f),
+                ProjectileKind.Pistol         => (new Color(255, 235, 160), 8f),
+                ProjectileKind.MachineGun     => (new Color(255, 210, 120), 6f),
+                ProjectileKind.Laser          => (new Color(255, 90, 90),   14f),
+                ProjectileKind.Rocket         => (new Color(255, 160, 70),  16f),
+                ProjectileKind.Tnt            => (new Color(255, 210, 110), 10f),
                 _ => (Color.White, 6f),
             };
             _renderer.AddLight(p.Position, r, col);
