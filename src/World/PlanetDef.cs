@@ -34,7 +34,7 @@ public static class PlanetDefs
 {
     public static readonly PlanetDef[] All =
     {
-        new("verdant", "Verdant", "Gentle green start — lakes, moss, iron",
+        new("verdant", "Verdant", "Gentle green start, lakes, moss, iron",
             new Color(90, 150, 80), new Color(150, 210, 130),
             TileKind.Grass,
             LakeMin: 3, LakeExtra: 1, MountainMin: 6, MountainExtra: 3,
@@ -43,7 +43,7 @@ public static class PlanetDefs
             QuakeScale: 1.0f, CaveSpawnCap: 14,
             ShipOre: "gold", ShipOreCount: 3),
 
-        new("frost", "Frost", "Frozen wastes — deep water, sapphire seams",
+        new("frost", "Frost", "Frozen wastes, deep water, sapphire seams",
             new Color(150, 180, 220), new Color(220, 235, 255),
             TileKind.Snow,
             LakeMin: 4, LakeExtra: 2, MountainMin: 8, MountainExtra: 3,
@@ -52,7 +52,7 @@ public static class PlanetDefs
             QuakeScale: 1.2f, CaveSpawnCap: 16,
             ShipOre: "sapphire", ShipOreCount: 4),
 
-        new("ember", "Ember", "Volcanic furnace — lava high, rubies below",
+        new("ember", "Ember", "Volcanic furnace, lava high, rubies below",
             new Color(190, 90, 50), new Color(255, 170, 90),
             TileKind.Gravel,
             LakeMin: 0, LakeExtra: 0, MountainMin: 9, MountainExtra: 4,
@@ -61,7 +61,7 @@ public static class PlanetDefs
             QuakeScale: 0.55f, CaveSpawnCap: 18,
             ShipOre: "ruby", ShipOreCount: 4),
 
-        new("slag", "Slag", "Dead metal world — platinum veins, restless crust",
+        new("slag", "Slag", "Dead metal world, platinum veins, restless crust",
             new Color(130, 125, 140), new Color(200, 205, 220),
             TileKind.Gravel,
             LakeMin: 0, LakeExtra: 0, MountainMin: 4, MountainExtra: 2,
@@ -70,7 +70,7 @@ public static class PlanetDefs
             QuakeScale: 0.45f, CaveSpawnCap: 20,
             ShipOre: "platinum", ShipOreCount: 5),
 
-        new("core", "Coreheart", "The finale — diamond-rich, swarming, lava at the door",
+        new("core", "Coreheart", "The finale, diamond-rich, swarming, lava at the door",
             new Color(120, 70, 160), new Color(220, 150, 255),
             TileKind.Basalt,
             LakeMin: 1, LakeExtra: 1, MountainMin: 10, MountainExtra: 4,

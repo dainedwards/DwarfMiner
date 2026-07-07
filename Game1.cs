@@ -2443,7 +2443,7 @@ public sealed class DwarfMinerGame : Game
         }
         else
         {
-            var line1 = sel.Name.ToUpperInvariant() + " — " + sel.Tagline.ToUpperInvariant();
+            var line1 = sel.Name.ToUpperInvariant() + ": " + sel.Tagline.ToUpperInvariant();
             _renderer.DrawText(line1,
                 new Vector2((VirtualWidth - _renderer.MeasureText(line1, 2)) / 2f, infoY), Color.White, 2);
             var line2 = $"SHIP NAV CORE NEEDS: {sel.ShipOreCount} {Tiles.ResourceLabel(sel.ShipOre)} + 3 CRYSTAL";
