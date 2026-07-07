@@ -255,7 +255,23 @@ public sealed class DwarfMinerGame : Game
         if (keys.IsKeyDown(Keys.S) || keys.IsKeyDown(Keys.Down)) verticalAxis -= 1;
 
         // G toggles fly mode for world testing.
-        if (Pressed(keys, _prevKeys, Keys.G)) _player.FlyMode = !_player.FlyMode;
+        if (Pressed(keys, _prevKeys, Keys.G))
+        {
+            _player.FlyMode = !_player.FlyMode;
+            // God mode carries the full armoury: entering fills empty belt slots with every
+            // weapon; leaving strips the ones the player doesn't actually own, so the loaner
+            // guns vanish with the mode while crafted gear stays put.
+            if (_player.FlyMode)
+            {
+                foreach (var w in GodWeaponIds) _player.Toolbelt.AutoEquip(w);
+            }
+            else
+            {
+                for (var s = 0; s < Toolbelt.SlotCount; s++)
+                    if (_player.Toolbelt.Slots[s] is { } wid && IsGodLoanerWeapon(wid))
+                        _player.Toolbelt.Slots[s] = null;
+            }
+        }
 
         _player.Update(dt, _planet, moveAxis, jumpHeld, verticalAxis);
 
