@@ -235,9 +235,9 @@ public sealed partial class DwarfMinerGame : Game
 
         // Crafting menu intercepts most input — world keeps simulating but movement/mining
         // stops so the player isn't fighting the game while shopping for upgrades.
-        if (_craftingOpen)
+        if (_craftingMenu.Open)
         {
-            UpdateCraftingMenu(keys);
+            _craftingMenu.Update(keys, _prevKeys, ApplyCraft);
             _run.Physics.Update(dt);
             _particles.Update(dt, _run.Planet);
             _run.Cells.Update(dt);
@@ -245,7 +245,7 @@ public sealed partial class DwarfMinerGame : Game
             base.Update(gameTime);
             return;
         }
-        if (Pressed(keys, _prevKeys, Keys.C)) { _craftingOpen = true; _craftingCursor = 0; _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return; }
+        if (Pressed(keys, _prevKeys, Keys.C)) { _craftingMenu.Show(); _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return; }
 
         _run.RunTime += dt;
 
