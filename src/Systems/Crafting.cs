@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DwarfMiner.Entities;
+using DwarfMiner.World;
 
 namespace DwarfMiner.Systems;
 
@@ -7,12 +8,40 @@ public sealed record Recipe(string Id, string Name, IReadOnlyDictionary<string, 
 
 public static class Crafting
 {
+    /// <summary>Active recipe table — the base list plus the current planet's ship-stage
+    /// recipes (whose costs vary per planet). Rebuilt by <see cref="SetPlanet"/> at run start;
+    /// defaults to the starter planet so SimTest and tools see a full table.</summary>
+    public static IReadOnlyList<Recipe> All { get; private set; } = BuildFor(PlanetDefs.All[0]);
+
+    /// <summary>Rebuild the recipe table for a planet: the ship's nav core demands that
+    /// planet's signature deep ore, so leaving always requires a dive to where it lives.</summary>
+    public static void SetPlanet(PlanetDef def) => All = BuildFor(def);
+
+    private static IReadOnlyList<Recipe> BuildFor(PlanetDef def)
+    {
+        var list = new List<Recipe>(Base)
+        {
+            // ─── Spaceship — the way off this planet ─────────────────────────
+            // Pad first (placed at your feet on the surface), then hull → engine → nav in
+            // order, each crafted standing at the pad. Nav costs the planet's signature ore.
+            new("launch_pad", "Launch pad — build site (craft on the surface)",
+                new Dictionary<string, int> { ["stone"] = 8, ["iron"] = 4 }),
+            new("ship_hull", "Ship hull — stage 1 (craft at the pad)",
+                new Dictionary<string, int> { ["iron"] = 12, ["stone"] = 10 }),
+            new("ship_engine", "Ship engine — stage 2 (craft at the pad)",
+                new Dictionary<string, int> { ["gold"] = 4, ["coal"] = 10, ["iron"] = 6 }),
+            new("ship_nav", "Nav core — stage 3, ready to launch (L at the pad)",
+                new Dictionary<string, int> { ["crystal"] = 3, [def.ShipOre] = def.ShipOreCount }),
+        };
+        return list;
+    }
+
     /// <summary>Master recipe table. Order is the order shown in the in-game crafting menu —
     /// permanent upgrades first, then placeable build items, then ammos, then consumables and
     /// late-game super-weapons. New ids that appear in the cost / output should also be wired
     /// into <see cref="World.Tiles.ResourceOrder"/>, <see cref="World.Tiles.ResourceColor"/>,
     /// and <see cref="World.Tiles.ResourceLabel"/> so they render in the inventory panel.</summary>
-    public static readonly IReadOnlyList<Recipe> All = new List<Recipe>
+    private static readonly IReadOnlyList<Recipe> Base = new List<Recipe>
     {
         // ─── Pickaxe tier ladder ──────────────────────────────────────────────
         // Each tier sets PickaxeTier to its value; recipes are gated by tier so you can't
