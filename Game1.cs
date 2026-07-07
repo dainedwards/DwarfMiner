@@ -1726,6 +1726,12 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.DrawText(title, new Vector2((VirtualWidth - _renderer.MeasureText(title, 4)) / 2f, 46), Color.White, 4);
         var subtitle = "A/D SELECT   ENTER DEPART   BUILD A SHIP TO REACH THE NEXT WORLD";
         _renderer.DrawText(subtitle, new Vector2((VirtualWidth - _renderer.MeasureText(subtitle)) / 2f, 88), new Color(150, 155, 175));
+        if (RunSave.Exists)
+        {
+            var resume = "R RESUME SAVED RUN";
+            _renderer.DrawText(resume,
+                new Vector2((VirtualWidth - _renderer.MeasureText(resume, 2)) / 2f, 110), new Color(140, 220, 140), 2);
+        }
 
         for (var i = 0; i < count; i++)
         {
