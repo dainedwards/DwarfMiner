@@ -42,6 +42,19 @@ public static class TileAtlas
         return new Rectangle((v * MaskCount + (mask & 15)) * Res, (int)k * Res, Res, Res);
     }
 
+    /// <summary>Back-wall frame: same art, but instead of alpha erosion the mask bits select
+    /// edges baked with a soft ragged occlusion gradient (walls sit *behind* the world, so
+    /// where they border solid ground they fall into shadow over a few pixels rather than
+    /// being cut). Bit meanings match <see cref="Source"/>: 0 outer, 1 inner, 2 left, 3 right —
+    /// here a set bit means "solid tile on that side".</summary>
+    public static Rectangle WallSource(TileKind k, int variant, int mask)
+    {
+        var v = ((variant % VariantCount) + VariantCount) % VariantCount;
+        return new Rectangle((WallColumnOffset + v * MaskCount + (mask & 15)) * Res, (int)k * Res, Res, Res);
+    }
+
+    private const int WallColumnOffset = VariantCount * MaskCount;
+
     public static void Build(GraphicsDevice gd)
     {
         var kinds = Enum.GetValues<TileKind>();
