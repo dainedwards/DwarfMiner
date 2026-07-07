@@ -100,21 +100,43 @@ public sealed class Renderer
         var minRing = Math.Max(0, (int)(minDistTight / Planet.TileSize) - Planet.RingMin - 1);
         var maxRing = Math.Min(Planet.RingCount - 1, (int)(maxDistTight / Planet.TileSize) - Planet.RingMin + 1);
 
-        _gd.Clear(new Color(8, 10, 18));
+        // Elevation-layered skybox: backdrop and stars belong to different altitude bands.
+        // Underground reads near-black, the lower atmosphere is a moody dusk blue with no
+        // stars at all, and the starfield only fades in through the upper atmosphere,
+        // reaching full strength in open space — climbing a peak or flying up literally
+        // ascends through the sky layers. (The radial atmosphere shell and the orbiting
+        // haze wisps drawn below are world-space, so they stay glued to their own bands.)
+        var planetR = planet.Radius * Planet.TileSize;
+        var elev = camDist / planetR;                 // 0 = core … 1 = outermost ring
+        var caveBg = new Color(7, 9, 15);
+        var duskBg = new Color(34, 48, 82);
+        var spaceBg = new Color(9, 11, 20);
+        var backdrop = elev switch
+        {
+            < 0.60f => caveBg,
+            < 0.70f => Color.Lerp(caveBg, duskBg, (elev - 0.60f) / 0.10f),
+            < 0.80f => duskBg,
+            < 0.95f => Color.Lerp(duskBg, spaceBg, (elev - 0.80f) / 0.15f),
+            _ => spaceBg,
+        };
+        var starAlpha = MathHelper.Clamp((elev - 0.82f) / 0.14f, 0f, 1f);
 
-        // Pixelated space skybox, Terraria-style: a tileable starfield drawn screen-space
-        // at world-pixel chunkiness (PointWrap + integer-zoom upscale), with slow parallax
-        // against the camera so the stars sit far behind the terrain. Everything not
-        // covered by tiles — horizon, caves, dug-out openings — shows this instead of a
-        // synthetic back-wall.
-        var starScale = Math.Max(1, (int)cam.Zoom);
-        var parallax = cam.Target * 0.15f + new Vector2(Time * 1.2f, Time * 0.3f);
-        _sb.Begin(samplerState: SamplerState.PointWrap);
-        _sb.Draw(_stars, new Rectangle(0, 0, cam.ViewportSize.X, cam.ViewportSize.Y),
-            new Rectangle((int)parallax.X, (int)parallax.Y,
-                cam.ViewportSize.X / starScale, cam.ViewportSize.Y / starScale),
-            Color.White);
-        _sb.End();
+        _gd.Clear(backdrop);
+
+        // Pixelated starfield, Terraria-style: tileable, drawn screen-space at world-pixel
+        // chunkiness (PointWrap + integer-zoom upscale) with slow parallax. Faded by the
+        // elevation band above — invisible from the surface, dense once you're in space.
+        if (starAlpha > 0f)
+        {
+            var starScale = Math.Max(1, (int)cam.Zoom);
+            var parallax = cam.Target * 0.15f + new Vector2(Time * 1.2f, Time * 0.3f);
+            _sb.Begin(samplerState: SamplerState.PointWrap);
+            _sb.Draw(_stars, new Rectangle(0, 0, cam.ViewportSize.X, cam.ViewportSize.Y),
+                new Rectangle((int)parallax.X, (int)parallax.Y,
+                    cam.ViewportSize.X / starScale, cam.ViewportSize.Y / starScale),
+                Color.White * starAlpha);
+            _sb.End();
+        }
 
         _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view);
 
