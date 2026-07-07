@@ -109,7 +109,8 @@ public static class RunSave
         if (!Exists) return null;
         try
         {
-            using var r = new BinaryReader(File.OpenRead(SavePath));
+            using var r = new BinaryReader(new System.IO.Compression.GZipStream(
+                File.OpenRead(SavePath), System.IO.Compression.CompressionMode.Decompress));
             if (r.ReadUInt32() != Magic || r.ReadInt32() != Version)
                 throw new InvalidDataException("bad header");
 
