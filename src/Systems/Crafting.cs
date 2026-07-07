@@ -66,6 +66,8 @@ public static class Crafting
         // ─── Light & utility ──────────────────────────────────────────────────
         new("lantern", "Lantern — wider headlamp aura",
             new Dictionary<string, int> { ["coal"] = 2, ["iron"] = 1 }),
+        new("air_tank", "Air tank — doubles your air supply for deeper dives",
+            new Dictionary<string, int> { ["iron"] = 6, ["silver"] = 2 }),
         new("glowshroom", "Glow-shroom torch (placeable green light)",
             new Dictionary<string, int> { ["moss_stone"] = 3 }),
         new("beacon", "Crystal beacon (placeable; press T to recall)",
