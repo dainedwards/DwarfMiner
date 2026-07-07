@@ -1450,13 +1450,14 @@ public sealed partial class DwarfMinerGame : Game
         var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE  Q/E WEAPONS\n" +
                        "C CRAFT  T BEACON RECALL  L LAUNCH SHIP  G GOD MODE";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _run.Player, (int)_run.Titan.Anger, status, controls);
-        DrawInventoryPanel(inv);
-        DrawToolbelt();
-        if (_carry is { } carry) DrawCarry(carry.Id);
+        _invUi.DrawInventoryPanel(_renderer, _run.Player, VirtualWidth);
+        _invUi.DrawToolbelt(_renderer, _run.Player, VirtualWidth, VirtualHeight);
+        _invUi.DrawCarry(_renderer, _run.Player);
 
         DrawHoverDebugLabel();
 
-        if (_craftingOpen) DrawCraftingMenu();
+        if (_craftingMenu.Open)
+            _craftingMenu.Draw(_renderer, _run.Player.Inventory, IsOwned, VirtualWidth, VirtualHeight);
 
         if (_screen == GameScreen.GameOver) DrawGameOverOverlay();
 
