@@ -377,6 +377,80 @@ public static class SimTest
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "DwarfMiner", "run.sav");
 
+    /// <summary>Boss variants: the egg hatches on both its timer and enough damage, and each
+    /// kind's signature attack fires when aggroed near the player (fire/laser shots, Hydra
+    /// burrow+erupt, Kong leap+slam shockwave).</summary>
+    private static void TestTitanVariants()
+    {
+        const float dt = 1f / 60f;
+
+        // --- Egg hatches on the timer ---
+        var planet = WorldGen.Generate(55);
+        var cells = new Cells(planet);
+        var physics = new Physics(planet, cells);
+        var shots = new System.Collections.Generic.List<TitanProjectile>();
+        var boulders = new System.Collections.Generic.List<FallingBoulder>();
+
+        var eggTimer = new Titan(planet, -MathF.PI / 2f, TitanKind.Kong) { EggTimer = 0.05f };
+        Check("titan: starts unhatched in the egg", !eggTimer.Hatched);
+        for (var i = 0; i < 10; i++) eggTimer.Update(dt, planet, physics, cells, eggTimer.Position, boulders, shots);
+        Check("titan: egg hatches when the timer runs out", eggTimer.Hatched);
+
+        // --- Egg hatches early when beaten open ---
+        var eggHit = new Titan(planet, -MathF.PI / 2f, TitanKind.Mecha);
+        eggHit.DamageEgg(eggHit.EggMaxHealth * 0.5f);
+        Check("titan: egg survives a partial hit", !eggHit.Hatched);
+        eggHit.DamageEgg(eggHit.EggMaxHealth);
+        Check("titan: egg cracks open when its health is spent", eggHit.Hatched);
+
+        // --- Each variant's special attack fires when aggroed near the player ---
+        foreach (var kind in new[] { TitanKind.Godzilla, TitanKind.Mecha, TitanKind.Hydra, TitanKind.Kong })
+        {
+            var p = WorldGen.Generate(60);
+            var c = new Cells(p);
+            var phys = new Physics(p, c);
+            var sh = new System.Collections.Generic.List<TitanProjectile>();
+            var bo = new System.Collections.Generic.List<FallingBoulder>();
+            var titan = new Titan(p, -MathF.PI / 2f, kind);
+            titan.Hatch();
+            // Settle on the ground so grounded-gated specials (fire, leap) can trigger.
+            for (var i = 0; i < 180; i++) titan.Update(dt, p, phys, c, titan.Position, bo, sh);
+            var up = p.UpAt(titan.Position);
+            var right = new Vector2(-up.Y, up.X);
+            var player = new Player(titan.Position + right * 130f);
+
+            bool sawShot = false, sawSubmerge = false, sawShock = false;
+            for (var i = 0; i < 60 * 16; i++)
+            {
+                titan.OnDamage();   // keep it aggroed
+                titan.Update(dt, p, phys, c, player.Position, bo, sh);
+                if (sh.Count > 0) sawShot = true;
+                if (titan.Submerged) sawSubmerge = true;
+                if (titan.PendingShockwave is not null) { sawShock = true; titan.PendingShockwave = null; }
+            }
+
+            switch (kind)
+            {
+                case TitanKind.Godzilla:
+                case TitanKind.Mecha:
+                    Check($"titan: {kind} fires ranged shots", sawShot);
+                    break;
+                case TitanKind.Hydra:
+                    Check("titan: Hydra burrows and erupts", sawSubmerge && sawShock);
+                    break;
+                case TitanKind.Kong:
+                    Check("titan: Kong leaps and slams (shockwave)", sawShock);
+                    break;
+            }
+        }
+
+        // --- Planet mapping wires distinct bosses ---
+        Check("titan: ember hatches the fire-breather",
+            PlanetDefs.ById("ember").Titan == TitanKind.Godzilla);
+        Check("titan: slag hatches the mecha",
+            PlanetDefs.ById("slag").Titan == TitanKind.Mecha);
+    }
+
     /// <summary>Hazard cells: gas rises and flash-burns near lava, acid dissolves soft tiles,
     /// and the body-contact probe reports them. Uses hand-carved tiles for determinism.</summary>
     private static void TestHazards()
