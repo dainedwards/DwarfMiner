@@ -719,6 +719,68 @@ public sealed class TitanLeg
     public float StepT = 1f;       // 0..1 during a step; ≥1 means planted
 }
 
+/// <summary>Ranged attack fired by a boss at the player. Self-contained like
+/// <see cref="FallingBoulder"/> (checks player contact itself) so it never tangles with the
+/// player-projectile Combat sweep. Flame is a short-lived fireball from Godzilla's breath;
+/// Laser is a fast bolt from the Mecha's mouth.</summary>
+public enum TitanShotKind { Flame, Laser }
+
+public sealed class TitanProjectile
+{
+    public Vector2 Position;
+    public Vector2 Velocity;
+    public float Life;
+    public bool Dead;
+    public float Radius;
+    public readonly TitanShotKind Kind;
+
+    public TitanProjectile(Vector2 pos, Vector2 vel, TitanShotKind kind)
+    {
+        Position = pos;
+        Velocity = vel;
+        Kind = kind;
+        (Radius, Life) = kind switch
+        {
+            TitanShotKind.Flame => (5f, 0.85f),
+            _                   => (3f, 1.2f),   // Laser
+        };
+    }
+
+    public void Update(float dt, Planet planet, Cells cells, Player player)
+    {
+        Position += Velocity * dt;
+        Life -= dt;
+        if (Life <= 0f) { Dead = true; return; }
+
+        // Player contact — Flame sears, Laser hits harder and knocks back.
+        var diff = player.Position - Position;
+        if (diff.Length() < Radius + player.Radius)
+        {
+            if (Kind == TitanShotKind.Flame)
+            {
+                player.TakeDamage(9f);
+            }
+            else
+            {
+                player.TakeDamage(26f);
+                if (diff.LengthSquared() > 0.0001f) player.Velocity += Vector2.Normalize(diff) * 180f;
+            }
+            Dead = true;
+            return;
+        }
+
+        // Terrain: both are blockable — duck behind a wall to avoid them. Flame ignites gas it
+        // flies through, so Godzilla's breath can set off a gas pocket.
+        if (planet.IsSolidAt(Position))
+        {
+            Dead = true;
+            return;
+        }
+        if (Kind == TitanShotKind.Flame)
+            cells.IgniteGasNear(Position, 6f);
+    }
+}
+
 /// <summary>Boulder hurled by the Titan. Punches through tiles on impact, damages player.</summary>
 public sealed class FallingBoulder
 {
