@@ -63,7 +63,7 @@ public static class PlanetDefs
             MountainHeightScale: 1.4f, LavaFillFrac: 0.62f, HasWater: false,
             OreBias: new[] { (TileKind.Ruby, 0.030f), (TileKind.CoalOre, 0.030f), (TileKind.Obsidian, 0f) },
             QuakeScale: 0.55f, CaveSpawnCap: 18,
-            ShipOre: "ruby", ShipOreCount: 4),
+            ShipOre: "ruby", ShipOreCount: 4, OxygenDrainScale: 1.35f),
 
         new("slag", "Slag", "Dead metal world, platinum veins, restless crust",
             new Color(130, 125, 140), new Color(200, 205, 220),
