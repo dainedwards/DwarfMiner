@@ -1684,6 +1684,29 @@ public sealed partial class DwarfMinerGame : Game
             var tip = _run.Titan.TailNodes[^1];
             _renderer.AddLight(tip, 18f + 22f * anger01,
                 Color.Lerp(new Color(80, 130, 220), new Color(255, 90, 60), anger01));
+
+            // Mouth glow while a Godzilla winds up/breathes fire or a Mecha charges its laser —
+            // a telegraph the player can read to dodge. SpecialState > 0 is the active window.
+            if (_run.Titan.SpecialState > 0f &&
+                _run.Titan.Kind is TitanKind.Godzilla or TitanKind.Mecha)
+            {
+                var mouth = _run.Titan.Position + tup * 26f + tright * (_run.Titan.Facing * 130f);
+                var warm = _run.Titan.Kind == TitanKind.Godzilla
+                    ? new Color(255, 130, 40) : new Color(120, 230, 255);
+                _renderer.AddLight(mouth, 20f + 16f * _run.Titan.SpecialState, warm);
+            }
+        }
+
+        // Titan shots light their surroundings — flame warm, laser cyan.
+        foreach (var shot in _run.TitanShots)
+            _renderer.AddLight(shot.Position, shot.Kind == TitanShotKind.Flame ? 16f : 18f,
+                shot.Kind == TitanShotKind.Flame ? new Color(255, 150, 50) : new Color(120, 230, 255));
+
+        // A cracking egg glows faintly with its occupant's colour so it reads in a dark cave.
+        if (titanOnScreen && !_run.Titan.Hatched)
+        {
+            var (_, occAngry, _, _) = TitanPalette(_run.Titan.Kind);
+            _renderer.AddLight(_run.Titan.Position + _run.Planet.UpAt(_run.Titan.Position) * 40f, 30f, occAngry);
         }
 
         // Glowing creatures — magma slugs read as drifting coals, cave eyes as a faint gleam.
