@@ -591,14 +591,16 @@ public sealed class Particles
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
             var spd = strength * 1.5f + (float)_rng.NextDouble() * strength * 1.5f;
+            // Smoke starts ember-lit (warm orange-brown, fresh out of the fireball) and
+            // cools to near-black as it rises — fire turning into soot.
             _list.Add(new Particle
             {
                 Position = pos,
                 Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * spd,
                 Life = 0.8f + (float)_rng.NextDouble() * 0.8f,
                 MaxLife = 1.6f,
-                Color = new Color(110, 100, 95),
-                FadeColor = new Color(20, 18, 22),
+                Color = new Color(185, 115, 60),
+                FadeColor = new Color(22, 18, 20),
                 Size = 2f + (float)_rng.NextDouble() * 1.5f,
                 GravityScale = -0.15f,
                 Drag = 0.7f,
