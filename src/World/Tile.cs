@@ -87,6 +87,7 @@ public static class Tiles
         TileKind.Sapphire => 5,
         TileKind.Diamond => 6,
         TileKind.Crystal => 5,
+        TileKind.FuelOre => 3,
         TileKind.PlanetCore => 99,
         TileKind.Core => 999,
         TileKind.Support => 99,
