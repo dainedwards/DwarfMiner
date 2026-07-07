@@ -4,6 +4,7 @@ using System.IO;
 using DwarfMiner.Entities;
 using DwarfMiner.Rendering;
 using DwarfMiner.Systems;
+using DwarfMiner.UI;
 using DwarfMiner.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
