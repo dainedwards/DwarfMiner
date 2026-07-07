@@ -11,7 +11,11 @@ public static class Crafting
     /// <summary>Active recipe table — the base list plus the current planet's ship-stage
     /// recipes (whose costs vary per planet). Rebuilt by <see cref="SetPlanet"/> at run start;
     /// defaults to the starter planet so SimTest and tools see a full table.</summary>
-    public static IReadOnlyList<Recipe> All { get; private set; } = BuildFor(PlanetDefs.All[0]);
+    public static IReadOnlyList<Recipe> All { get; private set; }
+
+    // Static ctor rather than a field initializer: BuildFor reads Base, which is declared
+    // *below* — textual-order field init would hand it a null.
+    static Crafting() => All = BuildFor(PlanetDefs.All[0]);
 
     /// <summary>Rebuild the recipe table for a planet: the ship's nav core demands that
     /// planet's signature deep ore, so leaving always requires a dive to where it lives.</summary>
