@@ -25,6 +25,7 @@ public sealed class Session
     public readonly List<Corpse> Corpses = new();
     public readonly List<Projectile> Projectiles = new();
     public readonly List<FallingBoulder> Boulders = new();
+    public readonly List<TitanProjectile> TitanShots = new();
     public readonly List<Sentry> Sentries = new();
 
     public float EarthquakeTimer;
