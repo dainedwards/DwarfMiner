@@ -38,7 +38,8 @@ public sealed record PlanetDef(
     string ShipOre, int ShipOreCount,
     float OxygenDrainScale = 1f,
     bool SeedsGas = false,
-    bool SeedsAcid = false);
+    bool SeedsAcid = false,
+    TitanKind Titan = TitanKind.Godzilla);
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.</summary>
 public static class PlanetDefs
