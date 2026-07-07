@@ -60,6 +60,12 @@ public sealed class Planet
     /// only records the sites here and Game1 pours the cells in once Cells exists.</summary>
     public readonly List<(int x, int y)> WaterSeeds = new();
 
+    /// <summary>Cave tiles world gen wants filled with hazard cells — flammable gas (rises to
+    /// cave roofs) and corrosive acid (pools on cave floors). Like <see cref="WaterSeeds"/>,
+    /// gen only records the sites; Game1 pours the cells once Cells exists.</summary>
+    public readonly List<(int x, int y)> GasSeeds = new();
+    public readonly List<(int x, int y)> AcidSeeds = new();
+
     private readonly TileKind[] _tiles;
     private readonly byte[] _damage;
     /// <summary>Background "wall" tile kind per cell — what was there before caves were carved.
