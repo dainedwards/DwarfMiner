@@ -80,7 +80,7 @@ public static class PlanetDefs
             MountainHeightScale: 0.7f, LavaFillFrac: 0.35f, HasWater: false,
             OreBias: new[] { (TileKind.PlatinumOre, 0.030f), (TileKind.GoldOre, 0.020f), (TileKind.IronOre, 0.025f) },
             QuakeScale: 0.45f, CaveSpawnCap: 20,
-            ShipOre: "platinum", ShipOreCount: 5, OxygenDrainScale: 1.7f, SeedsAcid: true),
+            ShipOre: "platinum", ShipOreCount: 5, OxygenDrainScale: 1.7f, SeedsAcid: true, Titan: TitanKind.Mecha),
 
         new("core", "Coreheart", "The finale, diamond-rich, swarming, lava at the door",
             new Color(120, 70, 160), new Color(220, 150, 255),
