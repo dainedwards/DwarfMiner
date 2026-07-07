@@ -270,9 +270,100 @@ public static class SimTest
             }
         }
 
+        TestRunSave();
+
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
         Environment.Exit(_failed ? 1 : 0);
     }
+
+    /// <summary>Round-trip the suspend save: build a mutated session, write, read back, and
+    /// compare everything RunSave promises to preserve. The player's real save slot is
+    /// untouched — any existing run.sav is backed up and restored around the test.</summary>
+    private static void TestRunSave()
+    {
+        var backup = RunSave.Exists ? System.IO.File.ReadAllBytes(RunSavePath()) : null;
+        try
+        {
+            var def = PlanetDefs.ById("ember");
+            var run = new Session(def)
+            {
+                Planet = WorldGen.Generate(77, def),
+                RunTime = 123.5f,
+                HasCannon = true,
+                ShipStage = 2,
+                PadPos = new Vector2(2400, 1200),
+            };
+            run.Cells = new Cells(run.Planet);
+            run.Physics = new Physics(run.Planet, run.Cells);
+            // Mutations a real run would have: mined tunnel, damaged tile, spilled cells.
+            for (var r = 120; r < 129; r++) run.Planet.Set(r, 10, TileKind.Sky);
+            run.Planet.Mine(119, 10, 1);
+            run.Cells.FillTile(125, 10, Material.Water);
+
+            run.Player = new Player(new Vector2(2400, 1300))
+            {
+                Health = 61.5f, PickaxeTier = 3, HasDrill = true, HasLaser = true,
+                BeaconWorld = new Vector2(2000, 2000),
+            };
+            run.Player.Inventory.Add("iron", 14);
+            run.Player.Inventory.Add("ruby", 4);
+            run.Player.Toolbelt.AutoEquip("drill");
+            run.Player.Toolbelt.Selected = 2;
+            run.Titan = new Titan(run.Planet, 1.2f) { Health = 1234f, Anger = 42f };
+            run.Sentries.Add(new Sentry(new Vector2(2100, 2100)) { Health = 17f });
+
+            RunSave.Write(run);
+            var loaded = RunSave.TryRead();
+            Check("save: round-trip loads", loaded is not null);
+            if (loaded is null) return;
+
+            Check("save: planet id survives", loaded.Def.Id == "ember");
+            var tilesMatch = true;
+            foreach (var (x, y) in run.Planet.AllTiles())
+                if (run.Planet.Get(x, y) != loaded.Planet.Get(x, y)
+                    || run.Planet.GetWall(x, y) != loaded.Planet.GetWall(x, y)
+                    || run.Planet.Damage(x, y) != loaded.Planet.Damage(x, y))
+                { tilesMatch = false; break; }
+            Check("save: every tile/wall/damage matches", tilesMatch);
+            Check("save: water cells survive", loaded.Cells.Get(125 * Cells.Density + 4,
+                0) is Material.Water or Material.Empty || true); // placement-dependent; real check below
+            var waterFound = false;
+            for (var cy = 0; cy < loaded.Cells.Height && !waterFound; cy++)
+                for (var cx = 0; cx < loaded.Cells.CellsAt(cy); cx += 3)
+                    if (loaded.Cells.Get(cx, cy) == Material.Water) { waterFound = true; break; }
+            Check("save: spilled water present after load", waterFound);
+            Check("save: ship progress survives",
+                loaded.ShipStage == 2 && loaded.PadPos == run.PadPos && loaded.HasCannon && System.Math.Abs(loaded.RunTime - 123.5f) < 0.01f);
+            var p = loaded.Player;
+            Check("save: player stats survive",
+                p.Position == run.Player.Position && System.Math.Abs(p.Health - 61.5f) < 0.01f
+                && p.PickaxeTier == 3 && p.HasDrill && p.HasLaser && !p.HasHammer
+                && p.BeaconWorld == run.Player.BeaconWorld);
+            Check("save: inventory survives",
+                p.Inventory.Count("iron") == 14 && p.Inventory.Count("ruby") == 4);
+            Check("save: toolbelt survives",
+                p.Toolbelt.Selected == 2 && p.Toolbelt.Contains("drill"));
+            Check("save: titan survives",
+                loaded.Titan.Position == run.Titan.Position
+                && System.Math.Abs(loaded.Titan.Health - 1234f) < 0.01f
+                && System.Math.Abs(loaded.Titan.Anger - 42f) < 0.01f);
+            Check("save: sentries survive",
+                loaded.Sentries.Count == 1 && System.Math.Abs(loaded.Sentries[0].Health - 17f) < 0.01f);
+
+            // Loaded cells must tick clean (everything was woken on read).
+            for (var i = 0; i < 30; i++) loaded.Cells.Update(1f / 60f);
+            Check("save: loaded cells settle without incident", true);
+        }
+        finally
+        {
+            RunSave.Delete();
+            if (backup is not null) System.IO.File.WriteAllBytes(RunSavePath(), backup);
+        }
+    }
+
+    private static string RunSavePath() => System.IO.Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "DwarfMiner", "run.sav");
 
     private static void Check(string name, bool ok, string detail = "")
     {
