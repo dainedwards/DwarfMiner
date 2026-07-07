@@ -97,6 +97,21 @@ public sealed class Renderer
         var maxRing = Math.Min(Planet.RingCount - 1, (int)(maxDistTight / Planet.TileSize) - Planet.RingMin + 1);
 
         _gd.Clear(new Color(8, 10, 18));
+
+        // Pixelated space skybox, Terraria-style: a tileable starfield drawn screen-space
+        // at world-pixel chunkiness (PointWrap + integer-zoom upscale), with slow parallax
+        // against the camera so the stars sit far behind the terrain. Everything not
+        // covered by tiles — horizon, caves, dug-out openings — shows this instead of a
+        // synthetic back-wall.
+        var starScale = Math.Max(1, (int)cam.Zoom);
+        var parallax = cam.Target * 0.15f + new Vector2(Time * 1.2f, Time * 0.3f);
+        _sb.Begin(samplerState: SamplerState.PointWrap);
+        _sb.Draw(_stars, new Rectangle(0, 0, cam.ViewportSize.X, cam.ViewportSize.Y),
+            new Rectangle((int)parallax.X, (int)parallax.Y,
+                cam.ViewportSize.X / starScale, cam.ViewportSize.Y / starScale),
+            Color.White);
+        _sb.End();
+
         _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view);
 
         // Solid PlanetCore ball filling the space inside the innermost tile ring, so the
