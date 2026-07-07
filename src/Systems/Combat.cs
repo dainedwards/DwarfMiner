@@ -20,14 +20,14 @@ public static class Combat
     private static readonly List<(float t, object victim)> _hits = new();
 
     public static void ResolveHits(Projectile p, List<Creature> creatures, Titan? titan,
-        Planet planet, Physics physics, Cells cells)
+        Planet planet, Physics physics, Cells cells, Particles? particles = null)
     {
         // Fuse explosives (dynamite/TNT) are lobbed charges — they tumble past bodies without
         // touching them; all their damage comes from the blast. A contact explosive that
         // already died on terrain this frame has spent its blast there; the AoE below covers
         // anything it flew past on the way in.
         if (!p.ExplodesOnFuse && !(p.DetonatesOnContact && p.Dead))
-            SweepBodies(p, creatures, titan, planet, physics, cells);
+            SweepBodies(p, creatures, titan, planet, physics, cells, particles);
 
         if (p.Dead && p.ExplosionRadius > 0f)
             ApplyExplosionDamage(p, creatures, titan);
