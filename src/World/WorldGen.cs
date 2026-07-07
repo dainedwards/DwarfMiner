@@ -63,7 +63,7 @@ public static class WorldGen
         // rejection sampling so they never overlap a mountain's footprint. The basin profile
         // is a rounded dome (1-(d/w)²) rather than the mountains' pointy parabola. The carved
         // tiles are recorded as WaterSeeds; the water itself is poured in as sim cells later.
-        var lakeCount = 3 + rng.Next(2);
+        var lakeCount = def.HasWater ? def.LakeMin + rng.Next(def.LakeExtra + 1) : 0;
         var lakes = new (float ang, float depth, float w)[lakeCount];
         for (var i = 0; i < lakeCount; i++)
         {
