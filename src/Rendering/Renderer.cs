@@ -279,44 +279,24 @@ public sealed class Renderer
                 var leftSky  = leftK == TileKind.Sky;
                 var rightSky = rightK == TileKind.Sky;
 
-                // Terraria-style edge framing: every air-facing edge gets a dark 1-px
-                // outline; the sun-facing outer edge adds a lip inside it, the sides a
-                // faint bevel, the underside an inner shade. The dark outline carries the
-                // silhouette — the light accents are kept gentle enough to read as lighting
-                // rather than a painted rim.
+                // Edge framing: every air-facing edge gets a dark 1-px outline, and dug-out
+                // undersides an inner shade. No light accents — a bright lip highlighted
+                // every block as its own rectangle (worst on mountain-top staircases); the
+                // dark outline alone carries the silhouette, and darker always reads as
+                // shadow rather than paint.
                 var outline = new Color((int)(col.R * 0.45f), (int)(col.G * 0.45f), (int)(col.B * 0.45f));
-                var lip = new Color(
-                    Math.Clamp(col.R + 16, 0, 255),
-                    Math.Clamp(col.G + 16, 0, 255),
-                    Math.Clamp(col.B + 16, 0, 255));
-                var bevel = new Color(
-                    Math.Clamp(col.R + 7, 0, 255),
-                    Math.Clamp(col.G + 7, 0, 255),
-                    Math.Clamp(col.B + 7, 0, 255));
                 var under = new Color(
                     Math.Clamp(col.R - 26, 0, 255),
                     Math.Clamp(col.G - 26, 0, 255),
                     Math.Clamp(col.B - 26, 0, 255));
-                if (outerSky)
-                {
-                    DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, outline);
-                    DrawDeco(centre, right, up, rotation, chord, 0, 1, 8, 1, lip);
-                }
+                if (outerSky) DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, outline);
                 if (innerSky)
                 {
                     DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, outline);
                     DrawDeco(centre, right, up, rotation, chord, 0, 6, 8, 1, under);
                 }
-                if (leftSky)
-                {
-                    DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, outline);
-                    DrawDeco(centre, right, up, rotation, chord, 1, 0, 1, 8, bevel);
-                }
-                if (rightSky)
-                {
-                    DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, outline);
-                    DrawDeco(centre, right, up, rotation, chord, 6, 0, 1, 8, bevel);
-                }
+                if (leftSky)  DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, outline);
+                if (rightSky) DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, outline);
 
                 // Grass hugs exposed edges, Terraria-style: the green wraps down exposed
                 // sides and along a dug-out underside instead of showing bare dirt in
