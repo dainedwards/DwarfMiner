@@ -2171,7 +2171,7 @@ public sealed class DwarfMinerGame : Game
 
         if (_craftingOpen) DrawCraftingMenu();
 
-        if (_gameOver) DrawGameOverOverlay();
+        if (_screen == GameScreen.GameOver) DrawGameOverOverlay();
 
         if (_screenshotPending)
         {
