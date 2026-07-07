@@ -84,7 +84,7 @@ public static class WorldGen
                 w: 0.055f + (float)rng.NextDouble() * 0.05f);   // ≈ 3°–6° half-width
         }
 
-        const int baselineR = 129;
+        const int baselineR = BaselineSurfaceRing;
 
         for (var r = 0; r < Planet.RingCount; r++)
         {
