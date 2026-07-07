@@ -47,17 +47,19 @@ public static class TileAtlas
         var kinds = Enum.GetValues<TileKind>();
         var rows = 0;
         foreach (var k in kinds) rows = Math.Max(rows, (int)k + 1);
-        var w = VariantCount * Res;
+        var w = VariantCount * MaskCount * Res;
         var h = rows * Res;
         var px = new Color[w * h];
 
         var external = LoadExternalSources(gd);
         _externalKinds.Clear();
+        var tile = new Color[Res * Res];
         foreach (var k in kinds)
         {
             if (k == TileKind.Sky) continue;
             for (var v = 0; v < VariantCount; v++)
             {
+                Array.Clear(tile);
                 if (external.TryGetValue(k, out var src))
                 {
                     // Ores draw their background detail from the stone source so a vein sits
@@ -66,18 +68,77 @@ public static class TileAtlas
                     var bg = Tiles.IsOre(k) && external.TryGetValue(TileKind.Stone, out var stoneSrc)
                         ? stoneSrc
                         : src;
-                    ComposeHybrid(px, w, v * Res, (int)k * Res, k, src, bg, v);
+                    ComposeHybrid(tile, Res, 0, 0, k, src, bg, v);
                     _externalKinds.Add(k);
                 }
                 else
                 {
-                    GenerateTile(px, w, v * Res, (int)k * Res, k, new Random((int)k * 97 + v * 13 + 1));
+                    GenerateTile(tile, Res, 0, 0, k, new Random((int)k * 97 + v * 13 + 1));
                 }
+                for (var mask = 0; mask < MaskCount; mask++)
+                    BlitEroded(px, w, (v * MaskCount + mask) * Res, (int)k * Res, tile, k, v, mask);
             }
         }
 
         Texture = new Texture2D(gd, w, h);
         Texture.SetData(px);
+    }
+
+    /// <summary>Copy one composed tile into the atlas, cutting ragged transparency into
+    /// each air-exposed edge (per <paramref name="mask"/> bit) and chamfering corners where
+    /// two exposed edges meet. Depths are hash-stable per (kind, variant, edge, position):
+    /// mostly 0–1 art px with occasional 2, corners ~3 — at 2× world resolution that is a
+    /// sub-pixel-to-1.5-px nibble, rounding the silhouette without visibly gnawing it.
+    /// Cut pixels are fully transparent, so whatever is behind (sky, dim back-wall, water)
+    /// shows through — a shape change, never a colour band.</summary>
+    private static void BlitEroded(Color[] px, int stride, int ox, int oy,
+        Color[] tile, TileKind k, int variant, int mask)
+    {
+        Span<int> top = stackalloc int[Res];
+        Span<int> bot = stackalloc int[Res];
+        Span<int> lft = stackalloc int[Res];
+        Span<int> rgt = stackalloc int[Res];
+        var seed = (int)k * 733 + variant * 149;
+        for (var i = 0; i < Res; i++)
+        {
+            top[i] = (mask & 1) != 0 ? EdgeDepth(seed, 0, i) : 0;
+            bot[i] = (mask & 2) != 0 ? EdgeDepth(seed, 1, i) : 0;
+            lft[i] = (mask & 4) != 0 ? EdgeDepth(seed, 2, i) : 0;
+            rgt[i] = (mask & 8) != 0 ? EdgeDepth(seed, 3, i) : 0;
+        }
+        // Corner chamfers where two exposed edges meet (diagonal cut of ~3 px, hash ±1).
+        var tl = (mask & 5) == 5 ? 2 + EdgeDepth(seed, 4, 0) : 0;
+        var tr = (mask & 9) == 9 ? 2 + EdgeDepth(seed, 4, 1) : 0;
+        var bl = (mask & 6) == 6 ? 2 + EdgeDepth(seed, 4, 2) : 0;
+        var br = (mask & 10) == 10 ? 2 + EdgeDepth(seed, 4, 3) : 0;
+
+        for (var y = 0; y < Res; y++)
+        {
+            for (var x = 0; x < Res; x++)
+            {
+                var cut = y < top[x] || y >= Res - bot[x]
+                       || x < lft[y] || x >= Res - rgt[y]
+                       || x + y < tl
+                       || Res - 1 - x + y < tr
+                       || x + Res - 1 - y < bl
+                       || Res - 1 - x + Res - 1 - y < br;
+                px[(oy + y) * stride + ox + x] = cut ? Color.Transparent : tile[y * Res + x];
+            }
+        }
+    }
+
+    /// <summary>Ragged erosion depth for one position along one edge: 0 half the time,
+    /// 1 a third, 2 the rest — hash-stable so the same tile always erodes the same way.</summary>
+    private static int EdgeDepth(int seed, int edge, int i)
+    {
+        unchecked
+        {
+            var h = seed + edge * 8887 + i * (int)2654435761;
+            h ^= h >> 13;
+            h *= 1274126177;
+            h ^= h >> 16;
+            return ((h & 0x7FFFFFFF) % 6) switch { 0 or 1 or 2 => 0, 3 or 4 => 1, _ => 2 };
+        }
     }
 
     private static readonly HashSet<TileKind> _externalKinds = new();
