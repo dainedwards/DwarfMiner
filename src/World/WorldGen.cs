@@ -215,7 +215,7 @@ public static class WorldGen
                     // crust band (below the dirt, above the lava zone that Game1 fills at
                     // ~45% radius) so some caverns are found brimming rather than dry. Water
                     // is seeded as cells and settles to each pocket's floor on its own.
-                    if (depth > 10f && depth < 44f
+                    if (def.HasWater && depth > 10f && depth < 44f
                         && SampleNoise(waterNoise, wx * 0.05f, wy * 0.05f) > 0.62f)
                     {
                         planet.WaterSeeds.Add((r, t));
