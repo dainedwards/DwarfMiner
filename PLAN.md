@@ -6,10 +6,14 @@
 > Section 2 is done: the ItemDef registry (`src/Game1.Items.cs`) replaced the four per-item
 > switches; god mode is opt-in (survival default); Game1 is split — `UI/CraftingMenu`,
 > `UI/InventoryUi`, `Systems/SpawnDirector`, `Session`, `Game1.Items`.
-> Section 3: **in-run save/load is done** (`Systems/RunSave`) — F5 or quitting suspends the
-> run (single gzip slot, ~150 KB); R on the star map resumes; any run ending voids the save.
-> Also fixed: Esc now closes the crafting menu instead of quitting the game.
-> Next up: oxygen/depth pressure, or hazard cells, or per-planet mini-bosses.
+> Section 3 progress:
+> - **In-run save/load done** (`Systems/RunSave`) — F5 or quitting suspends the run (single
+>   gzip slot, ~150 KB); R on the star map resumes; any run ending voids the save. Also fixed:
+>   Esc now closes the crafting menu instead of quitting the game.
+> - **Oxygen/depth pressure done** (`Systems/OxygenRules`, `Player.Oxygen`) — air refills at
+>   the surface, drains with depth (per-planet `OxygenDrainScale`: slag 1.7 thinnest), empties
+>   into suffocation HP loss. `air_tank` recipe doubles the ceiling. AIR bar in the HUD.
+> Next up: hazard cells (gas/acid), or per-planet mini-bosses, or sound.
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
