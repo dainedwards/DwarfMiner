@@ -75,6 +75,175 @@ public static class Icons
 
     // ───────── per-icon builders ─────────
 
+    private static Texture2D BuildPistol(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "................",
+        "................",
+        "..SSSSSSSSSS....",
+        "..SsssssssssS...",
+        "..SSSSSSSSSS....",
+        "......GGg.......",
+        "......GGg.......",
+        ".....GGg........",
+        ".....GG.........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['S'] = new Color(185, 190, 205),
+        ['s'] = new Color(120, 125, 140),
+        ['G'] = new Color(105, 75, 50),
+        ['g'] = new Color(70, 48, 30),
+    });
+
+    private static Texture2D BuildMachineGun(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "................",
+        "..SSSSSSSSSSSS..",
+        "..SsssssssssssS.",
+        "..SSSSSSSSSSSS..",
+        "....GGg..MMm....",
+        "....GGg..MMm....",
+        "...GGg..........",
+        "...GG...........",
+        "................",
+        "..y.y.y.........",
+        ".y.y.y..........",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['S'] = new Color(150, 158, 175),
+        ['s'] = new Color(95, 102, 118),
+        ['G'] = new Color(105, 75, 50),
+        ['g'] = new Color(70, 48, 30),
+        ['M'] = new Color(120, 126, 140),
+        ['m'] = new Color(80, 85, 98),
+        ['y'] = new Color(230, 195, 90),
+    });
+
+    private static Texture2D BuildLaser(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "................",
+        "..MMMMMMM.......",
+        "..MmmmmmMCC.....",
+        "..MMMMMMMCCrrrr.",
+        "..MmmmmmMCC.....",
+        "..MMMMMMM.......",
+        ".....GGg........",
+        ".....GGg........",
+        "....GGg.........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['M'] = new Color(170, 175, 195),
+        ['m'] = new Color(110, 115, 135),
+        ['C'] = new Color(255, 130, 130),
+        ['r'] = new Color(255, 80, 80),
+        ['G'] = new Color(105, 75, 50),
+        ['g'] = new Color(70, 48, 30),
+    });
+
+    private static Texture2D BuildRocketLauncher(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "................",
+        "..TTTTTTTTTTTT..",
+        ".TtttttttttttTT.",
+        ".TtttttttttttTT.",
+        "..TTTTTTTTTTTT..",
+        ".......GGg......",
+        ".......GGg......",
+        "......GGg.......",
+        "......GG........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['T'] = new Color(96, 110, 88),
+        ['t'] = new Color(60, 72, 55),
+        ['G'] = new Color(105, 75, 50),
+        ['g'] = new Color(70, 48, 30),
+    });
+
+    private static Texture2D BuildRocket(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "................",
+        "................",
+        "......RR........",
+        ".....RRRR.......",
+        "....SSSSSS......",
+        "....SssssS......",
+        "....SssssS......",
+        "....SSSSSS......",
+        "...F.SSSS.F.....",
+        "..FF..ff..FF....",
+        "......ff........",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['R'] = new Color(200, 80, 60),
+        ['S'] = new Color(185, 190, 205),
+        ['s'] = new Color(125, 130, 148),
+        ['F'] = new Color(150, 60, 45),
+        ['f'] = new Color(255, 170, 70),
+    });
+
+    private static Texture2D BuildTnt(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "......y.........",
+        ".....y..........",
+        "....ww..........",
+        "...RRRRRRRRR....",
+        "...RrrRrrRrr....",
+        "...RRRRRRRRR....",
+        "...BBBBBBBBB....",
+        "...RRRRRRRRR....",
+        "...RrrRrrRrr....",
+        "...RRRRRRRRR....",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['R'] = new Color(190, 50, 45),
+        ['r'] = new Color(130, 28, 26),
+        ['B'] = new Color(95, 70, 45),
+        ['w'] = new Color(200, 190, 170),
+        ['y'] = new Color(255, 225, 120),
+    });
+
     private static Texture2D BuildPickaxe(GraphicsDevice gd, Color head, Color headDark) => Renderer.BuildSprite(gd, new[]
     {
         "................",
