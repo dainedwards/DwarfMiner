@@ -140,7 +140,7 @@ public sealed partial class DwarfMinerGame : Game
         _run.SpawnTimer = 6f;
         _run.FaunaTimer = 8f;
         _gameOverReason = "";
-        _craftingMenu.Reset();
+        _craftingMenu.Show(); // TEMP: verification only — force menu open for screenshot
         _invUi.Reset();
         _screen = GameScreen.Playing;
         // Camera exists except when DM_AUTOSTART triggers a run during Initialize —
