@@ -886,6 +886,69 @@ public sealed partial class DwarfMinerGame : Game
         _                  => "Titan",
     };
 
+    /// <summary>Calm→angry hide colours and spine-glow colours per variant — Godzilla mossy
+    /// green, Mecha steel-and-cyan, Hydra serpent-green, Kong fur-brown.</summary>
+    private static (Color hideCalm, Color hideAngry, Color glowCalm, Color glowAngry) TitanPalette(TitanKind k) => k switch
+    {
+        TitanKind.Mecha => (new Color(95, 100, 115), new Color(150, 120, 120), new Color(90, 200, 255), new Color(130, 235, 255)),
+        TitanKind.Hydra => (new Color(38, 78, 58), new Color(96, 120, 52), new Color(120, 220, 140), new Color(185, 240, 90)),
+        TitanKind.Kong  => (new Color(72, 56, 42), new Color(112, 74, 46), new Color(150, 110, 70), new Color(215, 150, 80)),
+        _               => (new Color(48, 56, 50), new Color(120, 60, 50), new Color(80, 130, 220), new Color(255, 90, 60)),
+    };
+
+    /// <summary>Draw the incubation egg: a mottled ovoid that wobbles with the boss's pulse,
+    /// flashes white on hits, and fissures more as its health is beaten down. The mottling is
+    /// tinted toward the occupant's colour as a hint of what's inside.</summary>
+    private void DrawTitanEgg()
+    {
+        var t = _run.Titan;
+        var up = _run.Planet.UpAt(t.Position);
+        var right = new Vector2(-up.Y, up.X);
+        var wob = MathF.Sin(t.Pulse) * 2.5f;
+        var basePos = t.Position + right * wob;
+        var (occCalm, occAngry, _, _) = TitanPalette(t.Kind);
+        var shell = t.HitFlash > 0 ? Color.White : new Color(224, 214, 196);
+        var shellDark = new Color(165, 154, 132);
+
+        _renderer.DrawCircle(basePos + up * 26f, 42f, shellDark);
+        _renderer.DrawCircle(basePos + up * 30f, 37f, shell);
+        _renderer.DrawCircle(basePos + up * 56f, 31f, shellDark);
+        _renderer.DrawCircle(basePos + up * 60f, 26f, shell);
+        _renderer.DrawCircle(basePos + up * 80f, 17f, shell);
+
+        // Occupant-tinted mottling — stable position hash so the spots don't shimmer.
+        var occ = Color.Lerp(occCalm, occAngry, 0.4f);
+        var seed = (int)(basePos.X * 0.21f) ^ (int)(basePos.Y * 0.11f);
+        for (var s = 0; s < 10; s++)
+        {
+            var h = (seed * 1664525 + s * 1013904223) & 0x7fffffff;
+            var sx = ((h >> 4) & 0x3F) - 32;
+            var sy = ((h >> 12) & 0x7F) + 8;
+            _renderer.DrawCircle(basePos + right * sx * 0.7f + up * sy, 3f + (h & 3), occ);
+        }
+
+        // Cracks widen as the egg is beaten toward hatching.
+        var dmg = MathHelper.Clamp(1f - t.EggHealth / t.EggMaxHealth, 0f, 1f);
+        var cracks = (int)(dmg * 6f);
+        for (var c = 0; c < cracks; c++)
+        {
+            var a = c * 1.7f;
+            var from = basePos + up * 44f;
+            var to = from + (right * MathF.Cos(a) + up * MathF.Sin(a)) * (14f + dmg * 20f);
+            DrawLegSegment(from, to, 1.6f, new Color(40, 34, 30));
+        }
+    }
+
+    /// <summary>Draw a travelling dirt mound where a burrowed Hydra is tunnelling.</summary>
+    private void DrawBurrowMound()
+    {
+        var t = _run.Titan;
+        var up = _run.Planet.UpAt(t.Position);
+        _renderer.DrawCircle(t.Position, 17f, new Color(92, 70, 50));
+        _renderer.DrawCircle(t.Position + up * 4f, 11f, new Color(116, 88, 62));
+        if (Random.Shared.NextDouble() < 0.3f) _particles.EmitDust(t.Position + up * 10f, 4f);
+    }
+
     /// <summary>Every run ending funnels through here: show the game-over overlay and void
     /// the suspend save — a finished run can't be resumed.</summary>
     private void EndRun(string reason)
