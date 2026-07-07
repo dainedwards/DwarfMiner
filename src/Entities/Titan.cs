@@ -91,12 +91,38 @@ public sealed class Titan
 
     private readonly Planet _planet;
 
-    public Titan(Planet planet, float startAngle)
+    public Titan(Planet planet, float startAngle, TitanKind kind = TitanKind.Godzilla)
     {
         _planet = planet;
-        Position = FindSurfaceSpawn(planet, startAngle);
+        Kind = kind;
+        EggHealth = EggMaxHealth;
+        // Rest the egg near the ground; the hatched boss rises to hover height on its own once
+        // its legs plant and the suspension lifts it.
+        var hover = FindSurfaceSpawn(planet, startAngle);
+        Position = hover - planet.UpAt(hover) * (BodyHover - 24f);
         InitLegs();
         InitTail();
+    }
+
+    /// <summary>Crack the egg — early (from damage) or on the 10-minute timer. The boss comes
+    /// out already aggroed so the fight starts immediately.</summary>
+    public void Hatch()
+    {
+        if (Hatched) return;
+        Hatched = true;
+        JustHatched = true;
+        AggroTimer = AggroDuration;
+        SpecialCooldown = 4f;
+    }
+
+    /// <summary>Apply damage to the egg (routed here by <see cref="Systems.Combat"/> while the
+    /// boss is unhatched). Beating the egg to zero hatches it immediately.</summary>
+    public void DamageEgg(float dmg)
+    {
+        if (Hatched) return;
+        EggHealth -= dmg;
+        HitFlash = 0.15f;
+        if (EggHealth <= 0f) Hatch();
     }
 
     private void InitLegs()
