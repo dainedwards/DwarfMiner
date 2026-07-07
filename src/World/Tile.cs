@@ -186,6 +186,7 @@ public static class Tiles
         "sapphire"    => BaseColor(TileKind.Sapphire),
         "diamond"     => BaseColor(TileKind.Diamond),
         "crystal"     => BaseColor(TileKind.Crystal),
+        "fuel"        => new Color(120, 255, 190),
         "rocket_part" => new Color(190, 200, 220),
         "nuke"        => new Color(255, 80, 200),
         "harpoon"     => new Color(220, 160, 100),
