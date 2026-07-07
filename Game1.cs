@@ -134,6 +134,9 @@ public sealed class DwarfMinerGame : Game
             PickaxeTier = Math.Max(1, _meta.StartingPickaxePower),
         };
         _hasCannon = _meta.StartWithCannon;
+        // Runs start in god mode, and god mode carries the full armoury — load every weapon
+        // onto the belt from frame one (toggling god off strips the unowned loaners).
+        foreach (var w in GodWeaponIds) _player.Toolbelt.AutoEquip(w);
         _titan = new Titan(_planet, MathF.PI * 0.6f);
         _creatures.Clear();
         _projectiles.Clear();
