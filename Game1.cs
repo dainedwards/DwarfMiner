@@ -153,6 +153,12 @@ public sealed partial class DwarfMinerGame : Game
             // higher-tier pickaxe so subsequent runs are slightly easier.
             PickaxeTier = Math.Max(1, _meta.StartingPickaxePower),
         };
+        // TEMP: verify hazard cell rendering — drop gas/acid/lava beside the spawn.
+        {
+            var (stx, sty) = _run.Planet.WorldToTile(surfacePos - _run.Planet.UpAt(surfacePos) * 4f);
+            for (var d = 0; d < 3; d++) { _run.Planet.Set(stx - d, sty + 4, TileKind.Sky); _run.Cells.FillTile(stx - d, sty + 4, Material.Gas); }
+            for (var d = 0; d < 3; d++) { _run.Planet.Set(stx - d, sty + 8, TileKind.Sky); _run.Cells.FillTile(stx - d, sty + 8, Material.Acid); }
+        }
         _run.HasCannon = _meta.StartWithCannon;
         // God mode carries the full armoury — load every weapon onto the belt from frame
         // one (toggling god off strips the unowned loaners).
