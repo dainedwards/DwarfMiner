@@ -242,6 +242,34 @@ public static class SimTest
             }
         }
 
+        // --- 6. Corpses: every creature kind pays out materials, and a corpse dropped into a
+        // cave settles onto the floor instead of sinking through it or drifting.
+        {
+            foreach (CreatureKind kind in Enum.GetValues<CreatureKind>())
+            {
+                var drops = Corpse.DropsFor(kind);
+                var total = 0;
+                foreach (var (_, count) in drops) total += count;
+                Check($"corpse: {kind} yields materials", drops.Length > 0 && total > 0);
+            }
+
+            var cPlanet = WorldGen.Generate(23);
+            if (FindCavePos(cPlanet, seedOffset: 77) is { } drop)
+            {
+                var corpse = new Corpse(drop, CreatureKind.Grub, 4f);
+                for (var step = 0; step < 60 * 5; step++)
+                    corpse.Update(dt, cPlanet);
+                Check("corpse: settles without embedding in rock",
+                    !cPlanet.IsSolidAt(corpse.Position) && corpse.Velocity.LengthSquared() < 1f,
+                    $"vel {corpse.Velocity.Length():0.00}");
+                Check("corpse: still fresh within decay window", !corpse.Expired);
+            }
+            else
+            {
+                Check("corpse: drop site found", false);
+            }
+        }
+
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
         Environment.Exit(_failed ? 1 : 0);
     }
