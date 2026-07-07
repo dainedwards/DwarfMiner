@@ -928,6 +928,7 @@ public sealed class DwarfMinerGame : Game
             case "pistol":          if (_player.HasPistol)         return; break;
             case "machine_gun":     if (_player.HasMachineGun)     return; break;
             case "laser":           if (_player.HasLaser)          return; break;
+            case "laser_cannon":    if (_player.HasLaserCannon)    return; break;
             case "rocket_launcher": if (_player.HasRocketLauncher) return; break;
         }
 
