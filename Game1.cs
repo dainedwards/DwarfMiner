@@ -295,6 +295,15 @@ public sealed partial class DwarfMinerGame : Game
             return;
         }
 
+        // Liftoff cinematic owns the frame: no player control, no crafting — just the climb.
+        if (_launching)
+        {
+            UpdateLaunch(dt);
+            _prevKeys = keys; _prevMouse = mouse;
+            base.Update(gameTime);
+            return;
+        }
+
         // Crafting menu intercepts most input — world keeps simulating but movement/mining
         // stops so the player isn't fighting the game while shopping for upgrades.
         if (_craftingMenu.Open)
