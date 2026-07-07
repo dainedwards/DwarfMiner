@@ -82,12 +82,25 @@ public sealed class Titan
     private float _roamTimer;         // seconds until the next roam-direction reroll
 
     /// <summary>Hover height — distance the body wants to maintain above the average planted-foot
-    /// position along planet-up. Higher values let the kaiju stride over taller terrain.</summary>
+    /// position along planet-up. Higher values let the kaiju stride over taller terrain. The
+    /// serpent Hydra rides much lower (<see cref="Hover"/>) since it has no legs.</summary>
     public const float BodyHover = 105f;
 
-    /// <summary>Per-segment length of the tail.</summary>
-    private const float TailSegLen = 26f;
-    private const int TailNodeCount = 7;
+    /// <summary>Effective body ride-height for this kind — bipeds stand tall, the legless
+    /// serpent slithers close to the ground.</summary>
+    public float Hover => Kind == TitanKind.Hydra ? 44f : BodyHover;
+
+    /// <summary>Verlet spine chain: a dragging tail for the bipeds, a long undulating body for
+    /// the Hydra (its heads mount at node 0). Segment length + node count vary by kind.</summary>
+    private readonly float _tailSeg;
+    private readonly int _tailNodeCount;
+
+    /// <summary>Locked aim for the Mecha's beam, captured when its charge completes so the beam
+    /// fires in a committed direction the player can dodge out of.</summary>
+    private Vector2 _lockedAim = Vector2.UnitX;
+    /// <summary>Seconds the Mecha's drilling beam keeps firing after the charge — the renderer
+    /// draws a solid lance for this window and it emits carving bolts each frame.</summary>
+    public float BeamTimer;
 
     private readonly Planet _planet;
 
