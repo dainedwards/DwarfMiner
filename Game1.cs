@@ -543,6 +543,7 @@ public sealed class DwarfMinerGame : Game
             case "pistol":      if ((god || _player.HasPistol) && _player.ShootCooldown <= 0) FirePistol(worldCursor); break;
             case "machine_gun": if ((god || _player.HasMachineGun) && _player.ShootCooldown <= 0) FireMachineGun(worldCursor); break;
             case "laser":       if ((god || _player.HasLaser) && _player.ShootCooldown <= 0) FireLaser(worldCursor); break;
+            case "laser_cannon": if ((god || _player.HasLaserCannon) && _player.ShootCooldown <= 0) FireLaserCannon(worldCursor); break;
             case "rocket_launcher":
                 if ((god || _player.HasRocketLauncher) && _player.ShootCooldown <= 0
                     && (god || _player.Inventory.TryConsume("rocket", 1)))
