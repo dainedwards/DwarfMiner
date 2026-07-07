@@ -15,7 +15,7 @@ namespace DwarfMiner;
 /// hub); Playing is a live run; GameOver overlays the frozen run until R returns to the map.</summary>
 public enum GameScreen { Overworld, Playing, GameOver }
 
-public sealed class DwarfMinerGame : Game
+public sealed partial class DwarfMinerGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
     private Renderer _renderer = null!;
