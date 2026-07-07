@@ -405,7 +405,7 @@ public sealed class DwarfMinerGame : Game
             // detonates contact explosives on the first body struck, and applies blast AoE
             // when an explosive dies. Sentries stay projectile-transparent — creature contact
             // damage to them is handled in the sentry-update block below.
-            Combat.ResolveHits(p, _creatures, _titan, _planet, _physics, _cells);
+            Combat.ResolveHits(p, _creatures, _titan, _planet, _physics, _cells, _particles);
 
             if (p.Dead)
             {
