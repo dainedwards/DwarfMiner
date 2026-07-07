@@ -12,6 +12,9 @@ namespace DwarfMiner.World;
 /// <param name="QuakeScale">Multiplies the earthquake interval — below 1 means more quakes.</param>
 /// <param name="ShipOre">Extra resource id demanded by the ship's nav core on this planet —
 /// chosen to force a deep dive into the planet's signature ore before you can leave.</param>
+/// <param name="OxygenDrainScale">Multiplies how fast the dwarf's air supply depletes at
+/// depth — thin-atmosphere worlds (dead metal, volcanic) burn air faster, so deep dives on
+/// them demand the air-tank upgrade sooner.</param>
 public sealed record PlanetDef(
     string Id,
     string Name,
@@ -27,7 +30,8 @@ public sealed record PlanetDef(
     (TileKind ore, float bias)[] OreBias,
     float QuakeScale,
     int CaveSpawnCap,
-    string ShipOre, int ShipOreCount);
+    string ShipOre, int ShipOreCount,
+    float OxygenDrainScale = 1f);
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.</summary>
 public static class PlanetDefs
