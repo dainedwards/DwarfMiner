@@ -577,6 +577,148 @@ public sealed class Particles
         }
     }
 
+    /// <summary>Short forward cone of hot sparks + a one-frame flash at a gun's muzzle.
+    /// Called once per shot; colour matches the weapon's projectile glow.</summary>
+    public void EmitMuzzleFlash(Vector2 pos, Vector2 dir, Color color)
+    {
+        _list.Add(new Particle
+        {
+            Position = pos,
+            Velocity = Vector2.Zero,
+            Life = 0.06f,
+            MaxLife = 0.06f,
+            Color = Color.White,
+            FadeColor = color,
+            Size = 3f,
+            GravityScale = 0f,
+            Drag = 0f,
+            LightRadius = 16f,
+            LightColor = color,
+        });
+        for (var i = 0; i < 4; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.7f;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            _list.Add(new Particle
+            {
+                Position = pos,
+                Velocity = d * (90f + (float)_rng.NextDouble() * 80f),
+                Life = 0.08f + (float)_rng.NextDouble() * 0.08f,
+                MaxLife = 0.16f,
+                Color = color,
+                FadeColor = new Color(60, 30, 20),
+                Size = 1f,
+                GravityScale = 0f,
+                Drag = 6f,
+            });
+        }
+    }
+
+    /// <summary>Per-frame in-flight trail keyed by projectile kind: rocket exhaust smoke,
+    /// sputtering fuse sparks on thrown explosives, energy motes behind beam weapons, and a
+    /// radioactive sparkle on the nuke. Cheap no-op for kinds without a trail.</summary>
+    public void EmitTrail(Projectile p)
+    {
+        if (p.Velocity.LengthSquared() < 1f) return;
+        var back = -Vector2.Normalize(p.Velocity);
+        switch (p.Kind)
+        {
+            case ProjectileKind.Rocket:
+                // Exhaust: grey puff shed at the tail every frame, drifting and expanding.
+                _list.Add(new Particle
+                {
+                    Position = p.Position + back * 6f + Jitter(1f),
+                    Velocity = back * 20f + Jitter(8f),
+                    Life = 0.35f + (float)_rng.NextDouble() * 0.25f,
+                    MaxLife = 0.6f,
+                    Color = new Color(150, 140, 135),
+                    FadeColor = new Color(40, 35, 35),
+                    Size = 1.5f + (float)_rng.NextDouble(),
+                    GravityScale = -0.05f,
+                    Drag = 1.2f,
+                });
+                break;
+            case ProjectileKind.Dynamite:
+            case ProjectileKind.Tnt:
+                // Sputtering fuse — intermittent tiny sparks tumbling off the stick.
+                if (_rng.NextDouble() < 0.55)
+                {
+                    _list.Add(new Particle
+                    {
+                        Position = p.Position + Jitter(2f),
+                        Velocity = Jitter(20f),
+                        Life = 0.15f + (float)_rng.NextDouble() * 0.15f,
+                        MaxLife = 0.3f,
+                        Color = new Color(255, 230, 130),
+                        FadeColor = new Color(150, 60, 20),
+                        Size = 1f,
+                        GravityScale = 0.4f,
+                        Drag = 1.5f,
+                        LightRadius = 4f,
+                        LightColor = new Color(255, 200, 100),
+                    });
+                }
+                break;
+            case ProjectileKind.LaserCannon:
+                // Ionised wake — cyan motes hanging briefly along the beam's path.
+                _list.Add(new Particle
+                {
+                    Position = p.Position + back * (float)(_rng.NextDouble() * 8.0) + Jitter(1.5f),
+                    Velocity = Jitter(10f),
+                    Life = 0.12f + (float)_rng.NextDouble() * 0.12f,
+                    MaxLife = 0.24f,
+                    Color = new Color(140, 230, 255),
+                    FadeColor = new Color(30, 50, 80),
+                    Size = 1f,
+                    GravityScale = 0f,
+                    Drag = 2f,
+                    LightRadius = 5f,
+                    LightColor = new Color(120, 225, 255),
+                });
+                break;
+            case ProjectileKind.Nuke:
+                // Radioactive shimmer — magenta flecks shed along the whole flight.
+                if (_rng.NextDouble() < 0.7)
+                {
+                    _list.Add(new Particle
+                    {
+                        Position = p.Position + Jitter(3f),
+                        Velocity = Jitter(15f),
+                        Life = 0.3f + (float)_rng.NextDouble() * 0.25f,
+                        MaxLife = 0.55f,
+                        Color = new Color(255, 120, 235),
+                        FadeColor = new Color(60, 20, 60),
+                        Size = 1f,
+                        GravityScale = 0f,
+                        Drag = 1f,
+                        LightRadius = 6f,
+                        LightColor = new Color(255, 90, 230),
+                    });
+                }
+                break;
+            case ProjectileKind.Harpoon:
+                // Thin slipstream flecks so the spear's speed reads.
+                if (_rng.NextDouble() < 0.4)
+                {
+                    _list.Add(new Particle
+                    {
+                        Position = p.Position + back * 8f + Jitter(1f),
+                        Velocity = back * 30f,
+                        Life = 0.12f,
+                        MaxLife = 0.12f,
+                        Color = new Color(210, 200, 180),
+                        FadeColor = new Color(60, 50, 40),
+                        Size = 1f,
+                        GravityScale = 0f,
+                        Drag = 3f,
+                    });
+                }
+                break;
+        }
+    }
+
     private Vector2 Jitter(float r) =>
         new((float)(_rng.NextDouble() * 2 - 1) * r, (float)(_rng.NextDouble() * 2 - 1) * r);
 }
