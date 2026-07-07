@@ -369,6 +369,77 @@ public static class SimTest
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "DwarfMiner", "run.sav");
 
+    /// <summary>Hazard cells: gas rises and flash-burns near lava, acid dissolves soft tiles,
+    /// and the body-contact probe reports them. Uses hand-carved tiles for determinism.</summary>
+    private static void TestHazards()
+    {
+        var planet = WorldGen.Generate(99);
+        var cells = new Cells(planet);
+        const float dt = 1f / 60f;
+
+        // --- Gas rises through an open shaft ---
+        int gr = 100, gt = 50;
+        for (var dr = 0; dr <= 6; dr++) planet.Set(gr + dr, gt, TileKind.Sky);
+        planet.Set(gr - 1, gt, TileKind.Stone); // floor
+        cells.FillTile(gr, gt, Material.Gas);
+        for (var i = 0; i < 60; i++) cells.Update(dt);
+        Check("hazard: gas rises through a shaft", CountMatInTile(cells, gr + 3, gt, Material.Gas) > 0);
+
+        // --- Acid dissolves a soft floor tile ---
+        int ar = 120, at = 80;
+        planet.Set(ar, at, TileKind.Dirt);   // corrodible floor
+        planet.Set(ar + 1, at, TileKind.Sky);
+        planet.Set(ar + 2, at, TileKind.Sky);
+        cells.FillTile(ar + 1, at, Material.Acid);
+        Check("hazard: contact probe sees acid",
+            cells.SampleHazardsNear(planet.TileToWorld(ar + 1, at), Planet.TileSize).acid > 0);
+        var corroded = false;
+        for (var i = 0; i < 3000 && !corroded; i++)
+        {
+            cells.Update(dt);
+            if (planet.Get(ar, at) == TileKind.Sky) corroded = true;
+        }
+        Check("hazard: acid dissolves a soft tile", corroded);
+        Check("hazard: acid does NOT dissolve hard rock", DissolveHardRockStays());
+
+        // --- Gas flash-burns to smoke on contact with lava ---
+        int br = 140, bt = 20;
+        planet.Set(br, bt, TileKind.Sky);
+        var cy = br * Cells.Density + 2;
+        var cx = bt * Cells.Density + 3;
+        cells.Place(cx, cy, Material.Gas);
+        cells.Place(cx + 1, cy, Material.Lava);
+        var burned = false;
+        for (var i = 0; i < 20 && !burned; i++)
+        {
+            cells.Update(dt);
+            if (cells.Get(cx, cy) != Material.Gas) burned = true;
+        }
+        Check("hazard: gas flash-burns beside lava", burned);
+    }
+
+    /// <summary>Acid over a granite tile must leave it intact — hard rock resists corrosion.</summary>
+    private static bool DissolveHardRockStays()
+    {
+        var planet = WorldGen.Generate(101);
+        var cells = new Cells(planet);
+        int r = 118, t = 40;
+        planet.Set(r, t, TileKind.Granite);
+        planet.Set(r + 1, t, TileKind.Sky);
+        cells.FillTile(r + 1, t, Material.Acid);
+        for (var i = 0; i < 1500; i++) cells.Update(1f / 60f);
+        return planet.Get(r, t) == TileKind.Granite;
+    }
+
+    private static int CountMatInTile(Cells cells, int tx, int ty, Material m)
+    {
+        var n = 0;
+        for (var dy = 0; dy < Cells.Density; dy++)
+            for (var dx = 0; dx < Cells.Density; dx++)
+                if (cells.Get(ty * Cells.Density + dx, tx * Cells.Density + dy) == m) n++;
+        return n;
+    }
+
     /// <summary>Air-supply rules: refill at the surface, monotonic drain with depth, and
     /// thin-atmosphere planets draining faster than the temperate starter.</summary>
     private static void TestOxygen()
