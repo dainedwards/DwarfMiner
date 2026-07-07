@@ -2437,7 +2437,7 @@ public sealed class DwarfMinerGame : Game
         var infoY = VirtualHeight - 130f;
         if (selLocked)
         {
-            var lockedMsg = "LOCKED — ESCAPE THE PREVIOUS WORLD TO CHART A COURSE HERE";
+            var lockedMsg = "LOCKED: ESCAPE THE PREVIOUS WORLD TO CHART A COURSE HERE";
             _renderer.DrawText(lockedMsg,
                 new Vector2((VirtualWidth - _renderer.MeasureText(lockedMsg, 2)) / 2f, infoY), new Color(200, 130, 120), 2);
         }
