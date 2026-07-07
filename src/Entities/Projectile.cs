@@ -176,10 +176,13 @@ public sealed class Projectile
 
     public void Update(float dt, Planet planet)
     {
-        // Dynamite arcs — gravity pulls it down so the throw feels weighty. Other projectiles
-        // travel ballistic for their lifetime so aim is direct.
+        // Thrown explosives arc — gravity pulls them down so the throw feels weighty. TNT is
+        // a heavy satchel, so it drops harder than a dynamite stick. Other projectiles travel
+        // ballistic for their lifetime so aim is direct.
         if (Kind == ProjectileKind.Dynamite)
             Velocity += planet.GravityAt(Position) * 240f * dt;
+        else if (Kind == ProjectileKind.Tnt)
+            Velocity += planet.GravityAt(Position) * 380f * dt;
 
         Position += Velocity * dt;
         Life -= dt;
