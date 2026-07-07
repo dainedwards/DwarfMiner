@@ -281,7 +281,7 @@ public sealed class Renderer
 
                 // No edge decoration at air boundaries — outlines and highlights both read
                 // as painted rectangles per block; the world lighting pass and the dim
-                // back-walls carry the block-vs-空 contrast on their own.
+                // back-walls carry the block-versus-air contrast on their own.
 
                 // Grass hugs exposed edges, Terraria-style: the green wraps down exposed
                 // sides and along a dug-out underside instead of showing bare dirt in
