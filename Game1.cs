@@ -905,6 +905,36 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
+    // Hazard-contact tuning (per second while the dwarf's body overlaps the cells).
+    private const float LavaBurnDps = 42f;   // ~2.4s from full — a lava bath is near-instant death
+    private const float AcidBurnDps = 20f;   // corrosive but survivable if you scramble out
+    private const float GasChokeOxygen = 26f; // air burned by breathing gas, on top of depth drain
+
+    /// <summary>Body-contact hazards from the cell sim: lava sears, acid corrodes (both bypass
+    /// armor — no plate stops molten rock or acid), and gas chokes by burning air. God mode is
+    /// immune. This is also the only place lava damages the dwarf at all — before hazard cells
+    /// the dwarf could wade through it unharmed.</summary>
+    private void TickHazardContact(float dt)
+    {
+        var p = _run.Player;
+        if (p.FlyMode) return;
+
+        var (lava, acid, gas) = _run.Cells.SampleHazardsNear(p.Position, p.Radius + 1.5f);
+        if (lava > 0)
+        {
+            p.Health -= LavaBurnDps * dt;
+            _run.Shake = MathF.Max(_run.Shake, 0.3f);
+            if (Random.Shared.NextDouble() < dt * 20f) _particles.EmitImpact(p.Position, ProjectileKind.Cannon);
+        }
+        if (acid > 0)
+        {
+            p.Health -= AcidBurnDps * dt;
+            if (Random.Shared.NextDouble() < dt * 12f) _particles.EmitDust(p.Position, 3f);
+        }
+        if (gas > 0)
+            p.Oxygen = MathF.Max(0f, p.Oxygen - GasChokeOxygen * dt);
+    }
+
     /// <summary>Board and launch the completed ship — the escape ending. Needs all three
     /// stages installed and the dwarf standing at the pad. Unlocks the next planet on the
     /// star-map chain and banks the same meta bonuses the old rocket escape granted.</summary>
