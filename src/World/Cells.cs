@@ -905,7 +905,8 @@ public sealed class Cells
             for (var d = -range; d <= range; d++)
             {
                 var cx = cx0 + d;
-                if ((Material)_mat[Idx(cx, cy)] != Material.Lava) continue;
+                var lm = (Material)_mat[Idx(cx, cy)];
+                if (lm != Material.Lava && lm != Material.Acid) continue;
                 // Skip interior pool cells whose four cardinal neighbours are all blocked.
                 var (icx, icy) = InnerCell(cx, cy);
                 var allBlocked = IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy) && IsBlocked(icx, icy);
@@ -917,7 +918,9 @@ public sealed class Cells
                 // Thin the emitters with grain resolution — a pool surface has Density/2 more
                 // cells per world unit than the old 2-px grid, and each light is a lightmap blit.
                 if ((step++ % (Density / 2)) != 0) continue;
-                r.AddLight(CellToWorld(cx, cy), 10f, new Color(255, 130, 40));
+                // Acid glows a dim toxic green; lava a hot orange.
+                r.AddLight(CellToWorld(cx, cy), lm == Material.Acid ? 7f : 10f,
+                    lm == Material.Acid ? new Color(90, 190, 40) : new Color(255, 130, 40));
             }
         }
     }
