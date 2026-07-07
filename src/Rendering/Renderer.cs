@@ -280,18 +280,19 @@ public sealed class Renderer
                 var rightSky = rightK == TileKind.Sky;
 
                 // Terraria-style edge framing: every air-facing edge gets a dark 1-px
-                // outline; the sun-facing outer edge adds a bright lip inside it, the sides
-                // a fainter bevel, the underside an inner shade. Interiors are baked soft
-                // (TileAtlas halves the pack detail), so this frame is what defines form.
+                // outline; the sun-facing outer edge adds a lip inside it, the sides a
+                // faint bevel, the underside an inner shade. The dark outline carries the
+                // silhouette — the light accents are kept gentle enough to read as lighting
+                // rather than a painted rim.
                 var outline = new Color((int)(col.R * 0.45f), (int)(col.G * 0.45f), (int)(col.B * 0.45f));
                 var lip = new Color(
-                    Math.Clamp(col.R + 42, 0, 255),
-                    Math.Clamp(col.G + 42, 0, 255),
-                    Math.Clamp(col.B + 42, 0, 255));
+                    Math.Clamp(col.R + 16, 0, 255),
+                    Math.Clamp(col.G + 16, 0, 255),
+                    Math.Clamp(col.B + 16, 0, 255));
                 var bevel = new Color(
-                    Math.Clamp(col.R + 20, 0, 255),
-                    Math.Clamp(col.G + 20, 0, 255),
-                    Math.Clamp(col.B + 20, 0, 255));
+                    Math.Clamp(col.R + 7, 0, 255),
+                    Math.Clamp(col.G + 7, 0, 255),
+                    Math.Clamp(col.B + 7, 0, 255));
                 var under = new Color(
                     Math.Clamp(col.R - 26, 0, 255),
                     Math.Clamp(col.G - 26, 0, 255),
