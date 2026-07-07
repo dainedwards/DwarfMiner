@@ -905,6 +905,13 @@ public sealed class DwarfMinerGame : Game
         _particles.EmitDust(_player.Position, 6f);
     }
 
+    /// <summary>Hearty feast — the big heal cooked from harvested creature meat.</summary>
+    private void UseFeast()
+    {
+        _player.Health = MathF.Min(_player.MaxHealth, _player.Health + 60f);
+        _particles.EmitDust(_player.Position, 8f);
+    }
+
     /// <summary>Core drill — usable only when the player is within the innermost rings of
     /// the planet (i.e. effectively standing on the Core's threshold). The Core is a
     /// synthetic tile (Planet.Get returns it for x &lt; 0; it's not stored in the array), so
