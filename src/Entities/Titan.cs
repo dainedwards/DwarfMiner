@@ -330,7 +330,144 @@ public sealed class Titan
             HurlCooldown = MathHelper.Lerp(7f, 2f, Anger / 100f);
         }
 
+        SpecialCooldown -= dt;
+        UpdateSpecial(dt, planet, physics, playerPos, shots);
+
         if (HitFlash > 0) HitFlash -= dt;
+    }
+
+    /// <summary>Per-kind signature attack. Godzilla breathes fire, Mecha fires a mouth laser,
+    /// Hydra burrows and erupts, Kong leaps and slams. All are aggro-gated so a calm boss just
+    /// roams. <see cref="SpecialCooldown"/> paces them; <see cref="SpecialState"/> runs the
+    /// active window (breath duration, laser charge, burrow time, leap airtime).</summary>
+    private void UpdateSpecial(float dt, Planet planet, Physics physics, Vector2 playerPos, List<TitanProjectile> shots)
+    {
+        switch (Kind)
+        {
+            case TitanKind.Godzilla: TickFireBreath(dt, playerPos, shots); break;
+            case TitanKind.Mecha:    TickMechaLaser(dt, playerPos, shots); break;
+            case TitanKind.Hydra:    TickHydra(dt, planet, physics, playerPos); break;
+            case TitanKind.Kong:     TickKong(physics, playerPos); break;
+        }
+    }
+
+    private Vector2 Mouth()
+    {
+        var up = _planet.UpAt(Position);
+        var right = new Vector2(-up.Y, up.X);
+        return Position + up * 26f + right * (Facing * 130f);
+    }
+
+    /// <summary>Godzilla: a ~1.1s cone of flame cells sprayed from the mouth toward the player.</summary>
+    private void TickFireBreath(float dt, Vector2 playerPos, List<TitanProjectile> shots)
+    {
+        if (SpecialState > 0f)
+        {
+            SpecialState -= dt;
+            var mouth = Mouth();
+            var aim = playerPos - mouth;
+            if (aim.LengthSquared() > 0.01f)
+            {
+                aim.Normalize();
+                for (var i = 0; i < 2; i++)
+                {
+                    var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.6f;
+                    var c = MathF.Cos(spread); var s = MathF.Sin(spread);
+                    var d = new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c);
+                    var speed = 190f + (float)Random.Shared.NextDouble() * 130f;
+                    shots.Add(new TitanProjectile(mouth + d * 12f, d * speed, TitanShotKind.Flame));
+                }
+            }
+            if (SpecialState <= 0f) SpecialCooldown = 6f;
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f || !Grounded) return;
+        if ((playerPos - Position).Length() > 560f) return;
+        SpecialState = 1.1f;
+    }
+
+    /// <summary>Mecha: a brief charge (mouth glows) then a single fast piercing laser bolt.</summary>
+    private void TickMechaLaser(float dt, Vector2 playerPos, List<TitanProjectile> shots)
+    {
+        if (SpecialState > 0f)
+        {
+            SpecialState -= dt;
+            if (SpecialState <= 0f)
+            {
+                var mouth = Mouth();
+                var aim = playerPos - mouth;
+                if (aim.LengthSquared() > 0.01f)
+                {
+                    aim.Normalize();
+                    shots.Add(new TitanProjectile(mouth + aim * 14f, aim * 720f, TitanShotKind.Laser));
+                }
+                SpecialCooldown = 5f;
+            }
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f) return;
+        if ((playerPos - Position).Length() > 720f) return;
+        SpecialState = 0.7f;   // charge windup
+    }
+
+    /// <summary>Hydra: dive underground, tunnel toward the player (intangible, tracked by a
+    /// dirt mound), then erupt at the surface with a quake + shockwave.</summary>
+    private void TickHydra(float dt, Planet planet, Physics physics, Vector2 playerPos)
+    {
+        if (Submerged)
+        {
+            SpecialState -= dt;
+            var toPlayer = playerPos - Position;
+            if (toPlayer.LengthSquared() > 1f)
+                Position += Vector2.Normalize(toPlayer) * 300f * dt;   // burrow straight at them
+            if (SpecialState <= 0f || toPlayer.Length() < 90f)
+                Erupt(planet, physics);
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f) return;
+        if ((playerPos - Position).Length() > 900f) return;
+        Submerged = true;
+        SpecialState = 2.4f;
+    }
+
+    private void Erupt(Planet planet, Physics physics)
+    {
+        // Pop up to the surface directly above wherever the burrow ended.
+        var rel = Position - planet.Center;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        Position = FindSurfaceSpawn(planet, ang) - planet.UpAt(Position) * (BodyHover - 40f);
+        Velocity = Vector2.Zero;
+        Submerged = false;
+        physics.Earthquake(Position, 180f, 3);
+        PendingShockwave = (Position, 150f, 30f);
+        SpecialCooldown = 7f;
+    }
+
+    /// <summary>Kong: leap toward the player, then slam down with a heavy quake + shockwave on
+    /// landing. The leap suppresses the leg-spring (via <see cref="Leaping"/>) so it launches.</summary>
+    private void TickKong(Physics physics, Vector2 playerPos)
+    {
+        if (Leaping)
+        {
+            // Airtime is bounded by SpecialState; the slam fires once we touch back down.
+            if (Grounded && SpecialState < 1.4f)
+            {
+                var up = _planet.UpAt(Position);
+                physics.Earthquake(Position - up * BodyRadius, 260f, 4);
+                PendingShockwave = (Position, 220f, 34f);
+                Leaping = false;
+                SpecialCooldown = 6f;
+            }
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f || !Grounded) return;
+        if ((playerPos - Position).Length() > 700f) return;
+        var u = _planet.UpAt(Position);
+        var right = new Vector2(-u.Y, u.X);
+        var dirSign = MathF.Sign(Vector2.Dot(playerPos - Position, right));
+        Velocity += u * 520f + right * (dirSign * 240f);
+        Leaping = true;
+        SpecialState = 2.0f;
     }
 
     /// <summary>Mean of foot positions for legs that are currently planted (StepT ≥ 1).
