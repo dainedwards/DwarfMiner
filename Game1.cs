@@ -336,6 +336,14 @@ public sealed partial class DwarfMinerGame : Game
         // Launch the completed ship with L while standing at the pad.
         if (Pressed(keys, _prevKeys, Keys.L)) TryLaunchShip();
 
+        // God-mode cheat: P plants a fully built, launch-ready ship at the player's feet,
+        // skipping the pad/hull/engine/nav-core craft chain — then L lifts off as usual.
+        if (_run.Player.FlyMode && Pressed(keys, _prevKeys, Keys.P))
+        {
+            PlaceLaunchPad();
+            _run.ShipStage = 3;
+        }
+
         // Physics + particles + cells update.
         _run.Physics.Update(dt);
         _particles.Update(dt, _run.Planet);
