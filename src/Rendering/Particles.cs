@@ -258,6 +258,8 @@ public sealed class Particles
         switch (kind)
         {
             case ProjectileKind.Bullet:
+            case ProjectileKind.Pistol:
+            case ProjectileKind.MachineGun:
             case ProjectileKind.CannonSilver:   // silver shells leave a small spark trail too
                 for (var i = 0; i < 4; i++)
                 {
