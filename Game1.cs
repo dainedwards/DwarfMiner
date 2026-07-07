@@ -365,7 +365,7 @@ public sealed class DwarfMinerGame : Game
             var anglesAround = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
             var pos = _run.Planet.Center + new Vector2(MathF.Cos(anglesAround), MathF.Sin(anglesAround)) * _run.Planet.Radius * Planet.TileSize * 0.5f;
             _run.Physics.Earthquake(pos, 200f, 2);
-            _run.EarthquakeTimer = 30f + (float)Random.Shared.NextDouble() * 20f;
+            _run.EarthquakeTimer = (30f + (float)Random.Shared.NextDouble() * 20f) * _run.Def.QuakeScale;
             _run.Shake = MathF.Max(_run.Shake, 1.0f);
         }
 
