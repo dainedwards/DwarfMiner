@@ -2,6 +2,11 @@ using Microsoft.Xna.Framework;
 
 namespace DwarfMiner.World;
 
+/// <summary>Which boss hatches from this planet's egg. Each has a distinct special attack:
+/// Godzilla breathes fire, Mecha fires a mouth laser, Hydra burrows and erupts, Kong leaps
+/// and quakes. The shared quadruped chassis is re-tinted per kind.</summary>
+public enum TitanKind { Godzilla, Mecha, Hydra, Kong }
+
 /// <summary>
 /// Static description of a planet archetype — the knobs WorldGen and Game1 previously kept as
 /// constants, plus star-map presentation and the ship's per-planet resource demand. One def per
