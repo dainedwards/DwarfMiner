@@ -105,6 +105,11 @@ public sealed class Projectile
     /// sapphire = 3, diamond = 5, dynamite = 4. 0 = no crater.</summary>
     public int CraterTiles;
 
+    /// <summary>Mining power applied to the tile this projectile dies against — gun rounds
+    /// chip blocks like a weak pickaxe swing, so sustained fire digs. 0 = no tile damage.
+    /// Uses <see cref="Planet.Mine"/>, so hardness scaling and anchor immunity apply.</summary>
+    public int MinePower;
+
     public Projectile(Vector2 pos, Vector2 vel, float damage, float life, ProjectileKind kind = ProjectileKind.Bullet)
     {
         Position = pos;
