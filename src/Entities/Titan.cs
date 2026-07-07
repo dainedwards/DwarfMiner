@@ -37,6 +37,40 @@ public sealed class Titan
     public Vector2[] TailNodes = null!;     // verlet chain — node 0 anchors to the body's rump
     public Vector2[] TailPrev = null!;      // previous-frame positions for verlet integration
 
+    /// <summary>Which boss this is — drives the special attack and the render tint.</summary>
+    public readonly TitanKind Kind;
+
+    // ─── Egg spawn ────────────────────────────────────────────────────────────
+    /// <summary>The boss incubates in a giant egg. It hatches when <see cref="EggTimer"/> runs
+    /// out (10 minutes) or when the egg's health is beaten to zero — attack the egg to fight
+    /// the boss early. Until then the body is dormant and only the egg is drawn/hittable.</summary>
+    public bool Hatched;
+    public float EggTimer = EggHatchSeconds;
+    public float EggHealth;
+    public float EggMaxHealth = 600f;
+    public const float EggHatchSeconds = 600f;
+    /// <summary>Set for one frame the moment the egg cracks open — Game1 reads it to fire the
+    /// hatch shake + shell-burst particles, then it's cleared.</summary>
+    public bool JustHatched;
+
+    // ─── Special attacks ──────────────────────────────────────────────────────
+    /// <summary>Cooldown until the next special; <see cref="SpecialState"/> is a per-attack
+    /// sub-timer (fire-breath duration, laser charge, burrow time, leap airtime).</summary>
+    public float SpecialCooldown;
+    public float SpecialState;
+    /// <summary>Hydra: submerged and tunnelling. Invulnerable and undrawn (a dirt mound tracks
+    /// it) until it erupts.</summary>
+    public bool Submerged;
+    /// <summary>Kong: mid-leap. Suppresses the leg-spring suspension so it actually leaves the
+    /// ground, and gates the landing-slam detection.</summary>
+    public bool Leaping;
+    /// <summary>Melee AoE pending from a Kong slam or Hydra eruption — Game1 consumes it to
+    /// damage/knock-back the player and spew debris, since the Titan has no Player reference.</summary>
+    public (Vector2 pos, float radius, float damage)? PendingShockwave;
+
+    /// <summary>Projectiles can hit the boss/egg except while the Hydra is burrowed.</summary>
+    public bool Targetable => !Submerged;
+
     /// <summary>Seconds of aggro remaining. While > 0, the kaiju chases the player and uses
     /// stomp / boulder-hurl attacks; while ≤ 0, it lazily roams the planet surface in a random
     /// direction. Reset to AggroDuration whenever OnDamage() is called.</summary>
