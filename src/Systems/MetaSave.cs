@@ -17,6 +17,11 @@ public sealed class MetaSave
     public int StartingPickaxePower { get; set; } = 1;
     public bool StartWithCannon { get; set; }
 
+    // Star-map progression: how many planets on the PlanetDefs chain are selectable, and
+    // which ones have been escaped by ship (drives the map's ESCAPED badges).
+    public int PlanetsUnlocked { get; set; } = 1;
+    public List<string> PlanetsEscaped { get; set; } = new();
+
     private static string SavePath
     {
         get
