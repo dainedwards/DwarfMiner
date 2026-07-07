@@ -220,6 +220,7 @@ public static class Tiles
         "ammo_diamond"       => "DIAMOND SHELL",
         "machine_gun"        => "MACHINE GUN",
         "rocket_launcher"    => "ROCKET LAUNCHER",
+        "chitin_armor"       => "CHITIN ARMOR",
         _                    => id.ToUpperInvariant(),
     };
 
