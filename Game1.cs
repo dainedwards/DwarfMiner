@@ -389,48 +389,20 @@ public sealed class DwarfMinerGame : Game
         for (var i = _projectiles.Count - 1; i >= 0; i--)
         {
             var p = _projectiles[i];
-            p.Update(dt, _planet);
+            p.Update(dt, _planet, _physics, _cells);
 
-            // Hit creatures. Pierce policy: -1 = unlimited (AoE explosives), N = up to N hits.
-            for (var j = _creatures.Count - 1; j >= 0; j--)
-            {
-                var c = _creatures[j];
-                if ((c.Position - p.Position).LengthSquared() < (c.Radius + p.Radius) * (c.Radius + p.Radius))
-                {
-                    c.Health -= p.Damage;
-                    c.HitFlash = 0.15f;
-                    if (p.BurnSeconds > 0f) c.BurnSeconds = MathF.Max(c.BurnSeconds, p.BurnSeconds);
-                    if (p.FreezeSeconds > 0f) c.FreezeSeconds = MathF.Max(c.FreezeSeconds, p.FreezeSeconds);
-
-                    if (p.CreaturePierces > 0)
-                    {
-                        p.CreaturePierces--;
-                        if (p.CreaturePierces <= 0) { p.Dead = true; break; }
-                    }
-                    // CreaturePierces == -1 → projectile keeps going through the swarm.
-                }
-            }
-
-            // Hit titan. Harpoon hits big — its damage stat is already large; just register
-            // the strike. Single titan, no list iteration needed.
-            if (!p.Dead && (_titan.Position - p.Position).Length() < _titan.Radius + p.Radius)
-            {
-                _titan.Health -= p.Damage;
-                _titan.HitFlash = 0.15f;
-                _titan.OnDamage();   // wakes the kaiju up and resets its 10s aggro timer
-                if (p.CreaturePierces == 1) p.Dead = true;
-            }
-
-            // Hit sentries (creature collisions chew through one over time, projectiles don't
-            // hit them). We instead handle creature contact damage to sentries down below in
-            // the sentry-update block.
+            // Body hits (creatures + titan): Combat sweeps the frame's travel segment so fast
+            // rounds can't skip over bodies, lands hits in path order with pierce accounting,
+            // detonates contact explosives on the first body struck, and applies blast AoE
+            // when an explosive dies. Sentries stay projectile-transparent — creature contact
+            // damage to them is handled in the sentry-update block below.
+            Combat.ResolveHits(p, _creatures, _titan, _planet, _physics, _cells);
 
             if (p.Dead)
             {
                 _particles.EmitImpact(p.Position, p.Kind);
-                // Apply explosion AoE damage at impact for any projectile that has a non-zero
-                // ExplosionRadius. The crater-tiles dig is already done by Projectile itself.
-                if (p.ExplosionRadius > 0f) ApplyExplosionDamage(p);
+                if (p.ExplosionRadius > 0f)
+                    _shake = MathF.Max(_shake, MathF.Min(1.5f, p.ExplosionRadius / 60f));
                 _projectiles.RemoveAt(i);
             }
         }
