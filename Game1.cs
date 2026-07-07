@@ -1000,6 +1000,7 @@ public sealed class DwarfMinerGame : Game
             // Passive permanent upgrades — no slot, no inventory entry. Just a flag.
             case "lantern":     _player.HasLantern = true; break;
             case "armor":       _player.HasArmor   = true; break;
+            case "chitin_armor": _player.HasArmor  = true; break;   // same plating, hunted materials
             // Everything else is a stockable item: the recipe id is the inventory id. The
             // first-craft also auto-equips an empty slot so the player can use it immediately
             // — subsequent crafts just stock more.
