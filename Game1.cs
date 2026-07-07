@@ -876,6 +876,16 @@ public sealed partial class DwarfMinerGame : Game
         EndRun($"You pierced the core. Run time: {_run.RunTime:0.0}s. Press R for the star map.");
     }
 
+    /// <summary>Display name for a boss variant — used in the victory line and the egg HUD.</summary>
+    private static string TitanName(TitanKind kind) => kind switch
+    {
+        TitanKind.Godzilla => "Cinderwyrm",
+        TitanKind.Mecha    => "Mecha-Titan",
+        TitanKind.Hydra    => "Burrow Hydra",
+        TitanKind.Kong     => "Stone Ape",
+        _                  => "Titan",
+    };
+
     /// <summary>Every run ending funnels through here: show the game-over overlay and void
     /// the suspend save — a finished run can't be resumed.</summary>
     private void EndRun(string reason)
