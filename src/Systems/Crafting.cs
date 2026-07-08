@@ -74,6 +74,10 @@ public static class Crafting
             new Dictionary<string, int> { ["crystal"] = 1 }),
 
         // ─── Building ─────────────────────────────────────────────────────────
+        // Stone-only so it's always rebuildable from surface mining after a death — the whole
+        // point is to withdraw the stash you banked on your last run.
+        new("storage_depot", "Storage depot — bank resources (B deposit / N withdraw); survives death",
+            new Dictionary<string, int> { ["stone"] = 8 }),
         new("support", "Place support beam",
             new Dictionary<string, int> { ["stone"] = 2 }),
         new("reinforced_support", "Reinforced support (anchors a 3×3 area)",
