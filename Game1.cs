@@ -80,6 +80,7 @@ public sealed partial class DwarfMinerGame : Game
     /// events route to the menu.</summary>
     private readonly CraftingMenu _craftingMenu = new();
     private readonly InventoryUi _invUi = new();
+    private readonly DebugMenu _debugMenu = new();
 
     private const int VirtualWidth = 1280;
     private const int VirtualHeight = 720;
