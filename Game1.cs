@@ -1700,7 +1700,7 @@ public sealed partial class DwarfMinerGame : Game
         }
         else if (banked > 0 && _run.DepotPos is null)
         {
-            var hint = $"BANKED STASH: {banked} — BUILD A STORAGE DEPOT TO WITHDRAW";
+            var hint = $"BANKED STASH: {banked} - BUILD A STORAGE DEPOT TO WITHDRAW";
             _renderer.DrawText(hint, new Vector2((VirtualWidth - _renderer.MeasureText(hint)) / 2f, 92), new Color(170, 190, 140));
         }
 
