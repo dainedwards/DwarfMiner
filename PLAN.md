@@ -26,8 +26,9 @@
 >   (melee AoE via `Titan.PendingShockwave`, consumed in Game1). `DM_HATCH=<s>` shortens the egg.
 > - **Boss overhaul done** — each variant now has its OWN procedural skeleton in the new
 >   `Rendering/TitanRenderer.cs` (upright fire-breathing Godzilla w/ dorsal fins + tail; boxy
->   Mecha robot w/ chest reactor, visor, digitigrade legs; legless 3-headed Hydra serpent;
->   broad-armed Kong ape) — NOT a re-tint. Bipeds = 2 legs, Hydra = 0 (serpent surface-follow +
+>   Mecha robot w/ chest reactor, visor, digitigrade legs; **Dune sandworm "Shai-Hulud"** —
+>   segmented sandy tube + round inward-toothed maw, burrows and breaches straight up out of
+>   the ground; broad-armed Kong ape) — NOT a re-tint. Bipeds = 2 legs, Hydra = 0 (serpent surface-follow +
 >   long verlet body). Bosses **smash through mountains** (`Titan.Plow` mines overlapping
 >   non-anchored tiles) instead of walking over; footfalls fire a **cave-in** quake below
 >   (`StompTile`). Mecha laser now **charges** (growing orb + tracking telegraph) then fires a
