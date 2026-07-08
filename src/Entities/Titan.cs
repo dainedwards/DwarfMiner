@@ -25,7 +25,7 @@ public sealed class Titan
     public float Health = 2500f;
     public float MaxHealth = 2500f;
     public float Anger;               // 0..100
-    public float MoveSpeed = 90f;     // tangent pixels/sec base
+    public float MoveSpeed = 58f;     // tangent pixels/sec base — deliberately slow so the kaiju lumbers
     public float Gravity = 320f;
     public float HitFlash;
     public float StompCooldown = 4f;
