@@ -45,14 +45,21 @@ public static class TitanRenderer
         var (_, _, glowCalm, glowAngry) = Palette(t.Kind);
         var glow = Color.Lerp(glowCalm, glowAngry, f.Anger);
 
-        // Eyes.
-        var head = HeadPos(t, f);
-        r.AddLight(head, 20f + 18f * f.Anger, EyeColor(t.Kind, f.Anger));
+        // Eyes — skipped for the eyeless worm, which gets a maw glow instead.
+        if (t.Kind != TitanKind.Sandworm)
+            r.AddLight(HeadPos(t, f), 20f + 18f * f.Anger, EyeColor(t.Kind, f.Anger));
 
         // Attack telegraphs / muzzles.
         var mouth = MouthPos(t, f);
         switch (t.Kind)
         {
+            case TitanKind.Sandworm:
+            {
+                // Warm glow from deep in the gullet — brighter with the maw open (breaching).
+                var md = t.Breaching ? f.Up : f.Right * f.Face;
+                r.AddLight(f.Tp + md * 30f, 26f + (t.Breaching ? 20f : 0f) + 14f * f.Anger, new Color(190, 70, 40));
+                break;
+            }
             case TitanKind.Godzilla:
                 if (t.SpecialState > 0f)
                 {
