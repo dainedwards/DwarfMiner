@@ -670,7 +670,10 @@ public sealed partial class DwarfMinerGame : Game
         {
             var shot = _run.TitanShots[i];
             shot.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player);
-            if (shot.Kind == TitanShotKind.Flame) _particles.EmitDust(shot.Position, 2f);
+            // Trailing smoke: only a fraction of flame grains puff each frame — emitting for
+            // every grain every frame (with dozens live during a breath) was a real cost.
+            if (shot.Kind == TitanShotKind.Flame && Random.Shared.Next(3) == 0)
+                _particles.EmitDust(shot.Position, 2f);
             if (shot.Dead)
             {
                 _particles.EmitImpact(shot.Position, ProjectileKind.Cannon);
