@@ -426,7 +426,7 @@ public sealed class Titan
         if ((playerPos - Position).Length() > 600f) return;
         SpecialState = FireBreathDuration;
     }
-    private const float FireBreathDuration = 1.75f;
+    private const float FireBreathDuration = FireBreathWindup;
 
     /// <summary>Mecha laser: a long, obvious charge (a growing orb at the mouth + a tracking
     /// telegraph line the player can dodge — both drawn by the renderer), then a sustained
