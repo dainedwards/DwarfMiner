@@ -58,6 +58,7 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>Wall-clock seconds since launch — drives the DM_AUTOSHOT capture schedule so
     /// tooling can screenshot any screen, including the star map before a run starts.</summary>
     private float _totalTime;
+    private readonly bool _bossCam = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 };
     private float _autoShotAt =
         float.TryParse(Environment.GetEnvironmentVariable("DM_AUTOSHOT"), out var s)
             ? s : float.PositiveInfinity;
