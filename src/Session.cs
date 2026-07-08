@@ -26,7 +26,12 @@ public sealed class Session
     public readonly List<Projectile> Projectiles = new();
     public readonly List<FallingBoulder> Boulders = new();
     public readonly List<TitanProjectile> TitanShots = new();
+    public readonly List<Meteor> Meteors = new();
     public readonly List<Sentry> Sentries = new();
+
+    /// <summary>Ambient-event timers (meteor strikes, magma surges) — see AmbientDirector.</summary>
+    public float MeteorTimer;
+    public float SurgeTimer;
 
     public float EarthquakeTimer;
     public float SpawnTimer;
