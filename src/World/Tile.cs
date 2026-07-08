@@ -165,6 +165,18 @@ public static class Tiles
         "stone", "dirt", "snow",
     };
 
+    /// <summary>Raw mined/harvested materials — the ids a Storage Depot will bank. Crafted
+    /// items (weapons, ammo, consumables, placeables) are deliberately excluded: the depot is
+    /// a stockpile of dug resources, not a general vault.</summary>
+    private static readonly System.Collections.Generic.HashSet<string> _bankable = new()
+    {
+        "dirt", "stone", "gravel", "moss_stone", "granite", "basalt", "obsidian", "snow",
+        "coal", "iron", "silver", "gold", "platinum", "crystal", "fuel",
+        "ruby", "sapphire", "diamond", "meat", "hide", "chitin",
+    };
+
+    public static bool IsBankable(string id) => _bankable.Contains(id);
+
     /// <summary>Display swatch colour for a resource id. Pulls from the source tile's BaseColor
     /// where there's a clean 1:1 mapping; specials (rocket_part, nuke) use bespoke tints.</summary>
     public static Color ResourceColor(string id) => id switch
