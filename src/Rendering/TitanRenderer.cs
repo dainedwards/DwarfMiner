@@ -549,7 +549,7 @@ public static class TitanRenderer
     public static (Color hideCalm, Color hideAngry, Color glowCalm, Color glowAngry) Palette(TitanKind k) => k switch
     {
         TitanKind.Mecha => (new Color(120, 128, 145), new Color(160, 130, 130), new Color(90, 200, 255), new Color(130, 235, 255)),
-        TitanKind.Sandworm => (new Color(38, 82, 58), new Color(96, 122, 52), new Color(120, 220, 140), new Color(185, 240, 90)),
+        TitanKind.Sandworm => (new Color(196, 168, 126), new Color(206, 132, 78), new Color(210, 120, 60), new Color(255, 150, 70)),
         TitanKind.Kong  => (new Color(78, 60, 46), new Color(120, 80, 50), new Color(150, 110, 70), new Color(215, 150, 80)),
         _               => (new Color(52, 62, 56), new Color(120, 60, 50), new Color(80, 150, 230), new Color(255, 90, 60)),
     };
