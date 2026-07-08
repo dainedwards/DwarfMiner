@@ -1003,6 +1003,21 @@ public sealed partial class DwarfMinerGame : Game
         EndRun($"You pierced the core. Run time: {_run.RunTime:0.0}s. Press R for the star map.");
     }
 
+    /// <summary>Debug-menu action: replace the current boss with a freshly-hatched one of the
+    /// chosen kind, spawned a short arc from the player and already aggroed. Any in-flight boss
+    /// ordnance from the previous boss is cleared so the new fight starts clean.</summary>
+    private void SpawnDebugTitan(TitanKind kind)
+    {
+        var rel = _run.Player.Position - _run.Planet.Center;
+        var ang = MathF.Atan2(rel.Y, rel.X) + 0.22f;
+        _run.Titan = new Titan(_run.Planet, ang, kind);
+        _run.Titan.Hatch();
+        _run.TitanShots.Clear();
+        _run.Boulders.Clear();
+        _toast = $"SPAWNED {TitanName(kind).ToUpperInvariant()}";
+        _toastTimer = 2.5f;
+    }
+
     /// <summary>Display name for a boss variant — used in the victory line and the egg HUD.</summary>
     private static string TitanName(TitanKind kind) => kind switch
     {
