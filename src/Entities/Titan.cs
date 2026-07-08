@@ -861,7 +861,7 @@ public sealed class TitanProjectile
         Kind = kind;
         (Radius, Life) = kind switch
         {
-            TitanShotKind.Flame => (5.5f, 1.0f),
+            TitanShotKind.Flame => (9f, 0.85f),   // fatter, shorter-lived — fewer grains read as one gout
             _                   => (4f, 0.9f),   // Laser
         };
         _drill = kind == TitanShotKind.Laser ? 3 : 0;
