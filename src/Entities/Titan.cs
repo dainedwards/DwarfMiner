@@ -682,16 +682,20 @@ public sealed class Titan
     private void StompTile(Planet planet, Physics physics, Cells cells, Vector2 footPos)
     {
         var (fx, fy) = planet.WorldToTile(footPos);
-        var centerPower = 3 + (int)(Anger / 35f);   // 3..6
-        var ringPower   = 1 + (int)(Anger / 60f);   // 1..2
-        for (var dy = -1; dy <= 1; dy++)
+        // A wider footprint than a single tile — these are hundred-foot feet. Full power at the
+        // centre falling off to the rim; power scales with anger so an enraged boss gouges deeper.
+        const int r = 2;
+        var centerPower = 5 + (int)(Anger / 24f);
+        for (var dy = -r; dy <= r; dy++)
         {
-            for (var dx = -1; dx <= 1; dx++)
+            for (var dx = -r; dx <= r; dx++)
             {
+                if (dx * dx + dy * dy > r * r) continue;
                 var x = fx + dx; var y = fy + dy;
                 var k = planet.Get(x, y);
                 if (!Tiles.IsSolid(k)) continue;
-                var pow = (dx == 0 && dy == 0) ? centerPower : ringPower;
+                var edge = MathHelper.Clamp(1f - MathF.Sqrt(dx * dx + dy * dy) / (r + 0.5f), 0.2f, 1f);
+                var pow = Math.Max(1, (int)(centerPower * edge));
                 var broken = planet.Mine(x, y, pow);
                 if (broken.HasValue)
                 {
@@ -702,6 +706,12 @@ public sealed class Titan
                 }
             }
         }
+
+        // Cave-in: shove a shock a few tiles below the footfall so any cavern the boss is
+        // standing over loses its roof and collapses. The Settle inside Earthquake dislodges
+        // unsupported tiles; Game1 turns the resulting CollapsesThisTick into screen shake.
+        var up = planet.UpAt(footPos);
+        physics.Earthquake(footPos - up * (Planet.TileSize * 5f), 64f + Anger * 0.5f, 1 + (int)(Anger / 45f));
     }
 
     /// <summary>Verlet-integrated tail. Node 0 is hard-anchored to a point on the body's rump
