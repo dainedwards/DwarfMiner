@@ -1893,6 +1893,8 @@ public sealed partial class DwarfMinerGame : Game
 
         if (_craftingMenu.Open)
             _craftingMenu.Draw(_renderer, _run.Player.Inventory, IsOwned, VirtualWidth, VirtualHeight);
+        if (_debugMenu.Open)
+            _debugMenu.Draw(_renderer, VirtualWidth, VirtualHeight);
 
         if (_screen == GameScreen.GameOver) DrawGameOverOverlay();
 
