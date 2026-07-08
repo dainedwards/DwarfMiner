@@ -287,6 +287,7 @@ public static class SimTest
         TestDepotBank();
         TestSfx();
         TestMeteors();
+        TestCaveIn();
 
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
         Environment.Exit(_failed ? 1 : 0);
