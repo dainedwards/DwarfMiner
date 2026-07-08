@@ -153,10 +153,14 @@ public static class TitanRenderer
                 Seg(r, hand + f.Right * (f.Face * 8f), hand + f.Right * (f.Face * 16f) + f.Up * (c * 5f), 2.5f, f.Chitin);
         }
 
-        // Neck + head, thrust forward and up.
+        // Neck + head, thrust forward and up. The neck is drawn as a continuous column that
+        // physically spans from deep in the shoulders to the base of the skull, so it can never
+        // read as detached no matter how the body leans or which way it faces.
         var neck = chest + f.Up * 18f + f.Right * (f.Face * 24f);
         var head = neck + f.Up * 14f + f.Right * (f.Face * 34f);
-        DrawTaper(r, chest + f.Up * 10f, neck, 44f, 34f, f.HideDark, f.Rot);
+        var neckBase = chest + f.Up * 4f;             // rooted inside the shoulders
+        Seg(r, neckBase, head, 46f, f.HideDark);      // dark under-neck bridging chest → skull
+        Seg(r, neckBase, head, 34f, f.Hide);          // lit throat
         r.DrawRect(head, new Vector2(56f, 46f), f.HideDark, f.Rot);
         r.DrawRect(head + f.Up * 6f, new Vector2(46f, 34f), f.Hide, f.Rot);
         // Snout.
