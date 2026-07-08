@@ -1711,6 +1711,10 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.AddLight(shot.Position, shot.Kind == TitanShotKind.Flame ? 16f : 18f,
                 shot.Kind == TitanShotKind.Flame ? new Color(255, 150, 50) : new Color(120, 230, 255));
 
+        // Falling meteors blaze a warm light as they streak in.
+        foreach (var m in _run.Meteors)
+            _renderer.AddLight(m.Position, 26f, new Color(255, 150, 60));
+
         // Glowing creatures — magma slugs read as drifting coals, cave eyes as a faint gleam.
         foreach (var c in _run.Creatures) c.AddLight(_renderer);
 
