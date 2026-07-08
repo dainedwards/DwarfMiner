@@ -570,6 +570,20 @@ public static class SimTest
         return n;
     }
 
+    /// <summary>Procedural audio synthesis is device-free and headless-testable: every named
+    /// effect renders a non-empty, non-silent 16-bit buffer without touching an audio device.</summary>
+    private static void TestSfx()
+    {
+        foreach (var name in Sfx.Names)
+        {
+            var buf = Sfx.Synth(name);
+            var peak = 0;
+            foreach (var s in buf) peak = System.Math.Max(peak, System.Math.Abs((int)s));
+            Check($"sfx: {name} renders audible PCM ({buf.Length} samples, peak {peak})",
+                buf.Length > 100 && peak > 1000);
+        }
+    }
+
     /// <summary>Storage depot: only raw mats are bankable, and a planet's vault survives the
     /// meta save/load (so death doesn't wipe it).</summary>
     private static void TestDepotBank()
