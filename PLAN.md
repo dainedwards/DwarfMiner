@@ -58,8 +58,13 @@
 >   blast the dwarf if caught. Cadence scales with thin atmosphere (`OxygenDrainScale`). **Magma
 >   surges** on lava-rich worlds (LavaFillFrac ≥ 0.5) flood a nearby cave with welling lava.
 >   Wired to the sound system (explode/collapse). `Session.Meteors`, `DM_METEOR=<s>` test hook.
-> Next up: per-weapon distinct shot sounds, a settings/volume UI, cave-in warnings, or new
-> content (biomes/creatures/weapons).
+> - **Per-weapon shot sounds done** — each gun/thrown weapon now has its own synth voice
+>   (`ItemDef.ShotSound`): pistol crack, MG rattle, laser zap, heavy drilling beam, rocket
+>   whoosh, cannon boom, throwable toss (dynamite/tnt), harpoon twang (nuke reuses the rocket
+>   whoosh). The single central fire-sound hook in `Update` resolves the current weapon's
+>   `ShotSound` (falls back to the generic "shoot" pew), so no Fire* method changed. 8 new
+>   `Sfx` synths, swept by the existing `TestSfx` name loop.
+> Next up: a settings/volume UI, cave-in warnings, or new content (biomes/creatures/weapons).
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
