@@ -722,7 +722,7 @@ public sealed class Titan
                     var t = leg.StepT;
                     var smooth = t * t * (3f - 2f * t);
                     var pos = Vector2.Lerp(leg.StepStart, leg.StepTarget, smooth);
-                    var arc = MathF.Sin(t * MathF.PI) * 32f;
+                    var arc = MathF.Sin(t * MathF.PI) * 44f;   // high, ponderous lift
                     pos += planet.UpAt(pos) * arc;
                     leg.FootPos = pos;
                 }
