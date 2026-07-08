@@ -58,17 +58,17 @@ public sealed class Titan
     /// sub-timer (fire-breath duration, laser charge, burrow time, leap airtime).</summary>
     public float SpecialCooldown;
     public float SpecialState;
-    /// <summary>Hydra: submerged and tunnelling. Invulnerable and undrawn (a dirt mound tracks
+    /// <summary>Sandworm: submerged and tunnelling. Invulnerable and undrawn (a dirt mound tracks
     /// it) until it erupts.</summary>
     public bool Submerged;
     /// <summary>Kong: mid-leap. Suppresses the leg-spring suspension so it actually leaves the
     /// ground, and gates the landing-slam detection.</summary>
     public bool Leaping;
-    /// <summary>Melee AoE pending from a Kong slam or Hydra eruption — Game1 consumes it to
+    /// <summary>Melee AoE pending from a Kong slam or Sandworm eruption — Game1 consumes it to
     /// damage/knock-back the player and spew debris, since the Titan has no Player reference.</summary>
     public (Vector2 pos, float radius, float damage)? PendingShockwave;
 
-    /// <summary>Projectiles can hit the boss/egg except while the Hydra is burrowed.</summary>
+    /// <summary>Projectiles can hit the boss/egg except while the Sandworm is burrowed.</summary>
     public bool Targetable => !Submerged;
 
     /// <summary>Seconds of aggro remaining. While > 0, the kaiju chases the player and uses
@@ -83,15 +83,15 @@ public sealed class Titan
 
     /// <summary>Hover height — distance the body wants to maintain above the average planted-foot
     /// position along planet-up. Higher values let the kaiju stride over taller terrain. The
-    /// serpent Hydra rides much lower (<see cref="Hover"/>) since it has no legs.</summary>
+    /// serpent Sandworm rides much lower (<see cref="Hover"/>) since it has no legs.</summary>
     public const float BodyHover = 105f;
 
     /// <summary>Effective body ride-height for this kind — bipeds stand tall, the legless
     /// serpent slithers close to the ground.</summary>
-    public float Hover => Kind == TitanKind.Hydra ? 44f : BodyHover;
+    public float Hover => Kind == TitanKind.Sandworm ? 44f : BodyHover;
 
     /// <summary>Verlet spine chain: a dragging tail for the bipeds, a long undulating body for
-    /// the Hydra (its heads mount at node 0). Segment length + node count vary by kind.</summary>
+    /// the Sandworm (its heads mount at node 0). Segment length + node count vary by kind.</summary>
     private readonly float _tailSeg;
     private readonly int _tailNodeCount;
 
@@ -117,8 +117,8 @@ public sealed class Titan
         _planet = planet;
         Kind = kind;
         EggHealth = EggMaxHealth;
-        // Hydra's spine is its whole body (long, many nodes); the others just drag a tail.
-        (_tailNodeCount, _tailSeg) = kind == TitanKind.Hydra ? (13, 30f) : (7, 26f);
+        // Sandworm's spine is its whole body (long, many nodes); the others just drag a tail.
+        (_tailNodeCount, _tailSeg) = kind == TitanKind.Sandworm ? (13, 30f) : (7, 26f);
         // Rest the egg near the ground; the hatched boss rises to hover height on its own once
         // its legs plant and the suspension lifts it.
         var hover = FindSurfaceSpawn(planet, startAngle);
@@ -151,10 +151,10 @@ public sealed class Titan
     private void InitLegs()
     {
         // Skeleton per kind. Bipeds (Godzilla/Mecha/Kong) stand on two legs planted under the
-        // body, stepping in alternation; the Hydra is legless and slithers on its belly, so it
+        // body, stepping in alternation; the Sandworm is legless and slithers on its belly, so it
         // gets no legs at all (surface-follow locomotion + verlet body instead). HipForward is
         // signed along the tangent; Side is the lateral stance sign.
-        Legs = Kind == TitanKind.Hydra
+        Legs = Kind == TitanKind.Sandworm
             ? System.Array.Empty<TitanLeg>()
             : new[]
             {
@@ -289,11 +289,11 @@ public sealed class Titan
         vNormal -= Gravity * dt;
 
         // Body suspension: a critically-damped spring holds the body at Hover above its support
-        // point. Bipeds support on the average of their planted feet; the legless Hydra supports
+        // point. Bipeds support on the average of their planted feet; the legless Sandworm supports
         // on the ground directly below its belly. When feet are planted the spring cancels
         // gravity and pulls toward the target height with no oscillation; with no support
         // (mid-leap, mid-fall) gravity wins and the body drops.
-        var planted = Kind == TitanKind.Hydra
+        var planted = Kind == TitanKind.Sandworm
             ? GroundBelow(up, out var hasPlanted)
             : AvgPlantedFoot(out hasPlanted);
         if (hasPlanted && !Leaping)   // a leaping Kong ignores its suspension so it can launch
@@ -364,7 +364,7 @@ public sealed class Titan
     }
 
     /// <summary>Per-kind signature attack. Godzilla breathes fire, Mecha fires a mouth laser,
-    /// Hydra burrows and erupts, Kong leaps and slams. All are aggro-gated so a calm boss just
+    /// Sandworm burrows and erupts, Kong leaps and slams. All are aggro-gated so a calm boss just
     /// roams. <see cref="SpecialCooldown"/> paces them; <see cref="SpecialState"/> runs the
     /// active window (breath duration, laser charge, burrow time, leap airtime).</summary>
     private void UpdateSpecial(float dt, Planet planet, Physics physics, Vector2 playerPos, List<TitanProjectile> shots)
@@ -373,7 +373,7 @@ public sealed class Titan
         {
             case TitanKind.Godzilla: TickFireBreath(dt, playerPos, shots); break;
             case TitanKind.Mecha:    TickMechaLaser(dt, playerPos, shots); break;
-            case TitanKind.Hydra:    TickHydra(dt, planet, physics, playerPos); break;
+            case TitanKind.Sandworm:    TickSandworm(dt, planet, physics, playerPos); break;
             case TitanKind.Kong:     TickKong(dt, physics, playerPos); break;
         }
     }
@@ -456,9 +456,9 @@ public sealed class Titan
         SpecialState = LaserChargeWindup;
     }
 
-    /// <summary>Hydra: dive underground, tunnel toward the player (intangible, tracked by a
+    /// <summary>Sandworm: dive underground, tunnel toward the player (intangible, tracked by a
     /// dirt mound), then erupt at the surface with a quake + shockwave.</summary>
-    private void TickHydra(float dt, Planet planet, Physics physics, Vector2 playerPos)
+    private void TickSandworm(float dt, Planet planet, Physics physics, Vector2 playerPos)
     {
         if (Submerged)
         {
@@ -588,7 +588,7 @@ public sealed class Titan
         }
     }
 
-    /// <summary>Ground point directly below the body along -up (the legless Hydra's support
+    /// <summary>Ground point directly below the body along -up (the legless Sandworm's support
     /// point). Marches down to the first solid tile; falls back to a fixed offset over open sky.</summary>
     private Vector2 GroundBelow(Vector2 up, out bool found)
     {

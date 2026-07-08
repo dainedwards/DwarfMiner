@@ -324,7 +324,7 @@ public static class SimTest
             run.Player.Inventory.Add("ruby", 4);
             run.Player.Toolbelt.AutoEquip("drill");
             run.Player.Toolbelt.Selected = 2;
-            run.Titan = new Titan(run.Planet, 1.2f, TitanKind.Hydra)
+            run.Titan = new Titan(run.Planet, 1.2f, TitanKind.Sandworm)
             {
                 Health = 1234f, Anger = 42f, EggTimer = 222f, EggHealth = 333f,
             };
@@ -367,7 +367,7 @@ public static class SimTest
                 && System.Math.Abs(loaded.Titan.Health - 1234f) < 0.01f
                 && System.Math.Abs(loaded.Titan.Anger - 42f) < 0.01f);
             Check("save: titan kind + egg state survive",
-                loaded.Titan.Kind == TitanKind.Hydra && !loaded.Titan.Hatched
+                loaded.Titan.Kind == TitanKind.Sandworm && !loaded.Titan.Hatched
                 && System.Math.Abs(loaded.Titan.EggTimer - 222f) < 0.01f
                 && System.Math.Abs(loaded.Titan.EggHealth - 333f) < 0.01f);
             Check("save: sentries survive",
@@ -389,7 +389,7 @@ public static class SimTest
         "DwarfMiner", "run.sav");
 
     /// <summary>Boss variants: the egg hatches on both its timer and enough damage, and each
-    /// kind's signature attack fires when aggroed near the player (fire/laser shots, Hydra
+    /// kind's signature attack fires when aggroed near the player (fire/laser shots, Sandworm
     /// burrow+erupt, Kong leap+slam shockwave).</summary>
     private static void TestTitanVariants()
     {
@@ -415,7 +415,7 @@ public static class SimTest
         Check("titan: egg cracks open when its health is spent", eggHit.Hatched);
 
         // --- Each variant's special attack fires when aggroed near the player ---
-        foreach (var kind in new[] { TitanKind.Godzilla, TitanKind.Mecha, TitanKind.Hydra, TitanKind.Kong })
+        foreach (var kind in new[] { TitanKind.Godzilla, TitanKind.Mecha, TitanKind.Sandworm, TitanKind.Kong })
         {
             var p = WorldGen.Generate(60);
             var c = new Cells(p);
@@ -446,8 +446,8 @@ public static class SimTest
                 case TitanKind.Mecha:
                     Check($"titan: {kind} fires ranged shots", sawShot);
                     break;
-                case TitanKind.Hydra:
-                    Check("titan: Hydra burrows and erupts", sawSubmerge && sawShock);
+                case TitanKind.Sandworm:
+                    Check("titan: Sandworm burrows and erupts", sawSubmerge && sawShock);
                     break;
                 case TitanKind.Kong:
                     Check("titan: Kong leaps and slams (shockwave)", sawShock);

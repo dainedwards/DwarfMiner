@@ -3,9 +3,9 @@ using Microsoft.Xna.Framework;
 namespace DwarfMiner.World;
 
 /// <summary>Which boss hatches from this planet's egg. Each has a distinct special attack:
-/// Godzilla breathes fire, Mecha fires a mouth laser, Hydra burrows and erupts, Kong leaps
+/// Godzilla breathes fire, Mecha fires a mouth laser, Sandworm burrows and erupts, Kong leaps
 /// and quakes. The shared quadruped chassis is re-tinted per kind.</summary>
-public enum TitanKind { Godzilla, Mecha, Hydra, Kong }
+public enum TitanKind { Godzilla, Mecha, Sandworm, Kong }
 
 /// <summary>
 /// Static description of a planet archetype — the knobs WorldGen and Game1 previously kept as
@@ -62,7 +62,7 @@ public static class PlanetDefs
             MountainHeightScale: 1.25f, LavaFillFrac: 0.30f, HasWater: true,
             OreBias: new[] { (TileKind.Sapphire, 0.030f), (TileKind.SilverOre, 0.020f) },
             QuakeScale: 1.2f, CaveSpawnCap: 16,
-            ShipOre: "sapphire", ShipOreCount: 4, OxygenDrainScale: 1.1f, Titan: TitanKind.Hydra),
+            ShipOre: "sapphire", ShipOreCount: 4, OxygenDrainScale: 1.1f, Titan: TitanKind.Sandworm),
 
         new("ember", "Ember", "Volcanic furnace, lava high, rubies below",
             new Color(190, 90, 50), new Color(255, 170, 90),

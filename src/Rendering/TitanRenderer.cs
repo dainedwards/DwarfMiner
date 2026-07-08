@@ -8,7 +8,7 @@ namespace DwarfMiner.Rendering;
 /// <summary>
 /// Draws the boss — a genuinely different procedural skeleton per <see cref="TitanKind"/>
 /// rather than a re-tint of one body: an upright, dorsal-finned Godzilla; an angular
-/// laser-mawed Mecha; a legless three-headed Hydra; a big-armed Kong. Also handles the egg
+/// laser-mawed Mecha; a legless three-headed Sandworm; a big-armed Kong. Also handles the egg
 /// and the burrow mound. Called in world space between <c>BeginEntities</c>/<c>EndEntities</c>;
 /// <see cref="AddLights"/> runs in the lighting pass.
 /// </summary>
@@ -26,7 +26,7 @@ public static class TitanRenderer
         {
             case TitanKind.Godzilla: DrawGodzilla(r, t, planet, playerPos, f, time); break;
             case TitanKind.Mecha:    DrawMecha(r, t, planet, playerPos, f, time); break;
-            case TitanKind.Hydra:    DrawHydra(r, t, planet, playerPos, f, time); break;
+            case TitanKind.Sandworm:    DrawSandworm(r, t, planet, playerPos, f, time); break;
             case TitanKind.Kong:     DrawKong(r, t, planet, playerPos, f, time); break;
         }
     }
@@ -259,9 +259,9 @@ public static class TitanRenderer
         DrawEyes(r, t, f, head + f.Up * 8f, playerPos, 0f, 0f, mech: true);
     }
 
-    // ── Hydra: legless three-headed serpent ─────────────────────────────────────
+    // ── Sandworm: legless three-headed serpent ─────────────────────────────────────
 
-    private static void DrawHydra(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
+    private static void DrawSandworm(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
     {
         // Body — the long verlet chain, thick scaled segments hugging the ground.
         var nodes = t.TailNodes;
@@ -509,7 +509,7 @@ public static class TitanRenderer
 
     private static Vector2 HeadPos(Titan t, Frame f) => t.Kind switch
     {
-        TitanKind.Hydra => f.Tp + f.Up * 96f,
+        TitanKind.Sandworm => f.Tp + f.Up * 96f,
         TitanKind.Kong  => f.Tp + f.Up * 92f + f.Right * (f.Face * 8f),
         _               => f.Tp + f.Up * 110f + f.Right * (f.Face * 60f),
     };
@@ -523,7 +523,7 @@ public static class TitanRenderer
     private static Color EyeColor(TitanKind k, float anger) => k switch
     {
         TitanKind.Mecha => Color.Lerp(new Color(120, 230, 255), new Color(255, 90, 60), anger),
-        TitanKind.Hydra => Color.Lerp(new Color(180, 255, 120), new Color(255, 210, 60), anger),
+        TitanKind.Sandworm => Color.Lerp(new Color(180, 255, 120), new Color(255, 210, 60), anger),
         TitanKind.Kong  => Color.Lerp(new Color(255, 210, 120), new Color(255, 90, 40), anger),
         _               => Color.Lerp(new Color(255, 220, 100), new Color(255, 70, 40), anger),
     };
@@ -532,7 +532,7 @@ public static class TitanRenderer
     public static (Color hideCalm, Color hideAngry, Color glowCalm, Color glowAngry) Palette(TitanKind k) => k switch
     {
         TitanKind.Mecha => (new Color(120, 128, 145), new Color(160, 130, 130), new Color(90, 200, 255), new Color(130, 235, 255)),
-        TitanKind.Hydra => (new Color(38, 82, 58), new Color(96, 122, 52), new Color(120, 220, 140), new Color(185, 240, 90)),
+        TitanKind.Sandworm => (new Color(38, 82, 58), new Color(96, 122, 52), new Color(120, 220, 140), new Color(185, 240, 90)),
         TitanKind.Kong  => (new Color(78, 60, 46), new Color(120, 80, 50), new Color(150, 110, 70), new Color(215, 150, 80)),
         _               => (new Color(52, 62, 56), new Color(120, 60, 50), new Color(80, 150, 230), new Color(255, 90, 60)),
     };

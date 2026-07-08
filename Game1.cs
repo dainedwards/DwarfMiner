@@ -562,7 +562,7 @@ public sealed partial class DwarfMinerGame : Game
             _run.Shake = MathF.Max(_run.Shake, 1.4f);
             _particles.EmitDust(_run.Titan.Position, 30f);
         }
-        // Melee shockwave from a Kong slam / Hydra eruption — quake already fired inside the
+        // Melee shockwave from a Kong slam / Sandworm eruption — quake already fired inside the
         // Titan; here we knock back and hurt the player if they're inside the radius.
         if (_run.Titan.PendingShockwave is { } sw)
         {
@@ -911,7 +911,7 @@ public sealed partial class DwarfMinerGame : Game
     {
         TitanKind.Godzilla => "Cinderwyrm",
         TitanKind.Mecha    => "Mecha-Titan",
-        TitanKind.Hydra    => "Burrow Hydra",
+        TitanKind.Sandworm => "Shai-Hulud",
         TitanKind.Kong     => "Stone Ape",
         _                  => "Titan",
     };
@@ -1418,7 +1418,7 @@ public sealed partial class DwarfMinerGame : Game
         // silhouette (it's huge — body+legs span ~280 px) and a small margin so legs sweeping
         // into view from off-screen aren't suddenly popped in.
         // Boss — a distinct procedural skeleton per variant (upright Godzilla, angular Mecha,
-        // legless Hydra, big-armed Kong) plus the egg / burrow mound, all in TitanRenderer.
+        // legless Sandworm, big-armed Kong) plus the egg / burrow mound, all in TitanRenderer.
         // Culled off-screen: the biggest bodies span ~300 px.
         var titanOnScreen = (_run.Titan.Position - _camera.Target).LengthSquared() < 400f * 400f;
         if (titanOnScreen)
