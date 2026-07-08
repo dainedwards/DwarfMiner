@@ -339,6 +339,18 @@ public sealed partial class DwarfMinerGame : Game
         }
         if (Pressed(keys, _prevKeys, Keys.C)) { _craftingMenu.Show(); _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return; }
 
+        // F9 — developer boss-spawn menu. While open it intercepts input (like crafting): the
+        // world keeps ticking but player control is suspended until a boss is picked or it closes.
+        if (_debugMenu.Open)
+        {
+            _debugMenu.Update(keys, _prevKeys, SpawnDebugTitan);
+            _run.Physics.Update(dt);
+            _particles.Update(dt, _run.Planet);
+            _run.Cells.Update(dt);
+            _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return;
+        }
+        if (Pressed(keys, _prevKeys, Keys.F9)) { _debugMenu.Toggle(); _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return; }
+
         // F5 — suspend-save in place (also happens automatically on quit). Resume from the
         // star map with R. DM_AUTOSAVE=<seconds> triggers the same save on a timer for
         // headless testing, since synthetic key input isn't available on this platform.
