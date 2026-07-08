@@ -1780,6 +1780,34 @@ public sealed partial class DwarfMinerGame : Game
     /// as stages install. All rects are rotated to local-up so the ship stands on the planet
     /// like everything else. Proportions: pad ~30 px wide, finished ship ~36 px tall — a
     /// landmark next to the ~7 px dwarf without dwarfing the mountains.</summary>
+    /// <summary>Draw the storage depot: a stout riveted vault crate with a hatch, standing on
+    /// the surface. Lights up with a small lamp when the player is close enough to use it.</summary>
+    private void DrawDepot(Vector2 pos)
+    {
+        var up = _run.Planet.UpAt(pos);
+        var right = new Vector2(-up.Y, up.X);
+        var rot = MathF.Atan2(up.X, -up.Y);
+        var body = new Color(120, 95, 60);
+        var bodyDark = new Color(80, 62, 40);
+        var band = new Color(60, 46, 30);
+        var metal = new Color(150, 155, 165);
+
+        // Crate body + base.
+        _renderer.DrawRect(pos + up * 2f, new Vector2(34f, 6f), band, rot);
+        _renderer.DrawRect(pos + up * 12f, new Vector2(30f, 22f), bodyDark, rot);
+        _renderer.DrawRect(pos + up * 12f, new Vector2(24f, 18f), body, rot);
+        // Reinforcing bands + corner rivets.
+        _renderer.DrawRect(pos + up * 12f, new Vector2(30f, 3f), band, rot);
+        for (var s = -1; s <= 1; s += 2)
+            _renderer.DrawRect(pos + up * 12f + right * (s * 13f), new Vector2(3f, 22f), band, rot);
+        // Hatch + latch.
+        _renderer.DrawRect(pos + up * 11f, new Vector2(12f, 12f), bodyDark, rot);
+        _renderer.DrawRect(pos + up * 11f, new Vector2(4f, 4f), metal, rot);
+        // Lit indicator lamp when in range, dim otherwise.
+        var lamp = NearDepot() ? new Color(120, 230, 150) : new Color(70, 90, 70);
+        _renderer.DrawCircle(pos + up * 24f + right * 10f, 2.4f, lamp);
+    }
+
     private void DrawShip(Vector2 pos, int stage)
     {
         var up = _run.Planet.UpAt(pos);
