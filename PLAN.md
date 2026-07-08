@@ -64,7 +64,14 @@
 >   whoosh). The single central fire-sound hook in `Update` resolves the current weapon's
 >   `ShotSound` (falls back to the generic "shoot" pew), so no Fire* method changed. 8 new
 >   `Sfx` synths, swept by the existing `TestSfx` name loop.
-> Next up: a settings/volume UI, cave-in warnings, or new content (biomes/creatures/weapons).
+> - **Cave-in warnings done** — building on the existing tremble telegraph (`Physics` condemns
+>   a region and it jitters for `TrembleTime` before crumbling): `Physics.NewlyCondemnedThisTick`
+>   now sounds a groaning **"creak"** synth the instant rock is condemned (lead time before the
+>   "collapse" boom), and `Game1.UpdateCaveInWarning` scans condemned tiles hanging *over* the
+>   dwarf (larger polar ring = falls onto them), **sifting dust** from them and flashing a
+>   **"! CAVE-IN !"** HUD banner so there's a clear "move now" cue. `TestCaveIn` covers the
+>   condemn → tremble → crumble sequence.
+> Next up: a settings/volume UI, or new content (biomes/creatures/weapons).
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
