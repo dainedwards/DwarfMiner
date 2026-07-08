@@ -698,6 +698,10 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
+        // Pick-tick on each swing (throttled + pitch-jittered so it doesn't machine-gun).
+        PlayAt("dig", worldCursor, 0.35f,
+            pitch: 0.1f + (float)Random.Shared.NextDouble() * 0.3f, minGap: 0.09f);
+
         var broken = _run.Player.TryMine(_run.Planet, _run.Physics, worldCursor, tool);
         if (broken is { } bk)
         {
@@ -715,6 +719,8 @@ public sealed partial class DwarfMinerGame : Game
                 _particles.EmitChips(_run.Planet.TileToWorld(btx, bty), bk);
             }
             _run.Cells.SpawnDustInTile(btx, bty, bk);
+            PlayAt("break", _run.Planet.TileToWorld(btx, bty), 0.6f,
+                pitch: -0.1f + (float)Random.Shared.NextDouble() * 0.25f);
         }
     }
 
