@@ -460,6 +460,32 @@ public static class SimTest
             PlanetDefs.ById("ember").Titan == TitanKind.Godzilla);
         Check("titan: slag hatches the mecha",
             PlanetDefs.ById("slag").Titan == TitanKind.Mecha);
+
+        // --- Terrain plow: a boss overlapping solid rock smashes through it ---
+        {
+            var pp = WorldGen.Generate(70);
+            var pc = new Cells(pp);
+            var pphys = new Physics(pp, pc);
+            var psh = new System.Collections.Generic.List<TitanProjectile>();
+            var pbo = new System.Collections.Generic.List<FallingBoulder>();
+            var boss = new Titan(pp, -MathF.PI / 2f, TitanKind.Kong);
+            boss.Hatch();
+            // Fill the tiles under the body's centre with solid rock, then tick once.
+            var (bx, by) = pp.WorldToTile(boss.Position);
+            for (var dx = -1; dx <= 1; dx++)
+                for (var dy = -1; dy <= 1; dy++)
+                    pp.Set(bx + dx, by + dy, TileKind.Stone);
+            var solidBefore = 0;
+            for (var dx = -1; dx <= 1; dx++)
+                for (var dy = -1; dy <= 1; dy++)
+                    if (Tiles.IsSolid(pp.Get(bx + dx, by + dy))) solidBefore++;
+            boss.Update(1f / 60f, pp, pphys, pc, boss.Position, pbo, psh);
+            var solidAfter = 0;
+            for (var dx = -1; dx <= 1; dx++)
+                for (var dy = -1; dy <= 1; dy++)
+                    if (Tiles.IsSolid(pp.Get(bx + dx, by + dy))) solidAfter++;
+            Check($"titan: boss plows through rock it overlaps ({solidBefore}→{solidAfter})", solidAfter < solidBefore);
+        }
     }
 
     /// <summary>Hazard cells: gas rises and flash-burns near lava, acid dissolves soft tiles,
