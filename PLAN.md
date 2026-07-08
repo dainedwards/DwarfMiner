@@ -19,15 +19,24 @@
 >   `Game1.TickHazardContact` (this also finally makes LAVA damage the player). Worldgen seeds
 >   per-planet (`PlanetDef.SeedsGas`/`SeedsAcid`: ember=gas, slag=acid, core=both); star map
 >   shows TOXINS + THIN ATMOSPHERE warnings. Cells serialize for free in the save.
-> - **Boss variants + egg done** — Titan now hatches from a giant egg (`Titan.Hatched`/`EggTimer`
+> - **Boss variants + egg done** — Titan hatches from a giant egg (`Titan.Hatched`/`EggTimer`
 >   10-min / `EggHealth` attackable to hatch early; Combat routes hits to the egg while unhatched).
 >   Four variants (`TitanKind`, per-planet via `PlanetDef.Titan`): Godzilla fire-breath + Mecha
->   mouth-laser (both spawn `TitanProjectile` enemy shots), Hydra burrow→erupt, Kong leap→quake
->   (melee AoE via `Titan.PendingShockwave`, consumed in Game1). Shared quadruped chassis
->   re-tinted per kind (`TitanPalette`). `DM_HATCH=<s>` shortens the egg timer for testing.
->   NOTE: the boss's shallow `Grounded` probe rarely reaches ground under the hovering body;
->   grounded-gated specials use the deeper `Titan.Standing()` probe instead (the pre-existing
->   Stomp still uses `Grounded` and so under-fires — candidate cleanup).
+>   laser (both spawn `TitanProjectile` enemy shots), Hydra burrow→erupt, Kong leap→quake
+>   (melee AoE via `Titan.PendingShockwave`, consumed in Game1). `DM_HATCH=<s>` shortens the egg.
+> - **Boss overhaul done** — each variant now has its OWN procedural skeleton in the new
+>   `Rendering/TitanRenderer.cs` (upright fire-breathing Godzilla w/ dorsal fins + tail; boxy
+>   Mecha robot w/ chest reactor, visor, digitigrade legs; legless 3-headed Hydra serpent;
+>   broad-armed Kong ape) — NOT a re-tint. Bipeds = 2 legs, Hydra = 0 (serpent surface-follow +
+>   long verlet body). Bosses **smash through mountains** (`Titan.Plow` mines overlapping
+>   non-anchored tiles) instead of walking over; footfalls fire a **cave-in** quake below
+>   (`StompTile`). Mecha laser now **charges** (growing orb + tracking telegraph) then fires a
+>   sustained drilling beam (bolts carve terrain); Godzilla atomic breath is denser/brighter
+>   with dorsal-spine charge glow. The ~250-line inline render block left Game1 (2249→1926
+>   lines even with all the boss content added).
+>   NOTE: god mode (`Player.FlyMode`) is now fully damage-immune (dev-tool intent).
+>   Test hooks added: `DM_BOSSCAM` (egg beside spawn + camera follows boss), `DM_ZOOM=<f>`.
+>   Pre-existing Stomp still gates on the shallow `Grounded` probe (under-fires) — cleanup.
 > Next up: sound (still no audio at all), or surface base (storage depot), or ambient events.
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
