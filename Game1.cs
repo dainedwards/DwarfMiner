@@ -600,7 +600,7 @@ public sealed partial class DwarfMinerGame : Game
         for (var i = _run.TitanShots.Count - 1; i >= 0; i--)
         {
             var shot = _run.TitanShots[i];
-            shot.Update(dt, _run.Planet, _run.Cells, _run.Player);
+            shot.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player);
             if (shot.Kind == TitanShotKind.Flame) _particles.EmitDust(shot.Position, 2f);
             if (shot.Dead)
             {
