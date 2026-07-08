@@ -179,6 +179,14 @@ public sealed partial class DwarfMinerGame
                 OnCraft = () => { _run.Player.HasAirTank = true; _run.Player.Oxygen = _run.Player.EffectiveMaxOxygen; },
             },
 
+            // ─── Surface base ────────────────────────────────────────────────────
+            ["storage_depot"] = new()
+            {
+                Owned = () => _run.DepotPos is not null,   // one depot per run
+                Blocked = () => !OpenToSky(_run.Player.Position),
+                OnCraft = PlaceDepot,
+            },
+
             // ─── Ship build chain (see PlaceLaunchPad / InstallShipStage) ─────────
             ["launch_pad"] = new()
             {
