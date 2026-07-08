@@ -102,6 +102,14 @@ public sealed class Titan
     /// draws a solid lance for this window and it emits carving bolts each frame.</summary>
     public float BeamTimer;
 
+    /// <summary>Committed beam direction (read by the renderer to draw the Mecha's lance).</summary>
+    public Vector2 BeamDir => _lockedAim;
+
+    /// <summary>Windup lengths exposed so the renderer can drive the charge-up telegraphs
+    /// (dorsal-spine glow for the atomic breath, the growing orb for the laser).</summary>
+    public const float FireBreathWindup = 1.75f;
+    public const float LaserChargeWindup = 1.5f;
+
     private readonly Planet _planet;
 
     public Titan(Planet planet, float startAngle, TitanKind kind = TitanKind.Godzilla)
