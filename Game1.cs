@@ -2061,4 +2061,16 @@ public sealed partial class DwarfMinerGame : Game
     private static bool Pressed(KeyboardState now, KeyboardState prev, Keys k)
         => now.IsKeyDown(k) && !prev.IsKeyDown(k);
 
+    /// <summary>Play a positioned sound: pan follows the world point's screen-x (rotation-aware
+    /// via the camera matrix) and volume falls off with distance, so a far-off explosion is a
+    /// quiet thud on the correct side.</summary>
+    private void PlayAt(string name, Vector2 worldPos, float vol = 1f, float pitch = 0f, float minGap = 0f)
+    {
+        var screen = Vector2.Transform(worldPos, _camera.View);
+        var halfW = VirtualWidth * 0.5f;
+        var pan = MathHelper.Clamp((screen.X - halfW) / halfW, -1f, 1f);
+        var range = halfW / MathF.Max(_camera.Zoom, 0.01f) * 2.4f;
+        var att = MathHelper.Clamp(1f - (worldPos - _camera.Target).Length() / range, 0f, 1f);
+        _sfx.Play(name, vol * att, pitch, pan, minGap);
+    }
 }
