@@ -453,9 +453,8 @@ public sealed class Titan
         }
         if (!IsAggro || SpecialCooldown > 0f) return;
         if ((playerPos - Position).Length() > 800f) return;
-        SpecialState = LaserChargeDuration;
+        SpecialState = LaserChargeWindup;
     }
-    private const float LaserChargeDuration = 1.5f;
 
     /// <summary>Hydra: dive underground, tunnel toward the player (intangible, tracked by a
     /// dirt mound), then erupt at the surface with a quake + shockwave.</summary>
