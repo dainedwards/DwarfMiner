@@ -259,46 +259,63 @@ public static class TitanRenderer
         DrawEyes(r, t, f, head + f.Up * 8f, playerPos, 0f, 0f, mech: true);
     }
 
-    // ── Sandworm: legless three-headed serpent ─────────────────────────────────────
+    // ── Sandworm (Shai-Hulud): Dune worm — segmented tube, round toothed maw ─────
 
     private static void DrawSandworm(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
     {
-        // Body — the long verlet chain, thick scaled segments hugging the ground.
+        // Body — the verlet chain as a fat, near-uniform ringed tube (only tapering toward the
+        // tail). Each node gets a banding ring so it reads as a segmented worm, not a snake.
         var nodes = t.TailNodes;
         for (var i = 1; i < nodes.Length; i++)
         {
             var fr = i / (float)(nodes.Length - 1);
-            var thick = MathHelper.Lerp(34f, 9f, fr);
-            Seg(r, nodes[i - 1], nodes[i], thick, Color.Lerp(f.Hide, f.HideDark, fr));
-            Seg(r, nodes[i - 1], nodes[i], thick * 0.5f, Color.Lerp(f.HideLight, f.Hide, fr));
-            // Dorsal scales.
-            var mid = (nodes[i] + nodes[i - 1]) * 0.5f;
-            r.DrawCircle(mid + planet.UpAt(mid) * thick * 0.4f, thick * 0.22f, f.Chitin);
+            var thick = MathHelper.Lerp(40f, 12f, fr * fr);   // stays fat most of its length
+            Seg(r, nodes[i - 1], nodes[i], thick, f.HideDark);
+            Seg(r, nodes[i - 1], nodes[i], thick * 0.72f, f.Hide);
+            Seg(r, nodes[i - 1], nodes[i], thick * 0.34f, f.HideLight);   // pale spine highlight
+            // Segment ring at each joint.
+            var seg = nodes[i] - nodes[i - 1];
+            if (seg.LengthSquared() > 1f)
+            {
+                var n = Vector2.Normalize(new Vector2(-seg.Y, seg.X));
+                r.DrawRect(nodes[i], new Vector2(thick, thick * 0.16f), f.Chitin,
+                    MathF.Atan2(n.Y, n.X));
+            }
         }
 
-        // Three necks rise from the body's front (near Position), each swaying on its own phase.
-        for (var h = -1; h <= 1; h++)
+        // The maw is at the front (Position), pointing along travel — but straight UP while
+        // breaching (the eruption). A round aperture ringed with inward-curving crystalline
+        // teeth: "spikes coming out of the mouth".
+        var mouthDir = t.Breaching ? f.Up : f.Right * f.Face;
+        var mouthCenter = f.Tp + mouthDir * 30f;
+        var openPulse = t.Breaching ? 1f : 0.72f + MathF.Sin(time * 3f) * 0.06f;
+        var rOuter = 46f * openPulse;
+
+        // Fleshy outer lip ring.
+        r.DrawCircle(mouthCenter, rOuter, f.HideDark);
+        r.DrawCircle(mouthCenter, rOuter * 0.82f, f.Hide);
+        // Dark gullet.
+        var gullet = mouthCenter + mouthDir * (rOuter * 0.12f);
+        r.DrawCircle(gullet, rOuter * 0.6f, new Color(30, 18, 14));
+        r.DrawCircle(gullet + mouthDir * 6f, rOuter * 0.34f, new Color(70, 20, 16));   // glowing throat
+        // Ring of teeth around the rim, each pointing inward toward the gullet.
+        var teeth = 12;
+        var ivory = new Color(226, 214, 188);
+        for (var k = 0; k < teeth; k++)
         {
-            var baseP = f.Tp + f.Right * (f.Face * 6f) + f.Right * (h * 22f);
-            var sway = MathF.Sin(time * 2.2f + h * 1.9f) * 26f;
-            var reared = t.SpecialState <= 0f ? 1f : 0.4f;   // heads lower a touch while burrow-cooling
-            var neckTop = baseP + f.Up * (96f * reared) + f.Right * (f.Face * 26f + sway);
-            // Neck as a couple of tapering segments.
-            var mid = Vector2.Lerp(baseP, neckTop, 0.55f) + f.Right * (sway * 0.4f);
-            Seg(r, baseP, mid, 20f, f.HideDark);
-            Seg(r, mid, neckTop, 15f, f.Hide);
-            // Head.
-            var head = neckTop + f.Right * (f.Face * 16f) + f.Up * 4f;
-            r.DrawRect(head, new Vector2(34f, 26f), f.HideDark, f.Rot);
-            r.DrawRect(head + f.Up * 3f, new Vector2(26f, 18f), f.Hide, f.Rot);
-            var snout = head + f.Right * (f.Face * 18f) - f.Up * 2f;
-            r.DrawRect(snout, new Vector2(20f, 12f), f.HideDark, f.Rot);
-            // Jaw + fangs.
-            r.DrawRect(snout - f.Up * 8f, new Vector2(18f, 5f), f.Chitin, f.Rot);
-            // Glowing serpent eyes.
-            var eyeCol = EyeColor(t.Kind, f.Anger);
-            for (var e = -1; e <= 1; e += 2)
-                r.DrawCircle(head + f.Right * (f.Face * 4f) + f.Up * 4f + f.Right * (e * 6f), 3.2f, eyeCol);
+            var a = k / (float)teeth * MathHelper.TwoPi;
+            var dirOut = f.Right * MathF.Cos(a) + f.Up * MathF.Sin(a);
+            var rimBase = mouthCenter + dirOut * (rOuter * 0.78f);
+            var tip = mouthCenter + dirOut * (rOuter * 0.34f);   // points inward
+            Seg(r, rimBase, tip, 6f, ivory);
+            r.DrawCircle(tip, 2.4f, Color.White);
+        }
+        // A couple of oversized mandible fangs framing the maw.
+        for (var s = -1; s <= 1; s += 2)
+        {
+            var side = new Vector2(-mouthDir.Y, mouthDir.X) * s;
+            var baseP = mouthCenter + side * rOuter + mouthDir * 4f;
+            Seg(r, baseP, baseP + mouthDir * 26f - side * 6f, 8f, ivory);
         }
     }
 
