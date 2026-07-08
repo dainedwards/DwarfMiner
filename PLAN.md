@@ -44,7 +44,16 @@
 >   `Tiles.IsBankable` gates what banks (raw mats only, not gear). `Session.DepotPos` +
 >   `RunSave` v5. HUD shows a deposit/withdraw prompt at the depot and a "banked stash — build
 >   a depot" nudge otherwise. (Skipped the optional workbench-gates-late-recipes idea.)
-> Next up: sound (still no audio at all), or ambient events (meteors/cave-in warnings).
+> - **Sound done** — fully procedural synth in `Systems/Sfx.cs` (swept oscillators + filtered
+>   noise + envelopes → 16-bit PCM → MonoGame `SoundEffect`); NO asset files. 10 effects
+>   (dig/break/pickup/shoot/explode/hurt/collapse/hatch/ui/launch) wired to game events,
+>   positioned via `Game1.PlayAt` (rotation-aware pan + distance falloff through the camera
+>   matrix), throttled per-effect. Fail-safe: all device calls try/catch behind `_ok`, so no
+>   audio device = silent, never a crash. `Synth()` is static/device-free (headless-tested).
+>   `DM_MUTE=1` silences. Note: audibility can't be verified headlessly — synth buffers + no
+>   crash with audio active are what's confirmed.
+> Next up: ambient events (meteor strikes, cave-in warnings, magma surges), or per-weapon
+> distinct shot sounds, or a settings/volume UI.
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
