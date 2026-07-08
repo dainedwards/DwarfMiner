@@ -330,6 +330,7 @@ public sealed class Physics
             p ??= new PendingCollapse();
             p.Tiles.Add(idx);
             _pendingTiles.Add(idx);
+            NewlyCondemnedThisTick++;
         }
         if (p is null) return;
         // Innermost ring first = "bottom" in polar gravity, so the crumble sweeps upward.
