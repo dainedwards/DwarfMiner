@@ -85,6 +85,7 @@ public sealed class Titan
 
     private int _roamDir;             // -1 / 0 / +1 along the body's tangent while roaming
     private float _roamTimer;         // seconds until the next roam-direction reroll
+    private int _flameTick;           // frame counter throttling fire-breath grain spawns
 
     /// <summary>Hover height — distance the body wants to maintain above the average planted-foot
     /// position along planet-up. Higher values let the kaiju stride over taller terrain. The
