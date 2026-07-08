@@ -1235,6 +1235,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             _meta.Save();
             _toast = $"BANKED {moved} RESOURCES";
+            _sfx.Play("ui", 0.7f);
         }
         else _toast = "NOTHING TO BANK";
         _toastTimer = 2.5f;
@@ -1257,6 +1258,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             _meta.Save();
             _toast = $"WITHDREW {moved} RESOURCES";
+            _sfx.Play("ui", 0.7f, 0.15f);
         }
         else _toast = "VAULT EMPTY";
         _toastTimer = 2.5f;

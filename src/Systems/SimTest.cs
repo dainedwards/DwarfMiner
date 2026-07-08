@@ -285,6 +285,7 @@ public static class SimTest
         TestHazards();
         TestTitanVariants();
         TestDepotBank();
+        TestSfx();
 
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
         Environment.Exit(_failed ? 1 : 0);
