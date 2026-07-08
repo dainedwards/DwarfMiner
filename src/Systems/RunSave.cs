@@ -57,6 +57,8 @@ public static class RunSave
             w.Write(run.ShipFuel);
             w.Write(run.PadPos.HasValue);
             if (run.PadPos is { } pad) { w.Write(pad.X); w.Write(pad.Y); }
+            w.Write(run.DepotPos.HasValue);
+            if (run.DepotPos is { } depot) { w.Write(depot.X); w.Write(depot.Y); }
 
             run.Planet.WriteState(w);
             run.Cells.WriteState(w);
