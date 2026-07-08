@@ -1173,8 +1173,10 @@ public sealed partial class DwarfMinerGame : Game
     {
         var bank = _meta.BankFor(_run.Def.Id);
         var moved = 0;
-        foreach (var (id, count) in new List<(string, int)>(
-                     System.Linq.Enumerable.Select(_run.Player.Inventory.Items, kv => (kv.Key, kv.Value))))
+        // Snapshot first — TryConsume mutates the inventory we'd otherwise be iterating.
+        var snapshot = new List<(string id, int count)>();
+        foreach (var kv in _run.Player.Inventory.Items) snapshot.Add((kv.Key, kv.Value));
+        foreach (var (id, count) in snapshot)
         {
             if (count <= 0 || !Tiles.IsBankable(id)) continue;
             if (_run.Player.Inventory.TryConsume(id, count))
