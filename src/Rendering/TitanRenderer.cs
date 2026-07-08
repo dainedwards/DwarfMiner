@@ -525,9 +525,20 @@ public static class TitanRenderer
 
     private static void DrawMound(Renderer r, Titan t, Planet planet)
     {
+        // A heaping sand wake shoved up over the buried worm — a broad ridge with a cresting
+        // hump, tinted to the worm's sandy hide so it reads as "something huge is under here".
         var up = planet.UpAt(t.Position);
-        r.DrawCircle(t.Position, 17f, new Color(92, 70, 50));
-        r.DrawCircle(t.Position + up * 4f, 11f, new Color(116, 88, 62));
+        var right = new Vector2(-up.Y, up.X);
+        var (calm, _, _, _) = Palette(TitanKind.Sandworm);
+        var sand = calm;
+        var sandDark = new Color(sand.R * 3 / 4, sand.G * 3 / 4, sand.B * 3 / 4);
+        var proj = t.Position + up * 6f;   // sit the wake on the surface it's pushing up
+        for (var d = -3; d <= 3; d++)
+        {
+            var h = (3 - MathF.Abs(d)) / 3f;
+            r.DrawCircle(proj + right * (d * 18f), 12f + h * 14f, d % 2 == 0 ? sand : sandDark);
+        }
+        r.DrawCircle(proj + up * 10f, 20f, sand);
     }
 
     // ── palette + helpers ───────────────────────────────────────────────────────
