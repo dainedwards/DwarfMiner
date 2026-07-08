@@ -599,6 +599,7 @@ public sealed partial class DwarfMinerGame : Game
             _run.Titan.PendingShockwave = null;
             _run.Shake = MathF.Max(_run.Shake, 1.0f);
             _particles.EmitDust(sw.pos, 24f);
+            PlayAt("explode", sw.pos, 1f, pitch: -0.3f);
             var toPlayer = _run.Player.Position - sw.pos;
             var d = toPlayer.Length();
             if (d < sw.radius)
