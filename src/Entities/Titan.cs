@@ -383,57 +383,71 @@ public sealed class Titan
     /// the Kong leap — and reads false mid-leap/mid-fall so they can't re-trigger in the air.</summary>
     private bool Standing() => ProbeSolid(_planet, Position - _planet.UpAt(Position) * (BodyHover + 12f));
 
-    /// <summary>Godzilla: a ~1.1s cone of flame cells sprayed from the mouth toward the player.</summary>
+    /// <summary>The Godzilla-style atomic breath: a short bright wind-up (dorsal spines pulse —
+    /// see the renderer), then a dense ~1.4s cone of fire poured from the mouth at the player.
+    /// The renderer reads <see cref="SpecialState"/> for the spine glow; here we hose flame.</summary>
     private void TickFireBreath(float dt, Vector2 playerPos, List<TitanProjectile> shots)
     {
         if (SpecialState > 0f)
         {
             SpecialState -= dt;
-            var mouth = Mouth();
-            var aim = playerPos - mouth;
-            if (aim.LengthSquared() > 0.01f)
-            {
-                aim.Normalize();
-                for (var i = 0; i < 2; i++)
-                {
-                    var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.6f;
-                    var c = MathF.Cos(spread); var s = MathF.Sin(spread);
-                    var d = new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c);
-                    var speed = 190f + (float)Random.Shared.NextDouble() * 130f;
-                    shots.Add(new TitanProjectile(mouth + d * 12f, d * speed, TitanShotKind.Flame));
-                }
-            }
-            if (SpecialState <= 0f) SpecialCooldown = 6f;
-            return;
-        }
-        if (!IsAggro || SpecialCooldown > 0f || !Standing()) return;
-        if ((playerPos - Position).Length() > 560f) return;
-        SpecialState = 1.1f;
-    }
-
-    /// <summary>Mecha: a brief charge (mouth glows) then a single fast piercing laser bolt.</summary>
-    private void TickMechaLaser(float dt, Vector2 playerPos, List<TitanProjectile> shots)
-    {
-        if (SpecialState > 0f)
-        {
-            SpecialState -= dt;
-            if (SpecialState <= 0f)
+            // The first ~0.35s is the charge (spines light up, no flame yet); then it erupts.
+            if (SpecialState < FireBreathDuration - 0.35f)
             {
                 var mouth = Mouth();
                 var aim = playerPos - mouth;
                 if (aim.LengthSquared() > 0.01f)
                 {
                     aim.Normalize();
-                    shots.Add(new TitanProjectile(mouth + aim * 14f, aim * 720f, TitanShotKind.Laser));
+                    // A fat gout: several grains per frame across a widening cone, at varied
+                    // speeds so the stream billows and lingers rather than reading as bullets.
+                    for (var i = 0; i < 4; i++)
+                    {
+                        var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.7f;
+                        var c = MathF.Cos(spread); var s = MathF.Sin(spread);
+                        var d = new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c);
+                        var speed = 150f + (float)Random.Shared.NextDouble() * 170f;
+                        shots.Add(new TitanProjectile(mouth + d * 12f, d * speed, TitanShotKind.Flame));
+                    }
                 }
-                SpecialCooldown = 5f;
             }
+            if (SpecialState <= 0f) SpecialCooldown = 6.5f;
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f || !Standing()) return;
+        if ((playerPos - Position).Length() > 600f) return;
+        SpecialState = FireBreathDuration;
+    }
+    private const float FireBreathDuration = 1.75f;
+
+    /// <summary>Mecha laser: a long, obvious charge (a growing orb at the mouth + a tracking
+    /// telegraph line the player can dodge — both drawn by the renderer), then a sustained
+    /// drilling beam. During the beam window it spits a fat carving bolt every frame along the
+    /// direction locked at the end of the charge, so the beam bores a tunnel toward where the
+    /// player was standing.</summary>
+    private void TickMechaLaser(float dt, Vector2 playerPos, List<TitanProjectile> shots)
+    {
+        if (BeamTimer > 0f)
+        {
+            BeamTimer -= dt;
+            var mouth = Mouth();
+            shots.Add(new TitanProjectile(mouth + _lockedAim * 16f, _lockedAim * 900f, TitanShotKind.Laser));
+            if (BeamTimer <= 0f) SpecialCooldown = 6.5f;
+            return;
+        }
+        if (SpecialState > 0f)   // charging — track the player, then commit the aim
+        {
+            SpecialState -= dt;
+            var aim = playerPos - Mouth();
+            if (aim.LengthSquared() > 0.01f) _lockedAim = Vector2.Normalize(aim);
+            if (SpecialState <= 0f) BeamTimer = 0.6f;
             return;
         }
         if (!IsAggro || SpecialCooldown > 0f) return;
-        if ((playerPos - Position).Length() > 720f) return;
-        SpecialState = 0.7f;   // charge windup
+        if ((playerPos - Position).Length() > 800f) return;
+        SpecialState = LaserChargeDuration;
     }
+    private const float LaserChargeDuration = 1.5f;
 
     /// <summary>Hydra: dive underground, tunnel toward the player (intangible, tracked by a
     /// dirt mound), then erupt at the surface with a quake + shockwave.</summary>
