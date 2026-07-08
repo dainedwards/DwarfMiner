@@ -406,16 +406,17 @@ public sealed class Titan
         {
             SpecialState -= dt;
             // The first ~0.35s is the charge (spines light up, no flame yet); then it erupts.
-            if (SpecialState < FireBreathDuration - 0.35f)
+            // Spawn only on alternating frames — a couple of fat, longer-lived grains per emit
+            // read as a dense billowing gout without flooding the projectile list (the old
+            // 4-grains-every-frame stream spawned 200+ live fireballs and tanked the frame rate).
+            if (SpecialState < FireBreathDuration - 0.35f && (++_flameTick & 1) == 0)
             {
                 var mouth = Mouth();
                 var aim = playerPos - mouth;
                 if (aim.LengthSquared() > 0.01f)
                 {
                     aim.Normalize();
-                    // A fat gout: several grains per frame across a widening cone, at varied
-                    // speeds so the stream billows and lingers rather than reading as bullets.
-                    for (var i = 0; i < 4; i++)
+                    for (var i = 0; i < 2; i++)
                     {
                         var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.7f;
                         var c = MathF.Cos(spread); var s = MathF.Sin(spread);
