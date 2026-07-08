@@ -497,6 +497,26 @@ public sealed partial class DwarfMinerGame : Game
         // Population upkeep — cave dwellers, surface herds, sky flyers (see SpawnDirector).
         SpawnDirector.Update(dt, _run);
 
+        // Ambient events — meteor strikes + magma surges (see AmbientDirector).
+        var ambient = AmbientDirector.Update(dt, _run, _particles);
+        if (ambient.Surge)
+        {
+            _run.Shake = MathF.Max(_run.Shake, 0.7f);
+            PlayAt("collapse", ambient.SurgePos, 0.9f, pitch: -0.3f);
+        }
+        for (var i = _run.Meteors.Count - 1; i >= 0; i--)
+        {
+            var m = _run.Meteors[i];
+            m.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player, _particles);
+            if (m.Dead)
+            {
+                _particles.EmitImpact(m.Position, ProjectileKind.Rocket);
+                _run.Shake = MathF.Max(_run.Shake, 0.9f);
+                PlayAt("explode", m.Position, 1f, pitch: -0.2f);
+                _run.Meteors.RemoveAt(i);
+            }
+        }
+
         // Update entities. Creatures that have drifted far outside the player's neighbourhood
         // are recycled — they'd never be met again, they eat sim time, and every recycled
         // body frees local-population budget so the spawner keeps the area around the player
