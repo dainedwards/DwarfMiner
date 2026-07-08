@@ -180,6 +180,15 @@ public sealed class Sfx
                     Noise(b, 0.8, Decay(4.5), lp: 0.94);
                     Tone(b, 60, 42, 0.5, Decay(4), Wave.Sine);
                 });
+            case "creak":
+                // Groaning rock strain — a wavering low tone that warns of imminent collapse,
+                // sounded the moment a region is condemned (before the "collapse" boom).
+                return Render(0.55, b =>
+                {
+                    Tone(b, 74, 52, 0.5, Ar(0.06, 3.2), Wave.Saw);
+                    Tone(b, 150, 118, 0.22, Ar(0.06, 3.2), Wave.Sine);
+                    Noise(b, 0.16, Ar(0.05, 2.6), lp: 0.92);
+                });
             case "hatch":
                 // Rising monster growl — swept saw + snarling noise.
                 return Render(0.7, b =>
