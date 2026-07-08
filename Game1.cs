@@ -1480,177 +1480,12 @@ public sealed partial class DwarfMinerGame : Game
         // visible radius from the camera target is ~200 px; bump to 400 for the kaiju's
         // silhouette (it's huge — body+legs span ~280 px) and a small margin so legs sweeping
         // into view from off-screen aren't suddenly popped in.
+        // Boss — a distinct procedural skeleton per variant (upright Godzilla, angular Mecha,
+        // legless Hydra, big-armed Kong) plus the egg / burrow mound, all in TitanRenderer.
+        // Culled off-screen: the biggest bodies span ~300 px.
         var titanOnScreen = (_run.Titan.Position - _camera.Target).LengthSquared() < 400f * 400f;
-        // Egg phase draws a giant egg instead of the boss; a burrowed Hydra draws a travelling
-        // dirt mound instead of its body.
-        if (titanOnScreen && !_run.Titan.Hatched) DrawTitanEgg();
-        else if (titanOnScreen && _run.Titan.Submerged) DrawBurrowMound();
-        var kaijuVisible = _run.Titan.Health > 0 && _run.Titan.Hatched && !_run.Titan.Submerged
-            && titanOnScreen;
-
-        // Kaiju boss. Body is a hulking scaled hulk on 4 procedural quadruped legs; tail is a
-        // verlet chain dragging behind; head is a snouted bulb in front. Legs use 2-bone IK
-        // that allows stretching when the foot is far from the hip — so the kaiju visibly
-        // elongates its limbs to crest mountains and compress them on flat ground. Foot
-        // positions, leg step state, and tail nodes are all simulated in Titan.Update; this
-        // block is rendering only.
-        if (kaijuVisible)
-        {
-            var tup = _run.Planet.UpAt(_run.Titan.Position);
-            var tright = new Vector2(-tup.Y, tup.X);
-            var trot = MathF.Atan2(tup.X, -tup.Y);
-            var tp = _run.Titan.Position;
-            var face = _run.Titan.Facing;
-            var anger01 = MathHelper.Clamp(_run.Titan.Anger / 100f, 0f, 1f);
-            // Per-variant palette: calm→angry hide and spine-glow colours.
-            var (hideCalm, hideAngry, glowCalm, glowAngry) = TitanPalette(_run.Titan.Kind);
-            var hide = _run.Titan.HitFlash > 0
-                ? Color.White
-                : Color.Lerp(hideCalm, hideAngry, anger01);
-            var hideDark = new Color(hide.R / 2, hide.G / 2, hide.B / 2);
-            var hideLight = new Color(
-                Math.Clamp(hide.R + 38, 0, 255),
-                Math.Clamp(hide.G + 38, 0, 255),
-                Math.Clamp(hide.B + 38, 0, 255));
-            var underBelly = new Color(
-                Math.Clamp(hide.R + 70, 0, 255),
-                Math.Clamp(hide.G + 60, 0, 255),
-                Math.Clamp(hide.B + 50, 0, 255));   // pale cream/yellow underbelly
-            var chitin = _run.Titan.Kind == TitanKind.Mecha ? new Color(30, 34, 44) : new Color(18, 14, 22);
-            var spineGlow = Color.Lerp(glowCalm, glowAngry, anger01);
-
-            // === 1. Tail (drawn first, so the body covers its root) ===
-            // Verlet chain; thickness tapers from base to tip. Trailing tip lights up as anger
-            // climbs so it reads like a kaiju "atomic" tail.
-            var tailNodes = _run.Titan.TailNodes;
-            for (var ti = 1; ti < tailNodes.Length; ti++)
-            {
-                var fr = ti / (float)(tailNodes.Length - 1);   // 0 at root, 1 at tip
-                var thick = MathHelper.Lerp(28f, 8f, fr);
-                var tailCol = Color.Lerp(hideDark, Color.Lerp(hide, spineGlow, anger01 * 0.45f), 1f - fr * 0.6f);
-                DrawLegSegment(tailNodes[ti - 1], tailNodes[ti], thick, tailCol);
-                // Mid-segment scales/spines along the tail
-                if (ti < tailNodes.Length - 1)
-                {
-                    var mid = (tailNodes[ti] + tailNodes[ti - 1]) * 0.5f;
-                    _renderer.DrawCircle(mid, thick * 0.45f, chitin);
-                }
-            }
-            // Tail tip glow — a small radial bead on the last node, brighter when angry.
-            _renderer.DrawCircle(tailNodes[^1], 7f + anger01 * 5f, spineGlow);
-            _renderer.DrawCircle(tailNodes[^1], 3f, Color.White);
-
-            // === 2. Hind legs (behind the body) — render the two with HipForward > 0 first ===
-            for (var li = 0; li < _run.Titan.Legs.Length; li++)
-            {
-                var leg = _run.Titan.Legs[li];
-                if (leg.HipForward * face >= 0) continue; // hind legs are on the side away from facing
-                DrawTitanLeg(leg, tp, tup, tright, hide, hideDark, hideLight, chitin, _run.Titan.Pulse);
-            }
-
-            // === 3. Body — a wide chitinous mass, breathing with the pulse ===
-            var breath2 = MathF.Sin(_run.Titan.Pulse) * 1.6f;
-            // Underbelly slab (low, lighter)
-            _renderer.DrawRect(tp + tup * (-18f + breath2), new Vector2(240f, 56f), underBelly, trot);
-            _renderer.DrawRect(tp + tup * (-32f + breath2), new Vector2(220f, 4f), chitin, trot);
-            // Belly scutes — horizontal banding
-            for (var s = -2; s <= 2; s++)
-            {
-                _renderer.DrawRect(tp + tup * (-22f + breath2) + tright * (s * 38f),
-                    new Vector2(28f, 14f), new Color(underBelly.R - 24, underBelly.G - 24, underBelly.B - 24), trot);
-            }
-            // Main body (hide-colored mass on top of underbelly)
-            _renderer.DrawRect(tp + tup * (10f + breath2), new Vector2(260f, 90f), hideDark, trot);
-            _renderer.DrawRect(tp + tup * (20f + breath2), new Vector2(244f, 70f), hide, trot);
-            _renderer.DrawRect(tp + tup * (38f + breath2), new Vector2(212f, 38f), hideLight, trot);
-            // Scaled skin texture: pseudo-random stable speckle. Use position-based hash so the
-            // scales don't shimmer between frames.
-            var hashSeed = (int)(tp.X * 0.13f) ^ (int)(tp.Y * 0.17f);
-            for (var sc = 0; sc < 18; sc++)
-            {
-                var h = (hashSeed * 1664525 + sc * 1013904223) & 0x7fffffff;
-                var sx = ((h >> 3) & 0xFF) / 255f * 220f - 110f;
-                var sy = ((h >> 11) & 0x3F) / 63f * 50f - 5f;
-                var ssz = 3f + ((h >> 19) & 3);
-                _renderer.DrawRect(tp + tright * sx + tup * (sy + breath2),
-                    new Vector2(ssz, ssz),
-                    (h & 1) == 0 ? hideDark : chitin, trot);
-            }
-
-            // === 4. Dorsal spines — Godzilla-style fin row along the back ===
-            // Each spine is a stacked pyramid of progressively narrower rects, glowing on the
-            // tip when angry. Three rows of 5 spines each — center row is tallest.
-            for (var s = -2; s <= 2; s++)
-            {
-                var sFr = MathF.Abs(s) / 2f;
-                var height = 32f - sFr * 12f;
-                var width = 22f - sFr * 6f;
-                var basePos = tp + tup * (54f + breath2) + tright * (s * 44f);
-                // Plate base
-                _renderer.DrawRect(basePos, new Vector2(width, 8f), chitin, trot);
-                // Plate body
-                _renderer.DrawRect(basePos + tup * (height * 0.35f), new Vector2(width * 0.8f, height * 0.55f), hideDark, trot);
-                // Plate spine tip
-                _renderer.DrawRect(basePos + tup * (height * 0.7f), new Vector2(width * 0.45f, height * 0.45f), chitin, trot);
-                // Glowing edge — anger-tinted
-                _renderer.DrawRect(basePos + tup * (height * 0.85f), new Vector2(width * 0.3f, 4f), spineGlow, trot);
-            }
-
-            // === 5. Front legs (in front of the body) ===
-            for (var li = 0; li < _run.Titan.Legs.Length; li++)
-            {
-                var leg = _run.Titan.Legs[li];
-                if (leg.HipForward * face < 0) continue; // skip hind legs (already drawn)
-                DrawTitanLeg(leg, tp, tup, tright, hide, hideDark, hideLight, chitin, _run.Titan.Pulse);
-            }
-
-            // === 6. Head — a snouted bulb in front of the body ===
-            var headBase = tp + tup * 26f + tright * (face * 110f);
-            // Neck connection (a small dark patch where head meets body)
-            _renderer.DrawRect(tp + tup * 22f + tright * (face * 60f), new Vector2(54f, 46f), hideDark, trot);
-            // Skull
-            _renderer.DrawRect(headBase + tup * 4f, new Vector2(86f, 64f), hideDark, trot);
-            _renderer.DrawRect(headBase + tup * 12f, new Vector2(72f, 48f), hide, trot);
-            _renderer.DrawRect(headBase + tup * 24f, new Vector2(54f, 22f), hideLight, trot);
-            // Brow ridge — a strong horizontal dark bar over the eyes
-            _renderer.DrawRect(headBase + tup * 18f, new Vector2(78f, 5f), chitin, trot);
-            // Snout — extends further forward, narrower and lower than the skull
-            var snoutBase = headBase + tright * (face * 38f) + tup * -4f;
-            _renderer.DrawRect(snoutBase, new Vector2(56f, 36f), hideDark, trot);
-            _renderer.DrawRect(snoutBase + tup * 6f, new Vector2(44f, 22f), hide, trot);
-            // Nostril
-            _renderer.DrawCircle(snoutBase + tright * (face * 18f) + tup * 8f, 3.5f, chitin);
-            // Jaw — a darker rect under the snout, with a tooth row
-            var jawPos = snoutBase + tup * -16f;
-            _renderer.DrawRect(jawPos, new Vector2(60f, 12f), chitin, trot);
-            // Teeth row — small white pixels along the jaw seam
-            for (var ti2 = -2; ti2 <= 2; ti2++)
-            {
-                _renderer.DrawRect(jawPos + tright * (ti2 * 10f) + tup * 4f,
-                    new Vector2(3f, 5f), Color.White, trot);
-            }
-            // Side horns — two crested ridges flaring back from the skull (kaiju cresting)
-            _renderer.DrawRect(headBase + tright * (face * -16f) + tup * 32f,
-                new Vector2(20f, 8f), chitin, trot + face * 0.5f);
-            _renderer.DrawRect(headBase + tright * (face * -16f) + tup * 24f,
-                new Vector2(28f, 6f), chitin, trot + face * 0.3f);
-
-            // === 7. Eyes — two glowing slits, anger-tinted, tracking the player ===
-            var lookDir = _run.Player.Position - headBase;
-            if (lookDir.LengthSquared() < 0.001f) lookDir = tright * face;
-            else lookDir.Normalize();
-            var lookRight = Vector2.Dot(lookDir, tright);
-            var lookUp = Vector2.Dot(lookDir, tup);
-            var eyeCol = Color.Lerp(new Color(255, 230, 100), new Color(255, 70, 50), anger01);
-            for (var ei = -1; ei <= 1; ei += 2)
-            {
-                var socket = headBase + tup * 8f + tright * (ei * 14f);
-                _renderer.DrawCircle(socket, 9f, chitin);
-                var pupil = socket + tright * lookRight * 3f + tup * lookUp * 2f;
-                _renderer.DrawCircle(pupil, 6f, eyeCol);
-                _renderer.DrawCircle(pupil, 2.5f, Color.Black);
-            }
-        }
+        if (titanOnScreen)
+            TitanRenderer.Draw(_renderer, _run.Titan, _run.Planet, _run.Player.Position, _renderer.Time);
 
         // Particles drawn last so chips and sparks pop over creatures and the player.
         _particles.Draw(_renderer);
@@ -1763,55 +1598,15 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.AddLight(beaconPad + bUp * 34f, 18f + pulse * 10f, new Color(255, 190, 90));
         }
 
-        // Kaiju eyes: gold → red as anger climbs. Two sockets, both lit. Position must mirror
-        // the renderer (headBase = body + tup*26 + tright*facing*110, sockets at tup*8 ± 14).
-        // Same visibility cull as the body — no point lighting an off-screen kaiju.
-        if (kaijuVisible)
-        {
-            var anger01 = MathHelper.Clamp(_run.Titan.Anger / 100f, 0f, 1f);
-            var tup = _run.Planet.UpAt(_run.Titan.Position);
-            var tright = new Vector2(-tup.Y, tup.X);
-            var headBase = _run.Titan.Position + tup * 26f + tright * (_run.Titan.Facing * 110f);
-            var lookDir = _run.Player.Position - headBase;
-            if (lookDir.LengthSquared() < 0.001f) lookDir = tright * _run.Titan.Facing; else lookDir.Normalize();
-            var lookRight = Vector2.Dot(lookDir, tright);
-            var lookUp = Vector2.Dot(lookDir, tup);
-            var eyeCol = Color.Lerp(new Color(255, 220, 100), new Color(255, 80, 40), anger01);
-            for (var ei = -1; ei <= 1; ei += 2)
-            {
-                var socket = headBase + tup * 8f + tright * (ei * 14f);
-                var pupil = socket + tright * lookRight * 3f + tup * lookUp * 2f;
-                _renderer.AddLight(pupil, 22f + 20f * anger01, eyeCol);
-            }
-            // Tail-tip glow as a bonus light source — sells the verlet drag and the kaiju's
-            // "atomic tail" look. Brightness ramps with anger.
-            var tip = _run.Titan.TailNodes[^1];
-            _renderer.AddLight(tip, 18f + 22f * anger01,
-                Color.Lerp(new Color(80, 130, 220), new Color(255, 90, 60), anger01));
-
-            // Mouth glow while a Godzilla winds up/breathes fire or a Mecha charges its laser —
-            // a telegraph the player can read to dodge. SpecialState > 0 is the active window.
-            if (_run.Titan.SpecialState > 0f &&
-                _run.Titan.Kind is TitanKind.Godzilla or TitanKind.Mecha)
-            {
-                var mouth = _run.Titan.Position + tup * 26f + tright * (_run.Titan.Facing * 130f);
-                var warm = _run.Titan.Kind == TitanKind.Godzilla
-                    ? new Color(255, 130, 40) : new Color(120, 230, 255);
-                _renderer.AddLight(mouth, 20f + 16f * _run.Titan.SpecialState, warm);
-            }
-        }
+        // Boss light sources — eyes, attack telegraphs, egg glow — all per-variant in the
+        // renderer. Same off-screen cull as the body.
+        if (titanOnScreen)
+            TitanRenderer.AddLights(_renderer, _run.Titan, _run.Planet, _run.Player.Position, _renderer.Time);
 
         // Titan shots light their surroundings — flame warm, laser cyan.
         foreach (var shot in _run.TitanShots)
             _renderer.AddLight(shot.Position, shot.Kind == TitanShotKind.Flame ? 16f : 18f,
                 shot.Kind == TitanShotKind.Flame ? new Color(255, 150, 50) : new Color(120, 230, 255));
-
-        // A cracking egg glows faintly with its occupant's colour so it reads in a dark cave.
-        if (titanOnScreen && !_run.Titan.Hatched)
-        {
-            var (_, occAngry, _, _) = TitanPalette(_run.Titan.Kind);
-            _renderer.AddLight(_run.Titan.Position + _run.Planet.UpAt(_run.Titan.Position) * 40f, 30f, occAngry);
-        }
 
         // Glowing creatures — magma slugs read as drifting coals, cave eyes as a faint gleam.
         foreach (var c in _run.Creatures) c.AddLight(_renderer);
