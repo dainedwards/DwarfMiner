@@ -1536,6 +1536,20 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.DrawCircle(b.Position, b.Radius, new Color(80, 70, 60));
         }
 
+        // Meteors — a molten rock (dark core, hot rim) plus a pulsing warning reticle on the
+        // ground it's aimed at, so the strike is telegraphed and dodgeable.
+        foreach (var m in _run.Meteors)
+        {
+            var gUp = _run.Planet.UpAt(m.Target);
+            var pulse = MathF.Sin(_renderer.Time * 10f) * 0.5f + 0.5f;
+            _renderer.DrawCircle(m.Target, 10f + pulse * 5f, new Color(255, 80, 40, 130));
+            _renderer.DrawRect(m.Target, new Vector2(22f, 2f), new Color(255, 120, 60), MathF.Atan2(gUp.X, -gUp.Y));
+
+            _renderer.DrawCircle(m.Position, m.Radius + 3f, new Color(255, 150, 60));
+            _renderer.DrawCircle(m.Position, m.Radius, new Color(60, 30, 24));
+            _renderer.DrawCircle(m.Position, m.Radius * 0.5f, new Color(255, 220, 140));
+        }
+
         // Titan ranged shots — Godzilla flame (layered orange/yellow flicker) and Mecha laser
         // (cyan bolt with a white core drawn along its velocity).
         foreach (var shot in _run.TitanShots)
