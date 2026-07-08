@@ -104,6 +104,64 @@ public sealed class Sfx
                     Tone(b, 440, 130, 0.4, Decay(34), Wave.Square);
                     Noise(b, 0.25, Decay(80), lp: 0.5);
                 });
+            case "shoot_pistol":
+                // Sharp high crack — tighter and brighter than the default pew.
+                return Render(0.10, b =>
+                {
+                    Tone(b, 620, 160, 0.45, Decay(40), Wave.Square);
+                    Noise(b, 0.35, Decay(90), lp: 0.35);
+                });
+            case "shoot_mg":
+                // Dry punchy tap — the per-round voice of a fast repeater.
+                return Render(0.07, b =>
+                {
+                    Tone(b, 300, 110, 0.4, Decay(55), Wave.Saw);
+                    Noise(b, 0.5, Decay(115), lp: 0.55);
+                });
+            case "shoot_laser":
+                // Zap — a fast falling square with a shimmering sine overtone.
+                return Render(0.14, b =>
+                {
+                    Tone(b, 1500, 260, 0.4, Decay(26), Wave.Square);
+                    Tone(b, 2200, 500, 0.15, Decay(30), Wave.Sine);
+                });
+            case "shoot_beam":
+                // Heavy sustained beam — a deep saw sweep with a growling low body.
+                return Render(0.28, b =>
+                {
+                    Tone(b, 700, 120, 0.5, Decay(11), Wave.Saw);
+                    Noise(b, 0.25, Decay(9), lp: 0.7);
+                    Tone(b, 90, 60, 0.4, Decay(8), Wave.Sine);
+                });
+            case "shoot_rocket":
+                // Ignition whoosh — swelling noise over a falling exhaust rumble.
+                return Render(0.4, b =>
+                {
+                    Noise(b, 0.6, Ar(0.05, 8), lp: 0.75);
+                    Tone(b, 200, 90, 0.4, Decay(7), Wave.Saw);
+                });
+            case "shoot_cannon":
+                // Big deep report — a low boom under a broadband crack.
+                return Render(0.35, b =>
+                {
+                    Tone(b, 160, 45, 0.7, Decay(12), Wave.Sine);
+                    Noise(b, 0.55, Decay(16), lp: 0.8);
+                });
+            case "throw":
+                // Light airy toss — a rising-then-falling whoosh, no percussive crack.
+                return Render(0.16, b =>
+                {
+                    Noise(b, 0.4, Ar(0.04, 16), lp: 0.6);
+                    Tone(b, 260, 420, 0.2, Decay(14), Wave.Sine);
+                });
+            case "harpoon":
+                // Mechanical twang — metallic square ping over a thunk and a tiny hiss.
+                return Render(0.16, b =>
+                {
+                    Tone(b, 900, 300, 0.4, Decay(30), Wave.Square);
+                    Tone(b, 180, 90, 0.4, Decay(24), Wave.Sine);
+                    Noise(b, 0.2, Decay(70), lp: 0.3);
+                });
             case "explode":
                 // Boom — long noise tail over a deep falling sine.
                 return Render(0.5, b =>
