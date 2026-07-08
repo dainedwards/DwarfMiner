@@ -1687,7 +1687,7 @@ public sealed partial class DwarfMinerGame : Game
         var status = $"{_run.Def.Name.ToUpperInvariant()}   DEPTH {depth}   SHIP: {ship}   {titanStatus}\n" +
                      $"META: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
         var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE  Q/E WEAPONS\n" +
-                       "C CRAFT  T BEACON RECALL  L LAUNCH SHIP  F5 SAVE  G GOD MODE";
+                       "C CRAFT  T BEACON  L LAUNCH  B/N DEPOT BANK  F5 SAVE  G GOD MODE";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _run.Player, (int)_run.Titan.Anger, status, controls);
 
         // Depot prompt: at the depot, show deposit/withdraw; otherwise, if a stash is waiting on
