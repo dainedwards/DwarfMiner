@@ -1499,6 +1499,9 @@ public sealed partial class DwarfMinerGame : Game
         if (_launching) DrawShip(_launchShipPos, _run.ShipStage);
         else if (_run.PadPos is { } shipPos) DrawShip(shipPos, _run.ShipStage);
 
+        // Storage depot — a squat vault the dwarf banks resources at.
+        if (_run.DepotPos is { } depotPos) DrawDepot(depotPos);
+
         // Kaiju visibility cull. The kaiju's render block does 100+ draw calls (4 legs × IK +
         // 7-node tail + dorsal spines + head + claws), so skipping it when off-screen is a
         // large win. Camera viewport is 1280×720 at zoom 4 → ~320×180 world units, so the
