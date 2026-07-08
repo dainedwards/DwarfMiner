@@ -462,11 +462,18 @@ public sealed partial class DwarfMinerGame : Game
         // instead of one frame later.
         var picked = _run.Cells.CollectInRadius(_run.Player.Position, _run.Player.Radius + 4f);
         if (picked is not null)
+        {
             foreach (var (id, count) in picked)
                 _run.Player.Inventory.Add(id, count);
+            _sfx.Play("pickup", 0.4f, 0.2f, 0f, minGap: 0.11f);
+        }
 
         _run.Cells.Update(dt);
-        if (_run.Physics.CollapsesThisTick > 0) _run.Shake = MathF.Max(_run.Shake, MathHelper.Clamp(_run.Physics.CollapsesThisTick / 80f, 0f, 1.5f));
+        if (_run.Physics.CollapsesThisTick > 0)
+        {
+            _run.Shake = MathF.Max(_run.Shake, MathHelper.Clamp(_run.Physics.CollapsesThisTick / 80f, 0f, 1.5f));
+            _sfx.Play("collapse", MathHelper.Clamp(_run.Physics.CollapsesThisTick / 40f, 0.25f, 1f), 0f, 0f, minGap: 0.4f);
+        }
 
         // Earthquakes — global shake every so often.
         _run.EarthquakeTimer -= dt;
