@@ -30,6 +30,7 @@ public sealed class Sfx
     public static readonly string[] Names =
     {
         "dig", "break", "pickup", "shoot", "explode", "hurt", "collapse", "hatch", "ui", "launch",
+        "creak",
         // Per-weapon shot voices — each gun/thrown weapon picks one via ItemDef.ShotSound;
         // anything without one falls back to the generic "shoot" pew above.
         "shoot_pistol", "shoot_mg", "shoot_laser", "shoot_beam", "shoot_rocket", "shoot_cannon",
