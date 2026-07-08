@@ -186,7 +186,9 @@ public sealed partial class DwarfMinerGame : Game
         _run.EarthquakeTimer = 25f * def.QuakeScale;
         _run.SpawnTimer = 6f;
         _run.FaunaTimer = 8f;
-        _run.MeteorTimer = 16f + (float)Random.Shared.NextDouble() * 14f;   // first strike ~16-30s in
+        // DM_METEOR=<s> overrides the first-strike delay for testing.
+        _run.MeteorTimer = float.TryParse(Environment.GetEnvironmentVariable("DM_METEOR"), out var mt)
+            ? mt : 16f + (float)Random.Shared.NextDouble() * 14f;   // first strike ~16-30s in
         _run.SurgeTimer = 22f;
         _gameOverReason = "";
         _craftingMenu.Reset();
