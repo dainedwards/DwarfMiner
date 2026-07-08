@@ -341,6 +341,7 @@ public sealed partial class DwarfMinerGame : Game
         _toastTimer -= dt;
 
         _run.RunTime += dt;
+        _sfx.Tick(dt);
 
         // Movement input — A/D or arrows along the player's local tangent.
         var moveAxis = 0;
