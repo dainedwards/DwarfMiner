@@ -235,7 +235,9 @@ public static class TitanRenderer
         // Head: a wedge with a single glowing visor and a mouth cannon.
         var neck = chest + f.Up * 16f + f.Right * (f.Face * 22f);
         var head = neck + f.Up * 10f + f.Right * (f.Face * 30f);
-        r.DrawRect(neck, new Vector2(26f, 22f), panel, f.Rot);
+        // Continuous armoured neck strut from the chest to the skull so the head stays bolted on.
+        Seg(r, chest + f.Up * 2f, head, 30f, steelDark);
+        Seg(r, chest + f.Up * 2f, head, 20f, panel);
         r.DrawRect(head, new Vector2(52f, 40f), steelDark, f.Rot);
         r.DrawRect(head + f.Up * 4f, new Vector2(40f, 28f), steel, f.Rot);
         // Visor band.
