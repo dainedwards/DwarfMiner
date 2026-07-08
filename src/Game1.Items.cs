@@ -101,47 +101,47 @@ public sealed partial class DwarfMinerGame
             // ─── Firearms ─────────────────────────────────────────────────────────
             ["pistol"] = new()
             {
-                Weapon = true, NeedsCooldown = true,
+                Weapon = true, NeedsCooldown = true, ShotSound = "shoot_pistol",
                 Owned = () => _run.Player.HasPistol, Use = FirePistol,
                 OnCraft = Own("pistol", () => _run.Player.HasPistol = true),
             },
             ["machine_gun"] = new()
             {
-                Weapon = true, NeedsCooldown = true,
+                Weapon = true, NeedsCooldown = true, ShotSound = "shoot_mg",
                 Owned = () => _run.Player.HasMachineGun, Use = FireMachineGun,
                 OnCraft = Own("machine_gun", () => _run.Player.HasMachineGun = true),
             },
             ["laser"] = new()
             {
-                Weapon = true, NeedsCooldown = true,
+                Weapon = true, NeedsCooldown = true, ShotSound = "shoot_laser",
                 Owned = () => _run.Player.HasLaser, Use = FireLaser,
                 OnCraft = Own("laser", () => _run.Player.HasLaser = true),
             },
             ["laser_cannon"] = new()
             {
-                Weapon = true, NeedsCooldown = true,
+                Weapon = true, NeedsCooldown = true, ShotSound = "shoot_beam",
                 Owned = () => _run.Player.HasLaserCannon, Use = FireLaserCannon,
                 OnCraft = Own("laser_cannon", () => _run.Player.HasLaserCannon = true),
             },
             ["rocket_launcher"] = new()
             {
-                Weapon = true, NeedsCooldown = true, Ammo = "rocket",
+                Weapon = true, NeedsCooldown = true, Ammo = "rocket", ShotSound = "shoot_rocket",
                 Owned = () => _run.Player.HasRocketLauncher, Use = FireRocket,
                 OnCraft = Own("rocket_launcher", () => _run.Player.HasRocketLauncher = true),
             },
             ["cannon"] = new()
             {
-                Weapon = true, NeedsCooldown = true,
+                Weapon = true, NeedsCooldown = true, ShotSound = "shoot_cannon",
                 Owned = () => _run.HasCannon, Use = FireCannon,
                 OnCraft = Own("cannon", () => _run.HasCannon = true),
             },
             ["rocket"] = new() { OnCraft = Stock("rocket", 3) },
 
             // ─── Throwables (stackable weapons — god mode throws for free) ────────
-            ["dynamite"] = new() { Weapon = true, NeedsCooldown = true, Ammo = "dynamite", Use = FireDynamite },
-            ["tnt"]      = new() { Weapon = true, NeedsCooldown = true, Ammo = "tnt",      Use = FireTnt },
-            ["harpoon"]  = new() { Weapon = true, NeedsCooldown = true, Ammo = "harpoon",  Use = FireHarpoon },
-            ["nuke"]     = new() { Weapon = true, NeedsCooldown = true, Ammo = "nuke",     Use = FireNuke },
+            ["dynamite"] = new() { Weapon = true, NeedsCooldown = true, Ammo = "dynamite", ShotSound = "throw",        Use = FireDynamite },
+            ["tnt"]      = new() { Weapon = true, NeedsCooldown = true, Ammo = "tnt",      ShotSound = "throw",        Use = FireTnt },
+            ["harpoon"]  = new() { Weapon = true, NeedsCooldown = true, Ammo = "harpoon",  ShotSound = "harpoon",      Use = FireHarpoon },
+            ["nuke"]     = new() { Weapon = true, NeedsCooldown = true, Ammo = "nuke",     ShotSound = "shoot_rocket", Use = FireNuke },
 
             // ─── Consumables ──────────────────────────────────────────────────────
             ["poultice"] = new() { Ammo = "poultice", Use = _ => UseHealPotion() },
