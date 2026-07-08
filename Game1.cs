@@ -224,7 +224,8 @@ public sealed partial class DwarfMinerGame : Game
         _camera = new Camera
         {
             ViewportSize = new Point(VirtualWidth, VirtualHeight),
-            Zoom = 4.0f,
+            // DM_ZOOM overrides the default zoom for testing (e.g. zoom out to frame a boss).
+            Zoom = float.TryParse(Environment.GetEnvironmentVariable("DM_ZOOM"), out var z) ? z : 4.0f,
         };
         // No run yet when the game boots to the star map; StartNewRun snaps on planet entry.
         if (_run is not null) _camera.SnapTo(_run.Player.Position, 0f);
