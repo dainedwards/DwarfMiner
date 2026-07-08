@@ -45,5 +45,9 @@ public sealed class Session
     /// the launch requirement; refuelling pulls mined "fuel" out of the inventory.</summary>
     public int ShipFuel;
 
+    /// <summary>Storage-depot build site (surface). While placed, the dwarf can bank raw
+    /// resources here (persisted per-planet in MetaSave) so death doesn't wipe them.</summary>
+    public Vector2? DepotPos;
+
     public Session(PlanetDef def) => Def = def;
 }
