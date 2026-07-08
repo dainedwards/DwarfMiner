@@ -187,11 +187,6 @@ public sealed partial class DwarfMinerGame : Game
         _craftingMenu.Reset();
         _invUi.Reset();
         _screen = GameScreen.Playing;
-        if (Environment.GetEnvironmentVariable("DM_DEPOT") is { Length: > 0 }) // TEMP: verify depot
-        {
-            PlaceDepot();
-            var b = _meta.BankFor(def.Id); b["iron"] = 14; b["ruby"] = 3;
-        }
         // Camera exists except when DM_AUTOSTART triggers a run during Initialize —
         // LoadContent snaps it then.
         _camera?.SnapTo(_run.Player.Position, 0f);
