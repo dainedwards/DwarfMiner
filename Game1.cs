@@ -590,6 +590,7 @@ public sealed partial class DwarfMinerGame : Game
             _run.Titan.JustHatched = false;
             _run.Shake = MathF.Max(_run.Shake, 1.4f);
             _particles.EmitDust(_run.Titan.Position, 30f);
+            PlayAt("hatch", _run.Titan.Position, 1f);
         }
         // Melee shockwave from a Kong slam / Sandworm eruption — quake already fired inside the
         // Titan; here we knock back and hurt the player if they're inside the radius.
