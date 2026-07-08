@@ -147,9 +147,12 @@ public sealed class Player
     public float DamageTakenMultiplier => HasArmor ? 0.6f : 1.0f;
 
     /// <summary>Apply incoming damage with armor scaling. Centralised so all damage paths
-    /// (creature contact, boulder, falling chunk, sentry friendly-fire) honour armor.</summary>
+    /// (creature contact, boulder, falling chunk, sentry friendly-fire, boss attacks) honour
+    /// armor. God mode (fly) is fully invulnerable — matches its no-collision/no-suffocation
+    /// dev-tool intent and lets attacks be observed safely.</summary>
     public void TakeDamage(float amount)
     {
+        if (FlyMode) return;
         Health -= amount * DamageTakenMultiplier;
     }
 
