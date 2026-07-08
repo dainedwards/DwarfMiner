@@ -808,6 +808,11 @@ public sealed class TitanProjectile
     public float Radius;
     public readonly TitanShotKind Kind;
 
+    /// <summary>Wall-pierce budget for the drilling laser — it bores through this many solid
+    /// tiles before dying, so the Mecha's beam carves a real tunnel instead of stopping at the
+    /// first wall. Flame has none (it splashes on rock).</summary>
+    private int _drill;
+
     public TitanProjectile(Vector2 pos, Vector2 vel, TitanShotKind kind)
     {
         Position = pos;
@@ -815,12 +820,13 @@ public sealed class TitanProjectile
         Kind = kind;
         (Radius, Life) = kind switch
         {
-            TitanShotKind.Flame => (5f, 0.85f),
-            _                   => (3f, 1.2f),   // Laser
+            TitanShotKind.Flame => (5.5f, 1.0f),
+            _                   => (4f, 0.9f),   // Laser
         };
+        _drill = kind == TitanShotKind.Laser ? 3 : 0;
     }
 
-    public void Update(float dt, Planet planet, Cells cells, Player player)
+    public void Update(float dt, Planet planet, Physics physics, Cells cells, Player player)
     {
         Position += Velocity * dt;
         Life -= dt;
@@ -836,19 +842,37 @@ public sealed class TitanProjectile
             }
             else
             {
-                player.TakeDamage(26f);
-                if (diff.LengthSquared() > 0.0001f) player.Velocity += Vector2.Normalize(diff) * 180f;
+                player.TakeDamage(28f);
+                if (diff.LengthSquared() > 0.0001f) player.Velocity += Vector2.Normalize(diff) * 200f;
             }
             Dead = true;
             return;
         }
 
-        // Terrain: both are blockable — duck behind a wall to avoid them. Flame ignites gas it
-        // flies through, so Godzilla's breath can set off a gas pocket.
         if (planet.IsSolidAt(Position))
         {
-            Dead = true;
-            return;
+            if (Kind == TitanShotKind.Laser && _drill > 0)
+            {
+                // Drill the wall: vaporise the tile and keep going until the pierce budget runs
+                // out, boring a glowing tunnel through terrain (and player cover).
+                var (tx, ty) = planet.WorldToTile(Position);
+                var k = planet.Get(tx, ty);
+                if (Tiles.IsSolid(k) && !Tiles.IsAnchored(k))
+                {
+                    if (planet.Mine(tx, ty, 40) is { } broken)
+                    {
+                        physics.MarkDirty(tx, ty);
+                        cells.SpawnDustInTile(tx, ty, broken);
+                    }
+                    _drill--;
+                }
+                else { Dead = true; return; }   // hit bedrock/anchor — beam stops
+            }
+            else
+            {
+                Dead = true;   // Flame splashes; a spent beam dies
+                return;
+            }
         }
         if (Kind == TitanShotKind.Flame)
             cells.IgniteGasNear(Position, 6f);
