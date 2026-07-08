@@ -26,6 +26,9 @@ public sealed partial class DwarfMinerGame : Game
     private float _playerFacing = 1f;
     private MetaSave _meta = null!;
     private readonly Particles _particles = new();
+    private readonly Sfx _sfx = new();
+    private float _prevPlayerHealth;
+    private int _prevProjCount;
 
     /// <summary>The current planet visit. Everything per-run lives here — swapped atomically
     /// when the player picks a planet on the star map. Null only while on the star map before
