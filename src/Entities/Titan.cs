@@ -704,7 +704,9 @@ public sealed class Titan
             }
             else
             {
-                var stepRate = 4.5f + MathF.Abs(vTangent) * 0.045f;
+                // Slow, deliberate swing — a hundred-foot leg doesn't snap forward. Rate scales
+                // gently with pace so it still keeps up at a run without ever looking twitchy.
+                var stepRate = 2.4f + MathF.Abs(vTangent) * 0.03f;
                 var prevT = leg.StepT;
                 leg.StepT = MathF.Min(1f, leg.StepT + dt * stepRate);
                 if (leg.StepT >= 1f && prevT < 1f)
