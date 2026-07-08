@@ -8,8 +8,9 @@ namespace DwarfMiner.Rendering;
 /// <summary>
 /// Draws the boss — a genuinely different procedural skeleton per <see cref="TitanKind"/>
 /// rather than a re-tint of one body: an upright, dorsal-finned Godzilla; an angular
-/// laser-mawed Mecha; a legless three-headed Sandworm; a big-armed Kong. Also handles the egg
-/// and the burrow mound. Called in world space between <c>BeginEntities</c>/<c>EndEntities</c>;
+/// laser-mawed Mecha; a legless Dune sandworm with a round toothed maw; a big-armed Kong. Also
+/// handles the egg and the burrow mound. Called in world space between
+/// <c>BeginEntities</c>/<c>EndEntities</c>;
 /// <see cref="AddLights"/> runs in the lighting pass.
 /// </summary>
 public static class TitanRenderer
