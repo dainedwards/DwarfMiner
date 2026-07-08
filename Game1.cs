@@ -418,10 +418,16 @@ public sealed partial class DwarfMinerGame : Game
 
         // Held LMB activates the selected slot's action. UseSelectedSlot is the single place
         // that maps id → in-world action (mine / shoot / place / throw / heal / …).
+        var shootCdBefore = _run.Player.ShootCooldown;
         if (mouse.LeftButton == ButtonState.Pressed && !clickConsumed && !_invUi.Carrying)
         {
             UseSelectedSlot(worldCursor);
         }
+        // A weapon fired iff the shoot cooldown jumped up this frame — one sound per shot,
+        // covering every gun/thrown weapon without touching each fire method.
+        if (_run.Player.ShootCooldown > shootCdBefore + 0.001f)
+            PlayAt("shoot", _run.Player.Position, 0.5f,
+                pitch: MathHelper.Clamp(0.4f - _run.Player.ShootCooldown, -0.3f, 0.4f), minGap: 0.03f);
 
         // T recalls to the last placed Beacon — kept as a key because recall is a unique
         // verb that doesn't fit the "use selected slot" pattern (the beacon slot already
