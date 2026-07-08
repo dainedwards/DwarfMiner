@@ -609,6 +609,55 @@ public static class SimTest
         Check("meteor: crater exposes fuel/gold ore", ore);
     }
 
+    /// <summary>Cave-in warning: an isolated unsupported rock island must be condemned into the
+    /// tremble window (the warning), stay standing through it, then crumble — exercising
+    /// Physics.NewlyCondemnedThisTick / TremblingTiles that drive the creak + HUD banner.</summary>
+    private static void TestCaveIn()
+    {
+        var planet = WorldGen.Generate(7);
+        var cells = new Cells(planet);
+        var physics = new Physics(planet, cells);
+        const float dt = 1f / 60f;
+
+        // Carve a hollow pocket at mid-depth and hang a small stone island in it — nothing
+        // solid inward, outward, or beside it, so the connectivity check finds no anchor.
+        const int ring = 100;
+        const int ang = 100;
+        for (var dr = -4; dr <= 3; dr++)
+            for (var da = -4; da <= 4; da++)
+                planet.Set(ring + dr, ang + da, TileKind.Sky);
+        var island = new List<(int x, int y)>();
+        for (var dr = 0; dr <= 1; dr++)
+            for (var da = 0; da <= 1; da++)
+            {
+                planet.Set(ring + dr, ang + da, TileKind.Stone);
+                island.Add((ring + dr, ang + da));
+            }
+        foreach (var (x, y) in island) physics.MarkDirty(x, y);
+
+        // Settle runs every 0.05s, so tick a few frames for the first pass to condemn it.
+        var condemned = false;
+        for (var i = 0; i < 10 && !condemned; i++)
+        {
+            physics.Update(dt);
+            if (physics.NewlyCondemnedThisTick > 0) condemned = true;
+        }
+        Check("cave-in: unsupported rock is condemned into the tremble window",
+            condemned && physics.TremblingTiles.Count > 0);
+        Check("cave-in: condemned rock still stands during the warning window",
+            island.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
+
+        // Run past the tremble + ring cascade; the island must crumble away to cells.
+        var crumbled = false;
+        for (var i = 0; i < 120; i++)
+        {
+            physics.Update(dt);
+            if (physics.CollapsesThisTick > 0) crumbled = true;
+        }
+        Check("cave-in: condemned rock crumbles after the warning window",
+            crumbled && island.TrueForAll(t => !Tiles.IsSolid(planet.Get(t.x, t.y))));
+    }
+
     private static int CountSolidNear(Planet planet, Vector2 world, int r)
     {
         var (cx, cy) = planet.WorldToTile(world);
