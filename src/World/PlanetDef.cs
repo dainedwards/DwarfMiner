@@ -2,9 +2,9 @@ using Microsoft.Xna.Framework;
 
 namespace DwarfMiner.World;
 
-/// <summary>Which boss hatches from this planet's egg. Each has a distinct special attack:
-/// Godzilla breathes fire, Mecha fires a mouth laser, Sandworm burrows and erupts, Kong leaps
-/// and quakes. The shared quadruped chassis is re-tinted per kind.</summary>
+/// <summary>Which boss hatches from this planet's egg. Each has its own procedural skeleton
+/// (see TitanRenderer) and a distinct attack: Godzilla breathes fire, Mecha fires a mouth
+/// laser, the Sandworm burrows and breaches, Kong leaps and quakes.</summary>
 public enum TitanKind { Godzilla, Mecha, Sandworm, Kong }
 
 /// <summary>
