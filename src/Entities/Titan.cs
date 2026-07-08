@@ -512,47 +512,72 @@ public sealed class Titan
         return hasAny ? sum / count : Vector2.Zero;
     }
 
-    private void ResolveCollision(Planet planet)
+    /// <summary>Bulldoze terrain: mine every non-anchored solid tile overlapping the body's
+    /// collision radius so the boss smashes a tunnel through mountains it walks into instead of
+    /// being shoved over them. Anchored tiles (planet core, player supports) can't be chewed —
+    /// the body is pushed off those. Broken tiles drop tumbling debris + wake the settle
+    /// physics, so plowing a mountain also caves in whatever it was holding up.</summary>
+    private void Plow(Planet planet, Physics physics, Cells cells)
     {
-        // Body collision uses the smaller BodyRadius — only the kaiju's central torso bumps
-        // against terrain, so it can squeeze past obstacles its silhouette overlaps. Legs and
-        // tail handle visual contact.
+        var (tx, _) = planet.WorldToTile(Position);
+        var rel = Position - planet.Center;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
         var span = (int)MathF.Ceiling(BodyRadius / Planet.TileSize) + 1;
-        for (var iter = 0; iter < 6; iter++)
+        var plowPow = 26 + (int)(Anger / 16f);   // shatters surface rock (dirt/stone/granite) fast
+        var rSq = BodyRadius * BodyRadius;
+
+        for (var dx = -span; dx <= span; dx++)
         {
-            var (tx, ty) = planet.WorldToTile(Position);
-            var pushed = false;
+            var x = tx + dx;
+            if (x < 0 || x >= Planet.RingCount) continue;
+            // Recompute the angular index per ring from the true body angle — ring tile counts
+            // differ, so a shared index would drift and miss overlapped tiles.
+            var nRing = Planet.TilesAt(x);
+            var ty0 = (int)(ang / MathHelper.TwoPi * nRing);
             for (var dy = -span; dy <= span; dy++)
             {
-                for (var dx = -span; dx <= span; dx++)
+                var y = ty0 + dy;
+                var k = planet.Get(x, y);
+                if (!Tiles.IsSolid(k)) continue;
+                var centre = planet.TileToWorld(x, y);
+                if ((centre - Position).LengthSquared() > rSq) continue;
+
+                if (Tiles.IsAnchored(k))
                 {
-                    var x = tx + dx; var y = ty + dy;
-                    if (!Tiles.IsSolid(planet.Get(x, y))) continue;
-                    var rect = new Rectangle(x * Planet.TileSize, y * Planet.TileSize, Planet.TileSize, Planet.TileSize);
-                    var closest = new Vector2(
-                        Math.Clamp(Position.X, rect.X, rect.X + rect.Width),
-                        Math.Clamp(Position.Y, rect.Y, rect.Y + rect.Height));
-                    var diff = Position - closest;
+                    var diff = Position - centre;
                     var dist = diff.Length();
-                    if (dist < BodyRadius && dist > 0.001f)
+                    if (dist > 0.001f && dist < BodyRadius)
                     {
                         var n = diff / dist;
                         Position += n * (BodyRadius - dist + 0.05f);
                         var into = Vector2.Dot(Velocity, n);
                         if (into < 0) Velocity -= n * into;
-                        pushed = true;
                     }
-                    else if (dist <= 0.001f)
-                    {
-                        // Body center inside a tile — escape via planet up.
-                        var u = planet.UpAt(Position);
-                        Position += u * 2f;
-                        pushed = true;
-                    }
+                    continue;
+                }
+
+                var broken = planet.Mine(x, y, plowPow);
+                if (broken.HasValue)
+                {
+                    physics.MarkDirty(x, y);
+                    cells.SpawnDustInTile(x, y, broken.Value);
                 }
             }
-            if (!pushed) break;
         }
+    }
+
+    /// <summary>Ground point directly below the body along -up (the legless Hydra's support
+    /// point). Marches down to the first solid tile; falls back to a fixed offset over open sky.</summary>
+    private Vector2 GroundBelow(Vector2 up, out bool found)
+    {
+        for (var d = 0f; d <= 320f; d += 6f)
+        {
+            var probe = Position - up * d;
+            if (_planet.IsSolidAt(probe)) { found = true; return probe; }
+        }
+        found = false;
+        return Position - up * 40f;
     }
 
     private static bool ProbeSolid(Planet planet, Vector2 worldPoint)
