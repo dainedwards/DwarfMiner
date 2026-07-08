@@ -569,6 +569,29 @@ public static class SimTest
         return n;
     }
 
+    /// <summary>Storage depot: only raw mats are bankable, and a planet's vault survives the
+    /// meta save/load (so death doesn't wipe it).</summary>
+    private static void TestDepotBank()
+    {
+        Check("depot: raw ore is bankable",
+            Tiles.IsBankable("iron") && Tiles.IsBankable("diamond") && Tiles.IsBankable("stone"));
+        Check("depot: crafted gear is not bankable",
+            !Tiles.IsBankable("pistol") && !Tiles.IsBankable("sentry") && !Tiles.IsBankable("ammo_ruby"));
+
+        var meta = new MetaSave();
+        var bank = meta.BankFor("frost");
+        bank["iron"] = 12;
+        bank["sapphire"] = 3;
+        Check("depot: BankFor returns the live per-planet dict", meta.BankFor("frost")["iron"] == 12);
+        Check("depot: banks are per-planet", meta.BankFor("ember").Count == 0);
+
+        // Mirror MetaSave.Save/Load — the nested bank dictionary must round-trip.
+        var json = System.Text.Json.JsonSerializer.Serialize(meta);
+        var back = System.Text.Json.JsonSerializer.Deserialize<MetaSave>(json);
+        Check("depot: vault survives a meta save/load",
+            back is not null && back.BankFor("frost")["iron"] == 12 && back.BankFor("frost")["sapphire"] == 3);
+    }
+
     /// <summary>Air-supply rules: refill at the surface, monotonic drain with depth, and
     /// thin-atmosphere planets draining faster than the temperate starter.</summary>
     private static void TestOxygen()
