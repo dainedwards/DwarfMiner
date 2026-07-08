@@ -134,6 +134,7 @@ public static class RunSave
                 ShipFuel = r.ReadInt32(),
             };
             if (r.ReadBoolean()) run.PadPos = new Vector2(r.ReadSingle(), r.ReadSingle());
+            if (r.ReadBoolean()) run.DepotPos = new Vector2(r.ReadSingle(), r.ReadSingle());
 
             run.Planet = new Planet(new Vector2(2400, 2400));
             run.Planet.ReadState(r);
