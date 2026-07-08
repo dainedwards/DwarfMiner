@@ -52,8 +52,14 @@
 >   audio device = silent, never a crash. `Synth()` is static/device-free (headless-tested).
 >   `DM_MUTE=1` silences. Note: audibility can't be verified headlessly — synth buffers + no
 >   crash with audio active are what's confirmed.
-> Next up: ambient events (meteor strikes, cave-in warnings, magma surges), or per-weapon
-> distinct shot sounds, or a settings/volume UI.
+> - **Ambient events done** (`Systems/AmbientDirector.cs`, `Entities/Meteor.cs`) — **meteor
+>   strikes** fall from the sky (telegraphed by a ground reticle + fiery trail), crater the
+>   surface, expose a fuel/gold ore core (feeds the ship's fuel tank!), splash lava/smoke, and
+>   blast the dwarf if caught. Cadence scales with thin atmosphere (`OxygenDrainScale`). **Magma
+>   surges** on lava-rich worlds (LavaFillFrac ≥ 0.5) flood a nearby cave with welling lava.
+>   Wired to the sound system (explode/collapse). `Session.Meteors`, `DM_METEOR=<s>` test hook.
+> Next up: per-weapon distinct shot sounds, a settings/volume UI, cave-in warnings, or new
+> content (biomes/creatures/weapons).
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
