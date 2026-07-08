@@ -242,6 +242,7 @@ public sealed partial class DwarfMinerGame
         if (def?.Blocked?.Invoke() == true) return;
 
         if (!Crafting.TryPay(r, _run.Player.Inventory)) return;
+        _sfx.Play("ui", 0.6f, 0.1f);
 
         if (def?.OnCraft is { } output)
         {
