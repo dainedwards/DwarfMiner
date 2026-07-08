@@ -38,7 +38,13 @@
 >   NOTE: god mode (`Player.FlyMode`) is now fully damage-immune (dev-tool intent).
 >   Test hooks added: `DM_BOSSCAM` (egg beside spawn + camera follows boss), `DM_ZOOM=<f>`.
 >   Pre-existing Stomp still gates on the shallow `Grounded` probe (under-fires) — cleanup.
-> Next up: sound (still no audio at all), or surface base (storage depot), or ambient events.
+> - **Surface base / storage depot done** — craft a **Storage Depot** (stone-only so it's
+>   always rebuildable), stand at it and press **B** to bank all raw mats / **N** to withdraw.
+>   The stash persists per-planet in `MetaSave.Bank` (survives death), cleared on escape.
+>   `Tiles.IsBankable` gates what banks (raw mats only, not gear). `Session.DepotPos` +
+>   `RunSave` v5. HUD shows a deposit/withdraw prompt at the depot and a "banked stash — build
+>   a depot" nudge otherwise. (Skipped the optional workbench-gates-late-recipes idea.)
+> Next up: sound (still no audio at all), or ambient events (meteors/cave-in warnings).
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
