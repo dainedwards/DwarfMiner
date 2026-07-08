@@ -62,8 +62,13 @@ public sealed class Titan
     /// it) until it erupts.</summary>
     public bool Submerged;
     /// <summary>Kong: mid-leap. Suppresses the leg-spring suspension so it actually leaves the
-    /// ground, and gates the landing-slam detection.</summary>
+    /// ground, and gates the landing-slam detection. Also reused by the Sandworm's breach so it
+    /// arcs freely out of the ground.</summary>
     public bool Leaping;
+
+    /// <summary>Sandworm: erupted out of the ground and arcing mouth-first through the air
+    /// (the classic Dune breach). Renderer opens the maw skyward while this is set.</summary>
+    public bool Breaching;
     /// <summary>Melee AoE pending from a Kong slam or Sandworm eruption — Game1 consumes it to
     /// damage/knock-back the player and spew debris, since the Titan has no Player reference.</summary>
     public (Vector2 pos, float radius, float damage)? PendingShockwave;
