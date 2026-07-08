@@ -497,6 +497,7 @@ public sealed partial class DwarfMinerGame : Game
             _run.Shake = MathF.Max(_run.Shake, MathHelper.Clamp(_run.Physics.CollapsesThisTick / 80f, 0f, 1.5f));
             _sfx.Play("collapse", MathHelper.Clamp(_run.Physics.CollapsesThisTick / 40f, 0.25f, 1f), 0f, 0f, minGap: 0.4f);
         }
+        UpdateCaveInWarning(dt);
 
         // Earthquakes — global shake every so often.
         _run.EarthquakeTimer -= dt;
