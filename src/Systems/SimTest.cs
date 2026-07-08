@@ -284,6 +284,7 @@ public static class SimTest
         TestOxygen();
         TestHazards();
         TestTitanVariants();
+        TestDepotBank();
 
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
         Environment.Exit(_failed ? 1 : 0);
