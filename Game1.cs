@@ -1095,6 +1095,7 @@ public sealed partial class DwarfMinerGame : Game
     private void BeginLaunch(Vector2 pad)
     {
         _launching = true;
+        _sfx.Play("launch", 1f);
         _launchElapsed = 0f;
         _launchVel = 0f;
         _launchShipPos = pad;
