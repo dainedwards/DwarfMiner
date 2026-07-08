@@ -86,6 +86,7 @@ public sealed class Physics
     public void Update(float dt)
     {
         CollapsesThisTick = 0;
+        NewlyCondemnedThisTick = 0;
         TickPendingCollapses(dt);
         _settleAccum += dt;
         if (_settleAccum < SettleInterval) return;
