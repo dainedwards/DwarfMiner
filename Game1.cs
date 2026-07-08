@@ -1107,6 +1107,8 @@ public sealed partial class DwarfMinerGame : Game
             Math.Min(PlanetDefs.All.Length, idx + 2));
         if (_meta.Escapes >= 1) _meta.StartingPickaxePower = Math.Max(_meta.StartingPickaxePower, 2);
         if (_meta.Escapes >= 3) _meta.StartWithCannon = true;
+        // The base is left behind when you fly off — its vault won't be revisited.
+        _meta.Bank.Remove(_run.Def.Id);
         _meta.Save();
         EndRun($"Liftoff! You escaped {_run.Def.Name} in {_run.RunTime:0.0}s. Press R for the star map.");
     }
