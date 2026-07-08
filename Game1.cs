@@ -47,6 +47,12 @@ public sealed partial class DwarfMinerGame : Game
     private string _toast = "";
     private float _toastTimer;
 
+    /// <summary>Cave-in warning state: <c>_caveInWarn</c> counts down while condemned tiles hang
+    /// over the dwarf (drives the flashing HUD banner); <c>_caveInDust</c> throttles the sifting
+    /// debris telegraph emitted from those tiles.</summary>
+    private float _caveInWarn;
+    private float _caveInDust;
+
     /// <summary>Fuel units the ship must hold before it can lift off.</summary>
     public const int FuelToLaunch = 12;
 
