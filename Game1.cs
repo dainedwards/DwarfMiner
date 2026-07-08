@@ -546,7 +546,11 @@ public sealed partial class DwarfMinerGame : Game
             {
                 _particles.EmitImpact(p.Position, p.Kind);
                 if (p.ExplosionRadius > 0f)
+                {
                     _run.Shake = MathF.Max(_run.Shake, MathF.Min(1.5f, p.ExplosionRadius / 60f));
+                    PlayAt("explode", p.Position, MathHelper.Clamp(p.ExplosionRadius / 60f, 0.4f, 1f),
+                        pitch: MathHelper.Clamp(0.3f - p.ExplosionRadius / 200f, -0.4f, 0.3f), minGap: 0.05f);
+                }
                 _run.Projectiles.RemoveAt(i);
             }
         }
