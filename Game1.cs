@@ -1846,6 +1846,14 @@ public sealed partial class DwarfMinerGame : Game
         if (_toastTimer > 0)
             _renderer.DrawText(_toast,
                 new Vector2((VirtualWidth - _renderer.MeasureText(_toast, 2)) / 2f, 64), new Color(160, 235, 160), 2);
+
+        // Cave-in banner — flashes while condemned rock hangs over the dwarf (see UpdateCaveInWarning).
+        if (_caveInWarn > 0f && ((int)(_run.RunTime * 6f) & 1) == 0)
+        {
+            const string warn = "! CAVE-IN !";
+            _renderer.DrawText(warn, new Vector2((VirtualWidth - _renderer.MeasureText(warn, 2)) / 2f, 112),
+                new Color(240, 90, 70), 2);
+        }
         _invUi.DrawInventoryPanel(_renderer, _run.Player, VirtualWidth);
         _invUi.DrawToolbelt(_renderer, _run.Player, VirtualWidth, VirtualHeight);
         _invUi.DrawCarry(_renderer, _run.Player);
