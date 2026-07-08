@@ -1039,6 +1039,50 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>Advance the air supply: refill near the surface, drain with depth (see
     /// <see cref="OxygenRules"/>), and bleed HP once it's empty. Skipped in god mode (kept
     /// topped up so re-entering survival is never an instant suffocation).</summary>
+    /// <summary>Cave-in warnings. Sounds a groaning creak the instant a region is condemned
+    /// (lead time before it crumbles), and — while condemned tiles hang over the dwarf — flashes
+    /// a HUD banner and sifts dust from those tiles so there's a clear "move now" cue during the
+    /// tremble window. In polar gravity "over" the dwarf means a larger ring index, so only rock
+    /// that would actually fall onto them raises the alarm.</summary>
+    private void UpdateCaveInWarning(float dt)
+    {
+        // Newly condemned this tick → creak, scaled by how much rock just gave way.
+        if (_run.Physics.NewlyCondemnedThisTick > 0)
+            _sfx.Play("creak",
+                MathHelper.Clamp(_run.Physics.NewlyCondemnedThisTick / 24f, 0.3f, 0.9f),
+                pitch: -0.15f, minGap: 0.5f);
+
+        _caveInWarn = MathF.Max(0f, _caveInWarn - dt);
+        _caveInDust -= dt;
+
+        var pending = _run.Physics.TremblingTiles;
+        if (pending.Count == 0) return;
+
+        var pos = _run.Player.Position;
+        var (pr, _) = _run.Planet.WorldToTile(pos);
+        const float reach = 96f;              // overhead rock this close threatens the dwarf
+        var reachSq = reach * reach;
+        var sift = _caveInDust <= 0f;         // throttle the dust telegraph
+        var threatened = false;
+
+        foreach (var idx in pending)
+        {
+            var (tx, ty) = _run.Planet.UnIndex(idx);
+            if (tx < pr) continue;            // inward of the dwarf — falls away, not onto them
+            var tw = _run.Planet.TileToWorld(tx, ty);
+            if (Vector2.DistanceSquared(tw, pos) > reachSq) continue;
+            threatened = true;
+            if (sift) _particles.EmitDust(tw, 2.5f);
+            else break;                       // just need the flag once we've sifted this frame
+        }
+
+        if (threatened)
+        {
+            _caveInWarn = 0.5f;
+            if (sift) _caveInDust = 0.1f;
+        }
+    }
+
     private void TickOxygen(float dt)
     {
         var p = _run.Player;
