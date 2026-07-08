@@ -381,9 +381,11 @@ public sealed partial class DwarfMinerGame : Game
         TickOxygen(dt);
         TickHazardContact(dt);
 
-        // Camera follows player, rotating so up = away from planet center.
-        var up = _run.Planet.UpAt(_run.Player.Position);
-        _camera.Follow(_run.Player.Position, up, dt);
+        // Camera follows player, rotating so up = away from planet center. DM_BOSSCAM frames
+        // the boss instead (testing hook for screenshotting the variants).
+        var camFocus = _bossCam && _run.Titan.Hatched ? _run.Titan.Position : _run.Player.Position;
+        var up = _run.Planet.UpAt(camFocus);
+        _camera.Follow(camFocus, up, dt);
 
         // Mouse → world cursor. Account for screen shake.
         var screenMouse = new Vector2(mouse.X, mouse.Y);
