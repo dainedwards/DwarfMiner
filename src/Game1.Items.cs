@@ -34,6 +34,11 @@ public sealed partial class DwarfMinerGame
         /// consumables, "rocket" for the launcher. God mode fires Weapon rows for free.</summary>
         public string? Ammo { get; init; }
 
+        /// <summary>Sfx name played once per shot (see the central fire-sound hook in Update).
+        /// Null falls back to the generic "shoot" pew — lets each weapon have its own voice
+        /// without touching the individual Fire* methods.</summary>
+        public string? ShotSound { get; init; }
+
         /// <summary>The belt action while LMB is held. Null = not usable from the belt.</summary>
         public Action<Vector2>? Use { get; init; }
 
