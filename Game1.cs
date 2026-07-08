@@ -1689,6 +1689,21 @@ public sealed partial class DwarfMinerGame : Game
         var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE  Q/E WEAPONS\n" +
                        "C CRAFT  T BEACON RECALL  L LAUNCH SHIP  F5 SAVE  G GOD MODE";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _run.Player, (int)_run.Titan.Anger, status, controls);
+
+        // Depot prompt: at the depot, show deposit/withdraw; otherwise, if a stash is waiting on
+        // this planet and no depot is built yet, nudge the player to build one to reclaim it.
+        var banked = BankCount();
+        if (NearDepot())
+        {
+            var prompt = $"B DEPOSIT   N WITHDRAW   VAULT: {banked}";
+            _renderer.DrawText(prompt, new Vector2((VirtualWidth - _renderer.MeasureText(prompt, 2)) / 2f, 92), new Color(200, 220, 150), 2);
+        }
+        else if (banked > 0 && _run.DepotPos is null)
+        {
+            var hint = $"BANKED STASH: {banked} — BUILD A STORAGE DEPOT TO WITHDRAW";
+            _renderer.DrawText(hint, new Vector2((VirtualWidth - _renderer.MeasureText(hint)) / 2f, 92), new Color(170, 190, 140));
+        }
+
         if (_toastTimer > 0)
             _renderer.DrawText(_toast,
                 new Vector2((VirtualWidth - _renderer.MeasureText(_toast, 2)) / 2f, 64), new Color(160, 235, 160), 2);
