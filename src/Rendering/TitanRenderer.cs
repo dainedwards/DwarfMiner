@@ -402,10 +402,19 @@ public static class TitanRenderer
         Seg(r, hip, knee, thigh, f.HideDark);
         Seg(r, knee, foot, shin, f.Hide);
         r.DrawCircle(knee, thigh * 0.5f, f.Chitin);
-        r.DrawCircle(foot, shin * 0.7f, f.Chitin);
-        var tangent = new Vector2(-f.Up.Y, f.Up.X) * leg.Side;
+
+        // Foot: an elongated sole planted flat along the ground with the toes pointing the way
+        // the body faces, an ankle joint, and three splayed claws. Reads as a heavy planted
+        // foot digging in rather than a round stump.
+        var groundFwd = new Vector2(-f.Up.Y, f.Up.X) * f.Face;   // planet tangent, facing direction
+        var heel = foot - groundFwd * (shin * 0.5f);
+        var toe = foot + groundFwd * (shin * 1.05f);
+        Seg(r, heel, toe, shin * 0.9f, f.HideDark);              // sole
+        r.DrawCircle(foot, shin * 0.62f, f.Hide);                // ankle knuckle
+        var clawLen = mech ? 8f : 13f;
+        var clawThick = mech ? 3f : 4.5f;
         for (var c = -1; c <= 1; c++)
-            Seg(r, foot, foot + (tangent + f.Up * (c * 0.5f - 0.3f)) * 14f, 4f, f.Chitin);
+            Seg(r, toe, toe + groundFwd * clawLen + f.Up * (c * shin * 0.34f), clawThick, f.Chitin);
     }
 
     /// <summary>Draw the verlet spine chain (tail or serpent body). <paramref name="ridge"/>
