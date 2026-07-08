@@ -216,6 +216,7 @@ public sealed partial class DwarfMinerGame : Game
     protected override void LoadContent()
     {
         _renderer = new Renderer(GraphicsDevice);
+        _sfx.Build();
         Icons.Build(GraphicsDevice);
         _camera = new Camera
         {
