@@ -23,6 +23,19 @@ public sealed class MetaSave
     public int PlanetsUnlocked { get; set; } = 1;
     public List<string> PlanetsEscaped { get; set; } = new();
 
+    /// <summary>Per-planet storage depot stash (planet id → resource id → count). Resources
+    /// deposited at a Storage Depot survive death — a new run of that planet can build a depot
+    /// and withdraw them, so a long ship-build run isn't wiped by one bad dive. Cleared when
+    /// the planet is escaped (the base is left behind).</summary>
+    public Dictionary<string, Dictionary<string, int>> Bank { get; set; } = new();
+
+    /// <summary>The (mutable) bank for a planet, created on first access.</summary>
+    public Dictionary<string, int> BankFor(string planetId)
+    {
+        if (!Bank.TryGetValue(planetId, out var b)) { b = new(); Bank[planetId] = b; }
+        return b;
+    }
+
     private static string SavePath
     {
         get
