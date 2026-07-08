@@ -428,10 +428,17 @@ public sealed partial class DwarfMinerGame : Game
             UseSelectedSlot(worldCursor);
         }
         // A weapon fired iff the shoot cooldown jumped up this frame — one sound per shot,
-        // covering every gun/thrown weapon without touching each fire method.
+        // covering every gun/thrown weapon without touching each fire method. Each weapon
+        // picks its own voice via ItemDef.ShotSound (falling back to the generic pew).
         if (_run.Player.ShootCooldown > shootCdBefore + 0.001f)
-            PlayAt("shoot", _run.Player.Position, 0.5f,
+        {
+            var shot = "shoot";
+            if (_run.Player.Toolbelt.Current is { } cur
+                && _items.TryGetValue(cur, out var cdef) && cdef.ShotSound is { } snd)
+                shot = snd;
+            PlayAt(shot, _run.Player.Position, 0.5f,
                 pitch: MathHelper.Clamp(0.4f - _run.Player.ShootCooldown, -0.3f, 0.4f), minGap: 0.03f);
+        }
 
         // T recalls to the last placed Beacon — kept as a key because recall is a unique
         // verb that doesn't fit the "use selected slot" pattern (the beacon slot already
