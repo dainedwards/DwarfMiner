@@ -571,6 +571,53 @@ public static class SimTest
         return n;
     }
 
+    /// <summary>Meteor strikes: the director spawns them, and a strike craters the surface and
+    /// leaves fuel/gold ore exposed to mine.</summary>
+    private static void TestMeteors()
+    {
+        var planet = WorldGen.Generate(88);
+        var cells = new Cells(planet);
+        var physics = new Physics(planet, cells);
+        var particles = new DwarfMiner.Rendering.Particles();
+        var player = new Player(SpawnDirector.FindSurfaceSpawn(planet, -MathF.PI / 2f, planet.Radius));
+        var run = new Session(PlanetDefs.ById("slag"))
+        {
+            Planet = planet, Cells = cells, Physics = physics, Player = player,
+        };
+
+        run.MeteorTimer = 0.001f;
+        AmbientDirector.Update(1f / 60f, run, particles);
+        Check("meteor: director spawns a strike on its timer", run.Meteors.Count > 0);
+
+        // Fire a meteor down onto solid ground and confirm it craters + exposes ore.
+        var ground = SpawnDirector.FindSurfaceSpawn(planet, 0.7f, planet.Radius);
+        var up = planet.UpAt(ground);
+        var m = new Meteor(ground + up * 120f, -up * 260f, ground);
+        var solidBefore = CountSolidNear(planet, ground, 5);
+        for (var i = 0; i < 600 && !m.Dead; i++)
+            m.Update(1f / 60f, planet, physics, cells, player, particles);
+        Check("meteor: strikes and dies", m.Dead);
+        var solidAfter = CountSolidNear(planet, ground, 5);
+        Check($"meteor: blasts a crater ({solidBefore}->{solidAfter})", solidAfter < solidBefore);
+
+        var (mx, my) = planet.WorldToTile(m.Position);
+        var ore = false;
+        for (var dx = -3; dx <= 3 && !ore; dx++)
+            for (var dy = -3; dy <= 3 && !ore; dy++)
+                if (planet.Get(mx + dx, my + dy) is TileKind.FuelOre or TileKind.GoldOre) ore = true;
+        Check("meteor: crater exposes fuel/gold ore", ore);
+    }
+
+    private static int CountSolidNear(Planet planet, Vector2 world, int r)
+    {
+        var (cx, cy) = planet.WorldToTile(world);
+        var n = 0;
+        for (var dx = -r; dx <= r; dx++)
+            for (var dy = -r; dy <= r; dy++)
+                if (Tiles.IsSolid(planet.Get(cx + dx, cy + dy))) n++;
+        return n;
+    }
+
     /// <summary>Procedural audio synthesis is device-free and headless-testable: every named
     /// effect renders a non-empty, non-silent 16-bit buffer without touching an audio device.</summary>
     private static void TestSfx()
