@@ -640,6 +640,12 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
+        // Hurt sting whenever HP drops (any source), throttled so a fire-breath tick-stream
+        // doesn't stack into a drone.
+        if (_run.Player.Health < _prevPlayerHealth - 0.5f)
+            _sfx.Play("hurt", 0.6f, 0f, 0f, minGap: 0.18f);
+        _prevPlayerHealth = _run.Player.Health;
+
         if (_run.Player.Health <= 0)
         {
             _meta.Deaths++;
