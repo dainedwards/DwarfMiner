@@ -1146,6 +1146,83 @@ public sealed partial class DwarfMinerGame : Game
     private bool NearPad() =>
         _run.PadPos is { } pad && (_run.Player.Position - pad).Length() < 120f;
 
+    /// <summary>Plant the storage depot at the player's feet (same ground-seek as the pad).</summary>
+    private void PlaceDepot()
+    {
+        var up = _run.Planet.UpAt(_run.Player.Position);
+        var pos = _run.Player.Position;
+        for (var i = 0; i < 8 * Planet.TileSize; i++)
+        {
+            var probe = pos - up * i;
+            if (_run.Planet.IsSolidAt(probe))
+            {
+                pos = probe + up * (Planet.TileSize * 0.7f);
+                break;
+            }
+        }
+        _run.DepotPos = pos;
+        _particles.EmitDust(pos, 8f);
+    }
+
+    private bool NearDepot() =>
+        _run.DepotPos is { } d && (_run.Player.Position - d).Length() < 90f;
+
+    /// <summary>Bank every raw material in the inventory into the planet's persistent stash.
+    /// Crafted gear stays on the belt; only dug/harvested resources go in the vault.</summary>
+    private void DepositToBank()
+    {
+        var bank = _meta.BankFor(_run.Def.Id);
+        var moved = 0;
+        foreach (var (id, count) in new List<(string, int)>(
+                     System.Linq.Enumerable.Select(_run.Player.Inventory.Items, kv => (kv.Key, kv.Value))))
+        {
+            if (count <= 0 || !Tiles.IsBankable(id)) continue;
+            if (_run.Player.Inventory.TryConsume(id, count))
+            {
+                bank[id] = bank.GetValueOrDefault(id) + count;
+                moved += count;
+            }
+        }
+        if (moved > 0)
+        {
+            _meta.Save();
+            _toast = $"BANKED {moved} RESOURCES";
+        }
+        else _toast = "NOTHING TO BANK";
+        _toastTimer = 2.5f;
+        _particles.EmitDust(_run.DepotPos ?? _run.Player.Position, 6f);
+    }
+
+    /// <summary>Pull the planet's whole banked stash back into the inventory.</summary>
+    private void WithdrawFromBank()
+    {
+        var bank = _meta.BankFor(_run.Def.Id);
+        var moved = 0;
+        foreach (var (id, count) in new List<KeyValuePair<string, int>>(bank))
+        {
+            if (count <= 0) continue;
+            _run.Player.Inventory.Add(id, count);
+            moved += count;
+        }
+        bank.Clear();
+        if (moved > 0)
+        {
+            _meta.Save();
+            _toast = $"WITHDREW {moved} RESOURCES";
+        }
+        else _toast = "VAULT EMPTY";
+        _toastTimer = 2.5f;
+        _particles.EmitDust(_run.DepotPos ?? _run.Player.Position, 6f);
+    }
+
+    /// <summary>Total items sitting in this planet's vault — for the HUD prompt.</summary>
+    private int BankCount()
+    {
+        var n = 0;
+        foreach (var (_, c) in _meta.BankFor(_run.Def.Id)) n += c;
+        return n;
+    }
+
     protected override void Draw(GameTime gameTime)
     {
         // Feed the renderer the current wall-clock so animated decoration (waving grass,
