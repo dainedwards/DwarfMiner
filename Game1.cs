@@ -170,7 +170,11 @@ public sealed partial class DwarfMinerGame : Game
         // one (toggling god off strips the unowned loaners).
         if (_run.Player.FlyMode)
             foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
-        _run.Titan = new Titan(_run.Planet, MathF.PI * 0.6f, def.Titan);
+        // DM_BOSSCAM spawns the egg beside the dwarf (instead of across the planet) so tooling
+        // can screenshot the boss without walking to it.
+        var titanAngle = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 }
+            ? -MathF.PI / 2f + 0.16f : MathF.PI * 0.6f;
+        _run.Titan = new Titan(_run.Planet, titanAngle, def.Titan);
         // DM_HATCH=<seconds> shortens the egg timer for testing (default 10 min).
         if (float.TryParse(Environment.GetEnvironmentVariable("DM_HATCH"), out var hatchAt))
             _run.Titan.EggTimer = hatchAt;
