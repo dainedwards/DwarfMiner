@@ -4,8 +4,12 @@ namespace DwarfMiner.World;
 
 /// <summary>Which boss hatches from this planet's egg. Each has its own procedural skeleton
 /// (see TitanRenderer) and a distinct attack: Godzilla breathes fire, Mecha fires a mouth
-/// laser, the Sandworm burrows and breaches, Kong leaps and quakes.</summary>
-public enum TitanKind { Godzilla, Mecha, Sandworm, Kong }
+/// laser, the Sandworm burrows and breaches, Kong leaps and quakes. The kaiju wave (Pacific
+/// Rim-inspired): Knifehead gores with a blade-crest charge, Otachi spits arcing acid that
+/// pools in the cell sim, Leatherback detonates an EMP that fries the dwarf's tech, Raiju
+/// lunges in rapid dash chains, Slattern — the category-5 apex — whips radial tail-spike
+/// barrages and sonic pulses. New values append after Kong so RunSave's int cast stays valid.</summary>
+public enum TitanKind { Godzilla, Mecha, Sandworm, Kong, Knifehead, Otachi, Leatherback, Raiju, Slattern }
 
 /// <summary>
 /// Static description of a planet archetype — the knobs WorldGen and Game1 previously kept as
