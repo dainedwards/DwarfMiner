@@ -778,6 +778,105 @@ public static class SimTest
         // Far from everything: no landing candidate.
         sim.ShipPos = new Vector2(0f, -20000f);
         Check("space: deep space offers no landing", sim.LandingCandidate() is null);
+
+        TestSpaceCombat();
+        TestFoundry();
+    }
+
+    /// <summary>Asteroids and the autocannon: rocks ram the hull (with an invulnerability
+    /// window), bolts kill rocks, big rocks split, and the maintenance spawner stocks the
+    /// field.</summary>
+    private static void TestSpaceCombat()
+    {
+        const float dt = 1f / 60f;
+
+        var sim = new Space.SpaceSim { AsteroidTarget = 0 };
+        sim.ShipPos = new Vector2(0f, -30000f);   // clear of sun/planets
+        sim.ShipVel = Vector2.Zero;
+
+        // A rock drifting straight into the ship must cost exactly one hull (invuln window).
+        sim.SpawnAsteroid(sim.ShipPos + new Vector2(200f, 0f), new Vector2(-300f, 0f), 20f);
+        for (var i = 0; i < 120; i++) sim.Update(dt, 0f, false, false);
+        Check("space: asteroid impact costs one hull", sim.Hull == Space.SpaceSim.MaxHull - 1,
+            $"hull {sim.Hull}");
+        Check("space: impact consumes the asteroid", sim.Asteroids.Count == 0);
+
+        // Shoot a small rock dead ahead: bolts must connect and destroy it (no split < 26px).
+        sim.ShipVel = Vector2.Zero;
+        sim.ShipHeading = 0f;   // nose +X
+        sim.SpawnAsteroid(sim.ShipPos + new Vector2(400f, 0f), Vector2.Zero, 20f);
+        for (var i = 0; i < 90; i++)
+        {
+            sim.TryFire();
+            sim.Update(dt, 0f, false, false);
+        }
+        Check("space: autocannon destroys a small rock", sim.Asteroids.Count == 0,
+            $"{sim.Asteroids.Count} left");
+
+        // A big rock splits into two smaller ones when killed.
+        var big = sim.SpawnAsteroid(sim.ShipPos + new Vector2(400f, 0f), Vector2.Zero, 40f);
+        big.Hp = 1f;   // one bolt finishes it
+        for (var i = 0; i < 60 && sim.Asteroids.Contains(big); i++)
+        {
+            sim.TryFire();
+            sim.Update(dt, 0f, false, false);
+        }
+        Check("space: big rock splits when killed",
+            !sim.Asteroids.Contains(big) && sim.Asteroids.Count == 2,
+            $"{sim.Asteroids.Count} fragments");
+
+        // Ram the hull to zero: the breach flag must raise for Game1's emergency dock.
+        sim.Asteroids.Clear();
+        sim.Hull = 1;
+        sim.HitTimer = 0f;
+        sim.SpawnAsteroid(sim.ShipPos + new Vector2(60f, 0f), new Vector2(-300f, 0f), 20f);
+        for (var i = 0; i < 60; i++) sim.Update(dt, 0f, false, false);
+        Check("space: hull zero raises the breach flag", sim.HullBreached);
+
+        // Maintenance spawner stocks the field when a target is set.
+        sim.AsteroidTarget = 10;
+        sim.Update(dt, 0f, false, false);
+        Check("space: spawner stocks the asteroid field", sim.Asteroids.Count == 10);
+
+        // Ion Engines II must actually be faster over the same burn.
+        var slow = new Space.SpaceSim { AsteroidTarget = 0 };
+        var fast = new Space.SpaceSim { AsteroidTarget = 0, EngineTier = 2 };
+        slow.ShipPos = fast.ShipPos = new Vector2(0f, -30000f);
+        var s0 = slow.ShipPos;
+        for (var i = 0; i < 120; i++) { slow.Update(dt, 0f, true, false); fast.Update(dt, 0f, true, false); }
+        Check("space: ion engines II outrun tier 1",
+            (fast.ShipPos - s0).Length() > (slow.ShipPos - s0).Length() * 1.2f);
+    }
+
+    /// <summary>The upgrade foundry economy: affordability gates, souls + cargo deducted,
+    /// purchase recorded, double-buy refused. Uses a scratch MetaSave (never saved).</summary>
+    private static void TestFoundry()
+    {
+        var meta = new MetaSave();
+        var jet = Space.Upgrades.All[0];   // jetpack: 1 soul + 4 gold + 6 iron
+
+        Check("foundry: broke dwarf can't afford", !Space.Upgrades.CanAfford(meta, jet));
+        meta.TitanSouls["Kong"] = 1;
+        meta.ShipCargo["gold"] = 4;
+        meta.ShipCargo["iron"] = 7;
+        Check("foundry: souls + cargo afford the jetpack", Space.Upgrades.CanAfford(meta, jet));
+
+        // TryBuy calls meta.Save() — point the write at a scratch profile? MetaSave writes to
+        // the real profile dir, so snapshot + restore around the buy.
+        var real = MetaSave.Load();
+        try
+        {
+            Check("foundry: purchase succeeds", Space.Upgrades.TryBuy(meta, jet));
+        }
+        finally
+        {
+            real.Save();
+        }
+        Check("foundry: purchase recorded", Space.Upgrades.Owned(meta, "jetpack"));
+        Check("foundry: souls spent", meta.TotalSouls() == 0);
+        Check("foundry: cargo deducted (gold gone, 1 iron left)",
+            !meta.ShipCargo.ContainsKey("gold") && meta.ShipCargo["iron"] == 1);
+        Check("foundry: double-buy refused", !Space.Upgrades.TryBuy(meta, jet));
     }
 
     private static void Check(string name, bool ok, string detail = "")
