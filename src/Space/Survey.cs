@@ -46,7 +46,16 @@ public static class Survey
         for (var i = 0; i < OreKinds.Length; i++)
             if (counts[i] > 0) found.Add((OreKinds[i].label, counts[i]));
         found.Sort((a, b) => b.count.CompareTo(a.count));
-        if (found.Count > top) found.RemoveRange(top, found.Count - top);
+        // The nav core's demanded ore is the planet's signature — always report it, even
+        // when commoner deposits would crowd it out of the top slots.
+        var signature = def.ShipOre.ToUpperInvariant();
+        var sigIdx = found.FindIndex(f => f.label == signature);
+        if (found.Count > top)
+        {
+            var sig = sigIdx >= top ? found[sigIdx] : default;
+            found.RemoveRange(top, found.Count - top);
+            if (sig.label is not null) found[top - 1] = sig;
+        }
 
         var result = found.ToArray();
         _cache[def.Id] = result;
