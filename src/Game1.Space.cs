@@ -349,23 +349,25 @@ public sealed partial class DwarfMinerGame
                 new Vector2((VirtualWidth - _renderer.MeasureText(_toast, 2)) / 2f, 84),
                 new Color(255, 225, 140), 2);
 
-        // Ship status block, bottom-left: hull pips, tank, currencies.
+        // Ship status block, bottom-left: hull pips, tank, currencies, rovers.
         var hullY = VirtualHeight - 96;
         _renderer.DrawText("HULL", new Vector2(24, hullY), new Color(150, 155, 175));
-        for (var i = 0; i < SpaceSim.MaxHull; i++)
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        for (var i = 0; i < _space.HullMax; i++)
         {
             var lit = i < _space.Hull;
-            sb.Begin(samplerState: SamplerState.PointClamp);
             sb.Draw(_renderer.Pixel, new Rectangle(70 + i * 16, hullY - 1, 12, 10),
                 lit ? new Color(120, 220, 130) : new Color(52, 56, 68));
-            sb.End();
         }
+        sb.End();
         var cargoTotal = 0;
         foreach (var (_, c) in _meta.ShipCargo) cargoTotal += c;
-        _renderer.DrawText($"FUEL {_meta.MotherFuel}   SOULS {_meta.TotalSouls()}   CARGO {cargoTotal}",
-            new Vector2(24, hullY + 18), new Color(150, 155, 175));
+        var fuelCol = _meta.MotherFuel > 0 ? new Color(150, 155, 175) : new Color(230, 140, 110);
+        _renderer.DrawText(
+            $"FUEL {_meta.MotherFuel}{(_meta.MotherFuel > 0 ? "" : " [RESERVE POWER]")}   ROVERS {_meta.Rovers}   SOULS {_meta.TotalSouls()}   CARGO {cargoTotal}",
+            new Vector2(24, hullY + 18), fuelCol);
 
-        var controls = "A/D TURN   W THRUST   S BRAKE   SPACE FIRE   ENTER LAND   U FOUNDRY";
+        var controls = "A/D TURN   W THRUST   S BRAKE   SPACE FIRE   ENTER LAND   U FOUNDRY   M SURVEY";
         _renderer.DrawText(controls,
             new Vector2((VirtualWidth - _renderer.MeasureText(controls)) / 2f, VirtualHeight - 58),
             new Color(150, 155, 175));
