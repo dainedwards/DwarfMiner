@@ -321,23 +321,19 @@ public sealed partial class DwarfMinerGame
             }
         }
 
-        // Landing prompt for the planet under the ship.
+        // Landing prompt for the planet under the ship. Roverless drops still work but warn.
         if (_space.LandingCandidate() is { } cand)
         {
-            var idx = PlanetDefs.IndexOf(cand.Def);
-            var prompt = idx < unlocked
-                ? $"ENTER  DEPLOY ROVER TO {cand.Def.Name.ToUpperInvariant()}"
-                : "UNCHARTED WORLD - YOUR NAV CORE CAN'T CHART IT YET";
-            var col = idx < unlocked ? new Color(255, 225, 140) : new Color(200, 130, 120);
+            var prompt = _meta.Rovers > 0
+                ? $"ENTER  DEPLOY ROVER TO {cand.Def.Name.ToUpperInvariant()} ({_meta.Rovers} LEFT)"
+                : $"ENTER  EMERGENCY DROP POD TO {cand.Def.Name.ToUpperInvariant()} (NO ROVERS - HALF HEALTH!)";
+            var col = _meta.Rovers > 0 ? new Color(255, 225, 140) : new Color(230, 150, 110);
             _renderer.DrawText(prompt,
                 new Vector2((VirtualWidth - _renderer.MeasureText(prompt, 2)) / 2f, VirtualHeight - 140), col, 2);
-            if (idx < unlocked)
-            {
-                var line2 = $"{cand.Def.Tagline.ToUpperInvariant()}   NAV CORE: {cand.Def.ShipOreCount} {Tiles.ResourceLabel(cand.Def.ShipOre)}";
-                _renderer.DrawText(line2,
-                    new Vector2((VirtualWidth - _renderer.MeasureText(line2)) / 2f, VirtualHeight - 112),
-                    new Color(190, 195, 215));
-            }
+            var line2 = $"{cand.Def.Tagline.ToUpperInvariant()}   NAV CORE: {cand.Def.ShipOreCount} {Tiles.ResourceLabel(cand.Def.ShipOre)}";
+            _renderer.DrawText(line2,
+                new Vector2((VirtualWidth - _renderer.MeasureText(line2)) / 2f, VirtualHeight - 112),
+                new Color(190, 195, 215));
         }
 
         if (RunSave.Exists)
