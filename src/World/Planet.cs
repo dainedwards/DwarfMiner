@@ -89,6 +89,21 @@ public sealed class Planet
     public readonly List<(int x, int y)> GasSeeds = new();
     public readonly List<(int x, int y)> AcidSeeds = new();
 
+    /// <summary>Volcano plumbing tiles to prime with lava — crater pool, throat, and the
+    /// deep magma chamber (see WorldGen.CarveVolcanoes). Acid volcanoes record theirs in
+    /// <see cref="AcidSeeds"/> instead.</summary>
+    public readonly List<(int x, int y)> LavaSeeds = new();
+
+    /// <summary>Volcano vent sites (just above each crater pool) + fluid type — where Game1
+    /// spawns fresh cells during an eruption. Persisted with the tile state so resumed runs
+    /// keep erupting.</summary>
+    public readonly List<(int x, int y, bool acid)> VolcanoVents = new();
+
+    /// <summary>Playable ring count for a planet of the given size scale — shared by world
+    /// gen and the run-save loader so restored planets get matching geometry.</summary>
+    public static int RingsFor(float sizeScale) =>
+        Math.Max(120, (int)MathF.Round(StandardRings * sizeScale));
+
     private readonly TileKind[] _tiles;
     private readonly byte[] _damage;
     /// <summary>Background "wall" tile kind per cell — what was there before caves were carved.
