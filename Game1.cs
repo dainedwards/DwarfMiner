@@ -325,6 +325,10 @@ public sealed partial class DwarfMinerGame : Game
         _run.MeteorTimer = float.TryParse(Environment.GetEnvironmentVariable("DM_METEOR"), out var mt)
             ? mt : 16f + (float)Random.Shared.NextDouble() * 14f;   // first strike ~16-30s in
         _run.SurgeTimer = 22f;
+        // Disasters: first flare well into the visit; DM_FLARE=<s> forces it for testing.
+        _run.FlareTimer = float.TryParse(Environment.GetEnvironmentVariable("DM_FLARE"), out var ft)
+            ? ft : 75f + (float)Random.Shared.NextDouble() * 60f;
+        _run.BlizzardTimer = 50f + (float)Random.Shared.NextDouble() * 45f;
         _gameOverReason = "";
         _craftingMenu.Reset();
         _invUi.Reset();
