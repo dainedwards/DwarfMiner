@@ -728,6 +728,58 @@ public static class SimTest
             seconds is > 15f and < 90f);
     }
 
+    /// <summary>The solar-system flight model: thrust moves the ship, braking stops it, the
+    /// sun and planet discs are solid, and the landing prompt fires exactly where it should.</summary>
+    private static void TestSpaceSim()
+    {
+        const float dt = 1f / 60f;
+
+        var sim = new Space.SpaceSim();
+        Check("space: one planet per PlanetDef", sim.Planets.Count == World.PlanetDefs.All.Length);
+        Check("space: ship parks in landing range of the start planet",
+            sim.LandingCandidate()?.Def.Id == sim.Planets[0].Def.Id);
+
+        // Thrust straight out for 3s: the ship must actually go somewhere.
+        var start = sim.ShipPos;
+        for (var i = 0; i < 180; i++) sim.Update(dt, 0f, thrust: true, brake: false);
+        var travelled = (sim.ShipPos - start).Length();
+        Check("space: 3s of thrust covers real distance", travelled > 500f, $"{travelled:0} px");
+
+        // Brake to a stop: speed must collapse to near zero within 2s.
+        for (var i = 0; i < 120; i++) sim.Update(dt, 0f, thrust: false, brake: true);
+        Check("space: braking kills velocity", sim.ShipVel.Length() < 5f, $"{sim.ShipVel.Length():0.0} px/s");
+
+        // Turning changes the heading at the advertised rate (≈3.4 rad in 1s of full turn).
+        var h0 = sim.ShipHeading;
+        for (var i = 0; i < 60; i++) sim.Update(dt, 1f, thrust: false, brake: false);
+        Check("space: turning sweeps the heading", MathF.Abs(sim.ShipHeading - h0) > 2.5f);
+
+        // Fly dead at the sun from nearby: the corona must keep the ship outside it.
+        sim.ShipPos = new Vector2(Space.SpaceSim.SunRadius + 400f, 0f);
+        sim.ShipVel = new Vector2(-640f, 0f);
+        sim.ShipHeading = MathF.PI;
+        for (var i = 0; i < 240; i++) sim.Update(dt, 0f, thrust: true, brake: false);
+        Check("space: sun corona repels the ship", sim.ShipPos.Length() > Space.SpaceSim.SunRadius,
+            $"dist {sim.ShipPos.Length():0}");
+
+        // Ram a planet: the ship skims off the disc instead of tunnelling inside.
+        var p = sim.Planets[2];
+        sim.ShipPos = p.Pos + new Vector2(p.BodyRadius + 300f, 0f);
+        sim.ShipVel = new Vector2(-640f, 0f);
+        var inside = false;
+        for (var i = 0; i < 240; i++)
+        {
+            sim.Update(dt, 0f, thrust: false, brake: false);
+            if ((sim.ShipPos - p.Pos).Length() < p.BodyRadius) inside = true;
+        }
+        Check("space: planet disc is solid", !inside);
+        Check("space: parked at the disc = landing prompt", sim.LandingCandidate()?.Def.Id == p.Def.Id);
+
+        // Far from everything: no landing candidate.
+        sim.ShipPos = new Vector2(0f, -20000f);
+        Check("space: deep space offers no landing", sim.LandingCandidate() is null);
+    }
+
     private static void Check(string name, bool ok, string detail = "")
     {
         if (!ok) _failed = true;
