@@ -351,13 +351,18 @@ public sealed partial class DwarfMinerGame
             }
         }
 
-        // Landing prompt for the planet under the ship. Roverless drops still work but warn.
+        // Landing prompt for the planet under the ship. Roverless drops still work but warn;
+        // the Rift shows its shard gate instead.
         if (_space.LandingCandidate() is { } cand)
         {
-            var prompt = _meta.Rovers > 0
-                ? $"ENTER  DEPLOY ROVER TO {cand.Def.Name.ToUpperInvariant()} ({_meta.Rovers} LEFT)"
-                : $"ENTER  EMERGENCY DROP POD TO {cand.Def.Name.ToUpperInvariant()} (NO ROVERS - HALF HEALTH!)";
-            var col = _meta.Rovers > 0 ? new Color(255, 225, 140) : new Color(230, 150, 110);
+            var riftLocked = cand.Def.Id == "rift" && _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded;
+            var prompt = riftLocked
+                ? $"THE RIFT'S STORMS REPEL YOU - {PlanetDefs.WarpShardsNeeded - _meta.CoreShards.Count} MORE CORE SHARDS NEEDED"
+                : _meta.Rovers > 0
+                    ? $"ENTER  DEPLOY ROVER TO {cand.Def.Name.ToUpperInvariant()} ({_meta.Rovers} LEFT)"
+                    : $"ENTER  EMERGENCY DROP POD TO {cand.Def.Name.ToUpperInvariant()} (NO ROVERS - HALF HEALTH!)";
+            var col = riftLocked ? new Color(255, 110, 90)
+                : _meta.Rovers > 0 ? new Color(255, 225, 140) : new Color(230, 150, 110);
             _renderer.DrawText(prompt,
                 new Vector2((VirtualWidth - _renderer.MeasureText(prompt, 2)) / 2f, VirtualHeight - 140), col, 2);
             var line2 = $"{cand.Def.Tagline.ToUpperInvariant()}   NAV CORE: {cand.Def.ShipOreCount} {Tiles.ResourceLabel(cand.Def.ShipOre)}";
