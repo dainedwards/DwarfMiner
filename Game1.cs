@@ -36,8 +36,7 @@ public sealed partial class DwarfMinerGame : Game
     /// the first run; Playing/GameOver screens always have one.</summary>
     private Session _run = null!;
 
-    private GameScreen _screen = GameScreen.Overworld;
-    private int _overworldCursor;
+    private GameScreen _screen = GameScreen.Space;
 
     private KeyboardState _prevKeys;
     private MouseState _prevMouse;
