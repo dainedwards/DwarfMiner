@@ -577,6 +577,7 @@ public sealed partial class DwarfMinerGame
 
         if (_upgradesOpen) DrawUpgradeMenu(sb);
         if (_surveyOpen) DrawSurveyMenu(sb);
+        DrawTransitionFlash();
     }
 
     /// <summary>The M-key long-range survey: every planet's titan (with souls banked of that
