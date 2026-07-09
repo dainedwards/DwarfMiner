@@ -965,18 +965,21 @@ public sealed class Cells
         }
     }
 
-    public void AddLights(Renderer r, Vector2 viewCentre, float viewRadius)
+    /// <summary>Lava/acid glow emitters. Same LOD contract as <see cref="Draw"/> — the
+    /// zoomed-out stride keeps the scan (and the per-light lightmap blits) bounded.</summary>
+    public void AddLights(Renderer r, Vector2 viewCentre, float viewRadius, int stride = 1)
     {
         var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
+        if (stride > 1) cyMin = Math.Max(cyMin, 60 * Density);
         var step = 0;
-        for (var cy = cyMin; cy <= cyMax; cy++)
+        for (var cy = cyMin; cy <= cyMax; cy += stride)
         {
             var n = _cellsAt[cy];
             var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
             var halfAng = MathF.Min(MathF.PI, viewRadius / MathF.Max(ringRadius, 1f));
             var cx0 = (int)(camAng / MathHelper.TwoPi * n);
             var range = Math.Min(n / 2, (int)(halfAng / MathHelper.TwoPi * n) + 2);
-            for (var d = -range; d <= range; d++)
+            for (var d = -range; d <= range; d += stride)
             {
                 var cx = cx0 + d;
                 var lm = (Material)_mat[Idx(cx, cy)];
