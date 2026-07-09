@@ -732,6 +732,116 @@ public static class TitanRenderer
         DrawEyes(r, t, f, head + f.Up * 8f, playerPos, 10f, 6f);
     }
 
+    // ── Pyrodactyl / Vitriodactyl: winged bombers — pterodactyl, but meaner ─────
+
+    private static void DrawPterodactyl(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
+    {
+        var lava = t.Kind == TitanKind.Pyrodactyl;
+        var payload = lava ? new Color(255, 140, 40) : new Color(160, 240, 60);
+        var payloadHot = lava ? new Color(255, 220, 120) : new Color(220, 255, 150);
+
+        // Thin whip tail with a diamond vane at the tip.
+        DrawSpineChain(r, t, f, 14f, 3f, ridge: false);
+        var vane = t.TailNodes[^1];
+        var vaneDir = t.TailNodes[^1] - t.TailNodes[^2];
+        if (vaneDir.LengthSquared() > 1f)
+        {
+            vaneDir.Normalize();
+            r.DrawRect(vane + vaneDir * 8f, new Vector2(16f, 9f), f.Chitin,
+                MathF.Atan2(vaneDir.Y, vaneDir.X) + 0.78f);
+        }
+
+        // Wing beat: slow soaring flap at cruise, folded tight into the dive while bombing.
+        var flap = t.Bombing ? -0.35f : MathF.Sin(f.Pulse * 2.2f) * 0.8f;
+
+        // Far wing first (shaded), then body, then near wing over it — reads as depth.
+        for (var s = -1; s <= 1; s += 2)
+        {
+            var near = s == (f.Face >= 0 ? 1 : -1);
+            if (near) continue;
+            DrawWing(r, t, f, flap * 0.85f, shade: 0.55f, back: true);
+        }
+
+        // Fuselage — a lean horizontal body slung between the wings, chest keel below.
+        var rump = f.Tp - f.Right * (f.Face * 36f) - f.Up * 2f;
+        var prow = f.Tp + f.Right * (f.Face * 44f) + f.Up * 6f;
+        Seg(r, rump, prow, 40f, f.HideDark);
+        Seg(r, rump + f.Up * 4f, prow + f.Up * 4f, 28f, f.Hide);
+        Seg(r, rump - f.Up * 10f, prow - f.Up * 8f, 12f, f.Belly);   // pale keel
+        // Payload sacs glowing along the belly — the bomb bay.
+        for (var i = 0; i < 3; i++)
+            r.DrawCircle(Vector2.Lerp(rump, prow, 0.3f + i * 0.22f) - f.Up * 14f,
+                4.5f, t.SpecialState > 0f ? payloadHot : payload);
+
+        // Tucked talons hanging off the hips.
+        for (var s = -1; s <= 1; s += 2)
+        {
+            var hip = f.Tp - f.Right * (f.Face * 14f) - f.Up * 16f + f.Right * (s * 6f);
+            var claw = hip - f.Up * 14f + f.Right * (f.Face * 8f);
+            Seg(r, hip, claw, 5f, f.HideDark);
+            for (var c = 0; c < 2; c++)
+                Seg(r, claw, claw + f.Right * (f.Face * 8f) - f.Up * (3f + c * 4f), 2.2f, f.Chitin);
+        }
+
+        // Neck arcing up and forward into the head.
+        var head = prow + f.Right * (f.Face * 30f) + f.Up * 14f;
+        Seg(r, prow, head, 18f, f.HideDark);
+        Seg(r, prow, head, 12f, f.Hide);
+        r.DrawRect(head, new Vector2(30f, 22f), f.HideDark, f.Rot);
+        r.DrawRect(head + f.Up * 2f, new Vector2(24f, 15f), f.Hide, f.Rot);
+
+        // The mean part: a long spear beak lined with snaggle teeth, and a swept skull
+        // crest counterweighting it — the classic pterosaur silhouette with malice.
+        var beakTip = head + f.Right * (f.Face * 52f) - f.Up * 2f;
+        Seg(r, head + f.Right * (f.Face * 8f), beakTip, 12f, f.HideDark);
+        Seg(r, head + f.Right * (f.Face * 8f) + f.Up * 3f, beakTip + f.Up * 2f, 6f, f.Hide);
+        Seg(r, beakTip, beakTip + f.Right * (f.Face * 7f) - f.Up * 5f, 4f, f.Chitin);   // hooked tip
+        for (var ti = 0; ti < 4; ti++)
+            r.DrawRect(Vector2.Lerp(head + f.Right * (f.Face * 14f), beakTip, ti / 3.6f) - f.Up * 6f,
+                new Vector2(2.5f, 5f), Color.White, f.Rot);
+        var crestTip = head - f.Right * (f.Face * 34f) + f.Up * 22f;
+        Seg(r, head + f.Up * 6f, crestTip, 10f, f.HideDark);
+        Seg(r, head + f.Up * 8f, crestTip, 4f, t.SpecialState > 0f ? payloadHot : payload);
+
+        // Maw glow while raining.
+        if (t.SpecialState > 0f)
+        {
+            r.DrawCircle(beakTip - f.Up * 4f, 7f, payload);
+            r.DrawCircle(beakTip - f.Up * 4f, 3.5f, payloadHot);
+        }
+
+        DrawEyes(r, t, f, head + f.Up * 5f, playerPos, 6.5f, 4f);
+
+        // Near wing over the body.
+        DrawWing(r, t, f, flap, shade: 1f, back: false);
+    }
+
+    /// <summary>One membrane wing: shoulder → wrist → tip, two bone fingers with the
+    /// membrane stretched back to the hip. <paramref name="flap"/> swings the whole
+    /// assembly around the shoulder; <paramref name="shade"/> darkens the far wing.</summary>
+    private static void DrawWing(Renderer r, Titan t, Frame f, float flap, float shade, bool back)
+    {
+        var shoulder = f.Tp + f.Up * 12f + f.Right * (f.Face * 4f);
+        // Wing sweeps back and up from the shoulder; flap rotates it about the tangent axis.
+        var span = f.Up * (46f + flap * 60f) - f.Right * (f.Face * 30f);
+        var wrist = shoulder + span;
+        var tip = wrist + f.Up * (18f + flap * 46f) - f.Right * (f.Face * 62f);
+        var hip = f.Tp - f.Right * (f.Face * 30f) - f.Up * 6f;
+
+        var bone = Shade(f.HideDark, shade);
+        var skin = Shade(f.Hide, shade * 0.82f);
+        // Membrane: filled between the bone line and the hip anchor.
+        Seg(r, Vector2.Lerp(shoulder, wrist, 0.5f), Vector2.Lerp(hip, tip, 0.45f), 30f, skin);
+        Seg(r, Vector2.Lerp(wrist, tip, 0.5f), Vector2.Lerp(hip, tip, 0.8f), 18f, skin);
+        // Leading-edge bones + finger.
+        Seg(r, shoulder, wrist, 9f, bone);
+        Seg(r, wrist, tip, 6f, bone);
+        Seg(r, wrist, Vector2.Lerp(hip, tip, 0.7f), 3.5f, bone);   // strut finger
+        r.DrawCircle(wrist, 5.5f, bone);
+        // Wing claw at the wrist joint — the mean little hook pterosaurs actually had.
+        Seg(r, wrist, wrist + f.Right * (f.Face * 10f) + f.Up * 4f, 2.5f, Shade(f.Chitin, shade));
+    }
+
     // ── shared primitives ───────────────────────────────────────────────────────
 
     /// <summary>Draw both legs of a biped, far leg first. The leg on the side opposite the
