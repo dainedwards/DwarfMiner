@@ -763,22 +763,38 @@ public static class SimTest
         Check("space: sun corona repels the ship", sim.ShipPos.Length() > Space.SpaceSim.SunRadius,
             $"dist {sim.ShipPos.Length():0}");
 
-        // Ram a planet: the ship skims off the disc instead of tunnelling inside.
+        // Fly at an ordinary planet: no wall — the ship reaches atmosphere-entry contact.
         var p = sim.Planets[2];
         sim.ShipPos = p.Pos + new Vector2(p.BodyRadius + 300f, 0f);
+        sim.ShipVel = new Vector2(-300f, 0f);
+        Space.SpacePlanet? contact = null;
+        for (var i = 0; i < 240 && contact is null; i++)
+        {
+            sim.Update(dt, 0f, thrust: false, brake: false);
+            contact = sim.AtmosphereContact();
+        }
+        Check("space: flying into a planet reaches entry contact", contact?.Def.Id == p.Def.Id);
+
+        // The locked Rift's storm wall stays solid — no entry contact, ship shoved out.
+        var rift = sim.Planets[^1];
+        sim.ShipPos = rift.Pos + new Vector2(rift.BodyRadius + 300f, 0f);
         sim.ShipVel = new Vector2(-640f, 0f);
-        var inside = false;
+        var riftInside = false;
+        var riftContact = false;
         for (var i = 0; i < 240; i++)
         {
             sim.Update(dt, 0f, thrust: false, brake: false);
-            if ((sim.ShipPos - p.Pos).Length() < p.BodyRadius) inside = true;
+            if ((sim.ShipPos - rift.Pos).Length() < rift.BodyRadius) riftInside = true;
+            if (sim.AtmosphereContact() is not null) riftContact = true;
         }
-        Check("space: planet disc is solid", !inside);
-        Check("space: parked at the disc = landing prompt", sim.LandingCandidate()?.Def.Id == p.Def.Id);
+        Check("space: locked rift storm wall repels", !riftInside && !riftContact);
+        sim.RiftLocked = false;
+        sim.ShipPos = rift.Pos + new Vector2(rift.BodyRadius + 10f, 0f);
+        Check("space: unlocked rift accepts entry", sim.AtmosphereContact()?.Def.Id == "rift");
 
-        // Far from everything: no landing candidate.
+        // Far from everything: no entry contact.
         sim.ShipPos = new Vector2(0f, -20000f);
-        Check("space: deep space offers no landing", sim.LandingCandidate() is null);
+        Check("space: deep space offers no entry", sim.AtmosphereContact() is null);
 
         TestSpaceCombat();
         TestFoundry();
