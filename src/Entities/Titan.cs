@@ -1167,23 +1167,27 @@ public sealed class TitanProjectile
         {
             TitanShotKind.Flame => (9f, 0.85f),   // fatter, shorter-lived — fewer grains read as one gout
             TitanShotKind.Acid  => (6.5f, 3.4f),  // lofted glob — lives long enough to finish its arc
+            TitanShotKind.Lava  => (7f, 3.4f),
             TitanShotKind.Spike => (4f, 1.6f),
             _                   => (4f, 0.9f),   // Laser
         };
         _drill = kind == TitanShotKind.Laser ? 3 : 0;
     }
 
+    /// <summary>Acid and Lava globs are the ballistic shots — they loft, arc, and rain down,
+    /// bursting into live cells of their material where they land.</summary>
+    private bool Ballistic => Kind is TitanShotKind.Acid or TitanShotKind.Lava;
+
     public void Update(float dt, Planet planet, Physics physics, Cells cells, Player player)
     {
-        // Acid globs are the one ballistic shot — they loft, arc, and rain down.
-        if (Kind == TitanShotKind.Acid)
+        if (Ballistic)
             Velocity += planet.GravityAt(Position) * 240f * dt;
         Position += Velocity * dt;
         Life -= dt;
         if (Life <= 0f)
         {
             Dead = true;
-            if (Kind == TitanShotKind.Acid) SplashAcid(planet, cells);
+            if (Ballistic) Splash(planet, cells);
             return;
         }
 
