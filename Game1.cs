@@ -1637,6 +1637,17 @@ public sealed partial class DwarfMinerGame : Game
                 spriteScale, SpriteEffects.None, 0f);
         }
 
+        // During the rover descent the dwarf rides inside the pod — draw the capsule over
+        // him: steel shell, glass dome, landing skids splayed along local-down.
+        if (_landing)
+        {
+            var lRight = new Vector2(-up.Y, up.X);
+            _renderer.DrawRect(_landerPos, new Vector2(9f, 8f), new Color(165, 170, 185), rot);
+            _renderer.DrawRect(_landerPos + up * 4.4f, new Vector2(7f, 2.4f), new Color(140, 210, 235), rot);
+            _renderer.DrawRect(_landerPos - up * 4.4f - lRight * 3.4f, new Vector2(1.8f, 3.4f), new Color(90, 92, 105), rot);
+            _renderer.DrawRect(_landerPos - up * 4.4f + lRight * 3.4f, new Vector2(1.8f, 3.4f), new Color(90, 92, 105), rot);
+        }
+
         // Reticle.
         var mouse = Mouse.GetState();
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
