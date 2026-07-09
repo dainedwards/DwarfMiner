@@ -42,8 +42,7 @@ public sealed partial class DwarfMinerGame
     private void EnterSpace(int planetIndex, float exitSpeed = 0f, bool zoomFromPlanet = false)
     {
         _space.PlaceShipAt(planetIndex, exitSpeed);
-        _space.GunTier = Upgrades.Owned(_meta, "gun2") ? 2 : 1;
-        _space.EngineTier = Upgrades.Owned(_meta, "engine2") ? 2 : 1;
+        ApplyShipTiers();
         _spaceZoom = zoomFromPlanet ? 2.2f : SpaceZoom;
         _screen = GameScreen.Space;
         _camera?.SnapTo(_space.ShipPos, 0f);
