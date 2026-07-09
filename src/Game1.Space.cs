@@ -524,14 +524,25 @@ public sealed partial class DwarfMinerGame
     private static string FormatCount(int n) =>
         n >= 1000 ? $"{n / 1000f:0.0}K" : n >= 100 ? $"{n / 10 * 10}+" : n.ToString();
 
+    /// <summary>Rows visible at once in the foundry — the catalogue outgrew the screen, so
+    /// the list scrolls with the cursor.</summary>
+    private const int FoundryVisibleRows = 8;
+    private int _upgradeScroll;
+
     /// <summary>The foundry overlay: one line per upgrade with soul + cargo price, cursor
-    /// selection, and a wallet readout. Purchases persist in MetaSave.ShipUpgrades.</summary>
+    /// selection (scrolling window), and a wallet readout. Purchases persist in
+    /// MetaSave.ShipUpgrades.</summary>
     private void DrawUpgradeMenu(SpriteBatch sb)
     {
         const int w = 680;
-        var h = 140 + Upgrades.All.Length * 52;
+        var visible = Math.Min(FoundryVisibleRows, Upgrades.All.Length);
+        var h = 140 + visible * 52;
         var x = (VirtualWidth - w) / 2;
         var y = (VirtualHeight - h) / 2;
+
+        // Keep the cursor inside the window.
+        if (_upgradeCursor < _upgradeScroll) _upgradeScroll = _upgradeCursor;
+        if (_upgradeCursor >= _upgradeScroll + visible) _upgradeScroll = _upgradeCursor - visible + 1;
 
         sb.Begin(samplerState: SamplerState.PointClamp);
         sb.Draw(_renderer.Pixel, new Rectangle(x, y, w, h), new Color(10, 12, 22, 235));
