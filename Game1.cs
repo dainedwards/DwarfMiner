@@ -390,6 +390,16 @@ public sealed partial class DwarfMinerGame : Game
         // holds the fully composited frame (post lighting/bloom/vignette).
         if (Pressed(keys, _prevKeys, Keys.F12)) _screenshotPending = true;
 
+        // F6 cycles the master volume on any screen; the step persists across sessions.
+        if (Pressed(keys, _prevKeys, Keys.F6))
+        {
+            _meta.VolumeStep = (_meta.VolumeStep + 1) % VolumeSteps.Length;
+            _sfx.Master = VolumeSteps[_meta.VolumeStep];
+            _sfx.Play("ui", 1f);
+            _toast = $"SOUND: {VolumeNames[_meta.VolumeStep]}";
+            _toastTimer = 2f;
+        }
+
         // Headless verification hook: DM_AUTOSHOT=<seconds> takes a screenshot at that wall
         // time and every 5s after — lets tooling capture frames without input access.
         if (_autoShotAt <= _totalTime)
