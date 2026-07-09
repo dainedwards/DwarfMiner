@@ -54,5 +54,18 @@ public sealed class Session
     /// resources here (persisted per-planet in MetaSave) so death doesn't wipe them.</summary>
     public Vector2? DepotPos;
 
+    /// <summary>Bearing of the mothership's parking orbit — it hangs in the planet view at
+    /// <see cref="OrbitAltitude"/> above the surface. The rover departs from it and the
+    /// escape rocket must climb back up and dock with it. Defaults to the spawn bearing.</summary>
+    public float MothershipAngle = -MathF.PI / 2f;
+
+    /// <summary>How far above the planet surface (px) the mothership parks.</summary>
+    public const float OrbitAltitude = 480f;
+
+    /// <summary>The mothership's world position in this planet's coordinate space.</summary>
+    public Vector2 StationPos =>
+        Planet.Center + new Vector2(MathF.Cos(MothershipAngle), MathF.Sin(MothershipAngle))
+            * (Planet.Radius * World.Planet.TileSize + OrbitAltitude);
+
     public Session(PlanetDef def) => Def = def;
 }
