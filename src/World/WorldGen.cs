@@ -175,6 +175,27 @@ public static class WorldGen
                         if (depth >= 1f) planet.WaterSeeds.Add((r, t));
                         continue;
                     }
+
+                    // Acid pool basin — same carve, corrosive fill.
+                    var acidDepth = 0f;
+                    foreach (var a in acidPools)
+                    {
+                        var angDiff = MathF.Abs(ang - a.ang);
+                        if (angDiff > MathF.PI) angDiff = MathHelper.TwoPi - angDiff;
+                        if (angDiff < a.w)
+                        {
+                            var f = angDiff / a.w;
+                            var d = (1f - f * f) * a.depth;
+                            if (d > acidDepth) acidDepth = d;
+                        }
+                    }
+                    if (acidDepth > 0.5f && depth < acidDepth)
+                    {
+                        planet.SetWall(r, t, TileKind.Stone);
+                        planet.Set(r, t, TileKind.Sky);
+                        if (depth >= 1f) planet.AcidSeeds.Add((r, t));
+                        continue;
+                    }
                 }
 
                 var pos = planet.TileToWorld(r, t);
