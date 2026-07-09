@@ -1627,7 +1627,7 @@ public sealed partial class DwarfMinerGame : Game
         _run.Cells.Update(dt);
         _run.RunTime += dt;
 
-        if (_launchElapsed > 1.2f)
+        if (_launchElapsed > 2.2f)
         {
             _launching = false;
             _ascending = true;
