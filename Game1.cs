@@ -355,12 +355,12 @@ public sealed partial class DwarfMinerGame : Game
         _particles.Update(dt, _run.Planet);
         _toastTimer -= dt;
 
-        if (Pressed(keys, _prevKeys, Keys.Space) || Pressed(keys, _prevKeys, Keys.Enter))
+        if (Pressed(keys, _prevKeys, Keys.Enter))
         {
             LaunchRover();
             return;
         }
-        if (Pressed(keys, _prevKeys, Keys.W))
+        if (Pressed(keys, _prevKeys, Keys.Space))
         {
             _orbiting = false;
             _transitionFlash = 0.6f;
