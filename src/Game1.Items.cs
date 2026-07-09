@@ -91,6 +91,12 @@ public sealed partial class DwarfMinerGame
                 Use = c => DoMine(c, MiningTool.Hammer),
                 OnCraft = Own("hammer", () => _run.Player.HasHammer = true),
             },
+            ["mining_laser"] = new()
+            {
+                Owned = () => _run.Player.HasMiningLaser,
+                Use = c => DoMine(c, MiningTool.MiningLaser),
+                OnCraft = Own("mining_laser", () => _run.Player.HasMiningLaser = true),
+            },
             ["core_drill"] = new()
             {
                 Owned = () => _run.Player.HasCoreDrill,
