@@ -100,6 +100,14 @@ public sealed class Renderer
         var minRing = Math.Max(0, (int)(minDistTight / Planet.TileSize) - Planet.RingMin - 1);
         var maxRing = Math.Min(Planet.RingCount - 1, (int)(maxDistTight / Planet.TileSize) - Planet.RingMin + 1);
 
+        // Zoomed way out (orbit view, high descent/ascent) a tile is ~3 screen px: the atlas
+        // texture, erosion rims, grass wraps, and decor are sub-pixel noise, and the view
+        // sees 5-10× more tiles than ground play. Low-detail mode draws one flat quad per
+        // tile and skips the deep interior (buried under opaque rock; the odd shaft reads
+        // as a dark speck at this scale) — this is what keeps the orbital shot at 60 fps.
+        var lowDetail = cam.Zoom < 0.9f;
+        if (lowDetail) minRing = Math.Max(minRing, 60);
+
         // Elevation-layered skybox: backdrop and stars belong to different altitude bands.
         // Underground reads near-black, the lower atmosphere is a moody dusk blue with no
         // stars at all, and the starfield only fades in through the upper atmosphere,
