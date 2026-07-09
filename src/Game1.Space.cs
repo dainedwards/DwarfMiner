@@ -176,8 +176,16 @@ public sealed partial class DwarfMinerGame
             StartNewRun(cand.Def, descend: true);
             if (podDrop)
             {
-                _run.Player.Health *= 0.5f;
-                _toast = "NO ROVERS - EMERGENCY DROP POD! SUIT DAMAGED";
+                // Pod Dampeners turn the crash landing into a soft one.
+                if (Upgrades.Owned(_meta, "dampeners"))
+                {
+                    _toast = "NO ROVERS - DROP POD DOWN SOFT ON THE DAMPENERS";
+                }
+                else
+                {
+                    _run.Player.Health *= 0.5f;
+                    _toast = "NO ROVERS - EMERGENCY DROP POD! SUIT DAMAGED";
+                }
                 _toastTimer = 4f;
             }
         }
