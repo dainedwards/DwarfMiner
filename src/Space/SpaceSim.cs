@@ -65,10 +65,9 @@ public sealed class SpaceSim
 
     // ── Hazards & armament (mothership era) ─────────────────────────────────
     public const float ShipRadius = 26f;
-    public const int MaxHull = 5;
     public readonly List<Asteroid> Asteroids = new();
     public readonly List<ShipShot> Shots = new();
-    public int Hull = MaxHull;
+    public int Hull = 5;
     /// <summary>Seconds of post-hit invulnerability left — also the renderer's hit flash.</summary>
     public float HitTimer;
     /// <summary>Set when a collision drops the hull to zero; Game1 consumes it to run the
