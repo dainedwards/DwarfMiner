@@ -97,6 +97,23 @@ public sealed class Titan
     /// serpent slithers close to the ground.</summary>
     public float Hover => Kind == TitanKind.Sandworm ? 44f : BodyHover;
 
+    /// <summary>Length of each drawn leg bone (thigh and shin are equal). Shared with
+    /// <see cref="Rendering.TitanRenderer"/>'s two-bone IK so the simulation never plants a
+    /// foot farther than the drawn leg can actually reach.</summary>
+    public const float LegBoneLen = 80f;
+    /// <summary>Maximum hip→foot distance — both bones almost straight, with a sliver of
+    /// slack kept so the knee never fully locks out.</summary>
+    public const float LegMaxReach = LegBoneLen * 1.96f;
+    /// <summary>Lateral half-spacing between the two hip sockets at the pelvis. Without this
+    /// the legs share one origin point and read as a wishbone.</summary>
+    public const float HipHalfSpan = 26f;
+
+    /// <summary>World position of a leg's hip socket — pelvis center offset along the tangent
+    /// by the leg's side. Single source of truth used by both the anchor search and the
+    /// renderer's IK, so the drawn thigh always roots where the simulation thinks it does.</summary>
+    public Vector2 HipWorld(TitanLeg leg, Vector2 up, Vector2 right)
+        => Position + right * (leg.HipForward + leg.Side * HipHalfSpan) + up * leg.HipUp;
+
     /// <summary>Verlet spine chain: a dragging tail for the bipeds, a long undulating body for
     /// the Sandworm (its heads mount at node 0). Segment length + node count vary by kind.</summary>
     private readonly float _tailSeg;
