@@ -113,14 +113,23 @@ run. The mothership mounts a **gun** for asteroids/obstacles and burns **fuel** 
 to farther worlds; both, plus the **engines**, are upgradeable.
 
 **Phases.**
-- **Phase 2 — mothership core (in progress):** mothership replaces the bare rocket as the
-  thing you fly in space (start aboard it); asteroids drift the system — dodge them or shoot
-  them with the ship gun (SPACE); collisions cost hull, hull-zero forces an emergency dock;
-  landings are rover-flavored; titan kill stops ending the run — the boss dies in-world and
-  banks a soul (`MetaSave.TitanSouls`, keyed by TitanKind); rocket-return transfers cargo
-  (raw mats → `MetaSave.ShipCargo`, fuel items → `MetaSave.MotherFuel`); basic upgrade
-  foundry (U in space): JETPACK (hold jump airborne to fly, charge-limited), AUTOCANNON II,
-  ION ENGINES II — purchases persist in `MetaSave.ShipUpgrades`.
+- **Phase 2 — mothership core (DONE 2026-07-08):** the mothership replaced the bare rocket
+  as the thing you fly in space (you start aboard it; new twin-nacelle sprite). Asteroids
+  drift the system (donut spawner around the ship, cull at range) — dodge them or shoot them
+  with the autocannon (SPACE/LMB, fires along the nose; big rocks split in two); collisions
+  cost hull (5 pips, 1s invulnerability window, red hit-flash) and hull-zero forces an
+  emergency dock at the nearest charted world (position lost, hull patched — no death).
+  Titan kill no longer ends the visit: the boss dies in-world (update/render gated on
+  Health > 0, HUD shows SLAIN) and banks a soul into `MetaSave.TitanSouls` keyed by
+  TitanKind, awarded on the health zero-crossing so resumed saves can't re-award. The rocket
+  is the only way off-world; docking transfers bankable raws → `MetaSave.ShipCargo` and
+  leftover mined fuel → `MetaSave.MotherFuel`. Upgrade foundry (U in space, Esc/U closes):
+  JETPACK (Player.HasJetpack — hold jump airborne, 2.6s charge refills on the ground,
+  re-applied from meta on every entry, not in the run save), AUTOCANNON II (2× fire rate),
+  ION ENGINES II (+40% thrust/top speed) — purchases persist in `MetaSave.ShipUpgrades`,
+  souls spent via `MetaSave.SpendSouls` (any-kind for now). `src/Space/Upgrades.cs` is the
+  catalogue; 15 new SimTest checks (combat + foundry economy); `DM_UPGRADES=1` opens the
+  foundry at boot for screenshots.
 - **Phase 3 — upgrade depth + economy:** fuel actually burned per-distance and **fuel range
   replaces the escape-chain unlock** as the gate on farther worlds (engine tiers extend
   range); rovers become consumable (craft/buy more; losing your last rover matters); soul
