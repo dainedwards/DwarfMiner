@@ -440,12 +440,14 @@ public sealed partial class DwarfMinerGame
                 FillCircleWorld(sb, c, p.BodyRadius, body);
             }
 
-            // Two-step terminator for a softer shadow gradient.
+            // Two-step terminator for a softer shadow gradient. (No fake polar highlight —
+            // the real terrain carries the detail now.)
             FillCircleWorld(sb, c + sunward * (p.BodyRadius * 0.30f), p.BodyRadius * 0.76f,
                 new Color(0, 0, 0, 60));
             FillCircleWorld(sb, c + sunward * (p.BodyRadius * 0.48f), p.BodyRadius * 0.56f,
                 new Color(0, 0, 0, 80));
-            FillCircleWorld(sb, c - sunward * (p.BodyRadius * 0.3f), p.BodyRadius * 0.30f, accent * 0.8f);
+            if (preview is null)
+                FillCircleWorld(sb, c - sunward * (p.BodyRadius * 0.3f), p.BodyRadius * 0.30f, accent * 0.8f);
         }
 
         // Asteroids — cratered grey rocks; a rotating surface pock sells the spin.
