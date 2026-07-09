@@ -130,8 +130,10 @@ public static class WorldGen
                 // Very subtle surface variation — at most ±1.5 tiles. The planet stays round.
                 var elev = AngularSample(surfA, ang) * 2f;
 
-                // Mountain height at this angle: take the max contribution across all spikes.
-                // Squared distance falloff (1-d/w)² gives a sharp parabolic point.
+                // Mountain height at this angle: max contribution across all peaks. The
+                // pow-1.7 falloff keeps a sharp summit but flares wider at the base than
+                // the old parabola, and the ridge noise crags the slope (±22%) so the
+                // silhouette steps down in jagged shelves instead of a clean curve.
                 var mountainHeight = 0f;
                 foreach (var m in mountains)
                 {
@@ -139,11 +141,12 @@ public static class WorldGen
                     if (angDiff > MathF.PI) angDiff = MathHelper.TwoPi - angDiff;
                     if (angDiff < m.w)
                     {
-                        var dt = 1f - (angDiff / m.w);
-                        var contribution = dt * dt * m.h;
+                        var contribution = MathF.Pow(1f - angDiff / m.w, 1.7f) * m.h;
                         if (contribution > mountainHeight) mountainHeight = contribution;
                     }
                 }
+                if (mountainHeight > 0.5f)
+                    mountainHeight *= 1f + AngularSample(ridge, ang) * 0.45f;
 
                 var surfaceR = baselineR + elev;
                 var peakR = surfaceR + mountainHeight;
