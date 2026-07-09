@@ -60,10 +60,20 @@ public sealed record PlanetDef(
     int AcidPools = 0,
     bool AcidRain = false);
 
-/// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.</summary>
+/// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.
+/// <see cref="All"/> is the ACTIVE chain: at boot Game1 swaps in a procedurally generated
+/// 7-planet campaign (see PlanetGen) seeded from MetaSave.WorldSeed, with the Rift appended
+/// as the fixed finale. <see cref="Classic"/> keeps the hand-tuned archetypes — they're the
+/// generator's templates, the default when nothing was activated (headless sim tests), and
+/// the fallback for id lookups from tooling hooks like DM_AUTOSTART=verdant.</summary>
 public static class PlanetDefs
 {
-    public static readonly PlanetDef[] All =
+    public static PlanetDef[] All { get; private set; } = null!;
+
+    /// <summary>Swap in a generated campaign chain (call before anything caches planets).</summary>
+    public static void Activate(PlanetDef[] chain) => All = chain;
+
+    public static readonly PlanetDef[] Classic =
     {
         new("verdant", "Verdant", "Gentle green start, lakes, moss, iron",
             new Color(90, 150, 80), new Color(150, 210, 130),
