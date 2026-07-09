@@ -280,9 +280,12 @@ public sealed partial class DwarfMinerGame : Game
             ? -MathF.PI / 2f + 0.16f : MathF.PI * 0.6f;
         // Pooled planets (Coreheart) roll a fresh kaiju out of the breach every visit;
         // fixed planets always hatch their signature boss (soul farming stays plannable).
+        // DM_BOSSCAM=<TitanKind name> forces a kind so tooling can screenshot each variant.
         var titanKind = def.TitanPool is { Length: > 0 } pool
             ? pool[Random.Shared.Next(pool.Length)]
             : def.Titan;
+        if (Enum.TryParse<TitanKind>(Environment.GetEnvironmentVariable("DM_BOSSCAM"), true, out var forced))
+            titanKind = forced;
         _run.Titan = new Titan(_run.Planet, titanAngle, titanKind);
         // DM_HATCH=<seconds> shortens the egg timer for testing (default 10 min).
         if (float.TryParse(Environment.GetEnvironmentVariable("DM_HATCH"), out var hatchAt))
