@@ -1653,7 +1653,10 @@ public sealed partial class DwarfMinerGame : Game
         // rather than shooting past the station (which is still drifting; the approach
         // glide below tracks it).
         _run.MothershipAngle += Session.StationDriftRate * dt;
-        var climb = MathHelper.Clamp((Session.OrbitAltitude - alt) * 1.4f, 0f, 300f);
+        // Keep building thrust from where the liftoff cinematic left off, capped at cruise —
+        // the slow heave off the pad flows into the climb with no velocity jump.
+        _launchVel = MathF.Min(300f, _launchVel + 80f * dt);
+        var climb = MathHelper.Clamp((Session.OrbitAltitude - alt) * 1.4f, 0f, _launchVel);
         _launchShipPos += (up * climb + right * (lat * 220f)) * dt;
 
         // Near orbit altitude the docking computer takes over the final approach.
