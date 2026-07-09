@@ -132,9 +132,11 @@ public sealed partial class DwarfMinerGame : Game
     protected override void Initialize()
     {
         _meta = MetaSave.Load();
-        // Boot into space with the ship parked at the farthest charted world.
+        // Boot into space with the mothership wherever it was left (fresh installs park at
+        // the farthest charted world), and the saved volume step applied.
         _space = new SpaceSim();
-        _space.PlaceShipAt(Math.Min(_meta.PlanetsUnlocked, PlanetDefs.All.Length) - 1);
+        RestoreShipState();
+        _sfx.Master = VolumeSteps[Math.Clamp(_meta.VolumeStep, 0, VolumeSteps.Length - 1)];
         // DM_AUTOSTART=<planet-id|resume> skips the space screen and jumps straight into a run
         // (or resumes the suspend save) — keeps DM_AUTOSHOT-driven gameplay verification
         // working without menu input.
