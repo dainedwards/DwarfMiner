@@ -93,7 +93,8 @@
 > skips the space screen (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons); `DM_UPGRADES=1`
 > opens the mothership foundry at boot; `DM_SURVEY=1` opens the system survey at boot;
-> `DM_DESCEND=1` forces the rover descent under DM_AUTOSTART.
+> `DM_DESCEND=1` forces the rover descent under DM_AUTOSTART; `DM_ORBIT=<planet-id>` boots
+> straight into the parking orbit.
 
 Current state: circular polar planet with a Noita-style cell sim (water/lava/dust), structural
 physics with collapses, a Titan boss, cave/surface/sky fauna, a 30+ recipe crafting tree, three
