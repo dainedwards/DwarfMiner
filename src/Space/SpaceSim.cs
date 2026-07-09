@@ -191,19 +191,23 @@ public sealed class SpaceSim
             if (radial < 0f) ShipVel -= outward * (radial * 1.6f);
         }
 
-        // Planets are solid: skim along the disc instead of flying through it, so hovering
-        // at the landing prompt doesn't drift you inside the artwork.
-        foreach (var p in Planets)
+        // Planets are open sky now — flying into one is how you enter its atmosphere. The
+        // exception is the shard-locked Rift, whose storm wall shoves the ship back out.
+        if (RiftLocked)
         {
-            var d = ShipPos - p.Pos;
-            var dist = d.Length();
-            var min = p.BodyRadius + 16f;
-            if (dist < min && dist > 0.5f)
+            foreach (var p in Planets)
             {
-                var outward = d / dist;
-                ShipPos = p.Pos + outward * min;
-                var radial = Vector2.Dot(ShipVel, outward);
-                if (radial < 0f) ShipVel -= outward * radial;
+                if (p.Def.Id != "rift") continue;
+                var d = ShipPos - p.Pos;
+                var dist = d.Length();
+                var min = p.BodyRadius + 16f;
+                if (dist < min && dist > 0.5f)
+                {
+                    var outward = d / dist;
+                    ShipPos = p.Pos + outward * min;
+                    var radial = Vector2.Dot(ShipVel, outward);
+                    if (radial < 0f) ShipVel -= outward * (radial * 1.4f);
+                }
             }
         }
     }
