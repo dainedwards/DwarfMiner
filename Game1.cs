@@ -1032,6 +1032,10 @@ public sealed partial class DwarfMinerGame : Game
         // Apply shake decay to camera.
         _run.Shake = MathF.Max(0, _run.Shake - dt * 1.4f);
 
+        // The mothership keeps sailing its orbit while you're on the ground — glance up (or
+        // follow the HUD arrow) to see where the rendezvous will be.
+        _run.MothershipAngle += Session.StationDriftRate * dt;
+
         _prevKeys = keys;
         _prevMouse = mouse;
         base.Update(gameTime);
