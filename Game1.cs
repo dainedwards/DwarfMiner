@@ -1431,9 +1431,9 @@ public sealed partial class DwarfMinerGame : Game
         // hanging vines) advances with the game time rather than the frame index.
         _renderer.Time = (float)gameTime.TotalGameTime.TotalSeconds;
 
-        if (_screen == GameScreen.Overworld)
+        if (_screen == GameScreen.Space)
         {
-            DrawOverworld();
+            DrawSpace();
             if (_screenshotPending)
             {
                 _screenshotPending = false;
