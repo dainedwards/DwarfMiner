@@ -866,6 +866,39 @@ public static class SimTest
         Check("space: hull plating raises max hull",
             new Space.SpaceSim { HullTier = 2 }.HullMax == 7
             && new Space.SpaceSim().HullMax == 5);
+
+        // Autocannon III fires a twin spread; lower tiers a single bolt.
+        var twin = new Space.SpaceSim { AsteroidTarget = 0, GunTier = 3 };
+        twin.ShipPos = new Vector2(0f, -30000f);
+        twin.TryFire();
+        Check("space: autocannon III fires twin bolts", twin.Shots.Count == 2,
+            $"{twin.Shots.Count} bolts");
+
+        // Ion Engines III outrun tier 2 and sip even less.
+        var t2 = new Space.SpaceSim { AsteroidTarget = 0, EngineTier = 2 };
+        var t3 = new Space.SpaceSim { AsteroidTarget = 0, EngineTier = 3 };
+        t2.ShipPos = t3.ShipPos = new Vector2(0f, -30000f);
+        var t0pos = t2.ShipPos;
+        for (var i = 0; i < 120; i++) { t2.Update(dt, 0f, true, false); t3.Update(dt, 0f, true, false); }
+        Check("space: ion engines III outrun tier 2",
+            (t3.ShipPos - t0pos).Length() > (t2.ShipPos - t0pos).Length() * 1.15f);
+        Check("space: ion engines III burn least", t3.FuelUsed < t2.FuelUsed);
+
+        // The deflector shield eats the first impact (no hull loss), then the hull pays
+        // while it recharges.
+        var sh = new Space.SpaceSim { AsteroidTarget = 0, HasShield = true };
+        sh.ShipPos = new Vector2(0f, -30000f);
+        sh.ShipVel = Vector2.Zero;
+        sh.SpawnAsteroid(sh.ShipPos + new Vector2(120f, 0f), new Vector2(-300f, 0f), 20f);
+        for (var i = 0; i < 90; i++) sh.Update(dt, 0f, false, false);
+        Check("space: shield eats the first impact", sh.Hull == sh.HullMax && sh.ShieldCooldown > 0f,
+            $"hull {sh.Hull} cd {sh.ShieldCooldown:0.0}");
+        sh.ShipVel = Vector2.Zero;
+        sh.HitTimer = 0f;
+        sh.SpawnAsteroid(sh.ShipPos + new Vector2(120f, 0f), new Vector2(-300f, 0f), 20f);
+        for (var i = 0; i < 90; i++) sh.Update(dt, 0f, false, false);
+        Check("space: recharging shield lets the hull pay", sh.Hull == sh.HullMax - 1,
+            $"hull {sh.Hull}");
     }
 
     /// <summary>The upgrade foundry economy: affordability gates, souls + cargo deducted,
