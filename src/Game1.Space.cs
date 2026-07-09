@@ -26,6 +26,42 @@ public sealed partial class DwarfMinerGame
     private Task<Session>? _prefetchTask;
     private string? _prefetchId;
 
+    /// <summary>Disc previews rasterized from each planet's survey world, so the system
+    /// view shows real terrain — mountain silhouettes, lakes, lava — not a flat disc.
+    /// Worlds generate on a background task at boot; textures build lazily on the main
+    /// thread once their world is ready.</summary>
+    private readonly Dictionary<string, Texture2D> _planetPreview = new();
+    private const int PreviewSize = 200;
+
+    /// <summary>Rasterize a planet's survey world into a disc texture: each pixel samples
+    /// the tile at the matching polar coordinate. Sky above the surface stays transparent
+    /// (real mountain silhouettes on the limb); sky inside the crust (caves) reads as dark
+    /// rock so the disc doesn't look moth-eaten.</summary>
+    private Texture2D BuildPlanetPreview(Planet world)
+    {
+        var data = new Color[PreviewSize * PreviewSize];
+        var half = PreviewSize / 2f;
+        var worldRadius = world.Radius * Planet.TileSize;
+        var cave = new Color(24, 21, 26);
+        for (var py = 0; py < PreviewSize; py++)
+            for (var px = 0; px < PreviewSize; px++)
+            {
+                var dx = (px + 0.5f - half) / half;
+                var dy = (py + 0.5f - half) / half;
+                var rr = MathF.Sqrt(dx * dx + dy * dy);
+                if (rr > 1f) continue;
+                var pos = world.Center + new Vector2(dx, dy) * worldRadius;
+                var (tx, ty) = world.WorldToTile(pos);
+                var kind = world.Get(tx, ty);
+                data[py * PreviewSize + px] = kind == TileKind.Sky
+                    ? (rr > 0.80f ? Color.Transparent : cave)
+                    : Tiles.BaseColor(kind);
+            }
+        var tex = new Texture2D(GraphicsDevice, PreviewSize, PreviewSize);
+        tex.SetData(data);
+        return tex;
+    }
+
     /// <summary>Claim a prefetched Session for this planet, waiting out any remaining build
     /// time (still faster than restarting). Null when nothing (or the wrong world) was
     /// prefetched — the caller builds synchronously.</summary>
