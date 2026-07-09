@@ -1733,7 +1733,8 @@ public sealed partial class DwarfMinerGame : Game
         // Boss — a distinct procedural skeleton per variant (upright Godzilla, angular Mecha,
         // legless Sandworm, big-armed Kong) plus the egg / burrow mound, all in TitanRenderer.
         // Culled off-screen: the biggest bodies span ~300 px.
-        var titanOnScreen = (_run.Titan.Position - _camera.Target).LengthSquared() < 400f * 400f;
+        var titanOnScreen = _run.Titan.Health > 0
+            && (_run.Titan.Position - _camera.Target).LengthSquared() < 400f * 400f;
         if (titanOnScreen)
             TitanRenderer.Draw(_renderer, _run.Titan, _run.Planet, _run.Player.Position, _renderer.Time);
 
