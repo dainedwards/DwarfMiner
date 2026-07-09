@@ -2648,11 +2648,11 @@ public sealed partial class DwarfMinerGame : Game
         else if (!_run.Titan.Hatched)
         {
             var secs = MathF.Max(0f, _run.Titan.EggTimer);
-            titanStatus = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} EGG  HATCH {(int)(secs / 60):0}:{(int)(secs % 60):00}  (ATTACK TO HATCH: {(int)_run.Titan.EggHealth} HP)";
+            titanStatus = $"{TitanName(_run.Titan.Kind).ToUpperInvariant()} EGG  HATCH {(int)(secs / 60):0}:{(int)(secs % 60):00}  (ATTACK TO HATCH: {(int)_run.Titan.EggHealth} HP)";
         }
         else
         {
-            titanStatus = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} HP {(int)_run.Titan.Health}/{(int)_run.Titan.MaxHealth}";
+            titanStatus = $"{TitanName(_run.Titan.Kind).ToUpperInvariant()} HP {(int)_run.Titan.Health}/{(int)_run.Titan.MaxHealth}";
         }
         var status = $"{_run.Def.Name.ToUpperInvariant()}   DEPTH {depth}   SHIP: {ship}   {titanStatus}\n" +
                      $"META: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
