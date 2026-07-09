@@ -1077,8 +1077,9 @@ public sealed class TitanLeg
 /// <summary>Ranged attack fired by a boss at the player. Self-contained like
 /// <see cref="FallingBoulder"/> (checks player contact itself) so it never tangles with the
 /// player-projectile Combat sweep. Flame is a short-lived fireball from Godzilla's breath;
-/// Laser is a fast bolt from the Mecha's mouth.</summary>
-public enum TitanShotKind { Flame, Laser }
+/// Laser is a fast bolt from the Mecha's mouth; Acid is Otachi's lofted glob that arcs under
+/// gravity and bursts into live acid cells; Spike is a straight bolt from Slattern's tail fan.</summary>
+public enum TitanShotKind { Flame, Laser, Acid, Spike }
 
 public sealed class TitanProjectile
 {
