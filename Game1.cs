@@ -259,7 +259,7 @@ public sealed partial class DwarfMinerGame : Game
         // The space screen drives Zoom itself every frame; remember the in-run zoom (incl. any
         // DM_ZOOM override) so landing on a planet restores it.
         _playZoom = _camera.Zoom;
-        _rocketTex = BuildRocketTexture();
+        _mothershipTex = BuildMothershipTexture();
         // No run yet when the game boots to space; StartNewRun snaps on planet entry.
         if (_run is not null) _camera.SnapTo(_run.Player.Position, 0f);
         else _camera.SnapTo(_space.ShipPos, 0f);
