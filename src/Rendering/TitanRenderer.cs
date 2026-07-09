@@ -1111,6 +1111,10 @@ public static class TitanRenderer
         TitanKind.Leatherback => (new Color(52, 68, 74), new Color(84, 78, 106), new Color(90, 160, 255), new Color(160, 220, 255)),
         TitanKind.Raiju       => (new Color(84, 104, 134), new Color(140, 116, 190), new Color(150, 220, 255), new Color(220, 245, 255)),
         TitanKind.Slattern    => (new Color(94, 58, 44), new Color(150, 66, 38), new Color(255, 150, 50), new Color(255, 200, 80)),
+        // The flyers: charcoal hide over ember innards for the lava bomber, sickly olive
+        // over acid-lit membranes for its corrosive twin.
+        TitanKind.Pyrodactyl  => (new Color(64, 46, 44), new Color(120, 52, 36), new Color(255, 140, 40), new Color(255, 190, 80)),
+        TitanKind.Vitriodactyl => (new Color(56, 68, 44), new Color(94, 112, 40), new Color(150, 230, 60), new Color(210, 255, 110)),
         _                     => (new Color(52, 62, 56), new Color(120, 60, 50), new Color(80, 150, 230), new Color(255, 90, 60)),
     };
 
