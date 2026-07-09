@@ -16,7 +16,10 @@ namespace DwarfMiner.World;
 ///     Support) or the world edge within budget, the *whole region* crumbles into the cell
 ///     sim as dust tagged with each tile's kind — it rains down as granular debris under
 ///     the velocity sim and pays out the tile's drop on pickup, same as loose ground.
-///     Anchored kinds never move.
+///     Anchored kinds never move. The size budget only saves regions that touch the crust
+///     (underground, the backdrop wall is inferred to carry big spans); fully airborne
+///     regions — an undercut mountain, a sky-built platform — have nothing behind them
+///     and collapse no matter how big.
 ///
 /// Driven by a dirty queue so we only revisit recently disturbed tiles. Within a single
 /// settle pass, anchored regions are cached so repeated floods short-circuit.
