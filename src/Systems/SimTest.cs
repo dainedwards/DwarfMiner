@@ -584,7 +584,9 @@ public static class SimTest
             verdant.GasSeeds.Count == 0 && verdant.AcidSeeds.Count == 0);
     }
 
-    /// <summary>Acid over a granite tile must leave it intact — hard rock resists corrosion.</summary>
+    /// <summary>The buffed corrosion rule: acid melts through most materials — granite
+    /// included — but obsidian resists, keeping the deep crust as the hard bound so a
+    /// spill can't chew an open tunnel all the way to the core.</summary>
     private static bool DissolveHardRockStays()
     {
         var planet = WorldGen.Generate(101);
@@ -593,8 +595,20 @@ public static class SimTest
         planet.Set(r, t, TileKind.Granite);
         planet.Set(r + 1, t, TileKind.Sky);
         cells.FillTile(r + 1, t, Material.Acid);
-        for (var i = 0; i < 1500; i++) cells.Update(1f / 60f);
-        return planet.Get(r, t) == TileKind.Granite;
+        var graniteMelted = false;
+        for (var i = 0; i < 3000 && !graniteMelted; i++)
+        {
+            cells.Update(1f / 60f);
+            if (planet.Get(r, t) != TileKind.Granite) graniteMelted = true;
+        }
+
+        var planet2 = WorldGen.Generate(102);
+        var cells2 = new Cells(planet2);
+        planet2.Set(r, t, TileKind.Obsidian);
+        planet2.Set(r + 1, t, TileKind.Sky);
+        cells2.FillTile(r + 1, t, Material.Acid);
+        for (var i = 0; i < 1500; i++) cells2.Update(1f / 60f);
+        return graniteMelted && planet2.Get(r, t) == TileKind.Obsidian;
     }
 
     private static int CountMatInTile(Cells cells, int tx, int ty, Material m)
