@@ -158,11 +158,22 @@ public static class WorldGen
                     continue;
                 }
 
-                // Mountain body — solid stone above the planet's natural surface.
+                // Mountain body — rock above the planet's natural surface: a stone shell
+                // over noise-veined granite, and a snow cap on the outer skin above the
+                // snow line wherever the world is wet enough to hold one (frost peaks are
+                // white all the way down; hot/dead worlds stay bare crag).
                 if (r > surfaceR)
                 {
+                    var mpos = planet.TileToWorld(r, t);
+                    var body = SampleNoise(pocketNoise,
+                        (mpos.X - planet.Center.X) / Planet.TileSize * 0.11f,
+                        (mpos.Y - planet.Center.Y) / Planet.TileSize * 0.11f);
+                    var mk = body > 0.62f ? TileKind.Granite : TileKind.Stone;
+                    var snowy = def.SurfaceTile == TileKind.Snow
+                        || (def.HasWater && r - surfaceR > 20f * def.MountainHeightScale);
+                    if (snowy && r > peakR - 2.5f) mk = TileKind.Snow;
                     planet.SetWall(r, t, TileKind.Stone);
-                    planet.Set(r, t, TileKind.Stone);
+                    planet.Set(r, t, mk);
                     continue;
                 }
 
