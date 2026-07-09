@@ -477,64 +477,22 @@ public sealed class Titan
         SpecialState = LaserChargeWindup;
     }
 
-    /// <summary>Shai-Hulud, the Dune sandworm: it lives underground, tunnelling toward the
-    /// player (a dirt mound tracks it), then BREACHES — erupting straight up out of the sand
-    /// mouth-first with a quake + shockwave — before diving back under to hunt again. It only
-    /// surfaces to breach, so the fight is a rhythm of watching the mound and dodging the
-    /// eruption. The breach reuses <see cref="Leaping"/> to arc freely (spring suppressed).</summary>
+    /// <summary>Shai-Hulud, the Dune sandworm. It no longer burrows or breaches — it simply
+    /// slithers slowly through the planet toward the player, weaving up out of the ground and back
+    /// under (the serpentine locomotion lives in <see cref="Update"/>). This just adds the bite:
+    /// when the maw catches up to within snapping range it snaps shut — a ground shock plus a
+    /// knockback pulse (<see cref="PendingShockwave"/>) — paced by the cooldown so it can't
+    /// chain-chomp.</summary>
     private void TickSandworm(float dt, Planet planet, Physics physics, Vector2 playerPos)
     {
-        if (Breaching)
-        {
-            SpecialState -= dt;
-            // Crash back down after a beat of airtime, then dive under to hunt again.
-            var airborneLongEnough = SpecialState < BreachAirtime - 0.6f;
-            if ((Grounded && airborneLongEnough) || SpecialState <= 0f)
-            {
-                Breaching = false;
-                Leaping = false;
-                physics.Earthquake(Position, 130f, 2);
-                if (IsAggro) { Submerged = true; SpecialState = BurrowTime; }
-                else SpecialCooldown = 5f;
-            }
-            return;
-        }
-
-        if (Submerged)
-        {
-            SpecialState -= dt;
-            var toPlayer = playerPos - Position;
-            if (toPlayer.LengthSquared() > 1f)
-                Position += Vector2.Normalize(toPlayer) * 340f * dt;   // burrow straight at them
-            if (SpecialState <= 0f || toPlayer.Length() < 130f)
-                Breach(planet, physics, playerPos);
-            return;
-        }
-
-        // Surfaced and idle — Shai-Hulud doesn't lounge on the sand; it dives under to hunt.
         if (!IsAggro || SpecialCooldown > 0f) return;
-        if ((playerPos - Position).Length() > 1000f) return;
-        Submerged = true;
-        SpecialState = BurrowTime;
-    }
-    private const float BurrowTime = 2.0f;
-    private const float BreachAirtime = 1.7f;
-
-    /// <summary>Erupt straight up out of the sand beneath the player, maw first.</summary>
-    private void Breach(Planet planet, Physics physics, Vector2 playerPos)
-    {
-        var rel = playerPos - planet.Center;
-        var ang = MathF.Atan2(rel.Y, rel.X);
-        var up = planet.UpAt(playerPos);
-        // Start just under the surface below the player, then launch upward.
-        Position = FindSurfaceSpawn(planet, ang) - up * (BodyHover - 20f);
-        Velocity = up * 640f;
-        Submerged = false;
-        Breaching = true;
-        Leaping = true;   // suppress the ground-spring so the eruption arcs
-        SpecialState = BreachAirtime;
-        physics.Earthquake(Position, 190f, 3);
-        PendingShockwave = (Position, 170f, 34f);
+        var up = planet.UpAt(Position);
+        var right = new Vector2(-up.Y, up.X);
+        var maw = Position + right * (Facing * 30f);
+        if ((playerPos - maw).Length() > 130f) return;
+        physics.Earthquake(Position, 90f, 2);
+        PendingShockwave = (maw, 120f, 24f);
+        SpecialCooldown = 3.5f;
     }
 
     /// <summary>Kong: leap toward the player, then slam down with a heavy quake + shockwave on
