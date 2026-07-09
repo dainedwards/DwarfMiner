@@ -479,6 +479,13 @@ public static class SimTest
                     Check("titan: Slattern flings tail-spike barrages", sawShot);
                     Check("titan: Slattern's sonic pulse lands (shockwave)", sawShock);
                     break;
+                case TitanKind.Pyrodactyl:
+                    Check("titan: Pyrodactyl flies legless", titan.Legs.Length == 0);
+                    Check("titan: Pyrodactyl rains lava on a bombing run", sawShot);
+                    break;
+                case TitanKind.Vitriodactyl:
+                    Check("titan: Vitriodactyl rains acid on a bombing run", sawShot);
+                    break;
             }
         }
 
