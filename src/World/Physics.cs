@@ -281,10 +281,16 @@ public sealed class Physics
             }
             _floodRegion.Add(idx);
             _regionBudgetSum += BudgetFor(k);
+            if (x <= crustRing) _regionTouchesCrust = true;
             // Compare region size against the average per-material budget of its members
             // (count > sum/count, kept in integers as count² > sum) — a mixed seam of stone
-            // and ore gets a threshold between the two, weighted by composition.
-            if (_floodRegion.Count * _floodRegion.Count > _regionBudgetSum)
+            // and ore gets a threshold between the two, weighted by composition. The valve
+            // only fires for regions that touch the crust: underground there's a backdrop
+            // wall inferred to carry big spans, but a rock mass floating in open sky has
+            // nothing behind it, so the flood keeps going (bounded by SkyRegionCap) and an
+            // unsupported result condemns the whole thing regardless of size.
+            if (_floodRegion.Count * _floodRegion.Count > _regionBudgetSum
+                && (_regionTouchesCrust || _floodRegion.Count > SkyRegionCap))
             {
                 // Region too big for its material strength — treat as supported.
                 foreach (var v in _floodVisited) _anchoredCache.Add(v);
