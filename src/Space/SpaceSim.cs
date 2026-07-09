@@ -73,6 +73,9 @@ public sealed class SpaceSim
     /// <summary>Set when a collision drops the hull to zero; Game1 consumes it to run the
     /// emergency-dock sequence (reposition at the nearest world, restore hull).</summary>
     public bool HullBreached;
+    /// <summary>Where the last asteroid died this tick (shot or rammed) — Game1 consumes it
+    /// for the positional shatter sound.</summary>
+    public Vector2? LastRockShattered;
     /// <summary>Ship tiers, fed from MetaSave upgrades by Game1: 2 = Autocannon II /
     /// Ion Engines II / Hull Plating.</summary>
     public int GunTier = 1;
