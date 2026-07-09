@@ -241,6 +241,17 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   **LEFT/RIGHT orbit, ENTER launch lander, SPACE leave planet**; loading hitch fixes —
   prefetch kicks off at 2200 px (build always beats a full-throttle run-in) and disc
   previews rasterize at most one per frame.
+  **Phase 8c riders (2026-07-09):** descent zoom is altitude-driven (wide 0.72 while high —
+  you can see where you're steering — closing to play zoom only near the ground);
+  touchdown gouges a **small crater** (meteor rules: soft tiles only) and leaves the
+  **broken rover as wreckage** (`Session.RoverWreck` — listing scorched shell, sheared
+  skid, smoke wisp; cosmetic, not in the run save); the **parking orbit rose to 700 px**
+  and the station **drifts around the planet** (`Session.StationDriftRate` 0.0035 rad/s)
+  from the moment the rover drops — surface, descent, and ascent all advance it, so the
+  return rocket is a true moving rendezvous (the ascent glide tracks it); a cyan **SHIP
+  edge-arrow** points to the station whenever it's out of frame in the planet view; the
+  solar map labels every planet with **name + range (KM = px/10)** and draws **accent-
+  colored edge arrows with name + range** for off-screen worlds.
 
 **Upgrade ideas still unbuilt** (future foundry slots): further pickaxe tiers, armor suit,
 cargo hold capacity, scanner (ore/titan intel on the HUD), sentry capacity,
