@@ -53,7 +53,41 @@ public static class Upgrades
         new("drill", "Drill Rig",
             "Rovers deploy with a +1 pickaxe tier",
             Souls: 1, Mats: new[] { ("pure_platinum", 2), ("pure_iron", 3) }, SoulKind: "Sandworm"),
+
+        // ── Tier II of the dwarf/ship lines + the wishlist batch (phase 6) ──
+
+        new("jetpack2", "Jetpack II",
+            "Double the jetpack's charge and a stronger climb",
+            Souls: 1, Mats: new[] { ("ruby", 3) }, SoulKind: "Kong", Requires: "jetpack"),
+
+        new("gun3", "Autocannon III",
+            "Twin-barrel spread, same blistering rate",
+            Souls: 2, Mats: new[] { ("pure_iron", 4), ("crystal", 2) }, SoulKind: "Mecha", Requires: "gun2"),
+
+        new("engine3", "Ion Engines III",
+            "75 percent over stock thrust and the leanest burn",
+            Souls: 2, Mats: new[] { ("pure_platinum", 3), ("diamond", 2) }, SoulKind: "Godzilla", Requires: "engine2"),
+
+        new("shield", "Deflector Shield",
+            "Absorbs one impact, recharges in 8 seconds",
+            Souls: 2, Mats: new[] { ("diamond", 3) }, SoulKind: "Mecha"),
+
+        new("magnet", "Ore Magnet",
+            "Loose ore leaps to your pack from four times the reach",
+            Souls: 1, Mats: new[] { ("pure_gold", 2), ("crystal", 2) }, SoulKind: "Kong"),
+
+        new("dampeners", "Pod Dampeners",
+            "Emergency drop pods land soft - no more suit damage",
+            Souls: 1, Mats: new[] { ("pure_silver", 2), ("sapphire", 2) }, SoulKind: "Sandworm"),
+
+        new("armory", "Rover Armory",
+            "Every rover deploys with a pistol and 90 rounds",
+            Souls: 1, Mats: new[] { ("pure_iron", 4), ("pure_gold", 2) }, SoulKind: "Sandworm"),
     };
+
+    /// <summary>True when a tiered line's prerequisite hasn't been installed yet.</summary>
+    public static bool Locked(MetaSave meta, UpgradeDef def)
+        => def.Requires is { } req && !Owned(meta, req);
 
     public static bool Owned(MetaSave meta, string id) => meta.ShipUpgrades.Contains(id);
 
