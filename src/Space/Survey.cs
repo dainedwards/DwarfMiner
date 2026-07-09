@@ -46,6 +46,7 @@ public static class Survey
         (TileKind.SilverOre, "SILVER"), (TileKind.PlatinumOre, "PLATINUM"),
         (TileKind.Crystal, "CRYSTAL"), (TileKind.Ruby, "RUBY"), (TileKind.Sapphire, "SAPPHIRE"),
         (TileKind.Diamond, "DIAMOND"), (TileKind.FuelOre, "FUEL"),
+        (TileKind.Emerald, "EMERALD"), (TileKind.Voidstone, "VOIDSTONE"),
     };
 
     /// <summary>Top ore deposits on this world, biggest first (at most <paramref name="top"/>
