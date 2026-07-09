@@ -539,21 +539,18 @@ public sealed partial class DwarfMinerGame
             }
         }
 
-        // Landing prompt for the planet under the ship. Roverless drops still work but warn;
-        // the Rift shows its shard gate instead.
-        if (_space.LandingCandidate() is { } cand)
+        // Approach readout — informational only: entry happens by flying in, not a keypress.
+        var (approaching, approachDist) = _space.NearestPlanet();
+        if (approaching is not null && approachDist < 650f)
         {
-            var riftLocked = cand.Def.Id == "rift" && _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded;
-            var prompt = riftLocked
-                ? $"THE RIFT STORMS REPEL YOU - {PlanetDefs.WarpShardsNeeded - _meta.CoreShards.Count} MORE CORE SHARDS NEEDED"
-                : _meta.Rovers > 0
-                    ? $"ENTER  DEPLOY ROVER TO {cand.Def.Name.ToUpperInvariant()} ({_meta.Rovers} LEFT)"
-                    : $"ENTER  EMERGENCY DROP POD TO {cand.Def.Name.ToUpperInvariant()} (NO ROVERS - HALF HEALTH!)";
-            var col = riftLocked ? new Color(255, 110, 90)
-                : _meta.Rovers > 0 ? new Color(255, 225, 140) : new Color(230, 150, 110);
-            _renderer.DrawText(prompt,
-                new Vector2((VirtualWidth - _renderer.MeasureText(prompt, 2)) / 2f, VirtualHeight - 140), col, 2);
-            var line2 = $"{cand.Def.Tagline.ToUpperInvariant()}   NAV CORE: {cand.Def.ShipOreCount} {Tiles.ResourceLabel(cand.Def.ShipOre)}";
+            var riftLocked = approaching.Def.Id == "rift" && _space.RiftLocked;
+            var line1 = riftLocked
+                ? "STORM WALL AHEAD - THE RIFT IS WARP-LOCKED"
+                : $"ENTERING {approaching.Def.Name.ToUpperInvariant()} APPROACH - FLY IN TO MAKE ORBIT";
+            _renderer.DrawText(line1,
+                new Vector2((VirtualWidth - _renderer.MeasureText(line1, 2)) / 2f, VirtualHeight - 140),
+                riftLocked ? new Color(255, 110, 90) : new Color(255, 225, 140), 2);
+            var line2 = $"{approaching.Def.Tagline.ToUpperInvariant()}   NAV CORE: {approaching.Def.ShipOreCount} {Tiles.ResourceLabel(approaching.Def.ShipOre)}";
             _renderer.DrawText(line2,
                 new Vector2((VirtualWidth - _renderer.MeasureText(line2)) / 2f, VirtualHeight - 112),
                 new Color(190, 195, 215));
