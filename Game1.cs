@@ -60,6 +60,12 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>Fuel units the ship must hold before it can lift off.</summary>
     public const int FuelToLaunch = 12;
 
+    /// <summary>Rover descent state. While <see cref="_landing"/> is set, normal play is
+    /// suspended: the pod sinks along local gravity with A/D lateral steering (semi-controlled)
+    /// until it touches the surface, where gameplay begins.</summary>
+    private bool _landing;
+    private Vector2 _landerPos;
+
     /// <summary>Liftoff cinematic state. While <see cref="_launching"/> is set, normal play is
     /// suspended: the rocket climbs along <see cref="_launchUp"/> under <see cref="_launchVel"/>,
     /// trailing exhaust, until it clears the sky and the run ends.</summary>
