@@ -127,9 +127,8 @@ public static class TitanRenderer
         // Tail — verlet chain, thick at the root, dorsal ridge running along it.
         DrawSpineChain(r, t, f, 30f, 7f, ridge: true);
 
-        // Hind legs (both drawn; they read as the stance behind/around the torso).
-        foreach (var leg in t.Legs)
-            DrawLeg(r, t, f, leg, 26f, 20f);
+        // Hind legs — far leg shaded behind the near one.
+        DrawLegs(r, t, f, 26f, 20f);
 
         // Torso — a barrel rising from the pelvis (tp) to the shoulders, leaning into Facing.
         var lean = f.Right * (f.Face * 14f);
