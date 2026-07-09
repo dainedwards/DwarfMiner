@@ -20,9 +20,10 @@ public sealed partial class DwarfMinerGame
     private Texture2D _mothershipTex = null!;
 
     /// <summary>Foundry overlay state. DM_UPGRADES=1 opens it at boot so tooling can
-    /// screenshot the menu without input access.</summary>
+    /// screenshot the menu without input access; DM_SURVEY=1 likewise for the survey.</summary>
     private bool _upgradesOpen = Environment.GetEnvironmentVariable("DM_UPGRADES") is { Length: > 0 };
     private int _upgradeCursor;
+    private bool _surveyOpen = Environment.GetEnvironmentVariable("DM_SURVEY") is { Length: > 0 };
 
     /// <summary>Muzzle-flash timer for the autocannon.</summary>
     private float _muzzle;
