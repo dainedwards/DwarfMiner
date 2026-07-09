@@ -8,10 +8,11 @@ namespace DwarfMiner.Entities;
 /// <summary>
 /// Kaiju-scale quadruped boss. The body has a small physics-collision footprint; legs are
 /// procedural — each one ray-marches the terrain for a foot anchor and steps when the body
-/// drifts too far from it. Hip-to-foot distance is unconstrained, so legs visibly stretch
-/// over mountain peaks and compress on flat ground. The body is then lifted by its planted
-/// feet (spring force toward avg-foot + hover offset) so it can walk over obstacles its
-/// collision footprint alone couldn't clear. Each foot strike damages the tile underneath
+/// drifts too far from it. Hip-to-foot distance is capped at <see cref="LegMaxReach"/> (the
+/// two drawn leg bones near-straight): anchors are clamped to reach and a planted leg that
+/// gets overstretched steps early, so legs bend and stride instead of rubber-banding over
+/// terrain. The body is then lifted by its planted feet (spring force toward avg-foot +
+/// hover offset) so it can walk over obstacles its collision footprint alone couldn't clear. Each foot strike damages the tile underneath
 /// via Planet.Mine — soft tiles (dirt/grass/snow) crack visibly and break after a few
 /// stomps; harder tiles only crack cosmetically. Anger rises with player depth, unlocking
 /// stomp earthquakes and ranged boulder hurls.
