@@ -28,7 +28,8 @@ public sealed class Player
     /// jetpack): +50% air ceiling, multiplicative with the craftable air tank.</summary>
     public bool HasO2Recycler;
 
-    public float EffectiveMaxOxygen => HasAirTank ? BaseMaxOxygen * 2f : BaseMaxOxygen;
+    public float EffectiveMaxOxygen =>
+        BaseMaxOxygen * (HasAirTank ? 2f : 1f) * (HasO2Recycler ? 1.5f : 1f);
 
     /// <summary>Pickaxe tier 1..4. Drives base mining power and reach. Replaces the older
     /// <c>PickaxePower</c> int — kept as a tier so future augments can stack on top of a tier
