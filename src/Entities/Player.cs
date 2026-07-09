@@ -747,7 +747,7 @@ public sealed class Toolbelt
     /// (dragging one onto inventory just re-routes to first empty slot instead).</summary>
     public static bool IsPermanent(string id) => id is
         "pickaxe" or "bullets" or "blocks" or
-        "drill" or "hammer" or "cannon" or "core_drill" or
+        "drill" or "hammer" or "mining_laser" or "cannon" or "core_drill" or
         "pistol" or "machine_gun" or "laser" or "laser_cannon" or "rocket_launcher";
 }
 
