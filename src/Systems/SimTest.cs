@@ -956,6 +956,20 @@ public static class SimTest
         Space.Survey.For(ember);
         Check("survey: second read is cached (instant)",
             Environment.TickCount64 - t0 < genMs / 2 + 5, $"first {genMs}ms");
+
+        // The warp world: the def exists, its hellworld terrain generates cleanly, and the
+        // warp gate demands one shard per ordinary planet.
+        var rift = World.PlanetDefs.ById("rift");
+        Check("rift: def registered", rift.Id == "rift");
+        Check("rift: shards needed = every ordinary world",
+            World.PlanetDefs.WarpShardsNeeded == World.PlanetDefs.All.Length - 1);
+        var riftDeposits = Space.Survey.For(rift);
+        Check("rift: hellworld generates + surveys", riftDeposits.Length > 0,
+            string.Join(" ", System.Array.ConvertAll(riftDeposits, d => $"{d.label}:{d.count}")));
+        var sim6 = new Space.SpaceSim { AsteroidTarget = 0 };
+        var last = sim6.Planets[^1];
+        Check("rift: sits far beyond the ordinary orbits",
+            last.Def.Id == "rift" && last.OrbitRadius > sim6.Planets[^2].OrbitRadius * 1.5f);
     }
 
     private static void Check(string name, bool ok, string detail = "")
