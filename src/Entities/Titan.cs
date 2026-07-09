@@ -764,10 +764,11 @@ public sealed class Titan
     private void UpdateTail(float dt, Planet planet, Vector2 up, Vector2 right)
     {
         var worm = Kind == TitanKind.Sandworm;
-        // Anchor node 0. Bipeds: the rump (tail drags behind). Sandworm: the head (body trails it).
+        // Anchor node 0. Bipeds: the lower back, tucked just inside the torso so the tail base is
+        // covered by the body and emerges from the rump seamlessly. Sandworm: the head (body trails).
         var root = worm
             ? Position + right * (Facing * 8f)
-            : Position + right * (Facing * -98f) + up * 18f;
+            : Position + right * (Facing * -46f) + up * 20f;
         TailNodes[0] = root;
         TailPrev[0] = root;
 
