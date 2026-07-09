@@ -19,6 +19,9 @@ public static class AmbientDirector
     {
         public bool Surge;
         public Vector2 SurgePos;
+        public bool FlareWarned;
+        public bool FlareStruck;
+        public bool BlizzardStarted;
     }
 
     public static Result Update(float dt, Session run, Particles particles)
