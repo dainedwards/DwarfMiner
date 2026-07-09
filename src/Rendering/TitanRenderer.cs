@@ -954,9 +954,12 @@ public static class TitanRenderer
 
     private static Vector2 HeadPos(Titan t, Frame f) => t.Kind switch
     {
-        TitanKind.Sandworm => f.Tp + f.Up * 96f,
-        TitanKind.Kong  => f.Tp + f.Up * 92f + f.Right * (f.Face * 8f),
-        _               => f.Tp + f.Up * 110f + f.Right * (f.Face * 60f),
+        TitanKind.Sandworm    => f.Tp + f.Up * 96f,
+        TitanKind.Kong        => f.Tp + f.Up * 92f + f.Right * (f.Face * 8f),
+        TitanKind.Leatherback => f.Tp + f.Up * 88f + f.Right * (f.Face * 14f),
+        TitanKind.Raiju       => f.Tp + f.Up * 56f + f.Right * (f.Face * 78f),
+        TitanKind.Slattern    => f.Tp + f.Up * 136f + f.Right * (f.Face * 32f),
+        _                     => f.Tp + f.Up * 110f + f.Right * (f.Face * 60f),
     };
 
     // Kept numerically identical to Titan.Mouth() so ranged attacks spawn/aim from exactly where
