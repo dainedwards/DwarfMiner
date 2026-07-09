@@ -316,9 +316,9 @@ public sealed partial class DwarfMinerGame : Game
             _autoShotAt += 5f;
         }
 
-        if (_screen == GameScreen.Overworld)
+        if (_screen == GameScreen.Space)
         {
-            UpdateOverworld(keys, mouse);
+            UpdateSpace(keys, dt);
             _prevKeys = keys; _prevMouse = mouse;
             base.Update(gameTime);
             return;
@@ -326,8 +326,8 @@ public sealed partial class DwarfMinerGame : Game
 
         if (_screen == GameScreen.GameOver)
         {
-            // R returns to the star map — a fresh attempt (or the next planet) is picked there.
-            if (Pressed(keys, _prevKeys, Keys.R)) _screen = GameScreen.Overworld;
+            // R returns you to your ship, parked at the world the run ended on.
+            if (Pressed(keys, _prevKeys, Keys.R)) EnterSpace(PlanetDefs.IndexOf(_run.Def));
             _prevKeys = keys; _prevMouse = mouse;
             base.Update(gameTime);
             return;
