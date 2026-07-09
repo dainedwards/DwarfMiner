@@ -395,6 +395,18 @@ public sealed class Titan
             var targetH = Vector2.Dot(surface + up * weave - Position, up);
             vNormal = MathHelper.Clamp(targetH * 3.2f, -170f, 170f);
         }
+        else if (Flyer)
+        {
+            // Winged flight: hold a cruising band above the terrain, bobbing on the wing
+            // beat. A bombing run sinks to strafing height so the rain lands tight; the
+            // gravity applied above is cancelled by the band-holding spring, so the flyer
+            // never touches down (and terrain rising underneath just lifts the band).
+            var surface = SurfacePoint(planet, up);
+            var bob = MathF.Sin(Pulse * 0.9f) * 24f;
+            var cruise = (Bombing ? 130f : 200f) + bob;
+            var targetH = Vector2.Dot(surface + up * cruise - Position, up);
+            vNormal = MathHelper.Clamp(targetH * 2.6f, -230f, 230f);
+        }
         else
         {
             planted = AvgPlantedFoot(out hasPlanted);
