@@ -63,10 +63,14 @@ public sealed class Session
     /// <summary>How far above the planet surface (px) the mothership parks.</summary>
     public const float OrbitAltitude = 480f;
 
+    /// <summary>Extra height above the parking orbit — set on atmosphere entry and decayed
+    /// by the orbit tick, so arriving reads as the ship flying itself down into orbit.</summary>
+    public float OrbitEntryOffset;
+
     /// <summary>The mothership's world position in this planet's coordinate space.</summary>
     public Vector2 StationPos =>
         Planet.Center + new Vector2(MathF.Cos(MothershipAngle), MathF.Sin(MothershipAngle))
-            * (Planet.Radius * World.Planet.TileSize + OrbitAltitude);
+            * (Planet.Radius * World.Planet.TileSize + OrbitAltitude + OrbitEntryOffset);
 
     public Session(PlanetDef def) => Def = def;
 }
