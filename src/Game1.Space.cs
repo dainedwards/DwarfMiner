@@ -394,8 +394,13 @@ public sealed partial class DwarfMinerGame
         _renderer.DrawText(
             $"FUEL {_meta.MotherFuel}{(_meta.MotherFuel > 0 ? "" : " [RESERVE POWER]")}   ROVERS {_meta.Rovers}   SOULS {_meta.TotalSouls()}   CARGO {cargoTotal}",
             new Vector2(24, hullY + 18), fuelCol);
+        var shardCol = _meta.CoreShards.Count >= PlanetDefs.WarpShardsNeeded
+            ? new Color(150, 230, 255) : new Color(150, 155, 175);
+        _renderer.DrawText(
+            $"CORE SHARDS {_meta.CoreShards.Count}/{PlanetDefs.WarpShardsNeeded}{(_meta.CoreShards.Count >= PlanetDefs.WarpShardsNeeded ? "  [WARP READY - PRESS J]" : "")}",
+            new Vector2(24, hullY + 36), shardCol);
 
-        var controls = "A/D TURN   W THRUST   S BRAKE   SPACE FIRE   ENTER LAND   U FOUNDRY   M SURVEY";
+        var controls = "A/D TURN   W THRUST   S BRAKE   SPACE FIRE   ENTER LAND   U FOUNDRY   M SURVEY   J WARP";
         _renderer.DrawText(controls,
             new Vector2((VirtualWidth - _renderer.MeasureText(controls)) / 2f, VirtualHeight - 58),
             new Color(150, 155, 175));
