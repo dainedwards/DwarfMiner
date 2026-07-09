@@ -951,6 +951,36 @@ public sealed partial class DwarfMinerGame : Game
             _run.Shake = MathF.Max(_run.Shake, 0.7f);
             PlayAt("collapse", ambient.SurgePos, 0.9f, pitch: -0.3f);
         }
+        if (ambient.FlareWarned)
+        {
+            _toast = "! SOLAR FLARE INBOUND - GET UNDERGROUND !";
+            _toastTimer = 6.5f;
+            _sfx.Play("creak", 0.9f, pitch: 0.4f);
+        }
+        if (ambient.FlareStruck)
+        {
+            _toast = "SOLAR FLARE - THE SURFACE IS BURNING";
+            _toastTimer = 3.5f;
+            _sfx.Play("explode", 0.7f, pitch: -0.5f);
+        }
+        if (ambient.BlizzardStarted)
+        {
+            _toast = "BLIZZARD - GET OUT OF THE WIND";
+            _toastTimer = 4f;
+            _sfx.Play("creak", 0.8f, pitch: 0.6f);
+        }
+        // Exposure: both disasters punish standing in surface air; underground is safe.
+        var exposed = DepthBelowSurface() < OxygenRules.AirDepth;
+        if (exposed && _run.FlareActive > 0f)
+        {
+            _run.Player.TakeDamage(7f * dt);
+            if (Random.Shared.Next(4) == 0)
+                _particles.EmitDust(_run.Player.Position + new Vector2(
+                    (float)(Random.Shared.NextDouble() - 0.5) * 20f,
+                    (float)(Random.Shared.NextDouble() - 0.5) * 20f), 1.5f);
+        }
+        if (exposed && _run.BlizzardActive > 0f)
+            _run.Player.TakeDamage(2.5f * dt);
         for (var i = _run.Meteors.Count - 1; i >= 0; i--)
         {
             var m = _run.Meteors[i];
