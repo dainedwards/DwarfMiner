@@ -160,8 +160,28 @@ public sealed class Titan
         _planet = planet;
         Kind = kind;
         EggHealth = EggMaxHealth;
-        // Sandworm's spine is its whole body (long, many nodes); the others just drag a tail.
-        (_tailNodeCount, _tailSeg) = kind == TitanKind.Sandworm ? (13, 30f) : (7, 26f);
+        // Per-kind chassis: the kaiju wave trades bulk for speed in both directions —
+        // Raiju is a glass-cannon sprinter, Leatherback a slow tank, Slattern the
+        // category-5 apex (biggest body, deepest health pool, guards the Rift).
+        (Health, MoveSpeed) = kind switch
+        {
+            TitanKind.Knifehead   => (2300f, 62f),
+            TitanKind.Otachi      => (2100f, 60f),
+            TitanKind.Leatherback => (3000f, 46f),
+            TitanKind.Raiju       => (1700f, 96f),
+            TitanKind.Slattern    => (4200f, 62f),
+            _                     => (Health, MoveSpeed),
+        };
+        MaxHealth = Health;
+        if (kind == TitanKind.Slattern) { Radius = 150f; BodyRadius = 70f; }
+        // Sandworm's spine is its whole body (long, many nodes); Slattern drags a long
+        // spiked lash it whips barrages from; the others just drag a tail.
+        (_tailNodeCount, _tailSeg) = kind switch
+        {
+            TitanKind.Sandworm => (13, 30f),
+            TitanKind.Slattern => (10, 32f),
+            _                  => (7, 26f),
+        };
         // Rest the egg near the ground; the hatched boss rises to hover height on its own once
         // its legs plant and the suspension lifts it.
         var hover = FindSurfaceSpawn(planet, startAngle);
