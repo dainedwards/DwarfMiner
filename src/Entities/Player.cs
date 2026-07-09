@@ -256,6 +256,21 @@ public sealed class Player
             const float climbSpeed = 70f;
             vNormal = MoveToward(vNormal, verticalAxis * climbSpeed, 480f * dt);
         }
+
+        // Jetpack: holding jump while airborne thrusts toward a steady rise until the charge
+        // runs dry; the charge refills on the ground. The jump edge itself is still the
+        // ordinary jump (buffer/coyote below), so a hop flows into a burn naturally. Gated
+        // off ladders so climbing doesn't fight the thrust.
+        if (HasJetpack)
+        {
+            if (Grounded) JetCharge = JetChargeMax;
+            else if (jumpHeld && !jumpEdge && !onLadder && JetCharge > 0f)
+            {
+                vNormal = MoveToward(vNormal, JetRiseSpeed, JetAccel * dt);
+                JetCharge -= dt;
+            }
+        }
+
         // Cap fall speed — see MaxFallSpeed comment for why this is essential.
         if (vNormal < -MaxFallSpeed) vNormal = -MaxFallSpeed;
 
