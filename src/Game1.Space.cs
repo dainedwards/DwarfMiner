@@ -169,6 +169,7 @@ public sealed partial class DwarfMinerGame
             }
             var podDrop = _meta.Rovers <= 0;
             if (!podDrop) _meta.Rovers--;
+            CaptureShipState();
             _meta.Save();
             StartNewRun(cand.Def, descend: true);
             if (podDrop)
