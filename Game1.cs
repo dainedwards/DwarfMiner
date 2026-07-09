@@ -2613,10 +2613,19 @@ public sealed partial class DwarfMinerGame : Game
         if (titanOnScreen)
             TitanRenderer.AddLights(_renderer, _run.Titan, _run.Planet, _run.Player.Position, _renderer.Time);
 
-        // Titan shots light their surroundings — flame warm, laser cyan.
+        // Titan shots light their surroundings — flame warm, acid toxic green, spikes dim
+        // bone-glint, laser cyan.
         foreach (var shot in _run.TitanShots)
-            _renderer.AddLight(shot.Position, shot.Kind == TitanShotKind.Flame ? 16f : 18f,
-                shot.Kind == TitanShotKind.Flame ? new Color(255, 150, 50) : new Color(120, 230, 255));
+        {
+            var (lr, lc) = shot.Kind switch
+            {
+                TitanShotKind.Flame => (16f, new Color(255, 150, 50)),
+                TitanShotKind.Acid  => (14f, new Color(140, 230, 60)),
+                TitanShotKind.Spike => (8f, new Color(210, 200, 170)),
+                _                   => (18f, new Color(120, 230, 255)),
+            };
+            _renderer.AddLight(shot.Position, lr, lc);
+        }
 
         // Falling meteors blaze a warm light as they streak in.
         foreach (var m in _run.Meteors)
