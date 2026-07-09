@@ -173,6 +173,12 @@ public sealed partial class DwarfMinerGame : Game
             if (auto == "resume") ResumeRun();
             else StartNewRun(PlanetDefs.ById(auto));
         }
+        // DM_ORBIT=<planet-id> boots straight into the parking orbit — tooling can
+        // screenshot the orbit state without flying there.
+        else if (Environment.GetEnvironmentVariable("DM_ORBIT") is { Length: > 0 } orbit)
+        {
+            EnterOrbit(PlanetDefs.ById(orbit));
+        }
         base.Initialize();
     }
 
