@@ -414,13 +414,17 @@ public sealed partial class DwarfMinerGame
             }
         }
 
-        // The mothership — sprite art points up, so heading needs the +π/2 correction.
-        // Recent asteroid hits flash the hull red for the invulnerability window.
+        // The mothership — a ring station spinning slowly (its facing doesn't read from the
+        // hull, so a nose lamp marks the thrust axis). Recent asteroid hits flash it red for
+        // the invulnerability window.
         var tint = _space.HitTimer > 0f && MathF.Sin(_totalTime * 40f) > 0f
             ? new Color(255, 120, 110) : Color.White;
-        sb.Draw(_mothershipTex, _space.ShipPos, null, tint,
-            _space.ShipHeading + MathF.PI / 2f,
-            new Vector2(_mothershipTex.Width / 2f, _mothershipTex.Height / 2f), 3f, SpriteEffects.None, 0f);
+        sb.Draw(_stationTex, _space.ShipPos, null, tint,
+            _totalTime * 0.12f,
+            new Vector2(_stationTex.Width / 2f, _stationTex.Height / 2f), 1.5f, SpriteEffects.None, 0f);
+        // Heading lamp: a bright dot on the ring along the nose vector.
+        var lamp = _space.ShipPos + _space.ShipDir * (SpaceSim.ShipRadius - 3f);
+        FillCircleWorld(sb, lamp, 4f, new Color(255, 240, 170));
 
         if (_muzzle > 0f)
         {
