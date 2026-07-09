@@ -233,6 +233,14 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   silhouettes, caves read as dark rock), so the map disc genuinely resembles the world you
   land on. 5 SimTest checks updated/added for the entry model. `DM_ORBIT=<planet-id>` boots
   straight into the parking orbit for tooling.
+  **Phase 8b riders (2026-07-09):** the planet view shows the mothership's **side profile**
+  (procedural: deck hull, glass command dome, engine pods, masts, keel docking bay — the
+  top-down ring stays in the system view); entry **arrives at the bearing you flew in on**
+  and the ship **automatically glides down** into its parking orbit
+  (`Session.OrbitEntryOffset` 420 px decaying at 340 px/s); orbit controls are
+  **LEFT/RIGHT orbit, ENTER launch lander, SPACE leave planet**; loading hitch fixes —
+  prefetch kicks off at 2200 px (build always beats a full-throttle run-in) and disc
+  previews rasterize at most one per frame.
 
 **Upgrade ideas still unbuilt** (future foundry slots): further pickaxe tiers, armor suit,
 cargo hold capacity, scanner (ore/titan intel on the HUD), sentry capacity,
