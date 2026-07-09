@@ -688,37 +688,84 @@ public sealed partial class DwarfMinerGame
 
     private static float Mod(float v, float m) => v - MathF.Floor(v / m) * m;
 
-    /// <summary>The mothership — a broad twin-nacelle cruiser (the little rocket from the
-    /// planet escape docks with this). Art points up; the draw call rotates by heading.</summary>
-    private Texture2D BuildMothershipTexture() => Renderer.BuildSprite(GraphicsDevice, new[]
+    /// <summary>The mothership — a circular ring station built procedurally: outer hull
+    /// ring, four spokes, glazed central hub, warning stripes at the cardinal points, and a
+    /// darker docking bay notch. Drawn spinning slowly in both views.</summary>
+    private Texture2D BuildStationTexture()
     {
-        "......WW......",
-        ".....WCCW.....",
-        ".....CCCC.....",
-        "....SCggCS....",
-        "....SCggCS....",
-        "...SSCCCCSS...",
-        "...SSSSSSSS...",
-        "..dSSSSSSSSd..",
-        ".ddSSyySSyySd.",
-        ".dSSSSSSSSSSd.",
-        "ddSSSSggSSSSdd",
-        "dSSSSSSSSSSSSd",
-        "dSSdSSSSSSdSSd",
-        "NNdSSSSSSSSdNN",
-        "NNddSSSSSSddNN",
-        "NN..dNNNNd..NN",
-        "....dNNNNd....",
-        "....dNNNNd....",
-    }, new Dictionary<char, Color>
+        const int size = 48;
+        const float c = (size - 1) / 2f;
+        var data = new Color[size * size];
+        var hull = new Color(185, 190, 205);
+        var shade = new Color(115, 120, 138);
+        var dark = new Color(70, 72, 85);
+        var glass = new Color(140, 210, 235);
+        var stripe = new Color(230, 190, 70);
+        for (var yPix = 0; yPix < size; yPix++)
+            for (var xPix = 0; xPix < size; xPix++)
+            {
+                var dx = xPix - c;
+                var dy = yPix - c;
+                var r = MathF.Sqrt(dx * dx + dy * dy);
+                var ang = MathF.Atan2(dy, dx);
+                var col = Color.Transparent;
+
+                // Outer hull ring with an inner shadow edge.
+                if (r is >= 17f and <= 23f)
+                {
+                    col = r >= 21.6f ? shade : hull;
+                    // Warning stripes at the four cardinal points.
+                    var quad = MathF.Abs(MathF.IEEERemainder(ang, MathF.PI / 2f));
+                    if (quad < 0.16f && r < 21.6f) col = stripe;
+                    // Docking bay notch at the top of the ring.
+                    if (MathF.Abs(MathF.IEEERemainder(ang + MathF.PI / 2f, MathF.PI * 2f)) < 0.24f)
+                        col = dark;
+                }
+                // Four spokes from hub to ring.
+                else if (r is > 8f and < 17f)
+                {
+                    var spoke = MathF.Abs(MathF.IEEERemainder(ang + MathF.PI / 4f, MathF.PI / 2f));
+                    if (spoke < 0.13f) col = shade;
+                }
+                // Central hub: hull rim around a glass core.
+                else if (r <= 8f)
+                {
+                    col = r <= 4.6f ? glass : r >= 7f ? shade : hull;
+                }
+                data[yPix * size + xPix] = col;
+            }
+        var tex = new Texture2D(GraphicsDevice, size, size);
+        tex.SetData(data);
+        return tex;
+    }
+
+    /// <summary>The station drawn inside a planet's world view (entity pass, world coords):
+    /// slow spin, running lights blinking around the ring. Scale chosen so it reads as a
+    /// big installation next to the ~36 px rocket.</summary>
+    private void DrawStationInWorld(Vector2 pos)
     {
-        ['.'] = Color.Transparent,
-        ['W'] = new Color(235, 235, 240),  // nose tip
-        ['C'] = new Color(150, 60, 55),    // command module red
-        ['g'] = new Color(140, 210, 235),  // viewport glass
-        ['S'] = new Color(185, 190, 205),  // hull steel
-        ['d'] = new Color(115, 120, 138),  // hull shadow / trim
-        ['y'] = new Color(230, 190, 70),   // warning stripes
-        ['N'] = new Color(70, 72, 85),     // engine nacelles
-    });
+        _renderer.Batch.Draw(_stationTex, pos, null, Color.White,
+            _totalTime * 0.1f, new Vector2(_stationTex.Width / 2f, _stationTex.Height / 2f),
+            2.2f, SpriteEffects.None, 0f);
+        // Running lights: three blinkers chasing around the ring.
+        for (var i = 0; i < 3; i++)
+        {
+            var a = _totalTime * 0.5f + i * MathHelper.TwoPi / 3f;
+            var lp = pos + new Vector2(MathF.Cos(a), MathF.Sin(a)) * 44f;
+            var on = MathF.Sin(_totalTime * 5f + i * 2.1f) > 0.2f;
+            if (on) _renderer.DrawRect(lp, new Vector2(2.4f, 2.4f), new Color(255, 200, 120));
+        }
+    }
+
+    /// <summary>The white blink masking the space↔planet coordinate swap, drawn over
+    /// whatever screen is active.</summary>
+    private void DrawTransitionFlash()
+    {
+        if (_transitionFlash <= 0f) return;
+        var sb = _renderer.Batch;
+        sb.Begin();
+        sb.Draw(_renderer.Pixel, new Rectangle(0, 0, VirtualWidth, VirtualHeight),
+            Color.White * MathHelper.Clamp(_transitionFlash / 0.6f, 0f, 1f));
+        sb.End();
+    }
 }
