@@ -1224,10 +1224,10 @@ public sealed class TitanProjectile
 
         if (planet.IsSolidAt(Position))
         {
-            if (Kind == TitanShotKind.Acid)
+            if (Ballistic)
             {
                 Dead = true;
-                SplashAcid(planet, cells);
+                Splash(planet, cells);
                 return;
             }
             if (Kind == TitanShotKind.Laser && _drill > 0)
