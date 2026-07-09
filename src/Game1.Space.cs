@@ -486,10 +486,20 @@ public sealed partial class DwarfMinerGame
         return string.Join("  ", parts);
     }
 
-    private static string CostLabel(UpgradeDef def)
+    /// <summary>"1 KONG SOUL + 4 GOLD + 6 IRON" — the kind prefix tells the player which
+    /// boss to hunt for this line.</summary>
+    private string CostLabel(UpgradeDef def)
     {
-        var s = $"{def.Souls} SOUL{(def.Souls == 1 ? "" : "S")}";
-        foreach (var (id, n) in def.Mats) s += $" + {n} {Tiles.ResourceLabel(id)}";
+        var s = "";
+        if (def.Souls > 0)
+        {
+            var kind = def.SoulKind is { } k
+                ? TitanName(Enum.Parse<TitanKind>(k)).ToUpperInvariant() + " "
+                : "";
+            s = $"{def.Souls} {kind}SOUL{(def.Souls == 1 ? "" : "S")}";
+        }
+        foreach (var (id, n) in def.Mats)
+            s += (s.Length > 0 ? " + " : "") + $"{n} {Tiles.ResourceLabel(id)}";
         return s;
     }
 
