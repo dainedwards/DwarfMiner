@@ -70,9 +70,11 @@ public sealed class MetaSave
     public int RunsCompleted { get; set; }
 
     /// <summary>Mothership state persisted across app restarts: where you parked, which way
-    /// the nose points, and the hull you left with. NaN X = never saved (fresh install) —
-    /// the boot falls back to parking at a planet. Hull -1 = full.</summary>
-    public float ShipPosX { get; set; } = float.NaN;
+    /// the nose points, and the hull you left with. <see cref="ShipStateSaved"/> false =
+    /// fresh install — the boot falls back to parking at a planet. Hull -1 = full. (No NaN
+    /// sentinels: System.Text.Json refuses to serialize them.)</summary>
+    public bool ShipStateSaved { get; set; }
+    public float ShipPosX { get; set; }
     public float ShipPosY { get; set; }
     public float ShipHeadingSave { get; set; }
     public int ShipHull { get; set; } = -1;
