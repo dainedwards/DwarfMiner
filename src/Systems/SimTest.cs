@@ -557,7 +557,7 @@ public static class SimTest
             if (planet.Get(ar, at) == TileKind.Sky) corroded = true;
         }
         Check("hazard: acid dissolves a soft tile", corroded);
-        Check("hazard: acid does NOT dissolve hard rock", DissolveHardRockStays());
+        Check("hazard: acid melts granite but obsidian resists", DissolveHardRockStays());
 
         // --- Gas flash-burns to smoke on contact with lava ---
         int br = 140, bt = 20;
