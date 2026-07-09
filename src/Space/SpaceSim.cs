@@ -76,11 +76,16 @@ public sealed class SpaceSim
     /// <summary>Where the last asteroid died this tick (shot or rammed) — Game1 consumes it
     /// for the positional shatter sound.</summary>
     public Vector2? LastRockShattered;
-    /// <summary>Ship tiers, fed from MetaSave upgrades by Game1: 2 = Autocannon II /
-    /// Ion Engines II / Hull Plating.</summary>
+    /// <summary>Ship tiers, fed from MetaSave upgrades by Game1: gun 2 = double rate,
+    /// gun 3 = twin spread; engines 2/3 = faster + leaner burn; hull 2 = 7 pips. The
+    /// deflector shield eats one impact then recharges.</summary>
     public int GunTier = 1;
     public int EngineTier = 1;
     public int HullTier = 1;
+    public bool HasShield;
+    /// <summary>Seconds until the shield can eat another impact; ready at ≤ 0.</summary>
+    public float ShieldCooldown;
+    public bool ShieldReady => HasShield && ShieldCooldown <= 0f;
     public int HullMax => HullTier >= 2 ? 7 : 5;
 
     /// <summary>Fuel plumbing: the tank lives in MetaSave, so the sim just reports demand.
