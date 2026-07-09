@@ -14,12 +14,13 @@ public static class Survey
 {
     private static readonly Dictionary<string, (string label, int count)[]> _cache = new();
 
+    // True minable deposits only — bulk terrain like obsidian would drown the list.
     private static readonly (TileKind kind, string label)[] OreKinds =
     {
         (TileKind.CoalOre, "COAL"), (TileKind.IronOre, "IRON"), (TileKind.GoldOre, "GOLD"),
         (TileKind.SilverOre, "SILVER"), (TileKind.PlatinumOre, "PLATINUM"),
         (TileKind.Crystal, "CRYSTAL"), (TileKind.Ruby, "RUBY"), (TileKind.Sapphire, "SAPPHIRE"),
-        (TileKind.Diamond, "DIAMOND"), (TileKind.FuelOre, "FUEL"), (TileKind.Obsidian, "OBSIDIAN"),
+        (TileKind.Diamond, "DIAMOND"), (TileKind.FuelOre, "FUEL"),
     };
 
     /// <summary>Top ore deposits on this world, biggest first (at most <paramref name="top"/>
