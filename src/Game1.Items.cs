@@ -236,6 +236,8 @@ public sealed partial class DwarfMinerGame
 
         var god = _run.Player.FlyMode;
         if (def.Owned is { } owned && !owned() && !(god && def.Weapon)) return;
+        // Leatherback's EMP fries anything beam-powered — ballistics and muscle still work.
+        if (_run.Player.EmpTimer > 0f && id is "laser" or "laser_cannon" or "mining_laser") return;
         if (def.NeedsCooldown && _run.Player.ShootCooldown > 0) return;
         if (def.Ammo is { } ammo && !(god && def.Weapon)
             && !_run.Player.Inventory.TryConsume(ammo, 1)) return;
