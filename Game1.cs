@@ -310,9 +310,11 @@ public sealed partial class DwarfMinerGame : Game
         Crafting.SetPlanet(run.Def);
         _prevTitanHealth = run.Titan.Health;
         // Foundry gear isn't in the run save — it's meta state, re-applied on every entry.
-        // (Drill Rig isn't: the saved PickaxeTier already includes it from the drop.)
+        // (Drill Rig and the Armory kit aren't: the saved tier/inventory already carry them.)
         run.Player.HasJetpack = Upgrades.Owned(_meta, "jetpack");
+        run.Player.JetTier2 = Upgrades.Owned(_meta, "jetpack2");
         run.Player.HasO2Recycler = Upgrades.Owned(_meta, "o2");
+        run.Player.HasMagnet = Upgrades.Owned(_meta, "magnet");
         // Loading woke every cell; burn the resettle here like world gen's pre-settle pass.
         for (var i = 0; i < 45; i++) _run.Cells.Update(1f / 60f);
         _gameOverReason = "";
