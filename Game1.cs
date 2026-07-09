@@ -346,8 +346,9 @@ public sealed partial class DwarfMinerGame : Game
         _screen = GameScreen.Playing;
         _orbiting = false;
         // Test-hook starts (DM_AUTOSTART) spawn straight on the surface; DM_DESCEND=1
-        // forces the rover descent for tooling. The real gameplay path goes through
-        // EnterOrbit → LaunchRover instead of this method.
+        // forces the rover descent for tooling; DM_LAUNCH=1 plants a fuelled rocket and
+        // lifts off at once (screenshots the escape ascent). The real gameplay path goes
+        // through EnterOrbit → LaunchRover instead of this method.
         _landing = descend || Environment.GetEnvironmentVariable("DM_DESCEND") is { Length: > 0 };
         if (_landing)
         {
@@ -356,6 +357,11 @@ public sealed partial class DwarfMinerGame : Game
             _transitionFlash = 0.6f;
             _toast = "ROVER AWAY - A/D STEER";
             _toastTimer = 3.5f;
+        }
+        else if (Environment.GetEnvironmentVariable("DM_LAUNCH") is { Length: > 0 })
+        {
+            SpawnDebugShip(fuelled: true);
+            if (_run.PadPos is { } pad) BeginLaunch(pad);
         }
         // Camera exists except when DM_AUTOSTART triggers a run during Initialize —
         // LoadContent snaps it then. Descents open zoomed out at the station and ease in
