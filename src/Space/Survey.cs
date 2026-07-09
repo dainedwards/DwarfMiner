@@ -83,7 +83,7 @@ public static class Survey
         }
 
         var result = found.ToArray();
-        _cache[def.Id] = result;
+        lock (_lock) _cache[def.Id] = result;
         return result;
     }
 }
