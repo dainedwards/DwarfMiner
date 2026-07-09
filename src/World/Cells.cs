@@ -648,8 +648,8 @@ public sealed class Cells
 
     private void TryCorrode((int cx, int cy) c)
     {
-        // Slower than lava melt — acid sizzles a tile away over a couple of seconds.
-        if (_rng.Next(90) != 0) return;
+        // Faster than the old sizzle — acid is meant to MELT through, not tickle.
+        if (_rng.Next(45) != 0) return;
         if (c.cy < 0 || c.cy >= Height) return;
         var tx = c.cy / Density;
         var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
