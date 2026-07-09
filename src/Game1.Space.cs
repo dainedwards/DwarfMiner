@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DwarfMiner.Rendering;
 using DwarfMiner.Space;
 using DwarfMiner.Systems;
 using DwarfMiner.World;
