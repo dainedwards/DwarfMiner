@@ -131,12 +131,21 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   souls spent via `MetaSave.SpendSouls` (any-kind for now). `src/Space/Upgrades.cs` is the
   catalogue; 15 new SimTest checks (combat + foundry economy); `DM_UPGRADES=1` opens the
   foundry at boot for screenshots.
-- **Phase 3 — upgrade depth + economy:** fuel actually burned per-distance and **fuel range
-  replaces the escape-chain unlock** as the gate on farther worlds (engine tiers extend
-  range); rovers become consumable (craft/buy more; losing your last rover matters); soul
-  costs become titan-kind-specific; take-gear-down loadouts (spend cargo to land equipped);
-  more upgrades from the noted list below; an M-key system survey (each planet's titan,
-  souls owned, approximate material quantities via a cached fixed-seed worldgen survey).
+- **Phase 3 — upgrade depth + economy (DONE 2026-07-08):** **fuel replaced the escape-chain
+  unlock** — every planet is landable, but thrusting burns the mothership tank
+  (0.4 fuel/s; Ion Engines II sip 0.28 and also go faster) and a dry tank drops to 35%
+  reserve power (slow limp, never a soft-lock; HUD shows [RESERVE POWER]). Tanks start with
+  10 courtesy fuel; mined fuel banks on docking. **Rovers are consumable**
+  (`MetaSave.Rovers`, start 3): landing spends one; with none left you can still land via
+  emergency drop pod at **half health**; the foundry builds more (repeatable line, 5 iron +
+  3 coal, no soul). **Soul costs are titan-kind-specific** (`UpgradeDef.SoulKind`,
+  `MetaSave.SpendSoulsOf`; cost labels name the boss — "1 STONE APE SOUL"). New foundry
+  lines: HULL PLATING (hull 5→7, Kong), O2 RECYCLER (+50% air, stacks with air tank,
+  Godzilla), DRILL RIG (+1 pickaxe tier on deploy, Sandworm). **M-key system survey**
+  (`src/Space/Survey.cs`): per-planet titan + souls owned + top-5 ore deposits from a cached
+  fixed-seed worldgen census (~40 ms/world, first open only; signature nav-core ore always
+  listed; obsidian excluded as bulk terrain). 13 new SimTest checks. `DM_SURVEY=1` opens the
+  survey at boot. (Take-gear-down loadouts moved to the noted-for-later list.)
 - **Phase 4 — the warp run:** core shard material near each planet's center (pierce-core
   rework); warp engine craft needing all 5 shards + souls; the **warp world** — a new
   PlanetDef harsher than Coreheart (extreme hazards, nastiest titan, maybe two) unreachable
