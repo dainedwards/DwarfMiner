@@ -114,6 +114,14 @@ public sealed class Titan
     /// serpent slithers close to the ground.</summary>
     public float Hover => Kind == TitanKind.Sandworm ? 44f : BodyHover;
 
+    /// <summary>The winged kaiju — no legs, airborne locomotion (cruises above the surface,
+    /// dips low during a bombing run), and the wing-flap render skeleton.</summary>
+    public bool Flyer => Kind is TitanKind.Pyrodactyl or TitanKind.Vitriodactyl;
+
+    /// <summary>Flyer mid-bombing-run: the renderer folds the wings into the dive and the
+    /// locomotion sinks to strafing height while it rains.</summary>
+    public bool Bombing;
+
     /// <summary>Length of each drawn leg bone (thigh and shin are equal). Shared with
     /// <see cref="Rendering.TitanRenderer"/>'s two-bone IK so the simulation never plants a
     /// foot farther than the drawn leg can actually reach.</summary>
