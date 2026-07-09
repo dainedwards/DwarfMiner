@@ -406,6 +406,15 @@ public sealed partial class DwarfMinerGame : Game
             return;
         }
 
+        // Rover descent owns the frame: steer the pod, everything else waits for touchdown.
+        if (_landing)
+        {
+            UpdateLanding(dt, keys);
+            _prevKeys = keys; _prevMouse = mouse;
+            base.Update(gameTime);
+            return;
+        }
+
         // Liftoff cinematic owns the frame: no player control, no crafting — just the climb.
         if (_launching)
         {
