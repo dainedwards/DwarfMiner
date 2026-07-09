@@ -127,9 +127,10 @@ public sealed class SpaceSim
     {
         foreach (var p in Planets) p.Angle += p.AngularVel * dt;
 
+        var engineMul = EngineTier >= 2 ? 1.4f : 1f;
         ShipHeading += turn * TurnRate * dt;
         Thrusting = thrust;
-        if (thrust) ShipVel += ShipDir * (Accel * dt);
+        if (thrust) ShipVel += ShipDir * (Accel * engineMul * dt);
         if (brake)
         {
             var speed = ShipVel.Length();
@@ -139,8 +140,14 @@ public sealed class SpaceSim
 
         ShipVel *= MathF.Exp(-Drag * dt);
         var spd = ShipVel.Length();
-        if (spd > MaxSpeed) ShipVel *= MaxSpeed / spd;
+        var maxSpd = MaxSpeed * engineMul;
+        if (spd > maxSpd) ShipVel *= maxSpd / spd;
         ShipPos += ShipVel * dt;
+
+        if (_gunCooldown > 0f) _gunCooldown -= dt;
+        if (HitTimer > 0f) HitTimer -= dt;
+        UpdateShots(dt);
+        UpdateAsteroids(dt);
 
         // The sun is not landable: the corona shoves the ship back out and reflects any
         // inbound velocity, so flying at it reads as a bounce rather than a clip-through.
