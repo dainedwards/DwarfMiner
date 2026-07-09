@@ -185,8 +185,9 @@ public sealed partial class DwarfMinerGame
     {
         _space.GunTier = Upgrades.Owned(_meta, "gun3") ? 3 : Upgrades.Owned(_meta, "gun2") ? 2 : 1;
         _space.EngineTier = Upgrades.Owned(_meta, "engine3") ? 3 : Upgrades.Owned(_meta, "engine2") ? 2 : 1;
-        _space.HullTier = Upgrades.Owned(_meta, "hull2") ? 2 : 1;
+        _space.HullTier = Upgrades.Owned(_meta, "hull3") ? 3 : Upgrades.Owned(_meta, "hull2") ? 2 : 1;
         _space.HasShield = Upgrades.Owned(_meta, "shield");
+        _space.ShieldTier = Upgrades.Owned(_meta, "shield2") ? 2 : 1;
     }
 
     /// <summary>Boot-time restore of the persisted mothership: park where you left it (with
