@@ -339,13 +339,27 @@ public sealed class SpaceSim
         }
     }
 
-    /// <summary>The planet the ship could land on right now — within LandRange of its
-    /// surface — or null. At most one qualifies since orbits never bring worlds that close.</summary>
-    public SpacePlanet? LandingCandidate()
+    /// <summary>The closest planet and the ship's distance to its disc surface (negative =
+    /// inside). Drives the approach zoom, the prefetch, and atmosphere-entry detection.</summary>
+    public (SpacePlanet? planet, float surfaceDist) NearestPlanet()
     {
+        SpacePlanet? best = null;
+        var bestD = float.MaxValue;
         foreach (var p in Planets)
-            if ((ShipPos - p.Pos).Length() - p.BodyRadius < LandRange)
-                return p;
-        return null;
+        {
+            var d = (ShipPos - p.Pos).Length() - p.BodyRadius;
+            if (d < bestD) { bestD = d; best = p; }
+        }
+        return (best, bestD);
+    }
+
+    /// <summary>The planet whose upper atmosphere the ship has just flown into, or null.
+    /// The locked Rift never returns — its storm wall keeps the ship outside this range.</summary>
+    public SpacePlanet? AtmosphereContact()
+    {
+        var (p, d) = NearestPlanet();
+        if (p is null || d > EntryRange) return null;
+        if (p.Def.Id == "rift" && RiftLocked) return null;
+        return p;
     }
 }
