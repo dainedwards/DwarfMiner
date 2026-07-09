@@ -73,6 +73,10 @@ public sealed class Player
     public float PickupReach => MagnetTier2 ? 30f : HasMagnet ? 16f : 4f;
 
     public float MineRange = 22f;          // pixels — dwarves have short reach
+
+    /// <summary>Mining-laser beam length. Far past arm's reach — the whole point of the
+    /// late-game upgrade is disintegrating rock from a distance.</summary>
+    public const float MiningLaserRange = 90f;
     public float MoveSpeed = 78f;          // shorter legs
     public float JumpSpeed = 150f;
     public float Gravity = 320f;
