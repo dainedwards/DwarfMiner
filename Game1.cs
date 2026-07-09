@@ -208,6 +208,10 @@ public sealed partial class DwarfMinerGame : Game
         if (Environment.GetEnvironmentVariable("DM_AUTOSTART") is { Length: > 0 } auto)
         {
             if (auto == "resume") ResumeRun();
+            // Generated planet ids vary by seed, so the new biomes get stable aliases:
+            // "ocean"/"acidworld" start the campaign's guaranteed instance of each.
+            else if (auto == "ocean") StartNewRun(FirstDef(d => d.LakeScale > 2f));
+            else if (auto == "acidworld") StartNewRun(FirstDef(d => d.AcidRain));
             else StartNewRun(PlanetDefs.ById(auto));
         }
         // DM_ORBIT=<planet-id> boots straight into the parking orbit — tooling can
