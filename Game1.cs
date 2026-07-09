@@ -1319,11 +1319,24 @@ public sealed partial class DwarfMinerGame : Game
         if (_meta.Escapes >= 3) _meta.StartWithCannon = true;
         // The base is left behind when you fly off — its vault won't be revisited.
         _meta.Bank.Remove(_run.Def.Id);
+        // Docking: raw materials in the pack transfer to the mothership's cargo hold (the
+        // foundry spends from it) and leftover mined fuel tops up the ship's tank. Gear
+        // stays behind with the rover — only bankable raws ride up.
+        var cargoMoved = 0;
+        foreach (var (id, count) in _run.Player.Inventory.Items)
+        {
+            if (id == "fuel") { _meta.MotherFuel += count; cargoMoved += count; continue; }
+            if (!Tiles.IsBankable(id)) continue;
+            _meta.ShipCargo[id] = _meta.ShipCargo.GetValueOrDefault(id) + count;
+            cargoMoved += count;
+        }
         _meta.Save();
-        // The run is over (a finished run can't be resumed), but there's no game-over screen:
-        // the rocket pops out above the planet still under thrust, and you fly it.
+        // The visit is over (a finished visit can't be resumed), but there's no game-over
+        // screen: the rocket docks with the mothership and you have the stick.
         RunSave.Delete();
-        _toast = $"ESCAPED {_run.Def.Name.ToUpperInvariant()} IN {_run.RunTime:0.0}S — YOU HAVE THE STICK";
+        _toast = cargoMoved > 0
+            ? $"DOCKED — {cargoMoved} CARGO TRANSFERRED TO THE HOLD"
+            : $"ESCAPED {_run.Def.Name.ToUpperInvariant()} IN {_run.RunTime:0.0}S — YOU HAVE THE STICK";
         _toastTimer = 4f;
         EnterSpace(idx, exitSpeed: 320f, zoomFromPlanet: true);
     }
