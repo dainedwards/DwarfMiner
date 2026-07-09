@@ -273,7 +273,12 @@ public sealed partial class DwarfMinerGame : Game
         // God mode carries the full armoury — load every weapon onto the belt from frame
         // one (toggling god off strips the unowned loaners).
         if (_run.Player.FlyMode)
+        {
             foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
+            // TEMP-VERIFY: select the pistol slot so DM_AUTOSHOT captures the held sprite.
+            for (var s = 0; s < Toolbelt.SlotCount; s++)
+                if (_run.Player.Toolbelt.Slots[s] == "pistol") { _run.Player.Toolbelt.Selected = s; break; }
+        }
         // DM_BOSSCAM spawns the egg beside the dwarf (instead of across the planet) so tooling
         // can screenshot the boss without walking to it.
         var titanAngle = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 }
