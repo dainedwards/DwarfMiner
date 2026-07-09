@@ -141,7 +141,9 @@ public sealed partial class DwarfMinerGame : Game
         // runs never reach this in Playing — EndRun already deleted the save.
         Exiting += (_, _) =>
         {
-            if (_screen == GameScreen.Playing && _run is not null) RunSave.Write(_run);
+            // A visit only suspends once the dwarf is actually down — quitting from the
+            // parking orbit just discards the unentered world.
+            if (_screen == GameScreen.Playing && !_orbiting && _run is not null) RunSave.Write(_run);
             // Fuel burned and flying done between the event-driven saves would otherwise be
             // lost — snapshot the mothership and flush meta on the way out.
             if (_screen == GameScreen.Space) CaptureShipState();
