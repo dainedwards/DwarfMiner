@@ -2186,13 +2186,28 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.DrawDebugLabel(label, screenPos + new Vector2(12, 12), Color.White);
     }
 
+    /// <summary>Dim the frozen run and stack the reason lines centred. Single-sentence
+    /// deaths render big; the multi-line campaign-victory summary steps down so every line
+    /// fits the viewport.</summary>
     private void DrawGameOverOverlay()
     {
         var sb = _renderer.Batch;
         sb.Begin();
         sb.Draw(_renderer.Pixel, new Rectangle(0, 0, VirtualWidth, VirtualHeight), new Color(0, 0, 0, 180));
         sb.End();
-        _renderer.DrawCenteredText(_gameOverReason, VirtualWidth, VirtualHeight, Color.White, scale: 3);
+
+        var lines = _gameOverReason.Split('\n');
+        var y = VirtualHeight / 2f - lines.Length * 20f;
+        for (var i = 0; i < lines.Length; i++)
+        {
+            // Headline big when it fits, body lines smaller.
+            var scale = i == 0 ? 3 : 2;
+            if (_renderer.MeasureText(lines[i], scale) > VirtualWidth - 60) scale--;
+            _renderer.DrawText(lines[i],
+                new Vector2((VirtualWidth - _renderer.MeasureText(lines[i], scale)) / 2f, y),
+                i == 0 ? Color.White : new Color(200, 205, 220), scale);
+            y += 22f + scale * 6f;
+        }
     }
 
     /// <summary>Render the ship build site: the pad slab always, then hull / engine / nose
