@@ -261,11 +261,10 @@ public sealed partial class DwarfMinerGame : Game
         _craftingMenu.Reset();
         _invUi.Reset();
         _screen = GameScreen.Playing;
-        // Rover drops from space start at the mothership's parking orbit and descend the
-        // whole way (semi-controlled by the player) — the station stays visible overhead
-        // for the entire visit, and the escape rocket must climb back up to it. Test-hook
-        // starts (DM_AUTOSTART) spawn straight on the surface; DM_DESCEND=1 forces the
-        // descent for tooling.
+        _orbiting = false;
+        // Test-hook starts (DM_AUTOSTART) spawn straight on the surface; DM_DESCEND=1
+        // forces the rover descent for tooling. The real gameplay path goes through
+        // EnterOrbit → LaunchRover instead of this method.
         _landing = descend || Environment.GetEnvironmentVariable("DM_DESCEND") is { Length: > 0 };
         if (_landing)
         {
@@ -283,6 +282,83 @@ public sealed partial class DwarfMinerGame : Game
             _camera.Zoom = _landing ? 1.5f : _playZoom;
             _camera.SnapTo(_run.Player.Position, 0f);
         }
+    }
+
+    /// <summary>Flying into a planet's upper atmosphere from space: build (or claim the
+    /// prefetched) world, park the mothership at its orbit anchor, and hold there — the
+    /// player chooses when to launch the rover, shifts the orbit with A/D to pick a drop
+    /// site, or breaks orbit back to space. No menus, no prompts on the way in.</summary>
+    private void EnterOrbit(PlanetDef def)
+    {
+        StartNewRun(def);
+        _landing = false;
+        _orbiting = true;
+        _transitionFlash = 0.6f;
+        _run.Player.Position = _run.StationPos;
+        _toast = $"ORBIT OF {def.Name.ToUpperInvariant()} ESTABLISHED";
+        _toastTimer = 3f;
+        _camera.Zoom = 1.4f;
+        _camera.SnapTo(_run.StationPos, 0f);
+    }
+
+    /// <summary>One frame in the parking orbit: A/D slides the station around the planet
+    /// (choosing the drop site), SPACE/ENTER launches the rover, W breaks orbit back to
+    /// space. The world lives underneath the whole time.</summary>
+    private void UpdateOrbit(float dt, KeyboardState keys)
+    {
+        var lat = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
+                + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
+        var orbitRadius = _run.Planet.Radius * Planet.TileSize + Session.OrbitAltitude;
+        _run.MothershipAngle += lat * (160f / orbitRadius) * dt;
+
+        var station = _run.StationPos;
+        _run.Player.Position = station;
+        _run.Player.Velocity = Vector2.Zero;
+        var up = _run.Planet.UpAt(station);
+        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, 1.3f, MathHelper.Clamp(dt * 2f, 0f, 1f));
+        _camera.Follow(station, up, dt);
+
+        _run.Physics.Update(dt);
+        _run.Cells.Update(dt);
+        _particles.Update(dt, _run.Planet);
+        _toastTimer -= dt;
+
+        if (Pressed(keys, _prevKeys, Keys.Space) || Pressed(keys, _prevKeys, Keys.Enter))
+        {
+            LaunchRover();
+            return;
+        }
+        if (Pressed(keys, _prevKeys, Keys.W))
+        {
+            _orbiting = false;
+            _transitionFlash = 0.6f;
+            EnterSpace(PlanetDefs.IndexOf(_run.Def), exitSpeed: 260f, zoomFromPlanet: true);
+        }
+    }
+
+    /// <summary>Deploy the rover from orbit — spends one (or takes the drop-pod penalty)
+    /// and begins the steered descent from wherever the orbit was parked.</summary>
+    private void LaunchRover()
+    {
+        var podDrop = _meta.Rovers <= 0;
+        if (!podDrop) _meta.Rovers--;
+        _meta.Save();
+        _orbiting = false;
+        _landing = true;
+        _landerPos = _run.StationPos;
+        _run.Player.Position = _landerPos;
+        if (podDrop)
+        {
+            if (!Upgrades.Owned(_meta, "dampeners")) _run.Player.Health *= 0.5f;
+            _toast = Upgrades.Owned(_meta, "dampeners")
+                ? "NO ROVERS - DROP POD DOWN SOFT ON THE DAMPENERS"
+                : "NO ROVERS - EMERGENCY DROP POD! SUIT DAMAGED";
+        }
+        else
+        {
+            _toast = "ROVER AWAY - A/D STEER";
+        }
+        _toastTimer = 3.5f;
     }
 
     /// <summary>One frame of the rover descent: constant sink along local gravity, direct
