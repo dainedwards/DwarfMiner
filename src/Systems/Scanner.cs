@@ -22,6 +22,8 @@ public static class Scanner
         "ruby"     => TileKind.Ruby,
         "sapphire" => TileKind.Sapphire,
         "diamond"  => TileKind.Diamond,
+        "emerald"  => TileKind.Emerald,
+        "voidstone" => TileKind.Voidstone,
         "crystal"  => TileKind.Crystal,
         "iron"     => TileKind.IronOre,
         "coal"     => TileKind.CoalOre,
