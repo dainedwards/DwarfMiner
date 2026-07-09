@@ -1927,7 +1927,7 @@ public sealed partial class DwarfMinerGame : Game
         string titanStatus;
         if (_run.Titan.Health <= 0)
         {
-            titanStatus = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} SLAIN — SOUL CLAIMED";
+            titanStatus = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} SLAIN - SOUL CLAIMED";
         }
         else if (!_run.Titan.Hatched)
         {
