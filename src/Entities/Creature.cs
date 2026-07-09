@@ -178,6 +178,11 @@ public sealed class Creature
             case CreatureKind.HornedDelver: TickDelver(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.Centipede:  TickCentipede(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.MoleBeast:  TickMole(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
+            // New biome fauna reuse proven brains: bats and wraiths patrol tunnels like the
+            // cave eye (the stats make them feel nothing alike); crawlers stalk like grubs.
+            case CreatureKind.SporeBat:
+            case CreatureKind.VoidWraith: TickCaveEye(dt, planet, toPlayer, dist, speedMul); break;
+            case CreatureKind.CrystalCrawler: TickGrub(dt, planet, up, right, toPlayer, dist, speedMul); break;
         }
 
         // Substepped integration: each step moves at most ~60% of the body radius so a fast
