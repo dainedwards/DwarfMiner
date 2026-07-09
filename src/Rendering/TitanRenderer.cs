@@ -569,6 +569,9 @@ public static class TitanRenderer
         _               => f.Tp + f.Up * 110f + f.Right * (f.Face * 60f),
     };
 
+    // Kept numerically identical to Titan.Mouth() so ranged attacks spawn/aim from exactly where
+    // the muzzle is drawn — otherwise the beam is drawn from the head but hits along a line cast
+    // from somewhere else.
     private static Vector2 MouthPos(Titan t, Frame f) => t.Kind switch
     {
         TitanKind.Mecha => f.Tp + f.Up * 90f + f.Right * (f.Face * 78f),
