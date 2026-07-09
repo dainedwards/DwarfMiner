@@ -1928,7 +1928,6 @@ public sealed partial class DwarfMinerGame : Game
                 _screenshotPending = false;
                 SaveScreenshot();
             }
-            base.Draw(gameTime);
             return;
         }
 
