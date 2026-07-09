@@ -8,8 +8,10 @@ namespace DwarfMiner.World;
 /// Rim-inspired): Knifehead gores with a blade-crest charge, Otachi spits arcing acid that
 /// pools in the cell sim, Leatherback detonates an EMP that fries the dwarf's tech, Raiju
 /// lunges in rapid dash chains, Slattern — the category-5 apex — whips radial tail-spike
-/// barrages and sonic pulses. New values append after Kong so RunSave's int cast stays valid.</summary>
-public enum TitanKind { Godzilla, Mecha, Sandworm, Kong, Knifehead, Otachi, Leatherback, Raiju, Slattern }
+/// barrages and sonic pulses. The flyers: Pyrodactyl and Vitriodactyl are pterodactyl-built
+/// wing kaiju that cruise above the surface and carpet-bomb the dwarf — one rains lava,
+/// the other rains acid. New values append at the end so RunSave's int cast stays valid.</summary>
+public enum TitanKind { Godzilla, Mecha, Sandworm, Kong, Knifehead, Otachi, Leatherback, Raiju, Slattern, Pyrodactyl, Vitriodactyl }
 
 /// <summary>
 /// Static description of a planet archetype — the knobs WorldGen and Game1 previously kept as
