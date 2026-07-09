@@ -620,12 +620,12 @@ public sealed class Cells
         TileKind.Dirt or TileKind.Grass or TileKind.Gravel or
         TileKind.MossStone or TileKind.Snow or TileKind.Support;
 
-    /// <summary>Tiles acid can dissolve — the soft-to-medium set. Hard rock (granite/basalt/
-    /// obsidian) and ores resist it, so acid carves through dirt seams and stone but can't
-    /// chew an unbounded hole through the deep crust.</summary>
-    private static bool IsCorrodible(TileKind k) => k is
-        TileKind.Dirt or TileKind.Grass or TileKind.Gravel or TileKind.MossStone or
-        TileKind.Snow or TileKind.Stone or TileKind.Support;
+    /// <summary>Tiles acid can dissolve — most materials, ores included (spilled acid
+    /// destroying a vein is a real hazard). Only obsidian and the anchor-class tiles
+    /// (planet core, bedrock) resist, so acid melts through nearly anything you'd build or
+    /// mine but still can't chew an unbounded hole into the deep obsidian crust.</summary>
+    private static bool IsCorrodible(TileKind k) =>
+        Tiles.IsSolid(k) && !Tiles.IsAnchored(k) && k != TileKind.Obsidian;
 
     /// <summary>Acid: corrode a touching soft tile now and then, otherwise flow like water.
     /// Mirrors <see cref="TickLava"/>'s structure (eat-then-flow) but with no self-light and a
