@@ -2637,6 +2637,7 @@ public sealed partial class DwarfMinerGame : Game
             {
                 TitanShotKind.Flame => (16f, new Color(255, 150, 50)),
                 TitanShotKind.Acid  => (14f, new Color(140, 230, 60)),
+                TitanShotKind.Lava  => (16f, new Color(255, 130, 40)),
                 TitanShotKind.Spike => (8f, new Color(210, 200, 170)),
                 _                   => (18f, new Color(120, 230, 255)),
             };
