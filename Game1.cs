@@ -2298,7 +2298,7 @@ public sealed partial class DwarfMinerGame : Game
 
         // Held weapon: the selected toolbelt slot's sidearm drawn in the dwarf's grip,
         // rotated to the aim and flipped when facing left so it's never upside-down.
-        if (!_landing && !_launching && !_ascending && !_orbiting
+        if (!_landing && !_ascending && !_orbiting
             && _run.Player.Toolbelt.Slots[_run.Player.Toolbelt.Selected] is { } heldId
             && _weaponTex.TryGetValue(heldId, out var heldTex))
         {
