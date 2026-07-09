@@ -1087,6 +1087,7 @@ public static class SimTest
         // Phase-11 content: rare gems generate where (and only where) they should, biome
         // pockets stamp real features, the voidstone reactor frees the tank, and the new
         // disasters run their warn → strike phases.
+        const float dt2 = 1f / 60f;
         int CountKind(Planet w, TileKind kind)
         {
             var total = 0;
