@@ -154,6 +154,7 @@ public static class RunSave
                 HasArmor = r.ReadBoolean(), HasCoreDrill = r.ReadBoolean(),
                 HasPistol = r.ReadBoolean(), HasMachineGun = r.ReadBoolean(), HasLaser = r.ReadBoolean(),
                 HasLaserCannon = r.ReadBoolean(), HasRocketLauncher = r.ReadBoolean(),
+                HasMiningLaser = r.ReadBoolean(),
                 FlyMode = r.ReadBoolean(),
             };
             if (r.ReadBoolean()) p.BeaconWorld = new Vector2(r.ReadSingle(), r.ReadSingle());
