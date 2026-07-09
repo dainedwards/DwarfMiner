@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using DwarfMiner.Entities;
 using DwarfMiner.Rendering;
+using DwarfMiner.Space;
 using DwarfMiner.Systems;
 using DwarfMiner.UI;
 using DwarfMiner.World;
