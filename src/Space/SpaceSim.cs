@@ -210,12 +210,19 @@ public sealed class SpaceSim
     {
         if (_gunCooldown > 0f) return false;
         _gunCooldown = GunTier >= 2 ? 0.13f : 0.26f;
-        Shots.Add(new ShipShot
+        // Autocannon III: twin barrels in a slight spread; below that, one straight bolt.
+        var spread = GunTier >= 3 ? 0.055f : 0f;
+        for (var s = GunTier >= 3 ? -1 : 0; s <= (GunTier >= 3 ? 1 : 0); s += 2)
         {
-            Pos = ShipPos + ShipDir * (ShipRadius + 6f),
-            Vel = ShipDir * ShotSpeed + ShipVel,
-            Life = 1.5f,
-        });
+            var a = ShipHeading + spread * s;
+            var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+            Shots.Add(new ShipShot
+            {
+                Pos = ShipPos + dir * (ShipRadius + 6f),
+                Vel = dir * ShotSpeed + ShipVel,
+                Life = 1.5f,
+            });
+        }
         return true;
     }
 
