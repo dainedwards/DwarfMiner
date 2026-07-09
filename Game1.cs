@@ -1620,11 +1620,13 @@ public sealed partial class DwarfMinerGame : Game
         TitanKind.Mecha       => "Mecha-Titan",
         TitanKind.Sandworm    => "Shai-Hulud",
         TitanKind.Kong        => "Stone Ape",
-        TitanKind.Knifehead   => "Knifehead",
-        TitanKind.Otachi      => "Otachi",
-        TitanKind.Leatherback => "Leatherback",
-        TitanKind.Raiju       => "Raiju",
-        TitanKind.Slattern    => "Slattern",
+        TitanKind.Knifehead    => "Knifehead",
+        TitanKind.Otachi       => "Otachi",
+        TitanKind.Leatherback  => "Leatherback",
+        TitanKind.Raiju        => "Raiju",
+        TitanKind.Slattern     => "Slattern",
+        TitanKind.Pyrodactyl   => "Pyrodactyl",
+        TitanKind.Vitriodactyl => "Vitriodactyl",
         _                  => "Titan",
     };
 
