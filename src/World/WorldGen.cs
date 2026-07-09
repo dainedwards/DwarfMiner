@@ -272,6 +272,11 @@ public static class WorldGen
                     if (oreN > 0.978f - boost * 0.4f - Bias(TileKind.Sapphire) && depth > 75f) k = TileKind.Sapphire;
                     if (oreN > 0.984f - boost * 0.3f - Bias(TileKind.Crystal) && depth > 42f) k = TileKind.Crystal;
                     if (oreN > 0.989f - boost * 0.2f - Bias(TileKind.Diamond) && depth > 95f) k = TileKind.Diamond;
+                    // Emerald seams sit deep on the living worlds (verdant/frost carry the
+                    // bias). Voidstone's base threshold is unreachable — only the Rift's
+                    // bias pulls it into existence, making it the campaign's endgame gem.
+                    if (oreN > 0.986f - boost * 0.3f - Bias(TileKind.Emerald) && depth > 80f) k = TileKind.Emerald;
+                    if (oreN > 1.05f - Bias(TileKind.Voidstone) && depth > 100f) k = TileKind.Voidstone;
                 }
 
                 planet.Set(r, t, k);
