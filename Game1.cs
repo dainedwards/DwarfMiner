@@ -2161,6 +2161,20 @@ public sealed partial class DwarfMinerGame : Game
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
         _renderer.DrawCircle(worldCursor, 3f, new Color(255, 255, 255, 180));
 
+        // Held weapon: the selected toolbelt slot's sidearm drawn in the dwarf's grip,
+        // rotated to the aim and flipped when facing left so it's never upside-down.
+        if (!_landing && !_launching && !_ascending && !_orbiting
+            && _run.Player.Toolbelt.Slots[_run.Player.Toolbelt.Selected] is { } heldId
+            && _weaponTex.TryGetValue(heldId, out var heldTex))
+        {
+            var aim = worldCursor - _run.Player.Position;
+            if (aim.LengthSquared() > 0.01f) aim.Normalize(); else aim = new Vector2(1f, 0f);
+            var wrot = MathF.Atan2(aim.Y, aim.X);
+            _renderer.Batch.Draw(heldTex, _run.Player.Position + aim * 3.2f, null, Color.White,
+                wrot, new Vector2(1.5f, heldTex.Height / 2f), 0.55f,
+                aim.X < 0f ? SpriteEffects.FlipVertically : SpriteEffects.None, 0f);
+        }
+
         // Corpses — drawn under the living so a fresh kill layers naturally. A flattened
         // slab of the creature's (desaturated) body colour lying along the local tangent,
         // with a paler belly stripe. Blinks during the last seconds before decay.
