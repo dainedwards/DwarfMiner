@@ -270,6 +270,7 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.HasO2Recycler = Upgrades.Owned(_meta, "o2");
         _run.Player.HasMagnet = Upgrades.Owned(_meta, "magnet");
         if (Upgrades.Owned(_meta, "drill")) _run.Player.PickaxeTier++;
+        _run.Player.HasPlating = Upgrades.Owned(_meta, "plating");
         // Rover Armory: every drop comes armed — sidearm plus a belt of rounds.
         if (Upgrades.Owned(_meta, "armory"))
         {
@@ -277,6 +278,17 @@ public sealed partial class DwarfMinerGame : Game
             _run.Player.Toolbelt.AutoEquip("pistol");
             _run.Player.Inventory.Add("bullets", 90);
         }
+        // Supply Cache: field consumables in every rover.
+        if (Upgrades.Owned(_meta, "supplies"))
+        {
+            _run.Player.Inventory.Add("poultice", 2);
+            _run.Player.Inventory.Add("blocks", 40);
+            _run.Player.Inventory.Add("sentry", 1);
+            _run.Player.Toolbelt.AutoEquip("poultice");
+        }
+        _scanTimer = 0f;
+        _scanFuel = null;
+        _scanOre = null;
         SpawnDirector.SpawnInitialFauna(_run);
         _run.EarthquakeTimer = 25f * def.QuakeScale;
         _run.SpawnTimer = 6f;
