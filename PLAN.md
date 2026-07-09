@@ -71,9 +71,26 @@
 >   dwarf (larger polar ring = falls onto them), **sifting dust** from them and flashing a
 >   **"! CAVE-IN !"** HUD banner so there's a clear "move now" cue. `TestCaveIn` covers the
 >   condemn → tremble → crumble sequence.
-> Next up: a settings/volume UI, or new content (biomes/creatures/weapons).
+> - **Flyable solar system done (space phase 1, 2026-07-08)** — the point-and-click star map
+>   is replaced by a real space scene (`GameScreen.Space`): sun at the origin, the 5 planets
+>   on slow circular orbits, a manually flown rocket (A/D turn, W thrust, S brake; drag +
+>   speed cap, no gravity wells), camera zoomed out to system scale. Launching off a planet
+>   now hands you the stick: `FinishLaunch` banks the escape meta, then drops the rocket in
+>   space above the departed world with the camera easing out from planet scale (escape no
+>   longer shows a game-over screen). Fly within `SpaceSim.LandRange` of a planet and press
+>   Enter/E to land (= `StartNewRun`); locked planets read UNCHARTED and refuse; death → R
+>   returns you to your ship parked at that world. Sun corona and planet discs are solid
+>   (bounce/skim). Model: `src/Space/SpaceSim.cs` (pure logic, 9 SimTest checks); screen:
+>   `src/Game1.Space.cs`. The space screen owns camera zoom per-frame; `_playZoom` restores
+>   the in-run zoom (incl. DM_ZOOM) on landing.
+>   Remaining space phases: (2) asteroids to dodge + ship hull damage w/ emergency landing;
+>   (3) titan souls (`MetaSave.TitanSouls`, one per titan-type kill) + an M-key system menu
+>   listing each planet's titan, souls owned, and approx. material quantities (cached
+>   fixed-seed worldgen survey); (4) persist ship position, thruster sfx, DM_SPACE hook.
+> Next up: space phases 2–4; then a settings/volume UI, or new content
+> (biomes/creatures/weapons).
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
-> skips the star map (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
+> skips the space screen (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
 
 Current state: circular polar planet with a Noita-style cell sim (water/lava/dust), structural
