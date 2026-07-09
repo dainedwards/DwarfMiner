@@ -420,21 +420,24 @@ public sealed partial class DwarfMinerGame
             FillCircleWorld(sb, c, p.BodyRadius + 16f, accent * 0.10f);
             FillCircleWorld(sb, c, p.BodyRadius + 7f, accent * 0.16f);
 
-            FillCircleWorld(sb, c, p.BodyRadius, body);
-
-            // Surface detail: hashed blotches in darker/accent shades, drifting slowly so
-            // the world reads as turning. Kept inside 0.65r so they never break the limb.
-            var seedHash = 0;
-            foreach (var ch in p.Def.Id) seedHash = seedHash * 31 + ch;
-            var dark = new Color((int)(body.R * 0.72f), (int)(body.G * 0.72f), (int)(body.B * 0.72f));
-            for (var s = 0; s < 6; s++)
+            // The disc is the planet's real (survey) terrain once its preview is ready —
+            // mountains on the limb, lakes and lava where they'll actually be. Until the
+            // background world-gen delivers, a flat disc stands in.
+            if (!_planetPreview.TryGetValue(p.Def.Id, out var preview)
+                && Survey.TryWorld(p.Def) is { } world)
             {
-                var h = ((seedHash + s * 7919) * 1013904223) & 0x7fffffff;
-                var ba = (h % 628) / 100f + _totalTime * 0.03f;
-                var bd = (h >> 8 & 63) / 63f * 0.55f;
-                var br = p.BodyRadius * (0.10f + (h >> 15 & 31) / 31f * 0.14f);
-                var bc = c + new Vector2(MathF.Cos(ba), MathF.Sin(ba)) * (p.BodyRadius * bd);
-                FillCircleWorld(sb, bc, br, s < 4 ? dark : accent * 0.55f);
+                preview = BuildPlanetPreview(world);
+                _planetPreview[p.Def.Id] = preview;
+            }
+            if (preview is not null)
+            {
+                sb.Draw(preview, c, null, Color.White, _totalTime * 0.012f,
+                    new Vector2(PreviewSize / 2f, PreviewSize / 2f),
+                    p.BodyRadius * 2f / PreviewSize, SpriteEffects.None, 0f);
+            }
+            else
+            {
+                FillCircleWorld(sb, c, p.BodyRadius, body);
             }
 
             // Two-step terminator for a softer shadow gradient.
