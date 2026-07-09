@@ -1009,6 +1009,12 @@ public sealed partial class DwarfMinerGame : Game
                 // don't: those creatures just wandered out of the simulation bubble.
                 _run.Corpses.Add(new Corpse(c.Position, c.Kind, c.Radius));
                 _particles.EmitDust(c.Position, 5f);
+                // Spore bats burst into a choking puff — kill them at arm's length.
+                if (c.Kind == CreatureKind.SporeBat)
+                {
+                    var (sx, sy) = _run.Planet.WorldToTile(c.Position);
+                    _run.Cells.SpawnInTile(sx, sy, Material.Gas, Cells.Density * 2);
+                }
                 _run.Creatures.RemoveAt(i);
             }
             else if ((c.Position - _run.Player.Position).LengthSquared() > 1000f * 1000f)
