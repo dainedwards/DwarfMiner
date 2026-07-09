@@ -310,7 +310,7 @@ public sealed partial class DwarfMinerGame
             var idx = PlanetDefs.IndexOf(cand.Def);
             var prompt = idx < unlocked
                 ? $"ENTER  DEPLOY ROVER TO {cand.Def.Name.ToUpperInvariant()}"
-                : "UNCHARTED WORLD — YOUR NAV CORE CAN'T CHART IT YET";
+                : "UNCHARTED WORLD - YOUR NAV CORE CAN'T CHART IT YET";
             var col = idx < unlocked ? new Color(255, 225, 140) : new Color(200, 130, 120);
             _renderer.DrawText(prompt,
                 new Vector2((VirtualWidth - _renderer.MeasureText(prompt, 2)) / 2f, VirtualHeight - 140), col, 2);
