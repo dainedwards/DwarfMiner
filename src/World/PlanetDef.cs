@@ -101,7 +101,10 @@ public static class PlanetDefs
             OreBias: new[] { (TileKind.Diamond, 0.030f), (TileKind.Crystal, 0.025f), (TileKind.Ruby, 0.015f) },
             QuakeScale: 0.5f, CaveSpawnCap: 24,
             ShipOre: "diamond", ShipOreCount: 5, OxygenDrainScale: 1.4f, SeedsGas: true, SeedsAcid: true, Titan: TitanKind.Godzilla,
-            CrystalPockets: 3, FungalPockets: 2),
+            CrystalPockets: 3, FungalPockets: 2,
+            // The breach world: a fresh kaiju rolls out of the pool on every visit, so no two
+            // Coreheart dives face the same monster. Titan above stays as the fallback label.
+            TitanPool: new[] { TitanKind.Knifehead, TitanKind.Otachi, TitanKind.Leatherback, TitanKind.Raiju }),
 
         // The warp world — out of normal flight range, reachable only with all five core
         // shards. Everything is turned up: swarming caves, toxins, near-vacuum air, lava at
