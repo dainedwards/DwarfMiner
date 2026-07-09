@@ -182,11 +182,23 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   transition flourishes beyond the zoom eases, and the pre-existing Stomp `Grounded` probe
   cleanup.
 
-**Upgrade ideas noted for later** (foundry slots to add in phases 4+): jetpack tiers
-(charge/thrust), further pickaxe tiers, armor suit, cargo hold capacity, ship shield, ore
-magnet (pickup radius), scanner (ore/titan intel on the HUD), rover quality (drop pods that
-don't hurt), sentry capacity, ship gun spread/damage tiers, engine tier III, take-gear-down
-loadouts (spend cargo to land equipped), warp engine (phase 4 capstone).
+- **Phase 6 — foundry depth (DONE 2026-07-09):** seven wishlist upgrades landed, with
+  `UpgradeDef.Requires` tier-gating (locked rows render dim with "REQUIRES …"; TryBuy
+  refuses) and a **scrolling foundry window** (8 visible rows, cursor-follow, "+ MORE"
+  cues). New lines: **JETPACK II** (Kong+ruby, needs jetpack — double charge, harder
+  climb), **AUTOCANNON III** (Mecha, needs II — twin-barrel spread at the same rate),
+  **ION ENGINES III** (Godzilla+diamond, needs II — 1.75× thrust/speed, 0.2/s burn),
+  **DEFLECTOR SHIELD** (Mecha+diamond — eats one impact, 8s recharge, pulsing cyan halo
+  while charged, knockback still applies), **ORE MAGNET** (Kong — pickup sweep 4→16 px),
+  **POD DAMPENERS** (Sandworm — roverless drop pods no longer cost health), **ROVER
+  ARMORY** (Sandworm — every drop deploys with a pistol + 90 rounds). Gem sinks: ruby,
+  diamond ×2, sapphire, crystal now all have foundry demand. 8 new SimTest checks (twin
+  bolts, tier-3 engines, shield absorb/recharge, prerequisite gating). NOTE: the pixel font
+  also lacks the apostrophe — UI strings must avoid ' as well as % and em-dash.
+
+**Upgrade ideas still unbuilt** (future foundry slots): further pickaxe tiers, armor suit,
+cargo hold capacity, scanner (ore/titan intel on the HUD), sentry capacity,
+take-gear-down loadouts beyond the Armory kit, jetpack III.
 
 **Open design questions:** does death on a planet cost more than the current visit (e.g. the
 rover)? Do souls/upgrades persist across completed runs (prestige reset vs. permanent)?
