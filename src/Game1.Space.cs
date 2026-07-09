@@ -164,7 +164,7 @@ public sealed partial class DwarfMinerGame
         if (Pressed(keys, _prevKeys, Keys.Enter))
         {
             var def = Upgrades.All[_upgradeCursor];
-            if (Upgrades.Owned(_meta, def.Id))
+            if (!def.Repeatable && Upgrades.Owned(_meta, def.Id))
             {
                 _toast = "ALREADY INSTALLED";
             }
