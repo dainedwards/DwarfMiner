@@ -707,7 +707,13 @@ public sealed class Titan
             if (leg.StepT >= 1f)
             {
                 var threshold = 28f + leg.Phase * 22f;
-                if ((leg.FootPos - ideal).LengthSquared() > threshold * threshold)
+                // Step when the terrain anchor has drifted away from the planted foot — or
+                // earlier if the body has walked the leg near full extension, so a planted
+                // foot never gets left behind stretching the leg past its bone length.
+                var hip = HipWorld(leg, up, right);
+                var overstretched = (leg.FootPos - hip).LengthSquared()
+                    > LegMaxReach * LegMaxReach * (0.92f * 0.92f);
+                if (overstretched || (leg.FootPos - ideal).LengthSquared() > threshold * threshold)
                 {
                     leg.StepStart = leg.FootPos;
                     leg.StepTarget = ideal;
