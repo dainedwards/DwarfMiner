@@ -358,26 +358,65 @@ public sealed partial class DwarfMinerGame
             }
         }
 
-        // The sun: layered corona glow with a slow breathing flicker, then the body.
+        // The sun: layered corona with a slow breathing flicker, rotating flare rays, then
+        // the body with a hot core.
         var flick = 1f + MathF.Sin(_totalTime * 1.7f) * 0.04f;
         FillCircleWorld(sb, Vector2.Zero, (SpaceSim.SunRadius + 150f) * flick, new Color(255, 160, 50, 14));
         FillCircleWorld(sb, Vector2.Zero, (SpaceSim.SunRadius + 70f) * flick, new Color(255, 180, 60, 30));
+        for (var ray = 0; ray < 10; ray++)
+        {
+            var ra = _totalTime * 0.08f + ray * MathHelper.TwoPi / 10f;
+            var rd = new Vector2(MathF.Cos(ra), MathF.Sin(ra));
+            var len = 120f + MathF.Sin(_totalTime * 1.3f + ray * 1.7f) * 45f;
+            for (var seg = 0f; seg < len; seg += 10f)
+            {
+                var pos = rd * (SpaceSim.SunRadius + 14f + seg);
+                var fade = 1f - seg / len;
+                sb.Draw(_renderer.Pixel, new Rectangle((int)pos.X - 3, (int)pos.Y - 3, 6, 6),
+                    new Color(255, 190, 90) * (0.28f * fade));
+            }
+        }
         FillCircleWorld(sb, Vector2.Zero, SpaceSim.SunRadius, new Color(255, 190, 80));
         FillCircleWorld(sb, Vector2.Zero, SpaceSim.SunRadius * 0.7f, new Color(255, 235, 170));
+        FillCircleWorld(sb, Vector2.Zero, SpaceSim.SunRadius * 0.35f, new Color(255, 250, 225));
 
-        // Planets — same disc treatment the star map used (body, terminator, polar highlight).
+        // Planets — atmosphere halo, body, drifting surface blotches, a two-step terminator
+        // (shadow faces away from the sun), and a polar highlight.
         for (var i = 0; i < _space.Planets.Count; i++)
         {
             var p = _space.Planets[i];
             var body = p.Def.MapColor;
             var accent = p.Def.MapAccent;
             var c = p.Pos;
-            FillCircleWorld(sb, c, p.BodyRadius, body);
-            // Terminator: the shadowed side faces away from the sun.
             var sunward = c.LengthSquared() > 1f ? Vector2.Normalize(c) : Vector2.UnitY;
-            FillCircleWorld(sb, c + sunward * (p.BodyRadius * 0.34f), p.BodyRadius * 0.72f,
-                new Color(body.R / 2, body.G / 2, body.B / 2));
-            FillCircleWorld(sb, c - sunward * (p.BodyRadius * 0.3f), p.BodyRadius * 0.32f, accent);
+
+            // Atmosphere: two translucent accent halos (the Rift's reads as a red storm).
+            FillCircleWorld(sb, c, p.BodyRadius + 16f, accent * 0.10f);
+            FillCircleWorld(sb, c, p.BodyRadius + 7f, accent * 0.16f);
+
+            FillCircleWorld(sb, c, p.BodyRadius, body);
+
+            // Surface detail: hashed blotches in darker/accent shades, drifting slowly so
+            // the world reads as turning. Kept inside 0.65r so they never break the limb.
+            var seedHash = 0;
+            foreach (var ch in p.Def.Id) seedHash = seedHash * 31 + ch;
+            var dark = new Color((int)(body.R * 0.72f), (int)(body.G * 0.72f), (int)(body.B * 0.72f));
+            for (var s = 0; s < 6; s++)
+            {
+                var h = ((seedHash + s * 7919) * 1013904223) & 0x7fffffff;
+                var ba = (h % 628) / 100f + _totalTime * 0.03f;
+                var bd = (h >> 8 & 63) / 63f * 0.55f;
+                var br = p.BodyRadius * (0.10f + (h >> 15 & 31) / 31f * 0.14f);
+                var bc = c + new Vector2(MathF.Cos(ba), MathF.Sin(ba)) * (p.BodyRadius * bd);
+                FillCircleWorld(sb, bc, br, s < 4 ? dark : accent * 0.55f);
+            }
+
+            // Two-step terminator for a softer shadow gradient.
+            FillCircleWorld(sb, c + sunward * (p.BodyRadius * 0.30f), p.BodyRadius * 0.76f,
+                new Color(0, 0, 0, 60));
+            FillCircleWorld(sb, c + sunward * (p.BodyRadius * 0.48f), p.BodyRadius * 0.56f,
+                new Color(0, 0, 0, 80));
+            FillCircleWorld(sb, c - sunward * (p.BodyRadius * 0.3f), p.BodyRadius * 0.30f, accent * 0.8f);
         }
 
         // Asteroids — cratered grey rocks; a rotating surface pock sells the spin.
