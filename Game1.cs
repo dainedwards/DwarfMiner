@@ -1855,7 +1855,7 @@ public sealed partial class DwarfMinerGame : Game
         // Keep building thrust from where the liftoff cinematic left off, capped at a
         // leisurely cruise — the slow heave off the pad flows into the climb with no
         // velocity jump, and the low cap keeps the whole ride easy to steer.
-        _launchVel = MathF.Min(160f, _launchVel + 50f * dt);
+        _launchVel = MathF.Min(100f, _launchVel + 35f * dt);
         var climb = MathHelper.Clamp((Session.OrbitAltitude - alt) * 1.4f, 0f, _launchVel);
         // Player thrust vector on top of the auto-climb: full 2D steering.
         var steer = right * lat + up * vert;
