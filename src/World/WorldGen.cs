@@ -23,32 +23,43 @@ public static class WorldGen
     {
         // Planet size scales with the def (0.7× dwarf worlds up to 1.8× giants). The sky
         // headroom stays fixed, so the baseline surface (planet.SurfaceRing) scales with it.
-        var rings = Math.Max(120, (int)MathF.Round(Planet.StandardRings * def.SizeScale));
-        var planet = new Planet(new Vector2(2400, 2400), rings);
+        var planet = new Planet(new Vector2(2400, 2400), Planet.RingsFor(def.SizeScale));
         var rng = new Random(seed);
 
         // Subtle surface elevation noise — kept very low so the planet reads as a smooth
-        // round circle except where mountain spikes rise.
+        // round circle except where mountain spikes rise. The ridge channel is much finer
+        // (≈0.7° per sample) and crags the mountain profiles below.
         var surfA = MakeAngularNoise(rng, 8);
         var surfC = MakeAngularNoise(rng, 128);
+        var ridge = MakeAngularNoise(rng, 512);
 
-        // Explicit mountain placements — 4-6 narrow spikes at random angles, each with its
-        // own height and angular width. Drives a much narrower silhouette than what angular
-        // noise interpolation could produce, since width is a per-mountain parameter.
-        var mountainCount = def.MountainMin + rng.Next(def.MountainExtra + 1);
-        var mountains = new (float ang, float h, float w)[mountainCount];
-        for (var i = 0; i < mountainCount; i++)
+        // Explicit mountain placements — each roll is a massif: a main peak flanked by 1-3
+        // shoulder peaks at offset angles and reduced heights, so ranges read as ridgelines
+        // stepping down into foothills rather than isolated spikes. Peaks flatten into one
+        // list; profile sampling takes the max contribution across all of them.
+        var massifCount = def.MountainMin + rng.Next(def.MountainExtra + 1);
+        var peaks = new List<(float ang, float h, float w)>();
+        for (var i = 0; i < massifCount; i++)
         {
-            // Per-mountain height scale 0.5–1.5 multiplied against a 28–46 base — final
-            // heights span ~14–69 tiles, so the planet has a mix of short and tall peaks.
+            // Per-massif height scale 0.5–1.5 multiplied against a 28–46 base — final
+            // heights span ~14–69 tiles, so the planet has a mix of short and tall ranges.
             var baseH = (28f + (float)rng.NextDouble() * 18f) * def.MountainHeightScale;
-            var scaleH = 0.5f + (float)rng.NextDouble() * 1.0f;
-            mountains[i] = (
-                ang: (float)(rng.NextDouble() * MathHelper.TwoPi),
-                h: baseH * scaleH,
-                w: 0.09f + (float)rng.NextDouble() * 0.075f               // 50% wider: ≈ 5.2°..9.5°
-            );
+            var mainH = baseH * (0.5f + (float)rng.NextDouble() * 1.0f);
+            var mainW = 0.09f + (float)rng.NextDouble() * 0.075f;         // ≈ 5.2°..9.5°
+            var ang = (float)(rng.NextDouble() * MathHelper.TwoPi);
+            peaks.Add((ang, mainH, mainW));
+            var shoulders = 1 + rng.Next(3);
+            for (var s = 0; s < shoulders; s++)
+            {
+                var side = rng.Next(2) == 0 ? -1f : 1f;
+                var off = mainW * (0.6f + (float)rng.NextDouble() * 0.9f) * side;
+                peaks.Add((
+                    ang + off,
+                    mainH * (0.3f + (float)rng.NextDouble() * 0.4f),
+                    mainW * (0.45f + (float)rng.NextDouble() * 0.4f)));
+            }
         }
+        var mountains = peaks.ToArray();
 
         var bigCave = new float[64, 64];
         var smallCave = new float[64, 64];
