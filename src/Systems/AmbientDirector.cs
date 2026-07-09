@@ -131,6 +131,24 @@ public static class AmbientDirector
         return result;
     }
 
+    /// <summary>One storm tick: drop a few acid cells from cloud height across the cloud's
+    /// angular band. Throttled so a 12s storm sheds a heavy but sim-friendly shower.</summary>
+    private static void RainAcid(Session run)
+    {
+        if (Random.Shared.Next(2) == 0) return;
+        var planet = run.Planet;
+        for (var i = 0; i < 3; i++)
+        {
+            var ang = run.AcidRainAngle + ((float)Random.Shared.NextDouble() - 0.5f) * 0.28f;
+            var ground = SpawnDirector.FindSurfaceSpawn(planet, ang, planet.Radius);
+            var up = planet.UpAt(ground);
+            var drop = ground + up * (180f + (float)Random.Shared.NextDouble() * 90f);
+            var (tx, ty) = planet.WorldToTile(drop);
+            if (tx < 0 || tx >= planet.Rings) continue;
+            run.Cells.SpawnInTile(tx, ty, Material.Acid, 1);
+        }
+    }
+
     private static void SpawnMeteor(Session run)
     {
         var planet = run.Planet;
