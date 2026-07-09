@@ -23,6 +23,11 @@ public sealed class MetaSave
     public int PlanetsUnlocked { get; set; } = 1;
     public List<string> PlanetsEscaped { get; set; } = new();
 
+    /// <summary>Seed of the current procedurally generated 7-planet campaign (see
+    /// PlanetGen.Campaign). 0 = not rolled yet — Game1 rolls and saves one at boot.
+    /// Rerolled when a campaign completes, so every new run gets a fresh system.</summary>
+    public int WorldSeed { get; set; }
+
     /// <summary>Per-planet storage depot stash (planet id → resource id → count). Resources
     /// deposited at a Storage Depot survive death — a new run of that planet can build a depot
     /// and withdraw them, so a long ship-build run isn't wiped by one bad dive. Cleared when
