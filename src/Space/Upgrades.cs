@@ -105,7 +105,7 @@ public static class Upgrades
     public static bool TryBuy(MetaSave meta, UpgradeDef def)
     {
         if (!def.Repeatable && Owned(meta, def.Id)) return false;
-        if (!CanAfford(meta, def)) return false;
+        if (Locked(meta, def) || !CanAfford(meta, def)) return false;
         if (def.SoulKind is { } kind) meta.SpendSoulsOf(kind, def.Souls);
         else meta.SpendSouls(def.Souls);
         foreach (var (id, n) in def.Mats)
