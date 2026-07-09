@@ -672,12 +672,23 @@ public sealed partial class DwarfMinerGame : Game
                 if (d > 0.01f) _run.Player.Velocity += toPlayer / d * 260f;
             }
         }
-        if (_run.Titan.Health <= 0)
+        // Slaying the titan no longer ends the visit — the rocket is the only way off-world.
+        // The kill banks a titan soul (foundry currency aboard the mothership) exactly once,
+        // on the frame health crosses zero; resumed saves of an already-dead titan can't
+        // re-award because both sides of the crossing are non-positive after load.
+        if (_run.Titan.Health <= 0 && _prevTitanHealth > 0)
         {
             _meta.TitansDefeated++;
+            var kindKey = _run.Def.Titan.ToString();
+            _meta.TitanSouls[kindKey] = _meta.TitanSouls.GetValueOrDefault(kindKey) + 1;
             _meta.Save();
-            EndRun($"You felled the {TitanName(_run.Def.Titan)}! Run time: {_run.RunTime:0.0}s. Press R to return to your ship.");
+            _run.Shake = MathF.Max(_run.Shake, 1.6f);
+            _particles.EmitDust(_run.Titan.Position, 44f);
+            PlayAt("explode", _run.Titan.Position, 1f, pitch: -0.4f);
+            _toast = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} SLAIN — SOUL CLAIMED";
+            _toastTimer = 3.5f;
         }
+        _prevTitanHealth = _run.Titan.Health;
 
         for (var i = _run.Boulders.Count - 1; i >= 0; i--)
         {
