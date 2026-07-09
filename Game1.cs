@@ -2457,6 +2457,13 @@ public sealed partial class DwarfMinerGame : Game
                     _renderer.DrawCircle(shot.Position, shot.Radius * 0.55f, new Color(180, 240, 80));
                     break;
                 }
+                case TitanShotKind.Lava:
+                {
+                    var wob = (float)Random.Shared.NextDouble() * 1.4f;
+                    _renderer.DrawCircle(shot.Position, shot.Radius + wob, new Color(200, 70, 20));
+                    _renderer.DrawCircle(shot.Position, shot.Radius * 0.55f, new Color(255, 190, 80));
+                    break;
+                }
                 case TitanShotKind.Spike:
                 {
                     var sAng = MathF.Atan2(shot.Velocity.Y, shot.Velocity.X);
