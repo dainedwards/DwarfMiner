@@ -897,6 +897,48 @@ public static class SimTest
         Check("foundry: cargo deducted (gold gone, 1 iron left)",
             !meta.ShipCargo.ContainsKey("gold") && meta.ShipCargo["iron"] == 1);
         Check("foundry: double-buy refused", !Space.Upgrades.TryBuy(meta, jet));
+
+        // Kind-specific souls: the jetpack wants a Kong soul — a Mecha soul must not do.
+        var meta2 = new MetaSave();
+        meta2.TitanSouls["Mecha"] = 3;
+        meta2.ShipCargo["gold"] = 9; meta2.ShipCargo["iron"] = 99; meta2.ShipCargo["coal"] = 99;
+        Check("foundry: wrong-kind soul refused", !Space.Upgrades.CanAfford(meta2, jet));
+        meta2.TitanSouls["Kong"] = 1;
+        Check("foundry: right-kind soul accepted", Space.Upgrades.CanAfford(meta2, jet));
+
+        // Rovers are repeatable: two buys, two more rovers, kind-agnostic (no soul cost).
+        var rover = System.Array.Find(Space.Upgrades.All, u => u.Id == "rover")!;
+        var before = meta2.Rovers;
+        var real2 = MetaSave.Load();
+        try
+        {
+            Check("foundry: rover buys repeat",
+                Space.Upgrades.TryBuy(meta2, rover) && Space.Upgrades.TryBuy(meta2, rover));
+        }
+        finally
+        {
+            real2.Save();
+        }
+        Check("foundry: rover count grew by two", meta2.Rovers == before + 2,
+            $"{before} -> {meta2.Rovers}");
+
+        // The long-range survey finds real deposits (ember is the ruby world) and caches.
+        var ember = World.PlanetDefs.ById("ember");
+        var t0 = Environment.TickCount64;
+        var deposits = Space.Survey.For(ember);
+        var genMs = Environment.TickCount64 - t0;
+        var hasRuby = false; var hasFuel = false;
+        foreach (var (label, n) in deposits)
+        {
+            if (label == "RUBY" && n > 0) hasRuby = true;
+            if (label == "FUEL" && n > 0) hasFuel = true;
+        }
+        Check("survey: ember shows ruby + fuel deposits", hasRuby && hasFuel,
+            string.Join(" ", System.Array.ConvertAll(deposits, d => $"{d.label}:{d.count}")));
+        t0 = Environment.TickCount64;
+        Space.Survey.For(ember);
+        Check("survey: second read is cached (instant)",
+            Environment.TickCount64 - t0 < genMs / 2 + 5, $"first {genMs}ms");
     }
 
     private static void Check(string name, bool ok, string detail = "")
