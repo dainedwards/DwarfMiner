@@ -276,21 +276,23 @@ public sealed partial class DwarfMinerGame : Game
     }
 
     /// <summary>One frame of the rover descent: constant sink along local gravity, direct
-    /// lateral drive from A/D (a guided pod, not a brick), world simulating underneath.
-    /// Touchdown hands control to normal play exactly where the pod settled.</summary>
+    /// lateral drive from A/D (a guided pod, not a brick), world simulating underneath and
+    /// the camera easing from orbit scale down to play zoom. Touchdown hands control to
+    /// normal play exactly where the pod settled.</summary>
     private void UpdateLanding(float dt, KeyboardState keys)
     {
         var up = _run.Planet.UpAt(_landerPos);
         var right = new Vector2(-up.Y, up.X);
         var lat = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
                 + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
-        _landerPos += (-up * 85f + right * (lat * 130f)) * dt;
+        _landerPos += (-up * 110f + right * (lat * 150f)) * dt;
 
         // Retro-thruster flame under the pod, throttled by the particle system itself.
         _particles.EmitRocketExhaust(_landerPos - up * 4f, -up);
 
         _run.Player.Position = _landerPos;
         _run.Player.Velocity = Vector2.Zero;
+        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, _playZoom, MathHelper.Clamp(dt * 1.1f, 0f, 1f));
         _camera.Follow(_landerPos, up, dt);
 
         _run.Physics.Update(dt);
