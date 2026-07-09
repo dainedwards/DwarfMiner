@@ -387,45 +387,90 @@ public static class TitanRenderer
 
     // ── shared primitives ───────────────────────────────────────────────────────
 
-    /// <summary>2-bone leg with knee, foot pad + claws; stretches when the foot is far. Shared
-    /// by all legged variants (thicker/rocky for Kong, plated for Mecha).</summary>
-    private static void DrawLeg(Renderer r, Titan t, Frame f, TitanLeg leg, float thigh, float shin, bool mech = false)
+    /// <summary>Draw both legs of a biped, far leg first. The leg on the side opposite the
+    /// facing direction renders in shadow behind the near leg, so the pair reads as two
+    /// distinct legs with depth instead of one overlapping blob.</summary>
+    private static void DrawLegs(Renderer r, Titan t, Frame f, float thigh, float shin, bool mech = false)
     {
-        var hip = f.Tp + f.Right * leg.HipForward + f.Up * leg.HipUp;
+        var faceSign = f.Face >= 0f ? 1 : -1;
+        foreach (var leg in t.Legs)
+            if (leg.Side != faceSign) DrawLeg(r, t, f, leg, thigh, shin, mech, far: true);
+        foreach (var leg in t.Legs)
+            if (leg.Side == faceSign) DrawLeg(r, t, f, leg, thigh, shin, mech);
+    }
+
+    /// <summary>2-bone leg with a haunch at the hip, a forward-bent knee (backward for the
+    /// digitigrade mech), a tapering shin and a clawed planted foot. Shares its hip socket and
+    /// bone length with the simulation (<see cref="Titan.HipWorld"/>/<see cref="Titan.LegBoneLen"/>)
+    /// so the drawn leg roots exactly where the anchor search thinks it does and can never
+    /// out-reach it. <paramref name="far"/> shades the whole leg for the away side.</summary>
+    private static void DrawLeg(Renderer r, Titan t, Frame f, TitanLeg leg, float thigh, float shin,
+        bool mech = false, bool far = false)
+    {
+        var hip = t.HipWorld(leg, f.Up, f.Right);
         var foot = leg.FootPos;
         var toFoot = foot - hip;
         var dist = toFoot.Length();
-        const float l = 78f;
+        const float l = Titan.LegBoneLen;
+        // The sim clamps anchors to reach, but a mid-swing frame can momentarily exceed it —
+        // pin the drawn foot at full extension so the leg never rubber-bands on screen.
+        if (dist > 2f * l)
+        {
+            foot = hip + toFoot * (2f * l / dist);
+            toFoot = foot - hip;
+            dist = 2f * l;
+        }
+
+        var cDark = far ? Shade(f.HideDark, 0.62f) : f.HideDark;
+        var cMid = far ? Shade(f.Hide, 0.62f) : f.Hide;
+        var cLite = far ? Shade(f.HideLight, 0.62f) : f.HideLight;
+        var cJoint = far ? Shade(f.Chitin, 0.7f) : f.Chitin;
+
         Vector2 knee;
-        if (dist < 0.5f) knee = hip - f.Up * 40f;
-        else if (dist >= 2 * l) knee = hip + toFoot * 0.5f;
+        if (dist < 0.5f) knee = hip - f.Up * l * 0.5f;
         else
         {
             var dir = toFoot / dist;
             var perp = new Vector2(-dir.Y, dir.X);
-            if (Vector2.Dot(perp, f.Right * leg.Side) < 0) perp = -perp;
-            var half = dist * 0.5f;
+            // Knee bows toward the facing direction (a striding plantigrade), or away from it
+            // for the digitigrade mech — both knees agree, instead of splaying outward.
+            var fwd = f.Right * (f.Face >= 0f ? 1f : -1f);
+            if (Vector2.Dot(perp, fwd) < 0) perp = -perp;
+            var half = MathF.Min(dist * 0.5f, l);
             var bend = MathF.Sqrt(MathF.Max(0f, l * l - half * half));
-            // Digitigrade (knee kicks back) for the mech; plantigrade otherwise.
             knee = hip + dir * half + perp * bend * (mech ? -1f : 1f);
         }
-        Seg(r, hip, knee, thigh, f.HideDark);
-        Seg(r, knee, foot, shin, f.Hide);
-        r.DrawCircle(knee, thigh * 0.5f, f.Chitin);
+
+        // Haunch — a heavy thigh mass over the hip socket so the leg visibly roots into the
+        // pelvis (mostly tucked under the torso, its lower arc shows as the top of the thigh).
+        r.DrawCircle(hip, thigh * 0.85f, cDark);
+        // Thigh: dark bone with a lit muscle core.
+        Seg(r, hip, knee, thigh, cDark);
+        Seg(r, hip, knee, thigh * 0.55f, Color.Lerp(cDark, cMid, 0.5f));
+        // Knee cap.
+        r.DrawCircle(knee, MathF.Max(thigh, shin) * 0.55f, cDark);
+        r.DrawCircle(knee, MathF.Max(thigh, shin) * 0.3f, cJoint);
+        // Shin: lighter, slimmer, with a highlight edge so the lower leg pops off the thigh.
+        Seg(r, knee, foot, shin, cMid);
+        Seg(r, knee, foot, shin * 0.42f, cLite);
 
         // Foot: an elongated sole planted flat along the ground with the toes pointing the way
         // the body faces, an ankle joint, and three splayed claws. Reads as a heavy planted
         // foot digging in rather than a round stump.
         var groundFwd = new Vector2(-f.Up.Y, f.Up.X) * f.Face;   // planet tangent, facing direction
-        var heel = foot - groundFwd * (shin * 0.5f);
+        var heel = foot - groundFwd * (shin * 0.6f);
         var toe = foot + groundFwd * (shin * 1.05f);
-        Seg(r, heel, toe, shin * 0.9f, f.HideDark);              // sole
-        r.DrawCircle(foot, shin * 0.62f, f.Hide);                // ankle knuckle
+        Seg(r, heel, toe, shin * 0.9f, cDark);                   // sole
+        r.DrawCircle(heel, shin * 0.42f, cDark);                 // heel pad
+        r.DrawCircle(foot, shin * 0.62f, cMid);                  // ankle knuckle
         var clawLen = mech ? 8f : 13f;
         var clawThick = mech ? 3f : 4.5f;
         for (var c = -1; c <= 1; c++)
-            Seg(r, toe, toe + groundFwd * clawLen + f.Up * (c * shin * 0.34f), clawThick, f.Chitin);
+            Seg(r, toe, toe + groundFwd * clawLen + f.Up * (c * shin * 0.34f), clawThick, cJoint);
     }
+
+    private static Color Shade(Color c, float m) => new(
+        (int)(c.R * m), (int)(c.G * m), (int)(c.B * m));
 
     /// <summary>Draw the verlet spine chain (tail or serpent body). <paramref name="ridge"/>
     /// adds Godzilla dorsal spikes; <paramref name="plated"/> adds mech plating.</summary>
