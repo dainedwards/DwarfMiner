@@ -1045,6 +1045,56 @@ public sealed class Creature
                 r.DrawCircle(Position + dir * 2.0f - perp * 1.3f, 0.5f, moleEye);
                 break;
             }
+            case CreatureKind.SporeBat:
+            {
+                // Pale fungal flitter: round spore-dusted body, two membrane wings beating
+                // out of phase, drooping antennae.
+                var flap = MathF.Sin(t * 13f + _phase) * 0.9f;
+                var body = Tinted(new Color(150, 180, 130));
+                var wing = Tinted(new Color(190, 220, 170)) * 0.85f;
+                r.DrawRect(Position + right * 2.4f + up * (flap * 1.4f), new Vector2(4.4f, 1.6f), wing, rot + 0.5f + flap * 0.5f);
+                r.DrawRect(Position - right * 2.4f + up * (flap * 1.4f), new Vector2(4.4f, 1.6f), wing, rot - 0.5f - flap * 0.5f);
+                r.DrawCircle(Position, Radius, body);
+                r.DrawCircle(Position + up * 0.8f + right * 0.9f, 0.8f, Tinted(new Color(110, 150, 95)));
+                r.DrawCircle(Position - up * 0.6f - right * 1.0f, 0.6f, Tinted(new Color(110, 150, 95)));
+                r.DrawCircle(Position + up * (Radius + 0.6f), 0.5f, Tinted(new Color(210, 240, 180)));
+                break;
+            }
+            case CreatureKind.CrystalCrawler:
+            {
+                // Low armoured slab with a jagged crystal ridge down its back and stubby
+                // scuttling legs — a walking geode.
+                var shell = Tinted(new Color(95, 90, 120));
+                var shard = Tinted(new Color(180, 130, 230));
+                r.DrawRect(Position - up * 0.6f, new Vector2(Radius * 2f, Radius * 1.2f), shell, rot);
+                var scuttle = MathF.Sin(t * 9f + _phase) * 0.7f;
+                var leg = Tinted(new Color(70, 66, 92));
+                for (var i = -1; i <= 1; i++)
+                    r.DrawRect(Position - up * (Radius * 0.8f) + right * (i * 3.0f + scuttle * 0.6f),
+                        new Vector2(1.2f, 2.2f), leg, rot);
+                for (var i = 0; i < 3; i++)
+                {
+                    var bx = (i - 1) * 2.6f;
+                    r.DrawRect(Position + up * (Radius * 0.7f) + right * bx,
+                        new Vector2(1.6f, 3.4f + (i == 1 ? 1.4f : 0f)), shard, rot + (i - 1) * 0.35f);
+                }
+                r.DrawCircle(Position + right * facing * (Radius - 0.8f) + up * 0.4f, 0.6f, Color.Black);
+                break;
+            }
+            case CreatureKind.VoidWraith:
+            {
+                // A torn shred of the Rift: layered violet shroud, white-hot core, and a
+                // wake of fading wisps behind its flight path.
+                var drift = Velocity.LengthSquared() > 1f ? Vector2.Normalize(Velocity) : right;
+                for (var i = 1; i <= 3; i++)
+                    r.DrawCircle(Position - drift * (i * 2.6f), Radius - i * 0.8f,
+                        Tinted(new Color(90, 40, 130)) * (0.5f - i * 0.12f));
+                var pulse = MathF.Sin(t * 6f + _phase) * 0.5f;
+                r.DrawCircle(Position, Radius + pulse * 0.5f, Tinted(new Color(70, 30, 110)) * 0.85f);
+                r.DrawCircle(Position, Radius * 0.55f, Tinted(new Color(140, 80, 200)));
+                r.DrawCircle(Position, 1.1f, Tinted(new Color(240, 220, 255)));
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
