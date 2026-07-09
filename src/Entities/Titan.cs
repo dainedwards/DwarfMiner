@@ -654,15 +654,17 @@ public sealed class Titan
     /// <summary>Search for a foot anchor for one leg by ray-marching downward (along -planet-up
     /// from the leg's lateral search start) until a solid tile is found. Returns the world-space
     /// anchor position, biased forward by the body's tangential motion so feet step ahead of
-    /// where the body is going. If no terrain is found, returns a max-reach dangle position.</summary>
+    /// where the body is going. The result is always clamped to <see cref="LegMaxReach"/> from
+    /// the hip — over a cliff or pit the foot stops at full extension in mid-air rather than
+    /// stretching, and the body suspension then lowers the body until the legs reach ground.</summary>
     private Vector2 ResolveFootAnchor(TitanLeg leg, Vector2 up, Vector2 right, Vector2 motionBias)
     {
-        const float legSideStride = 95f;
+        const float legSideStride = 70f;
         const float legSearchUp = 35f;
         const float legSearchDown = 360f;
         const float legProbeStep = 4f;
 
-        var hipWorld = Position + right * leg.HipForward + up * leg.HipUp;
+        var hipWorld = HipWorld(leg, up, right);
         var anchorStart = hipWorld + right * (leg.Side * legSideStride) + up * legSearchUp;
 
         var found = false;
@@ -678,6 +680,13 @@ public sealed class Titan
             }
         }
         if (found) foot += motionBias;
+
+        // Never plant beyond what the two drawn leg bones can span (slightly inside full
+        // extension so the knee keeps a visible bend even at max stride).
+        var toFoot = foot - hipWorld;
+        var reach = toFoot.Length();
+        const float maxPlant = LegMaxReach * 0.97f;
+        if (reach > maxPlant) foot = hipWorld + toFoot * (maxPlant / reach);
         return foot;
     }
 
