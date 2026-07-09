@@ -328,17 +328,15 @@ public static class WorldGen
                         if (Tiles.IsAnchored(k)) continue;
                         if (dist <= radius * Planet.TileSize)
                         {
-                            // Grove floors keep a mossy carpet with glowshrooms; caverns open clean.
-                            if (!crystal && dr == -radius && rng.Next(3) == 0 && k != TileKind.Sky)
-                            {
-                                planet.Set(r, t, TileKind.Glowshroom);
-                                continue;
-                            }
                             planet.Set(r, t, TileKind.Sky);
                         }
                         else if (k != TileKind.Sky)
                         {
-                            planet.Set(r, t, crystal ? TileKind.Crystal : TileKind.MossStone);
+                            // Cavern shells line with crystal; grove shells with moss, and
+                            // the inward (floor) side sprouts glowshrooms.
+                            planet.Set(r, t, crystal ? TileKind.Crystal
+                                : dr < 0 && rng.Next(3) == 0 ? TileKind.Glowshroom
+                                : TileKind.MossStone);
                         }
                     }
                 }
