@@ -1128,6 +1128,15 @@ public sealed class Creature
             case CreatureKind.MoleBeast:
                 if (_provokedT > 0f) r.AddLight(Position, 10f, new Color(255, 70, 50));
                 break;
+            case CreatureKind.SporeBat:
+                r.AddLight(Position, 11f, new Color(140, 210, 130));
+                break;
+            case CreatureKind.VoidWraith:
+            {
+                var pulse = MathF.Sin(r.Time * 5f + _phase) * 4f;
+                r.AddLight(Position, 22f + pulse, new Color(150, 80, 220));
+                break;
+            }
         }
     }
 
