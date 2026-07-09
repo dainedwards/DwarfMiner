@@ -352,7 +352,7 @@ public sealed class Titan
         // Stomp: earthquake centered at the kaiju's standing point. Only when aggroed and
         // grounded — a passive kaiju doesn't pound the ground, and a stomp mid-air looks
         // ridiculous (nothing's there to crack).
-        if (IsAggro && StompCooldown <= 0 && Anger > 15f && Grounded)
+        if (IsAggro && StompCooldown <= 0 && Anger > 15f && Grounded && Kind != TitanKind.Sandworm)
         {
             var quakeRadius = 130f + Anger * 3f;
             var strength = 2 + (int)(Anger / 35f);
