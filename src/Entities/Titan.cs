@@ -842,11 +842,12 @@ public sealed class Titan
     }
 }
 
-/// <summary>One procedural leg of the Titan. Hip is body-local (offset along the body's tangent
-/// axis, lifted slightly above the body center); foot is world-space and persists across frames
-/// — feet stay planted until the body has moved enough to trigger a step, then arc to a new
-/// terrain-resolved anchor. Hip→foot distance is unconstrained, so legs visibly stretch over
-/// peaks and pits and compress on flat ground.</summary>
+/// <summary>One procedural leg of the Titan. Hip is body-local (see <see cref="Titan.HipWorld"/>
+/// — the two sockets sit <see cref="Titan.HipHalfSpan"/> apart on the pelvis); foot is
+/// world-space and persists across frames — feet stay planted until the body has moved enough
+/// to trigger a step, then arc to a new terrain-resolved anchor. Hip→foot distance is capped
+/// at <see cref="Titan.LegMaxReach"/>: anchors clamp to reach and an overstretched planted leg
+/// steps early, so legs compress and bend but never rubber-band.</summary>
 public sealed class TitanLeg
 {
     public float HipForward;       // body-tangent offset of the hip (signed: front/back)
