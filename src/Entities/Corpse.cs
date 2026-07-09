@@ -86,6 +86,9 @@ public sealed class Corpse
         CreatureKind.HornedDelver => new Color(110, 90, 80),
         CreatureKind.Centipede    => new Color(100, 78, 60),
         CreatureKind.MoleBeast    => new Color(105, 85, 95),
+        CreatureKind.SporeBat     => new Color(120, 140, 105),
+        CreatureKind.CrystalCrawler => new Color(85, 80, 105),
+        CreatureKind.VoidWraith   => new Color(70, 45, 95),
         _                         => new Color(110, 90, 90),
     };
 }
