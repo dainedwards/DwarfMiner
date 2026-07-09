@@ -221,6 +221,18 @@ public sealed partial class DwarfMinerGame : Game
         _craftingMenu.Reset();
         _invUi.Reset();
         _screen = GameScreen.Playing;
+        // Rover drops from space descend visibly (semi-controlled by the player); test-hook
+        // starts (DM_AUTOSTART) and legacy paths spawn straight on the surface. DM_DESCEND=1
+        // forces the descent for tooling.
+        _landing = descend || Environment.GetEnvironmentVariable("DM_DESCEND") is { Length: > 0 };
+        if (_landing)
+        {
+            var up0 = _run.Planet.UpAt(_run.Player.Position);
+            _landerPos = _run.Player.Position + up0 * 300f;
+            _run.Player.Position = _landerPos;
+            _toast = "GUIDE THE ROVER DOWN - A/D STEER";
+            _toastTimer = 3.5f;
+        }
         // Camera exists except when DM_AUTOSTART triggers a run during Initialize —
         // LoadContent snaps it then. Zoom restores from whatever the space screen left it at.
         if (_camera is not null)
@@ -228,6 +240,45 @@ public sealed partial class DwarfMinerGame : Game
             _camera.Zoom = _playZoom;
             _camera.SnapTo(_run.Player.Position, 0f);
         }
+    }
+
+    /// <summary>One frame of the rover descent: constant sink along local gravity, direct
+    /// lateral drive from A/D (a guided pod, not a brick), world simulating underneath.
+    /// Touchdown hands control to normal play exactly where the pod settled.</summary>
+    private void UpdateLanding(float dt, KeyboardState keys)
+    {
+        var up = _run.Planet.UpAt(_landerPos);
+        var right = new Vector2(-up.Y, up.X);
+        var lat = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
+                + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
+        _landerPos += (-up * 85f + right * (lat * 130f)) * dt;
+
+        // Retro-thruster flame under the pod, throttled by the particle system itself.
+        _particles.EmitRocketExhaust(_landerPos - up * 4f, -up);
+
+        _run.Player.Position = _landerPos;
+        _run.Player.Velocity = Vector2.Zero;
+        _camera.Follow(_landerPos, up, dt);
+
+        _run.Physics.Update(dt);
+        _run.Cells.Update(dt);
+        _particles.Update(dt, _run.Planet);
+        _run.RunTime += dt;
+        _toastTimer -= dt;
+
+        // Touchdown: feet-level rock below, or a cliff face clipped sideways. Nudge free of
+        // any overlap so the dwarf never starts a run embedded.
+        if (!_run.Planet.IsSolidAt(_landerPos - up * (_run.Player.Radius + 2f))
+            && !_run.Planet.IsSolidAt(_landerPos))
+            return;
+        for (var i = 0; i < 60 && _run.Planet.IsSolidAt(_landerPos); i++) _landerPos += up * 2f;
+        _landing = false;
+        _run.Player.Position = _landerPos;
+        _particles.EmitDust(_landerPos, 16f);
+        _run.Shake = MathF.Max(_run.Shake, 0.5f);
+        _sfx.Play("collapse", 0.45f, pitch: 0.2f);
+        _toast = "TOUCHDOWN - ROVER EXPENDED";
+        _toastTimer = 2.5f;
     }
 
     /// <summary>Resume the suspended run from disk — RunSave rebuilt the Session; this does
