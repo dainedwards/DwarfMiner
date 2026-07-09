@@ -73,7 +73,7 @@ public static class RunSave
             w.Write(p.HasDrill); w.Write(p.HasHammer); w.Write(p.HasLantern);
             w.Write(p.HasArmor); w.Write(p.HasCoreDrill);
             w.Write(p.HasPistol); w.Write(p.HasMachineGun); w.Write(p.HasLaser);
-            w.Write(p.HasLaserCannon); w.Write(p.HasRocketLauncher);
+            w.Write(p.HasLaserCannon); w.Write(p.HasRocketLauncher); w.Write(p.HasMiningLaser);
             w.Write(p.FlyMode);
             w.Write(p.BeaconWorld.HasValue);
             if (p.BeaconWorld is { } b) { w.Write(b.X); w.Write(b.Y); }
