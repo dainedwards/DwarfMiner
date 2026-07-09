@@ -106,6 +106,11 @@ public static class PlanetGen
             "platinum" => TileKind.PlatinumOre, _ => TileKind.Diamond,
         };
 
+        // Volcanism: fire worlds always run 2-3 big cones, acid worlds vent vitriol from
+        // 1-2 of theirs, and every other biome has a 1-in-4 shot at a lone small one.
+        var strayVolcano = rng.Next(4) == 0 ? 1 : 0;
+        var strayScale = J(0.5f, 0.7f);
+
         return biome switch
         {
             Biome.Ocean => new(id, name,
