@@ -29,7 +29,7 @@ public static class Upgrades
             Souls: 1, Mats: new[] { ("iron", 8), ("coal", 6) }),
 
         new("engine2", "Ion Engines II",
-            "+40% mothership thrust and top speed",
+            "Mothership thrust and top speed up 40 percent",
             Souls: 2, Mats: new[] { ("silver", 5), ("crystal", 2) }),
     };
 
