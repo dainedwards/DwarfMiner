@@ -343,7 +343,7 @@ public static class WorldGen
                 var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
                 // Crystal runs deep (rings 30-70 below baseline); groves stay shallow (8-30).
                 var depth = crystal ? 30 + rng.Next(40) : 8 + rng.Next(22);
-                var cr = BaselineSurfaceRing - depth;
+                var cr = planet.SurfaceRing - depth;
                 if (cr < 8) continue;
                 var radius = crystal ? 4 + rng.Next(4) : 3 + rng.Next(3);
                 var n = planet.TilesAt(cr);
