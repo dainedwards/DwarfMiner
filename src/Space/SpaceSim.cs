@@ -24,6 +24,25 @@ public sealed class SpacePlanet
     public Vector2 Pos => new(MathF.Cos(Angle) * OrbitRadius, MathF.Sin(Angle) * OrbitRadius);
 }
 
+/// <summary>A drifting rock the mothership must dodge or shoot. Big ones split when killed.</summary>
+public sealed class Asteroid
+{
+    public Vector2 Pos;
+    public Vector2 Vel;
+    public float Radius;
+    public float Hp;
+    public float Rot;
+    public float Spin;
+}
+
+/// <summary>One autocannon bolt from the mothership's gun.</summary>
+public sealed class ShipShot
+{
+    public Vector2 Pos;
+    public Vector2 Vel;
+    public float Life;
+}
+
 /// <summary>
 /// The flyable solar system between planet runs. Owns the orbiting planets and the player's
 /// rocket (rotate/thrust/brake with drag and a speed cap — arcade handling, no gravity wells).
