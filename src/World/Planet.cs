@@ -95,9 +95,11 @@ public sealed class Planet
     /// Visible as a darker silhouette behind Sky tiles inside the planet (Terraria-style).</summary>
     private readonly TileKind[] _wall;
 
-    public Planet(Vector2 center)
+    public Planet(Vector2 center, int rings = StandardRings)
     {
         Center = center;
+        Rings = rings;
+        (_tilesAt, _ringOffsets, _totalTiles) = GeometryFor(rings);
         _tiles = new TileKind[_totalTiles];
         _damage = new byte[_totalTiles];
         _wall = new TileKind[_totalTiles];
