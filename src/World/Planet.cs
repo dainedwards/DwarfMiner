@@ -332,5 +332,9 @@ public sealed class Planet
             _damage[i] = damage[i];
             _wall[i] = (TileKind)walls[i];
         }
+        VolcanoVents.Clear();
+        var vents = r.ReadInt32();
+        for (var i = 0; i < vents; i++)
+            VolcanoVents.Add((r.ReadInt32(), r.ReadInt32(), r.ReadBoolean()));
     }
 }
