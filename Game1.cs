@@ -1805,7 +1805,7 @@ public sealed partial class DwarfMinerGame : Game
         _launchElapsed += dt;
         // Thrust ramps in over the first moments, then holds — a slow, weighty liftoff
         // building into a real climb rather than an instant jump.
-        _launchVel += 65f * dt;
+        _launchVel += 40f * dt;
         _launchShipPos += _launchUp * _launchVel * dt;
 
         // The dwarf rides the ship, so the camera tracks the ascent.
