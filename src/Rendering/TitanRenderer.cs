@@ -87,6 +87,39 @@ public static class TitanRenderer
                         r.AddLight(mouth + t.BeamDir * d, 16f, new Color(150, 240, 255));
                 r.AddLight(f.Tp + f.Up * 44f, 16f, glow);   // chest reactor
                 break;
+            case TitanKind.Knifehead:
+                // The blade crest shimmers through the gore windup and burns during the sprint.
+                if (t.SpecialState > 0f)
+                    r.AddLight(f.Tp + f.Up * 120f + f.Right * (f.Face * 90f),
+                        t.Charging ? 34f : 20f, new Color(120, 255, 230));
+                break;
+            case TitanKind.Otachi:
+                // Acid sacs along the throat glow while the spray winds up and fires.
+                if (t.SpecialState > 0f)
+                    r.AddLight(mouth, 26f, new Color(170, 250, 70));
+                r.AddLight(f.Tp + f.Up * 60f, 12f + 10f * f.Anger, new Color(120, 200, 50));
+                break;
+            case TitanKind.Leatherback:
+                // The back turbine builds to a blinding crackle before the EMP detonates.
+                var hump = f.Tp + f.Up * 96f - f.Right * (f.Face * 30f);
+                if (t.SpecialState > 0f)
+                {
+                    var prog = 1f - t.SpecialState / Titan.EmpWindup;
+                    r.AddLight(hump, 20f + 70f * prog, new Color(140, 200, 255));
+                }
+                else
+                    r.AddLight(hump, 16f + 12f * f.Anger, new Color(90, 160, 255));
+                break;
+            case TitanKind.Raiju:
+                // Streaking hood glow — bright while it dashes.
+                r.AddLight(f.Tp + f.Up * 60f + f.Right * (f.Face * 50f),
+                    t.Charging ? 40f : 16f, new Color(170, 230, 255));
+                break;
+            case TitanKind.Slattern:
+                // Triple crest burns hotter with anger; the tail tip glows where barrages fling from.
+                r.AddLight(f.Tp + f.Up * 150f, 24f + 26f * f.Anger, glow);
+                r.AddLight(t.TailNodes[^1], 14f, glow);
+                break;
         }
 
         // Beam-tip / hurl glow already handled by shots elsewhere.
