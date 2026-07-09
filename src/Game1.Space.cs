@@ -332,6 +332,7 @@ public sealed partial class DwarfMinerGame
         GraphicsDevice.Clear(new Color(4, 5, 12));
         var sb = _renderer.Batch;
         var view = _camera.View;
+        _previewBuiltThisFrame = false;
 
         // Deep background: soft nebula blobs on the slowest parallax, then a three-layer
         // starfield with a scattering of tinted stars — hashed screen positions scrolled
