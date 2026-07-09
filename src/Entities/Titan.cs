@@ -74,6 +74,21 @@ public sealed class Titan
     /// damage/knock-back the player and spew debris, since the Titan has no Player reference.</summary>
     public (Vector2 pos, float radius, float damage)? PendingShockwave;
 
+    /// <summary>Knifehead mid-gore / Raiju mid-dash — the renderer leans the body into the
+    /// sprint and Game1's HUD can read it. Cleared when the burst resolves.</summary>
+    public bool Charging;
+    /// <summary>EMP pulse pending from Leatherback's back-turbine discharge — Game1 consumes
+    /// it to fry the dwarf's tech (jetpack + energy weapons) for <c>seconds</c> if they're
+    /// inside the radius. Mirrors the PendingShockwave hand-off pattern.</summary>
+    public (Vector2 pos, float radius, float seconds)? PendingEmp;
+
+    /// <summary>Committed gore direction (tangent sign) while Knifehead charges.</summary>
+    private float _chargeDir;
+    /// <summary>Raiju lunge chain: dashes remaining in the current burst.</summary>
+    private int _dashesLeft;
+    /// <summary>Slattern alternates tail-spike barrages with sonic pulses.</summary>
+    private bool _slatternPulse;
+
     /// <summary>Projectiles can hit the boss/egg except while the Sandworm is burrowed.</summary>
     public bool Targetable => !Submerged;
 
