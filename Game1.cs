@@ -415,6 +415,7 @@ public sealed partial class DwarfMinerGame : Game
         var keys = Keyboard.GetState();
         var mouse = Mouse.GetState();
         _totalTime += dt;
+        _transitionFlash = MathF.Max(0f, _transitionFlash - dt * 1.6f);
 
         // Esc quits — except while the crafting menu is open, where the menu's own handler
         // consumes the same press edge to close itself (previously Esc quit the whole game
