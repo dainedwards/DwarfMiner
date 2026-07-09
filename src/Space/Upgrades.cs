@@ -26,23 +26,23 @@ public static class Upgrades
     {
         new("rover", "Rover",
             "One disposable descent rover (roverless drops cost half your health)",
-            Souls: 0, Mats: new[] { ("iron", 5), ("coal", 3) }, Repeatable: true),
+            Souls: 0, Mats: new[] { ("pure_iron", 3), ("pure_coal", 2) }, Repeatable: true),
 
         new("jetpack", "Jetpack",
             "Hold JUMP while airborne to fly (charge refills on the ground)",
-            Souls: 1, Mats: new[] { ("gold", 4), ("iron", 6) }, SoulKind: "Kong"),
+            Souls: 1, Mats: new[] { ("pure_gold", 2), ("pure_iron", 3) }, SoulKind: "Kong"),
 
         new("gun2", "Autocannon II",
             "Ship gun fires twice as fast",
-            Souls: 1, Mats: new[] { ("iron", 8), ("coal", 6) }, SoulKind: "Mecha"),
+            Souls: 1, Mats: new[] { ("pure_iron", 4), ("pure_coal", 3) }, SoulKind: "Mecha"),
 
         new("engine2", "Ion Engines II",
             "Mothership thrust and top speed up 40 percent, burns less fuel",
-            Souls: 2, Mats: new[] { ("silver", 5), ("crystal", 2) }, SoulKind: "Godzilla"),
+            Souls: 2, Mats: new[] { ("pure_silver", 3), ("crystal", 2) }, SoulKind: "Godzilla"),
 
         new("hull2", "Hull Plating",
             "Mothership hull raised from 5 to 7",
-            Souls: 1, Mats: new[] { ("stone", 8), ("iron", 4) }, SoulKind: "Kong"),
+            Souls: 1, Mats: new[] { ("pure_iron", 5), ("stone", 8) }, SoulKind: "Kong"),
 
         new("o2", "O2 Recycler",
             "Air supply up 50 percent (stacks with the air tank)",
@@ -50,7 +50,7 @@ public static class Upgrades
 
         new("drill", "Drill Rig",
             "Rovers deploy with a +1 pickaxe tier",
-            Souls: 1, Mats: new[] { ("platinum", 3), ("iron", 4) }, SoulKind: "Sandworm"),
+            Souls: 1, Mats: new[] { ("pure_platinum", 2), ("pure_iron", 3) }, SoulKind: "Sandworm"),
     };
 
     public static bool Owned(MetaSave meta, string id) => meta.ShipUpgrades.Contains(id);
