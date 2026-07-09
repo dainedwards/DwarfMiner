@@ -1185,6 +1185,18 @@ public sealed class TitanProjectile
         if (Kind == TitanShotKind.Flame)
             cells.IgniteGasNear(Position, 6f);
     }
+
+    /// <summary>Burst the glob into live acid cells just shy of the impact point (backed off
+    /// along the incoming velocity so the splash lands in open air, not inside the wall). The
+    /// cell sim takes it from there — the pool flows, corrodes, and glows like worldgen acid.</summary>
+    private void SplashAcid(Planet planet, Cells cells)
+    {
+        var splashAt = Position;
+        if (Velocity.LengthSquared() > 0.01f)
+            splashAt -= Vector2.Normalize(Velocity) * (Planet.TileSize * 0.9f);
+        var (tx, ty) = planet.WorldToTile(splashAt);
+        cells.SpawnInTile(tx, ty, Material.Acid, 6);
+    }
 }
 
 /// <summary>Boulder hurled by the Titan. Punches through tiles on impact, damages player.</summary>
