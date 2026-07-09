@@ -425,7 +425,7 @@ public static class SimTest
         {
             TitanKind.Godzilla, TitanKind.Mecha, TitanKind.Sandworm, TitanKind.Kong,
             TitanKind.Knifehead, TitanKind.Otachi, TitanKind.Leatherback, TitanKind.Raiju,
-            TitanKind.Slattern,
+            TitanKind.Slattern, TitanKind.Pyrodactyl, TitanKind.Vitriodactyl,
         })
         {
             var p = WorldGen.Generate(60);
