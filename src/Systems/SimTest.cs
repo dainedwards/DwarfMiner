@@ -29,7 +29,8 @@ public static class SimTest
         // --- 1. Collision: drop walkers into caves at many angles; none may end up in rock.
         var embedded = 0;
         var tested = 0;
-        foreach (var kind in new[] { CreatureKind.Grub, CreatureKind.Skitterer, CreatureKind.Grazer, CreatureKind.CaveEye })
+        foreach (var kind in new[] { CreatureKind.Grub, CreatureKind.Skitterer, CreatureKind.Grazer, CreatureKind.CaveEye,
+                                     CreatureKind.SporeBat, CreatureKind.CrystalCrawler, CreatureKind.VoidWraith })
         {
             for (var i = 0; i < 25; i++)
             {
