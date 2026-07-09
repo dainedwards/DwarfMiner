@@ -28,6 +28,9 @@ public enum TileKind : byte
     Diamond = 21,
     // Volatile mineral refined into rocket fuel — mined, not crafted.
     FuelOre = 27,
+    // Phase-11 rare gems: emerald seams on the living worlds, voidstone only in the Rift.
+    Emerald = 28,
+    Voidstone = 29,
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
@@ -65,6 +68,7 @@ public static class Tiles
         k is TileKind.CoalOre or TileKind.IronOre or TileKind.GoldOre or TileKind.Crystal
           or TileKind.SilverOre or TileKind.PlatinumOre
           or TileKind.Ruby or TileKind.Sapphire or TileKind.Diamond
+          or TileKind.Emerald or TileKind.Voidstone
           or TileKind.FuelOre;
 
     public static int Hardness(TileKind k) => k switch
@@ -86,6 +90,8 @@ public static class Tiles
         TileKind.Ruby => 5,
         TileKind.Sapphire => 5,
         TileKind.Diamond => 6,
+        TileKind.Emerald => 5,
+        TileKind.Voidstone => 6,
         TileKind.Crystal => 5,
         TileKind.FuelOre => 3,
         TileKind.PlanetCore => 99,
@@ -121,6 +127,8 @@ public static class Tiles
         TileKind.Sapphire => new Color(50, 70, 170),
         TileKind.Diamond => new Color(180, 220, 230),
         TileKind.Crystal => new Color(130, 80, 170),
+        TileKind.Emerald => new Color(35, 120, 70),
+        TileKind.Voidstone => new Color(40, 20, 55),
         TileKind.FuelOre => new Color(45, 80, 70),
         TileKind.Core => new Color(255, 90, 40),
         TileKind.Support => new Color(150, 110, 70),
@@ -144,6 +152,8 @@ public static class Tiles
         TileKind.Sapphire => new Color(140, 180, 255),
         TileKind.Diamond => new Color(255, 255, 255),
         TileKind.Crystal => new Color(230, 180, 255),
+        TileKind.Emerald => new Color(120, 255, 160),
+        TileKind.Voidstone => new Color(200, 120, 255),
         TileKind.FuelOre => new Color(120, 255, 190),
         _ => Color.White,
     };
@@ -155,7 +165,7 @@ public static class Tiles
     /// </summary>
     public static readonly string[] ResourceOrder =
     {
-        "diamond", "ruby", "sapphire", "platinum", "gold", "silver",
+        "voidstone", "emerald", "diamond", "ruby", "sapphire", "platinum", "gold", "silver",
         "crystal", "iron", "coal", "fuel",
         "nuke", "harpoon",
         "ammo_diamond", "ammo_sapphire", "ammo_ruby", "ammo_silver",
@@ -172,7 +182,7 @@ public static class Tiles
     {
         "dirt", "stone", "gravel", "moss_stone", "granite", "basalt", "obsidian", "snow",
         "coal", "iron", "silver", "gold", "platinum", "crystal", "fuel",
-        "ruby", "sapphire", "diamond", "meat", "hide", "chitin",
+        "ruby", "sapphire", "diamond", "emerald", "voidstone", "meat", "hide", "chitin",
     };
 
     public static bool IsBankable(string id) => _bankable.Contains(id);
@@ -196,6 +206,8 @@ public static class Tiles
         "platinum"    => BaseColor(TileKind.PlatinumOre),
         "ruby"        => BaseColor(TileKind.Ruby),
         "sapphire"    => BaseColor(TileKind.Sapphire),
+        "emerald"     => BaseColor(TileKind.Emerald),
+        "voidstone"   => BaseColor(TileKind.Voidstone),
         "diamond"     => BaseColor(TileKind.Diamond),
         "crystal"     => BaseColor(TileKind.Crystal),
         "fuel"        => new Color(120, 255, 190),
@@ -271,6 +283,8 @@ public static class Tiles
         TileKind.PlatinumOre => ("platinum", 1),
         TileKind.Ruby => ("ruby", 1),
         TileKind.Sapphire => ("sapphire", 1),
+        TileKind.Emerald => ("emerald", 1),
+        TileKind.Voidstone => ("voidstone", 1),
         TileKind.Diamond => ("diamond", 1),
         TileKind.Crystal => ("crystal", 1),
         TileKind.FuelOre => ("fuel", 1),

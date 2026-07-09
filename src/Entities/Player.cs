@@ -527,18 +527,55 @@ public sealed class Player
         return placed;
     }
 
-    /// <summary>Try to mine the tile under the cursor with a specific tool. Pickaxe is the
-    /// default; drill / hammer change cooldown + power profile. PlanetCore needs the hammer,
-    /// the Core needs the core drill. Tier IV gets a 2× power bonus on Obsidian; hammer
-    /// gets a flat power floor + an effective-hardness override so it bites bedrock at all.</summary>
+    /// <summary>Where the current tool's strike actually lands. The pick and hammer are swung
+    /// tools: the strike marches a short ray from the body toward the aim point and lands on
+    /// the first rock within arm's reach — the cursor gives the direction, the dwarf's
+    /// position gives the origin, so you can't chip tiles hidden behind a wall or out past
+    /// your reach. The mining laser is the same ray at beam range. The drill (a point tool
+    /// held against the wall) and god mode keep classic cursor-tile targeting. Returns null
+    /// when the swing whiffs — no rock along the ray, or cursor on sky / out of range in
+    /// cursor mode.</summary>
+    public (int X, int Y)? ResolveMineTarget(Planet planet, Vector2 worldCursor, MiningTool tool)
+    {
+        if (FlyMode || tool == MiningTool.Drill)
+        {
+            if ((worldCursor - Position).Length() > EffectiveMineRange) return null;
+            var (cx, cy) = planet.WorldToTile(worldCursor);
+            return planet.Get(cx, cy) == TileKind.Sky ? null : (cx, cy);
+        }
+
+        var aim = worldCursor - Position;
+        if (aim.LengthSquared() < 0.001f) return null;
+        var dir = Vector2.Normalize(aim);
+        var range = tool == MiningTool.MiningLaser ? MiningLaserRange : EffectiveMineRange;
+
+        // Skip the tile the dwarf's own centre occupies (a ladder being climbed, a glowshroom
+        // at the feet) unless the cursor is actually inside it — otherwise every swing taken
+        // from a ladder would chew the ladder instead of the wall being aimed at. Step 2 px:
+        // comfortably under the 8 px tile so the ray can't jump a tile corner.
+        var self = planet.WorldToTile(Position);
+        var cursorTile = planet.WorldToTile(worldCursor);
+        for (var t = 0f; t <= range; t += 2f)
+        {
+            var (x, y) = planet.WorldToTile(Position + dir * t);
+            if ((x, y) == self && (x, y) != cursorTile) continue;
+            if (planet.Get(x, y) != TileKind.Sky) return (x, y);
+        }
+        return null;
+    }
+
+    /// <summary>Try to mine with a specific tool at the strike point resolved by
+    /// <see cref="ResolveMineTarget"/>. Pickaxe is the default; drill / hammer / laser change
+    /// cooldown + power profile. PlanetCore needs the hammer, the Core needs the core drill.
+    /// Tier IV gets a 2× power bonus on Obsidian; hammer gets a flat power floor + an
+    /// effective-hardness override so it bites bedrock at all; the mining laser doubles the
+    /// pick's power (floor 6) on top of its stream cadence, so it eats rock far quicker.</summary>
     public TileKind? TryMine(Planet planet, Physics physics, Vector2 worldCursor, MiningTool tool = MiningTool.Pickaxe)
     {
         if (MineCooldown > 0) return null;
-        var d = worldCursor - Position;
-        if (d.Length() > EffectiveMineRange) return null;
-        var (x, y) = planet.WorldToTile(worldCursor);
+        if (ResolveMineTarget(planet, worldCursor, tool) is not { } target) return null;
+        var (x, y) = target;
         var k = planet.Get(x, y);
-        if (k == TileKind.Sky) return null;
         if (!CanBreak(k, tool))
         {
             MineCooldown = MineCooldownFor(tool);   // still spend a swing for feedback
