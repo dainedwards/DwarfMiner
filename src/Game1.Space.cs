@@ -20,6 +20,49 @@ public sealed partial class DwarfMinerGame
     private SpaceSim _space = null!;
     private Texture2D _stationTex = null!;
     private Texture2D _stationSideTex = null!;
+    private Texture2D _arrowTex = null!;
+
+    /// <summary>A solid triangle pointing +X, for the edge-of-screen nav arrows.</summary>
+    private Texture2D BuildArrowTexture()
+    {
+        const int s = 15;
+        var data = new Color[s * s];
+        for (var y = 0; y < s; y++)
+            for (var x = 0; x < s; x++)
+                if (MathF.Abs(y - s / 2f + 0.5f) <= (s - 1 - x) * 0.5f)
+                    data[y * s + x] = Color.White;
+        var tex = new Texture2D(GraphicsDevice, s, s);
+        tex.SetData(data);
+        return tex;
+    }
+
+    /// <summary>Edge-of-screen pointer toward the orbiting mothership while it's out of
+    /// frame in the planet view — mining runs deep, and the rendezvous drifts.</summary>
+    private void DrawStationIndicator()
+    {
+        var screen = Vector2.Transform(_run.StationPos, _camera.View);
+        const int margin = 46;
+        if (screen.X > margin && screen.X < VirtualWidth - margin
+            && screen.Y > margin && screen.Y < VirtualHeight - margin)
+            return;   // station visible (or nearly) — no pointer needed
+
+        var centre = new Vector2(VirtualWidth / 2f, VirtualHeight / 2f);
+        var dir = screen - centre;
+        if (dir.LengthSquared() < 1f) return;
+        dir.Normalize();
+        var pos = new Vector2(
+            MathHelper.Clamp(screen.X, margin, VirtualWidth - margin),
+            MathHelper.Clamp(screen.Y, margin, VirtualHeight - margin));
+
+        var sb = _renderer.Batch;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(_arrowTex, pos, null, new Color(150, 220, 255),
+            MathF.Atan2(dir.Y, dir.X), new Vector2(7.5f, 7.5f), 1.6f, SpriteEffects.None, 0f);
+        sb.End();
+        const string tag = "SHIP";
+        _renderer.DrawText(tag, pos - dir * 26f - new Vector2(_renderer.MeasureText(tag) / 2f, 4f),
+            new Color(150, 220, 255));
+    }
 
     /// <summary>Background world build for the planet the ship is loitering near — by the
     /// time the player presses Enter the Session is usually ready, so landing is seamless.
