@@ -6,8 +6,9 @@ namespace DwarfMiner.Space;
 /// <summary>One purchasable line in the mothership's upgrade foundry: a soul price (of a
 /// specific titan kind when <see cref="SoulKind"/> is set — slay that boss to afford it)
 /// plus a cargo-hold materials bill. <see cref="Repeatable"/> lines are consumables
-/// (rovers) rather than one-time installs. Effects are applied by whoever reads
-/// MetaSave.ShipUpgrades (SpaceSim for ship tiers, StartNewRun for dwarf gear).</summary>
+/// (rovers) rather than one-time installs; <see cref="Requires"/> gates a tier behind its
+/// predecessor. Effects are applied by whoever reads MetaSave.ShipUpgrades (SpaceSim for
+/// ship tiers, StartNewRun for dwarf gear).</summary>
 public sealed record UpgradeDef(
     string Id,
     string Name,
@@ -15,7 +16,8 @@ public sealed record UpgradeDef(
     int Souls,
     (string id, int n)[] Mats,
     string? SoulKind = null,
-    bool Repeatable = false);
+    bool Repeatable = false,
+    string? Requires = null);
 
 /// <summary>The foundry catalogue. The still-unbuilt wishlist (cargo hold capacity, shield,
 /// ore magnet, scanner, sentry capacity, jetpack tiers, warp engine…) lives in PLAN.md §0
