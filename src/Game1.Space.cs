@@ -368,6 +368,21 @@ public sealed partial class DwarfMinerGame
             }
         }
 
+        // Deflector shield: a faint cyan halo while charged, so its readiness reads at a
+        // glance (it vanishes for the 8s recharge after eating a hit).
+        if (_space.ShieldReady)
+        {
+            var ring = SpaceSim.ShipRadius + 14f + MathF.Sin(_totalTime * 3f) * 2f;
+            const int dots = 26;
+            for (var d = 0; d < dots; d++)
+            {
+                var a = d * MathHelper.TwoPi / dots + _totalTime * 0.6f;
+                var pos = _space.ShipPos + new Vector2(MathF.Cos(a), MathF.Sin(a)) * ring;
+                sb.Draw(_renderer.Pixel, new Rectangle((int)pos.X - 2, (int)pos.Y - 2, 4, 4),
+                    new Color(120, 220, 255) * 0.7f);
+            }
+        }
+
         // The mothership — sprite art points up, so heading needs the +π/2 correction.
         // Recent asteroid hits flash the hull red for the invulnerability window.
         var tint = _space.HitTimer > 0f && MathF.Sin(_totalTime * 40f) > 0f
