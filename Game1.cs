@@ -327,15 +327,18 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
-    /// <summary>One frame in the parking orbit: A/D slides the station around the planet
-    /// (choosing the drop site), SPACE/ENTER launches the rover, W breaks orbit back to
-    /// space. The world lives underneath the whole time.</summary>
+    /// <summary>One frame in the parking orbit: left/right slides the station around the
+    /// planet (choosing the drop site), ENTER launches the lander, SPACE leaves the planet.
+    /// The arrival glide settles first; the world lives underneath the whole time.</summary>
     private void UpdateOrbit(float dt, KeyboardState keys)
     {
+        // The automatic fly-in: bleed off the arrival height until the ship sits in orbit.
+        _run.OrbitEntryOffset = MathF.Max(0f, _run.OrbitEntryOffset - 340f * dt);
+
         var lat = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
                 + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
         var orbitRadius = _run.Planet.Radius * Planet.TileSize + Session.OrbitAltitude;
-        _run.MothershipAngle += lat * (160f / orbitRadius) * dt;
+        _run.MothershipAngle += lat * (170f / orbitRadius) * dt;
 
         var station = _run.StationPos;
         _run.Player.Position = station;
