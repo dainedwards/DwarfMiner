@@ -445,6 +445,10 @@ public sealed partial class DwarfMinerGame
             _renderer.DrawText($"TITAN: {TitanName(def.Titan).ToUpperInvariant()}  [{slain}]",
                 new Vector2(x + 250, rowY + 4),
                 souls > 0 ? new Color(140, 220, 140) : new Color(200, 160, 120));
+            if (def.Id != "rift")
+                _renderer.DrawText(_meta.CoreShards.Contains(def.Id) ? "SHARD SECURED" : "SHARD IN CORE",
+                    new Vector2(x + w - 24 - _renderer.MeasureText(_meta.CoreShards.Contains(def.Id) ? "SHARD SECURED" : "SHARD IN CORE"), rowY + 4),
+                    _meta.CoreShards.Contains(def.Id) ? new Color(150, 230, 255) : new Color(120, 125, 145));
             var deposits = "";
             foreach (var (label, n) in Survey.For(def))
                 deposits += $"{label} {FormatCount(n)}   ";
