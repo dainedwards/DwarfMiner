@@ -137,9 +137,9 @@ public sealed partial class DwarfMinerGame
             var accent = locked ? new Color(60, 62, 72) : p.Def.MapAccent;
             var c = p.Pos;
             FillCircleWorld(sb, c, p.BodyRadius, body);
-            // Terminator: the shadowed half faces away from the sun.
+            // Terminator: the shadowed side faces away from the sun.
             var sunward = c.LengthSquared() > 1f ? Vector2.Normalize(c) : Vector2.UnitY;
-            FillCircleWorld(sb, c + sunward * (p.BodyRadius * 0.22f), p.BodyRadius * 0.82f,
+            FillCircleWorld(sb, c + sunward * (p.BodyRadius * 0.34f), p.BodyRadius * 0.72f,
                 new Color(body.R / 2, body.G / 2, body.B / 2));
             FillCircleWorld(sb, c - sunward * (p.BodyRadius * 0.3f), p.BodyRadius * 0.32f, accent);
         }
