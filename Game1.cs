@@ -2309,8 +2309,8 @@ public sealed partial class DwarfMinerGame : Game
         var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE  Q/E WEAPONS\n" +
                        "C CRAFT  T BEACON  L LAUNCH  B/N DEPOT BANK  F5 SAVE  G GOD MODE";
         if (_orbiting)
-            controls = $"A/D SHIFT ORBIT   SPACE LAUNCH ROVER ({_meta.Rovers} ABOARD{(_meta.Rovers <= 0 ? " - DROP POD!" : "")})   W BREAK ORBIT\n" +
-                       "PICK YOUR DROP SITE - THE ROVER FALLS FROM THE SHIP";
+            controls = $"LEFT/RIGHT ORBIT THE PLANET   ENTER LAUNCH LANDER ({_meta.Rovers} ABOARD{(_meta.Rovers <= 0 ? " - DROP POD!" : "")})   SPACE LEAVE PLANET\n" +
+                       "PICK YOUR DROP SITE - THE LANDER FALLS FROM THE SHIP";
         else if (_landing)
             controls = "A/D STEER THE ROVER\nTOUCHDOWN WHERE YOU AIM";
         else if (_ascending)
