@@ -108,11 +108,13 @@ public sealed class SpaceSim
         for (var i = 0; i < PlanetDefs.All.Length; i++)
         {
             var def = PlanetDefs.All[i];
+            // The Rift sits far beyond the ordinary orbits — warp territory, not a cruise.
+            var rift = def.Id == "rift";
             Planets.Add(new SpacePlanet(def,
-                orbitRadius: 1500f + i * 1050f,
-                bodyRadius: 120f + i * 18f,
+                orbitRadius: rift ? 9800f : 1500f + i * 1050f,
+                bodyRadius: rift ? 210f : 120f + i * 18f,
                 angle: i * 2.23f + 0.6f,
-                angularVel: 0.012f / MathF.Sqrt(1f + i * 0.7f)));
+                angularVel: rift ? 0.004f : 0.012f / MathF.Sqrt(1f + i * 0.7f)));
         }
         PlaceShipAt(0);
     }
