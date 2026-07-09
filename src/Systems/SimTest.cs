@@ -872,13 +872,30 @@ public static class SimTest
     /// purchase recorded, double-buy refused. Uses a scratch MetaSave (never saved).</summary>
     private static void TestFoundry()
     {
+        // The dock refinery: raw metals smelt 4:1 with the remainder staying raw; gems and
+        // sub-batch amounts pass through untouched.
+        var refMeta = new MetaSave();
+        refMeta.ShipCargo["iron"] = 11;    // → 2 pure + 3 raw
+        refMeta.ShipCargo["gold"] = 4;     // → 1 pure, raw gone
+        refMeta.ShipCargo["coal"] = 3;     // sub-batch: stays raw
+        refMeta.ShipCargo["ruby"] = 9;     // rare: never refined
+        refMeta.RefineCargo();
+        Check("refinery: 11 iron smelts to 2 pure + 3 raw",
+            refMeta.ShipCargo.GetValueOrDefault("pure_iron") == 2 && refMeta.ShipCargo.GetValueOrDefault("iron") == 3);
+        Check("refinery: exact batch leaves no raw",
+            refMeta.ShipCargo.GetValueOrDefault("pure_gold") == 1 && !refMeta.ShipCargo.ContainsKey("gold"));
+        Check("refinery: sub-batch coal stays raw",
+            refMeta.ShipCargo.GetValueOrDefault("coal") == 3 && !refMeta.ShipCargo.ContainsKey("pure_coal"));
+        Check("refinery: gems are never refined",
+            refMeta.ShipCargo.GetValueOrDefault("ruby") == 9 && !refMeta.ShipCargo.ContainsKey("pure_ruby"));
+
         var meta = new MetaSave();
-        var jet = System.Array.Find(Space.Upgrades.All, u => u.Id == "jetpack")!;   // 1 Kong soul + 4 gold + 6 iron
+        var jet = System.Array.Find(Space.Upgrades.All, u => u.Id == "jetpack")!;   // 1 Kong soul + 2 pure gold + 3 pure iron
 
         Check("foundry: broke dwarf can't afford", !Space.Upgrades.CanAfford(meta, jet));
         meta.TitanSouls["Kong"] = 1;
-        meta.ShipCargo["gold"] = 4;
-        meta.ShipCargo["iron"] = 7;
+        meta.ShipCargo["pure_gold"] = 2;
+        meta.ShipCargo["pure_iron"] = 4;
         Check("foundry: souls + cargo afford the jetpack", Space.Upgrades.CanAfford(meta, jet));
 
         // TryBuy calls meta.Save() — point the write at a scratch profile? MetaSave writes to
