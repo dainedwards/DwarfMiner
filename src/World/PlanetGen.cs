@@ -188,7 +188,7 @@ public static class PlanetGen
                 ShipOre: shipOre, ShipOreCount: shipOreCount,
                 OxygenDrainScale: oxy * 1.25f, SeedsGas: true, SeedsAcid: true, Titan: titan,
                 CrystalPockets: 3 + rng.Next(2), FungalPockets: rng.Next(2),
-                SizeScale: size),
+                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale),
 
             _ => new(id, name,
                 "Living world - gentle green, lakes, moss, iron",
