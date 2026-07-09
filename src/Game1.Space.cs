@@ -572,23 +572,60 @@ public sealed partial class DwarfMinerGame
 
         sb.End();
 
-        // Text pass — screen space; planet labels project through the camera.
+        // Text pass — screen space. On-screen planets get a name + range label; off-screen
+        // ones get an edge arrow with name + range, so every world is always navigable.
         for (var i = 0; i < _space.Planets.Count; i++)
         {
             var p = _space.Planets[i];
             var name = p.Def.Name.ToUpperInvariant();
             var warpLocked = p.Def.Id == "rift" && _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded;
             if (warpLocked) name += " [WARP LOCKED]";
-            var screen = Vector2.Transform(p.Pos + new Vector2(0f, -(p.BodyRadius + 46f)), view);
-            _renderer.DrawText(name,
-                new Vector2(screen.X - _renderer.MeasureText(name, 2) / 2f, screen.Y),
-                warpLocked ? new Color(255, 110, 90) : Color.White, 2);
-            if (_meta.PlanetsEscaped.Contains(p.Def.Id))
+            var col = warpLocked ? new Color(255, 110, 90) : Color.White;
+            var range = MathF.Max(0f, (p.Pos - _space.ShipPos).Length() - p.BodyRadius);
+            var rangeLabel = $"{range / 10f:0} KM";
+
+            var discCentre = Vector2.Transform(p.Pos, view);
+            var discR = p.BodyRadius * _camera.Zoom;
+            var onScreen = discCentre.X > -discR && discCentre.X < VirtualWidth + discR
+                        && discCentre.Y > -discR && discCentre.Y < VirtualHeight + discR;
+            if (onScreen)
             {
-                var esc = Vector2.Transform(p.Pos + new Vector2(0f, p.BodyRadius + 30f), view);
-                _renderer.DrawText("ESCAPED",
-                    new Vector2(esc.X - _renderer.MeasureText("ESCAPED") / 2f, esc.Y),
-                    new Color(140, 220, 140));
+                var screen = Vector2.Transform(p.Pos + new Vector2(0f, -(p.BodyRadius + 46f)), view);
+                _renderer.DrawText(name,
+                    new Vector2(screen.X - _renderer.MeasureText(name, 2) / 2f, screen.Y), col, 2);
+                _renderer.DrawText(rangeLabel,
+                    new Vector2(screen.X - _renderer.MeasureText(rangeLabel) / 2f, screen.Y - 16f),
+                    new Color(150, 155, 175));
+                if (_meta.PlanetsEscaped.Contains(p.Def.Id))
+                {
+                    var esc = Vector2.Transform(p.Pos + new Vector2(0f, p.BodyRadius + 30f), view);
+                    _renderer.DrawText("ESCAPED",
+                        new Vector2(esc.X - _renderer.MeasureText("ESCAPED") / 2f, esc.Y),
+                        new Color(140, 220, 140));
+                }
+            }
+            else
+            {
+                const int margin = 42;
+                var centre = new Vector2(VirtualWidth / 2f, VirtualHeight / 2f);
+                var dir = discCentre - centre;
+                if (dir.LengthSquared() < 1f) continue;
+                dir.Normalize();
+                var pos = new Vector2(
+                    MathHelper.Clamp(discCentre.X, margin, VirtualWidth - margin),
+                    MathHelper.Clamp(discCentre.Y, margin, VirtualHeight - margin));
+                sb.Begin(samplerState: SamplerState.PointClamp);
+                sb.Draw(_arrowTex, pos, null, warpLocked ? new Color(255, 110, 90) : p.Def.MapAccent,
+                    MathF.Atan2(dir.Y, dir.X), new Vector2(7.5f, 7.5f), 1.4f, SpriteEffects.None, 0f);
+                sb.End();
+                var label = $"{name} {rangeLabel}";
+                var labelPos = pos - dir * 30f;
+                _renderer.DrawText(label,
+                    new Vector2(
+                        MathHelper.Clamp(labelPos.X - _renderer.MeasureText(label) / 2f, 6f,
+                            VirtualWidth - 6f - _renderer.MeasureText(label)),
+                        MathHelper.Clamp(labelPos.Y - 4f, 6f, VirtualHeight - 20f)),
+                    col);
             }
         }
 
