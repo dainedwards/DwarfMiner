@@ -1023,6 +1023,20 @@ public static class SimTest
         var last = sim6.Planets[^1];
         Check("rift: sits far beyond the ordinary orbits",
             last.Def.Id == "rift" && last.OrbitRadius > sim6.Planets[^2].OrbitRadius * 1.5f);
+
+        // Seamless-landing prefetch: the heavy session build must work off the main thread
+        // and produce a world with a findable surface and a station parked in orbit above it.
+        var pre = System.Threading.Tasks.Task.Run(
+            () => DwarfMinerGame.BuildSessionWorld(World.PlanetDefs.ById("verdant"))).GetAwaiter().GetResult();
+        Check("prefetch: background session build completes",
+            pre.Planet is not null && pre.Cells is not null && pre.Physics is not null);
+        var preSpawn = SpawnDirector.FindSurfaceSpawn(pre.Planet, -MathF.PI / 2f, pre.Planet.Radius);
+        var stationAlt = (pre.StationPos - pre.Planet.Center).Length()
+                         - pre.Planet.Radius * World.Planet.TileSize;
+        Check("prefetch: station parks at orbit altitude above the spawn",
+            MathF.Abs(stationAlt - Session.OrbitAltitude) < 1f
+            && !pre.Planet.IsSolidAt(pre.StationPos),
+            $"alt {stationAlt:0} spawn {preSpawn.Length():0}");
     }
 
     private static void Check(string name, bool ok, string detail = "")
