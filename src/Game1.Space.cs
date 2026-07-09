@@ -215,11 +215,11 @@ public sealed partial class DwarfMinerGame
         // World pass — everything in space coordinates under the camera transform.
         sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view);
 
-        // Orbit rings: dotted circles, dimmer past the unlock frontier.
+        // Orbit rings: dotted circles.
         for (var i = 0; i < _space.Planets.Count; i++)
         {
             var p = _space.Planets[i];
-            var col = i < unlocked ? new Color(70, 76, 100) : new Color(34, 37, 48);
+            var col = new Color(70, 76, 100);
             var dots = (int)(p.OrbitRadius / 28f);
             for (var d = 0; d < dots; d++)
             {
