@@ -56,6 +56,15 @@ public sealed partial class DwarfMinerGame : Game
     private static readonly float[] VolumeSteps = { 0.55f, 0.28f, 0.1f, 0f };
     private static readonly string[] VolumeNames = { "FULL", "LOW", "QUIET", "MUTED" };
 
+    /// <summary>Frame-rate diagnostics, drawn top-right on every screen: real rendered FPS
+    /// (counted at Draw), plus smoothed update/draw CPU times so a slow frame points at its
+    /// culprit.</summary>
+    private readonly System.Diagnostics.Stopwatch _updSw = new();
+    private readonly System.Diagnostics.Stopwatch _drawSw = new();
+    private float _updateMs, _drawMs;
+    private int _fps, _fpsFrames;
+    private long _fpsMark = Environment.TickCount64;
+
     /// <summary>Cave-in warning state: <c>_caveInWarn</c> counts down while condemned tiles hang
     /// over the dwarf (drives the flashing HUD banner); <c>_caveInDust</c> throttles the sifting
     /// debris telegraph emitted from those tiles.</summary>
