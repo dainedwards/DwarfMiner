@@ -489,6 +489,46 @@ public static class SimTest
             }
         }
 
+        // --- Procedural campaigns: 7 generated worlds + the Rift finale ---
+        {
+            var chainA = PlanetGen.Campaign(1234);
+            var chainB = PlanetGen.Campaign(1234);
+            var chainC = PlanetGen.Campaign(99);
+            Check("plangen: campaign = 7 worlds + the Rift", chainA.Length == 8 && chainA[7].Id == "rift");
+            var same = true;
+            for (var i = 0; i < 8; i++) same &= chainA[i].Id == chainB[i].Id && chainA[i].Titan == chainB[i].Titan;
+            Check("plangen: same seed = same system", same);
+            var diff = false;
+            for (var i = 0; i < 7; i++) diff |= chainA[i].Id != chainC[i].Id;
+            Check("plangen: new seed = new system", diff);
+            Check("plangen: size ramps with difficulty (0.7 to 1.8)",
+                chainA[0].SizeScale < chainA[6].SizeScale
+                && chainA[0].SizeScale >= 0.69f && chainA[6].SizeScale <= 1.81f);
+            var kinds = new System.Collections.Generic.HashSet<TitanKind>();
+            for (var i = 0; i < 7; i++) kinds.Add(chainA[i].Titan);
+            Check("plangen: the four classic soul kinds stay farmable",
+                kinds.Contains(TitanKind.Kong) && kinds.Contains(TitanKind.Sandworm)
+                && kinds.Contains(TitanKind.Godzilla) && kinds.Contains(TitanKind.Mecha));
+            var hasOcean = false; var hasAcid = false;
+            foreach (var d in chainA) { hasOcean |= d.LakeScale > 2f; hasAcid |= d.AcidRain; }
+            Check("plangen: every campaign has an ocean world and an acid world", hasOcean && hasAcid);
+
+            // Ocean world actually reads as mostly water: most surface tiles sit over a
+            // carved basin. Count water seeds vs a plain world's.
+            PlanetDef ocean = null!, acidWorld = null!;
+            foreach (var d in chainA) { if (d.LakeScale > 2f && ocean is null) ocean = d; if (d.AcidRain && acidWorld is null) acidWorld = d; }
+            var oceanWorld = WorldGen.Generate(7, ocean);
+            var plainWorld = WorldGen.Generate(7, PlanetDefs.ById("verdant"));
+            Check($"plangen: ocean world is mostly water ({oceanWorld.WaterSeeds.Count} seeds vs {plainWorld.WaterSeeds.Count})",
+                oceanWorld.WaterSeeds.Count > plainWorld.WaterSeeds.Count * 3);
+            var acidGen = WorldGen.Generate(8, acidWorld);
+            Check($"plangen: acid world carves surface acid pools ({acidGen.AcidSeeds.Count} seeds)",
+                acidGen.AcidSeeds.Count > 0);
+            // Size actually changes the tile grid.
+            Check($"plangen: SizeScale drives real ring counts ({oceanWorld.Rings} vs {plainWorld.Rings})",
+                WorldGen.Generate(9, chainA[6]).Rings > WorldGen.Generate(9, chainA[0]).Rings);
+        }
+
         // --- Planet mapping wires distinct bosses ---
         Check("titan: ember hatches the fire-breather",
             PlanetDefs.ById("ember").Titan == TitanKind.Godzilla);

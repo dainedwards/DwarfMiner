@@ -128,9 +128,11 @@ public sealed class SpaceSim
             var def = PlanetDefs.All[i];
             // The Rift sits far beyond the ordinary orbits — warp territory, not a cruise.
             var rift = def.Id == "rift";
+            // Body radius tracks the def's SizeScale so the system view honestly previews
+            // how big each world is - the far giants loom, the near dwarfs look like moons.
             Planets.Add(new SpacePlanet(def,
                 orbitRadius: rift ? 9800f : 1500f + i * 1050f,
-                bodyRadius: rift ? 210f : 120f + i * 18f,
+                bodyRadius: rift ? 210f : 130f * def.SizeScale,
                 angle: i * 2.23f + 0.6f,
                 angularVel: rift ? 0.004f : 0.012f / MathF.Sqrt(1f + i * 0.7f)));
         }
