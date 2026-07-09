@@ -98,8 +98,19 @@
 >   thrust burns no fuel, ever). **Held weapons**: pistol/MG/laser/laser-cannon/rocket-
 >   launcher/cannon/harpoon/mining-laser get pixel sprites drawn in the dwarf's grip,
 >   rotated to the aim and flipped left. 6 new SimTest checks.
-> Next up: more content (new creatures per biome, weapon variety), a settings UI beyond the
-> F6 volume cycle, difficulty/balance tuning from playtests, or a run-summary/stats screen.
+> - **Phase 12 — biome fauna (DONE 2026-07-09):** three creatures tied to the phase-11
+>   biomes, all reusing proven AI brains with distinct stat blocks. **SPORE BAT** (shallow
+>   caves on fungal-grove worlds — frail flitter on the cave-eye brain, bursts into a
+>   choking gas puff on death: kill it at arm's length). **CRYSTAL CRAWLER** (deep caves on
+>   crystal-pocket worlds — 45 HP armoured slab on the grub brain, 13 contact damage, walking
+>   geode art; drops 2 crystal + chitin). **VOID WRAITH** (the Rift, any depth, 25% of
+>   spawns — fast vicious phantom with a pulsing violet aura and wisp trail; **drops 1
+>   voidstone**, making the endgame gem farmable but Rift-gated). Spawn tables get a
+>   biome-special override roll keyed off def pocket counts / rift id. Collision sweep now
+>   covers all 7 tested kinds (175 placements); 3 new checks. `DM_FAUNA=1` parades the new
+>   kinds beside spawn for screenshots.
+> Next up: weapon variety, a settings UI beyond the F6 volume cycle, difficulty/balance
+> tuning from playtests, or a run-summary/stats screen.
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the space screen (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons); `DM_UPGRADES=1`
