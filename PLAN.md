@@ -267,9 +267,20 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   UPD/DRW CPU ms to attribute blame (Update/Draw are wrapped by thin timing shims around
   `UpdateFrame`/`DrawFrame`).
 
-**Upgrade ideas still unbuilt** (future foundry slots): further pickaxe tiers, armor suit,
-cargo hold capacity, scanner (ore/titan intel on the HUD), sentry capacity,
-take-gear-down loadouts beyond the Armory kit, jetpack III.
+- **Phase 9 — foundry wishlist completion (DONE 2026-07-09):** the three meaningful
+  remaining wishlist slots landed. **GEO SCANNER** (Mecha soul + pure silver + crystal):
+  HUD edge-arrows with ranges (in tiles, "M") to the nearest **fuel deposit**, the planet's
+  **signature nav-core ore**, and the **titan** — powered by `Systems/Scanner.FindNearest`
+  (ring-band tile sweep, refreshed on a 1.5s timer, ~20k tiles per 620px fix; pure/static,
+  headless-tested) and the shared `DrawEdgeArrow` chevron language. **COMBAT PLATING**
+  (Kong soul + pure iron/platinum): 30% off all incoming damage via
+  `Player.DamageTakenMultiplier`, multiplicative with crafted armor (0.42× stacked).
+  **SUPPLY CACHE** (Godzilla soul + pure gold/coal): every rover deploys with 2 poultices,
+  40 blocks, and a sentry. Foundry is now 17 lines. 8 new SimTest checks.
+  Dropped from the wishlist as non-features: cargo hold capacity (no cap exists — adding
+  one would only annoy), sentry capacity (no cap exists), further pickaxe tiers (crafted
+  tiers already cover the curve). Remaining ideas if wanted later: jetpack III, richer
+  loadout picking in orbit.
 
 **Open design questions:** does death on a planet cost more than the current visit (e.g. the
 rover)? Do souls/upgrades persist across completed runs (prestige reset vs. permanent)?
