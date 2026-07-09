@@ -85,10 +85,21 @@
 >   the in-run zoom (incl. DM_ZOOM) on landing.
 >   Remaining space work: see **§0 The mothership era** below (redesigned 2026-07-08 —
 >   supersedes the earlier phase 2–4 sketch that lived here).
-> Next up: the mothership era (§0) is COMPLETE through phase 9 (the foundry wishlist is
-> done). Candidates: new content (biomes/creatures/weapons — the biggest untouched arc), a
-> settings UI beyond the F6 volume cycle, difficulty/balance tuning from playtests, or a
-> proper run-summary/stats screen.
+> - **Phase 11 — content drop (DONE 2026-07-09):** **Rare gems**: EMERALD (deep seams on
+>   verdant/frost, TileKind 28) and VOIDSTONE (TileKind 29 — base threshold unreachable,
+>   only the Rift's bias spawns it: the campaign's endgame gem, ~30 tiles/world). Both wired
+>   through drops/banking/refinery-exempt/atlas/survey/scanner. **Underground biomes**
+>   (`WorldGen.SeedBiomePockets`, per-def counts): CRYSTAL CAVERNS (mid-depth cavities lined
+>   in crystal) and FUNGAL GROVES (shallow moss-walled caves with wild glowshrooms — first
+>   natural light underground). **Disasters** (AmbientDirector): SOLAR FLARE (all worlds,
+>   ~7s warned window then 9s of 7 dps to anyone in surface air; DM_FLARE=<s> hook) and
+>   BLIZZARD (snow worlds, 15s squall, 2.5 dps exposed). **Gem capstone upgrades**: EMERALD
+>   WEAVE (Kong + 3 emerald — max HP 140) and VOIDSTONE REACTOR (Mecha ×3 + voidstone —
+>   thrust burns no fuel, ever). **Held weapons**: pistol/MG/laser/laser-cannon/rocket-
+>   launcher/cannon/harpoon/mining-laser get pixel sprites drawn in the dwarf's grip,
+>   rotated to the aim and flipped left. 6 new SimTest checks.
+> Next up: more content (new creatures per biome, weapon variety), a settings UI beyond the
+> F6 volume cycle, difficulty/balance tuning from playtests, or a run-summary/stats screen.
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the space screen (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons); `DM_UPGRADES=1`
