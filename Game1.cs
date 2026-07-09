@@ -1283,9 +1283,9 @@ public sealed partial class DwarfMinerGame : Game
         if (_launchElapsed > 3.4f) FinishLaunch();
     }
 
-    /// <summary>The escape ending, reached once the ship has flown clear. Unlocks the next
-    /// planet on the star-map chain and banks the same meta bonuses the old rocket escape
-    /// granted.</summary>
+    /// <summary>Reached once the ship has flown clear: bank the escape (unlock the next world,
+    /// meta bonuses), then hand the rocket to the player in space — manual flight from here,
+    /// with the camera easing out from planet scale to system scale.</summary>
     private void FinishLaunch()
     {
         _launching = false;
@@ -1299,7 +1299,12 @@ public sealed partial class DwarfMinerGame : Game
         // The base is left behind when you fly off — its vault won't be revisited.
         _meta.Bank.Remove(_run.Def.Id);
         _meta.Save();
-        EndRun($"Liftoff! You escaped {_run.Def.Name} in {_run.RunTime:0.0}s. Press R for the star map.");
+        // The run is over (a finished run can't be resumed), but there's no game-over screen:
+        // the rocket pops out above the planet still under thrust, and you fly it.
+        RunSave.Delete();
+        _toast = $"ESCAPED {_run.Def.Name.ToUpperInvariant()} IN {_run.RunTime:0.0}S — YOU HAVE THE STICK";
+        _toastTimer = 4f;
+        EnterSpace(idx, exitSpeed: 320f, zoomFromPlanet: true);
     }
 
     /// <summary>True when nothing solid hangs above this position for a dozen tiles along
