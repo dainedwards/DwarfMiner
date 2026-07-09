@@ -555,30 +555,45 @@ public sealed partial class DwarfMinerGame
         _renderer.DrawText($"SOULS {_meta.TotalSouls()}    CARGO HOLD: {CargoSummary()}",
             new Vector2(x + 24, y + 54), new Color(150, 155, 175));
 
-        for (var i = 0; i < Upgrades.All.Length; i++)
+        for (var row = 0; row < visible; row++)
         {
+            var i = _upgradeScroll + row;
+            if (i >= Upgrades.All.Length) break;
             var def = Upgrades.All[i];
-            var rowY = y + 88 + i * 52;
+            var rowY = y + 88 + row * 52;
             var owned = !def.Repeatable && Upgrades.Owned(_meta, def.Id);
-            var afford = Upgrades.CanAfford(_meta, def);
+            var locked = Upgrades.Locked(_meta, def);
+            var afford = !locked && Upgrades.CanAfford(_meta, def);
             if (i == _upgradeCursor)
             {
                 sb.Begin(samplerState: SamplerState.PointClamp);
                 sb.Draw(_renderer.Pixel, new Rectangle(x + 12, rowY - 6, w - 24, 46), new Color(45, 50, 70, 180));
                 sb.End();
             }
-            var nameCol = owned ? new Color(140, 220, 140) : afford ? Color.White : new Color(130, 132, 145);
+            var nameCol = owned ? new Color(140, 220, 140)
+                : locked ? new Color(95, 98, 112)
+                : afford ? Color.White : new Color(130, 132, 145);
             var name = def.Id == "rover" ? $"ROVER ({_meta.Rovers} ABOARD)" : def.Name.ToUpperInvariant();
-            var cost = owned ? "INSTALLED" : CostLabel(def);
+            var cost = owned ? "INSTALLED"
+                : locked ? $"REQUIRES {Array.Find(Upgrades.All, u => u.Id == def.Requires)!.Name.ToUpperInvariant()}"
+                : CostLabel(def);
             _renderer.DrawText(name, new Vector2(x + 24, rowY), nameCol, 2);
             _renderer.DrawText(cost,
                 new Vector2(x + w - 24 - _renderer.MeasureText(cost), rowY + 4),
-                owned ? new Color(140, 220, 140) : afford ? new Color(255, 225, 140) : new Color(160, 120, 110));
+                owned ? new Color(140, 220, 140)
+                : locked ? new Color(95, 98, 112)
+                : afford ? new Color(255, 225, 140) : new Color(160, 120, 110));
             _renderer.DrawText(def.Desc.ToUpperInvariant(), new Vector2(x + 24, rowY + 22), new Color(150, 155, 175));
         }
 
+        // Scroll cues when the catalogue continues past the window.
+        if (_upgradeScroll > 0)
+            _renderer.DrawText("+ MORE", new Vector2(x + w - 24 - _renderer.MeasureText("+ MORE"), y + 56), new Color(150, 155, 175));
+        if (_upgradeScroll + visible < Upgrades.All.Length)
+            _renderer.DrawText("+ MORE", new Vector2(x + w - 24 - _renderer.MeasureText("+ MORE"), y + h - 28), new Color(150, 155, 175));
+
         _renderer.DrawText("UP/DOWN SELECT   ENTER INSTALL   U/ESC CLOSE",
-            new Vector2(x + (w - _renderer.MeasureText("UP/DOWN SELECT   ENTER INSTALL   U/ESC CLOSE")) / 2f, y + h - 28),
+            new Vector2(x + 24, y + h - 28),
             new Color(150, 155, 175));
     }
 
