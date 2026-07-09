@@ -1089,6 +1089,8 @@ public static class TitanRenderer
     private static Vector2 MouthPos(Titan t, Frame f) => t.Kind switch
     {
         TitanKind.Mecha => f.Tp + f.Up * 90f + f.Right * (f.Face * 78f),
+        TitanKind.Pyrodactyl or TitanKind.Vitriodactyl
+                        => f.Tp + f.Up * 8f + f.Right * (f.Face * 84f),
         _               => f.Tp + f.Up * 106f + f.Right * (f.Face * 92f),
     };
 
