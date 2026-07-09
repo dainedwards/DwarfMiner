@@ -363,8 +363,9 @@ public sealed class Titan
             StompCooldown = MathHelper.Lerp(8f, 2.5f, Anger / 100f);
         }
 
-        // Hurl: lobs a boulder along the line of sight to the player. Aggro-gated.
-        if (IsAggro && HurlCooldown <= 0 && Anger > 50f)
+        // Hurl: lobs a boulder along the line of sight to the player. Aggro-gated. The worm has
+        // no arms — it never hurls.
+        if (IsAggro && HurlCooldown <= 0 && Anger > 50f && Kind != TitanKind.Sandworm)
         {
             var dirToPlayer = playerPos - Position;
             if (dirToPlayer.LengthSquared() > 0.0001f)
