@@ -318,6 +318,17 @@ public sealed partial class DwarfMinerGame : Game
         _scanFuel = null;
         _scanOre = null;
         SpawnDirector.SpawnInitialFauna(_run);
+        // DM_FAUNA=1 parades the biome fauna beside the spawn so tooling can screenshot
+        // creature art without hunting for natural spawns.
+        if (Environment.GetEnvironmentVariable("DM_FAUNA") is { Length: > 0 })
+        {
+            var fUp = _run.Planet.UpAt(_run.Player.Position);
+            var fRight = new Vector2(-fUp.Y, fUp.X);
+            var kinds = new[] { CreatureKind.SporeBat, CreatureKind.CrystalCrawler, CreatureKind.VoidWraith };
+            for (var i = 0; i < kinds.Length; i++)
+                _run.Creatures.Add(new Creature(
+                    _run.Player.Position + fRight * (26f + i * 22f) + fUp * 8f, kinds[i]));
+        }
         _run.EarthquakeTimer = 25f * def.QuakeScale;
         _run.SpawnTimer = 6f;
         _run.FaunaTimer = 8f;
