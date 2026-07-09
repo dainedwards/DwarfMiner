@@ -176,14 +176,14 @@ public sealed class Titan
     {
         // Skeleton per kind. Bipeds (Godzilla/Mecha/Kong) stand on two legs planted under the
         // body, stepping in alternation; the Sandworm is legless and slithers on its belly, so it
-        // gets no legs at all (surface-follow locomotion + verlet body instead). HipForward is
-        // signed along the tangent; Side is the lateral stance sign.
+        // gets no legs at all (surface-follow locomotion + verlet body instead). Hip sockets sit
+        // HipHalfSpan apart on the pelvis (via HipWorld); Side is the lateral stance sign.
         Legs = Kind == TitanKind.Sandworm
             ? System.Array.Empty<TitanLeg>()
             : new[]
             {
-                new TitanLeg { HipForward = 6f, Side = -1, Phase = 0.00f, HipUp = 8f },   // left
-                new TitanLeg { HipForward = 6f, Side = +1, Phase = 0.50f, HipUp = 8f },   // right
+                new TitanLeg { HipForward = 0f, Side = -1, Phase = 0.00f, HipUp = 8f },   // left
+                new TitanLeg { HipForward = 0f, Side = +1, Phase = 0.50f, HipUp = 8f },   // right
             };
 
         var up = _planet.UpAt(Position);
