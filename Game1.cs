@@ -556,6 +556,14 @@ public sealed partial class DwarfMinerGame : Game
 
     protected override void Update(GameTime gameTime)
     {
+        _updSw.Restart();
+        UpdateFrame(gameTime);
+        _updSw.Stop();
+        _updateMs = _updateMs * 0.9f + (float)_updSw.Elapsed.TotalMilliseconds * 0.1f;
+    }
+
+    private void UpdateFrame(GameTime gameTime)
+    {
         var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         var keys = Keyboard.GetState();
         var mouse = Mouse.GetState();
