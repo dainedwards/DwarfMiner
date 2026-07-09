@@ -288,27 +288,40 @@ public sealed class Titan
         var vTangent = Vector2.Dot(Velocity, right);
         var vNormal = Vector2.Dot(Velocity, up);
 
-        var targetTangent = moveAxis * MoveSpeed * speedMul * (1f + Anger / 80f);
+        // The worm slithers, it doesn't charge — hold its forward pace down to a slow crawl.
+        var paceMul = Kind == TitanKind.Sandworm ? 0.55f : 1f;
+        var targetTangent = moveAxis * MoveSpeed * speedMul * paceMul * (1f + Anger / 80f);
         var accel = Grounded ? 260f : 100f;
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
 
         vNormal -= Gravity * dt;
 
-        // Body suspension: a critically-damped spring holds the body at Hover above its support
-        // point. Bipeds support on the average of their planted feet; the legless Sandworm supports
-        // on the ground directly below its belly. When feet are planted the spring cancels
-        // gravity and pulls toward the target height with no oscillation; with no support
-        // (mid-leap, mid-fall) gravity wins and the body drops.
-        var planted = Kind == TitanKind.Sandworm
-            ? GroundBelow(up, out var hasPlanted)
-            : AvgPlantedFoot(out hasPlanted);
-        if (hasPlanted && !Leaping)   // a leaping Kong ignores its suspension so it can launch
+        // Body suspension / locomotion. Bipeds ride a critically-damped spring that holds the
+        // body at Hover above the average of their planted feet (gravity cancelled when planted,
+        // gravity wins mid-leap/mid-fall). The legless Sandworm instead weaves like a snake: no
+        // spring and no jump — its head eases toward a point that traces the terrain surface but
+        // sine-oscillates above and below it, so the worm threads up out of the ground and back
+        // under as it slides forward, moving through the planet rather than standing on it.
+        var planted = Vector2.Zero;
+        var hasPlanted = false;
+        if (Kind == TitanKind.Sandworm)
         {
-            var heightAboveFeet = Vector2.Dot(Position - planted, up);
-            var deficit = Hover - heightAboveFeet;
-            var springAcc = MathHelper.Clamp(deficit * 9f, -500f, 800f);
-            var dampAcc = -vNormal * 4f;
-            vNormal += (Gravity + springAcc + dampAcc) * dt;
+            var surface = SurfacePoint(planet, up);
+            var weave = MathF.Sin(Pulse * 1.1f) * 78f;      // crest over / dive under the surface line
+            var targetH = Vector2.Dot(surface + up * weave - Position, up);
+            vNormal = MathHelper.Clamp(targetH * 3.2f, -170f, 170f);
+        }
+        else
+        {
+            planted = AvgPlantedFoot(out hasPlanted);
+            if (hasPlanted && !Leaping)   // a leaping Kong ignores its suspension so it can launch
+            {
+                var heightAboveFeet = Vector2.Dot(Position - planted, up);
+                var deficit = Hover - heightAboveFeet;
+                var springAcc = MathHelper.Clamp(deficit * 9f, -500f, 800f);
+                var dampAcc = -vNormal * 4f;
+                vNormal += (Gravity + springAcc + dampAcc) * dt;
+            }
         }
 
         Velocity = right * vTangent + up * vNormal;
