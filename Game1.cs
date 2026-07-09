@@ -1891,6 +1891,31 @@ public sealed partial class DwarfMinerGame : Game
 
     protected override void Draw(GameTime gameTime)
     {
+        _drawSw.Restart();
+        DrawFrame(gameTime);
+        _drawSw.Stop();
+        _drawMs = _drawMs * 0.9f + (float)_drawSw.Elapsed.TotalMilliseconds * 0.1f;
+
+        // Real rendered frame rate (MonoGame drops Draws when a fixed-step frame overruns,
+        // so this is the number that actually stutters).
+        _fpsFrames++;
+        var now = Environment.TickCount64;
+        if (now - _fpsMark >= 1000)
+        {
+            _fps = (int)(_fpsFrames * 1000 / (now - _fpsMark));
+            _fpsFrames = 0;
+            _fpsMark = now;
+        }
+        var fpsText = $"FPS {_fps}  UPD {_updateMs:0.0}  DRW {_drawMs:0.0}";
+        _renderer.DrawText(fpsText,
+            new Vector2(VirtualWidth - 8 - _renderer.MeasureText(fpsText), 6),
+            _fps >= 55 ? new Color(120, 220, 130) : _fps >= 30 ? new Color(255, 225, 140) : new Color(255, 110, 90));
+
+        base.Draw(gameTime);
+    }
+
+    private void DrawFrame(GameTime gameTime)
+    {
         // Feed the renderer the current wall-clock so animated decoration (waving grass,
         // hanging vines) advances with the game time rather than the frame index.
         _renderer.Time = (float)gameTime.TotalGameTime.TotalSeconds;
