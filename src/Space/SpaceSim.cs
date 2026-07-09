@@ -178,6 +178,112 @@ public sealed class SpaceSim
         }
     }
 
+    /// <summary>Fire the autocannon along the nose if the gun is off cooldown. Autocannon II
+    /// (GunTier 2) doubles the fire rate. Returns true when a bolt actually left the barrel
+    /// (drives muzzle feedback in the renderer).</summary>
+    public bool TryFire()
+    {
+        if (_gunCooldown > 0f) return false;
+        _gunCooldown = GunTier >= 2 ? 0.13f : 0.26f;
+        Shots.Add(new ShipShot
+        {
+            Pos = ShipPos + ShipDir * (ShipRadius + 6f),
+            Vel = ShipDir * ShotSpeed + ShipVel,
+            Life = 1.5f,
+        });
+        return true;
+    }
+
+    /// <summary>Drop a rock into the field — the maintenance spawner and the tests both come
+    /// through here. Hp scales with size so big rocks soak a burst, not one bolt.</summary>
+    public Asteroid SpawnAsteroid(Vector2 pos, Vector2 vel, float radius)
+    {
+        var a = new Asteroid
+        {
+            Pos = pos, Vel = vel, Radius = radius, Hp = radius * 1.6f,
+            Spin = (float)(Random.Shared.NextDouble() - 0.5) * 2.2f,
+        };
+        Asteroids.Add(a);
+        return a;
+    }
+
+    private void UpdateShots(float dt)
+    {
+        for (var i = Shots.Count - 1; i >= 0; i--)
+        {
+            var s = Shots[i];
+            s.Pos += s.Vel * dt;
+            s.Life -= dt;
+            if (s.Life <= 0f) { Shots.RemoveAt(i); continue; }
+            foreach (var a in Asteroids)
+            {
+                if ((s.Pos - a.Pos).LengthSquared() > a.Radius * a.Radius) continue;
+                a.Hp -= ShotDamage;
+                if (a.Hp <= 0f) KillAsteroid(a);
+                Shots.RemoveAt(i);
+                break;
+            }
+        }
+    }
+
+    /// <summary>Big rocks calve into two smaller ones; small ones just die. The fragments
+    /// inherit the parent's drift plus a sideways kick so they visibly split apart.</summary>
+    private void KillAsteroid(Asteroid a)
+    {
+        Asteroids.Remove(a);
+        if (a.Radius < 26f) return;
+        var kick = new Vector2(-a.Vel.Y, a.Vel.X);
+        if (kick.LengthSquared() < 1f) kick = new Vector2(0f, 40f);
+        kick = Vector2.Normalize(kick) * 46f;
+        SpawnAsteroid(a.Pos + kick * 0.3f, a.Vel + kick, a.Radius * 0.55f);
+        SpawnAsteroid(a.Pos - kick * 0.3f, a.Vel - kick, a.Radius * 0.55f);
+    }
+
+    private void UpdateAsteroids(float dt)
+    {
+        for (var i = Asteroids.Count - 1; i >= 0; i--)
+        {
+            var a = Asteroids[i];
+            a.Pos += a.Vel * dt;
+            a.Rot += a.Spin * dt;
+
+            // Cull rocks that drifted far out of play; maintenance below replaces them.
+            if ((a.Pos - ShipPos).LengthSquared() > 3200f * 3200f)
+            {
+                Asteroids.RemoveAt(i);
+                continue;
+            }
+
+            // Ram the mothership: lose hull, shove the ship along the impact normal, and eat
+            // the rock. The invulnerability window stops one debris cloud double-tapping.
+            var d = ShipPos - a.Pos;
+            var dist = d.Length();
+            if (dist < a.Radius + ShipRadius && HitTimer <= 0f)
+            {
+                Hull--;
+                HitTimer = 1.0f;
+                var n = dist > 0.5f ? d / dist : new Vector2(0f, -1f);
+                ShipVel += n * 260f;
+                Asteroids.RemoveAt(i);
+                if (Hull <= 0) HullBreached = true;
+            }
+        }
+
+        // Keep the field stocked: new rocks appear in a donut around the ship — outside the
+        // screen at system zoom, close enough to matter soon — drifting loosely shipward.
+        while (Asteroids.Count < AsteroidTarget)
+        {
+            var ang = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
+            var distOut = 1500f + (float)Random.Shared.NextDouble() * 1200f;
+            var pos = ShipPos + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * distOut;
+            var drift = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
+            var speed = 30f + (float)Random.Shared.NextDouble() * 70f;
+            var vel = new Vector2(MathF.Cos(drift), MathF.Sin(drift)) * speed
+                      - new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * 25f;
+            SpawnAsteroid(pos, vel, 16f + (float)Random.Shared.NextDouble() * 26f);
+        }
+    }
+
     /// <summary>The planet the ship could land on right now — within LandRange of its
     /// surface — or null. At most one qualifies since orbits never bring worlds that close.</summary>
     public SpacePlanet? LandingCandidate()
