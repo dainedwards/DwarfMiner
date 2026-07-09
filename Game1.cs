@@ -1955,7 +1955,10 @@ public sealed partial class DwarfMinerGame : Game
 
         // Cells (sand/water/lava/smoke) draw above tiles but below entities so the dwarf walks
         // in front of his own debris pile.
-        _run.Cells.Draw(_renderer, viewCentre, viewRadius);
+        // Zoomed-out views (orbit/high descent) sample the cell grid at a stride — the full
+        // scan is the single biggest cost at orbital view radii.
+        var cellStride = _camera.Zoom < 0.55f ? 6 : _camera.Zoom < 0.9f ? 3 : 1;
+        _run.Cells.Draw(_renderer, viewCentre, viewRadius, cellStride);
 
         // Pixel-art dwarf sprite — drawn rotated to align local-up with planet's outward radial.
         // Sprite head-at-top, feet-at-bottom; the rotation maps sprite-up to world-up.
