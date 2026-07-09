@@ -45,7 +45,8 @@ public sealed record PlanetDef(
     bool SeedsAcid = false,
     TitanKind Titan = TitanKind.Godzilla,
     int CrystalPockets = 0,
-    int FungalPockets = 0);
+    int FungalPockets = 0,
+    TitanKind[]? TitanPool = null);
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.</summary>
 public static class PlanetDefs
