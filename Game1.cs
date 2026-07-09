@@ -359,6 +359,8 @@ public sealed partial class DwarfMinerGame : Game
         _transitionFlash = 0.6f;
         _run.MothershipAngle = entryBearing;
         _run.OrbitEntryOffset = 420f;   // arrive high, glide down — the automatic fly-in
+        // DM_LOADOUT=1 opens the loadout menu on arrival so tooling can screenshot it.
+        _loadoutOpen = Environment.GetEnvironmentVariable("DM_LOADOUT") is { Length: > 0 };
         _run.Player.Position = _run.StationPos;
         _toast = $"ORBIT OF {def.Name.ToUpperInvariant()} ESTABLISHED";
         _toastTimer = 3f;
