@@ -1863,7 +1863,7 @@ public sealed partial class DwarfMinerGame : Game
     /// off to mine more.</summary>
     private void TryLaunchShip()
     {
-        if (_launching) return;
+        if (_ascending) return;
         if (_run.ShipStage < 3 || _run.PadPos is not { } pad) return;
         if ((_run.Player.Position - pad).Length() > 60f) return;
 
