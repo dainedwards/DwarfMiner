@@ -55,6 +55,32 @@ public sealed partial class DwarfMinerGame
         _space.HullTier = Upgrades.Owned(_meta, "hull2") ? 2 : 1;
     }
 
+    /// <summary>Boot-time restore of the persisted mothership: park where you left it (with
+    /// the hull you left with) or fall back to a planet for fresh installs.</summary>
+    private void RestoreShipState()
+    {
+        ApplyShipTiers();
+        if (float.IsNaN(_meta.ShipPosX))
+        {
+            _space.PlaceShipAt(Math.Min(_meta.PlanetsUnlocked, PlanetDefs.All.Length) - 1);
+            return;
+        }
+        _space.ShipPos = new Vector2(_meta.ShipPosX, _meta.ShipPosY);
+        _space.ShipHeading = _meta.ShipHeadingSave;
+        if (_meta.ShipHull > 0) _space.Hull = Math.Min(_meta.ShipHull, _space.HullMax);
+    }
+
+    /// <summary>Snapshot the mothership into MetaSave — called wherever meta already saves
+    /// (landing, quitting), so the ship is wherever you left it next boot.</summary>
+    private void CaptureShipState()
+    {
+        if (_space is null) return;
+        _meta.ShipPosX = _space.ShipPos.X;
+        _meta.ShipPosY = _space.ShipPos.Y;
+        _meta.ShipHeadingSave = _space.ShipHeading;
+        _meta.ShipHull = _space.Hull;
+    }
+
     private void UpdateSpace(KeyboardState keys, MouseState mouse, float dt)
     {
         _toastTimer -= dt;
