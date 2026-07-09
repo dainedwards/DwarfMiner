@@ -1093,6 +1093,8 @@ public static class TitanRenderer
         TitanKind.Leatherback => Color.Lerp(new Color(110, 180, 255), new Color(200, 230, 255), anger),
         TitanKind.Raiju       => Color.Lerp(new Color(160, 220, 255), new Color(255, 255, 255), anger),
         TitanKind.Slattern    => Color.Lerp(new Color(255, 190, 80), new Color(255, 100, 40), anger),
+        TitanKind.Pyrodactyl  => Color.Lerp(new Color(255, 170, 70), new Color(255, 90, 30), anger),
+        TitanKind.Vitriodactyl => Color.Lerp(new Color(190, 255, 90), new Color(240, 255, 130), anger),
         _                     => Color.Lerp(new Color(255, 220, 100), new Color(255, 70, 40), anger),
     };
 
