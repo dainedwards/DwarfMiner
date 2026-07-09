@@ -1580,6 +1580,8 @@ public sealed partial class DwarfMinerGame : Game
         new("Leatherback (EMP burst)",    () => SpawnDebugTitan(TitanKind.Leatherback)),
         new("Raiju       (dash chain)",   () => SpawnDebugTitan(TitanKind.Raiju)),
         new("Slattern    (spike barrage)",() => SpawnDebugTitan(TitanKind.Slattern)),
+        new("Pyrodactyl  (lava rain)",    () => SpawnDebugTitan(TitanKind.Pyrodactyl)),
+        new("Vitriodactyl (acid rain)",   () => SpawnDebugTitan(TitanKind.Vitriodactyl)),
         new("Rocket — fuelled, launch-ready", () => SpawnDebugShip(fuelled: true)),
         new("Rocket — dry (mine fuel first)", () => SpawnDebugShip(fuelled: false)),
     };
