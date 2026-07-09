@@ -434,13 +434,12 @@ public static class SimTest
             var right = new Vector2(-up.Y, up.X);
             var player = new Player(titan.Position + right * 130f);
 
-            bool sawShot = false, sawSubmerge = false, sawShock = false;
+            bool sawShot = false, sawShock = false;
             for (var i = 0; i < 60 * 16; i++)
             {
                 titan.OnDamage();   // keep it aggroed
                 titan.Update(dt, p, phys, c, player.Position, bo, sh);
                 if (sh.Count > 0) sawShot = true;
-                if (titan.Submerged) sawSubmerge = true;
                 if (titan.PendingShockwave is not null) { sawShock = true; titan.PendingShockwave = null; }
             }
 
