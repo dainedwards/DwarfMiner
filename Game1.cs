@@ -1183,31 +1183,50 @@ public sealed partial class DwarfMinerGame : Game
     /// stays one-liner-per-case.</summary>
     private void DoMine(Vector2 worldCursor, MiningTool tool)
     {
+        // Where the strike actually lands — the swung tools ray out from the body toward the
+        // aim, so effects must key off the resolved tile, not the raw cursor.
+        var target = _run.Player.ResolveMineTarget(_run.Planet, worldCursor, tool);
+
         // Continuous drill chip-stream every frame the drill is held — fires during cooldown
         // so the swing reads as continuous.
-        if (tool == MiningTool.Drill && !_run.Player.FlyMode)
+        if (tool == MiningTool.Drill && !_run.Player.FlyMode && target is { } dt)
         {
-            var (ctx, cty) = _run.Planet.WorldToTile(worldCursor);
-            if (_run.Planet.Get(ctx, cty) != TileKind.Sky)
-            {
-                var tilePos = _run.Planet.TileToWorld(ctx, cty);
-                var dir = tilePos - _run.Player.Position;
-                if (dir.LengthSquared() > 0.001f) dir.Normalize();
-                _particles.EmitDrillChips(tilePos, dir, _run.Planet.Get(ctx, cty));
-            }
+            var tilePos = _run.Planet.TileToWorld(dt.X, dt.Y);
+            var dir = tilePos - _run.Player.Position;
+            if (dir.LengthSquared() > 0.001f) dir.Normalize();
+            _particles.EmitDrillChips(tilePos, dir, _run.Planet.Get(dt.X, dt.Y));
         }
 
-        // Pick-tick on each swing (throttled + pitch-jittered so it doesn't machine-gun).
-        PlayAt("dig", worldCursor, 0.35f,
-            pitch: 0.1f + (float)Random.Shared.NextDouble() * 0.3f, minGap: 0.09f);
+        // Mining laser: a continuous beam from the dwarf to the strike point (or full beam
+        // length into the dark when aimed at nothing), emitted every held frame so it reads
+        // as a stream rather than swings. Low steady hum instead of the pick-tick.
+        if (tool == MiningTool.MiningLaser)
+        {
+            var aim = worldCursor - _run.Player.Position;
+            if (aim.LengthSquared() > 0.001f)
+            {
+                aim.Normalize();
+                var beamEnd = target is { } ht
+                    ? _run.Planet.TileToWorld(ht.X, ht.Y)
+                    : _run.Player.Position + aim * Player.MiningLaserRange;
+                _particles.EmitMiningBeam(_run.Player.Position + aim * 4f, beamEnd, hitting: target is not null);
+                PlayAt("shoot_laser", _run.Player.Position, 0.16f, pitch: -0.4f, minGap: 0.12f);
+            }
+        }
+        else
+        {
+            // Pick-tick on each swing (throttled + pitch-jittered so it doesn't machine-gun).
+            PlayAt("dig", worldCursor, 0.35f,
+                pitch: 0.1f + (float)Random.Shared.NextDouble() * 0.3f, minGap: 0.09f);
+        }
 
         var broken = _run.Player.TryMine(_run.Planet, _run.Physics, worldCursor, tool);
-        if (broken is { } bk)
+        if (broken is { } bk && target is { } bt)
         {
             if (Tiles.Drop(bk) is not null) _meta.TotalOreMined++;
             var depth = _run.Planet.Radius - (int)((_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize);
             if (depth > _meta.DeepestDepth) _meta.DeepestDepth = depth;
-            var (btx, bty) = _run.Planet.WorldToTile(worldCursor);
+            var (btx, bty) = (bt.X, bt.Y);
             if (tool == MiningTool.Hammer && Tiles.Hardness(bk) >= 4)
             {
                 _particles.EmitHammerImpact(_run.Planet.TileToWorld(btx, bty), bk);
