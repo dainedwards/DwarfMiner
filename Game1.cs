@@ -1896,8 +1896,14 @@ public sealed partial class DwarfMinerGame : Game
         _drawSw.Stop();
         _drawMs = _drawMs * 0.9f + (float)_drawSw.Elapsed.TotalMilliseconds * 0.1f;
 
-        // Real rendered frame rate (MonoGame drops Draws when a fixed-step frame overruns,
-        // so this is the number that actually stutters).
+        base.Draw(gameTime);
+    }
+
+    /// <summary>Real rendered frame rate + smoothed CPU times, top-right on every screen.
+    /// MonoGame drops Draws when a fixed-step frame overruns, so FPS here is the number
+    /// that actually stutters; UPD/DRW attribute the blame.</summary>
+    private void DrawFpsOverlay()
+    {
         _fpsFrames++;
         var now = Environment.TickCount64;
         if (now - _fpsMark >= 1000)
@@ -1910,8 +1916,6 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.DrawText(fpsText,
             new Vector2(VirtualWidth - 8 - _renderer.MeasureText(fpsText), 6),
             _fps >= 55 ? new Color(120, 220, 130) : _fps >= 30 ? new Color(255, 225, 140) : new Color(255, 110, 90));
-
-        base.Draw(gameTime);
     }
 
     private void DrawFrame(GameTime gameTime)
