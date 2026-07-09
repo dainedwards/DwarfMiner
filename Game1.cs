@@ -1336,8 +1336,8 @@ public sealed partial class DwarfMinerGame : Game
         // screen: the rocket docks with the mothership and you have the stick.
         RunSave.Delete();
         _toast = cargoMoved > 0
-            ? $"DOCKED — {cargoMoved} CARGO TRANSFERRED TO THE HOLD"
-            : $"ESCAPED {_run.Def.Name.ToUpperInvariant()} IN {_run.RunTime:0.0}S — YOU HAVE THE STICK";
+            ? $"DOCKED - {cargoMoved} CARGO TRANSFERRED TO THE HOLD"
+            : $"ESCAPED {_run.Def.Name.ToUpperInvariant()} IN {_run.RunTime:0.0}S - YOU HAVE THE STICK";
         _toastTimer = 4f;
         EnterSpace(idx, exitSpeed: 320f, zoomFromPlanet: true);
     }
