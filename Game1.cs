@@ -2368,7 +2368,8 @@ public sealed partial class DwarfMinerGame : Game
         // the lightmap so they actually illuminate the cave wall behind them.
         _particles.AddLights(_renderer);
         // Lava cells along their pool surface light up the cave roof (view-culled).
-        _run.Cells.AddLights(_renderer, viewCentre, viewRadius);
+        _run.Cells.AddLights(_renderer, viewCentre, viewRadius,
+            _camera.Zoom < 0.55f ? 6 : _camera.Zoom < 0.9f ? 3 : 1);
 
         // Depth darkness: subtract a radial gradient centred at the planet so deep tiles
         // dim toward black while the surface stays at full ambient. Radius = surfaceRadius
