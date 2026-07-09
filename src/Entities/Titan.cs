@@ -402,11 +402,17 @@ public sealed class Titan
         }
     }
 
+    /// <summary>World position the boss's ranged attacks issue from — the actual drawn mouth.
+    /// MUST stay in sync with <see cref="Rendering.TitanRenderer"/>'s MouthPos, or the beam/flame
+    /// will spawn (and aim) from a different point than it's drawn, so the visible lance won't
+    /// pass through where it actually hits.</summary>
     private Vector2 Mouth()
     {
         var up = _planet.UpAt(Position);
         var right = new Vector2(-up.Y, up.X);
-        return Position + up * 26f + right * (Facing * 130f);
+        return Kind == TitanKind.Mecha
+            ? Position + up * 90f + right * (Facing * 78f)
+            : Position + up * 106f + right * (Facing * 92f);
     }
 
     /// <summary>True when the boss is planted on the ground (probing past the hover height,
