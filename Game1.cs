@@ -1411,6 +1411,26 @@ public sealed partial class DwarfMinerGame : Game
         _run.Shake = MathF.Max(_run.Shake, 0.35f);
     }
 
+    /// <summary>The expended rover where it settled: a listing, scorched pod shell with a
+    /// cracked dome, one sheared-off skid nearby, and a lazy smoke wisp — the crash site
+    /// stays as a landmark for the whole visit.</summary>
+    private void DrawRoverWreck(Vector2 pos)
+    {
+        var up = _run.Planet.UpAt(pos);
+        var right = new Vector2(-up.Y, up.X);
+        var rot = MathF.Atan2(up.X, -up.Y) + 0.38f;   // listing to one side
+        var shell = new Color(120, 124, 138);
+        var scorch = new Color(62, 58, 60);
+        _renderer.DrawRect(pos, new Vector2(9f, 7f), shell, rot);
+        _renderer.DrawRect(pos - up * 2.4f, new Vector2(9f, 2.4f), scorch, rot);
+        _renderer.DrawRect(pos + up * 3.6f + right * 1.2f, new Vector2(6f, 2.2f), new Color(90, 140, 160), rot);
+        // Sheared skid a body-length away, flat on the ground.
+        _renderer.DrawRect(pos + right * 9f - up * 2.5f, new Vector2(4.5f, 1.6f), scorch,
+            MathF.Atan2(up.X, -up.Y));
+        // A thin smoke wisp so the site reads from a distance.
+        if (Random.Shared.Next(5) == 0) _particles.EmitDust(pos + up * 4f, 0.8f);
+    }
+
     /// <summary>Drop a sentry just above the player's feet so the dwarf doesn't end up
     /// standing inside it. The position is along planet-up so the turret lands on the
     /// surface rather than burying into a slope.</summary>
