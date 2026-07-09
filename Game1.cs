@@ -1821,7 +1821,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             _launching = false;
             _ascending = true;
-            _toast = "CLIMB TO THE MOTHERSHIP - A/D STEER";
+            _toast = "CLIMB TO THE MOTHERSHIP - WASD/ARROWS STEER";
             _toastTimer = 3.5f;
         }
     }
