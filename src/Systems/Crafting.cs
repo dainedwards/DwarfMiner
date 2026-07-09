@@ -138,6 +138,8 @@ public static class Crafting
             new Dictionary<string, int> { ["crystal"] = 3, ["gold"] = 10 }),
         new("harpoon", "Anti-Titan harpoon (press Y to fire)",
             new Dictionary<string, int> { ["platinum"] = 4, ["ruby"] = 4 }),
+        new("mining_laser", "Mining laser — hold LMB: a beam that disintegrates rock at range",
+            new Dictionary<string, int> { ["crystal"] = 4, ["ruby"] = 3, ["diamond"] = 2, ["platinum"] = 4 }),
         new("core_drill", "Core drill — only thing that can pierce the Core",
             new Dictionary<string, int> { ["diamond"] = 5, ["platinum"] = 5, ["crystal"] = 3 }),
     };
