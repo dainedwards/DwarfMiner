@@ -240,9 +240,8 @@ public sealed partial class DwarfMinerGame
         for (var i = 0; i < _space.Planets.Count; i++)
         {
             var p = _space.Planets[i];
-            var locked = i >= unlocked;
-            var body = locked ? new Color(40, 42, 52) : p.Def.MapColor;
-            var accent = locked ? new Color(60, 62, 72) : p.Def.MapAccent;
+            var body = p.Def.MapColor;
+            var accent = p.Def.MapAccent;
             var c = p.Pos;
             FillCircleWorld(sb, c, p.BodyRadius, body);
             // Terminator: the shadowed side faces away from the sun.
