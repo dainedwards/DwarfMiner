@@ -101,6 +101,12 @@ public sealed partial class DwarfMinerGame : Game
     private Vector2? _scanFuel;
     private Vector2? _scanOre;
 
+    /// <summary>Rover loadout menu (L, in orbit): kits bought with cargo stack in the
+    /// pending manifest and pay out into the pack on the next drop.</summary>
+    private bool _loadoutOpen;
+    private int _loadoutCursor;
+    private readonly Dictionary<string, int> _pendingKits = new();
+
     /// <summary>Liftoff cinematic state. While <see cref="_launching"/> is set, normal play is
     /// suspended: the rocket climbs along <see cref="_launchUp"/> under <see cref="_launchVel"/>,
     /// trailing exhaust, until the player takes the stick for the orbital ascent.</summary>
