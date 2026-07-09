@@ -41,7 +41,7 @@ public sealed partial class DwarfMinerGame
     private void DrawStationIndicator()
     {
         var screen = Vector2.Transform(_run.StationPos, _camera.View);
-        const int margin = 46;
+        const int margin = 14;
         if (screen.X > margin && screen.X < VirtualWidth - margin
             && screen.Y > margin && screen.Y < VirtualHeight - margin)
             return;   // station visible (or nearly) — no pointer needed
@@ -54,14 +54,14 @@ public sealed partial class DwarfMinerGame
             MathHelper.Clamp(screen.X, margin, VirtualWidth - margin),
             MathHelper.Clamp(screen.Y, margin, VirtualHeight - margin));
 
+        // Small and stubby: short along the pointing axis, broad across it, hugging the
+        // screen edge. No text — the shape and colour carry it.
         var sb = _renderer.Batch;
         sb.Begin(samplerState: SamplerState.PointClamp);
         sb.Draw(_arrowTex, pos, null, new Color(150, 220, 255),
-            MathF.Atan2(dir.Y, dir.X), new Vector2(7.5f, 7.5f), 1.6f, SpriteEffects.None, 0f);
+            MathF.Atan2(dir.Y, dir.X), new Vector2(7.5f, 7.5f),
+            new Vector2(0.7f, 1.3f), SpriteEffects.None, 0f);
         sb.End();
-        const string tag = "SHIP";
-        _renderer.DrawText(tag, pos - dir * 26f - new Vector2(_renderer.MeasureText(tag) / 2f, 4f),
-            new Color(150, 220, 255));
     }
 
     /// <summary>Background world build for the planet the ship is loitering near — by the
