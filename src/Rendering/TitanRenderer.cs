@@ -343,9 +343,8 @@ public static class TitanRenderer
         var furDark = f.HideDark;
         var stone = new Color(90, 88, 96);
 
-        // Legs (short, stout).
-        foreach (var leg in t.Legs)
-            DrawLeg(r, t, f, leg, 30f, 24f);
+        // Legs (short, stout) — far leg shaded behind the near one.
+        DrawLegs(r, t, f, 30f, 24f);
 
         // Broad torso.
         var breath = MathF.Sin(f.Pulse) * 2f;
