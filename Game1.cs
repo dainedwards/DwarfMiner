@@ -284,7 +284,9 @@ public sealed partial class DwarfMinerGame : Game
         var titanKind = def.TitanPool is { Length: > 0 } pool
             ? pool[Random.Shared.Next(pool.Length)]
             : def.Titan;
-        if (Enum.TryParse<TitanKind>(Environment.GetEnvironmentVariable("DM_BOSSCAM"), true, out var forced))
+        if (Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 } bossCam
+            && char.IsLetter(bossCam[0])   // DM_BOSSCAM=1 is the plain follow-cam, not a kind
+            && Enum.TryParse<TitanKind>(bossCam, true, out var forced))
             titanKind = forced;
         _run.Titan = new Titan(_run.Planet, titanAngle, titanKind);
         // DM_HATCH=<seconds> shortens the egg timer for testing (default 10 min).
