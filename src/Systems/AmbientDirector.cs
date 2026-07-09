@@ -22,6 +22,7 @@ public static class AmbientDirector
         public bool FlareWarned;
         public bool FlareStruck;
         public bool BlizzardStarted;
+        public bool AcidRainStarted;
     }
 
     public static Result Update(float dt, Session run, Particles particles)
