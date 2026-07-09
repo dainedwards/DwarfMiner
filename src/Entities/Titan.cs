@@ -167,12 +167,14 @@ public sealed class Titan
         // category-5 apex (biggest body, deepest health pool, guards the Rift).
         (Health, MoveSpeed) = kind switch
         {
-            TitanKind.Knifehead   => (2300f, 62f),
-            TitanKind.Otachi      => (2100f, 60f),
-            TitanKind.Leatherback => (3000f, 46f),
-            TitanKind.Raiju       => (1700f, 96f),
-            TitanKind.Slattern    => (4200f, 62f),
-            _                     => (Health, MoveSpeed),
+            TitanKind.Knifehead    => (2300f, 62f),
+            TitanKind.Otachi       => (2100f, 60f),
+            TitanKind.Leatherback  => (3000f, 46f),
+            TitanKind.Raiju        => (1700f, 96f),
+            TitanKind.Slattern     => (4200f, 62f),
+            TitanKind.Pyrodactyl   => (2000f, 88f),
+            TitanKind.Vitriodactyl => (2000f, 88f),
+            _                      => (Health, MoveSpeed),
         };
         MaxHealth = Health;
         if (kind == TitanKind.Slattern) { Radius = 150f; BodyRadius = 70f; }
