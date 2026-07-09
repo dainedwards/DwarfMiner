@@ -1073,6 +1073,20 @@ public sealed partial class DwarfMinerGame : Game
         // follow the HUD arrow) to see where the rendezvous will be.
         _run.MothershipAngle += Session.StationDriftRate * dt;
 
+        // Geo Scanner sweep: refresh the nearest fuel / signature-ore fixes on a timer (the
+        // ring-band search is cheap, but not run-it-every-frame cheap).
+        if (Upgrades.Owned(_meta, "scanner"))
+        {
+            _scanTimer -= dt;
+            if (_scanTimer <= 0f)
+            {
+                _scanTimer = 1.5f;
+                _scanFuel = Scanner.FindNearest(_run.Planet, _run.Player.Position, TileKind.FuelOre, 620f);
+                _scanOre = Scanner.FindNearest(_run.Planet, _run.Player.Position,
+                    Scanner.OreTileFor(_run.Def.ShipOre), 620f);
+            }
+        }
+
         _prevKeys = keys;
         _prevMouse = mouse;
         base.Update(gameTime);
