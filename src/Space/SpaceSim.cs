@@ -52,8 +52,12 @@ public sealed class ShipShot
 public sealed class SpaceSim
 {
     public const float SunRadius = 240f;
-    /// <summary>How far off a planet's surface the landing prompt reaches.</summary>
-    public const float LandRange = 130f;
+    /// <summary>Surface distance at which flying at a planet becomes an atmosphere entry.</summary>
+    public const float EntryRange = 18f;
+    /// <summary>Set by Game1 each frame from the shard count — while locked, the Rift is the
+    /// one world whose disc stays solid (its storms repel you); every other planet can be
+    /// flown straight into, No Man's Sky style.</summary>
+    public bool RiftLocked = true;
 
     public readonly List<SpacePlanet> Planets = new();
     public Vector2 ShipPos;
