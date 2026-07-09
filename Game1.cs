@@ -433,10 +433,29 @@ public sealed partial class DwarfMinerGame : Game
             return;
         for (var i = 0; i < 60 && _run.Planet.IsSolidAt(_landerPos); i++) _landerPos += up * 2f;
         _landing = false;
+
+        // The pod hits hard enough to gouge a small crater (soft tiles only — same rules as
+        // a meteor strike, minus the ore) and what's left of it stays as wreckage: a
+        // landmark marking where you came down.
+        var (cx, cy) = _run.Planet.WorldToTile(_landerPos - up * (_run.Player.Radius + 4f));
+        const int craterR = 3;
+        for (var dy = -craterR; dy <= craterR; dy++)
+            for (var dx = -craterR; dx <= craterR; dx++)
+            {
+                if (dx * dx + dy * dy > craterR * craterR) continue;
+                var x = cx + dx; var y = cy + dy;
+                var k = _run.Planet.Get(x, y);
+                if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
+                _run.Planet.Set(x, y, TileKind.Sky);
+                _run.Cells.SpawnDustInTile(x, y, k);
+                _run.Physics.MarkDirty(x, y);
+            }
+        _run.RoverWreck = _landerPos - up * 2f;
+
         _run.Player.Position = _landerPos;
-        _particles.EmitDust(_landerPos, 16f);
-        _run.Shake = MathF.Max(_run.Shake, 0.5f);
-        _sfx.Play("collapse", 0.45f, pitch: 0.2f);
+        _particles.EmitDust(_landerPos, 22f);
+        _run.Shake = MathF.Max(_run.Shake, 0.7f);
+        _sfx.Play("collapse", 0.55f, pitch: 0.1f);
         _toast = "TOUCHDOWN - ROVER EXPENDED";
         _toastTimer = 2.5f;
     }
