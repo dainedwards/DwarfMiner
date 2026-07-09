@@ -124,6 +124,18 @@ public static class SpawnDirector
                      : roll < 0.85 ? CreatureKind.CaveEye
                      : CreatureKind.HornedDelver;
             }
+
+            // Biome specials override the generic roster: wraiths haunt the Rift at every
+            // depth, crawlers stalk the deeps of crystal-pocket worlds, and spore bats flit
+            // through the shallow caves of worlds with fungal groves.
+            var special = Random.Shared.NextDouble();
+            if (run.Def.Id == "rift" && special < 0.25)
+                kind = CreatureKind.VoidWraith;
+            else if (run.Def.CrystalPockets > 0 && depth > 40f && special < 0.18)
+                kind = CreatureKind.CrystalCrawler;
+            else if (run.Def.FungalPockets > 0 && depth < 30f && special < 0.22)
+                kind = CreatureKind.SporeBat;
+
             var c = new Creature(pos, kind);
             ClearSpawnSpace(run, pos, c.Radius);
             run.Creatures.Add(c);
