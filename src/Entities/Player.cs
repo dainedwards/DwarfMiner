@@ -288,11 +288,13 @@ public sealed class Player
             vNormal = MoveToward(vNormal, verticalAxis * climbSpeed, 480f * dt);
         }
 
+        if (EmpTimer > 0f) EmpTimer -= dt;
+
         // Jetpack: holding jump while airborne thrusts toward a steady rise until the charge
         // runs dry; the charge refills on the ground. The jump edge itself is still the
         // ordinary jump (buffer/coyote below), so a hop flows into a burn naturally. Gated
-        // off ladders so climbing doesn't fight the thrust.
-        if (HasJetpack)
+        // off ladders so climbing doesn't fight the thrust, and dead while EMP'd.
+        if (HasJetpack && EmpTimer <= 0f)
         {
             if (Grounded) JetCharge = JetChargeCap;
             else if (jumpHeld && !jumpEdge && !onLadder && JetCharge > 0f)
