@@ -443,6 +443,15 @@ public sealed partial class DwarfMinerGame : Game
         var podDrop = _meta.Rovers <= 0;
         if (!podDrop) _meta.Rovers--;
         _meta.Save();
+        // The pending loadout manifest pays out into the pack as the rover departs.
+        foreach (var (kitId, kits) in _pendingKits)
+        {
+            var kit = Array.Find(Loadouts.All, l => l.Id == kitId);
+            if (kit is null) continue;
+            foreach (var (id, n) in kit.Grants) _run.Player.Inventory.Add(id, n * kits);
+        }
+        _pendingKits.Clear();
+        _loadoutOpen = false;
         _orbiting = false;
         _landing = true;
         _landerPos = _run.StationPos;
