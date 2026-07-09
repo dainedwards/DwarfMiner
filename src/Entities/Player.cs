@@ -668,8 +668,9 @@ public sealed class Player
 }
 
 /// <summary>Which mining tool the player is using this swing. Drives cooldown, power floor,
-/// and which tile classes are breakable. Selected via the active toolbelt slot.</summary>
-public enum MiningTool { Pickaxe, Drill, Hammer }
+/// targeting mode (swung ray vs cursor tile vs beam), and which tile classes are breakable.
+/// Selected via the active toolbelt slot.</summary>
+public enum MiningTool { Pickaxe, Drill, Hammer, MiningLaser }
 
 /// <summary>
 /// 13-slot equipment belt. Crafted equipment auto-equips into the first empty slot via
