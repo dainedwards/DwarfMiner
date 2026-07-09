@@ -31,6 +31,7 @@ public sealed partial class DwarfMinerGame
     /// Worlds generate on a background task at boot; textures build lazily on the main
     /// thread once their world is ready.</summary>
     private readonly Dictionary<string, Texture2D> _planetPreview = new();
+    private bool _previewBuiltThisFrame;
     private const int PreviewSize = 200;
 
     /// <summary>Rasterize a planet's survey world into a disc texture: each pixel samples
