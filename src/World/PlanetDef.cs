@@ -58,7 +58,16 @@ public sealed record PlanetDef(
     float SizeScale = 1f,
     float LakeScale = 1f,
     int AcidPools = 0,
-    bool AcidRain = false);
+    bool AcidRain = false,
+    // ── Volcano knobs ──────────────────────────────────────────────────────────
+    // Volcanoes raises that many basalt cones on the surface, each with an open crater
+    // pool and a primed throat running down to a deep magma chamber (WorldGen
+    // .CarveVolcanoes). VolcanoScale sizes the cones (fire worlds run big, the rare
+    // strays on other biomes small); VolcanoAcid switches the fluid to vitriol — the
+    // acid worlds' volcanoes vent acid instead of lava.
+    int Volcanoes = 0,
+    float VolcanoScale = 1f,
+    bool VolcanoAcid = false);
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.
 /// <see cref="All"/> is the ACTIVE chain: at boot Game1 swaps in a procedurally generated
