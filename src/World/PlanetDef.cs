@@ -46,7 +46,17 @@ public sealed record PlanetDef(
     TitanKind Titan = TitanKind.Godzilla,
     int CrystalPockets = 0,
     int FungalPockets = 0,
-    TitanKind[]? TitanPool = null);
+    TitanKind[]? TitanPool = null,
+    // ── Size + new biome knobs ─────────────────────────────────────────────────
+    // SizeScale multiplies the standard 200-ring planet (0.7 dwarf .. 1.8 giant); the
+    // random-planet generator ties it to difficulty. LakeScale widens/deepens every lake
+    // basin (ocean worlds run 8+ lakes at ~3×, so the surface is mostly sea). AcidPools
+    // carves that many open acid ponds into the surface; AcidRain arms the toxic-cloud
+    // ambient event (AmbientDirector) that periodically rains acid around the dwarf.
+    float SizeScale = 1f,
+    float LakeScale = 1f,
+    int AcidPools = 0,
+    bool AcidRain = false);
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.</summary>
 public static class PlanetDefs
