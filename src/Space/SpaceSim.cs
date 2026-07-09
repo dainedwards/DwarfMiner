@@ -311,7 +311,7 @@ public sealed class SpaceSim
             {
                 if (ShieldReady)
                 {
-                    ShieldCooldown = 8f;
+                    ShieldCooldown = ShieldRechargeTime;
                     HitTimer = 0.4f;
                 }
                 else
