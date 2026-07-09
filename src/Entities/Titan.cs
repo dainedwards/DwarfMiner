@@ -434,9 +434,12 @@ public sealed class Titan
             StompCooldown = MathHelper.Lerp(8f, 2.5f, Anger / 100f);
         }
 
-        // Hurl: lobs a boulder along the line of sight to the player. Aggro-gated. The worm has
-        // no arms — it never hurls.
-        if (IsAggro && HurlCooldown <= 0 && Anger > 50f && Kind != TitanKind.Sandworm)
+        // Hurl: lobs a boulder along the line of sight to the player. Aggro-gated. Only the
+        // kinds with arms (and the temper) throw — the worm has none, the blade-headed and
+        // dash kaiju fight with their bodies, and Otachi spits instead.
+        var hurls = Kind is TitanKind.Godzilla or TitanKind.Mecha or TitanKind.Kong
+                         or TitanKind.Leatherback or TitanKind.Slattern;
+        if (IsAggro && HurlCooldown <= 0 && Anger > 50f && hurls)
         {
             var dirToPlayer = playerPos - Position;
             if (dirToPlayer.LengthSquared() > 0.0001f)
