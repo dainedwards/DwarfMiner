@@ -150,8 +150,8 @@ public sealed partial class DwarfMinerGame
             var back = -_space.ShipDir;
             for (var i = 0; i < 4; i++)
             {
-                var d = 16f + i * 9f + (float)Random.Shared.NextDouble() * 6f;
-                var w = 10 - i * 2;
+                var d = 24f + i * 10f + (float)Random.Shared.NextDouble() * 6f;
+                var w = 12 - i * 2;
                 var pos = _space.ShipPos + back * d;
                 var col = i < 2 ? new Color(255, 220, 120) : new Color(255, 140, 60);
                 sb.Draw(_renderer.Pixel,
