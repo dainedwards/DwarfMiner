@@ -74,9 +74,19 @@ public sealed class SpaceSim
     /// emergency-dock sequence (reposition at the nearest world, restore hull).</summary>
     public bool HullBreached;
     /// <summary>Ship tiers, fed from MetaSave upgrades by Game1: 2 = Autocannon II /
-    /// Ion Engines II.</summary>
+    /// Ion Engines II / Hull Plating.</summary>
     public int GunTier = 1;
     public int EngineTier = 1;
+    public int HullTier = 1;
+    public int HullMax => HullTier >= 2 ? 7 : 5;
+
+    /// <summary>Fuel plumbing: the tank lives in MetaSave, so the sim just reports demand.
+    /// Game1 sets <see cref="HasFuel"/> each frame and drains whole units out of
+    /// <see cref="FuelUsed"/>. Dry tank = reserve thrusters at 35% power (you can always
+    /// limp somewhere to mine more — no soft-lock, just a long slow ride).</summary>
+    public bool HasFuel = true;
+    public float FuelUsed;
+
     private float _gunCooldown;
     /// <summary>Target live-asteroid population; maintained by Update inside a spawn donut
     /// around the ship. Zero disables spawning (tests build their own fields).</summary>
