@@ -1009,6 +1009,35 @@ public static class SimTest
             real3.Save();
         }
 
+        // Combat Plating: 30% off incoming damage, multiplicative with crafted armor.
+        var dummy = new Player(Vector2.Zero) { Health = 100f };
+        dummy.HasPlating = true;
+        dummy.TakeDamage(10f);
+        Check("plating: 30 percent damage cut", MathF.Abs(dummy.Health - 93f) < 0.01f,
+            $"hp {dummy.Health}");
+        dummy.HasArmor = true;
+        dummy.TakeDamage(10f);
+        Check("plating: stacks with crafted armor (x0.42)",
+            MathF.Abs(dummy.Health - (93f - 4.2f)) < 0.01f, $"hp {dummy.Health}");
+
+        // The Geo Scanner finds the deposits it promises, honours its radius, and hunts the
+        // right tile kind for each signature ore id.
+        var scanWorld = Space.Survey.WorldFor(World.PlanetDefs.ById("verdant"));
+        var scanFrom = SpawnDirector.FindSurfaceSpawn(scanWorld, -MathF.PI / 2f, scanWorld.Radius);
+        var iron = Scanner.FindNearest(scanWorld, scanFrom, TileKind.IronOre, 620f);
+        Check("scanner: finds iron near the verdant surface", iron is not null);
+        if (iron is { } ironPos)
+        {
+            var (ix, iy) = scanWorld.WorldToTile(ironPos);
+            Check("scanner: fix actually points at iron", scanWorld.Get(ix, iy) == TileKind.IronOre);
+            Check("scanner: fix respects the radius", (ironPos - scanFrom).Length() <= 620f,
+                $"{(ironPos - scanFrom).Length():0} px");
+        }
+        Check("scanner: tiny radius finds nothing",
+            Scanner.FindNearest(scanWorld, scanFrom, TileKind.Diamond, 24f) is null);
+        Check("scanner: ore ids map to ore tiles",
+            Scanner.OreTileFor("ruby") == TileKind.Ruby && Scanner.OreTileFor("platinum") == TileKind.PlatinumOre);
+
         // The long-range survey finds real deposits (ember is the ruby world) and caches.
         var ember = World.PlanetDefs.ById("ember");
         var t0 = Environment.TickCount64;
