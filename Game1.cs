@@ -182,6 +182,15 @@ public sealed partial class DwarfMinerGame : Game
     protected override void Initialize()
     {
         _meta = MetaSave.Load();
+        // Roll (or restore) the campaign's 7 procedurally generated planets before anything
+        // touches PlanetDefs.All — the seed persists in the meta save so the same system
+        // greets you across restarts, and only a completed campaign rerolls it.
+        if (_meta.WorldSeed == 0)
+        {
+            _meta.WorldSeed = Random.Shared.Next(1, int.MaxValue);
+            _meta.Save();
+        }
+        PlanetDefs.Activate(PlanetGen.Campaign(_meta.WorldSeed));
         // Boot into space with the mothership wherever it was left (fresh installs park at
         // the farthest charted world), and the saved volume step applied.
         _space = new SpaceSim();
