@@ -52,9 +52,9 @@ public static class Survey
     /// entries, zero-count ores omitted).</summary>
     public static (string label, int count)[] For(PlanetDef def, int top = 5)
     {
-        if (_cache.TryGetValue(def.Id, out var hit)) return hit;
+        lock (_lock) if (_cache.TryGetValue(def.Id, out var hit)) return hit;
 
-        var planet = WorldGen.Generate(4242 + PlanetDefs.IndexOf(def), def);
+        var planet = WorldFor(def);
         var counts = new int[OreKinds.Length];
         for (var r = 0; r < Planet.RingCount; r++)
         {
