@@ -346,6 +346,14 @@ public sealed class Titan
             speedMul = 0.45f;   // slow roam — kaiju is just wandering, not hunting
         }
 
+        // Knifehead's gore owns the pace: plant and crouch through the windup, then sprint
+        // flat-out along the committed direction — the player dodges the line, not the chase.
+        if (Kind == TitanKind.Knifehead && SpecialState > 0f)
+        {
+            moveAxis = Charging ? MathF.Sign(_chargeDir) : 0;
+            speedMul = Charging ? 4.4f : 0f;
+        }
+
         // Decompose velocity into tangent and normal components so gravity, walking, and the
         // leg-spring lift can be handled independently of where on the planet we are.
         var vTangent = Vector2.Dot(Velocity, right);
@@ -354,7 +362,7 @@ public sealed class Titan
         // The worm slithers, it doesn't charge — hold its forward pace down to a slow crawl.
         var paceMul = Kind == TitanKind.Sandworm ? 0.55f : 1f;
         var targetTangent = moveAxis * MoveSpeed * speedMul * paceMul * (1f + Anger / 80f);
-        var accel = Grounded ? 260f : 100f;
+        var accel = Charging ? 900f : Grounded ? 260f : 100f;
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
 
         vNormal -= Gravity * dt;
