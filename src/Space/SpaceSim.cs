@@ -170,6 +170,7 @@ public sealed class SpaceSim
 
         if (_gunCooldown > 0f) _gunCooldown -= dt;
         if (HitTimer > 0f) HitTimer -= dt;
+        if (ShieldCooldown > 0f) ShieldCooldown -= dt;
         UpdateShots(dt);
         UpdateAsteroids(dt);
 
