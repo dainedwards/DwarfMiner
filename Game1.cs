@@ -2427,21 +2427,42 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.DrawCircle(m.Position, m.Radius * 0.5f, new Color(255, 220, 140));
         }
 
-        // Titan ranged shots — Godzilla flame (layered orange/yellow flicker) and Mecha laser
-        // (cyan bolt with a white core drawn along its velocity).
+        // Titan ranged shots — Godzilla flame (layered orange/yellow flicker), Otachi acid
+        // (wobbling green glob), Slattern spikes (bone-pale darts), Mecha laser (cyan bolt
+        // with a white core drawn along its velocity).
         foreach (var shot in _run.TitanShots)
         {
-            if (shot.Kind == TitanShotKind.Flame)
+            switch (shot.Kind)
             {
-                var flick = (float)Random.Shared.NextDouble() * 1.6f;
-                _renderer.DrawCircle(shot.Position, shot.Radius + flick, new Color(230, 90, 30));
-                _renderer.DrawCircle(shot.Position, shot.Radius * 0.6f, new Color(255, 210, 90));
-            }
-            else
-            {
-                var ang = MathF.Atan2(shot.Velocity.Y, shot.Velocity.X);
-                _renderer.DrawRect(shot.Position, new Vector2(20f, 3.5f), new Color(120, 230, 255, 200), ang);
-                _renderer.DrawRect(shot.Position, new Vector2(15f, 1.6f), Color.White, ang);
+                case TitanShotKind.Flame:
+                {
+                    var flick = (float)Random.Shared.NextDouble() * 1.6f;
+                    _renderer.DrawCircle(shot.Position, shot.Radius + flick, new Color(230, 90, 30));
+                    _renderer.DrawCircle(shot.Position, shot.Radius * 0.6f, new Color(255, 210, 90));
+                    break;
+                }
+                case TitanShotKind.Acid:
+                {
+                    var wob = (float)Random.Shared.NextDouble() * 1.2f;
+                    _renderer.DrawCircle(shot.Position, shot.Radius + wob, new Color(90, 160, 30));
+                    _renderer.DrawCircle(shot.Position, shot.Radius * 0.55f, new Color(180, 240, 80));
+                    break;
+                }
+                case TitanShotKind.Spike:
+                {
+                    var sAng = MathF.Atan2(shot.Velocity.Y, shot.Velocity.X);
+                    _renderer.DrawRect(shot.Position, new Vector2(16f, 4.5f), new Color(200, 190, 165), sAng);
+                    _renderer.DrawRect(shot.Position + Vector2.Normalize(shot.Velocity) * 6f,
+                        new Vector2(6f, 2f), Color.White, sAng);
+                    break;
+                }
+                default:   // Laser
+                {
+                    var ang = MathF.Atan2(shot.Velocity.Y, shot.Velocity.X);
+                    _renderer.DrawRect(shot.Position, new Vector2(20f, 3.5f), new Color(120, 230, 255, 200), ang);
+                    _renderer.DrawRect(shot.Position, new Vector2(15f, 1.6f), Color.White, ang);
+                    break;
+                }
             }
         }
 
