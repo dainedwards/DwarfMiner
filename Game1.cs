@@ -1132,6 +1132,22 @@ public sealed partial class DwarfMinerGame : Game
                 if (d > 0.01f) _run.Player.Velocity += toPlayer / d * 260f;
             }
         }
+        // Leatherback's EMP: inside the radius the dwarf's tech dies — jetpack and energy
+        // weapons — for the pulse duration (Player.EmpTimer gates both). Damage came from
+        // the pressure-wave shockwave above; this is the systems kill.
+        if (_run.Titan.PendingEmp is { } emp)
+        {
+            _run.Titan.PendingEmp = null;
+            _run.Shake = MathF.Max(_run.Shake, 1.2f);
+            _particles.EmitDust(emp.pos, 34f);
+            PlayAt("shoot_beam", emp.pos, 1f, pitch: -0.4f);
+            if ((_run.Player.Position - emp.pos).Length() < emp.radius)
+            {
+                _run.Player.EmpTimer = emp.seconds;
+                _toast = "EMP BURST - JETPACK + ENERGY WEAPONS OFFLINE";
+                _toastTimer = 2.5f;
+            }
+        }
         // Slaying the titan no longer ends the visit — the rocket is the only way off-world.
         // The kill banks a titan soul (foundry currency aboard the mothership) exactly once,
         // on the frame health crosses zero; resumed saves of an already-dead titan can't
