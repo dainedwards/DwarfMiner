@@ -44,7 +44,14 @@ public sealed class Physics
     public const int BudgetPerHardness = 8;
     /// <summary>Obsidian is brittle: any unsupported span bigger than this caves in.</summary>
     public const int ObsidianCollapseBudget = 6;
+    /// <summary>Hard flood cap for regions entirely above the crust. Airborne rock gets no
+    /// size-based reprieve — this only bounds the flood's worst-case work (the biggest
+    /// giant-world massifs run ~7-8k tiles).</summary>
+    public const int SkyRegionCap = 20000;
     private int _regionBudgetSum;
+    /// <summary>Whether the current flood region reaches at or below the crust line
+    /// (baseline surface + margin). Only such regions earn the too-big-to-fall valve.</summary>
+    private bool _regionTouchesCrust;
 
     /// <summary>Seconds a condemned region trembles before it starts crumbling — the
     /// Terraria-style warning window for the player to step out from under it.</summary>
