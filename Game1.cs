@@ -114,14 +114,12 @@ public sealed partial class DwarfMinerGame : Game
         return n;
     }
 
-    /// <summary>Liftoff cinematic state. While <see cref="_launching"/> is set, normal play is
-    /// suspended: the rocket climbs along <see cref="_launchUp"/> under <see cref="_launchVel"/>,
-    /// trailing exhaust, until the player takes the stick for the orbital ascent.</summary>
-    private bool _launching;
-    private float _launchElapsed;
-    private float _launchVel;
+    /// <summary>Escape-flight ship state: <see cref="_launchShipPos"/>/<see cref="_ascentVel"/>
+    /// track the rocket, <see cref="_launchUp"/> the local vertical for the camera and the
+    /// riding dwarf.</summary>
     private Vector2 _launchShipPos;
     private Vector2 _launchUp;
+    private Vector2 _ascentVel;
     /// <summary>Wall-clock seconds since launch — drives the DM_AUTOSHOT capture schedule so
     /// tooling can screenshot any screen, including the star map before a run starts.</summary>
     private float _totalTime;
