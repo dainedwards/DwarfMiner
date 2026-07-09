@@ -19,6 +19,7 @@ public sealed partial class DwarfMinerGame
 {
     private SpaceSim _space = null!;
     private Texture2D _stationTex = null!;
+    private Texture2D _stationSideTex = null!;
 
     /// <summary>Background world build for the planet the ship is loitering near — by the
     /// time the player presses Enter the Session is usually ready, so landing is seamless.
