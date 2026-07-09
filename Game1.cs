@@ -12,9 +12,10 @@ using Microsoft.Xna.Framework.Input;
 
 namespace DwarfMiner;
 
-/// <summary>Top-level screen state. Overworld is the star map (entry screen and post-run
-/// hub); Playing is a live run; GameOver overlays the frozen run until R returns to the map.</summary>
-public enum GameScreen { Overworld, Playing, GameOver }
+/// <summary>Top-level screen state. Space is the flyable solar system (entry screen and
+/// post-run hub — see src/Game1.Space.cs); Playing is a live run; GameOver overlays the
+/// frozen run until R returns you to your ship.</summary>
+public enum GameScreen { Space, Playing, GameOver }
 
 public sealed partial class DwarfMinerGame : Game
 {
