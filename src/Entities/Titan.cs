@@ -1203,7 +1203,11 @@ public sealed class TitanProjectile
                     break;
                 case TitanShotKind.Acid:
                     player.TakeDamage(13f);
-                    SplashAcid(planet, cells);
+                    Splash(planet, cells);
+                    break;
+                case TitanShotKind.Lava:
+                    player.TakeDamage(15f);
+                    Splash(planet, cells);
                     break;
                 case TitanShotKind.Spike:
                     player.TakeDamage(16f);
