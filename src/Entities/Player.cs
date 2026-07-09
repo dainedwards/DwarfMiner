@@ -159,9 +159,13 @@ public sealed class Player
         return true;
     }
 
+    /// <summary>Foundry Combat Plating (meta gear, re-applied on entry): a further 30% off
+    /// incoming damage, multiplicative with the craftable armor.</summary>
+    public bool HasPlating;
+
     /// <summary>Damage-take multiplier applied at the entity damage call sites. 1.0 = normal,
-    /// 0.6 = 40% reduction (iron plate armor).</summary>
-    public float DamageTakenMultiplier => HasArmor ? 0.6f : 1.0f;
+    /// 0.6 = 40% reduction (iron plate armor); foundry plating stacks multiplicatively.</summary>
+    public float DamageTakenMultiplier => (HasArmor ? 0.6f : 1.0f) * (HasPlating ? 0.7f : 1.0f);
 
     /// <summary>Apply incoming damage with armor scaling. Centralised so all damage paths
     /// (creature contact, boulder, falling chunk, sentry friendly-fire, boss attacks) honour
