@@ -144,7 +144,7 @@ public sealed partial class DwarfMinerGame : Game
         base.Initialize();
     }
 
-    private void StartNewRun(PlanetDef def)
+    private void StartNewRun(PlanetDef def, bool descend = false)
     {
         var seed = (int)DateTime.Now.Ticks;
         _run = new Session(def);
