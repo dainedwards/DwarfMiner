@@ -501,7 +501,44 @@ public sealed class Titan
             case TitanKind.Leatherback: TickEmp(dt, physics, playerPos); break;
             case TitanKind.Raiju:       TickRaiju(dt, playerPos); break;
             case TitanKind.Slattern:    TickSlattern(dt, physics, playerPos, shots); break;
+            case TitanKind.Pyrodactyl:
+            case TitanKind.Vitriodactyl: TickBombingRun(dt, playerPos, shots); break;
         }
+    }
+
+    /// <summary>The flyers' signature: a bombing run. The wing kaiju sinks to strafing
+    /// height (see the flight branch in <see cref="Update"/>) and rains ballistic gouts
+    /// down at the player for a couple of seconds — live lava from the Pyrodactyl, live
+    /// acid from the Vitriodactyl. Everything that lands feeds the cell sim, so a pass
+    /// leaves burning (or melting) ground behind, and the buffed acid corrosion means the
+    /// Vitriodactyl's rain eats the very cover you hide under.</summary>
+    private void TickBombingRun(float dt, Vector2 playerPos, List<TitanProjectile> shots)
+    {
+        if (SpecialState > 0f)
+        {
+            SpecialState -= dt;
+            Bombing = true;
+            if ((++_flameTick & 1) == 0)
+            {
+                var mouth = Mouth();
+                var aim = playerPos - mouth;
+                if (aim.LengthSquared() > 0.01f)
+                {
+                    aim.Normalize();
+                    var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.45f;
+                    var c = MathF.Cos(spread); var s = MathF.Sin(spread);
+                    var d = new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c);
+                    var kind = Kind == TitanKind.Pyrodactyl ? TitanShotKind.Lava : TitanShotKind.Acid;
+                    shots.Add(new TitanProjectile(mouth + d * 14f,
+                        d * (190f + (float)Random.Shared.NextDouble() * 80f), kind));
+                }
+            }
+            if (SpecialState <= 0f) { Bombing = false; SpecialCooldown = 6.5f; }
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f) return;
+        if ((playerPos - Position).Length() > 720f) return;
+        SpecialState = 2.0f;
     }
 
     /// <summary>Knifehead: crouch through a telegraphed windup, then gore — a flat-out
