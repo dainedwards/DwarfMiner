@@ -216,6 +216,23 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   terminators, and polar highlights. 2 new SimTest checks (background build off-thread,
   station altitude/clearance).
 
+- **Phase 8 — No Man's Sky-style entry (DONE 2026-07-09):** the Enter-to-land prompt is
+  gone. Planets are real places you fly to: an **approach zoom** pulls the camera onto the
+  ship inside 650 px of any surface, and **flying into the upper atmosphere IS the
+  transition** (`SpaceSim.AtmosphereContact`, EntryRange 18 px) — planets are no longer
+  solid in space; only the shard-locked Rift keeps its storm wall (`SpaceSim.RiftLocked`).
+  Entry drops you into a new **parking-orbit state** (`_orbiting`): the world is live below
+  a wide orbital shot (zoom 0.53 framing station + curved surface), **A/D slides the orbit**
+  around the planet to pick a drop site, **SPACE launches the rover** (consumption/pod
+  penalty moved here from the old prompt), **W breaks orbit** back to space. Quitting from
+  orbit discards the unentered world (no RunSave). Prefetch now triggers at 900 px on
+  approach, so entry is seamless. **Planet discs are real terrain**: each disc is rasterized
+  from its cached survey world (`Survey.WorldFor` — thread-safe, warmed by a boot task;
+  `BuildPlanetPreview` samples tiles polar-wise: transparent sky above the limb = mountain
+  silhouettes, caves read as dark rock), so the map disc genuinely resembles the world you
+  land on. 5 SimTest checks updated/added for the entry model. `DM_ORBIT=<planet-id>` boots
+  straight into the parking orbit for tooling.
+
 **Upgrade ideas still unbuilt** (future foundry slots): further pickaxe tiers, armor suit,
 cargo hold capacity, scanner (ore/titan intel on the HUD), sentry capacity,
 take-gear-down loadouts beyond the Armory kit, jetpack III.
