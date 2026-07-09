@@ -911,14 +911,14 @@ public static class SimTest
         }
         Check("foundry: purchase recorded", Space.Upgrades.Owned(meta, "jetpack"));
         Check("foundry: souls spent", meta.TotalSouls() == 0);
-        Check("foundry: cargo deducted (gold gone, 1 iron left)",
-            !meta.ShipCargo.ContainsKey("gold") && meta.ShipCargo["iron"] == 1);
+        Check("foundry: cargo deducted (pure gold gone, 1 pure iron left)",
+            !meta.ShipCargo.ContainsKey("pure_gold") && meta.ShipCargo["pure_iron"] == 1);
         Check("foundry: double-buy refused", !Space.Upgrades.TryBuy(meta, jet));
 
         // Kind-specific souls: the jetpack wants a Kong soul — a Mecha soul must not do.
         var meta2 = new MetaSave();
         meta2.TitanSouls["Mecha"] = 3;
-        meta2.ShipCargo["gold"] = 9; meta2.ShipCargo["iron"] = 99; meta2.ShipCargo["coal"] = 99;
+        meta2.ShipCargo["pure_gold"] = 9; meta2.ShipCargo["pure_iron"] = 99; meta2.ShipCargo["pure_coal"] = 99;
         Check("foundry: wrong-kind soul refused", !Space.Upgrades.CanAfford(meta2, jet));
         meta2.TitanSouls["Kong"] = 1;
         Check("foundry: right-kind soul accepted", Space.Upgrades.CanAfford(meta2, jet));
