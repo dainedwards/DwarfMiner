@@ -915,20 +915,25 @@ public sealed class Cells
         return (cyMin, cyMax);
     }
 
-    public void Draw(Renderer r, Vector2 viewCentre, float viewRadius)
+    /// <summary>Draw the live cells around the view. <paramref name="stride"/> &gt; 1 is
+    /// the zoomed-out LOD (orbit/high descent): sample every Nth cell on both axes at N×
+    /// size and skip rows buried deep in the crust — at orbital view radii the full scan
+    /// touches millions of cells, and a 3-px tile can't show sub-tile grains anyway.</summary>
+    public void Draw(Renderer r, Vector2 viewCentre, float viewRadius, int stride = 1)
     {
         var radial = (float)Planet.TileSize / Density;
         var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
-        for (var cy = cyMin; cy <= cyMax; cy++)
+        if (stride > 1) cyMin = Math.Max(cyMin, 60 * Density);   // matches the tile LOD's interior cut
+        for (var cy = cyMin; cy <= cyMax; cy += stride)
         {
             var n = _cellsAt[cy];
             var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
             var chord = MathHelper.TwoPi * ringRadius / n;
-            var size = new Vector2(chord + 0.5f, radial + 0.5f);
+            var size = new Vector2((chord + 0.5f) * stride, (radial + 0.5f) * stride);
             var halfAng = MathF.Min(MathF.PI, viewRadius / MathF.Max(ringRadius, 1f));
             var cx0 = (int)(camAng / MathHelper.TwoPi * n);
             var range = Math.Min(n / 2, (int)(halfAng / MathHelper.TwoPi * n) + 2);
-            for (var d = -range; d <= range; d++)
+            for (var d = -range; d <= range; d += stride)
             {
                 var cx = cx0 + d;
                 var idx = Idx(cx, cy);
