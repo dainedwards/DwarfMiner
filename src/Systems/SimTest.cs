@@ -1137,6 +1137,20 @@ public static class SimTest
             blizzStarted |= AmbientDirector.Update(dt2, blizzRun, flareParticles).BlizzardStarted;
         Check("content: blizzard breaks on the frost world", blizzStarted && blizzRun.BlizzardActive > 0f);
 
+        // Biome fauna: the wraith is the renewable voidstone source, the crawler pays out
+        // crystal, and the new kinds carry sane stat blocks.
+        var wraithDrops = Corpse.DropsFor(CreatureKind.VoidWraith);
+        Check("fauna: void wraith sheds voidstone",
+            System.Array.Exists(wraithDrops, d => d.id == "voidstone" && d.count >= 1));
+        Check("fauna: crystal crawler pays out crystal",
+            System.Array.Exists(Corpse.DropsFor(CreatureKind.CrystalCrawler), d => d.id == "crystal"));
+        var bat = new Creature(Vector2.Zero, CreatureKind.SporeBat);
+        var crawler = new Creature(Vector2.Zero, CreatureKind.CrystalCrawler);
+        var wraith = new Creature(Vector2.Zero, CreatureKind.VoidWraith);
+        Check("fauna: stat blocks read right",
+            bat.Health < crawler.Health && wraith.MoveSpeed > crawler.MoveSpeed
+            && crawler.ContactDamage > bat.ContactDamage);
+
         // The long-range survey finds real deposits (ember is the ruby world) and caches.
         var ember = World.PlanetDefs.ById("ember");
         var t0 = Environment.TickCount64;
