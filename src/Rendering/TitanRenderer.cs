@@ -420,6 +420,316 @@ public static class TitanRenderer
         DrawEyes(r, t, f, head + f.Up * 2f, playerPos, 9f, 5f);
     }
 
+    // ── Knifehead: pale carapace biped, huge blade crest, goring charge ─────────
+
+    private static void DrawKnifehead(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
+    {
+        DrawSpineChain(r, t, f, 24f, 5f, ridge: false);
+        DrawLegs(r, t, f, 24f, 19f);
+
+        // Lean hard into the sprint; crouch low through the windup.
+        var winding = t.SpecialState > 0f && !t.Charging;
+        var lean = f.Right * (f.Face * (t.Charging ? 34f : 12f));
+        var crouch = winding ? -14f : 0f;
+        var breath = MathF.Sin(f.Pulse) * 2f;
+        var pelvis = f.Tp + f.Up * crouch;
+        var chest = pelvis + f.Up * (72f + breath) + lean;
+        DrawTaper(r, pelvis + f.Up * 18f, chest, 88f, 62f, f.HideDark, f.Rot);
+        DrawTaper(r, pelvis + f.Up * 24f, chest + f.Up * 4f, 70f, 50f, f.Hide, f.Rot);
+        // Pale plated belly seams.
+        for (var i = 0; i < 3; i++)
+            r.DrawRect(Vector2.Lerp(pelvis + f.Up * 24f, chest, i / 2f) + f.Right * (f.Face * 16f),
+                new Vector2(30f - i * 4f, 10f), f.Belly, f.Rot);
+
+        // Stubby hooked forearms tucked against the chest.
+        for (var s = -1; s <= 1; s += 2)
+        {
+            var shoulder = chest + f.Right * (s * 22f);
+            var hand = shoulder + f.Right * (f.Face * 26f) - f.Up * 18f;
+            Seg(r, shoulder, hand, 10f, f.HideDark);
+            Seg(r, hand, hand + f.Right * (f.Face * 10f) - f.Up * 8f, 4f, f.Chitin);
+        }
+
+        // Head is mostly blade: a low skull flowing into an enormous flat crest that runs
+        // forward past the snout AND sweeps back over the shoulders — the silhouette IS the
+        // weapon. It glows along its edge while the gore is armed.
+        var head = chest + f.Up * 16f + f.Right * (f.Face * 30f);
+        Seg(r, chest + f.Up * 2f, head, 34f, f.HideDark);
+        r.DrawRect(head, new Vector2(44f, 30f), f.Hide, f.Rot);
+        var bladeTip = head + f.Right * (f.Face * 110f) + f.Up * 10f;
+        var bladeBack = head - f.Right * (f.Face * 58f) + f.Up * 26f;
+        // Blade: dark core with a pale honed edge, tapering to both ends.
+        Seg(r, bladeBack, bladeTip, 22f, f.HideDark);
+        Seg(r, bladeBack + f.Up * 4f, bladeTip + f.Up * 3f, 12f, f.Hide);
+        var edgeGlow = t.SpecialState > 0f
+            ? (t.Charging ? new Color(140, 255, 235) : new Color(90, 200, 210))
+            : f.Belly;
+        Seg(r, bladeBack + f.Up * 10f, bladeTip + f.Up * 6f, 4f, edgeGlow);
+        r.DrawCircle(bladeTip, 5f, edgeGlow);
+        // Underslung jaw beneath the blade.
+        var jaw = head + f.Right * (f.Face * 26f) - f.Up * 12f;
+        r.DrawRect(jaw, new Vector2(30f, 10f), f.HideDark, f.Rot);
+        for (var ti = -1; ti <= 1; ti++)
+            r.DrawRect(jaw + f.Right * (ti * 8f) + f.Up * 4f, new Vector2(3f, 5f), Color.White, f.Rot);
+        // Four small eyes tucked under the crest (kaiju cluster, not a friendly pair).
+        for (var e = 0; e < 4; e++)
+            r.DrawCircle(head + f.Right * (f.Face * (6f + e * 7f)) + f.Up * (e % 2 == 0 ? 8f : 12f),
+                2.6f, EyeColor(t.Kind, f.Anger));
+    }
+
+    // ── Otachi: winged acid-spitter, pincered tail ──────────────────────────────
+
+    private static void DrawOtachi(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
+    {
+        // Tail chain ends in a three-claw pincer.
+        DrawSpineChain(r, t, f, 26f, 6f, ridge: false);
+        var tip = t.TailNodes[^1];
+        var tipDir = t.TailNodes[^1] - t.TailNodes[^2];
+        if (tipDir.LengthSquared() > 1f)
+        {
+            tipDir.Normalize();
+            var perp = new Vector2(-tipDir.Y, tipDir.X);
+            for (var c = -1; c <= 1; c++)
+                Seg(r, tip, tip + tipDir * 20f + perp * (c * 12f), 4.5f, f.Chitin);
+        }
+
+        DrawLegs(r, t, f, 25f, 20f);
+
+        // Torso, leaner than Godzilla's, rearing up while it sprays.
+        var spraying = t.SpecialState > 0f;
+        var rear = spraying ? 16f : 0f;
+        var breath = MathF.Sin(f.Pulse) * 2f;
+        var chest = f.Tp + f.Up * (76f + rear + breath) + f.Right * (f.Face * 8f);
+        DrawTaper(r, f.Tp + f.Up * 20f, chest, 86f, 60f, f.HideDark, f.Rot);
+        DrawTaper(r, f.Tp + f.Up * 26f, chest + f.Up * 4f, 68f, 48f, f.Hide, f.Rot);
+        // Glowing acid veins up the throat — brighter mid-spray.
+        var vein = spraying ? new Color(190, 255, 90) : new Color(120, 190, 50);
+        for (var i = 0; i < 3; i++)
+            r.DrawRect(Vector2.Lerp(f.Tp + f.Up * 30f, chest, i / 2f) + f.Right * (f.Face * 18f),
+                new Vector2(4f, 14f), vein, f.Rot);
+
+        // Folded membrane wings swept back off the shoulders — the Otachi silhouette.
+        for (var s = -1; s <= 1; s += 2)
+        {
+            var root = chest + f.Right * (s * 24f) + f.Up * 10f;
+            var elbow = root - f.Right * (f.Face * 44f) + f.Up * (34f + s * 4f);
+            var wtip = elbow - f.Right * (f.Face * 52f) - f.Up * 10f;
+            var shade = s == (f.Face >= 0 ? 1 : -1) ? f.HideDark : Shade(f.HideDark, 0.6f);
+            // Wing fingers + stretched membrane between them.
+            Seg(r, root, elbow, 7f, shade);
+            Seg(r, elbow, wtip, 5f, shade);
+            Seg(r, Vector2.Lerp(root, elbow, 0.5f), Vector2.Lerp(elbow, wtip, 0.6f), 16f,
+                Shade(f.Hide, s == (f.Face >= 0 ? 1 : -1) ? 0.8f : 0.5f));
+        }
+
+        // Long neck to a narrow head with splitting mandibles; maw glows when spraying.
+        var neck = chest + f.Up * 14f + f.Right * (f.Face * 26f);
+        var head = neck + f.Up * 12f + f.Right * (f.Face * 38f);
+        Seg(r, chest + f.Up * 4f, head, 26f, f.HideDark);
+        Seg(r, chest + f.Up * 4f, head, 18f, f.Hide);
+        r.DrawRect(head, new Vector2(42f, 26f), f.HideDark, f.Rot);
+        r.DrawRect(head + f.Up * 3f, new Vector2(32f, 18f), f.Hide, f.Rot);
+        // Split mandibles — hinge open around the glowing gullet during the spray.
+        var mAng = spraying ? 0.5f : 0.15f;
+        var snout = head + f.Right * (f.Face * 22f);
+        for (var s = -1; s <= 1; s += 2)
+            Seg(r, snout, snout + f.Right * (f.Face * 22f) + f.Up * (s * 22f * mAng), 6f, f.Chitin);
+        if (spraying)
+        {
+            r.DrawCircle(snout + f.Right * (f.Face * 8f), 8f, new Color(150, 240, 60));
+            r.DrawCircle(snout + f.Right * (f.Face * 8f), 4f, new Color(230, 255, 150));
+        }
+        DrawEyes(r, t, f, head + f.Up * 8f, playerPos, 8f, 4.5f);
+    }
+
+    // ── Leatherback: barnacled tank ape with an EMP turbine hump ────────────────
+
+    private static void DrawLeatherback(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
+    {
+        DrawLegs(r, t, f, 32f, 26f);
+
+        // The widest torso in the roster — a storm-blue slab.
+        var breath = MathF.Sin(f.Pulse) * 2f;
+        var chest = f.Tp + f.Up * (66f + breath);
+        DrawTaper(r, f.Tp + f.Up * 14f, chest, 132f, 116f, f.HideDark, f.Rot);
+        DrawTaper(r, f.Tp + f.Up * 22f, chest, 112f, 94f, f.Hide, f.Rot);
+        // Barnacle clusters stubbling the hide.
+        var seed = (int)(f.Tp.X * 0.37f) ^ (int)(f.Tp.Y * 0.19f);
+        for (var b = 0; b < 8; b++)
+        {
+            var h = (seed * 1664525 + b * 1013904223) & 0x7fffffff;
+            var bx = ((h >> 3) & 0x7F) - 64;
+            var by = ((h >> 11) & 0x3F) + 18;
+            r.DrawCircle(f.Tp + f.Right * (bx * 0.72f) + f.Up * by, 3f + (h & 3), f.Belly);
+        }
+
+        // The EMP organ: a ribbed turbine hump on the back, arcing lightning as it charges.
+        var hump = f.Tp + f.Up * 96f - f.Right * (f.Face * 30f);
+        r.DrawCircle(hump, 34f, f.HideDark);
+        r.DrawCircle(hump + f.Up * 4f, 26f, f.Chitin);
+        for (var i = -2; i <= 2; i++)
+            r.DrawRect(hump + f.Right * (i * 10f) + f.Up * 6f, new Vector2(4f, 22f), f.HideDark, f.Rot);
+        var charging = t.SpecialState > 0f;
+        var coreCol = charging
+            ? Color.Lerp(new Color(90, 160, 255), Color.White, 1f - t.SpecialState / Titan.EmpWindup)
+            : new Color(90, 160, 255);
+        r.DrawCircle(hump + f.Up * 6f, charging ? 12f : 8f, coreCol);
+        if (charging)
+        {
+            // Jagged arcs crawling off the turbine — pseudo-random per frame slice.
+            var n = 2 + (int)((1f - t.SpecialState / Titan.EmpWindup) * 4f);
+            for (var a = 0; a < n; a++)
+            {
+                var h = ((int)(time * 30f) * 92821 + a * 68917) & 0x7fffffff;
+                var dir = f.Right * (((h & 0xFF) / 128f) - 1f) + f.Up * (((h >> 8) & 0xFF) / 255f);
+                if (dir.LengthSquared() < 0.05f) dir = f.Up;
+                dir.Normalize();
+                var p0 = hump + f.Up * 6f;
+                var p1 = p0 + dir * 22f + f.Right * ((((h >> 16) & 0xF) - 8) * 1.5f);
+                var p2 = p1 + dir * 18f - f.Right * ((((h >> 20) & 0xF) - 8) * 1.8f);
+                Seg(r, p0, p1, 2.2f, new Color(170, 220, 255));
+                Seg(r, p1, p2, 1.6f, Color.White);
+            }
+        }
+
+        // Column arms planted on rocky knuckles (broader than Kong's).
+        for (var s = -1; s <= 1; s += 2)
+        {
+            var shoulder = chest + f.Right * (s * 60f) + f.Up * 12f;
+            var fist = shoulder + f.Right * (s * 16f) - f.Up * (62f + MathF.Sin(f.Pulse + s) * 4f);
+            var elbow = Vector2.Lerp(shoulder, fist, 0.5f) + f.Right * (s * 18f);
+            Seg(r, shoulder, elbow, 30f, f.HideDark);
+            Seg(r, elbow, fist, 26f, f.Hide);
+            r.DrawCircle(fist, 18f, f.Chitin);
+            for (var c = -1; c <= 1; c++)
+                r.DrawCircle(fist + f.Right * (c * 9f) - f.Up * 8f, 5f, f.Belly);
+        }
+
+        // Squat head sunk between the shoulders, heavy jaw.
+        var head = chest + f.Up * 20f + f.Right * (f.Face * 14f);
+        r.DrawRect(head, new Vector2(50f, 34f), f.HideDark, f.Rot);
+        r.DrawRect(head + f.Up * 2f, new Vector2(38f, 24f), f.Hide, f.Rot);
+        r.DrawRect(head + f.Right * (f.Face * 14f) - f.Up * 8f, new Vector2(26f, 14f), f.HideDark, f.Rot);
+        DrawEyes(r, t, f, head + f.Up * 4f, playerPos, 8f, 4.5f);
+    }
+
+    // ── Raiju: low sleek sprinter, split hood crest ─────────────────────────────
+
+    private static void DrawRaiju(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
+    {
+        // Fin-bladed tail.
+        DrawSpineChain(r, t, f, 20f, 4f, ridge: false);
+
+        // Digitigrade legs (backward knee) sell the sprinter stance.
+        DrawLegs(r, t, f, 20f, 15f, mech: true);
+
+        // Speed streaks while dashing — motion smeared out behind the body.
+        if (t.Charging)
+            for (var s = 0; s < 4; s++)
+                Seg(r, f.Tp + f.Up * (20f + s * 14f) - f.Right * (f.Face * (30f + s * 22f)),
+                    f.Tp + f.Up * (20f + s * 14f) - f.Right * (f.Face * (78f + s * 26f)),
+                    3f, new Color(170, 230, 255) * 0.5f);
+
+        // Long horizontal body — a torpedo riding low over the legs, nose down like a
+        // crocodile mid-sprint. Built from a lying taper instead of the upright barrel.
+        var lunge = t.Charging ? 12f : 0f;
+        var rump = f.Tp + f.Up * 34f - f.Right * (f.Face * 40f);
+        var prow = f.Tp + f.Up * (46f + MathF.Sin(f.Pulse) * 2f) + f.Right * (f.Face * (52f + lunge));
+        Seg(r, rump, prow, 52f, f.HideDark);
+        Seg(r, rump + f.Up * 4f, prow + f.Up * 4f, 38f, f.Hide);
+        Seg(r, rump + f.Up * 12f, prow + f.Up * 10f, 14f, f.HideLight);
+        // Charge-lit flank stripes.
+        var stripe = t.Charging ? new Color(190, 240, 255) : Color.Lerp(f.Belly, new Color(150, 220, 255), f.Anger);
+        for (var i = 0; i < 3; i++)
+            r.DrawRect(Vector2.Lerp(rump, prow, 0.3f + i * 0.2f) - f.Up * 6f, new Vector2(5f, 16f), stripe, f.Rot + 0.5f * f.Face);
+
+        // Crocodile head with the split hood — two swept crest plates that flare while dashing.
+        var head = prow + f.Right * (f.Face * 26f) + f.Up * 4f;
+        r.DrawRect(head, new Vector2(46f, 24f), f.HideDark, f.Rot);
+        r.DrawRect(head + f.Up * 2f, new Vector2(36f, 16f), f.Hide, f.Rot);
+        var snout = head + f.Right * (f.Face * 28f) - f.Up * 2f;
+        r.DrawRect(snout, new Vector2(28f, 12f), f.HideDark, f.Rot);
+        for (var ti = -1; ti <= 1; ti++)
+            r.DrawRect(snout + f.Right * (ti * 7f) - f.Up * 4f, new Vector2(2.5f, 4f), Color.White, f.Rot);
+        var flare = t.Charging ? 0.55f : 0.25f;
+        for (var s = -1; s <= 1; s += 2)
+        {
+            var root = head + f.Up * 10f;
+            var crest = root - f.Right * (f.Face * 30f) + f.Up * (26f * (1f + s * flare * 0.4f)) + f.Right * (s * 8f);
+            Seg(r, root, crest, 7f, f.Chitin);
+            Seg(r, root, crest, 3f, stripe);
+        }
+        DrawEyes(r, t, f, head + f.Up * 6f, playerPos, 7f, 4f);
+    }
+
+    // ── Slattern: the category-5 apex — triple crest, spiked lash ───────────────
+
+    private static void DrawSlattern(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
+    {
+        // The lash: a long tail chain studded with thorn spikes — the barrage's launcher.
+        var nodes = t.TailNodes;
+        for (var i = 1; i < nodes.Length; i++)
+        {
+            var fr = i / (float)(nodes.Length - 1);
+            var thick = MathHelper.Lerp(30f, 8f, fr);
+            Seg(r, nodes[i - 1], nodes[i], thick, Color.Lerp(f.HideDark, f.Hide, 1f - fr * 0.5f));
+            // Paired thorns at each joint, angled off the chain.
+            var seg = nodes[i] - nodes[i - 1];
+            if (seg.LengthSquared() > 1f)
+            {
+                var n = Vector2.Normalize(new Vector2(-seg.Y, seg.X));
+                Seg(r, nodes[i], nodes[i] + n * (thick * 0.9f), 3.5f, f.Chitin);
+                Seg(r, nodes[i], nodes[i] - n * (thick * 0.9f), 3.5f, f.Chitin);
+            }
+        }
+        r.DrawCircle(nodes[^1], 7f, f.Glow);   // the glowing flinger tip
+
+        DrawLegs(r, t, f, 30f, 24f);
+
+        // Towering torso — head and shoulders over every other kaiju.
+        var breath = MathF.Sin(f.Pulse) * 2.5f;
+        var lean = f.Right * (f.Face * 12f);
+        var chest = f.Tp + f.Up * (108f + breath) + lean;
+        DrawTaper(r, f.Tp + f.Up * 22f, chest, 118f, 88f, f.HideDark, f.Rot);
+        DrawTaper(r, f.Tp + f.Up * 30f, chest + f.Up * 4f, 96f, 70f, f.Hide, f.Rot);
+        // Cracked magma seams down the chest — the apex runs hot.
+        for (var i = 0; i < 4; i++)
+            r.DrawRect(Vector2.Lerp(f.Tp + f.Up * 34f, chest, i / 3f) + f.Right * (f.Face * (14f - i * 3f)),
+                new Vector2(5f, 16f), Color.Lerp(f.Glow, f.Belly, 0.4f), f.Rot + 0.2f);
+
+        // Twin heavy arms with talon fans.
+        for (var s = -1; s <= 1; s += 2)
+        {
+            var shoulder = chest + f.Right * (s * 48f) + f.Up * 8f;
+            var hand = shoulder + f.Right * (f.Face * 30f) - f.Up * (44f + MathF.Sin(f.Pulse + s) * 5f);
+            var elbow = Vector2.Lerp(shoulder, hand, 0.5f) + f.Right * (s * 14f);
+            Seg(r, shoulder, elbow, 20f, f.HideDark);
+            Seg(r, elbow, hand, 16f, f.Hide);
+            for (var c = -1; c <= 1; c++)
+                Seg(r, hand, hand + f.Right * (f.Face * 16f) + f.Up * (c * 8f - 6f), 3.5f, f.Chitin);
+        }
+
+        // Head crowned by the triple crest — three swept blades, lit from within.
+        var head = chest + f.Up * 24f + f.Right * (f.Face * 20f);
+        Seg(r, chest + f.Up * 6f, head, 38f, f.HideDark);
+        r.DrawRect(head, new Vector2(52f, 38f), f.HideDark, f.Rot);
+        r.DrawRect(head + f.Up * 4f, new Vector2(42f, 28f), f.Hide, f.Rot);
+        for (var c = -1; c <= 1; c++)
+        {
+            var root = head + f.Up * 16f + f.Right * (c * 12f);
+            var ctip = root + f.Up * (34f - MathF.Abs(c) * 8f) - f.Right * (f.Face * (18f + MathF.Abs(c) * 10f)) + f.Right * (c * 8f);
+            Seg(r, root, ctip, 7f, f.Chitin);
+            Seg(r, root, ctip, 3f, f.Glow);
+            r.DrawCircle(ctip, 3f, f.Glow);
+        }
+        // Underbite jaw with a tooth row.
+        var jaw = head + f.Right * (f.Face * 26f) - f.Up * 12f;
+        r.DrawRect(jaw, new Vector2(34f, 12f), f.HideDark, f.Rot);
+        for (var ti = -1; ti <= 1; ti++)
+            r.DrawRect(jaw + f.Right * (ti * 9f) + f.Up * 5f, new Vector2(3f, 6f), Color.White, f.Rot);
+        DrawEyes(r, t, f, head + f.Up * 8f, playerPos, 10f, 6f);
+    }
+
     // ── shared primitives ───────────────────────────────────────────────────────
 
     /// <summary>Draw both legs of a biped, far leg first. The leg on the side opposite the
