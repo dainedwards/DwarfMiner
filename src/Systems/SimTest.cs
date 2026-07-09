@@ -846,6 +846,26 @@ public static class SimTest
         for (var i = 0; i < 120; i++) { slow.Update(dt, 0f, true, false); fast.Update(dt, 0f, true, false); }
         Check("space: ion engines II outrun tier 1",
             (fast.ShipPos - s0).Length() > (slow.ShipPos - s0).Length() * 1.2f);
+
+        // …and sip fuel doing it: 2s of burn demands less from the tank than tier 1.
+        Check("space: thrust burns fuel", slow.FuelUsed > 0.5f, $"{slow.FuelUsed:0.00} used");
+        Check("space: ion engines II burn less fuel", fast.FuelUsed < slow.FuelUsed * 0.8f,
+            $"{fast.FuelUsed:0.00} vs {slow.FuelUsed:0.00}");
+
+        // A dry tank drops to reserve power: same burn covers far less ground, and no fuel
+        // is demanded.
+        var dry = new Space.SpaceSim { AsteroidTarget = 0, HasFuel = false };
+        dry.ShipPos = new Vector2(0f, -30000f);
+        var d0 = dry.ShipPos;
+        for (var i = 0; i < 120; i++) dry.Update(dt, 0f, true, false);
+        Check("space: dry tank limps at reserve power",
+            (dry.ShipPos - d0).Length() < (slow.ShipPos - s0).Length() * 0.6f);
+        Check("space: reserve power burns nothing", dry.FuelUsed == 0f);
+
+        // Hull plating raises the ceiling.
+        Check("space: hull plating raises max hull",
+            new Space.SpaceSim { HullTier = 2 }.HullMax == 7
+            && new Space.SpaceSim().HullMax == 5);
     }
 
     /// <summary>The upgrade foundry economy: affordability gates, souls + cargo deducted,
