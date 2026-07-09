@@ -1005,7 +1005,7 @@ public sealed partial class DwarfMinerGame : Game
     {
         new("Cinderwyrm  (fire breath)",  () => SpawnDebugTitan(TitanKind.Godzilla)),
         new("Mecha-Titan (drill laser)",  () => SpawnDebugTitan(TitanKind.Mecha)),
-        new("Shai-Hulud  (burrow/breach)", () => SpawnDebugTitan(TitanKind.Sandworm)),
+        new("Shai-Hulud  (slither/bite)", () => SpawnDebugTitan(TitanKind.Sandworm)),
         new("Stone Ape   (leap slam)",    () => SpawnDebugTitan(TitanKind.Kong)),
         new("Rocket — fuelled, launch-ready", () => SpawnDebugShip(fuelled: true)),
         new("Rocket — dry (mine fuel first)", () => SpawnDebugShip(fuelled: false)),
