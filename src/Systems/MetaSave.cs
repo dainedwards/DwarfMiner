@@ -48,9 +48,10 @@ public sealed class MetaSave
     /// from it.</summary>
     public Dictionary<string, int> ShipCargo { get; set; } = new();
 
-    /// <summary>Fuel units in the mothership's tank — leftover mined fuel transfers on
-    /// docking. Phase 3 burns this per-distance to gate travel to farther worlds.</summary>
-    public int MotherFuel { get; set; }
+    /// <summary>Fuel units in the mothership's tank — thrusting in space burns it (dry tank
+    /// = 35% reserve power), and leftover mined fuel transfers on docking. Starts with a
+    /// courtesy tank so the first flight isn't a crawl.</summary>
+    public int MotherFuel { get; set; } = 10;
 
     /// <summary>Purchased foundry upgrade ids (see Space.Upgrades). Permanent.</summary>
     public List<string> ShipUpgrades { get; set; } = new();
