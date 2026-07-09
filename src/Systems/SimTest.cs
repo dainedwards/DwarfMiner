@@ -441,13 +441,14 @@ public static class SimTest
             var right = new Vector2(-up.Y, up.X);
             var player = new Player(titan.Position + right * 130f);
 
-            bool sawShot = false, sawShock = false;
+            bool sawShot = false, sawShock = false, sawEmp = false;
             for (var i = 0; i < 60 * 16; i++)
             {
                 titan.OnDamage();   // keep it aggroed
                 titan.Update(dt, p, phys, c, player.Position, bo, sh);
                 if (sh.Count > 0) sawShot = true;
                 if (titan.PendingShockwave is not null) { sawShock = true; titan.PendingShockwave = null; }
+                if (titan.PendingEmp is not null) { sawEmp = true; titan.PendingEmp = null; }
             }
 
             switch (kind)
@@ -462,6 +463,22 @@ public static class SimTest
                 case TitanKind.Kong:
                     Check("titan: Kong leaps and slams (shockwave)", sawShock);
                     break;
+                case TitanKind.Knifehead:
+                    Check("titan: Knifehead's gore charge connects (shockwave)", sawShock);
+                    break;
+                case TitanKind.Otachi:
+                    Check("titan: Otachi sprays acid globs", sawShot);
+                    break;
+                case TitanKind.Leatherback:
+                    Check("titan: Leatherback detonates an EMP", sawEmp);
+                    break;
+                case TitanKind.Raiju:
+                    Check("titan: Raiju's dash chain clips the player (shockwave)", sawShock);
+                    break;
+                case TitanKind.Slattern:
+                    Check("titan: Slattern flings tail-spike barrages", sawShot);
+                    Check("titan: Slattern's sonic pulse lands (shockwave)", sawShock);
+                    break;
             }
         }
 
@@ -470,6 +487,10 @@ public static class SimTest
             PlanetDefs.ById("ember").Titan == TitanKind.Godzilla);
         Check("titan: slag hatches the mecha",
             PlanetDefs.ById("slag").Titan == TitanKind.Mecha);
+        Check("titan: the Rift hatches the category-5 apex",
+            PlanetDefs.ById("rift").Titan == TitanKind.Slattern);
+        Check("titan: Coreheart rolls from the kaiju pool",
+            PlanetDefs.ById("core").TitanPool is { Length: 4 });
 
         // --- Terrain plow: a boss overlapping solid rock smashes through it ---
         {
