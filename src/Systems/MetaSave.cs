@@ -55,6 +55,22 @@ public sealed class MetaSave
     /// <summary>Purchased foundry upgrade ids (see Space.Upgrades). Permanent.</summary>
     public List<string> ShipUpgrades { get; set; } = new();
 
+    /// <summary>Disposable descent rovers aboard the mothership. Landing consumes one; the
+    /// foundry builds more from cargo. Landing with none is an emergency drop pod — you
+    /// arrive at half health.</summary>
+    public int Rovers { get; set; } = 3;
+
+    public int SoulsOf(string kind) => TitanSouls.GetValueOrDefault(kind);
+
+    /// <summary>Deduct souls of one specific titan kind. False untouched if short.</summary>
+    public bool SpendSoulsOf(string kind, int n)
+    {
+        if (SoulsOf(kind) < n) return false;
+        TitanSouls[kind] -= n;
+        if (TitanSouls[kind] == 0) TitanSouls.Remove(kind);
+        return true;
+    }
+
     public int TotalSouls()
     {
         var n = 0;
