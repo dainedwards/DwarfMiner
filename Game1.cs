@@ -122,7 +122,9 @@ public sealed partial class DwarfMinerGame : Game
         Exiting += (_, _) =>
         {
             if (_screen == GameScreen.Playing && _run is not null) RunSave.Write(_run);
-            // Fuel burned in space between the event-driven saves would otherwise be lost.
+            // Fuel burned and flying done between the event-driven saves would otherwise be
+            // lost — snapshot the mothership and flush meta on the way out.
+            if (_screen == GameScreen.Space) CaptureShipState();
             _meta?.Save();
         };
     }
