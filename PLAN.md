@@ -89,7 +89,8 @@
 > (biomes/creatures/weapons).
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the space screen (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
-> suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons).
+> suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons); `DM_UPGRADES=1`
+> opens the mothership foundry at boot.
 
 Current state: circular polar planet with a Noita-style cell sim (water/lava/dust), structural
 physics with collapses, a Titan boss, cave/surface/sky fauna, a 30+ recipe crafting tree, three
