@@ -1606,10 +1606,15 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>Display name for a boss variant — used in the victory line and the egg HUD.</summary>
     private static string TitanName(TitanKind kind) => kind switch
     {
-        TitanKind.Godzilla => "Cinderwyrm",
-        TitanKind.Mecha    => "Mecha-Titan",
-        TitanKind.Sandworm => "Shai-Hulud",
-        TitanKind.Kong     => "Stone Ape",
+        TitanKind.Godzilla    => "Cinderwyrm",
+        TitanKind.Mecha       => "Mecha-Titan",
+        TitanKind.Sandworm    => "Shai-Hulud",
+        TitanKind.Kong        => "Stone Ape",
+        TitanKind.Knifehead   => "Knifehead",
+        TitanKind.Otachi      => "Otachi",
+        TitanKind.Leatherback => "Leatherback",
+        TitanKind.Raiju       => "Raiju",
+        TitanKind.Slattern    => "Slattern",
         _                  => "Titan",
     };
 
