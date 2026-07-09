@@ -36,15 +36,16 @@ public sealed partial class DwarfMinerGame
         return tex;
     }
 
-    /// <summary>Edge-of-screen pointer toward the orbiting mothership while it's out of
-    /// frame in the planet view — mining runs deep, and the rendezvous drifts.</summary>
-    private void DrawStationIndicator()
+    /// <summary>Edge-of-screen pointer toward an off-frame world position — a stubby wide
+    /// chevron hugging the screen edge, with an optional small label floated just inside
+    /// it. On-screen targets draw nothing (they speak for themselves).</summary>
+    private void DrawEdgeArrow(Vector2 worldPos, Color col, string? label = null)
     {
-        var screen = Vector2.Transform(_run.StationPos, _camera.View);
+        var screen = Vector2.Transform(worldPos, _camera.View);
         const int margin = 14;
         if (screen.X > margin && screen.X < VirtualWidth - margin
             && screen.Y > margin && screen.Y < VirtualHeight - margin)
-            return;   // station visible (or nearly) — no pointer needed
+            return;
 
         var centre = new Vector2(VirtualWidth / 2f, VirtualHeight / 2f);
         var dir = screen - centre;
@@ -54,14 +55,44 @@ public sealed partial class DwarfMinerGame
             MathHelper.Clamp(screen.X, margin, VirtualWidth - margin),
             MathHelper.Clamp(screen.Y, margin, VirtualHeight - margin));
 
-        // Small and stubby: short along the pointing axis, broad across it, hugging the
-        // screen edge. No text — the shape and colour carry it.
         var sb = _renderer.Batch;
         sb.Begin(samplerState: SamplerState.PointClamp);
-        sb.Draw(_arrowTex, pos, null, new Color(150, 220, 255),
+        sb.Draw(_arrowTex, pos, null, col,
             MathF.Atan2(dir.Y, dir.X), new Vector2(7.5f, 7.5f),
             new Vector2(0.7f, 1.3f), SpriteEffects.None, 0f);
         sb.End();
+        if (label is not null)
+        {
+            var lp = pos - dir * 24f;
+            _renderer.DrawText(label,
+                new Vector2(
+                    MathHelper.Clamp(lp.X - _renderer.MeasureText(label) / 2f, 4f,
+                        VirtualWidth - 4f - _renderer.MeasureText(label)),
+                    MathHelper.Clamp(lp.Y - 4f, 4f, VirtualHeight - 16f)),
+                col);
+        }
+    }
+
+    /// <summary>Pointer toward the orbiting mothership while it's out of frame — mining
+    /// runs deep, and the rendezvous drifts.</summary>
+    private void DrawStationIndicator() => DrawEdgeArrow(_run.StationPos, new Color(150, 220, 255));
+
+    /// <summary>The Geo Scanner's HUD fixes: nearest fuel deposit, nearest signature ore,
+    /// and the titan, each with its range in tiles. Only while the upgrade is owned and the
+    /// dwarf is actually down on (or dropping to) the planet.</summary>
+    private void DrawScannerArrows()
+    {
+        if (_orbiting || !Upgrades.Owned(_meta, "scanner")) return;
+        string Range(Vector2 target) =>
+            $"{(target - _run.Player.Position).Length() / Planet.TileSize:0}M";
+        if (_scanFuel is { } fuel)
+            DrawEdgeArrow(fuel, new Color(255, 170, 60), $"FUEL {Range(fuel)}");
+        if (_scanOre is { } ore)
+            DrawEdgeArrow(ore, Tiles.ResourceColor(_run.Def.ShipOre),
+                $"{Tiles.ResourceLabel(_run.Def.ShipOre)} {Range(ore)}");
+        if (_run.Titan.Health > 0)
+            DrawEdgeArrow(_run.Titan.Position, new Color(255, 110, 90),
+                $"TITAN {Range(_run.Titan.Position)}");
     }
 
     /// <summary>Background world build for the planet the ship is loitering near — by the
