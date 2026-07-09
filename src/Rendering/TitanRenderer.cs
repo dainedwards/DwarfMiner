@@ -297,13 +297,17 @@ public static class TitanRenderer
             }
         }
 
-        // The maw is at the front (Position), pointing along travel — but straight UP while
-        // breaching (the eruption). A round aperture ringed with inward-curving crystalline
-        // teeth: "spikes coming out of the mouth".
-        var mouthDir = t.Breaching ? f.Up : f.Right * f.Face;
-        var mouthCenter = f.Tp + mouthDir * 30f;
-        var openPulse = t.Breaching ? 1f : 0.72f + MathF.Sin(time * 3f) * 0.06f;
-        var rOuter = 46f * openPulse;
+        // The maw rides on node 0 — the head of the chain — so it stays welded to the body no
+        // matter how the worm weaves through the ground. A solid head lump bridges the leading
+        // body segment into the maw; then a round aperture ringed with inward-curving crystalline
+        // teeth, pointing the way the worm travels.
+        var head = nodes[0];
+        var mouthDir = f.Right * f.Face;
+        r.DrawCircle(head, 24f, f.HideDark);
+        r.DrawCircle(head, 18f, f.Hide);
+        var mouthCenter = head + mouthDir * 16f;
+        var openPulse = 0.72f + MathF.Sin(time * 3f) * 0.06f;
+        var rOuter = 44f * openPulse;
 
         // Fleshy outer lip ring.
         r.DrawCircle(mouthCenter, rOuter, f.HideDark);
