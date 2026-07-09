@@ -143,12 +143,17 @@ public static class PlanetDefs
             CrystalPockets: 4),
     };
 
+    static PlanetDefs() => All = Classic;
+
     /// <summary>Core shards needed to warp — one from every world except the Rift itself.</summary>
     public static int WarpShardsNeeded => All.Length - 1;
 
     public static PlanetDef ById(string id)
     {
         foreach (var d in All) if (d.Id == id) return d;
+        // Classic ids (verdant, frost, …) stay resolvable while a generated campaign is
+        // active — the DM_AUTOSTART/DM_ORBIT tooling hooks and sim tests name them directly.
+        foreach (var d in Classic) if (d.Id == id) return d;
         return All[0];
     }
 
