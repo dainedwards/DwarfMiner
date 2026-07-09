@@ -206,8 +206,12 @@ public sealed partial class DwarfMinerGame : Game
         _invUi.Reset();
         _screen = GameScreen.Playing;
         // Camera exists except when DM_AUTOSTART triggers a run during Initialize —
-        // LoadContent snaps it then.
-        _camera?.SnapTo(_run.Player.Position, 0f);
+        // LoadContent snaps it then. Zoom restores from whatever the space screen left it at.
+        if (_camera is not null)
+        {
+            _camera.Zoom = _playZoom;
+            _camera.SnapTo(_run.Player.Position, 0f);
+        }
     }
 
     /// <summary>Resume the suspended run from disk — RunSave rebuilt the Session; this does
