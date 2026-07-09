@@ -592,7 +592,7 @@ public sealed partial class DwarfMinerGame
             $"CORE SHARDS {_meta.CoreShards.Count}/{PlanetDefs.WarpShardsNeeded}{(_meta.CoreShards.Count >= PlanetDefs.WarpShardsNeeded ? "  [WARP READY - PRESS J]" : "")}",
             new Vector2(24, hullY + 36), shardCol);
 
-        var controls = "A/D TURN   W THRUST   S BRAKE   SPACE FIRE   ENTER LAND   U FOUNDRY   M SURVEY   J WARP";
+        var controls = "A/D TURN   W THRUST   S BRAKE   SPACE FIRE   U FOUNDRY   M SURVEY   J WARP";
         _renderer.DrawText(controls,
             new Vector2((VirtualWidth - _renderer.MeasureText(controls)) / 2f, VirtualHeight - 58),
             new Color(150, 155, 175));
