@@ -63,6 +63,10 @@ public sealed class Corpse
         CreatureKind.HornedDelver => new[] { ("hide", 1), ("iron", 1) },
         CreatureKind.Centipede    => new[] { ("chitin", 3) },
         CreatureKind.MoleBeast    => new[] { ("meat", 2), ("hide", 2) },
+        CreatureKind.SporeBat     => new[] { ("meat", 1) },
+        CreatureKind.CrystalCrawler => new[] { ("crystal", 2), ("chitin", 1) },
+        // The wraith is the renewable voidstone source — Rift-gated, but farmable.
+        CreatureKind.VoidWraith   => new[] { ("voidstone", 1) },
         _                         => new[] { ("meat", 1) },
     };
 
