@@ -458,18 +458,176 @@ public sealed class Titan
     }
 
     /// <summary>Per-kind signature attack. Godzilla breathes fire, Mecha fires a mouth laser,
-    /// Sandworm burrows and erupts, Kong leaps and slams. All are aggro-gated so a calm boss just
-    /// roams. <see cref="SpecialCooldown"/> paces them; <see cref="SpecialState"/> runs the
-    /// active window (breath duration, laser charge, burrow time, leap airtime).</summary>
+    /// Sandworm burrows and erupts, Kong leaps and slams; the kaiju wave — Knifehead gores,
+    /// Otachi spits acid, Leatherback EMPs, Raiju dash-chains, Slattern whips spike barrages.
+    /// All are aggro-gated so a calm boss just roams. <see cref="SpecialCooldown"/> paces
+    /// them; <see cref="SpecialState"/> runs the active window (breath duration, laser
+    /// charge, burrow time, leap airtime, gore sprint, spray, dash chain).</summary>
     private void UpdateSpecial(float dt, Planet planet, Physics physics, Vector2 playerPos, List<TitanProjectile> shots)
     {
         switch (Kind)
         {
-            case TitanKind.Godzilla: TickFireBreath(dt, playerPos, shots); break;
-            case TitanKind.Mecha:    TickMechaLaser(dt, playerPos, shots); break;
+            case TitanKind.Godzilla:    TickFireBreath(dt, playerPos, shots); break;
+            case TitanKind.Mecha:       TickMechaLaser(dt, playerPos, shots); break;
             case TitanKind.Sandworm:    TickSandworm(dt, planet, physics, playerPos); break;
-            case TitanKind.Kong:     TickKong(dt, physics, playerPos); break;
+            case TitanKind.Kong:        TickKong(dt, physics, playerPos); break;
+            case TitanKind.Knifehead:   TickKnifehead(dt, physics, playerPos); break;
+            case TitanKind.Otachi:      TickAcidSpray(dt, playerPos, shots); break;
+            case TitanKind.Leatherback: TickEmp(dt, physics, playerPos); break;
+            case TitanKind.Raiju:       TickRaiju(dt, playerPos); break;
+            case TitanKind.Slattern:    TickSlattern(dt, physics, playerPos, shots); break;
         }
+    }
+
+    /// <summary>Knifehead: crouch through a telegraphed windup, then gore — a flat-out
+    /// blade-first sprint along the surface (the pace override lives in <see cref="Update"/>).
+    /// Catching the player on the blade is a heavy hit + launch; the sprint also plows
+    /// whatever terrain stands in the line. Whiffing just runs the sprint out.</summary>
+    private void TickKnifehead(float dt, Physics physics, Vector2 playerPos)
+    {
+        const float goreDuration = 1.5f;
+        if (SpecialState > 0f)
+        {
+            SpecialState -= dt;
+            if (!Charging && SpecialState <= goreDuration)
+                Charging = true;   // windup over — commit to the sprint
+            if (Charging && (playerPos - Position).Length() < BodyRadius + 55f)
+            {
+                // Gored: heavy damage + a launch along the charge direction (Game1 adds the
+                // radial knockback; the quake sells the impact).
+                PendingShockwave = (Position, 150f, 36f);
+                physics.Earthquake(Position, 120f, 2);
+                SpecialState = 0f;
+            }
+            if (SpecialState <= 0f) { Charging = false; SpecialCooldown = 5.5f; }
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f || !Standing()) return;
+        if ((playerPos - Position).Length() > 620f) return;
+        var right = new Vector2(-_planet.UpAt(Position).Y, _planet.UpAt(Position).X);
+        _chargeDir = MathF.Sign(Vector2.Dot(playerPos - Position, right));
+        if (_chargeDir == 0f) _chargeDir = Facing >= 0f ? 1f : -1f;
+        SpecialState = GoreWindup + goreDuration;
+    }
+
+    /// <summary>Otachi: rears up and hoses a volley of acid globs at the player. The globs
+    /// arc under gravity and burst into real acid cells (see <see cref="TitanProjectile"/>),
+    /// so every spray leaves corrosive pools eating the terrain where it landed — the player
+    /// is dodging the arc AND ceding ground.</summary>
+    private void TickAcidSpray(float dt, Vector2 playerPos, List<TitanProjectile> shots)
+    {
+        if (SpecialState > 0f)
+        {
+            SpecialState -= dt;
+            // First 0.9s is the rear-up; then the spray, a glob every other frame.
+            if (SpecialState < AcidSprayWindup - 0.9f && (++_flameTick & 1) == 0)
+            {
+                var mouth = Mouth();
+                var aim = playerPos - mouth;
+                if (aim.LengthSquared() > 0.01f)
+                {
+                    aim.Normalize();
+                    var up = _planet.UpAt(Position);
+                    var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.5f;
+                    var c = MathF.Cos(spread); var s = MathF.Sin(spread);
+                    var d = new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c);
+                    // Loft the glob so it arcs — the acid rains down rather than darting flat.
+                    var vel = d * (200f + (float)Random.Shared.NextDouble() * 90f) + up * 130f;
+                    shots.Add(new TitanProjectile(mouth + d * 12f, vel, TitanShotKind.Acid));
+                }
+            }
+            if (SpecialState <= 0f) SpecialCooldown = 7f;
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f) return;
+        if ((playerPos - Position).Length() > 700f) return;
+        SpecialState = AcidSprayWindup;
+    }
+
+    /// <summary>Leatherback: spins up the back turbine (the renderer crackles arcs over it),
+    /// then detonates an EMP. Game1 consumes <see cref="PendingEmp"/> — inside the radius the
+    /// dwarf's tech dies for the duration: jetpack, energy weapons, scanner fixes. Light on
+    /// raw damage; the danger is being de-teched next to a three-thousand-HP ape.</summary>
+    private void TickEmp(float dt, Physics physics, Vector2 playerPos)
+    {
+        if (SpecialState > 0f)
+        {
+            SpecialState -= dt;
+            if (SpecialState <= 0f)
+            {
+                PendingEmp = (Position, 430f, 6f);
+                PendingShockwave = (Position, 200f, 10f);   // the pressure wave itself stings
+                physics.Earthquake(Position, 140f, 2);
+                SpecialCooldown = 9f;
+            }
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f || !Standing()) return;
+        if ((playerPos - Position).Length() > 520f) return;
+        SpecialState = EmpWindup;
+    }
+
+    /// <summary>Raiju: the fastest kaiju fights in lunge chains — three quick dashes, each an
+    /// impulse re-aimed at the player, each clipping them for a modest hit on contact. The
+    /// chain telegraphs itself through sheer motion; the counter-window is the cooldown after
+    /// the third lunge.</summary>
+    private void TickRaiju(float dt, Vector2 playerPos)
+    {
+        if (SpecialState > 0f)
+        {
+            SpecialState -= dt;
+            Charging = true;
+            // A fresh impulse every 0.45s while dashes remain.
+            if (_dashesLeft > 0 && SpecialState <= _dashesLeft * 0.45f)
+            {
+                _dashesLeft--;
+                var up = _planet.UpAt(Position);
+                var right = new Vector2(-up.Y, up.X);
+                var dir = MathF.Sign(Vector2.Dot(playerPos - Position, right));
+                if (dir == 0f) dir = Facing >= 0f ? 1f : -1f;
+                Velocity += right * (dir * 430f) + up * 70f;
+            }
+            if ((playerPos - Position).Length() < BodyRadius + 45f)
+                PendingShockwave = (Position, 100f, 15f);   // clipped mid-lunge
+            if (SpecialState <= 0f) { Charging = false; SpecialCooldown = 6f; }
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f || !Standing()) return;
+        if ((playerPos - Position).Length() > 560f) return;
+        _dashesLeft = 3;
+        SpecialState = 3 * 0.45f;
+    }
+
+    /// <summary>Slattern, the category-5 apex: alternates a radial tail-spike barrage — a fan
+    /// of fast bolts flung from the tail tip toward the player — with a sonic pulse, a huge
+    /// low-damage shockwave that shoves the player off their footing (and off ledges). Paced
+    /// faster than any other special; this is the campaign's final wall.</summary>
+    private void TickSlattern(float dt, Physics physics, Vector2 playerPos, List<TitanProjectile> shots)
+    {
+        if (!IsAggro || SpecialCooldown > 0f) return;
+        if ((playerPos - Position).Length() > 760f) return;
+        _slatternPulse = !_slatternPulse;
+        if (_slatternPulse)
+        {
+            physics.Earthquake(Position, 200f, 3);
+            PendingShockwave = (Position, 320f, 18f);
+        }
+        else
+        {
+            var tip = TailNodes[^1];
+            var aim = playerPos - tip;
+            if (aim.LengthSquared() < 0.01f) return;
+            aim.Normalize();
+            const int spikes = 9;
+            for (var i = 0; i < spikes; i++)
+            {
+                var spread = (i / (float)(spikes - 1) - 0.5f) * 1.0f;
+                var c = MathF.Cos(spread); var s = MathF.Sin(spread);
+                var d = new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c);
+                shots.Add(new TitanProjectile(tip + d * 10f, d * 340f, TitanShotKind.Spike));
+            }
+        }
+        SpecialCooldown = 4.5f;
     }
 
     /// <summary>World position the boss's ranged attacks issue from — the actual drawn mouth.
