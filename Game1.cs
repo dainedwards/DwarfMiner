@@ -229,6 +229,9 @@ public sealed partial class DwarfMinerGame : Game
         if (run is null) return;  // corrupt/stale save — the map hint disappears next frame
         _run = run;
         Crafting.SetPlanet(run.Def);
+        _prevTitanHealth = run.Titan.Health;
+        // Foundry gear isn't in the run save — it's meta state, re-applied on every entry.
+        run.Player.HasJetpack = Upgrades.Owned(_meta, "jetpack");
         // Loading woke every cell; burn the resettle here like world gen's pre-settle pass.
         for (var i = 0; i < 45; i++) _run.Cells.Update(1f / 60f);
         _gameOverReason = "";
