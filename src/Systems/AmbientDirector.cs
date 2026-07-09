@@ -38,6 +38,53 @@ public static class AmbientDirector
             run.MeteorTimer = interval * (0.6f + (float)Random.Shared.NextDouble() * 0.9f);
         }
 
+        // Solar flare: every world's star occasionally spits a radiation burst. A warned
+        // window (get underground!) then a scorching phase — anyone in surface air burns.
+        if (run.FlareActive > 0f)
+        {
+            run.FlareActive -= dt;
+            if (run.FlareActive <= 0f)
+                run.FlareTimer = 90f + (float)Random.Shared.NextDouble() * 70f;
+        }
+        else if (run.FlareWarn > 0f)
+        {
+            run.FlareWarn -= dt;
+            if (run.FlareWarn <= 0f)
+            {
+                run.FlareActive = 9f;
+                result.FlareStruck = true;
+            }
+        }
+        else
+        {
+            run.FlareTimer -= dt;
+            if (run.FlareTimer <= 0f)
+            {
+                run.FlareWarn = 7f;
+                result.FlareWarned = true;
+            }
+        }
+
+        // Blizzards — snow worlds only: a freezing squall that bites anyone caught outside.
+        if (run.Def.SurfaceTile == TileKind.Snow)
+        {
+            if (run.BlizzardActive > 0f)
+            {
+                run.BlizzardActive -= dt;
+                if (run.BlizzardActive <= 0f)
+                    run.BlizzardTimer = 70f + (float)Random.Shared.NextDouble() * 55f;
+            }
+            else
+            {
+                run.BlizzardTimer -= dt;
+                if (run.BlizzardTimer <= 0f)
+                {
+                    run.BlizzardActive = 15f;
+                    result.BlizzardStarted = true;
+                }
+            }
+        }
+
         // Magma surges — only where there's serious lava (ember, core).
         if (run.Def.LavaFillFrac >= 0.5f)
         {
