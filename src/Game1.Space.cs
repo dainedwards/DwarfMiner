@@ -156,6 +156,16 @@ public sealed partial class DwarfMinerGame
 
         TickSpaceCameraAndBreach(dt);
 
+        // Prefetch the world for whatever planet we're loitering near, so pressing Enter
+        // lands without a generation pause. The Rift only prefetches once it's warp-open.
+        if (_space.LandingCandidate() is { } near && _prefetchId != near.Def.Id
+            && (near.Def.Id != "rift" || _meta.CoreShards.Count >= PlanetDefs.WarpShardsNeeded))
+        {
+            var def = near.Def;
+            _prefetchId = def.Id;
+            _prefetchTask = Task.Run(() => BuildSessionWorld(def));
+        }
+
         // Warp jump: all five core shards let the mothership fold space to the Rift.
         if (Pressed(keys, _prevKeys, Keys.J))
         {
