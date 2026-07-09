@@ -116,7 +116,7 @@ public sealed class Planet
     /// fine for the rates we call it at (dirty queue processing).</summary>
     public (int x, int y) UnIndex(int idx)
     {
-        int lo = 0, hi = RingCount;
+        int lo = 0, hi = Rings;
         while (lo < hi)
         {
             var mid = (lo + hi) / 2;
@@ -126,12 +126,12 @@ public sealed class Planet
         return (lo, idx - _ringOffsets[lo]);
     }
 
-    public bool InBounds(int x, int y) => x >= 0 && x < RingCount;
+    public bool InBounds(int x, int y) => x >= 0 && x < Rings;
 
     public TileKind Get(int x, int y)
     {
         if (x < 0) return TileKind.Core;
-        if (x >= RingCount) return TileKind.Sky;
+        if (x >= Rings) return TileKind.Sky;
         return _tiles[Index(x, y)];
     }
 
@@ -199,7 +199,7 @@ public sealed class Planet
         var ringIdx = (int)(dist / TileSize) - RingMin;
         var ang = MathF.Atan2(rel.Y, rel.X);
         if (ang < 0) ang += MathHelper.TwoPi;
-        var nRing = MathHelper.Clamp(ringIdx, 0, RingCount - 1);
+        var nRing = MathHelper.Clamp(ringIdx, 0, Rings - 1);
         var n = TilesAt(nRing);
         var t = (int)(ang / MathHelper.TwoPi * n);
         if (t >= n) t = n - 1;
@@ -244,7 +244,7 @@ public sealed class Planet
     /// when the outer ring's TPR is large enough that this tile's arc spans two outer tiles.</summary>
     public int OuterNeighbourCount(int x, int y)
     {
-        if (x >= RingCount - 1) return 1;
+        if (x >= Rings - 1) return 1;
         var nIn = TilesAt(x);
         var nOut = TilesAt(x + 1);
         if (nIn == nOut) return 1;
@@ -257,7 +257,7 @@ public sealed class Planet
     /// <summary>Outer-radial neighbour at index <paramref name="which"/> in [0, OuterNeighbourCount).</summary>
     public (int x, int y) OuterNeighbour(int x, int y, int which = 0)
     {
-        if (x >= RingCount - 1) return (RingCount, 0);
+        if (x >= Rings - 1) return (Rings, 0);
         var nIn = TilesAt(x);
         var nOut = TilesAt(x + 1);
         var w = ((y % nIn) + nIn) % nIn;
@@ -268,7 +268,7 @@ public sealed class Planet
 
     public IEnumerable<(int x, int y)> AllTiles()
     {
-        for (var x = 0; x < RingCount; x++)
+        for (var x = 0; x < Rings; x++)
         {
             var n = TilesAt(x);
             for (var y = 0; y < n; y++)

@@ -307,8 +307,8 @@ public sealed class Projectile
         var chipBudget = 24;   // tiles that get a particle burst; ~2-3 particles each
         for (var r = centerRing - tiles; r <= centerRing + tiles; r++)
         {
-            if (r < 0 || r >= Planet.RingCount) continue;
-            var ct = (int)(ang / MathHelper.TwoPi * Planet.TilesAt(r));
+            if (r < 0 || r >= planet.Rings) continue;
+            var ct = (int)(ang / MathHelper.TwoPi * planet.TilesAt(r));
             for (var dt2 = -(tiles + 1); dt2 <= tiles + 1; dt2++)
             {
                 var t = ct + dt2;

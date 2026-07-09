@@ -536,7 +536,7 @@ public sealed partial class DwarfMinerGame : Game
         // Altitude-driven zoom: stay wide while high (see the terrain you're steering at),
         // then close to play zoom only for the final stretch.
         var alt = (_landerPos - _run.Planet.Center).Length()
-                  - (Planet.RingMin + WorldGen.BaselineSurfaceRing) * Planet.TileSize;
+                  - (Planet.RingMin + _run.Planet.SurfaceRing) * Planet.TileSize;
         var zoomTarget = MathHelper.Lerp(_playZoom, 0.72f, MathHelper.Clamp(alt / 650f, 0f, 1f));
         _camera.Zoom = MathHelper.Lerp(_camera.Zoom, zoomTarget, MathHelper.Clamp(dt * 2.4f, 0f, 1f));
         _camera.Follow(_landerPos, up, dt);
@@ -1683,7 +1683,7 @@ public sealed partial class DwarfMinerGame : Game
     private float DepthBelowSurface()
     {
         var ringsFromCenter = (_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize;
-        var surfaceRings = Planet.RingMin + WorldGen.BaselineSurfaceRing;
+        var surfaceRings = Planet.RingMin + _run.Planet.SurfaceRing;
         return surfaceRings - ringsFromCenter;
     }
 
@@ -2007,7 +2007,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             var probe = pos + up * (i * Planet.TileSize);
             var (x, y) = _run.Planet.WorldToTile(probe);
-            if (x >= Planet.RingCount) return true;
+            if (x >= _run.Planet.Rings) return true;
             if (Tiles.IsSolid(_run.Planet.Get(x, y))) return false;
         }
         return true;

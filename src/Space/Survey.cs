@@ -57,9 +57,9 @@ public static class Survey
 
         var planet = WorldFor(def);
         var counts = new int[OreKinds.Length];
-        for (var r = 0; r < Planet.RingCount; r++)
+        for (var r = 0; r < planet.Rings; r++)
         {
-            var n = Planet.TilesAt(r);
+            var n = planet.TilesAt(r);
             for (var y = 0; y < n; y++)
             {
                 var k = planet.Get(r, y);

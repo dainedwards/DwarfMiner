@@ -41,8 +41,8 @@ public static class Scanner
         for (var dr = -ringSpan; dr <= ringSpan; dr++)
         {
             var r = pr + dr;
-            if (r < 0 || r >= Planet.RingCount) continue;
-            var n = Planet.TilesAt(r);
+            if (r < 0 || r >= planet.Rings) continue;
+            var n = planet.TilesAt(r);
             var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
             // Angular reach of the radius on this ring, in tile steps.
             var span = Math.Min(n / 2, (int)(maxRadius / (MathHelper.TwoPi * ringRadius) * n) + 1);

@@ -95,7 +95,7 @@ public sealed class Cells
     public Cells(Planet planet)
     {
         Planet = planet;
-        Height = Planet.RingCount * Density;
+        Height = Planet.Rings * Density;
         _cellsAt = new int[Height];
         _rowOffsets = new int[Height + 1];
         for (var cy = 0; cy < Height; cy++)
@@ -1006,7 +1006,7 @@ public sealed class Cells
     {
         var maxRing = (int)radiusTilesFromCentre - Planet.RingMin;
         if (maxRing <= 0) return;
-        maxRing = Math.Min(maxRing, Planet.RingCount);
+        maxRing = Math.Min(maxRing, Planet.Rings);
         for (var r = 0; r < maxRing; r++)
         {
             var n = Planet.TilesAt(r);

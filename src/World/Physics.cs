@@ -296,7 +296,7 @@ public sealed class Physics
             for (var oi = 0; oi < oc; oi++)
             {
                 var (or_, ot_) = _planet.OuterNeighbour(x, y, oi);
-                if (or_ >= Planet.RingCount) continue;
+                if (or_ >= _planet.Rings) continue;
                 VisitFloodNeighbour(or_, ot_);
             }
 

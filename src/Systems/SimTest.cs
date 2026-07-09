@@ -1118,9 +1118,9 @@ public static class SimTest
         int CountKind(Planet w, TileKind kind)
         {
             var total = 0;
-            for (var r = 0; r < Planet.RingCount; r++)
+            for (var r = 0; r < w.Rings; r++)
             {
-                var n = Planet.TilesAt(r);
+                var n = w.TilesAt(r);
                 for (var t = 0; t < n; t++)
                     if (w.Get(r, t) == kind) total++;
             }
@@ -1238,7 +1238,7 @@ public static class SimTest
         for (var attempt = 0; attempt < 4000; attempt++)
         {
             var r = 90 + rng.Next(35); // depth ~4..39 below baseline surface (ring 129)
-            var t = rng.Next(Planet.TilesAt(r));
+            var t = rng.Next(planet.TilesAt(r));
             if (planet.Get(r, t) != TileKind.Sky) continue;
             if (planet.GetWall(r, t) == TileKind.Sky) continue;
             return planet.TileToWorld(r, t);

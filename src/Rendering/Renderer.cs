@@ -98,7 +98,7 @@ public sealed class Renderer
         var maxDistTight = camDist + halfDiag;
 
         var minRing = Math.Max(0, (int)(minDistTight / Planet.TileSize) - Planet.RingMin - 1);
-        var maxRing = Math.Min(Planet.RingCount - 1, (int)(maxDistTight / Planet.TileSize) - Planet.RingMin + 1);
+        var maxRing = Math.Min(planet.Rings - 1, (int)(maxDistTight / Planet.TileSize) - Planet.RingMin + 1);
 
         // Zoomed way out (orbit view, high descent/ascent) a tile is ~3 screen px: the atlas
         // texture, erosion rims, grass wraps, and decor are sub-pixel noise, and the view
@@ -177,7 +177,7 @@ public sealed class Renderer
         for (var r = minRing; r <= maxRing; r++)
         {
             var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
-            var tpr = Planet.TilesAt(r);
+            var tpr = planet.TilesAt(r);
             var chord = MathHelper.TwoPi * ringRadius / tpr;
 
             // Visible angular slice: from the law of cosines, a tile at angle Δθ from the

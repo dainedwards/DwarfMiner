@@ -85,7 +85,7 @@ public static class SpawnDirector
             var d = 200f + (float)Random.Shared.NextDouble() * 250f;
             var candidate = run.Player.Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * d;
             var (r, t) = planet.WorldToTile(candidate);
-            if (r < 0 || r >= Planet.RingCount) continue;
+            if (r < 0 || r >= planet.Rings) continue;
             if (planet.Get(r, t) != TileKind.Sky) continue;
             if (planet.GetWall(r, t) == TileKind.Sky) continue;
             var pos = planet.TileToWorld(r, t);
@@ -95,7 +95,7 @@ public static class SpawnDirector
             // mid-band belongs to the diggers (delvers, centipedes, borers, moles), and the
             // lava zone is magma slugs plus hardened delver war-parties.
             var fromCenter = (pos - planet.Center).Length() / Planet.TileSize;
-            var depth = 129f - (fromCenter - Planet.RingMin); // tiles below the baseline surface
+            var depth = planet.SurfaceRing - (fromCenter - Planet.RingMin); // tiles below the baseline surface
             var roll = Random.Shared.NextDouble();
             CreatureKind kind;
             if (depth > 45f)
@@ -199,10 +199,10 @@ public static class SpawnDirector
         for (var dx = -2; dx <= 2; dx++)
         {
             var x = tx + dx;
-            if (x < 0 || x >= Planet.RingCount) continue;
+            if (x < 0 || x >= planet.Rings) continue;
             // Per-ring column from the true world angle — ring tile counts differ, so a
             // shared ty index would drift near the angle wrap and miss overlapped tiles.
-            var nRing = Planet.TilesAt(x);
+            var nRing = planet.TilesAt(x);
             var ty0 = (int)(ang / MathHelper.TwoPi * nRing);
             for (var dy = -2; dy <= 2; dy++)
             {
@@ -217,7 +217,7 @@ public static class SpawnDirector
                 var lx = Vector2.Dot(rel, right);
                 var ly = Vector2.Dot(rel, up);
                 var ringRadius = (Planet.RingMin + x + 0.5f) * Planet.TileSize;
-                var halfX = MathHelper.TwoPi * ringRadius / Planet.TilesAt(x) * 0.5f;
+                var halfX = MathHelper.TwoPi * ringRadius / planet.TilesAt(x) * 0.5f;
                 var halfY = Planet.TileSize * 0.5f;
                 var ox = lx - MathHelper.Clamp(lx, -halfX, halfX);
                 var oy = ly - MathHelper.Clamp(ly, -halfY, halfY);

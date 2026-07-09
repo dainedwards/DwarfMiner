@@ -801,10 +801,10 @@ public sealed class Titan
         for (var dx = -span; dx <= span; dx++)
         {
             var x = tx + dx;
-            if (x < 0 || x >= Planet.RingCount) continue;
+            if (x < 0 || x >= planet.Rings) continue;
             // Recompute the angular index per ring from the true body angle — ring tile counts
             // differ, so a shared index would drift and miss overlapped tiles.
-            var nRing = Planet.TilesAt(x);
+            var nRing = planet.TilesAt(x);
             var ty0 = (int)(ang / MathHelper.TwoPi * nRing);
             for (var dy = -span; dy <= span; dy++)
             {

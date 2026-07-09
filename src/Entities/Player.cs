@@ -409,8 +409,8 @@ public sealed class Player
             for (var dx = -2; dx <= 2; dx++)
             {
                 var x = tx + dx;
-                if (x < 0 || x >= Planet.RingCount) continue;
-                var nRing = Planet.TilesAt(x);
+                if (x < 0 || x >= planet.Rings) continue;
+                var nRing = planet.TilesAt(x);
                 var ty0 = (int)(ang / MathHelper.TwoPi * nRing);
                 for (var dy = -2; dy <= 2; dy++)
                 {
@@ -427,7 +427,7 @@ public sealed class Player
 
                     // Tile-local extents: chord (arc width) × TileSize (radial).
                     var ringRadius = (Planet.RingMin + x + 0.5f) * Planet.TileSize;
-                    var halfX = MathHelper.TwoPi * ringRadius / Planet.TilesAt(x) * 0.5f;
+                    var halfX = MathHelper.TwoPi * ringRadius / planet.TilesAt(x) * 0.5f;
                     var halfY = Planet.TileSize * 0.5f;
 
                     var cLocalX = MathHelper.Clamp(pLocalX, -halfX, halfX);

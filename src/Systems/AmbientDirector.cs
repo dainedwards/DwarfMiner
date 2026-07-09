@@ -132,7 +132,7 @@ public static class AmbientDirector
             var d = 60f + (float)Random.Shared.NextDouble() * 240f;
             var cand = run.Player.Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * d;
             var (tx, ty) = planet.WorldToTile(cand);
-            if (tx < 0 || tx >= Planet.RingCount) continue;
+            if (tx < 0 || tx >= planet.Rings) continue;
             if (planet.Get(tx, ty) != TileKind.Sky) continue;
             if (planet.GetWall(tx, ty) == TileKind.Sky) continue;   // must be enclosed rock, not open sky
 

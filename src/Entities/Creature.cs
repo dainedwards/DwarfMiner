@@ -426,9 +426,9 @@ public sealed class Creature
         for (var dx = -2; dx <= 2; dx++)
         {
             var x = cx + dx;
-            if (x < 0 || x >= Planet.RingCount) continue;
+            if (x < 0 || x >= planet.Rings) continue;
             // Angular index recomputed per ring — rings have different tile counts.
-            var ty0 = (int)(ang / MathHelper.TwoPi * Planet.TilesAt(x));
+            var ty0 = (int)(ang / MathHelper.TwoPi * planet.TilesAt(x));
             for (var dy = -2; dy <= 2; dy++)
             {
                 var y = ty0 + dy;
@@ -740,8 +740,8 @@ public sealed class Creature
                 var x = tx + dx;
                 // Below ring 0 Planet.Get reports the synthetic Core pseudo-tile, which
                 // has no world-space rect — skip rather than collide with garbage.
-                if (x < 0 || x >= Planet.RingCount) continue;
-                var nRing = Planet.TilesAt(x);
+                if (x < 0 || x >= planet.Rings) continue;
+                var nRing = planet.TilesAt(x);
                 var ty0 = (int)(ang / MathHelper.TwoPi * nRing);
                 for (var dy = -2; dy <= 2; dy++)
                 {
@@ -757,7 +757,7 @@ public sealed class Creature
 
                     // Tile-local extents: chord (arc width) × TileSize (radial).
                     var ringRadius = (Planet.RingMin + x + 0.5f) * Planet.TileSize;
-                    var halfX = MathHelper.TwoPi * ringRadius / Planet.TilesAt(x) * 0.5f;
+                    var halfX = MathHelper.TwoPi * ringRadius / planet.TilesAt(x) * 0.5f;
                     var halfY = Planet.TileSize * 0.5f;
 
                     var cLocalX = MathHelper.Clamp(pLocalX, -halfX, halfX);

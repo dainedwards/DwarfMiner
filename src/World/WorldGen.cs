@@ -13,16 +13,15 @@ namespace DwarfMiner.World;
 /// </summary>
 public static class WorldGen
 {
-    /// <summary>Ring index of the planet's baseline surface (before mountains/lakes). The
-    /// natural round edge sits here; oxygen and depth math measure "below surface" from it.</summary>
-    public const int BaselineSurfaceRing = 129;
-
     /// <summary>Legacy overload — the starter planet's tuning (used by SimTest).</summary>
     public static Planet Generate(int seed) => Generate(seed, PlanetDefs.All[0]);
 
     public static Planet Generate(int seed, PlanetDef def)
     {
-        var planet = new Planet(new Vector2(2400, 2400));
+        // Planet size scales with the def (0.7× dwarf worlds up to 1.8× giants). The sky
+        // headroom stays fixed, so the baseline surface (planet.SurfaceRing) scales with it.
+        var rings = Math.Max(120, (int)MathF.Round(Planet.StandardRings * def.SizeScale));
+        var planet = new Planet(new Vector2(2400, 2400), rings);
         var rng = new Random(seed);
 
         // Subtle surface elevation noise — kept very low so the planet reads as a smooth
@@ -86,9 +85,9 @@ public static class WorldGen
 
         const int baselineR = BaselineSurfaceRing;
 
-        for (var r = 0; r < Planet.RingCount; r++)
+        for (var r = 0; r < planet.Rings; r++)
         {
-            var n = Planet.TilesAt(r);
+            var n = planet.TilesAt(r);
             for (var t = 0; t < n; t++)
             {
                 var ang = (t + 0.5f) / n * MathHelper.TwoPi;
@@ -305,7 +304,7 @@ public static class WorldGen
                 var cr = BaselineSurfaceRing - depth;
                 if (cr < 8) continue;
                 var radius = crystal ? 4 + rng.Next(4) : 3 + rng.Next(3);
-                var n = Planet.TilesAt(cr);
+                var n = planet.TilesAt(cr);
                 var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
                 var centre = planet.TileToWorld(cr, ct);
 
@@ -314,8 +313,8 @@ public static class WorldGen
                 for (var dr = -radius - 1; dr <= radius + 1; dr++)
                 {
                     var r = cr + dr;
-                    if (r < 2 || r >= Planet.RingCount) continue;
-                    var rn = Planet.TilesAt(r);
+                    if (r < 2 || r >= planet.Rings) continue;
+                    var rn = planet.TilesAt(r);
                     var rt0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * rn);
                     var span = radius + 2;
                     for (var dt = -span; dt <= span; dt++)
