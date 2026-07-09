@@ -835,22 +835,78 @@ public sealed partial class DwarfMinerGame
         return tex;
     }
 
-    /// <summary>The station drawn inside a planet's world view (entity pass, world coords):
-    /// slow spin, running lights blinking around the ring. Scale chosen so it reads as a
-    /// big installation next to the ~36 px rocket.</summary>
+    /// <summary>The station drawn inside a planet's world view (entity pass, world coords).
+    /// The planet view is side-on, so this is the SIDE profile — deck hull, glass command
+    /// dome, under-slung docking bay, masts — rotated so its keel faces local down. Blinking
+    /// running lights along the deck. Big next to the ~36 px rocket.</summary>
     private void DrawStationInWorld(Vector2 pos)
     {
-        _renderer.Batch.Draw(_stationTex, pos, null, Color.White,
-            _totalTime * 0.1f, new Vector2(_stationTex.Width / 2f, _stationTex.Height / 2f),
+        var up = _run.Planet.UpAt(pos);
+        var rot = MathF.Atan2(up.X, -up.Y);
+        _renderer.Batch.Draw(_stationSideTex, pos, null, Color.White, rot,
+            new Vector2(_stationSideTex.Width / 2f, _stationSideTex.Height / 2f),
             2.2f, SpriteEffects.None, 0f);
-        // Running lights: three blinkers chasing around the ring.
+        // Running lights: blinkers spaced along the deck line.
+        var right = new Vector2(-up.Y, up.X);
         for (var i = 0; i < 3; i++)
         {
-            var a = _totalTime * 0.5f + i * MathHelper.TwoPi / 3f;
-            var lp = pos + new Vector2(MathF.Cos(a), MathF.Sin(a)) * 44f;
+            var lp = pos + right * ((i - 1) * 42f) + up * 8f;
             var on = MathF.Sin(_totalTime * 5f + i * 2.1f) > 0.2f;
             if (on) _renderer.DrawRect(lp, new Vector2(2.4f, 2.4f), new Color(255, 200, 120));
         }
+    }
+
+    /// <summary>Side profile of the mothership for the planet view: a long hull deck with a
+    /// glazed command dome amidships, engine pods at both ends, antenna masts, warning
+    /// stripes, and a docking bay notch on the keel where the rover drops and the rocket
+    /// docks. Built procedurally like the ring.</summary>
+    private Texture2D BuildStationSideTexture()
+    {
+        const int w = 56, h = 22;
+        var data = new Color[w * h];
+        var hull = new Color(185, 190, 205);
+        var shade = new Color(115, 120, 138);
+        var dark = new Color(70, 72, 85);
+        var glass = new Color(140, 210, 235);
+        var stripe = new Color(230, 190, 70);
+        void Set(int x, int y, Color c)
+        {
+            if (x >= 0 && x < w && y >= 0 && y < h) data[y * w + x] = c;
+        }
+        // Main deck hull: rows 8..14, tapered at the ends.
+        for (var y = 8; y <= 14; y++)
+            for (var x = 2; x < w - 2; x++)
+            {
+                var taper = y is 8 or 14 ? 4 : 0;
+                if (x < 2 + taper || x >= w - 2 - taper) continue;
+                Set(x, y, y >= 13 ? shade : hull);
+            }
+        // Engine pods at both ends.
+        for (var y = 9; y <= 13; y++)
+            for (var x = 0; x < 4; x++) { Set(x, y, dark); Set(w - 1 - x, y, dark); }
+        // Command dome amidships (rows 3..8), glass with a hull rim.
+        for (var y = 3; y <= 8; y++)
+            for (var x = 0; x < w; x++)
+            {
+                var dx = x - w / 2f + 0.5f;
+                var dy = (y - 8) * 1.6f;
+                var rr = MathF.Sqrt(dx * dx + dy * dy);
+                if (rr <= 9f) Set(x, y, rr > 7.4f ? hull : glass);
+            }
+        // Warning stripes on the deck.
+        for (var x = 8; x < w - 8; x += 12) { Set(x, 12, stripe); Set(x + 1, 12, stripe); }
+        // Docking bay: a dark keel notch dead centre, where the lander leaves from.
+        for (var y = 15; y <= 18; y++)
+            for (var x = w / 2 - 5; x <= w / 2 + 4; x++)
+                Set(x, y, y >= 17 ? Color.Transparent : dark);
+        for (var x = w / 2 - 5; x <= w / 2 + 4; x += 9) { Set(x, 17, shade); Set(x, 18, shade); }
+        // Antenna masts.
+        for (var y = 0; y < 3; y++) { Set(10, y, shade); Set(w - 11, y, shade); }
+        Set(10, 0, stripe); Set(w - 11, 0, stripe);
+
+        var tex = new Texture2D(GraphicsDevice, w, h);
+        tex.SetData(data);
+        return tex;
     }
 
     /// <summary>The white blink masking the space↔planet coordinate swap, drawn over
