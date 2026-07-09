@@ -199,6 +199,8 @@ public sealed partial class DwarfMinerGame : Game
         _prevTitanHealth = _run.Titan.Health;
         // Foundry gear bought on the mothership rides down with every rover drop.
         _run.Player.HasJetpack = Upgrades.Owned(_meta, "jetpack");
+        _run.Player.HasO2Recycler = Upgrades.Owned(_meta, "o2");
+        if (Upgrades.Owned(_meta, "drill")) _run.Player.PickaxeTier++;
         SpawnDirector.SpawnInitialFauna(_run);
         _run.EarthquakeTimer = 25f * def.QuakeScale;
         _run.SpawnTimer = 6f;
