@@ -244,6 +244,8 @@ public sealed class Physics
         _floodStack.Clear();
         _floodRegion.Clear();
         _regionBudgetSum = 0;
+        _regionTouchesCrust = false;
+        var crustRing = _planet.SurfaceRing + 2;   // covers the ±1.5-tile surface elev noise
 
         var startIdx = _planet.Index(sx, sy);
         _floodStack.Push(startIdx);
