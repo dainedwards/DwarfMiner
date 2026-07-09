@@ -145,9 +145,13 @@ public sealed class Titan
     public Vector2 BeamDir => _lockedAim;
 
     /// <summary>Windup lengths exposed so the renderer can drive the charge-up telegraphs
-    /// (dorsal-spine glow for the atomic breath, the growing orb for the laser).</summary>
+    /// (dorsal-spine glow for the atomic breath, the growing orb for the laser, the crest
+    /// shimmer before a gore, the crackling turbine before the EMP).</summary>
     public const float FireBreathWindup = 1.75f;
     public const float LaserChargeWindup = 1.5f;
+    public const float GoreWindup = 0.9f;
+    public const float EmpWindup = 1.4f;
+    public const float AcidSprayWindup = 2.0f;   // 0.9s rear-up + 1.1s spray (mirrors fire breath's shape)
 
     private readonly Planet _planet;
 
