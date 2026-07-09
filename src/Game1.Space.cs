@@ -48,15 +48,25 @@ public sealed partial class DwarfMinerGame
         _camera?.SnapTo(_space.ShipPos, 0f);
     }
 
+    private void ApplyShipTiers()
+    {
+        _space.GunTier = Upgrades.Owned(_meta, "gun2") ? 2 : 1;
+        _space.EngineTier = Upgrades.Owned(_meta, "engine2") ? 2 : 1;
+        _space.HullTier = Upgrades.Owned(_meta, "hull2") ? 2 : 1;
+    }
+
     private void UpdateSpace(KeyboardState keys, MouseState mouse, float dt)
     {
         _toastTimer -= dt;
 
-        // The foundry overlay captures input; the system keeps drifting behind it.
-        if (Pressed(keys, _prevKeys, Keys.U)) _upgradesOpen = !_upgradesOpen;
-        if (_upgradesOpen)
+        // Overlays capture input while the system keeps drifting behind them; opening one
+        // closes the other.
+        if (Pressed(keys, _prevKeys, Keys.U)) { _upgradesOpen = !_upgradesOpen; _surveyOpen = false; }
+        if (Pressed(keys, _prevKeys, Keys.M)) { _surveyOpen = !_surveyOpen; _upgradesOpen = false; }
+        if (_upgradesOpen || _surveyOpen)
         {
-            UpdateUpgradeMenu(keys);
+            if (_upgradesOpen) UpdateUpgradeMenu(keys);
+            else if (Pressed(keys, _prevKeys, Keys.Escape)) _surveyOpen = false;
             _space.Update(dt, 0f, thrust: false, brake: false);
             TickSpaceCameraAndBreach(dt);
             return;
