@@ -13,6 +13,31 @@ namespace DwarfMiner.Space;
 public static class Survey
 {
     private static readonly Dictionary<string, (string label, int count)[]> _cache = new();
+    private static readonly Dictionary<string, Planet> _worlds = new();
+    private static readonly object _lock = new();
+
+    /// <summary>The fixed-seed survey world for a planet, generated once and cached — the
+    /// ore census counts it, and the system view rasterizes its disc preview from it.
+    /// Thread-safe: the space screen warms this cache from a background task.</summary>
+    public static Planet WorldFor(PlanetDef def)
+    {
+        lock (_lock)
+        {
+            if (!_worlds.TryGetValue(def.Id, out var world))
+            {
+                world = WorldGen.Generate(4242 + PlanetDefs.IndexOf(def), def);
+                _worlds[def.Id] = world;
+            }
+            return world;
+        }
+    }
+
+    /// <summary>The cached survey world if it's already been generated — never generates,
+    /// so render paths can poll without hitching the frame.</summary>
+    public static Planet? TryWorld(PlanetDef def)
+    {
+        lock (_lock) return _worlds.GetValueOrDefault(def.Id);
+    }
 
     // True minable deposits only — bulk terrain like obsidian would drown the list.
     private static readonly (TileKind kind, string label)[] OreKinds =
