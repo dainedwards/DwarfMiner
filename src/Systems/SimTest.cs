@@ -40,7 +40,12 @@ public static class SimTest
                 var c = new Creature(p, kind);
                 for (var step = 0; step < 60 * 8; step++)
                     c.Update(dt, planet, physics, cells, player);
-                if (planet.IsSolidAt(c.Position)) embedded++;
+                if (planet.IsSolidAt(c.Position))
+                {
+                    embedded++;
+                    var (ex, ey) = planet.WorldToTile(c.Position);
+                    Console.WriteLine($"  [dbg] embedded {kind} i={i} tile=({ex},{ey}) kind={planet.Get(ex, ey)} depth={planet.SurfaceRing - ex}");
+                }
             }
         }
         Check("collision: no creature embedded in rock after 8s", embedded == 0,
