@@ -159,7 +159,7 @@ public sealed partial class DwarfMinerGame
             }
             else
             {
-                _toast = "CAN'T AFFORD — SOULS + CARGO REQUIRED";
+                _toast = "CAN'T AFFORD - SOULS + CARGO REQUIRED";
             }
             _toastTimer = 2.5f;
         }
