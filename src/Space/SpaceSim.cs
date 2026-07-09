@@ -102,6 +102,8 @@ public sealed class SpaceSim
     /// limp somewhere to mine more — no soft-lock, just a long slow ride).</summary>
     public bool HasFuel = true;
     public float FuelUsed;
+    /// <summary>Voidstone Reactor: thrust demands no fuel at all.</summary>
+    public bool FreeThrust;
 
     private float _gunCooldown;
     /// <summary>Target live-asteroid population; maintained by Update inside a spawn donut
