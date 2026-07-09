@@ -307,6 +307,13 @@ public sealed class Planet
         w.Write(tiles);
         w.Write(_damage);
         w.Write(walls);
+        w.Write(VolcanoVents.Count);
+        foreach (var (x, y, acid) in VolcanoVents)
+        {
+            w.Write(x);
+            w.Write(y);
+            w.Write(acid);
+        }
     }
 
     /// <summary>Restore state written by <see cref="WriteState"/>. Throws on a geometry
