@@ -118,7 +118,10 @@ public sealed partial class DwarfMinerGame : Game
     protected override void Initialize()
     {
         _meta = MetaSave.Load();
-        // DM_AUTOSTART=<planet-id|resume> skips the star map and jumps straight into a run
+        // Boot into space with the ship parked at the farthest charted world.
+        _space = new SpaceSim();
+        _space.PlaceShipAt(Math.Min(_meta.PlanetsUnlocked, PlanetDefs.All.Length) - 1);
+        // DM_AUTOSTART=<planet-id|resume> skips the space screen and jumps straight into a run
         // (or resumes the suspend save) — keeps DM_AUTOSHOT-driven gameplay verification
         // working without menu input.
         if (Environment.GetEnvironmentVariable("DM_AUTOSTART") is { Length: > 0 } auto)
