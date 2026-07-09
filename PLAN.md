@@ -252,6 +252,12 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   edge-arrow** points to the station whenever it's out of frame in the planet view; the
   solar map labels every planet with **name + range (KM = px/10)** and draws **accent-
   colored edge arrows with name + range** for off-screen worlds.
+  Follow-ups (same day): the SHIP indicator shrank to a stubby wide chevron hugging the
+  screen edge (margin 14, no text); rocket liftoff is a slow heave (65 px/s² for 2.2s,
+  thrust carried into the ascent so there's no velocity jump, cruise capped 300);
+  **orbit-view performance**: `Renderer.DrawWorld` gained a low-detail mode below zoom 0.9 —
+  one flat jittered quad per tile (atlas/rims/decor are sub-pixel there) and interior rings
+  under r=60 skipped — cutting the orbital draw load by roughly an order of magnitude.
 
 **Upgrade ideas still unbuilt** (future foundry slots): further pickaxe tiers, armor suit,
 cargo hold capacity, scanner (ore/titan intel on the HUD), sentry capacity,
