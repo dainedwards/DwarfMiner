@@ -196,6 +196,9 @@ public sealed partial class DwarfMinerGame : Game
         // DM_HATCH=<seconds> shortens the egg timer for testing (default 10 min).
         if (float.TryParse(Environment.GetEnvironmentVariable("DM_HATCH"), out var hatchAt))
             _run.Titan.EggTimer = hatchAt;
+        _prevTitanHealth = _run.Titan.Health;
+        // Foundry gear bought on the mothership rides down with every rover drop.
+        _run.Player.HasJetpack = Upgrades.Owned(_meta, "jetpack");
         SpawnDirector.SpawnInitialFauna(_run);
         _run.EarthquakeTimer = 25f * def.QuakeScale;
         _run.SpawnTimer = 6f;
