@@ -999,6 +999,32 @@ public sealed partial class DwarfMinerGame : Game
         EndRun($"You pierced the core. Run time: {_run.RunTime:0.0}s. Press R for the star map.");
     }
 
+    /// <summary>The developer spawn menu's rows — bosses plus the two rocket shortcuts. Rebuilt
+    /// each time the menu opens so the delegates close over the current run.</summary>
+    private DebugMenu.Entry[] BuildDebugEntries() => new DebugMenu.Entry[]
+    {
+        new("Cinderwyrm  (fire breath)",  () => SpawnDebugTitan(TitanKind.Godzilla)),
+        new("Mecha-Titan (drill laser)",  () => SpawnDebugTitan(TitanKind.Mecha)),
+        new("Shai-Hulud  (burrow/breach)", () => SpawnDebugTitan(TitanKind.Sandworm)),
+        new("Stone Ape   (leap slam)",    () => SpawnDebugTitan(TitanKind.Kong)),
+        new("Rocket — fuelled, launch-ready", () => SpawnDebugShip(fuelled: true)),
+        new("Rocket — dry (mine fuel first)", () => SpawnDebugShip(fuelled: false)),
+    };
+
+    /// <summary>Debug-menu action: plant a fully-built, launch-ready ship at the player's feet,
+    /// skipping the pad/hull/engine/nav-core craft chain. When <paramref name="fuelled"/> the
+    /// tank is topped to launch spec so L lifts off at once; otherwise it's empty and you must
+    /// mine "fuel" to fill it — the intended path, just with the build steps skipped.</summary>
+    private void SpawnDebugShip(bool fuelled)
+    {
+        PlaceLaunchPad();
+        _run.ShipStage = 3;
+        _run.ShipFuel = fuelled ? FuelToLaunch : 0;
+        _toast = fuelled ? "SPAWNED FUELLED ROCKET — L AT PAD TO LAUNCH"
+                         : "SPAWNED DRY ROCKET — MINE FUEL, THEN L AT PAD";
+        _toastTimer = 2.5f;
+    }
+
     /// <summary>Debug-menu action: replace the current boss with a freshly-hatched one of the
     /// chosen kind, spawned a short arc from the player and already aggroed. Any in-flight boss
     /// ordnance from the previous boss is cleared so the new fight starts clean.</summary>
