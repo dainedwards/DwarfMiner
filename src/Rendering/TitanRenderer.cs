@@ -122,6 +122,13 @@ public static class TitanRenderer
                 r.AddLight(f.Tp + f.Up * 150f, 24f + 26f * f.Anger, glow);
                 r.AddLight(t.TailNodes[^1], 14f, glow);
                 break;
+            case TitanKind.Pyrodactyl:
+            case TitanKind.Vitriodactyl:
+                // Payload sacs glow along the belly; the beak flares while it rains.
+                r.AddLight(f.Tp - f.Up * 14f, 18f + 12f * f.Anger, glow);
+                if (t.SpecialState > 0f)
+                    r.AddLight(mouth, 30f, glow);
+                break;
         }
 
         // Beam-tip / hurl glow already handled by shots elsewhere.
