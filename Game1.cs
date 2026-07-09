@@ -607,6 +607,7 @@ public sealed partial class DwarfMinerGame : Game
         _stationTex = BuildStationTexture();
         _stationSideTex = BuildStationSideTexture();
         _arrowTex = BuildArrowTexture();
+        BuildWeaponTextures();
         // No run yet when the game boots to space; StartNewRun snaps on planet entry.
         if (_run is not null) _camera.SnapTo(_run.Player.Position, 0f);
         else _camera.SnapTo(_space.ShipPos, 0f);
