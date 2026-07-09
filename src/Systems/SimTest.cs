@@ -838,6 +838,15 @@ public static class SimTest
             acidVent && acidWorld.LavaSeeds.Count == 0 && acidWorld.AcidSeeds.Count > 0);
     }
 
+    /// <summary>True if the position sits inside a tile that actually blocks bodies —
+    /// creature collision uses Tiles.BlocksPlayer, so passable tiles (glowshrooms in a
+    /// fungal grove, ladders) don't count as "embedded in rock".</summary>
+    private static bool EmbeddedInRock(Planet planet, Vector2 pos)
+    {
+        var (x, y) = planet.WorldToTile(pos);
+        return Tiles.BlocksPlayer(planet.Get(x, y));
+    }
+
     private static int CountSolidNear(Planet planet, Vector2 world, int r)
     {
         var (cx, cy) = planet.WorldToTile(world);
