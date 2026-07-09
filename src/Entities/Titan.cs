@@ -183,14 +183,18 @@ public sealed class Titan
     {
         var up = _planet.UpAt(Position);
         var right = new Vector2(-up.Y, up.X);
-        // Lay the chain out along -tangent so it dangles behind the body at spawn. Verlet picks
-        // it up from there — drag/gravity will settle it on the next few frames.
+        // Lay the chain out behind the body at spawn; verlet picks it up from there. Bipeds root
+        // it at the rump so it dangles behind + down (a dragging tail). The Sandworm's chain IS
+        // its body — it roots at the HEAD and lays straight back, so the maw (drawn on node 0)
+        // is always welded to the segments trailing behind it.
         TailNodes = new Vector2[_tailNodeCount];
         TailPrev = new Vector2[_tailNodeCount];
-        var root = Position + right * (Facing * -90f) + up * 18f;
+        var worm = Kind == TitanKind.Sandworm;
+        var root = worm ? Position + right * (Facing * 8f)
+                        : Position + right * (Facing * -90f) + up * 18f;
         for (var i = 0; i < _tailNodeCount; i++)
         {
-            TailNodes[i] = root + right * (Facing * -i * _tailSeg) + up * (-i * 4f);
+            TailNodes[i] = root + right * (Facing * -i * _tailSeg) + up * (worm ? 0f : -i * 4f);
             TailPrev[i] = TailNodes[i];
         }
     }
