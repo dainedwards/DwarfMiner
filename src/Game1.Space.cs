@@ -96,16 +96,44 @@ public sealed partial class DwarfMinerGame
 
         TickSpaceCameraAndBreach(dt);
 
+        // Warp jump: all five core shards let the mothership fold space to the Rift.
+        if (Pressed(keys, _prevKeys, Keys.J))
+        {
+            var needed = PlanetDefs.WarpShardsNeeded;
+            if (_meta.CoreShards.Count >= needed)
+            {
+                var rift = _space.Planets.FindIndex(p => p.Def.Id == "rift");
+                _space.PlaceShipAt(rift);
+                _space.Asteroids.Clear();
+                _spaceZoom = 1.6f;   // snap in, ease back out — sells the fold
+                _camera.SnapTo(_space.ShipPos, 0f);
+                _sfx.Play("launch", 0.8f, pitch: 0.4f);
+                _toast = "WARP JUMP COMPLETE - THE RIFT LOOMS";
+            }
+            else
+            {
+                _toast = $"WARP DRIVE COLD - {needed - _meta.CoreShards.Count} MORE CORE SHARDS NEEDED";
+            }
+            _toastTimer = 3f;
+        }
+
         // Landing: Enter beside any planet drops a rover there (fuel range is the travel
         // gate now, not an unlock chain). No rovers left = emergency drop pod: you still
-        // get down, but the crash costs half your health.
+        // get down, but the crash costs half your health. The Rift refuses landings until
+        // the warp drive is shard-complete — its storms shred an unshielded descent.
         if (_space.LandingCandidate() is { } cand
             && (Pressed(keys, _prevKeys, Keys.Enter) || Pressed(keys, _prevKeys, Keys.E)))
         {
+            if (cand.Def.Id == "rift" && _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded)
+            {
+                _toast = $"THE RIFT REJECTS YOU - {PlanetDefs.WarpShardsNeeded} CORE SHARDS REQUIRED TO BREACH ITS STORMS";
+                _toastTimer = 3f;
+                return;
+            }
             var podDrop = _meta.Rovers <= 0;
             if (!podDrop) _meta.Rovers--;
             _meta.Save();
-            StartNewRun(cand.Def);
+            StartNewRun(cand.Def, descend: true);
             if (podDrop)
             {
                 _run.Player.Health *= 0.5f;
