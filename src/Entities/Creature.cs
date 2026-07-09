@@ -33,6 +33,9 @@ public enum CreatureKind : byte
     HornedDelver, // horned humanoid miner — swings a pickaxe, tunnels toward aggroed prey
     Centipede,    // long segmented tunneller — chews fast winding galleries
     MoleBeast,    // alien mole — digs burrows, shy unless cornered or provoked
+    SporeBat,     // fungal-grove flitter — frail, chokes its killer with a spore puff
+    CrystalCrawler, // armoured deep-cave tank with a crystal-shard back — slow, hits hard
+    VoidWraith,   // Rift-only phantom — fast, vicious, sheds voidstone when destroyed
 }
 
 public sealed class Creature
