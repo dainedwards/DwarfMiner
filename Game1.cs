@@ -1927,6 +1927,7 @@ public sealed partial class DwarfMinerGame : Game
         if (_screen == GameScreen.Space)
         {
             DrawSpace();
+            DrawFpsOverlay();
             if (_screenshotPending)
             {
                 _screenshotPending = false;
