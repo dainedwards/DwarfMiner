@@ -422,6 +422,9 @@ public sealed class Cells
         // Freefall: accelerate inward and traverse multiple rows per tick at speed.
         // Rows are stepped one at a time because InnerCell remaps cx at band-halving
         // boundaries, and per-step collision prevents tunneling through thin floors.
+        // A just-freed grain (velR still 0) gets an initial kick so it drops on this very
+        // tick instead of hanging while gravity ramps it up from a standstill.
+        if (_velR[i] == 0f) _velR[i] = InitialFallCells;
         _velR[i] = MathF.Min(_velR[i] + GravityCells * dt, TerminalCells);
         _travel[i] += _velR[i] * dt;
         var steps = Math.Min((int)_travel[i], MaxStepsPerTick);
