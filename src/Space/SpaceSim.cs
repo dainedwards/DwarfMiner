@@ -136,10 +136,15 @@ public sealed class SpaceSim
     {
         foreach (var p in Planets) p.Angle += p.AngularVel * dt;
 
-        var engineMul = EngineTier >= 2 ? 1.4f : 1f;
+        var engineMul = (EngineTier >= 2 ? 1.4f : 1f) * (HasFuel ? 1f : 0.35f);
         ShipHeading += turn * TurnRate * dt;
         Thrusting = thrust;
-        if (thrust) ShipVel += ShipDir * (Accel * engineMul * dt);
+        if (thrust)
+        {
+            ShipVel += ShipDir * (Accel * engineMul * dt);
+            // Ion Engines II sip rather than gulp — range is the real tier-2 payoff.
+            if (HasFuel) FuelUsed += (EngineTier >= 2 ? 0.28f : 0.4f) * dt;
+        }
         if (brake)
         {
             var speed = ShipVel.Length();
