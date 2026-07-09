@@ -95,7 +95,8 @@ public static class PlanetDefs
             MountainHeightScale: 1.5f, LavaFillFrac: 0.58f, HasWater: true,
             OreBias: new[] { (TileKind.Diamond, 0.030f), (TileKind.Crystal, 0.025f), (TileKind.Ruby, 0.015f) },
             QuakeScale: 0.5f, CaveSpawnCap: 24,
-            ShipOre: "diamond", ShipOreCount: 5, OxygenDrainScale: 1.4f, SeedsGas: true, SeedsAcid: true, Titan: TitanKind.Godzilla),
+            ShipOre: "diamond", ShipOreCount: 5, OxygenDrainScale: 1.4f, SeedsGas: true, SeedsAcid: true, Titan: TitanKind.Godzilla,
+            CrystalPockets: 3, FungalPockets: 2),
 
         // The warp world — out of normal flight range, reachable only with all five core
         // shards. Everything is turned up: swarming caves, toxins, near-vacuum air, lava at
