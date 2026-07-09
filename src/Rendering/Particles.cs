@@ -184,6 +184,64 @@ public sealed class Particles
         });
     }
 
+    /// <summary>Continuous mining-laser beam: hot glow motes strung along the beam line plus
+    /// molten spatter where it eats rock. Called every frame the beam is held, so mote
+    /// lifetimes are tiny — the beam vanishes the instant the trigger is released.</summary>
+    public void EmitMiningBeam(Vector2 from, Vector2 to, bool hitting)
+    {
+        var d = to - from;
+        var len = d.Length();
+        if (len < 1f) return;
+        var dir = d / len;
+        // Beam body: a mote every ~3 px, drifting toward the strike point so the stream reads
+        // as flowing. Only every fourth mote glows — a full-beam light string would flood the
+        // lighting pass.
+        const float step = 3f;
+        var n = (int)(len / step);
+        for (var i = 0; i <= n; i++)
+        {
+            var hotCore = _rng.NextDouble() < 0.35;
+            _list.Add(new Particle
+            {
+                Position = from + dir * (i * step) + Jitter(0.7f),
+                Velocity = dir * 25f,
+                Life = 0.04f + (float)_rng.NextDouble() * 0.04f,
+                MaxLife = 0.08f,
+                Color = hotCore ? new Color(255, 240, 200) : new Color(255, 150, 40),
+                FadeColor = new Color(180, 50, 10),
+                Size = hotCore ? 1f : 1.5f,
+                GravityScale = 0f,
+                LightRadius = i % 4 == 0 ? 7f : 0f,
+                LightColor = new Color(255, 160, 60),
+            });
+        }
+        if (!hitting) return;
+        // Molten spatter at the strike point — sprays back toward the emitter side.
+        for (var i = 0; i < 2; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * 1.6f;
+            var back = -dir;
+            var rotated = new Vector2(
+                back.X * MathF.Cos(spread) - back.Y * MathF.Sin(spread),
+                back.X * MathF.Sin(spread) + back.Y * MathF.Cos(spread));
+            _list.Add(new Particle
+            {
+                Position = to,
+                Velocity = rotated * (50f + (float)_rng.NextDouble() * 50f),
+                Life = 0.15f + (float)_rng.NextDouble() * 0.15f,
+                MaxLife = 0.30f,
+                Color = new Color(255, 200, 90),
+                FadeColor = new Color(120, 30, 10),
+                Size = 1f,
+                GravityScale = 0.6f,
+                Drag = 1.5f,
+                LightRadius = 5f,
+                LightColor = new Color(255, 150, 60),
+                CollideTiles = true,
+            });
+        }
+    }
+
     /// <summary>Hammer impact: a heavy ring of stone shards plus a dust cloud. Used when the
     /// hammer cracks bedrock — heavier than EmitChips, lighter than an explosion.</summary>
     public void EmitHammerImpact(Vector2 pos, TileKind kind)
