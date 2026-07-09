@@ -278,7 +278,12 @@ public sealed partial class DwarfMinerGame : Game
         // can screenshot the boss without walking to it.
         var titanAngle = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 }
             ? -MathF.PI / 2f + 0.16f : MathF.PI * 0.6f;
-        _run.Titan = new Titan(_run.Planet, titanAngle, def.Titan);
+        // Pooled planets (Coreheart) roll a fresh kaiju out of the breach every visit;
+        // fixed planets always hatch their signature boss (soul farming stays plannable).
+        var titanKind = def.TitanPool is { Length: > 0 } pool
+            ? pool[Random.Shared.Next(pool.Length)]
+            : def.Titan;
+        _run.Titan = new Titan(_run.Planet, titanAngle, titanKind);
         // DM_HATCH=<seconds> shortens the egg timer for testing (default 10 min).
         if (float.TryParse(Environment.GetEnvironmentVariable("DM_HATCH"), out var hatchAt))
             _run.Titan.EggTimer = hatchAt;
