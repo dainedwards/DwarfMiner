@@ -586,7 +586,7 @@ public sealed class Titan
                 _dashesLeft--;
                 var up = _planet.UpAt(Position);
                 var right = new Vector2(-up.Y, up.X);
-                var dir = MathF.Sign(Vector2.Dot(playerPos - Position, right));
+                float dir = MathF.Sign(Vector2.Dot(playerPos - Position, right));
                 if (dir == 0f) dir = Facing >= 0f ? 1f : -1f;
                 Velocity += right * (dir * 430f) + up * 70f;
             }
