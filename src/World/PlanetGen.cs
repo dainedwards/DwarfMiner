@@ -175,7 +175,7 @@ public static class PlanetGen
                 QuakeScale: quake, CaveSpawnCap: caveCap + 2,
                 ShipOre: shipOre, ShipOreCount: shipOreCount,
                 OxygenDrainScale: oxy * 1.35f, SeedsAcid: rng.Next(2) == 0, Titan: titan,
-                SizeScale: size),
+                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale),
 
             Biome.Crystal => new(id, name,
                 "Crystalline world - glittering, swarming, and deeply unkind",
