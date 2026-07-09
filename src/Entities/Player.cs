@@ -51,13 +51,17 @@ public sealed class Player
     public bool HasLaserCannon;
     public bool HasRocketLauncher;
 
-    /// <summary>Mothership-foundry upgrade (not craftable in-run, not in the run save —
-    /// re-applied from MetaSave on every planet entry). Hold jump while airborne to fly on a
-    /// charge that refills on the ground.</summary>
+    /// <summary>Mothership-foundry upgrades (not craftable in-run, not in the run save —
+    /// re-applied from MetaSave on every planet entry). Jetpack: hold jump while airborne to
+    /// fly on a charge that refills on the ground; tier II doubles the charge and climbs
+    /// harder. Magnet: loose ore leaps to the pack from much farther.</summary>
     public bool HasJetpack;
+    public bool JetTier2;
+    public bool HasMagnet;
     public float JetCharge = JetChargeMax;
-    public const float JetChargeMax = 2.6f;   // seconds of burn
-    private const float JetRiseSpeed = 110f;  // target upward speed under thrust
+    public const float JetChargeMax = 2.6f;   // seconds of burn (tier I)
+    public float JetChargeCap => JetTier2 ? JetChargeMax * 2f : JetChargeMax;
+    private float JetRiseSpeed => JetTier2 ? 150f : 110f;
     private const float JetAccel = 420f;
 
     public float MineRange = 22f;          // pixels — dwarves have short reach
