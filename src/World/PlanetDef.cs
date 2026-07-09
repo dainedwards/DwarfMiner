@@ -53,9 +53,10 @@ public static class PlanetDefs
             TileKind.Grass,
             LakeMin: 3, LakeExtra: 1, MountainMin: 6, MountainExtra: 3,
             MountainHeightScale: 1.0f, LavaFillFrac: 0.45f, HasWater: true,
-            OreBias: new[] { (TileKind.IronOre, 0.015f), (TileKind.CoalOre, 0.015f) },
+            OreBias: new[] { (TileKind.IronOre, 0.015f), (TileKind.CoalOre, 0.015f), (TileKind.Emerald, 0.020f) },
             QuakeScale: 1.0f, CaveSpawnCap: 14,
-            ShipOre: "gold", ShipOreCount: 3, Titan: TitanKind.Kong),
+            ShipOre: "gold", ShipOreCount: 3, Titan: TitanKind.Kong,
+            CrystalPockets: 1, FungalPockets: 4),
 
         new("frost", "Frost", "Frozen wastes, deep water, sapphire seams",
             new Color(150, 180, 220), new Color(220, 235, 255),
