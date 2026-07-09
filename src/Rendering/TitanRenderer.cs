@@ -627,19 +627,31 @@ public static class TitanRenderer
 
     private static Color EyeColor(TitanKind k, float anger) => k switch
     {
-        TitanKind.Mecha => Color.Lerp(new Color(120, 230, 255), new Color(255, 90, 60), anger),
-        TitanKind.Sandworm => Color.Lerp(new Color(180, 255, 120), new Color(255, 210, 60), anger),
-        TitanKind.Kong  => Color.Lerp(new Color(255, 210, 120), new Color(255, 90, 40), anger),
-        _               => Color.Lerp(new Color(255, 220, 100), new Color(255, 70, 40), anger),
+        TitanKind.Mecha       => Color.Lerp(new Color(120, 230, 255), new Color(255, 90, 60), anger),
+        TitanKind.Sandworm    => Color.Lerp(new Color(180, 255, 120), new Color(255, 210, 60), anger),
+        TitanKind.Kong        => Color.Lerp(new Color(255, 210, 120), new Color(255, 90, 40), anger),
+        TitanKind.Knifehead   => Color.Lerp(new Color(140, 220, 255), new Color(120, 255, 220), anger),
+        TitanKind.Otachi      => Color.Lerp(new Color(190, 255, 90), new Color(255, 250, 120), anger),
+        TitanKind.Leatherback => Color.Lerp(new Color(110, 180, 255), new Color(200, 230, 255), anger),
+        TitanKind.Raiju       => Color.Lerp(new Color(160, 220, 255), new Color(255, 255, 255), anger),
+        TitanKind.Slattern    => Color.Lerp(new Color(255, 190, 80), new Color(255, 100, 40), anger),
+        _                     => Color.Lerp(new Color(255, 220, 100), new Color(255, 70, 40), anger),
     };
 
     /// <summary>Calm→angry hide colours and spine-glow colours per variant.</summary>
     public static (Color hideCalm, Color hideAngry, Color glowCalm, Color glowAngry) Palette(TitanKind k) => k switch
     {
-        TitanKind.Mecha => (new Color(120, 128, 145), new Color(160, 130, 130), new Color(90, 200, 255), new Color(130, 235, 255)),
-        TitanKind.Sandworm => (new Color(196, 168, 126), new Color(206, 132, 78), new Color(210, 120, 60), new Color(255, 150, 70)),
-        TitanKind.Kong  => (new Color(78, 60, 46), new Color(120, 80, 50), new Color(150, 110, 70), new Color(215, 150, 80)),
-        _               => (new Color(52, 62, 56), new Color(120, 60, 50), new Color(80, 150, 230), new Color(255, 90, 60)),
+        TitanKind.Mecha       => (new Color(120, 128, 145), new Color(160, 130, 130), new Color(90, 200, 255), new Color(130, 235, 255)),
+        TitanKind.Sandworm    => (new Color(196, 168, 126), new Color(206, 132, 78), new Color(210, 120, 60), new Color(255, 150, 70)),
+        TitanKind.Kong        => (new Color(78, 60, 46), new Color(120, 80, 50), new Color(150, 110, 70), new Color(215, 150, 80)),
+        // The kaiju wave — bioluminescent Pacific Rim palettes: pale carapace Knifehead,
+        // acid-veined Otachi, storm-blue Leatherback, electric Raiju, molten-crested Slattern.
+        TitanKind.Knifehead   => (new Color(150, 160, 170), new Color(180, 150, 140), new Color(90, 210, 255), new Color(130, 255, 230)),
+        TitanKind.Otachi      => (new Color(58, 76, 50), new Color(96, 118, 44), new Color(140, 230, 60), new Color(200, 255, 90)),
+        TitanKind.Leatherback => (new Color(52, 68, 74), new Color(84, 78, 106), new Color(90, 160, 255), new Color(160, 220, 255)),
+        TitanKind.Raiju       => (new Color(84, 104, 134), new Color(140, 116, 190), new Color(150, 220, 255), new Color(220, 245, 255)),
+        TitanKind.Slattern    => (new Color(94, 58, 44), new Color(150, 66, 38), new Color(255, 150, 50), new Color(255, 200, 80)),
+        _                     => (new Color(52, 62, 56), new Color(120, 60, 50), new Color(80, 150, 230), new Color(255, 90, 60)),
     };
 
     private static Color Add(Color c, int d) => new(
