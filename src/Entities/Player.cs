@@ -57,12 +57,17 @@ public sealed class Player
     /// harder. Magnet: loose ore leaps to the pack from much farther.</summary>
     public bool HasJetpack;
     public bool JetTier2;
+    public bool JetTier3;
     public bool HasMagnet;
+    public bool MagnetTier2;
     public float JetCharge = JetChargeMax;
     public const float JetChargeMax = 2.6f;   // seconds of burn (tier I)
-    public float JetChargeCap => JetTier2 ? JetChargeMax * 2f : JetChargeMax;
-    private float JetRiseSpeed => JetTier2 ? 150f : 110f;
+    public float JetChargeCap => JetChargeMax * (JetTier3 ? 3f : JetTier2 ? 2f : 1f);
+    private float JetRiseSpeed => JetTier3 ? 190f : JetTier2 ? 150f : 110f;
     private const float JetAccel = 420f;
+
+    /// <summary>How far loose material leaps to the pack — foundry magnet tiers.</summary>
+    public float PickupReach => MagnetTier2 ? 30f : HasMagnet ? 16f : 4f;
 
     public float MineRange = 22f;          // pixels — dwarves have short reach
     public float MoveSpeed = 78f;          // shorter legs
