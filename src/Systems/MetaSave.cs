@@ -61,6 +61,33 @@ public sealed class MetaSave
     /// arrive at half health.</summary>
     public int Rovers { get; set; } = 3;
 
+    /// <summary>Core shards secured (planet ids) — the warp-drive material pierced from near
+    /// each planet's center with the core drill. One per world; all of them together let the
+    /// mothership warp to the Rift.</summary>
+    public List<string> CoreShards { get; set; } = new();
+
+    /// <summary>Completed warp runs (escaped the Rift with its titan slain).</summary>
+    public int RunsCompleted { get; set; }
+
+    /// <summary>Raw metals refined N:1 into pure ingots at the dock. Gems and other rares
+    /// (crystal, ruby, sapphire, diamond) are precious as-is and skip refining; bulk stone
+    /// stays bulk. Remainders stay raw in the hold and join the next batch.</summary>
+    public const int RefineRatio = 4;
+    private static readonly string[] Refinable = { "iron", "coal", "silver", "gold", "platinum" };
+
+    public void RefineCargo()
+    {
+        foreach (var id in Refinable)
+        {
+            if (!ShipCargo.TryGetValue(id, out var raw) || raw < RefineRatio) continue;
+            var pure = raw / RefineRatio;
+            ShipCargo["pure_" + id] = ShipCargo.GetValueOrDefault("pure_" + id) + pure;
+            var rem = raw % RefineRatio;
+            if (rem == 0) ShipCargo.Remove(id);
+            else ShipCargo[id] = rem;
+        }
+    }
+
     public int SoulsOf(string kind) => TitanSouls.GetValueOrDefault(kind);
 
     /// <summary>Deduct souls of one specific titan kind. False untouched if short.</summary>
