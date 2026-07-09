@@ -85,9 +85,9 @@ public sealed partial class DwarfMinerGame : Game
     /// the seamless transitions can't avoid. Decays in Update, drawn over both screens.</summary>
     private float _transitionFlash;
 
-    /// <summary>Manual orbital ascent: after the liftoff cinematic clears the pad, the player
-    /// steers the climbing rocket (A/D) up to the mothership's parking orbit and docks —
-    /// reaching orbit altitude engages an approach glide so the rendezvous always completes.</summary>
+    /// <summary>Manual escape flight: the rocket is the player's from the instant it leaves
+    /// the pad — free 2D flight anywhere around the planet (WASD/arrows). Flying close to
+    /// the mothership engages an approach glide that completes the docking.</summary>
     private bool _ascending;
 
     /// <summary>Parked in orbit after an atmosphere entry: the world is live below, the
