@@ -594,16 +594,17 @@ public sealed class Titan
         }
     }
 
-    /// <summary>Ground point directly below the body along -up (the legless Sandworm's support
-    /// point). Marches down to the first solid tile; falls back to a fixed offset over open sky.</summary>
-    private Vector2 GroundBelow(Vector2 up, out bool found)
+    /// <summary>Terrain surface directly along the head's radial: march down from well above the
+    /// head to the first solid tile. Traces the reference line the Sandworm's serpentine weave
+    /// oscillates around, so the head can dive below it and crest over it as it slithers.</summary>
+    private Vector2 SurfacePoint(Planet planet, Vector2 up)
     {
-        for (var d = 0f; d <= 320f; d += 6f)
+        var top = Position + up * 240f;
+        for (var d = 0f; d <= 480f; d += 5f)
         {
-            var probe = Position - up * d;
-            if (_planet.IsSolidAt(probe)) { found = true; return probe; }
+            var p = top - up * d;
+            if (planet.IsSolidAt(p)) return p;
         }
-        found = false;
         return Position - up * 40f;
     }
 
