@@ -171,10 +171,11 @@ public sealed partial class DwarfMinerGame
             else if (Upgrades.TryBuy(_meta, def))
             {
                 // Ship tiers apply immediately; dwarf gear applies on the next rover drop.
-                _space.GunTier = Upgrades.Owned(_meta, "gun2") ? 2 : 1;
-                _space.EngineTier = Upgrades.Owned(_meta, "engine2") ? 2 : 1;
+                ApplyShipTiers();
                 _sfx.Play("pickup", 0.8f);
-                _toast = $"{def.Name.ToUpperInvariant()} INSTALLED";
+                _toast = def.Repeatable
+                    ? $"{def.Name.ToUpperInvariant()} BUILT ({_meta.Rovers} ABOARD)"
+                    : $"{def.Name.ToUpperInvariant()} INSTALLED";
             }
             else
             {
