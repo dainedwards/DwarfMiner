@@ -1446,12 +1446,19 @@ public sealed partial class DwarfMinerGame : Game
         RunSave.Delete();
 
         // The campaign finale: escaping the Rift with its titan slain conquers the system.
+        // Souls, upgrades, and the mothership endure into the next campaign; the warp home
+        // burns the five core shards, so the worlds must be pierced anew.
         if (_run.Def.Id == "rift" && _run.Titan.Health <= 0)
         {
             _meta.RunsCompleted++;
+            _meta.CoreShards.Clear();
             _meta.Save();
-            EndRun($"SYSTEM CONQUERED! The Rift titan is slain and you flew out alive. " +
-                   $"Campaigns completed: {_meta.RunsCompleted}. Press R to return to your ship.");
+            EndRun("SYSTEM CONQUERED!\n" +
+                   $"The Rift titan is slain and you flew out alive. Campaigns completed: {_meta.RunsCompleted}.\n" +
+                   $"Escapes {_meta.Escapes}   Titan kills {_meta.TitansDefeated}   Deepest {_meta.DeepestDepth}   Deaths {_meta.Deaths}\n" +
+                   "Souls and upgrades endure. The warp home burned your core shards -\n" +
+                   "pierce the five worlds anew to reach the Rift again.\n" +
+                   "Press R to return to your ship.");
             return;
         }
 
