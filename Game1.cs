@@ -1902,7 +1902,11 @@ public sealed partial class DwarfMinerGame : Game
             _ => $"FUEL {_run.ShipFuel}/{FuelToLaunch} - L AT PAD TO FUEL/LAUNCH",
         };
         string titanStatus;
-        if (!_run.Titan.Hatched)
+        if (_run.Titan.Health <= 0)
+        {
+            titanStatus = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} SLAIN — SOUL CLAIMED";
+        }
+        else if (!_run.Titan.Hatched)
         {
             var secs = MathF.Max(0f, _run.Titan.EggTimer);
             titanStatus = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} EGG  HATCH {(int)(secs / 60):0}:{(int)(secs % 60):00}  (ATTACK TO HATCH: {(int)_run.Titan.EggHealth} HP)";
