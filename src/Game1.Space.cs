@@ -307,12 +307,11 @@ public sealed partial class DwarfMinerGame
         for (var i = 0; i < _space.Planets.Count; i++)
         {
             var p = _space.Planets[i];
-            var locked = i >= unlocked;
-            var name = locked ? "???" : p.Def.Name.ToUpperInvariant();
+            var name = p.Def.Name.ToUpperInvariant();
             var screen = Vector2.Transform(p.Pos + new Vector2(0f, -(p.BodyRadius + 46f)), view);
             _renderer.DrawText(name,
                 new Vector2(screen.X - _renderer.MeasureText(name, 2) / 2f, screen.Y),
-                locked ? new Color(110, 112, 125) : Color.White, 2);
+                Color.White, 2);
             if (_meta.PlanetsEscaped.Contains(p.Def.Id))
             {
                 var esc = Vector2.Transform(p.Pos + new Vector2(0f, p.BodyRadius + 30f), view);
