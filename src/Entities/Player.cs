@@ -271,7 +271,7 @@ public sealed class Player
         // off ladders so climbing doesn't fight the thrust.
         if (HasJetpack)
         {
-            if (Grounded) JetCharge = JetChargeMax;
+            if (Grounded) JetCharge = JetChargeCap;
             else if (jumpHeld && !jumpEdge && !onLadder && JetCharge > 0f)
             {
                 vNormal = MoveToward(vNormal, JetRiseSpeed, JetAccel * dt);
