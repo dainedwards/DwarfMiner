@@ -136,7 +136,9 @@ public static class RunSave
             if (r.ReadBoolean()) run.PadPos = new Vector2(r.ReadSingle(), r.ReadSingle());
             if (r.ReadBoolean()) run.DepotPos = new Vector2(r.ReadSingle(), r.ReadSingle());
 
-            run.Planet = new Planet(new Vector2(2400, 2400));
+            // Ring count must match the def's size scale or ReadState rejects the geometry —
+            // generated campaign worlds are almost never the standard 200 rings.
+            run.Planet = new Planet(new Vector2(2400, 2400), Planet.RingsFor(def.SizeScale));
             run.Planet.ReadState(r);
             run.Cells = new Cells(run.Planet);
             run.Cells.ReadState(r);
