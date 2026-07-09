@@ -252,6 +252,7 @@ public sealed class SpaceSim
     private void KillAsteroid(Asteroid a)
     {
         Asteroids.Remove(a);
+        LastRockShattered = a.Pos;
         if (a.Radius < 26f) return;
         var kick = new Vector2(-a.Vel.Y, a.Vel.X);
         if (kick.LengthSquared() < 1f) kick = new Vector2(0f, 40f);
