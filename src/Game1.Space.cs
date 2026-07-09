@@ -431,7 +431,8 @@ public sealed partial class DwarfMinerGame
     /// selection, and a wallet readout. Purchases persist in MetaSave.ShipUpgrades.</summary>
     private void DrawUpgradeMenu(SpriteBatch sb)
     {
-        const int w = 620, h = 330;
+        const int w = 680;
+        var h = 140 + Upgrades.All.Length * 52;
         var x = (VirtualWidth - w) / 2;
         var y = (VirtualHeight - h) / 2;
 
