@@ -31,6 +31,9 @@ public sealed partial class DwarfMinerGame : Game
     private readonly Sfx _sfx = new();
     private float _prevPlayerHealth;
     private int _prevProjCount;
+    /// <summary>Previous-frame titan health — the soul award fires on the >0 → ≤0 crossing,
+    /// so a save resumed with an already-dead titan can never re-award.</summary>
+    private float _prevTitanHealth;
 
     /// <summary>The current planet visit. Everything per-run lives here — swapped atomically
     /// when the player lands on a planet from space. Null only while flying in space before
