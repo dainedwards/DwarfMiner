@@ -293,6 +293,12 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.MagnetTier2 = Upgrades.Owned(_meta, "magnet2");
         if (Upgrades.Owned(_meta, "drill")) _run.Player.PickaxeTier++;
         _run.Player.HasPlating = Upgrades.Owned(_meta, "plating");
+        // Emerald Weave: a bigger health pool, filled from the start of every drop.
+        if (Upgrades.Owned(_meta, "vitality"))
+        {
+            _run.Player.MaxHealth = 140f;
+            _run.Player.Health = 140f;
+        }
         // Rover Armory: every drop comes armed — sidearm plus a belt of rounds.
         if (Upgrades.Owned(_meta, "armory"))
         {
