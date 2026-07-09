@@ -220,6 +220,37 @@ public static class Icons
         ['g'] = new Color(70, 48, 30),
     });
 
+    private static Texture2D BuildMiningLaser(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        ".MMMMMMMMM......",
+        ".MmmmmmmmMOO....",
+        ".MmmYYYmmMOOrrrw",
+        ".MmmmmmmmMOO....",
+        ".MMMMMMMMM......",
+        ".....GGg........",
+        ".....GGg........",
+        "....GGg.........",
+        "....GG..........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['M'] = new Color(175, 170, 160),
+        ['m'] = new Color(115, 110, 100),
+        ['Y'] = new Color(230, 195, 90),
+        ['O'] = new Color(255, 160, 60),
+        ['r'] = new Color(255, 130, 30),
+        ['w'] = new Color(255, 235, 190),
+        ['G'] = new Color(105, 75, 50),
+        ['g'] = new Color(70, 48, 30),
+    });
+
     private static Texture2D BuildRocketLauncher(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
     {
         "................",
