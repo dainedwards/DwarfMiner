@@ -577,12 +577,21 @@ public static class SimTest
         const float dt = 1f / 60f;
 
         // --- Gas rises through an open shaft ---
+        // Fully hand-carve a sealed chimney: per-ring tile counts skew a constant-index
+        // column in angle, so the shaft needs width and its own walls rather than trusting
+        // whatever terrain the seed put beside it.
         int gr = 100, gt = 50;
-        for (var dr = 0; dr <= 6; dr++) planet.Set(gr + dr, gt, TileKind.Sky);
-        planet.Set(gr - 1, gt, TileKind.Stone); // floor
-        cells.FillTile(gr, gt, Material.Gas);
+        for (var dr = -1; dr <= 7; dr++)
+            for (var da = -2; da <= 4; da++)
+                planet.Set(gr + dr, gt + da,
+                    dr is -1 or 7 || da is -2 or 4 ? TileKind.Stone : TileKind.Sky);
+        cells.FillTile(gr, gt + 1, Material.Gas);
         for (var i = 0; i < 60; i++) cells.Update(dt);
-        Check("hazard: gas rises through a shaft", CountMatInTile(cells, gr + 3, gt, Material.Gas) > 0);
+        var risen = 0;
+        for (var dr = 2; dr <= 6; dr++)
+            for (var da = -1; da <= 3; da++)
+                risen += CountMatInTile(cells, gr + dr, gt + da, Material.Gas);
+        Check("hazard: gas rises through a shaft", risen > 0);
 
         // --- Acid dissolves a soft floor tile ---
         int ar = 120, at = 80;
