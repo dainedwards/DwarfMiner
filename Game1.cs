@@ -328,7 +328,7 @@ public sealed partial class DwarfMinerGame : Game
 
         if (_screen == GameScreen.Space)
         {
-            UpdateSpace(keys, dt);
+            UpdateSpace(keys, mouse, dt);
             _prevKeys = keys; _prevMouse = mouse;
             base.Update(gameTime);
             return;
