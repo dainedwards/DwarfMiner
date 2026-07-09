@@ -66,14 +66,24 @@ public sealed partial class DwarfMinerGame : Game
     public const int FuelToLaunch = 12;
 
     /// <summary>Rover descent state. While <see cref="_landing"/> is set, normal play is
-    /// suspended: the pod sinks along local gravity with A/D lateral steering (semi-controlled)
-    /// until it touches the surface, where gameplay begins.</summary>
+    /// suspended: the pod departs the orbiting mothership and sinks along local gravity with
+    /// A/D lateral steering (semi-controlled) until it touches the surface, where gameplay
+    /// begins.</summary>
     private bool _landing;
     private Vector2 _landerPos;
 
+    /// <summary>White flash masking the space↔planet coordinate swap — the one visual cut
+    /// the seamless transitions can't avoid. Decays in Update, drawn over both screens.</summary>
+    private float _transitionFlash;
+
+    /// <summary>Manual orbital ascent: after the liftoff cinematic clears the pad, the player
+    /// steers the climbing rocket (A/D) up to the mothership's parking orbit and docks —
+    /// reaching orbit altitude engages an approach glide so the rendezvous always completes.</summary>
+    private bool _ascending;
+
     /// <summary>Liftoff cinematic state. While <see cref="_launching"/> is set, normal play is
     /// suspended: the rocket climbs along <see cref="_launchUp"/> under <see cref="_launchVel"/>,
-    /// trailing exhaust, until it clears the sky and the run ends.</summary>
+    /// trailing exhaust, until the player takes the stick for the orbital ascent.</summary>
     private bool _launching;
     private float _launchElapsed;
     private float _launchVel;
