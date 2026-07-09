@@ -399,6 +399,13 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
+    /// <summary>First active-chain planet matching the probe (DM_AUTOSTART biome aliases).</summary>
+    private static PlanetDef FirstDef(Func<PlanetDef, bool> probe)
+    {
+        foreach (var d in PlanetDefs.All) if (probe(d)) return d;
+        return PlanetDefs.All[0];
+    }
+
     /// <summary>Flying into a planet's upper atmosphere from space: build (or claim the
     /// prefetched) world and arrive above the parking orbit at the same bearing you flew in
     /// on — the ship then settles itself down into orbit automatically. From there the
