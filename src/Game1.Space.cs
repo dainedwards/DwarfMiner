@@ -96,20 +96,21 @@ public sealed partial class DwarfMinerGame
 
         TickSpaceCameraAndBreach(dt);
 
-        // Landing: Enter beside an unlocked planet drops a rover there; locked worlds refuse.
+        // Landing: Enter beside any planet drops a rover there (fuel range is the travel
+        // gate now, not an unlock chain). No rovers left = emergency drop pod: you still
+        // get down, but the crash costs half your health.
         if (_space.LandingCandidate() is { } cand
             && (Pressed(keys, _prevKeys, Keys.Enter) || Pressed(keys, _prevKeys, Keys.E)))
         {
-            var idx = PlanetDefs.IndexOf(cand.Def);
-            var unlocked = Math.Min(_meta.PlanetsUnlocked, PlanetDefs.All.Length);
-            if (idx < unlocked)
+            var podDrop = _meta.Rovers <= 0;
+            if (!podDrop) _meta.Rovers--;
+            _meta.Save();
+            StartNewRun(cand.Def);
+            if (podDrop)
             {
-                StartNewRun(cand.Def);
-            }
-            else
-            {
-                _toast = $"UNCHARTED - ESCAPE {PlanetDefs.All[idx - 1].Name.ToUpperInvariant()} TO CHART A COURSE";
-                _toastTimer = 2.5f;
+                _run.Player.Health *= 0.5f;
+                _toast = "NO ROVERS - EMERGENCY DROP POD! SUIT DAMAGED";
+                _toastTimer = 4f;
             }
         }
     }
