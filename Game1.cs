@@ -2431,6 +2431,29 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.DrawCircle(b.Position, b.Radius, new Color(80, 70, 60));
         }
 
+        // Toxic cloud — the acid-rain storm's source, a roiling olive bank parked above the
+        // surface at the storm bearing. The falling acid cells themselves are drawn by the
+        // cell renderer; this is the thing to run away from.
+        if (_run.AcidRainActive > 0f)
+        {
+            var cAng = _run.AcidRainAngle;
+            var cDir = new Vector2(MathF.Cos(cAng), MathF.Sin(cAng));
+            var cUp = cDir;
+            var cRight = new Vector2(-cUp.Y, cUp.X);
+            var ground = SpawnDirector.FindSurfaceSpawn(_run.Planet, cAng, _run.Planet.Radius);
+            var cloud = ground + cUp * 300f;
+            var dark = new Color(52, 66, 40);
+            var mid = new Color(72, 92, 50);
+            for (var i = -3; i <= 3; i++)
+            {
+                var bob = MathF.Sin(_renderer.Time * 1.3f + i) * 6f;
+                var h = (3f - MathF.Abs(i)) / 3f;
+                var p = cloud + cRight * (i * 42f) + cUp * bob;
+                _renderer.DrawCircle(p, 26f + h * 22f, i % 2 == 0 ? dark : mid);
+                _renderer.DrawCircle(p - cUp * 12f, 18f + h * 14f, new Color(96, 128, 56));
+            }
+        }
+
         // Meteors — a molten rock (dark core, hot rim) plus a pulsing warning reticle on the
         // ground it's aimed at, so the strike is telegraphed and dodgeable.
         foreach (var m in _run.Meteors)
