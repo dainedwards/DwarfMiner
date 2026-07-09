@@ -283,7 +283,70 @@ public static class WorldGen
             }
         }
 
+        SeedBiomePockets(planet, def, rng);
+
         return planet;
+    }
+
+    /// <summary>Underground biomes: hand-carved pockets stamped after the main pass.
+    /// <b>Crystal caverns</b> — mid-depth cavities lined with crystal, a glittering find
+    /// worth a detour. <b>Fungal groves</b> — shallow caves walled in moss with glowshrooms
+    /// sprouting from the floor, natural light wells on the living worlds. Counts come from
+    /// the planet def.</summary>
+    private static void SeedBiomePockets(Planet planet, PlanetDef def, Random rng)
+    {
+        void Carve(int count, bool crystal)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+                // Crystal runs deep (rings 30-70 below baseline); groves stay shallow (8-30).
+                var depth = crystal ? 30 + rng.Next(40) : 8 + rng.Next(22);
+                var cr = BaselineSurfaceRing - depth;
+                if (cr < 8) continue;
+                var radius = crystal ? 4 + rng.Next(4) : 3 + rng.Next(3);
+                var n = Planet.TilesAt(cr);
+                var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                var centre = planet.TileToWorld(cr, ct);
+
+                // Carve the cavity, then line the shell one tile beyond it.
+                var lineR = (radius + 1) * Planet.TileSize;
+                for (var dr = -radius - 1; dr <= radius + 1; dr++)
+                {
+                    var r = cr + dr;
+                    if (r < 2 || r >= Planet.RingCount) continue;
+                    var rn = Planet.TilesAt(r);
+                    var rt0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * rn);
+                    var span = radius + 2;
+                    for (var dt = -span; dt <= span; dt++)
+                    {
+                        var t = ((rt0 + dt) % rn + rn) % rn;
+                        var pos = planet.TileToWorld(r, t);
+                        var dist = (pos - centre).Length();
+                        if (dist > lineR) continue;
+                        var k = planet.Get(r, t);
+                        if (Tiles.IsAnchored(k)) continue;
+                        if (dist <= radius * Planet.TileSize)
+                        {
+                            // Grove floors keep a mossy carpet with glowshrooms; caverns open clean.
+                            if (!crystal && dr == -radius && rng.Next(3) == 0 && k != TileKind.Sky)
+                            {
+                                planet.Set(r, t, TileKind.Glowshroom);
+                                continue;
+                            }
+                            planet.Set(r, t, TileKind.Sky);
+                        }
+                        else if (k != TileKind.Sky)
+                        {
+                            planet.Set(r, t, crystal ? TileKind.Crystal : TileKind.MossStone);
+                        }
+                    }
+                }
+            }
+        }
+
+        Carve(def.CrystalPockets, crystal: true);
+        Carve(def.FungalPockets, crystal: false);
     }
 
     /// <summary>True if <paramref name="ang"/> falls within <paramref name="margin"/> radians
