@@ -64,7 +64,8 @@ public sealed class SpaceSim
     public bool Thrusting;
 
     // ── Hazards & armament (mothership era) ─────────────────────────────────
-    public const float ShipRadius = 26f;
+    /// <summary>Collision radius of the ring station (the 48px sprite draws at 1.5×).</summary>
+    public const float ShipRadius = 34f;
     public readonly List<Asteroid> Asteroids = new();
     public readonly List<ShipShot> Shots = new();
     public int Hull = 5;
