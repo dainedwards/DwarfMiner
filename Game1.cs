@@ -504,8 +504,11 @@ public sealed partial class DwarfMinerGame : Game
         // (Drill Rig and the Armory/Supply kits aren't: the saved tier/inventory carry them.)
         run.Player.HasJetpack = Upgrades.Owned(_meta, "jetpack");
         run.Player.JetTier2 = Upgrades.Owned(_meta, "jetpack2");
+        run.Player.JetTier3 = Upgrades.Owned(_meta, "jetpack3");
         run.Player.HasO2Recycler = Upgrades.Owned(_meta, "o2");
+        run.Player.O2Tier2 = Upgrades.Owned(_meta, "o22");
         run.Player.HasMagnet = Upgrades.Owned(_meta, "magnet");
+        run.Player.MagnetTier2 = Upgrades.Owned(_meta, "magnet2");
         run.Player.HasPlating = Upgrades.Owned(_meta, "plating");
         // Loading woke every cell; burn the resettle here like world gen's pre-settle pass.
         for (var i = 0; i < 45; i++) _run.Cells.Update(1f / 60f);
