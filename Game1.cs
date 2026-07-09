@@ -369,6 +369,9 @@ public sealed partial class DwarfMinerGame : Game
         _run.FlareTimer = float.TryParse(Environment.GetEnvironmentVariable("DM_FLARE"), out var ft)
             ? ft : 75f + (float)Random.Shared.NextDouble() * 60f;
         _run.BlizzardTimer = 50f + (float)Random.Shared.NextDouble() * 45f;
+        // DM_ERUPT=<seconds> forces the first volcanic eruption for tooling.
+        _run.VolcanoTimer = float.TryParse(Environment.GetEnvironmentVariable("DM_ERUPT"), out var vt)
+            ? vt : 50f + (float)Random.Shared.NextDouble() * 50f;
         // DM_ACIDRAIN=<seconds> forces the first toxic-cloud storm for tooling.
         _run.AcidRainTimer = float.TryParse(Environment.GetEnvironmentVariable("DM_ACIDRAIN"), out var art)
             ? art : 45f + (float)Random.Shared.NextDouble() * 50f;
