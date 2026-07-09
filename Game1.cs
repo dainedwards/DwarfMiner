@@ -345,10 +345,10 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.Velocity = Vector2.Zero;
         var up = _run.Planet.UpAt(station);
         // Frame both the station and the ground below it — the whole point of shifting the
-        // orbit is picking a drop site you can see. (Surface baseline sits ~1050 px under
-        // the parking orbit, so this is a genuinely wide shot.)
-        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, 0.53f, MathHelper.Clamp(dt * 2f, 0f, 1f));
-        _camera.Follow(station - up * 520f, up, dt);
+        // orbit is picking a drop site you can see. (Surface baseline sits ~1270 px under
+        // the raised parking orbit, so this is a genuinely wide shot.)
+        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, 0.44f, MathHelper.Clamp(dt * 2f, 0f, 1f));
+        _camera.Follow(station - up * 630f, up, dt);
 
         _run.Physics.Update(dt);
         _run.Cells.Update(dt);
