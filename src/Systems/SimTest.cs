@@ -450,7 +450,7 @@ public static class SimTest
                     Check($"titan: {kind} fires ranged shots", sawShot);
                     break;
                 case TitanKind.Sandworm:
-                    Check("titan: Sandworm burrows and erupts", sawSubmerge && sawShock);
+                    Check("titan: Sandworm slithers up and bites (shockwave)", sawShock);
                     break;
                 case TitanKind.Kong:
                     Check("titan: Kong leaps and slams (shockwave)", sawShock);
