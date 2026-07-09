@@ -137,7 +137,8 @@ public static class PlanetGen
                 ShipOre: shipOre, ShipOreCount: shipOreCount,
                 OxygenDrainScale: oxy * 1.15f, SeedsAcid: true, Titan: titan,
                 CrystalPockets: 1 + rng.Next(2),
-                SizeScale: size, AcidPools: 4 + rng.Next(3), AcidRain: true),
+                SizeScale: size, AcidPools: 4 + rng.Next(3), AcidRain: true,
+                Volcanoes: 1 + rng.Next(2), VolcanoScale: J(0.75f, 1.05f), VolcanoAcid: true),
 
             Biome.Frost => new(id, name,
                 "Frozen world - blizzards bite anyone caught on the ice",
