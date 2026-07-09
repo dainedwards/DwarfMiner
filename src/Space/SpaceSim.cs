@@ -88,10 +88,13 @@ public sealed class SpaceSim
     public int EngineTier = 1;
     public int HullTier = 1;
     public bool HasShield;
+    /// <summary>2 = Aegis Capacitor: the shield recharges twice as fast.</summary>
+    public int ShieldTier = 1;
     /// <summary>Seconds until the shield can eat another impact; ready at ≤ 0.</summary>
     public float ShieldCooldown;
     public bool ShieldReady => HasShield && ShieldCooldown <= 0f;
-    public int HullMax => HullTier >= 2 ? 7 : 5;
+    public float ShieldRechargeTime => ShieldTier >= 2 ? 4f : 8f;
+    public int HullMax => HullTier >= 3 ? 9 : HullTier >= 2 ? 7 : 5;
 
     /// <summary>Fuel plumbing: the tank lives in MetaSave, so the sim just reports demand.
     /// Game1 sets <see cref="HasFuel"/> each frame and drains whole units out of
