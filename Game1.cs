@@ -718,8 +718,8 @@ public sealed partial class DwarfMinerGame : Game
             _meta.Deaths++;
             _meta.Save();
             EndRun(_run.Player.Oxygen <= 0f
-                ? "You suffocated in the deep. Press R for the star map."
-                : "You died. Press R for the star map.");
+                ? "You suffocated in the deep. Press R to return to your ship."
+                : "You died. Press R to return to your ship.");
         }
 
         // Apply shake decay to camera.
