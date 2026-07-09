@@ -44,6 +44,7 @@ public sealed class Player
     /// no-op. Augments (future) will live in a separate flags struct beside these.</summary>
     public bool HasDrill;
     public bool HasHammer;
+    public bool HasMiningLaser;
     public bool HasLantern;
     public bool HasArmor;
     public bool HasCoreDrill;
