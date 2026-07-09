@@ -251,23 +251,26 @@ public sealed partial class DwarfMinerGame : Game
         _craftingMenu.Reset();
         _invUi.Reset();
         _screen = GameScreen.Playing;
-        // Rover drops from space descend visibly (semi-controlled by the player); test-hook
-        // starts (DM_AUTOSTART) and legacy paths spawn straight on the surface. DM_DESCEND=1
-        // forces the descent for tooling.
+        // Rover drops from space start at the mothership's parking orbit and descend the
+        // whole way (semi-controlled by the player) — the station stays visible overhead
+        // for the entire visit, and the escape rocket must climb back up to it. Test-hook
+        // starts (DM_AUTOSTART) spawn straight on the surface; DM_DESCEND=1 forces the
+        // descent for tooling.
         _landing = descend || Environment.GetEnvironmentVariable("DM_DESCEND") is { Length: > 0 };
         if (_landing)
         {
-            var up0 = _run.Planet.UpAt(_run.Player.Position);
-            _landerPos = _run.Player.Position + up0 * 300f;
+            _landerPos = _run.StationPos;
             _run.Player.Position = _landerPos;
-            _toast = "GUIDE THE ROVER DOWN - A/D STEER";
+            _transitionFlash = 0.6f;
+            _toast = "ROVER AWAY - A/D STEER";
             _toastTimer = 3.5f;
         }
         // Camera exists except when DM_AUTOSTART triggers a run during Initialize —
-        // LoadContent snaps it then. Zoom restores from whatever the space screen left it at.
+        // LoadContent snaps it then. Descents open zoomed out at the station and ease in
+        // on the way down; surface starts restore the play zoom directly.
         if (_camera is not null)
         {
-            _camera.Zoom = _playZoom;
+            _camera.Zoom = _landing ? 1.5f : _playZoom;
             _camera.SnapTo(_run.Player.Position, 0f);
         }
     }
