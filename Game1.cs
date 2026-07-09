@@ -1826,28 +1826,40 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
-    /// <summary>The manual half of the escape: the rocket climbs on its own, easing to a
-    /// stop at the mothership's parking orbit, while the player steers laterally (the same
-    /// hands-on feel as the rover descent, in reverse). At orbit altitude an approach glide
-    /// pulls the rocket the rest of the way to the station — the rendezvous always
-    /// completes; steering just decides how direct the ride is. Docking = FinishLaunch.</summary>
+    /// <summary>The manual half of the escape: the rocket climbs gently on its own, easing
+    /// to a stop at the mothership's parking orbit, while the player steers freely in any
+    /// direction (WASD/arrows) — nudge sideways to chase the drifting station, throttle up
+    /// or ease back down. At orbit altitude an approach glide pulls the rocket the rest of
+    /// the way to the station — the rendezvous always completes; steering just decides how
+    /// direct the ride is. Docking = FinishLaunch.</summary>
     private void UpdateAscent(float dt, KeyboardState keys)
     {
         var up = _run.Planet.UpAt(_launchShipPos);
         var right = new Vector2(-up.Y, up.X);
         var lat = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
                 + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
+        var vert = (keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up) ? 1f : 0f)
+                 + (keys.IsKeyDown(Keys.S) || keys.IsKeyDown(Keys.Down) ? -1f : 0f);
 
         var alt = (_launchShipPos - _run.Planet.Center).Length() - _run.Planet.Radius * Planet.TileSize;
         // Climb rate eases to zero approaching the parking orbit — the rocket "arrives"
         // rather than shooting past the station (which is still drifting; the approach
         // glide below tracks it).
         _run.MothershipAngle += Session.StationDriftRate * dt;
-        // Keep building thrust from where the liftoff cinematic left off, capped at cruise —
-        // the slow heave off the pad flows into the climb with no velocity jump.
-        _launchVel = MathF.Min(300f, _launchVel + 80f * dt);
+        // Keep building thrust from where the liftoff cinematic left off, capped at a
+        // leisurely cruise — the slow heave off the pad flows into the climb with no
+        // velocity jump, and the low cap keeps the whole ride easy to steer.
+        _launchVel = MathF.Min(160f, _launchVel + 50f * dt);
         var climb = MathHelper.Clamp((Session.OrbitAltitude - alt) * 1.4f, 0f, _launchVel);
-        _launchShipPos += (up * climb + right * (lat * 220f)) * dt;
+        // Player thrust vector on top of the auto-climb: full 2D steering.
+        var steer = right * lat + up * vert;
+        if (steer != Vector2.Zero) steer.Normalize();
+        _launchShipPos += (up * climb + steer * 170f) * dt;
+        // Never let the rocket sink back into the crust — S throttles down to a hover.
+        var minR = _run.Planet.Radius * Planet.TileSize + 60f;
+        var fromCenter = _launchShipPos - _run.Planet.Center;
+        if (fromCenter.Length() < minR)
+            _launchShipPos = _run.Planet.Center + Vector2.Normalize(fromCenter) * minR;
 
         // Near orbit altitude the docking computer takes over the final approach.
         var station = _run.StationPos;
@@ -1855,7 +1867,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             var to = station - _launchShipPos;
             var d = to.Length();
-            if (d > 1f) _launchShipPos += to / d * MathF.Min(650f * dt, d);
+            if (d > 1f) _launchShipPos += to / d * MathF.Min(380f * dt, d);
             if (d < 48f)
             {
                 _ascending = false;
@@ -1867,11 +1879,13 @@ public sealed partial class DwarfMinerGame : Game
 
         _run.Player.Position = _launchShipPos + _launchUp * 8f;
         _run.Player.Velocity = Vector2.Zero;
-        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, 1.4f, MathHelper.Clamp(dt * 1.4f, 0f, 1f));
-        _camera.Follow(_run.Player.Position, up, dt);
+        // Wide orbit-style framing: same zoom as the parking orbit, biased upward so the
+        // planet limb, the climbing rocket, and the station all fit in frame.
+        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, 0.44f, MathHelper.Clamp(dt * 1.4f, 0f, 1f));
+        _camera.Follow(_run.Player.Position + up * 260f, up, dt);
         _launchUp = up;
 
-        if (climb > 20f) _particles.EmitRocketExhaust(_launchShipPos - up * 2f, -up);
+        if (climb > 20f || vert > 0f) _particles.EmitRocketExhaust(_launchShipPos - up * 2f, -up);
         _run.Physics.Update(dt);
         _particles.Update(dt, _run.Planet);
         _run.Cells.Update(dt);
