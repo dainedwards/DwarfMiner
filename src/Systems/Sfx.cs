@@ -202,6 +202,15 @@ public sealed class Sfx
             case "ui":
                 // Soft confirm blip.
                 return Render(0.06, b => Tone(b, 880, 940, 0.3, Decay(45), Wave.Sine));
+            case "thrust":
+                // Ion-engine rumble — dark noise bed with a slow wobbling low tone. Gentle
+                // attack/release so back-to-back retriggers blur into one burn.
+                return Render(0.3, b =>
+                {
+                    Noise(b, 0.4, Ar(0.08, 6), lp: 0.93);
+                    Tone(b, 55, 48, 0.3, Ar(0.08, 5), Wave.Sine);
+                    Tone(b, 110, 96, 0.12, Ar(0.08, 5), Wave.Saw);
+                });
             case "launch":
                 // Sustained rising roar for liftoff.
                 return Render(1.3, b =>
