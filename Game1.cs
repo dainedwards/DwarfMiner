@@ -81,6 +81,11 @@ public sealed partial class DwarfMinerGame : Game
     /// reaching orbit altitude engages an approach glide so the rendezvous always completes.</summary>
     private bool _ascending;
 
+    /// <summary>Parked in orbit after an atmosphere entry: the world is live below, the
+    /// station holds at its anchor, and the player decides when (and where — A/D shifts the
+    /// orbit) to launch the rover, or breaks orbit back to space.</summary>
+    private bool _orbiting;
+
     /// <summary>Liftoff cinematic state. While <see cref="_launching"/> is set, normal play is
     /// suspended: the rocket climbs along <see cref="_launchUp"/> under <see cref="_launchVel"/>,
     /// trailing exhaust, until the player takes the stick for the orbital ascent.</summary>
