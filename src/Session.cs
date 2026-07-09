@@ -50,6 +50,13 @@ public sealed class Session
     public float AcidRainActive;
     public float AcidRainAngle;
 
+    /// <summary>Volcano state: countdown to the next eruption, which vent is erupting, and
+    /// how long it keeps spewing. Vent sites live on <see cref="World.Planet.VolcanoVents"/>;
+    /// worlds without volcanoes never tick these.</summary>
+    public float VolcanoTimer = 60f;
+    public float EruptionLeft;
+    public int EruptionVent = -1;
+
     public float EarthquakeTimer;
     public float SpawnTimer;
     public float FaunaTimer;
