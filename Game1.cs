@@ -1155,13 +1155,15 @@ public sealed partial class DwarfMinerGame : Game
         if (_run.Titan.Health <= 0 && _prevTitanHealth > 0)
         {
             _meta.TitansDefeated++;
-            var kindKey = _run.Def.Titan.ToString();
+            // Soul keyed off the titan actually fought — planets with a TitanPool roll a
+            // different kaiju per visit, so the def's static kind can be wrong.
+            var kindKey = _run.Titan.Kind.ToString();
             _meta.TitanSouls[kindKey] = _meta.TitanSouls.GetValueOrDefault(kindKey) + 1;
             _meta.Save();
             _run.Shake = MathF.Max(_run.Shake, 1.6f);
             _particles.EmitDust(_run.Titan.Position, 44f);
             PlayAt("explode", _run.Titan.Position, 1f, pitch: -0.4f);
-            _toast = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} SLAIN - SOUL CLAIMED";
+            _toast = $"{TitanName(_run.Titan.Kind).ToUpperInvariant()} SLAIN - SOUL CLAIMED";
             _toastTimer = 3.5f;
         }
         _prevTitanHealth = _run.Titan.Health;
