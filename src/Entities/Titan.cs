@@ -84,8 +84,10 @@ public sealed class Titan
 
     /// <summary>Committed gore direction (tangent sign) while Knifehead charges.</summary>
     private float _chargeDir;
-    /// <summary>Raiju lunge chain: dashes remaining in the current burst.</summary>
+    /// <summary>Raiju lunge chain: dashes remaining in the current burst, plus a short
+    /// grace between contact hits so an overlap doesn't shred the player every frame.</summary>
     private int _dashesLeft;
+    private float _clipTimer;
     /// <summary>Slattern alternates tail-spike barrages with sonic pulses.</summary>
     private bool _slatternPulse;
 
