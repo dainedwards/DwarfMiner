@@ -291,16 +291,27 @@ public sealed class SpaceSim
 
             // Ram the mothership: lose hull, shove the ship along the impact normal, and eat
             // the rock. The invulnerability window stops one debris cloud double-tapping.
+            // A charged deflector shield eats the impact instead (knockback still applies)
+            // and starts its recharge.
             var d = ShipPos - a.Pos;
             var dist = d.Length();
             if (dist < a.Radius + ShipRadius && HitTimer <= 0f)
             {
-                Hull--;
-                HitTimer = 1.0f;
+                if (ShieldReady)
+                {
+                    ShieldCooldown = 8f;
+                    HitTimer = 0.4f;
+                }
+                else
+                {
+                    Hull--;
+                    HitTimer = 1.0f;
+                    if (Hull <= 0) HullBreached = true;
+                }
                 var n = dist > 0.5f ? d / dist : new Vector2(0f, -1f);
                 ShipVel += n * 260f;
+                LastRockShattered = a.Pos;
                 Asteroids.RemoveAt(i);
-                if (Hull <= 0) HullBreached = true;
             }
         }
 
