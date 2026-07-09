@@ -797,7 +797,7 @@ public static class SimTest
         // A rock drifting straight into the ship must cost exactly one hull (invuln window).
         sim.SpawnAsteroid(sim.ShipPos + new Vector2(200f, 0f), new Vector2(-300f, 0f), 20f);
         for (var i = 0; i < 120; i++) sim.Update(dt, 0f, false, false);
-        Check("space: asteroid impact costs one hull", sim.Hull == Space.SpaceSim.MaxHull - 1,
+        Check("space: asteroid impact costs one hull", sim.Hull == sim.HullMax - 1,
             $"hull {sim.Hull}");
         Check("space: impact consumes the asteroid", sim.Asteroids.Count == 0);
 
