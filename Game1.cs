@@ -1106,8 +1106,23 @@ public sealed partial class DwarfMinerGame : Game
 
         _particles.EmitImpact(_run.Planet.Center, ProjectileKind.Nuke);
         _run.Shake = MathF.Max(_run.Shake, 1.5f);
-        _meta.Save();
-        EndRun($"You pierced the core. Run time: {_run.RunTime:0.0}s. Press R to return to your ship.");
+        // Piercing the core no longer ends the run — it yields the planet's CORE SHARD, the
+        // warp-drive material (one per world, straight into meta: shards are too important
+        // to lose to a death on the climb back out). All five shards let the mothership warp
+        // to the Rift.
+        if (_run.Def.Id != "rift" && !_meta.CoreShards.Contains(_run.Def.Id))
+        {
+            _meta.CoreShards.Add(_run.Def.Id);
+            _meta.Save();
+            _toast = $"CORE SHARD SECURED ({_meta.CoreShards.Count}/{PlanetDefs.WarpShardsNeeded}) - NOW GET BACK UP";
+        }
+        else
+        {
+            _toast = _run.Def.Id == "rift"
+                ? "THE RIFT'S CORE YIELDS NOTHING - SLAY ITS TITAN AND ESCAPE"
+                : "CORE ALREADY PIERCED - THE SHARD IS ABOARD";
+        }
+        _toastTimer = 4f;
     }
 
     /// <summary>The developer spawn menu's rows — bosses plus the two rocket shortcuts. Rebuilt
