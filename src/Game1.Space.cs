@@ -336,10 +336,12 @@ public sealed partial class DwarfMinerGame
         {
             var p = _space.Planets[i];
             var name = p.Def.Name.ToUpperInvariant();
+            var warpLocked = p.Def.Id == "rift" && _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded;
+            if (warpLocked) name += " [WARP LOCKED]";
             var screen = Vector2.Transform(p.Pos + new Vector2(0f, -(p.BodyRadius + 46f)), view);
             _renderer.DrawText(name,
                 new Vector2(screen.X - _renderer.MeasureText(name, 2) / 2f, screen.Y),
-                Color.White, 2);
+                warpLocked ? new Color(255, 110, 90) : Color.White, 2);
             if (_meta.PlanetsEscaped.Contains(p.Def.Id))
             {
                 var esc = Vector2.Transform(p.Pos + new Vector2(0f, p.BodyRadius + 30f), view);
