@@ -43,6 +43,13 @@ public sealed class Session
     public float BlizzardTimer;
     public float BlizzardActive;
 
+    /// <summary>Acid-rain storm state (acid worlds, PlanetDef.AcidRain): a toxic cloud
+    /// parks over a bearing and rains live acid cells for the active window. The cloud
+    /// drifts while it rains — see AmbientDirector.</summary>
+    public float AcidRainTimer;
+    public float AcidRainActive;
+    public float AcidRainAngle;
+
     public float EarthquakeTimer;
     public float SpawnTimer;
     public float FaunaTimer;
