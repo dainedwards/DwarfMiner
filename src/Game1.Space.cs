@@ -842,9 +842,13 @@ public sealed partial class DwarfMinerGame
             var souls = _meta.SoulsOf(def.Titan.ToString());
             var slain = souls > 0 ? $"SOULS {souls}" : "NO SOULS YET";
             _renderer.DrawText(def.Name.ToUpperInvariant(), new Vector2(x + 24, rowY), Color.White, 2);
-            _renderer.DrawText($"TITAN: {TitanName(def.Titan).ToUpperInvariant()}  [{slain}]",
+            // Pooled planets roll a fresh kaiju per visit — the census can't name it ahead.
+            _renderer.DrawText(def.TitanPool is { Length: > 0 }
+                    ? "TITAN: UNSTABLE - ROLLS EACH VISIT"
+                    : $"TITAN: {TitanName(def.Titan).ToUpperInvariant()}  [{slain}]",
                 new Vector2(x + 250, rowY + 4),
-                souls > 0 ? new Color(140, 220, 140) : new Color(200, 160, 120));
+                def.TitanPool is { Length: > 0 } ? new Color(220, 140, 220)
+                    : souls > 0 ? new Color(140, 220, 140) : new Color(200, 160, 120));
             if (def.Id != "rift")
                 _renderer.DrawText(_meta.CoreShards.Contains(def.Id) ? "SHARD SECURED" : "SHARD IN CORE",
                     new Vector2(x + w - 24 - _renderer.MeasureText(_meta.CoreShards.Contains(def.Id) ? "SHARD SECURED" : "SHARD IN CORE"), rowY + 4),
