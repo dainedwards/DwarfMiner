@@ -163,7 +163,7 @@ public sealed partial class DwarfMinerGame
         // The rocket — sprite art points up, so heading needs the +π/2 correction.
         sb.Draw(_rocketTex, _space.ShipPos, null, Color.White,
             _space.ShipHeading + MathF.PI / 2f,
-            new Vector2(_rocketTex.Width / 2f, _rocketTex.Height / 2f), 2.2f, SpriteEffects.None, 0f);
+            new Vector2(_rocketTex.Width / 2f, _rocketTex.Height / 2f), 3f, SpriteEffects.None, 0f);
 
         sb.End();
 
