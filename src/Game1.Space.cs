@@ -198,38 +198,11 @@ public sealed partial class DwarfMinerGame
             _toastTimer = 3f;
         }
 
-        // Landing: Enter beside any planet drops a rover there (fuel range is the travel
-        // gate now, not an unlock chain). No rovers left = emergency drop pod: you still
-        // get down, but the crash costs half your health. The Rift refuses landings until
-        // the warp drive is shard-complete — its storms shred an unshielded descent.
-        if (_space.LandingCandidate() is { } cand
-            && (Pressed(keys, _prevKeys, Keys.Enter) || Pressed(keys, _prevKeys, Keys.E)))
+        // Storm-wall feedback when the locked Rift bounces the ship.
+        if (nearP is { Def.Id: "rift" } && _space.RiftLocked && surfDist < 60f && _toastTimer <= 0f)
         {
-            if (cand.Def.Id == "rift" && _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded)
-            {
-                _toast = $"THE RIFT REJECTS YOU - {PlanetDefs.WarpShardsNeeded} CORE SHARDS REQUIRED TO BREACH ITS STORMS";
-                _toastTimer = 3f;
-                return;
-            }
-            var podDrop = _meta.Rovers <= 0;
-            if (!podDrop) _meta.Rovers--;
-            CaptureShipState();
-            _meta.Save();
-            StartNewRun(cand.Def, descend: true);
-            if (podDrop)
-            {
-                // Pod Dampeners turn the crash landing into a soft one.
-                if (Upgrades.Owned(_meta, "dampeners"))
-                {
-                    _toast = "NO ROVERS - DROP POD DOWN SOFT ON THE DAMPENERS";
-                }
-                else
-                {
-                    _run.Player.Health *= 0.5f;
-                    _toast = "NO ROVERS - EMERGENCY DROP POD! SUIT DAMAGED";
-                }
-                _toastTimer = 4f;
-            }
+            _toast = $"THE RIFT STORMS REPEL YOU - {PlanetDefs.WarpShardsNeeded - _meta.CoreShards.Count} MORE CORE SHARDS NEEDED";
+            _toastTimer = 2.5f;
         }
     }
 
