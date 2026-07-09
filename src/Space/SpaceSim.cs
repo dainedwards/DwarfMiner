@@ -215,8 +215,10 @@ public sealed class SpaceSim
             s.Pos += s.Vel * dt;
             s.Life -= dt;
             if (s.Life <= 0f) { Shots.RemoveAt(i); continue; }
-            foreach (var a in Asteroids)
+            // Indexed (not foreach): KillAsteroid mutates the list, then we break.
+            for (var j = 0; j < Asteroids.Count; j++)
             {
+                var a = Asteroids[j];
                 if ((s.Pos - a.Pos).LengthSquared() > a.Radius * a.Radius) continue;
                 a.Hp -= ShotDamage;
                 if (a.Hp <= 0f) KillAsteroid(a);
