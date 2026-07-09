@@ -14,25 +14,48 @@ namespace DwarfMiner.World;
 /// </summary>
 public sealed class Planet
 {
-    public const int RingCount = 200;
+    /// <summary>Ring count of a scale-1.0 planet — the norm PlanetDef.SizeScale multiplies.</summary>
+    public const int StandardRings = 200;
     public const int RingMin = 20;
     public const int TileSize = 8;
 
-    /// <summary>Tile count per ring, computed per ring at construction. Power-of-2 halved at radius bands.</summary>
-    private static readonly int[] _tilesAt;
-    private static readonly int[] _ringOffsets;
-    private static readonly int _totalTiles;
+    /// <summary>Rings of headroom kept between the baseline surface and the top of the tile
+    /// grid, at every planet size — enough for the tallest mountains plus clear sky. The
+    /// surface therefore sits at <see cref="SurfaceRing"/> = Rings − SkyHeadroom.</summary>
+    public const int SkyHeadroom = 71;
 
-    static Planet()
+    /// <summary>Playable ring count for THIS planet — varies with PlanetDef.SizeScale
+    /// (≈140 for a 0.7× dwarf world up to ≈360 for a 1.8× giant).</summary>
+    public readonly int Rings;
+
+    /// <summary>Ring index of the baseline surface (before mountains/lakes) on this planet.
+    /// Depth and oxygen math measure "below surface" from here.</summary>
+    public int SurfaceRing => Rings - SkyHeadroom;
+
+    /// <summary>Tile count per ring. Geometry depends only on the ring count, so it's built
+    /// once per distinct size and shared between planets (survey worlds spawn many).</summary>
+    private readonly int[] _tilesAt;
+    private readonly int[] _ringOffsets;
+    private readonly int _totalTiles;
+
+    private static readonly Dictionary<int, (int[] tilesAt, int[] offsets, int total)> _geometryCache = new();
+
+    private static (int[] tilesAt, int[] offsets, int total) GeometryFor(int rings)
     {
-        _tilesAt = new int[RingCount];
-        _ringOffsets = new int[RingCount + 1];
-        for (var r = 0; r < RingCount; r++)
+        lock (_geometryCache)
         {
-            _tilesAt[r] = ComputeTilesAt(r);
-            _ringOffsets[r + 1] = _ringOffsets[r] + _tilesAt[r];
+            if (_geometryCache.TryGetValue(rings, out var g)) return g;
+            var tilesAt = new int[rings];
+            var offsets = new int[rings + 1];
+            for (var r = 0; r < rings; r++)
+            {
+                tilesAt[r] = ComputeTilesAt(r);
+                offsets[r + 1] = offsets[r] + tilesAt[r];
+            }
+            g = (tilesAt, offsets, offsets[rings]);
+            _geometryCache[rings] = g;
+            return g;
         }
-        _totalTiles = _ringOffsets[RingCount];
     }
 
     /// <summary>Per-ring tile count chosen so each tile's chord ≈ <see cref="TileSize"/> px —
@@ -45,15 +68,15 @@ public sealed class Planet
         return Math.Max(8, (int)Math.Round(MathHelper.TwoPi * globalRadius));
     }
 
-    public static int TilesAt(int r)
+    public int TilesAt(int r)
     {
-        if (r < 0 || r >= RingCount) return 1;
+        if (r < 0 || r >= Rings) return 1;
         return _tilesAt[r];
     }
 
     public Vector2 Center;
-    public int Radius => RingMin + RingCount;
-    public int Size => RingCount;
+    public int Radius => RingMin + Rings;
+    public int Size => Rings;
 
     /// <summary>Tiles world gen wants filled with water cells (surface lakes + underground
     /// reservoirs). Water lives exclusively in the cell sim — never as solid tiles — so gen
