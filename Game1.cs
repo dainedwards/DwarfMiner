@@ -1423,8 +1423,8 @@ public sealed partial class DwarfMinerGame : Game
     }
 
     /// <summary>One frame of the liftoff climb: build thrust, ride the dwarf up with the ship,
-    /// spew exhaust, shake the screen, and hand off to <see cref="FinishLaunch"/> once the
-    /// rocket has cleared the surface.</summary>
+    /// spew exhaust, shake the screen — then hand the stick to the player for the orbital
+    /// ascent once the rocket has cleared the pad.</summary>
     private void UpdateLaunch(float dt)
     {
         _launchElapsed += dt;
@@ -1448,7 +1448,61 @@ public sealed partial class DwarfMinerGame : Game
         _run.Cells.Update(dt);
         _run.RunTime += dt;
 
-        if (_launchElapsed > 3.4f) FinishLaunch();
+        if (_launchElapsed > 1.2f)
+        {
+            _launching = false;
+            _ascending = true;
+            _toast = "CLIMB TO THE MOTHERSHIP - A/D STEER";
+            _toastTimer = 3.5f;
+        }
+    }
+
+    /// <summary>The manual half of the escape: the rocket climbs on its own, easing to a
+    /// stop at the mothership's parking orbit, while the player steers laterally (the same
+    /// hands-on feel as the rover descent, in reverse). At orbit altitude an approach glide
+    /// pulls the rocket the rest of the way to the station — the rendezvous always
+    /// completes; steering just decides how direct the ride is. Docking = FinishLaunch.</summary>
+    private void UpdateAscent(float dt, KeyboardState keys)
+    {
+        var up = _run.Planet.UpAt(_launchShipPos);
+        var right = new Vector2(-up.Y, up.X);
+        var lat = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
+                + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
+
+        var alt = (_launchShipPos - _run.Planet.Center).Length() - _run.Planet.Radius * Planet.TileSize;
+        // Climb rate eases to zero approaching the parking orbit — the rocket "arrives"
+        // rather than shooting past the station.
+        var climb = MathHelper.Clamp((Session.OrbitAltitude - alt) * 1.4f, 0f, 270f);
+        _launchShipPos += (up * climb + right * (lat * 220f)) * dt;
+
+        // Near orbit altitude the docking computer takes over the final approach.
+        var station = _run.StationPos;
+        if (alt > Session.OrbitAltitude - 70f)
+        {
+            var to = station - _launchShipPos;
+            var d = to.Length();
+            if (d > 1f) _launchShipPos += to / d * MathF.Min(650f * dt, d);
+            if (d < 48f)
+            {
+                _ascending = false;
+                _transitionFlash = 0.6f;
+                FinishLaunch();
+                return;
+            }
+        }
+
+        _run.Player.Position = _launchShipPos + _launchUp * 8f;
+        _run.Player.Velocity = Vector2.Zero;
+        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, 1.4f, MathHelper.Clamp(dt * 1.4f, 0f, 1f));
+        _camera.Follow(_run.Player.Position, up, dt);
+        _launchUp = up;
+
+        if (climb > 20f) _particles.EmitRocketExhaust(_launchShipPos - up * 2f, -up);
+        _run.Physics.Update(dt);
+        _particles.Update(dt, _run.Planet);
+        _run.Cells.Update(dt);
+        _run.RunTime += dt;
+        _toastTimer -= dt;
     }
 
     /// <summary>Reached once the ship has flown clear: bank the escape (unlock the next world,
