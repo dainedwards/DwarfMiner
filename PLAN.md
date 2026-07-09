@@ -168,8 +168,18 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   (refinery ratios, rift def/worldgen/orbit, rebalanced foundry costs).
   Deferred from this phase: a proper run-summary screen and the "new run+" reset decision
   (souls/upgrades/shards currently all persist across campaigns).
-- **Phase 5 — polish/persistence:** persist mothership position/hull; thruster + gun sfx;
-  landing/launch transition flourishes; DM_SPACE-style test hooks; settings/volume UI.
+- **Phase 5 — polish/persistence (DONE 2026-07-09):** the mothership persists across app
+  restarts — position, heading, and hull snapshot into MetaSave on landing and on quit
+  (`ShipStateSaved` flag, not NaN sentinels: System.Text.Json refuses NaN, which would have
+  silently killed saving). Space audio: "thrust" ion-rumble synth re-triggered while burning
+  (quieter on reserve power), positional rock-shatter via PlayAt when an asteroid dies, hull
+  "hurt" thud on impacts. **F6 cycles master volume** (FULL/LOW/QUIET/MUTED, persists in
+  `MetaSave.VolumeStep`) on any screen. The game-over overlay is multi-line now, and the
+  campaign victory shows a proper summary. **New-run+ decision:** souls, upgrades, and the
+  mothership endure across campaigns; the warp home burns the five core shards, so each
+  campaign re-pierces the worlds. Remaining polish ideas: a full settings UI, landing/launch
+  transition flourishes beyond the zoom eases, and the pre-existing Stomp `Grounded` probe
+  cleanup.
 
 **Upgrade ideas noted for later** (foundry slots to add in phases 4+): jetpack tiers
 (charge/thrust), further pickaxe tiers, armor suit, cargo hold capacity, ship shield, ore
