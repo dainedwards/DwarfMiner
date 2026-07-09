@@ -1038,6 +1038,52 @@ public static class SimTest
         Check("scanner: ore ids map to ore tiles",
             Scanner.OreTileFor("ruby") == TileKind.Ruby && Scanner.OreTileFor("platinum") == TileKind.PlatinumOre);
 
+        // Tier-III effects: jetpack charge/climb curve, magnet reach, O2 ceiling, hull 9,
+        // and the Aegis shield recharge.
+        var tiers = new Player(Vector2.Zero) { HasJetpack = true };
+        var cap1 = tiers.JetChargeCap;
+        tiers.JetTier2 = true;
+        var cap2 = tiers.JetChargeCap;
+        tiers.JetTier3 = true;
+        Check("tiers: jetpack charge 1x/2x/3x",
+            MathF.Abs(cap1 - 2.6f) < 0.01f && MathF.Abs(cap2 - 5.2f) < 0.01f
+            && MathF.Abs(tiers.JetChargeCap - 7.8f) < 0.01f);
+        tiers.HasMagnet = true;
+        var reach1 = tiers.PickupReach;
+        tiers.MagnetTier2 = true;
+        Check("tiers: magnet reach 16 then 30", reach1 == 16f && tiers.PickupReach == 30f);
+        tiers.HasO2Recycler = true;
+        tiers.O2Tier2 = true;
+        Check("tiers: O2 reserves II doubles the ceiling",
+            MathF.Abs(tiers.EffectiveMaxOxygen - 200f) < 0.01f);
+        Check("tiers: hull plating II reaches 9 pips",
+            new Space.SpaceSim { HullTier = 3 }.HullMax == 9);
+        Check("tiers: aegis capacitor halves shield recharge",
+            new Space.SpaceSim { ShieldTier = 2 }.ShieldRechargeTime == 4f
+            && new Space.SpaceSim().ShieldRechargeTime == 8f);
+
+        // The rover loadout manifest: kits price in cargo, stack in the pending manifest,
+        // and refuse gracefully when the hold is short.
+        var loadMeta = new MetaSave();
+        var pending = new System.Collections.Generic.Dictionary<string, int>();
+        var ammo = System.Array.Find(Space.Loadouts.All, l => l.Id == "ammo")!;
+        Check("loadout: empty hold refused", !Space.Loadouts.CanAfford(loadMeta, ammo));
+        loadMeta.ShipCargo["pure_iron"] = 2;
+        var realL = MetaSave.Load();
+        try
+        {
+            Check("loadout: two buys stack",
+                Space.Loadouts.TryBuy(loadMeta, ammo, pending)
+                && Space.Loadouts.TryBuy(loadMeta, ammo, pending)
+                && !Space.Loadouts.TryBuy(loadMeta, ammo, pending));
+        }
+        finally
+        {
+            realL.Save();
+        }
+        Check("loadout: manifest counts kits", pending.GetValueOrDefault("ammo") == 2);
+        Check("loadout: cargo drained exactly", !loadMeta.ShipCargo.ContainsKey("pure_iron"));
+
         // The long-range survey finds real deposits (ember is the ruby world) and caches.
         var ember = World.PlanetDefs.ById("ember");
         var t0 = Environment.TickCount64;
