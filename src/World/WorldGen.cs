@@ -77,13 +77,34 @@ public static class WorldGen
                 ang = (float)(rng.NextDouble() * MathHelper.TwoPi);
                 tries++;
             } while (tries < 40 && NearMountain(mountains, ang, 0.14f));
+            // LakeScale > 1 (ocean worlds) makes every basin wider and deeper — at 3× with
+            // 8+ lakes the shoreline is mostly sea and dry land the exception.
             lakes[i] = (
                 ang,
-                depth: 3.5f + (float)rng.NextDouble() * 3.5f,   // 3.5–7 tiles deep at centre
-                w: 0.055f + (float)rng.NextDouble() * 0.05f);   // ≈ 3°–6° half-width
+                depth: (3.5f + (float)rng.NextDouble() * 3.5f) * def.LakeScale,  // 3.5–7 tiles at scale 1
+                w: (0.055f + (float)rng.NextDouble() * 0.05f) * def.LakeScale);  // ≈ 3°–6° half-width at scale 1
         }
 
-        const int baselineR = BaselineSurfaceRing;
+        // Surface acid pools (acid worlds): carved exactly like lakes but filled with acid
+        // cells — open corrosive ponds to bridge or detour around, feeding the same cell
+        // sim as the underground pockets.
+        var acidPools = new (float ang, float depth, float w)[def.AcidPools];
+        for (var i = 0; i < acidPools.Length; i++)
+        {
+            float ang;
+            var tries = 0;
+            do
+            {
+                ang = (float)(rng.NextDouble() * MathHelper.TwoPi);
+                tries++;
+            } while (tries < 40 && NearMountain(mountains, ang, 0.14f));
+            acidPools[i] = (
+                ang,
+                depth: 3f + (float)rng.NextDouble() * 3f,
+                w: 0.05f + (float)rng.NextDouble() * 0.045f);
+        }
+
+        var baselineR = planet.SurfaceRing;
 
         for (var r = 0; r < planet.Rings; r++)
         {
