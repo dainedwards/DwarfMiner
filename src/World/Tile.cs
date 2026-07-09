@@ -240,6 +240,13 @@ public static class Tiles
         "machine_gun"        => "MACHINE GUN",
         "rocket_launcher"    => "ROCKET LAUNCHER",
         "chitin_armor"       => "CHITIN ARMOR",
+        // Mothership refinery output (the pixel font has no underscore glyph).
+        "pure_iron"          => "PURE IRON",
+        "pure_coal"          => "PURE COAL",
+        "pure_silver"        => "PURE SILVER",
+        "pure_gold"          => "PURE GOLD",
+        "pure_platinum"      => "PURE PLATINUM",
+        "core_shard"         => "CORE SHARD",
         _                    => id.ToUpperInvariant(),
     };
 
