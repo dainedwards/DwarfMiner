@@ -135,9 +135,33 @@ public sealed partial class DwarfMinerGame
         }
     }
 
-    /// <summary>Pointer toward the orbiting mothership while it's out of frame — mining
-    /// runs deep, and the rendezvous drifts.</summary>
-    private void DrawStationIndicator() => DrawEdgeArrow(_run.StationPos, new Color(150, 220, 255));
+    /// <summary>Fix on the orbiting mothership — mining runs deep, the rendezvous drifts,
+    /// and the escape climb needs the docking target at any range. Off-frame it's an edge
+    /// arrow with a range readout; in frame during the ascent the label floats under the
+    /// station itself, so the indicator is up no matter how far away the ship is.</summary>
+    private void DrawStationIndicator()
+    {
+        var col = new Color(150, 220, 255);
+        var label = $"MOTHERSHIP {(_run.StationPos - _run.Player.Position).Length() / Planet.TileSize:0}M";
+        var screen = Vector2.Transform(_run.StationPos, _camera.View);
+        const int margin = 14;
+        var onScreen = screen.X > margin && screen.X < VirtualWidth - margin
+                    && screen.Y > margin && screen.Y < VirtualHeight - margin;
+        if (!onScreen)
+        {
+            DrawEdgeArrow(_run.StationPos, col, label);
+            return;
+        }
+        // On-screen the station speaks for itself in normal play, but during the ascent
+        // keep the label pinned to it — the docking target should never be ambiguous.
+        if (!_ascending) return;
+        var w = _renderer.MeasureText(label);
+        _renderer.DrawText(label,
+            new Vector2(
+                MathHelper.Clamp(screen.X - w / 2f, 4f, VirtualWidth - 4f - w),
+                MathHelper.Clamp(screen.Y + 42f, 4f, VirtualHeight - 16f)),
+            col);
+    }
 
     /// <summary>The Geo Scanner's HUD fixes: nearest fuel deposit, nearest signature ore,
     /// and the titan, each with its range in tiles. Only while the upgrade is owned and the
