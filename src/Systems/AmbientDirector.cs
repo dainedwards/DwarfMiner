@@ -86,6 +86,33 @@ public static class AmbientDirector
             }
         }
 
+        // Acid rain — acid worlds only: a toxic cloud parks over the player's bearing and
+        // rains live acid cells for the storm window. The drops feed the ordinary cell sim,
+        // so the rain pools where it lands and (with the buffed corrosion) eats through the
+        // roofs the dwarf shelters under. The cloud drifts slowly while it rains.
+        if (run.Def.AcidRain)
+        {
+            if (run.AcidRainActive > 0f)
+            {
+                run.AcidRainActive -= dt;
+                run.AcidRainAngle += 0.012f * dt;   // slow downwind drift
+                RainAcid(run);
+                if (run.AcidRainActive <= 0f)
+                    run.AcidRainTimer = 55f + (float)Random.Shared.NextDouble() * 45f;
+            }
+            else
+            {
+                run.AcidRainTimer -= dt;
+                if (run.AcidRainTimer <= 0f)
+                {
+                    var rel = run.Player.Position - run.Planet.Center;
+                    run.AcidRainAngle = MathF.Atan2(rel.Y, rel.X);
+                    run.AcidRainActive = 12f;
+                    result.AcidRainStarted = true;
+                }
+            }
+        }
+
         // Magma surges — only where there's serious lava (ember, core).
         if (run.Def.LavaFillFrac >= 0.5f)
         {
