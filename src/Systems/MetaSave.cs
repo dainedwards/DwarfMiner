@@ -69,6 +69,17 @@ public sealed class MetaSave
     /// <summary>Completed warp runs (escaped the Rift with its titan slain).</summary>
     public int RunsCompleted { get; set; }
 
+    /// <summary>Mothership state persisted across app restarts: where you parked, which way
+    /// the nose points, and the hull you left with. NaN X = never saved (fresh install) —
+    /// the boot falls back to parking at a planet. Hull -1 = full.</summary>
+    public float ShipPosX { get; set; } = float.NaN;
+    public float ShipPosY { get; set; }
+    public float ShipHeadingSave { get; set; }
+    public int ShipHull { get; set; } = -1;
+
+    /// <summary>Master-volume step (0 full … 3 muted) — cycled with F6, applied at boot.</summary>
+    public int VolumeStep { get; set; }
+
     /// <summary>Raw metals refined N:1 into pure ingots at the dock. Gems and other rares
     /// (crystal, ruby, sapphire, diamond) are precious as-is and skip refining; bulk stone
     /// stays bulk. Remainders stay raw in the hold and join the next batch.</summary>
