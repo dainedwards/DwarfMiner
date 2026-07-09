@@ -247,8 +247,13 @@ public sealed partial class DwarfMinerGame : Game
             // DM_ZOOM overrides the default zoom for testing (e.g. zoom out to frame a boss).
             Zoom = float.TryParse(Environment.GetEnvironmentVariable("DM_ZOOM"), out var z) ? z : 4.0f,
         };
-        // No run yet when the game boots to the star map; StartNewRun snaps on planet entry.
+        // The space screen drives Zoom itself every frame; remember the in-run zoom (incl. any
+        // DM_ZOOM override) so landing on a planet restores it.
+        _playZoom = _camera.Zoom;
+        _rocketTex = BuildRocketTexture();
+        // No run yet when the game boots to space; StartNewRun snaps on planet entry.
         if (_run is not null) _camera.SnapTo(_run.Player.Position, 0f);
+        else _camera.SnapTo(_space.ShipPos, 0f);
 
         // Animated CC0 sprite pack when assets/player is present; string-art dwarf otherwise.
         _playerSprite = PlayerSprite.TryLoad(GraphicsDevice);
