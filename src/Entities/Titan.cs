@@ -748,36 +748,40 @@ public sealed class Titan
         physics.Earthquake(footPos - up * (Planet.TileSize * 5f), 64f + Anger * 0.5f, 1 + (int)(Anger / 45f));
     }
 
-    /// <summary>Verlet-integrated tail. Node 0 is hard-anchored to a point on the body's rump
-    /// (opposite the head's facing); subsequent nodes free-fall under planet gravity with
-    /// damping, then a fixed-distance constraint keeps the chain links at TailSegLen apart.
-    /// The result is a tail that drags behind the body when moving, droops downward when
-    /// idle, and curls around terrain it brushes against.</summary>
+    /// <summary>Verlet-integrated spine chain. For bipeds node 0 anchors at the rump (opposite the
+    /// head's facing) so the tail drags behind and droops; for the Sandworm node 0 anchors at the
+    /// HEAD so the whole chain — the worm's body — stays welded to the maw and undulates behind it
+    /// as the head weaves. Free nodes free-fall with damping, then a fixed-distance constraint
+    /// keeps the links at TailSegLen apart.</summary>
     private void UpdateTail(float dt, Planet planet, Vector2 up, Vector2 right)
     {
-        // Anchor the tail's root to the back of the body, opposite the head's facing.
-        var root = Position + right * (Facing * -98f) + up * 18f;
+        var worm = Kind == TitanKind.Sandworm;
+        // Anchor node 0. Bipeds: the rump (tail drags behind). Sandworm: the head (body trails it).
+        var root = worm
+            ? Position + right * (Facing * 8f)
+            : Position + right * (Facing * -98f) + up * 18f;
         TailNodes[0] = root;
         TailPrev[0] = root;
 
-        // Verlet integration on the free nodes.
+        // Verlet integration on the free nodes. The worm's body follows the head's weave rather
+        // than drooping, so it barely feels gravity; a biped's tail hangs under full gravity.
+        var gravMag = worm ? 90f : 380f;
         for (var i = 1; i < TailNodes.Length; i++)
         {
             var temp = TailNodes[i];
             var velocity = (TailNodes[i] - TailPrev[i]) * 0.94f;  // damping
-            var grav = planet.GravityAt(TailNodes[i]) * 380f;
+            var grav = planet.GravityAt(TailNodes[i]) * gravMag;
             TailNodes[i] += velocity + grav * (dt * dt);
             TailPrev[i] = temp;
         }
 
-        // Terrain collision: any node inside a solid tile is pushed out along the local up.
-        for (var i = 1; i < TailNodes.Length; i++)
-        {
-            for (var safety = 0; safety < 4 && planet.IsSolidAt(TailNodes[i]); safety++)
-            {
-                TailNodes[i] += planet.UpAt(TailNodes[i]) * 3f;
-            }
-        }
+        // Terrain collision keeps a biped's tail from clipping into the ground. The Sandworm is
+        // *meant* to thread through the planet, so its body passes freely through solid rock (its
+        // head plows a tunnel) instead of being shoved back up to the surface.
+        if (!worm)
+            for (var i = 1; i < TailNodes.Length; i++)
+                for (var safety = 0; safety < 4 && planet.IsSolidAt(TailNodes[i]); safety++)
+                    TailNodes[i] += planet.UpAt(TailNodes[i]) * 3f;
 
         // Distance constraints — multiple iterations for stability.
         for (var iter = 0; iter < 6; iter++)
