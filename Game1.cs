@@ -153,38 +153,50 @@ public sealed partial class DwarfMinerGame : Game
         base.Initialize();
     }
 
-    private void StartNewRun(PlanetDef def, bool descend = false)
+    /// <summary>The heavy half of starting a run: world generation, cell seeding, and the
+    /// liquid pre-settle. Static and touching only freshly built objects, so the space
+    /// screen can run it on a background thread while the player is still flying — by the
+    /// time they press Enter the world is usually already built (seamless landing).</summary>
+    private static Session BuildSessionWorld(PlanetDef def)
     {
         var seed = (int)DateTime.Now.Ticks;
-        _run = new Session(def);
-        // Ship-stage recipes (nav core cost) vary per planet — rebuild the crafting table.
-        Crafting.SetPlanet(def);
-        _run.Planet = WorldGen.Generate(seed, def);
-        _run.Cells = new Cells(_run.Planet);
-        _run.Physics = new Physics(_run.Planet, _run.Cells);
+        var run = new Session(def);
+        run.Planet = WorldGen.Generate(seed, def);
+        run.Cells = new Cells(run.Planet);
+        run.Physics = new Physics(run.Planet, run.Cells);
         // Lava seeding: any cave (Sky tile) within the def's lava fraction of the planet
         // radius gets filled with lava — volcanic worlds flood far shallower cavities.
         if (def.LavaFillFrac > 0f)
-            _run.Cells.FillSkyTilesWithin(_run.Planet.Radius * def.LavaFillFrac, Material.Lava);
+            run.Cells.FillSkyTilesWithin(run.Planet.Radius * def.LavaFillFrac, Material.Lava);
 
         // Water seeding: world gen recorded lake-basin and reservoir tiles; pour the cells in
         // now. Water is always sim cells (never solid tiles), so it settles, flows into player
         // tunnels, and quenches lava per the cell rules.
-        foreach (var (wsx, wsy) in _run.Planet.WaterSeeds)
-            _run.Cells.FillTile(wsx, wsy, Material.Water);
+        foreach (var (wsx, wsy) in run.Planet.WaterSeeds)
+            run.Cells.FillTile(wsx, wsy, Material.Water);
 
         // Hazard cells: gas rises to the cave roofs, acid settles to the floors. Poured after
         // water so the pre-settle below carries them to rest alongside it.
-        foreach (var (gx, gy) in _run.Planet.GasSeeds)
-            _run.Cells.FillTile(gx, gy, Material.Gas);
-        foreach (var (ax, ay) in _run.Planet.AcidSeeds)
-            _run.Cells.FillTile(ax, ay, Material.Acid);
+        foreach (var (gx, gy) in run.Planet.GasSeeds)
+            run.Cells.FillTile(gx, gy, Material.Gas);
+        foreach (var (ax, ay) in run.Planet.AcidSeeds)
+            run.Cells.FillTile(ax, ay, Material.Acid);
 
         // Pre-settle the seeded liquids during load: the first ~2s of cell ticks carry every
         // seeded cell awake (tens of ms per tick at Density 8). Burning them here turns a
         // visible gameplay stutter into a slightly longer world-gen pause; after settling,
         // hemmed pool interiors sleep and the steady-state tick is cheap.
-        for (var i = 0; i < 120; i++) _run.Cells.Update(1f / 60f);
+        for (var i = 0; i < 120; i++) run.Cells.Update(1f / 60f);
+        return run;
+    }
+
+    private void StartNewRun(PlanetDef def, bool descend = false)
+    {
+        // A prefetched world (built in the background while flying nearby) makes this
+        // near-instant; otherwise build it here and eat the pause.
+        _run = TakePrefetchedSession(def) ?? BuildSessionWorld(def);
+        // Ship-stage recipes (nav core cost) vary per planet — rebuild the crafting table.
+        Crafting.SetPlanet(def);
 
         // Spawn the dwarf on top of whatever mountain is at angle -π/2 — walk down from
         // far above until the first solid tile, then float a few pixels above it.
