@@ -72,6 +72,11 @@ public sealed class Player
     /// <summary>How far loose material leaps to the pack — foundry magnet tiers.</summary>
     public float PickupReach => MagnetTier2 ? 30f : HasMagnet ? 16f : 4f;
 
+    /// <summary>Seconds of Leatherback EMP remaining. While positive the dwarf's tech is
+    /// fried: the jetpack won't burn and energy weapons (laser / laser cannon / mining
+    /// laser) won't fire — see Game1's UseSelectedSlot gate. Transient (not saved).</summary>
+    public float EmpTimer;
+
     public float MineRange = 22f;          // pixels — dwarves have short reach
 
     /// <summary>Mining-laser beam length. Far past arm's reach — the whole point of the
