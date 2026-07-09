@@ -128,6 +128,15 @@ public sealed class Creature
             case CreatureKind.MoleBeast:
                 Radius = 4.2f; Health = 22f; MoveSpeed = 26f; ContactDamage = 8f;
                 break;
+            case CreatureKind.SporeBat:
+                Radius = 2.8f; Health = 6f; MoveSpeed = 44f; ContactDamage = 4f;
+                break;
+            case CreatureKind.CrystalCrawler:
+                Radius = 5f; Health = 45f; MoveSpeed = 14f; ContactDamage = 13f;
+                break;
+            case CreatureKind.VoidWraith:
+                Radius = 3.8f; Health = 20f; MoveSpeed = 62f; ContactDamage = 15f;
+                break;
         }
     }
 
