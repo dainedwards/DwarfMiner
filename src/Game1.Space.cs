@@ -244,6 +244,11 @@ public sealed partial class DwarfMinerGame
             {
                 _toast = "ALREADY INSTALLED";
             }
+            else if (Upgrades.Locked(_meta, def))
+            {
+                var req = Array.Find(Upgrades.All, u => u.Id == def.Requires)!;
+                _toast = $"REQUIRES {req.Name.ToUpperInvariant()} FIRST";
+            }
             else if (Upgrades.TryBuy(_meta, def))
             {
                 // Ship tiers apply immediately; dwarf gear applies on the next rover drop.
