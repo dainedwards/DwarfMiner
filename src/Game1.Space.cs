@@ -98,7 +98,7 @@ public sealed partial class DwarfMinerGame
             }
             else
             {
-                _toast = $"UNCHARTED — ESCAPE {PlanetDefs.All[idx - 1].Name.ToUpperInvariant()} TO CHART A COURSE";
+                _toast = $"UNCHARTED - ESCAPE {PlanetDefs.All[idx - 1].Name.ToUpperInvariant()} TO CHART A COURSE";
                 _toastTimer = 2.5f;
             }
         }
