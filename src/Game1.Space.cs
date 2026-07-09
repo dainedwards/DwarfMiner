@@ -60,7 +60,7 @@ public sealed partial class DwarfMinerGame
     private void RestoreShipState()
     {
         ApplyShipTiers();
-        if (float.IsNaN(_meta.ShipPosX))
+        if (!_meta.ShipStateSaved)
         {
             _space.PlaceShipAt(Math.Min(_meta.PlanetsUnlocked, PlanetDefs.All.Length) - 1);
             return;
