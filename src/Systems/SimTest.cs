@@ -748,6 +748,87 @@ public static class SimTest
             crumbled && island.TrueForAll(t => !Tiles.IsSolid(planet.Get(t.x, t.y))));
     }
 
+    /// <summary>Above-crust support rule: a floating slab in open sky far bigger than the
+    /// underground collapse budget must still fall (nothing behind it to infer support
+    /// from), while the same slab hung in an underground pocket stays put — the budget
+    /// valve keeps inferring backdrop support below the crust.</summary>
+    private static void TestSkyCollapse()
+    {
+        var planet = WorldGen.Generate(9);
+        var cells = new Cells(planet);
+        var physics = new Physics(planet, cells);
+        const float dt = 1f / 60f;
+        const int slabH = 8, slabW = 16;   // 128 tiles — well past the stone budget of 48
+
+        // Find a stretch of open sky above the surface (clear of mountains/volcanoes).
+        var ring0 = planet.SurfaceRing + 20;
+        var ang0 = -1;
+        var n = planet.TilesAt(ring0);
+        for (var t = 0; t < n && ang0 < 0; t++)
+        {
+            var clear = true;
+            for (var dr = -2; dr <= slabH + 1 && clear; dr++)
+                for (var da = -2; da <= slabW + 1 && clear; da++)
+                    clear = planet.Get(ring0 + dr, t + da) == TileKind.Sky;
+            if (clear) ang0 = t;
+        }
+        Check("sky-collapse: open-sky test site found", ang0 >= 0);
+        if (ang0 < 0) return;
+
+        var slab = new List<(int x, int y)>();
+        for (var dr = 0; dr < slabH; dr++)
+            for (var da = 0; da < slabW; da++)
+            {
+                planet.Set(ring0 + dr, ang0 + da, TileKind.Stone);
+                slab.Add((ring0 + dr, ang0 + da));
+            }
+        foreach (var (x, y) in slab) physics.MarkDirty(x, y);
+        for (var i = 0; i < 300; i++) physics.Update(dt);
+        Check("sky-collapse: oversized airborne slab crumbles (no backdrop above the crust)",
+            slab.TrueForAll(t => !Tiles.IsSolid(planet.Get(t.x, t.y))));
+
+        // Control: the same slab in a carved pocket underground is saved by the budget valve.
+        var uRing = planet.SurfaceRing - 40;
+        const int uAng = 60;
+        for (var dr = -2; dr <= slabH + 1; dr++)
+            for (var da = -2; da <= slabW + 1; da++)
+                planet.Set(uRing + dr, uAng + da, TileKind.Sky);
+        var buried = new List<(int x, int y)>();
+        for (var dr = 0; dr < slabH; dr++)
+            for (var da = 0; da < slabW; da++)
+            {
+                planet.Set(uRing + dr, uAng + da, TileKind.Stone);
+                buried.Add((uRing + dr, uAng + da));
+            }
+        foreach (var (x, y) in buried) physics.MarkDirty(x, y);
+        for (var i = 0; i < 300; i++) physics.Update(dt);
+        Check("sky-collapse: same slab underground stays (backdrop support inferred)",
+            buried.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
+    }
+
+    /// <summary>Volcanoes: fire worlds raise lava-primed cones whose plumbing reaches a deep
+    /// chamber; the acid flag reroutes the fluid to the acid seed channel.</summary>
+    private static void TestVolcanoes()
+    {
+        var ember = WorldGen.Generate(5, PlanetDefs.ById("ember"));
+        Check($"volcano: ember world raises primed volcanoes ({ember.VolcanoVents.Count} vents, "
+            + $"{ember.LavaSeeds.Count} lava sites)",
+            ember.VolcanoVents.Count >= 1 && ember.LavaSeeds.Count > 0);
+        var deep = false;
+        foreach (var (x, _) in ember.LavaSeeds) deep |= x < ember.SurfaceRing - 40;
+        Check("volcano: throat is primed down to a deep magma chamber", deep);
+        var aboveSurface = false;
+        foreach (var (x, _) in ember.LavaSeeds) aboveSurface |= x > ember.SurfaceRing;
+        Check("volcano: crater pool sits above the surface", aboveSurface);
+
+        var acidDef = PlanetDefs.ById("ember") with { VolcanoAcid = true };
+        var acidWorld = WorldGen.Generate(6, acidDef);
+        var acidVent = false;
+        foreach (var v in acidWorld.VolcanoVents) acidVent |= v.acid;
+        Check("volcano: acid volcanoes vent acid and seed the acid channel",
+            acidVent && acidWorld.LavaSeeds.Count == 0 && acidWorld.AcidSeeds.Count > 0);
+    }
+
     private static int CountSolidNear(Planet planet, Vector2 world, int r)
     {
         var (cx, cy) = planet.WorldToTile(world);
