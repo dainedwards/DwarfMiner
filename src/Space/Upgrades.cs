@@ -83,6 +83,18 @@ public static class Upgrades
         new("armory", "Rover Armory",
             "Every rover deploys with a pistol and 90 rounds",
             Souls: 1, Mats: new[] { ("pure_iron", 4), ("pure_gold", 2) }, SoulKind: "Sandworm"),
+
+        new("scanner", "Geo Scanner",
+            "HUD arrows track the nearest fuel, signature ore, and the titan",
+            Souls: 1, Mats: new[] { ("pure_silver", 2), ("crystal", 2) }, SoulKind: "Mecha"),
+
+        new("plating", "Combat Plating",
+            "Suit takes 30 percent less damage (stacks with crafted armor)",
+            Souls: 1, Mats: new[] { ("pure_iron", 3), ("pure_platinum", 2) }, SoulKind: "Kong"),
+
+        new("supplies", "Supply Cache",
+            "Every rover deploys with 2 poultices, 40 blocks, and a sentry",
+            Souls: 1, Mats: new[] { ("pure_gold", 2), ("pure_coal", 2) }, SoulKind: "Godzilla"),
     };
 
     /// <summary>True when a tiered line's prerequisite hasn't been installed yet.</summary>
