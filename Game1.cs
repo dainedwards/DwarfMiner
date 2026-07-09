@@ -2676,6 +2676,15 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.AddLight(shot.Position, lr, lc);
         }
 
+        // The toxic cloud sheds a sickly green underglow onto the ground it's raining on.
+        if (_run.AcidRainActive > 0f)
+        {
+            var cAng = _run.AcidRainAngle;
+            var cUp = new Vector2(MathF.Cos(cAng), MathF.Sin(cAng));
+            var ground = SpawnDirector.FindSurfaceSpawn(_run.Planet, cAng, _run.Planet.Radius);
+            _renderer.AddLight(ground + cUp * 240f, 60f, new Color(110, 170, 60));
+        }
+
         // Falling meteors blaze a warm light as they streak in.
         foreach (var m in _run.Meteors)
             _renderer.AddLight(m.Position, 26f, new Color(255, 150, 60));
