@@ -154,16 +154,27 @@ public sealed partial class DwarfMinerGame
             _sfx.Play("shoot", 0.35f, pitch: -0.2f, pan: 0f, minGap: 0.05f);
         }
 
+        _space.RiftLocked = _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded;
         TickSpaceCameraAndBreach(dt);
 
-        // Prefetch the world for whatever planet we're loitering near, so pressing Enter
-        // lands without a generation pause. The Rift only prefetches once it's warp-open.
-        if (_space.LandingCandidate() is { } near && _prefetchId != near.Def.Id
-            && (near.Def.Id != "rift" || _meta.CoreShards.Count >= PlanetDefs.WarpShardsNeeded))
+        // Prefetch the world for whatever planet we're approaching, so atmosphere entry is
+        // seamless. Kicked off well outside entry range; the locked Rift never prefetches.
+        var (nearP, surfDist) = _space.NearestPlanet();
+        if (nearP is not null && surfDist < 900f && _prefetchId != nearP.Def.Id
+            && !(nearP.Def.Id == "rift" && _space.RiftLocked))
         {
-            var def = near.Def;
+            var def = nearP.Def;
             _prefetchId = def.Id;
             _prefetchTask = Task.Run(() => BuildSessionWorld(def));
+        }
+
+        // Flying into the upper atmosphere IS the transition — no prompt, no keypress.
+        if (_space.AtmosphereContact() is { } entry)
+        {
+            CaptureShipState();
+            _meta.Save();
+            EnterOrbit(entry.Def);
+            return;
         }
 
         // Warp jump: all five core shards let the mothership fold space to the Rift.
