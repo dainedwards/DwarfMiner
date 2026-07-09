@@ -729,15 +729,16 @@ public static class SimTest
     }
 
     /// <summary>The solar-system flight model: thrust moves the ship, braking stops it, the
-    /// sun and planet discs are solid, and the landing prompt fires exactly where it should.</summary>
+    /// sun repels, ordinary planets are open atmosphere (flying in = entry contact), and
+    /// only the locked Rift's storm wall stays solid.</summary>
     private static void TestSpaceSim()
     {
         const float dt = 1f / 60f;
 
         var sim = new Space.SpaceSim();
         Check("space: one planet per PlanetDef", sim.Planets.Count == World.PlanetDefs.All.Length);
-        Check("space: ship parks in landing range of the start planet",
-            sim.LandingCandidate()?.Def.Id == sim.Planets[0].Def.Id);
+        Check("space: ship parks near the start planet",
+            sim.NearestPlanet().planet?.Def.Id == sim.Planets[0].Def.Id);
 
         // Thrust straight out for 3s: the ship must actually go somewhere.
         var start = sim.ShipPos;
