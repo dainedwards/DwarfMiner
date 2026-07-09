@@ -205,8 +205,7 @@ public static class TitanRenderer
         // Short segmented tail.
         DrawSpineChain(r, t, f, 22f, 6f, ridge: false, plated: true);
 
-        foreach (var leg in t.Legs)
-            DrawLeg(r, t, f, leg, 24f, 18f, mech: true);
+        DrawLegs(r, t, f, 24f, 18f, mech: true);
 
         // Boxy torso with panel seams + a glowing chest reactor.
         var chest = f.Tp + f.Up * 74f + f.Right * (f.Face * 8f);
