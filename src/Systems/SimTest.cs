@@ -972,6 +972,26 @@ public static class SimTest
         Check("foundry: rover count grew by two", meta2.Rovers == before + 2,
             $"{before} -> {meta2.Rovers}");
 
+        // Tier gating: Jetpack II is locked until the base jetpack is installed, however
+        // rich the buyer.
+        var jet2 = System.Array.Find(Space.Upgrades.All, u => u.Id == "jetpack2")!;
+        var meta3 = new MetaSave();
+        meta3.TitanSouls["Kong"] = 9;
+        meta3.ShipCargo["ruby"] = 9;
+        Check("foundry: tier II locked without tier I", Space.Upgrades.Locked(meta3, jet2)
+            && !Space.Upgrades.TryBuy(meta3, jet2));
+        Check("foundry: lock spent nothing", meta3.TotalSouls() == 9 && meta3.ShipCargo["ruby"] == 9);
+        meta3.ShipUpgrades.Add("jetpack");
+        var real3 = MetaSave.Load();
+        try
+        {
+            Check("foundry: tier II unlocks behind tier I", Space.Upgrades.TryBuy(meta3, jet2));
+        }
+        finally
+        {
+            real3.Save();
+        }
+
         // The long-range survey finds real deposits (ember is the ruby world) and caches.
         var ember = World.PlanetDefs.ById("ember");
         var t0 = Environment.TickCount64;
