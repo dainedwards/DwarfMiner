@@ -391,6 +391,14 @@ public sealed partial class DwarfMinerGame : Game
         _particles.Update(dt, _run.Planet);
         _toastTimer -= dt;
 
+        // The loadout menu captures input while open; the orbit keeps drifting behind it.
+        if (Pressed(keys, _prevKeys, Keys.L)) _loadoutOpen = !_loadoutOpen;
+        if (_loadoutOpen)
+        {
+            UpdateLoadoutMenu(keys);
+            return;
+        }
+
         if (Pressed(keys, _prevKeys, Keys.Enter))
         {
             LaunchRover();
@@ -401,6 +409,30 @@ public sealed partial class DwarfMinerGame : Game
             _orbiting = false;
             _transitionFlash = 0.6f;
             EnterSpace(PlanetDefs.IndexOf(_run.Def), exitSpeed: 260f, zoomFromPlanet: true);
+        }
+    }
+
+    private void UpdateLoadoutMenu(KeyboardState keys)
+    {
+        if (Pressed(keys, _prevKeys, Keys.Escape)) _loadoutOpen = false;
+        var count = Loadouts.All.Length;
+        if (Pressed(keys, _prevKeys, Keys.Up) || Pressed(keys, _prevKeys, Keys.W))
+            _loadoutCursor = (_loadoutCursor - 1 + count) % count;
+        if (Pressed(keys, _prevKeys, Keys.Down) || Pressed(keys, _prevKeys, Keys.S))
+            _loadoutCursor = (_loadoutCursor + 1) % count;
+        if (Pressed(keys, _prevKeys, Keys.Enter))
+        {
+            var def = Loadouts.All[_loadoutCursor];
+            if (Loadouts.TryBuy(_meta, def, _pendingKits))
+            {
+                _sfx.Play("pickup", 0.7f);
+                _toast = $"{def.Name.ToUpperInvariant()} PACKED ({_pendingKits[def.Id]} ABOARD)";
+            }
+            else
+            {
+                _toast = "NOT ENOUGH CARGO";
+            }
+            _toastTimer = 2.5f;
         }
     }
 
