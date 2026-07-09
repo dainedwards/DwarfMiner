@@ -304,15 +304,18 @@ public sealed partial class DwarfMinerGame : Game
     }
 
     /// <summary>Flying into a planet's upper atmosphere from space: build (or claim the
-    /// prefetched) world, park the mothership at its orbit anchor, and hold there — the
-    /// player chooses when to launch the rover, shifts the orbit with A/D to pick a drop
-    /// site, or breaks orbit back to space. No menus, no prompts on the way in.</summary>
-    private void EnterOrbit(PlanetDef def)
+    /// prefetched) world and arrive above the parking orbit at the same bearing you flew in
+    /// on — the ship then settles itself down into orbit automatically. From there the
+    /// player orbits left/right to pick a drop site, launches the lander, or leaves. No
+    /// menus, no prompts on the way in.</summary>
+    private void EnterOrbit(PlanetDef def, float entryBearing = -MathF.PI / 2f)
     {
         StartNewRun(def);
         _landing = false;
         _orbiting = true;
         _transitionFlash = 0.6f;
+        _run.MothershipAngle = entryBearing;
+        _run.OrbitEntryOffset = 420f;   // arrive high, glide down — the automatic fly-in
         _run.Player.Position = _run.StationPos;
         _toast = $"ORBIT OF {def.Name.ToUpperInvariant()} ESTABLISHED";
         _toastTimer = 3f;
