@@ -575,6 +575,7 @@ public sealed class Titan
     /// the third lunge.</summary>
     private void TickRaiju(float dt, Vector2 playerPos)
     {
+        _clipTimer -= dt;
         if (SpecialState > 0f)
         {
             SpecialState -= dt;
@@ -589,8 +590,11 @@ public sealed class Titan
                 if (dir == 0f) dir = Facing >= 0f ? 1f : -1f;
                 Velocity += right * (dir * 430f) + up * 70f;
             }
-            if ((playerPos - Position).Length() < BodyRadius + 45f)
+            if (_clipTimer <= 0f && (playerPos - Position).Length() < BodyRadius + 45f)
+            {
                 PendingShockwave = (Position, 100f, 15f);   // clipped mid-lunge
+                _clipTimer = 0.5f;                          // one clip per pass, not per frame
+            }
             if (SpecialState <= 0f) { Charging = false; SpecialCooldown = 6f; }
             return;
         }
