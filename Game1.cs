@@ -51,6 +51,11 @@ public sealed partial class DwarfMinerGame : Game
     private string _toast = "";
     private float _toastTimer;
 
+    /// <summary>F6 master-volume cycle. Step 0 is the classic default; the choice persists
+    /// in MetaSave.VolumeStep.</summary>
+    private static readonly float[] VolumeSteps = { 0.55f, 0.28f, 0.1f, 0f };
+    private static readonly string[] VolumeNames = { "FULL", "LOW", "QUIET", "MUTED" };
+
     /// <summary>Cave-in warning state: <c>_caveInWarn</c> counts down while condemned tiles hang
     /// over the dwarf (drives the flashing HUD banner); <c>_caveInDust</c> throttles the sifting
     /// debris telegraph emitted from those tiles.</summary>
