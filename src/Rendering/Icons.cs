@@ -65,6 +65,7 @@ public static class Icons
         _icons["machine_gun"]     = BuildMachineGun(gd);
         _icons["laser"]           = BuildLaser(gd);
         _icons["laser_cannon"]    = BuildLaserCannon(gd);
+        _icons["mining_laser"]    = BuildMiningLaser(gd);
         _icons["rocket_launcher"] = BuildRocketLauncher(gd);
         _icons["rocket"]          = BuildRocket(gd);
         _icons["tnt"]             = BuildTnt(gd);
