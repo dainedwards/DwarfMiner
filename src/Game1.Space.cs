@@ -109,7 +109,18 @@ public sealed partial class DwarfMinerGame
                  + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
         var thrust = keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up);
         var brake = keys.IsKeyDown(Keys.S) || keys.IsKeyDown(Keys.Down);
+        var prevHull = _space.Hull;
         _space.Update(dt, turn, thrust, brake);
+
+        // Engine rumble: a short loopable burst re-triggered while the burn is held.
+        if (thrust) _sfx.Play("thrust", _space.HasFuel ? 0.4f : 0.18f, pitch: -0.2f, minGap: 0.22f);
+        // Positional shatter for any rock that died this tick; a thud when one of them was us.
+        if (_space.LastRockShattered is { } rock)
+        {
+            _space.LastRockShattered = null;
+            PlayAt("break", rock, 0.8f, pitch: -0.3f, minGap: 0.05f);
+        }
+        if (_space.Hull < prevHull) _sfx.Play("hurt", 0.7f, pitch: -0.4f);
 
         // Autocannon — held fire, rate-limited by the sim's cooldown.
         _muzzle -= dt;
