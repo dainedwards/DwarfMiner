@@ -310,8 +310,12 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.Position = _run.StationPos;
         _toast = $"ORBIT OF {def.Name.ToUpperInvariant()} ESTABLISHED";
         _toastTimer = 3f;
-        _camera.Zoom = 1.4f;
-        _camera.SnapTo(_run.StationPos, 0f);
+        // Camera is null only for the DM_ORBIT boot hook — LoadContent snaps it then.
+        if (_camera is not null)
+        {
+            _camera.Zoom = 1.4f;
+            _camera.SnapTo(_run.StationPos, 0f);
+        }
     }
 
     /// <summary>One frame in the parking orbit: A/D slides the station around the planet
