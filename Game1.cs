@@ -572,6 +572,7 @@ public sealed partial class DwarfMinerGame : Game
         run.Player.HasMagnet = Upgrades.Owned(_meta, "magnet");
         run.Player.MagnetTier2 = Upgrades.Owned(_meta, "magnet2");
         run.Player.HasPlating = Upgrades.Owned(_meta, "plating");
+        if (Upgrades.Owned(_meta, "vitality")) run.Player.MaxHealth = 140f;
         // Loading woke every cell; burn the resettle here like world gen's pre-settle pass.
         for (var i = 0; i < 45; i++) _run.Cells.Update(1f / 60f);
         _gameOverReason = "";
