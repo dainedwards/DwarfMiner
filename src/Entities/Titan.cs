@@ -1103,6 +1103,8 @@ public sealed class TitanProjectile
         (Radius, Life) = kind switch
         {
             TitanShotKind.Flame => (9f, 0.85f),   // fatter, shorter-lived — fewer grains read as one gout
+            TitanShotKind.Acid  => (6.5f, 3.4f),  // lofted glob — lives long enough to finish its arc
+            TitanShotKind.Spike => (4f, 1.6f),
             _                   => (4f, 0.9f),   // Laser
         };
         _drill = kind == TitanShotKind.Laser ? 3 : 0;
@@ -1110,22 +1112,40 @@ public sealed class TitanProjectile
 
     public void Update(float dt, Planet planet, Physics physics, Cells cells, Player player)
     {
+        // Acid globs are the one ballistic shot — they loft, arc, and rain down.
+        if (Kind == TitanShotKind.Acid)
+            Velocity += planet.GravityAt(Position) * 240f * dt;
         Position += Velocity * dt;
         Life -= dt;
-        if (Life <= 0f) { Dead = true; return; }
+        if (Life <= 0f)
+        {
+            Dead = true;
+            if (Kind == TitanShotKind.Acid) SplashAcid(planet, cells);
+            return;
+        }
 
-        // Player contact — Flame sears, Laser hits harder and knocks back.
+        // Player contact — Flame sears, Acid burns and splashes, Laser/Spike hit harder
+        // and knock back.
         var diff = player.Position - Position;
         if (diff.Length() < Radius + player.Radius)
         {
-            if (Kind == TitanShotKind.Flame)
+            switch (Kind)
             {
-                player.TakeDamage(9f);
-            }
-            else
-            {
-                player.TakeDamage(28f);
-                if (diff.LengthSquared() > 0.0001f) player.Velocity += Vector2.Normalize(diff) * 200f;
+                case TitanShotKind.Flame:
+                    player.TakeDamage(9f);
+                    break;
+                case TitanShotKind.Acid:
+                    player.TakeDamage(13f);
+                    SplashAcid(planet, cells);
+                    break;
+                case TitanShotKind.Spike:
+                    player.TakeDamage(16f);
+                    if (diff.LengthSquared() > 0.0001f) player.Velocity += Vector2.Normalize(diff) * 160f;
+                    break;
+                default:   // Laser
+                    player.TakeDamage(28f);
+                    if (diff.LengthSquared() > 0.0001f) player.Velocity += Vector2.Normalize(diff) * 200f;
+                    break;
             }
             Dead = true;
             return;
@@ -1133,6 +1153,12 @@ public sealed class TitanProjectile
 
         if (planet.IsSolidAt(Position))
         {
+            if (Kind == TitanShotKind.Acid)
+            {
+                Dead = true;
+                SplashAcid(planet, cells);
+                return;
+            }
             if (Kind == TitanShotKind.Laser && _drill > 0)
             {
                 // Drill the wall: vaporise the tile and keep going until the pierce budget runs
