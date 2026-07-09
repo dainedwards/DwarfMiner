@@ -2289,6 +2289,13 @@ public sealed partial class DwarfMinerGame : Game
                      $"META: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
         var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE  Q/E WEAPONS\n" +
                        "C CRAFT  T BEACON  L LAUNCH  B/N DEPOT BANK  F5 SAVE  G GOD MODE";
+        if (_orbiting)
+            controls = $"A/D SHIFT ORBIT   SPACE LAUNCH ROVER ({_meta.Rovers} ABOARD{(_meta.Rovers <= 0 ? " - DROP POD!" : "")})   W BREAK ORBIT\n" +
+                       "PICK YOUR DROP SITE - THE ROVER FALLS FROM THE SHIP";
+        else if (_landing)
+            controls = "A/D STEER THE ROVER\nTOUCHDOWN WHERE YOU AIM";
+        else if (_ascending)
+            controls = "A/D STEER THE ROCKET\nCLIMB TO THE MOTHERSHIP AND DOCK";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _run.Player, (int)_run.Titan.Anger, status, controls);
 
         // Depot prompt: at the depot, show deposit/withdraw; otherwise, if a stash is waiting on
