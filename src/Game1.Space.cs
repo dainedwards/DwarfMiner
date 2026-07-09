@@ -425,12 +425,14 @@ public sealed partial class DwarfMinerGame
 
             // The disc is the planet's real (survey) terrain once its preview is ready —
             // mountains on the limb, lakes and lava where they'll actually be. Until the
-            // background world-gen delivers, a flat disc stands in.
+            // background world-gen delivers, a flat disc stands in. At most one preview
+            // rasterizes per frame so six never spike the same frame.
             if (!_planetPreview.TryGetValue(p.Def.Id, out var preview)
-                && Survey.TryWorld(p.Def) is { } world)
+                && !_previewBuiltThisFrame && Survey.TryWorld(p.Def) is { } world)
             {
                 preview = BuildPlanetPreview(world);
                 _planetPreview[p.Def.Id] = preview;
+                _previewBuiltThisFrame = true;
             }
             if (preview is not null)
             {
