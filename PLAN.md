@@ -197,6 +197,25 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   bolts, tier-3 engines, shield absorb/recharge, prerequisite gating). NOTE: the pixel font
   also lacks the apostrophe — UI strings must avoid ' as well as % and em-dash.
 
+- **Phase 7 — orbital integration + fidelity (DONE 2026-07-09):** the mothership became a
+  **circular ring station** (procedural 48px texture: hull ring, four spokes, glazed hub,
+  cardinal warning stripes, docking notch — spins slowly, chasing running lights) and it now
+  has a **real position in the planet view**: it parks at `Session.StationPos`
+  (`OrbitAltitude` 480px above the surface at the spawn bearing) and hangs there all visit.
+  **The rover departs from it** — descents start at the station in orbit, camera zoomed to
+  1.5 easing to play zoom on the way down (140 px/s sink, A/D 175 px/s). **Escape is a real
+  rendezvous**: the liftoff cinematic hands over at 1.2s to a manual ascent (`_ascending` —
+  climb auto-eases to a stop at orbit altitude, A/D steers 220 px/s laterally, then a
+  650 px/s docking-computer glide guarantees the rendezvous; contact = dock = the old
+  FinishLaunch). **Seamless loading**: `BuildSessionWorld` (worldgen + seeding + pre-settle)
+  was extracted static and is **prefetched on a background thread** while the ship loiters
+  near a planet, so pressing Enter usually lands instantly; a 0.6s white transition flash
+  masks the one unavoidable coordinate/scale cut in each direction. **System view fidelity**:
+  3-layer parallax starfield with tinted stars, soft nebula blobs, sun flare rays + hot
+  core, and planets with atmosphere halos, drifting hashed surface blotches, two-step
+  terminators, and polar highlights. 2 new SimTest checks (background build off-thread,
+  station altitude/clearance).
+
 **Upgrade ideas still unbuilt** (future foundry slots): further pickaxe tiers, armor suit,
 cargo hold capacity, scanner (ore/titan intel on the HUD), sentry capacity,
 take-gear-down loadouts beyond the Armory kit, jetpack III.
