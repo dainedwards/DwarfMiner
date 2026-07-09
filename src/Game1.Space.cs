@@ -18,7 +18,27 @@ namespace DwarfMiner;
 public sealed partial class DwarfMinerGame
 {
     private SpaceSim _space = null!;
-    private Texture2D _mothershipTex = null!;
+    private Texture2D _stationTex = null!;
+
+    /// <summary>Background world build for the planet the ship is loitering near — by the
+    /// time the player presses Enter the Session is usually ready, so landing is seamless.
+    /// BuildSessionWorld touches only fresh objects, so the thread hop is safe.</summary>
+    private Task<Session>? _prefetchTask;
+    private string? _prefetchId;
+
+    /// <summary>Claim a prefetched Session for this planet, waiting out any remaining build
+    /// time (still faster than restarting). Null when nothing (or the wrong world) was
+    /// prefetched — the caller builds synchronously.</summary>
+    private Session? TakePrefetchedSession(PlanetDef def)
+    {
+        var task = _prefetchTask;
+        var id = _prefetchId;
+        _prefetchTask = null;
+        _prefetchId = null;
+        if (task is null || id != def.Id) return null;
+        try { return task.GetAwaiter().GetResult(); }
+        catch { return null; }   // background build died — rebuild on the main thread
+    }
 
     /// <summary>Foundry overlay state. DM_UPGRADES=1 opens it at boot so tooling can
     /// screenshot the menu without input access; DM_SURVEY=1 likewise for the survey.</summary>
