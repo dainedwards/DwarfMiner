@@ -354,7 +354,179 @@ public static class WorldGen
 
         SeedBiomePockets(planet, def, rng);
 
+        // Volcanoes stamp last so their plumbing (throat lining, chamber shell) wins over
+        // any cave or pocket it crosses. Keep them off the lake/pool basins.
+        var wet = new List<(float ang, float w)>();
+        foreach (var l in lakes) wet.Add((l.ang, l.w));
+        foreach (var a in acidPools) wet.Add((a.ang, a.w));
+        CarveVolcanoes(planet, def, rng, mountains, wet);
+
         return planet;
+    }
+
+    /// <summary>Volcanoes: basalt cones raised on the surface, each holding an open crater
+    /// pool that connects through a primed two-tile throat to a deep obsidian-shelled magma
+    /// chamber — the lava genuinely rises from a pool far underground, and drilling into the
+    /// column anywhere lets it flow out through the breach. Acid worlds (def.VolcanoAcid)
+    /// vent vitriol instead; their chambers stay above the global lava-fill line so the two
+    /// fluids never share plumbing. Fluid sites are recorded as seeds (LavaSeeds/AcidSeeds)
+    /// for Game1 to pour, and each crater registers a vent for periodic eruptions.</summary>
+    private static void CarveVolcanoes(Planet planet, PlanetDef def, Random rng,
+        (float ang, float h, float w)[] mountains, List<(float ang, float w)> avoid)
+    {
+        var surfaceR = planet.SurfaceRing;
+        var seeds = def.VolcanoAcid ? planet.AcidSeeds : planet.LavaSeeds;
+        var placed = new List<(float ang, float w)>();
+
+        for (var v = 0; v < def.Volcanoes; v++)
+        {
+            var scale = def.VolcanoScale * (0.85f + (float)rng.NextDouble() * 0.3f);
+            var coneH = MathF.Min((30f + (float)rng.NextDouble() * 16f) * scale, Planet.SkyHeadroom - 6f);
+            var coneW = (0.13f + (float)rng.NextDouble() * 0.05f) * MathF.Sqrt(scale);
+
+            // Placement: clear of mountains, lake/pool basins, other volcanoes — and the
+            // spawn bearing (-π/2), so the rover never drops the dwarf into a crater.
+            var ang = 0f;
+            var ok = false;
+            for (var tries = 0; tries < 80 && !ok; tries++)
+            {
+                ang = (float)(rng.NextDouble() * MathHelper.TwoPi);
+                ok = !NearMountain(mountains, ang, coneW + 0.05f)
+                     && AngDist(ang, MathF.PI * 1.5f) > coneW + 0.25f;
+                for (var i = 0; ok && i < avoid.Count; i++)
+                    ok = AngDist(ang, avoid[i].ang) > coneW + avoid[i].w + 0.04f;
+                for (var i = 0; ok && i < placed.Count; i++)
+                    ok = AngDist(ang, placed[i].ang) > coneW + placed[i].w + 0.1f;
+            }
+            if (!ok) continue;
+            placed.Add((ang, coneW));
+
+            const float craterFrac = 0.30f;           // crater mouth as a fraction of the footprint
+            var craterDepth = coneH * 0.45f;
+            var poolTop = coneH - craterDepth * 0.25f; // fluid level — a few tiles below the rim,
+                                                       // so eruptions visibly overflow the lip
+            var floorR = surfaceR + (int)(coneH - craterDepth);
+
+            // The cone. Profile: full height at the rim (f = craterFrac), a near-linear
+            // flank falling to the footprint edge, and a bowl dipping to the crater floor
+            // inside the mouth. Basalt body with obsidian around the throat and a loose
+            // ash-gravel skin low on the flanks.
+            var topR = Math.Min(planet.Rings - 1, surfaceR + (int)coneH + 2);
+            for (var r = Math.Max(2, surfaceR - 3); r <= topR; r++)
+            {
+                var n = planet.TilesAt(r);
+                var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                var span = (int)(coneW / MathHelper.TwoPi * n) + 2;
+                for (var dt = -span; dt <= span; dt++)
+                {
+                    var t = ((t0 + dt) % n + n) % n;
+                    var f = AngDist((t + 0.5f) / n * MathHelper.TwoPi, ang) / coneW;
+                    if (f > 1f) continue;
+                    var h = f >= craterFrac
+                        ? coneH * MathF.Pow((1f - f) / (1f - craterFrac), 1.15f)
+                        : coneH - craterDepth * MathF.Pow(1f - f / craterFrac, 1.5f);
+                    var above = r - surfaceR;
+                    if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                    if (above > h)
+                    {
+                        // Inside the bowl above the floor: open air, fluid up to the pool
+                        // line. Above the pool the crater mouth stays open sky.
+                        if (f < craterFrac && above <= poolTop)
+                        {
+                            planet.SetWall(r, t, TileKind.Basalt);
+                            planet.Set(r, t, TileKind.Sky);
+                            seeds.Add((r, t));
+                        }
+                        continue;
+                    }
+                    var k = TileKind.Basalt;
+                    if (f < craterFrac + 0.1f)
+                        k = rng.Next(3) == 0 ? TileKind.Obsidian : TileKind.Basalt;
+                    else if (f > 0.55f && above > h - 1.5f)
+                        k = TileKind.Gravel;                       // ash skirt
+                    planet.SetWall(r, t, TileKind.Basalt);
+                    planet.Set(r, t, k);
+                }
+            }
+
+            // The magma chamber: an obsidian-shelled pool deep under the cone. Obsidian
+            // resists both lava melt and acid corrosion, so the reservoir holds until the
+            // player (or a cave-in) breaches it.
+            var chamberRad = 4 + rng.Next(3) + (int)(scale * 1.5f);
+            var chamberR = surfaceR - (55 + rng.Next(26));
+            if (def.VolcanoAcid)
+            {
+                // Keep acid plumbing above the global lava flood so the two never mix.
+                var lavaTop = (int)(planet.Radius * def.LavaFillFrac) - Planet.RingMin;
+                chamberR = Math.Max(chamberR, lavaTop + chamberRad + 4);
+            }
+            chamberR = Math.Max(chamberR, 14 + chamberRad);
+
+            var nC = planet.TilesAt(chamberR);
+            var centre = planet.TileToWorld(chamberR, (int)((ang / MathHelper.TwoPi + 1f) % 1f * nC));
+            var shellR = (chamberRad + 1) * Planet.TileSize;
+            for (var dr = -chamberRad - 1; dr <= chamberRad + 1; dr++)
+            {
+                var r = chamberR + dr;
+                if (r < 2 || r >= planet.Rings) continue;
+                var rn = planet.TilesAt(r);
+                var rt0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * rn);
+                for (var dt = -chamberRad - 2; dt <= chamberRad + 2; dt++)
+                {
+                    var t = ((rt0 + dt) % rn + rn) % rn;
+                    var dist = (planet.TileToWorld(r, t) - centre).Length();
+                    if (dist > shellR) continue;
+                    if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                    if (dist <= chamberRad * Planet.TileSize)
+                    {
+                        planet.SetWall(r, t, TileKind.Basalt);
+                        planet.Set(r, t, TileKind.Sky);
+                        seeds.Add((r, t));
+                    }
+                    else
+                    {
+                        planet.SetWall(r, t, TileKind.Obsidian);
+                        planet.Set(r, t, TileKind.Obsidian);
+                    }
+                }
+            }
+
+            // The throat: a primed channel from the chamber roof up to the crater floor,
+            // sleeved in basalt so the soft dirt band it crosses can't slump into it.
+            for (var r = chamberR + chamberRad - 1; r <= floorR; r++)
+            {
+                if (r < 2 || r >= planet.Rings) continue;
+                var n = planet.TilesAt(r);
+                var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                for (var dt = -2; dt <= 2; dt++)
+                {
+                    var t = ((t0 + dt) % n + n) % n;
+                    if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                    planet.SetWall(r, t, TileKind.Basalt);
+                    if (dt is -2 or 2)
+                    {
+                        planet.Set(r, t, TileKind.Basalt);
+                    }
+                    else
+                    {
+                        planet.Set(r, t, TileKind.Sky);
+                        seeds.Add((r, t));
+                    }
+                }
+            }
+
+            // Vent: just above the pool surface — where eruptions spawn fresh cells.
+            var ventR = Math.Min(planet.Rings - 1, surfaceR + (int)poolTop + 2);
+            var ventT = (int)((ang / MathHelper.TwoPi + 1f) % 1f * planet.TilesAt(ventR));
+            planet.VolcanoVents.Add((ventR, ventT, def.VolcanoAcid));
+        }
+    }
+
+    /// <summary>Shortest angular distance between two bearings, in radians.</summary>
+    private static float AngDist(float a, float b)
+    {
+        var d = MathF.Abs(a - b) % MathHelper.TwoPi;
+        return d > MathF.PI ? MathHelper.TwoPi - d : d;
     }
 
     /// <summary>Underground biomes: hand-carved pockets stamped after the main pass.
