@@ -117,6 +117,16 @@ public static class Upgrades
         new("hull3", "Hull Plating II",
             "Mothership hull raised from 7 to 9",
             Souls: 2, Mats: new[] { ("pure_iron", 4), ("pure_platinum", 2) }, SoulKind: "Kong", Requires: "hull2"),
+
+        // ── Rare-gem capstones (phase 11): emerald seams + Rift voidstone ──
+
+        new("vitality", "Emerald Weave",
+            "Suit weave laced with emerald - max health up 40 percent",
+            Souls: 1, Mats: new[] { ("emerald", 3) }, SoulKind: "Kong"),
+
+        new("voidcore", "Voidstone Reactor",
+            "The engines feed on the void - thrust burns no fuel, ever",
+            Souls: 3, Mats: new[] { ("voidstone", 2), ("diamond", 2) }, SoulKind: "Mecha"),
     };
 
     /// <summary>True when a tiered line's prerequisite hasn't been installed yet.</summary>
