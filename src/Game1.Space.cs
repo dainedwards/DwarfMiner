@@ -22,6 +22,68 @@ public sealed partial class DwarfMinerGame
     private Texture2D _stationSideTex = null!;
     private Texture2D _arrowTex = null!;
 
+    /// <summary>Pixel-art sidearms drawn in the dwarf's grip, keyed by toolbelt item id.
+    /// All art points +X; the draw call rotates to the aim and flips below the horizontal.</summary>
+    private readonly Dictionary<string, Texture2D> _weaponTex = new();
+
+    private void BuildWeaponTextures()
+    {
+        var pal = new Dictionary<char, Color>
+        {
+            ['.'] = Color.Transparent,
+            ['S'] = new Color(185, 190, 205),  // steel
+            ['d'] = new Color(115, 120, 138),  // dark steel
+            ['D'] = new Color(80, 62, 40),     // wood/grip
+            ['m'] = new Color(255, 220, 120),  // muzzle bright
+            ['C'] = new Color(120, 220, 255),  // energy cyan
+            ['G'] = new Color(120, 255, 160),  // mining beam green
+            ['R'] = new Color(190, 60, 50),    // warhead red
+        };
+        Texture2D T(params string[] rows) => Renderer.BuildSprite(GraphicsDevice, rows, pal);
+
+        _weaponTex["pistol"] = T(
+            "SSSSSSm.",
+            "SSSSSSS.",
+            ".DD.....",
+            ".DD.....");
+        _weaponTex["machine_gun"] = T(
+            "..ddddddddd.",
+            "DDSSSSSSSSSm",
+            ".DDSSd......",
+            "..DDd.......");
+        _weaponTex["laser"] = T(
+            ".dSSSSSSd.",
+            "DSCCCCCCSm",
+            ".dSSSSSSd.",
+            "..DD......");
+        _weaponTex["laser_cannon"] = T(
+            ".ddSSSSSSSSd.",
+            "DSSCCCCCCCCSm",
+            "DSSCCCCCCCCSm",
+            ".ddSSSSSSSSd.",
+            "...DD........");
+        _weaponTex["rocket_launcher"] = T(
+            "SSSSSSSSSSSSR",
+            "d...........R",
+            "SSSSSSSSSSSSR",
+            "...DD........");
+        _weaponTex["cannon"] = T(
+            ".dSSSSSSSSSd.",
+            "dSSSSSSSSSSSm",
+            "dSSSSSSSSSSSm",
+            ".dSSSSSSSSSd.",
+            "..DDD........");
+        _weaponTex["harpoon"] = T(
+            "dddddddddSSm",
+            "DSSSSSSSSSS.",
+            ".DD.........");
+        _weaponTex["mining_laser"] = T(
+            ".dSSSSSSd.",
+            "DSGGGGGGSm",
+            ".dSSSSSSd.",
+            "..DD......");
+    }
+
     /// <summary>A solid triangle pointing +X, for the edge-of-screen nav arrows.</summary>
     private Texture2D BuildArrowTexture()
     {
