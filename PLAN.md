@@ -97,6 +97,54 @@ endings (kill Titan, pierce core, launch rocket with 5 rocket_parts), and cross-
 progression in MetaSave. Game1.cs is ~2,250 lines doing everything — input, game state,
 spawning, UI, and win/lose logic.
 
+## 0. The mothership era (agreed 2026-07-08)
+
+**Vision.** A "run" is no longer one planet — it's conquering the whole system. The player
+lives aboard a **mothership** in space (the game starts there). Loop per planet: fly the
+mothership to a world → descend in a **disposable rover** (this starts the planet visit) →
+mine, survive, optionally slay the titan (grants a **titan soul**; no longer ends the visit)
+→ build the rocket and launch — the rocket returns you to the mothership, transferring your
+raw materials into the ship's cargo hold and leftover fuel into its tank. Aboard the
+mothership, spend **titan souls + rare cargo** in the upgrade foundry. Each planet hides a
+**core shard** near its center (the pierce-the-core rework — piercing yields the shard
+instead of ending the run). Collect all five shards to build the **warp engine** and jump to
+a super-hazardous warp world that's out of normal flight range — conquering it completes the
+run. The mothership mounts a **gun** for asteroids/obstacles and burns **fuel** to traverse
+to farther worlds; both, plus the **engines**, are upgradeable.
+
+**Phases.**
+- **Phase 2 — mothership core (in progress):** mothership replaces the bare rocket as the
+  thing you fly in space (start aboard it); asteroids drift the system — dodge them or shoot
+  them with the ship gun (SPACE); collisions cost hull, hull-zero forces an emergency dock;
+  landings are rover-flavored; titan kill stops ending the run — the boss dies in-world and
+  banks a soul (`MetaSave.TitanSouls`, keyed by TitanKind); rocket-return transfers cargo
+  (raw mats → `MetaSave.ShipCargo`, fuel items → `MetaSave.MotherFuel`); basic upgrade
+  foundry (U in space): JETPACK (hold jump airborne to fly, charge-limited), AUTOCANNON II,
+  ION ENGINES II — purchases persist in `MetaSave.ShipUpgrades`.
+- **Phase 3 — upgrade depth + economy:** fuel actually burned per-distance and **fuel range
+  replaces the escape-chain unlock** as the gate on farther worlds (engine tiers extend
+  range); rovers become consumable (craft/buy more; losing your last rover matters); soul
+  costs become titan-kind-specific; take-gear-down loadouts (spend cargo to land equipped);
+  more upgrades from the noted list below; an M-key system survey (each planet's titan,
+  souls owned, approximate material quantities via a cached fixed-seed worldgen survey).
+- **Phase 4 — the warp run:** core shard material near each planet's center (pierce-core
+  rework); warp engine craft needing all 5 shards + souls; the **warp world** — a new
+  PlanetDef harsher than Coreheart (extreme hazards, nastiest titan, maybe two) unreachable
+  by normal flight; run completion = conquering it; run-summary screen; decide what "new
+  run+" resets (souls? upgrades? shards?).
+- **Phase 5 — polish/persistence:** persist mothership position/hull; thruster + gun sfx;
+  landing/launch transition flourishes; DM_SPACE-style test hooks; settings/volume UI.
+
+**Upgrade ideas noted for later** (foundry slots to add in phases 3–4): jetpack tiers
+(charge/thrust), drill/pickaxe tiers, armor suit, oxygen tank tiers, cargo hold capacity,
+ship shield, ore magnet (pickup radius), scanner (ore/titan intel on the HUD), rover
+quality/count, sentry capacity, ship gun spread/damage tiers, engine range/speed tiers,
+warp engine (phase 4 capstone).
+
+**Open design questions:** does death on a planet cost more than the current visit (e.g. the
+rover)? Do souls/upgrades persist across completed runs (prestige reset vs. permanent)?
+Should the warp world end the game or open a second system?
+
 ## 1. The big feature: overworld + spaceship (first)
 
 The rocket escape (`TryLaunchRocket`) is already a proto-spaceship, and `MetaSave` is already
