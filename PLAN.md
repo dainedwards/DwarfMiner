@@ -83,11 +83,9 @@
 >   (bounce/skim). Model: `src/Space/SpaceSim.cs` (pure logic, 9 SimTest checks); screen:
 >   `src/Game1.Space.cs`. The space screen owns camera zoom per-frame; `_playZoom` restores
 >   the in-run zoom (incl. DM_ZOOM) on landing.
->   Remaining space phases: (2) asteroids to dodge + ship hull damage w/ emergency landing;
->   (3) titan souls (`MetaSave.TitanSouls`, one per titan-type kill) + an M-key system menu
->   listing each planet's titan, souls owned, and approx. material quantities (cached
->   fixed-seed worldgen survey); (4) persist ship position, thruster sfx, DM_SPACE hook.
-> Next up: space phases 2–4; then a settings/volume UI, or new content
+>   Remaining space work: see **§0 The mothership era** below (redesigned 2026-07-08 —
+>   supersedes the earlier phase 2–4 sketch that lived here).
+> Next up: mothership-era phases 2–5 (§0); then a settings/volume UI, or new content
 > (biomes/creatures/weapons).
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
 > skips the space screen (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
