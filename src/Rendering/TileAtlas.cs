@@ -471,6 +471,8 @@ public static class TileAtlas
             case TileKind.Ruby:
             case TileKind.Sapphire:
             case TileKind.Diamond:
+            case TileKind.Emerald:
+            case TileKind.Voidstone:
             {
                 Strata(1, -20);
                 Vein(Tiles.OreSpeckle(k), sparkle: k != TileKind.IronOre);
