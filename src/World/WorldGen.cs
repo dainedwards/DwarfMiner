@@ -5,11 +5,14 @@ namespace DwarfMiner.World;
 
 /// <summary>
 /// Polar world generation. The planet's natural outer edge is essentially circular (very mild
-/// elev variation only). Mountains are placed as a small set of explicit narrow spikes at
-/// random angles, so each peak is a pointy stone column rising sharply from the otherwise
-/// smooth grass surface. Underground: deep dirt layer, then stone with sparse caves, dirt
-/// seams, gravel pockets, and ores, running all the way down to the core ball the renderer
-/// draws inside the innermost ring.
+/// elev variation only). Mountains are placed as a small set of explicit massifs at random
+/// angles — a main peak flanked by shoulder peaks, with a high-frequency ridge noise cragging
+/// the silhouette — so ranges read as jagged ridgelines with foothills rather than lone
+/// spikes; tall peaks on wet worlds carry snow caps over a granite-veined body. Volcanic
+/// worlds additionally raise basalt cones whose crater pools connect through a primed throat
+/// to a deep magma chamber (see <see cref="CarveVolcanoes"/>). Underground: deep dirt layer,
+/// then stone with sparse caves, dirt seams, gravel pockets, and ores, running all the way
+/// down to the core ball the renderer draws inside the innermost ring.
 /// </summary>
 public static class WorldGen
 {
