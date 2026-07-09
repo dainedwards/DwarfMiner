@@ -33,7 +33,7 @@ public sealed partial class DwarfMinerGame : Game
     private int _prevProjCount;
 
     /// <summary>The current planet visit. Everything per-run lives here — swapped atomically
-    /// when the player picks a planet on the star map. Null only while on the star map before
+    /// when the player lands on a planet from space. Null only while flying in space before
     /// the first run; Playing/GameOver screens always have one.</summary>
     private Session _run = null!;
 
