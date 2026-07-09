@@ -873,7 +873,7 @@ public static class SimTest
     private static void TestFoundry()
     {
         var meta = new MetaSave();
-        var jet = Space.Upgrades.All[0];   // jetpack: 1 soul + 4 gold + 6 iron
+        var jet = System.Array.Find(Space.Upgrades.All, u => u.Id == "jetpack")!;   // 1 Kong soul + 4 gold + 6 iron
 
         Check("foundry: broke dwarf can't afford", !Space.Upgrades.CanAfford(meta, jet));
         meta.TitanSouls["Kong"] = 1;
