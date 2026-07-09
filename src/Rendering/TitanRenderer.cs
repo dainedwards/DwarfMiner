@@ -57,8 +57,8 @@ public static class TitanRenderer
             case TitanKind.Sandworm:
             {
                 // Warm glow from deep in the gullet, riding the head node so it tracks the maw.
-                var mouth = t.TailNodes[0] + f.Right * (f.Face * 16f);
-                r.AddLight(mouth, 26f + 14f * f.Anger, new Color(190, 70, 40));
+                var maw = t.TailNodes[0] + f.Right * (f.Face * 16f);
+                r.AddLight(maw, 26f + 14f * f.Anger, new Color(190, 70, 40));
                 break;
             }
             case TitanKind.Godzilla:
