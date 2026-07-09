@@ -200,7 +200,7 @@ public static class PlanetGen
                 QuakeScale: quake, CaveSpawnCap: caveCap,
                 ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy,
                 Titan: titan, CrystalPockets: 1, FungalPockets: 3 + rng.Next(3),
-                SizeScale: size),
+                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale),
         };
     }
 
