@@ -95,6 +95,28 @@ public static class Upgrades
         new("supplies", "Supply Cache",
             "Every rover deploys with 2 poultices, 40 blocks, and a sentry",
             Souls: 1, Mats: new[] { ("pure_gold", 2), ("pure_coal", 2) }, SoulKind: "Godzilla"),
+
+        // ── Third-tier lines (phase 10) ──
+
+        new("jetpack3", "Jetpack III",
+            "Triple charge and a screaming climb",
+            Souls: 2, Mats: new[] { ("ruby", 2), ("diamond", 2) }, SoulKind: "Kong", Requires: "jetpack2"),
+
+        new("shield2", "Aegis Capacitor",
+            "Deflector shield recharges twice as fast",
+            Souls: 2, Mats: new[] { ("pure_platinum", 2), ("crystal", 2) }, SoulKind: "Mecha", Requires: "shield"),
+
+        new("magnet2", "Ore Magnet II",
+            "Loose ore leaps to your pack from across the room",
+            Souls: 1, Mats: new[] { ("pure_gold", 3) }, SoulKind: "Kong", Requires: "magnet"),
+
+        new("o22", "O2 Reserves II",
+            "Air supply doubled (stacks with the air tank)",
+            Souls: 1, Mats: new[] { ("sapphire", 3), ("diamond", 1) }, SoulKind: "Godzilla", Requires: "o2"),
+
+        new("hull3", "Hull Plating II",
+            "Mothership hull raised from 7 to 9",
+            Souls: 2, Mats: new[] { ("pure_iron", 4), ("pure_platinum", 2) }, SoulKind: "Kong", Requires: "hull2"),
     };
 
     /// <summary>True when a tiered line's prerequisite hasn't been installed yet.</summary>
