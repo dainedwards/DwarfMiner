@@ -146,11 +146,27 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   fixed-seed worldgen census (~40 ms/world, first open only; signature nav-core ore always
   listed; obsidian excluded as bulk terrain). 13 new SimTest checks. `DM_SURVEY=1` opens the
   survey at boot. (Take-gear-down loadouts moved to the noted-for-later list.)
-- **Phase 4 — the warp run:** core shard material near each planet's center (pierce-core
-  rework); warp engine craft needing all 5 shards + souls; the **warp world** — a new
-  PlanetDef harsher than Coreheart (extreme hazards, nastiest titan, maybe two) unreachable
-  by normal flight; run completion = conquering it; run-summary screen; decide what "new
-  run+" resets (souls? upgrades? shards?).
+- **Phase 4 — the warp run (DONE 2026-07-09), plus two riders:**
+  **Refinery (balance):** docking smelts raw metals 4:1 into pure ingots
+  (`MetaSave.RefineCargo`: iron/coal/silver/gold/platinum → `pure_*`; remainders stay raw
+  and join the next batch; gems/crystal stay precious as-is; stone stays bulk). All foundry
+  costs now bill pure ingots, so a purchase represents a real haul, not six pebbles.
+  **Lander descent:** deploying from the mothership now actually launches the rover — a
+  visible pod drops from 300 px up at 85 px/s with **A/D lateral steering** (semi-controlled
+  landing site), retro-flame, world simulating beneath, touchdown dust + thump exactly where
+  it settles (never embedded — nudge-out pass). Steel/glass/skids pod drawn over the dwarf;
+  `DM_DESCEND=1` forces it under DM_AUTOSTART for tooling.
+  **The warp run:** the core drill's pierce no longer ends anything — it yields the planet's
+  **CORE SHARD** (`MetaSave.CoreShards`, once per world, banked instantly so dying on the
+  climb out can't lose it; HUD + survey track n/5). All five shards wake the warp drive:
+  **J warps the mothership** to **THE RIFT** (`rift` PlanetDef — orbit 9800 far past the
+  system, body 210, LavaFillFrac .7, O2 drain 2.2, spawn cap 30, gas+acid, Mecha titan,
+  diamond/ruby/platinum-rich), which refuses landings until shard-complete. **Escaping the
+  Rift by rocket with its titan slain = campaign complete** (`MetaSave.RunsCompleted`,
+  victory overlay); escaping with it alive docks you with a taunt. 12 new SimTest checks
+  (refinery ratios, rift def/worldgen/orbit, rebalanced foundry costs).
+  Deferred from this phase: a proper run-summary screen and the "new run+" reset decision
+  (souls/upgrades/shards currently all persist across campaigns).
 - **Phase 5 — polish/persistence:** persist mothership position/hull; thruster + gun sfx;
   landing/launch transition flourishes; DM_SPACE-style test hooks; settings/volume UI.
 
