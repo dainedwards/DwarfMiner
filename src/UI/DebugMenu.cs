@@ -1,59 +1,64 @@
 using System;
 using DwarfMiner.Rendering;
-using DwarfMiner.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
 namespace DwarfMiner.UI;
 
 /// <summary>
-/// A tiny developer overlay for spawning any boss on demand. Toggled with F9 while playing;
-/// Up/Down (or the number row) pick a <see cref="TitanKind"/> and Enter/Space (or the number
-/// key) spawns it next to the player via the <c>spawn</c> callback, replacing the current boss.
-/// Purely a testing aid — never surfaced in normal play.
+/// A tiny developer overlay for spawning things on demand — bosses, a ready-to-launch rocket,
+/// and so on. Toggled with F9 while playing; Up/Down (or the number row) pick an entry and
+/// Enter/Space (or the number key) runs its action. Entries are supplied by the caller via
+/// <see cref="SetEntries"/> so the menu stays generic. Purely a testing aid — never surfaced
+/// in normal play.
 /// </summary>
 public sealed class DebugMenu
 {
+    /// <summary>One menu row: a display label and the action to run when it's chosen.</summary>
+    public readonly record struct Entry(string Name, Action Run);
+
     public bool Open { get; private set; }
     private int _cursor;
+    private Entry[] _entries = Array.Empty<Entry>();
 
-    private static readonly (TitanKind Kind, string Name)[] Entries =
+    /// <summary>Replace the menu's rows. The cursor is clamped into the new range so a shorter
+    /// list can't leave it dangling.</summary>
+    public void SetEntries(Entry[] entries)
     {
-        (TitanKind.Godzilla, "Cinderwyrm  (fire breath)"),
-        (TitanKind.Mecha,    "Mecha-Titan (drill laser)"),
-        (TitanKind.Sandworm, "Shai-Hulud  (burrow/breach)"),
-        (TitanKind.Kong,     "Stone Ape   (leap slam)"),
-    };
+        _entries = entries;
+        _cursor = entries.Length == 0 ? 0 : Math.Clamp(_cursor, 0, entries.Length - 1);
+    }
 
     public void Toggle() => Open = !Open;
     public void Close() => Open = false;
 
-    /// <summary>Menu input. Up/Down move the cursor, Enter/Space spawns the highlighted boss,
-    /// number keys 1-4 spawn directly, F9/Esc closes. The chosen kind is handed to
-    /// <paramref name="spawn"/>.</summary>
-    public void Update(KeyboardState keys, KeyboardState prevKeys, Action<TitanKind> spawn)
+    /// <summary>Menu input. Up/Down move the cursor, Enter/Space runs the highlighted entry,
+    /// number keys 1-9 run directly, F9/Esc closes.</summary>
+    public void Update(KeyboardState keys, KeyboardState prevKeys)
     {
         if (Pressed(keys, prevKeys, Keys.F9) || Pressed(keys, prevKeys, Keys.Escape))
         {
             Open = false;
             return;
         }
-        if (Pressed(keys, prevKeys, Keys.Down) || Pressed(keys, prevKeys, Keys.S))
-            _cursor = (_cursor + 1) % Entries.Length;
-        if (Pressed(keys, prevKeys, Keys.Up) || Pressed(keys, prevKeys, Keys.W))
-            _cursor = (_cursor - 1 + Entries.Length) % Entries.Length;
+        if (_entries.Length == 0) return;
 
-        for (var i = 0; i < Entries.Length; i++)
+        if (Pressed(keys, prevKeys, Keys.Down) || Pressed(keys, prevKeys, Keys.S))
+            _cursor = (_cursor + 1) % _entries.Length;
+        if (Pressed(keys, prevKeys, Keys.Up) || Pressed(keys, prevKeys, Keys.W))
+            _cursor = (_cursor - 1 + _entries.Length) % _entries.Length;
+
+        for (var i = 0; i < Math.Min(9, _entries.Length); i++)
             if (Pressed(keys, prevKeys, Keys.D1 + i))
             {
-                spawn(Entries[i].Kind);
+                _entries[i].Run();
                 Open = false;
                 return;
             }
 
         if (Pressed(keys, prevKeys, Keys.Enter) || Pressed(keys, prevKeys, Keys.Space))
         {
-            spawn(Entries[_cursor].Kind);
+            _entries[_cursor].Run();
             Open = false;
         }
     }
@@ -64,7 +69,7 @@ public sealed class DebugMenu
 
         const int panelW = 360;
         const int rowH = 18;
-        var panelH = 64 + Entries.Length * rowH;
+        var panelH = 64 + _entries.Length * rowH;
         var panelX = (viewportWidth - panelW) / 2;
         var panelY = (viewportHeight - panelH) / 2;
 
@@ -76,7 +81,7 @@ public sealed class DebugMenu
         sb.Draw(renderer.Pixel, new Rectangle(panelX, panelY, 1, panelH), new Color(200, 130, 90));
         sb.Draw(renderer.Pixel, new Rectangle(panelX + panelW - 1, panelY, 1, panelH), new Color(200, 130, 90));
 
-        for (var i = 0; i < Entries.Length; i++)
+        for (var i = 0; i < _entries.Length; i++)
         {
             var rowY = panelY + 48 + i * rowH;
             if (i == _cursor)
@@ -84,14 +89,14 @@ public sealed class DebugMenu
         }
         sb.End();
 
-        renderer.DrawDebugLabel("DEBUG: SPAWN BOSS  (Up/Down, Enter, or 1-4 — F9/Esc to close)",
+        renderer.DrawDebugLabel("DEBUG: SPAWN  (Up/Down, Enter, or number — F9/Esc to close)",
             new Vector2(panelX + 12, panelY + 14), new Color(255, 200, 150));
 
-        for (var i = 0; i < Entries.Length; i++)
+        for (var i = 0; i < _entries.Length; i++)
         {
             var rowY = panelY + 48 + i * rowH;
             var col = i == _cursor ? new Color(255, 240, 210) : new Color(190, 190, 200);
-            renderer.DrawDebugLabel($"{i + 1}. {Entries[i].Name}", new Vector2(panelX + 16, rowY), col);
+            renderer.DrawDebugLabel($"{i + 1}. {_entries[i].Name}", new Vector2(panelX + 16, rowY), col);
         }
     }
 
