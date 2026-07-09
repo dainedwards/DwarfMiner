@@ -53,9 +53,13 @@ public sealed class Cells
     // --- Per-cell velocity tuning (cells/sec units, radial axis). Expressed relative to
     // Density so the *world-space* fall speed and spread stay identical if the grain
     // resolution changes: px/s = cells/s × (TileSize / Density). ---
-    /// <summary>Inward acceleration while freefalling (600 px/s² equivalent), so disturbed
+    /// <summary>Inward acceleration while freefalling (900 px/s² equivalent), so disturbed
     /// material visibly picks up speed instead of instantly ticking downward.</summary>
-    private const float GravityCells = 75f * Density;
+    private const float GravityCells = 112.5f * Density;
+    /// <summary>Speed a freed grain starts at so it steps a full cell on its very first tick
+    /// instead of hanging in place for ~0.1s while gravity ramps it up from zero. 60 cells/s =
+    /// one cell per 1/60s tick — enough to drop immediately without popping.</summary>
+    private const float InitialFallCells = 60f;
     /// <summary>Terminal fall speed (480 px/s equivalent).</summary>
     private const float TerminalCells = 60f * Density;
     /// <summary>Hard cap on rows traversed per tick so lag frames can't tunnel through floors.</summary>
