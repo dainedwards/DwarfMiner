@@ -190,7 +190,6 @@ public sealed partial class DwarfMinerGame
         GraphicsDevice.Clear(new Color(4, 5, 12));
         var sb = _renderer.Batch;
         var view = _camera.View;
-        var unlocked = Math.Min(_meta.PlanetsUnlocked, PlanetDefs.All.Length);
 
         // Parallax starfield: hashed screen positions scrolled against the camera at two
         // depths and wrapped, so flying reads as motion even with nothing else on screen.
