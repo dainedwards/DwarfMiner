@@ -90,7 +90,23 @@ public static class PlanetDefs
             OreBias: new[] { (TileKind.Diamond, 0.030f), (TileKind.Crystal, 0.025f), (TileKind.Ruby, 0.015f) },
             QuakeScale: 0.5f, CaveSpawnCap: 24,
             ShipOre: "diamond", ShipOreCount: 5, OxygenDrainScale: 1.4f, SeedsGas: true, SeedsAcid: true, Titan: TitanKind.Godzilla),
+
+        // The warp world — out of normal flight range, reachable only with all five core
+        // shards. Everything is turned up: swarming caves, toxins, near-vacuum air, lava at
+        // every depth, and the deadliest titan variant. Escaping it with the titan slain
+        // completes the campaign.
+        new("rift", "The Rift", "Warp-locked hellworld, everything here wants you dead",
+            new Color(85, 25, 40), new Color(255, 90, 70),
+            TileKind.Basalt,
+            LakeMin: 0, LakeExtra: 0, MountainMin: 12, MountainExtra: 4,
+            MountainHeightScale: 1.6f, LavaFillFrac: 0.70f, HasWater: false,
+            OreBias: new[] { (TileKind.Diamond, 0.035f), (TileKind.Ruby, 0.030f), (TileKind.PlatinumOre, 0.030f) },
+            QuakeScale: 0.35f, CaveSpawnCap: 30,
+            ShipOre: "diamond", ShipOreCount: 6, OxygenDrainScale: 2.2f, SeedsGas: true, SeedsAcid: true, Titan: TitanKind.Mecha),
     };
+
+    /// <summary>Core shards needed to warp — one from every world except the Rift itself.</summary>
+    public static int WarpShardsNeeded => All.Length - 1;
 
     public static PlanetDef ById(string id)
     {
