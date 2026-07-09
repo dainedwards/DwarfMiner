@@ -61,7 +61,16 @@ public sealed class Session
     public float MothershipAngle = -MathF.PI / 2f;
 
     /// <summary>How far above the planet surface (px) the mothership parks.</summary>
-    public const float OrbitAltitude = 480f;
+    public const float OrbitAltitude = 700f;
+
+    /// <summary>Orbital drift (rad/s) once the rover has dropped — the station keeps moving
+    /// around the planet while you mine, so the return rocket is a real rendezvous. Idle
+    /// while parked in the pre-drop orbit (the player is steering it then).</summary>
+    public const float StationDriftRate = 0.0035f;
+
+    /// <summary>Where the spent rover came to rest — drawn as wreckage for the whole visit,
+    /// a landmark marking your arrival point. Not persisted in the run save (cosmetic).</summary>
+    public Vector2? RoverWreck;
 
     /// <summary>Extra height above the parking orbit — set on atmosphere entry and decayed
     /// by the orbit tick, so arriving reads as the ship flying itself down into orbit.</summary>
