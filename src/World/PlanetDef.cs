@@ -107,7 +107,7 @@ public static class PlanetDefs
             TileKind.Basalt,
             LakeMin: 0, LakeExtra: 0, MountainMin: 12, MountainExtra: 4,
             MountainHeightScale: 1.6f, LavaFillFrac: 0.70f, HasWater: false,
-            OreBias: new[] { (TileKind.Diamond, 0.035f), (TileKind.Ruby, 0.030f), (TileKind.PlatinumOre, 0.030f), (TileKind.Voidstone, 0.075f) },
+            OreBias: new[] { (TileKind.Diamond, 0.035f), (TileKind.Ruby, 0.030f), (TileKind.PlatinumOre, 0.030f), (TileKind.Voidstone, 0.105f) },
             QuakeScale: 0.35f, CaveSpawnCap: 30,
             ShipOre: "diamond", ShipOreCount: 6, OxygenDrainScale: 2.2f, SeedsGas: true, SeedsAcid: true, Titan: TitanKind.Mecha,
             CrystalPockets: 4),
