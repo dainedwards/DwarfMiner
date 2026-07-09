@@ -1887,7 +1887,7 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.Velocity = Vector2.Zero;
         // Wide orbit-style framing: same zoom as the parking orbit, biased upward so the
         // planet limb, the climbing rocket, and the station all fit in frame.
-        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, 0.44f, MathHelper.Clamp(dt * 1.4f, 0f, 1f));
+        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, 0.44f, MathHelper.Clamp(dt * 2.2f, 0f, 1f));
         _camera.Follow(_run.Player.Position + up * 260f, up, dt);
         _launchUp = up;
 
