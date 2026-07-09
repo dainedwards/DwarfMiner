@@ -58,7 +58,7 @@ public static class SimTest
                 c.Update(dt, planet, physics, cells, player);
             var after = CountSolidPlanet(planet);
             Check($"digging: {kind} removed tiles (before {before} → after {after})", after < before);
-            Check($"digging: {kind} not embedded in rock", !planet.IsSolidAt(c.Position));
+            Check($"digging: {kind} not embedded in rock", !EmbeddedInRock(planet, c.Position));
         }
 
         // --- 3. Delver: aggro-mines toward a player separated from it by real rock. Pick a
