@@ -211,7 +211,13 @@ public sealed partial class DwarfMinerGame
     /// fight to the rocks costs you your position, not the game.</summary>
     private void TickSpaceCameraAndBreach(float dt)
     {
-        _spaceZoom = MathHelper.Lerp(_spaceZoom, SpaceZoom, MathHelper.Clamp(dt * 2.2f, 0f, 1f));
+        // Approach zoom, No Man's Sky style: cruising shows the system; closing on a planet
+        // pulls the camera onto the ship until the atmosphere fills the screen at contact.
+        var (nearPlanet, dist) = _space.NearestPlanet();
+        var zoomTarget = SpaceZoom;
+        if (nearPlanet is not null && dist < 650f)
+            zoomTarget = MathHelper.Lerp(2.4f, SpaceZoom, MathHelper.Clamp(dist / 650f, 0f, 1f));
+        _spaceZoom = MathHelper.Lerp(_spaceZoom, zoomTarget, MathHelper.Clamp(dt * 2.2f, 0f, 1f));
         _camera.Zoom = _spaceZoom;
         _camera.Rotation = 0f;
         _camera.SmoothRotation = 0f;
