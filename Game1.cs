@@ -1982,6 +1982,11 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
+        // The mothership hangs at its parking orbit for the whole visit — the rover departs
+        // from it and the escape rocket docks with it. Culled when far off-screen.
+        if ((_run.StationPos - _camera.Target).LengthSquared() < 1400f * 1400f)
+            DrawStationInWorld(_run.StationPos);
+
         // Spaceship build site — the pad plus however many stages are installed. Drawn as
         // world-space rects rotated to local-up, same as every other surface structure. During
         // liftoff the ship is drawn at its climbing position instead of on the pad.
