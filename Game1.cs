@@ -2497,6 +2497,7 @@ public sealed partial class DwarfMinerGame : Game
             _debugMenu.Draw(_renderer, VirtualWidth, VirtualHeight);
 
         DrawStationIndicator();
+        DrawScannerArrows();
         if (_screen == GameScreen.GameOver) DrawGameOverOverlay();
         DrawTransitionFlash();
         DrawFpsOverlay();
