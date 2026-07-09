@@ -190,8 +190,10 @@ public sealed class Titan
         TailNodes = new Vector2[_tailNodeCount];
         TailPrev = new Vector2[_tailNodeCount];
         var worm = Kind == TitanKind.Sandworm;
+        // Biped tail roots at the lower back, tucked just inside the torso so its base is covered
+        // by the body and the chain emerges from the rump with no gap (was floating ~50px behind).
         var root = worm ? Position + right * (Facing * 8f)
-                        : Position + right * (Facing * -90f) + up * 18f;
+                        : Position + right * (Facing * -46f) + up * 20f;
         for (var i = 0; i < _tailNodeCount; i++)
         {
             TailNodes[i] = root + right * (Facing * -i * _tailSeg) + up * (worm ? 0f : -i * 4f);
