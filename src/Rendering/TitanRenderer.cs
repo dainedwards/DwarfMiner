@@ -1071,6 +1071,8 @@ public static class TitanRenderer
         TitanKind.Leatherback => f.Tp + f.Up * 88f + f.Right * (f.Face * 14f),
         TitanKind.Raiju       => f.Tp + f.Up * 56f + f.Right * (f.Face * 78f),
         TitanKind.Slattern    => f.Tp + f.Up * 136f + f.Right * (f.Face * 32f),
+        TitanKind.Pyrodactyl or TitanKind.Vitriodactyl
+                              => f.Tp + f.Up * 24f + f.Right * (f.Face * 74f),
         _                     => f.Tp + f.Up * 110f + f.Right * (f.Face * 60f),
     };
 
