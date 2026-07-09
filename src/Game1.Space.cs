@@ -377,7 +377,55 @@ public sealed partial class DwarfMinerGame
             new Color(120, 125, 145));
 
         if (_upgradesOpen) DrawUpgradeMenu(sb);
+        if (_surveyOpen) DrawSurveyMenu(sb);
     }
+
+    /// <summary>The M-key long-range survey: every planet's titan (with souls banked of that
+    /// kind) and its biggest ore deposits with approximate counts — see Space.Survey for why
+    /// "approximate" is honest. First open generates each world once (a beat of hitch).</summary>
+    private void DrawSurveyMenu(SpriteBatch sb)
+    {
+        const int w = 860;
+        var count = PlanetDefs.All.Length;
+        var h = 120 + count * 66;
+        var x = (VirtualWidth - w) / 2;
+        var y = (VirtualHeight - h) / 2;
+
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y, w, h), new Color(10, 12, 22, 235));
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y, w, 2), new Color(140, 200, 255));
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y + h - 2, w, 2), new Color(140, 200, 255));
+        sb.End();
+
+        _renderer.DrawText("SYSTEM SURVEY",
+            new Vector2(x + (w - _renderer.MeasureText("SYSTEM SURVEY", 3)) / 2f, y + 16), Color.White, 3);
+
+        for (var i = 0; i < count; i++)
+        {
+            var def = PlanetDefs.All[i];
+            var rowY = y + 62 + i * 66;
+            var souls = _meta.SoulsOf(def.Titan.ToString());
+            var slain = souls > 0 ? $"SOULS {souls}" : "NO SOULS YET";
+            _renderer.DrawText(def.Name.ToUpperInvariant(), new Vector2(x + 24, rowY), Color.White, 2);
+            _renderer.DrawText($"TITAN: {TitanName(def.Titan).ToUpperInvariant()}  [{slain}]",
+                new Vector2(x + 250, rowY + 4),
+                souls > 0 ? new Color(140, 220, 140) : new Color(200, 160, 120));
+            var deposits = "";
+            foreach (var (label, n) in Survey.For(def))
+                deposits += $"{label} {FormatCount(n)}   ";
+            _renderer.DrawText(deposits.TrimEnd(),
+                new Vector2(x + 24, rowY + 28), new Color(150, 155, 175));
+        }
+
+        _renderer.DrawText("M/ESC CLOSE",
+            new Vector2(x + (w - _renderer.MeasureText("M/ESC CLOSE")) / 2f, y + h - 26),
+            new Color(150, 155, 175));
+    }
+
+    /// <summary>Approximate-count formatting for the survey ("1.4K" style) — the rounding is
+    /// the point: the real world is seeded per-visit, so exact digits would be a lie.</summary>
+    private static string FormatCount(int n) =>
+        n >= 1000 ? $"{n / 1000f:0.0}K" : n >= 100 ? $"{n / 10 * 10}+" : n.ToString();
 
     /// <summary>The foundry overlay: one line per upgrade with soul + cargo price, cursor
     /// selection, and a wallet readout. Purchases persist in MetaSave.ShipUpgrades.</summary>
