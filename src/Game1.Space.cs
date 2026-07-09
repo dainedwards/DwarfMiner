@@ -450,22 +450,23 @@ public sealed partial class DwarfMinerGame
         for (var i = 0; i < Upgrades.All.Length; i++)
         {
             var def = Upgrades.All[i];
-            var rowY = y + 92 + i * 62;
-            var owned = Upgrades.Owned(_meta, def.Id);
+            var rowY = y + 88 + i * 52;
+            var owned = !def.Repeatable && Upgrades.Owned(_meta, def.Id);
             var afford = Upgrades.CanAfford(_meta, def);
             if (i == _upgradeCursor)
             {
                 sb.Begin(samplerState: SamplerState.PointClamp);
-                sb.Draw(_renderer.Pixel, new Rectangle(x + 12, rowY - 6, w - 24, 54), new Color(45, 50, 70, 180));
+                sb.Draw(_renderer.Pixel, new Rectangle(x + 12, rowY - 6, w - 24, 46), new Color(45, 50, 70, 180));
                 sb.End();
             }
             var nameCol = owned ? new Color(140, 220, 140) : afford ? Color.White : new Color(130, 132, 145);
+            var name = def.Id == "rover" ? $"ROVER ({_meta.Rovers} ABOARD)" : def.Name.ToUpperInvariant();
             var cost = owned ? "INSTALLED" : CostLabel(def);
-            _renderer.DrawText(def.Name.ToUpperInvariant(), new Vector2(x + 24, rowY), nameCol, 2);
+            _renderer.DrawText(name, new Vector2(x + 24, rowY), nameCol, 2);
             _renderer.DrawText(cost,
                 new Vector2(x + w - 24 - _renderer.MeasureText(cost), rowY + 4),
                 owned ? new Color(140, 220, 140) : afford ? new Color(255, 225, 140) : new Color(160, 120, 110));
-            _renderer.DrawText(def.Desc.ToUpperInvariant(), new Vector2(x + 24, rowY + 24), new Color(150, 155, 175));
+            _renderer.DrawText(def.Desc.ToUpperInvariant(), new Vector2(x + 24, rowY + 22), new Color(150, 155, 175));
         }
 
         _renderer.DrawText("UP/DOWN SELECT   ENTER INSTALL   U/ESC CLOSE",
