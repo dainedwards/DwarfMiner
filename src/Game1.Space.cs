@@ -130,7 +130,7 @@ public sealed partial class DwarfMinerGame
         _space.Asteroids.Clear();
         _camera.SnapTo(_space.ShipPos, 0f);
         _sfx.Play("explode", 0.8f, pitch: -0.3f);
-        _toast = $"HULL BREACH — EMERGENCY DOCK AT {_space.Planets[nearest].Def.Name.ToUpperInvariant()}";
+        _toast = $"HULL BREACH - EMERGENCY DOCK AT {_space.Planets[nearest].Def.Name.ToUpperInvariant()}";
         _toastTimer = 3.5f;
     }
 
