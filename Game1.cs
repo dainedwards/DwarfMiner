@@ -397,7 +397,7 @@ public sealed partial class DwarfMinerGame : Game
         var right = new Vector2(-up.Y, up.X);
         var lat = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
                 + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
-        _landerPos += (-up * 140f + right * (lat * 175f)) * dt;
+        _landerPos += (-up * 170f + right * (lat * 195f)) * dt;
 
         // Retro-thruster flame under the pod, throttled by the particle system itself.
         _particles.EmitRocketExhaust(_landerPos - up * 4f, -up);
