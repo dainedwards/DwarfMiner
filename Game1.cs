@@ -403,15 +403,22 @@ public sealed partial class DwarfMinerGame : Game
         var right = new Vector2(-up.Y, up.X);
         var lat = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
                 + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
-        _landerPos += (-up * 170f + right * (lat * 195f)) * dt;
+        _landerPos += (-up * 185f + right * (lat * 205f)) * dt;
 
         // Retro-thruster flame under the pod, throttled by the particle system itself.
         _particles.EmitRocketExhaust(_landerPos - up * 4f, -up);
 
         _run.Player.Position = _landerPos;
         _run.Player.Velocity = Vector2.Zero;
-        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, _playZoom, MathHelper.Clamp(dt * 1.1f, 0f, 1f));
+        // Altitude-driven zoom: stay wide while high (see the terrain you're steering at),
+        // then close to play zoom only for the final stretch.
+        var alt = (_landerPos - _run.Planet.Center).Length()
+                  - (Planet.RingMin + WorldGen.BaselineSurfaceRing) * Planet.TileSize;
+        var zoomTarget = MathHelper.Lerp(_playZoom, 0.72f, MathHelper.Clamp(alt / 650f, 0f, 1f));
+        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, zoomTarget, MathHelper.Clamp(dt * 2.4f, 0f, 1f));
         _camera.Follow(_landerPos, up, dt);
+        // The station keeps drifting while the pod falls.
+        _run.MothershipAngle += Session.StationDriftRate * dt;
 
         _run.Physics.Update(dt);
         _run.Cells.Update(dt);
