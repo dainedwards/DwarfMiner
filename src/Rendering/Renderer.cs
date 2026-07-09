@@ -247,6 +247,14 @@ public sealed class Renderer
                     Math.Clamp(col.G + jitter / 4, 0, 255),
                     Math.Clamp(col.B + jitter / 4, 0, 255));
 
+                // Low-detail: the jittered base colour IS the tile at this scale.
+                if (lowDetail)
+                {
+                    _sb.Draw(_pixel, centre, null, col, rotation,
+                        new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+                    continue;
+                }
+
                 // Neighbour kinds drive the erosion mask, the grass wrap and the material
                 // bite-rows. Outer band boundaries can have two neighbours: any sky counts
                 // as exposed, and the first solid one supplies the merge colour.
