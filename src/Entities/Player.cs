@@ -31,7 +31,7 @@ public sealed class Player
     public bool O2Tier2;
 
     public float EffectiveMaxOxygen =>
-        BaseMaxOxygen * (HasAirTank ? 2f : 1f) * (HasO2Recycler ? 1.5f : 1f);
+        BaseMaxOxygen * (HasAirTank ? 2f : 1f) * (O2Tier2 ? 2f : HasO2Recycler ? 1.5f : 1f);
 
     /// <summary>Pickaxe tier 1..4. Drives base mining power and reach. Replaces the older
     /// <c>PickaxePower</c> int — kept as a tier so future augments can stack on top of a tier
