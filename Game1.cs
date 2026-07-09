@@ -2798,7 +2798,7 @@ public sealed partial class DwarfMinerGame : Game
         else if (_landing)
             controls = "A/D STEER THE ROVER\nTOUCHDOWN WHERE YOU AIM";
         else if (_ascending)
-            controls = "WASD/ARROWS STEER THE ROCKET - ANY DIRECTION\nCLIMB TO THE MOTHERSHIP AND DOCK";
+            controls = "WASD/ARROWS FLY THE ROCKET - ANYWHERE AROUND THE PLANET\nGET CLOSE TO THE MOTHERSHIP TO DOCK";
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _run.Player, (int)_run.Titan.Anger, status, controls);
 
         // Depot prompt: at the depot, show deposit/withdraw; otherwise, if a stash is waiting on
