@@ -47,6 +47,15 @@ public sealed class Player
     public bool HasLaserCannon;
     public bool HasRocketLauncher;
 
+    /// <summary>Mothership-foundry upgrade (not craftable in-run, not in the run save —
+    /// re-applied from MetaSave on every planet entry). Hold jump while airborne to fly on a
+    /// charge that refills on the ground.</summary>
+    public bool HasJetpack;
+    public float JetCharge = JetChargeMax;
+    public const float JetChargeMax = 2.6f;   // seconds of burn
+    private const float JetRiseSpeed = 110f;  // target upward speed under thrust
+    private const float JetAccel = 420f;
+
     public float MineRange = 22f;          // pixels — dwarves have short reach
     public float MoveSpeed = 78f;          // shorter legs
     public float JumpSpeed = 150f;
