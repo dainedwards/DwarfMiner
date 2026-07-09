@@ -154,11 +154,11 @@ to farther worlds; both, plus the **engines**, are upgradeable.
 - **Phase 5 — polish/persistence:** persist mothership position/hull; thruster + gun sfx;
   landing/launch transition flourishes; DM_SPACE-style test hooks; settings/volume UI.
 
-**Upgrade ideas noted for later** (foundry slots to add in phases 3–4): jetpack tiers
-(charge/thrust), drill/pickaxe tiers, armor suit, oxygen tank tiers, cargo hold capacity,
-ship shield, ore magnet (pickup radius), scanner (ore/titan intel on the HUD), rover
-quality/count, sentry capacity, ship gun spread/damage tiers, engine range/speed tiers,
-warp engine (phase 4 capstone).
+**Upgrade ideas noted for later** (foundry slots to add in phases 4+): jetpack tiers
+(charge/thrust), further pickaxe tiers, armor suit, cargo hold capacity, ship shield, ore
+magnet (pickup radius), scanner (ore/titan intel on the HUD), rover quality (drop pods that
+don't hurt), sentry capacity, ship gun spread/damage tiers, engine tier III, take-gear-down
+loadouts (spend cargo to land equipped), warp engine (phase 4 capstone).
 
 **Open design questions:** does death on a planet cost more than the current visit (e.g. the
 rover)? Do souls/upgrades persist across completed runs (prestige reset vs. permanent)?
