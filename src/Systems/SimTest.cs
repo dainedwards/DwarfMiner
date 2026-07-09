@@ -1084,6 +1084,57 @@ public static class SimTest
         Check("loadout: manifest counts kits", pending.GetValueOrDefault("ammo") == 2);
         Check("loadout: cargo drained exactly", !loadMeta.ShipCargo.ContainsKey("pure_iron"));
 
+        // Phase-11 content: rare gems generate where (and only where) they should, biome
+        // pockets stamp real features, the voidstone reactor frees the tank, and the new
+        // disasters run their warn → strike phases.
+        int CountKind(Planet w, TileKind kind)
+        {
+            var total = 0;
+            for (var r = 0; r < Planet.RingCount; r++)
+            {
+                var n = Planet.TilesAt(r);
+                for (var t = 0; t < n; t++)
+                    if (w.Get(r, t) == kind) total++;
+            }
+            return total;
+        }
+        var verdantWorld = Space.Survey.WorldFor(World.PlanetDefs.ById("verdant"));
+        var riftWorld = Space.Survey.WorldFor(World.PlanetDefs.ById("rift"));
+        Check("content: emerald seams on verdant", CountKind(verdantWorld, TileKind.Emerald) > 0,
+            $"{CountKind(verdantWorld, TileKind.Emerald)} tiles");
+        Check("content: voidstone only in the rift",
+            CountKind(riftWorld, TileKind.Voidstone) > 0 && CountKind(verdantWorld, TileKind.Voidstone) == 0,
+            $"rift {CountKind(riftWorld, TileKind.Voidstone)}");
+        Check("content: fungal groves sprout wild glowshrooms",
+            CountKind(verdantWorld, TileKind.Glowshroom) > 0,
+            $"{CountKind(verdantWorld, TileKind.Glowshroom)} shrooms");
+
+        var voidSim = new Space.SpaceSim { AsteroidTarget = 0, FreeThrust = true, HasFuel = false };
+        voidSim.ShipPos = new Vector2(0f, -30000f);
+        var v0 = voidSim.ShipPos;
+        for (var i = 0; i < 120; i++) voidSim.Update(dt2, 0f, true, false);
+        Check("content: voidstone reactor = full thrust on a dry tank, no burn",
+            voidSim.FuelUsed == 0f && (voidSim.ShipPos - v0).Length() > 500f);
+
+        var flareRun = new Session(World.PlanetDefs.ById("verdant"))
+            { MeteorTimer = 9999f, FlareTimer = 0.3f, BlizzardTimer = 9999f };
+        var flareParticles = new Rendering.Particles();
+        bool warned = false, struck = false;
+        for (var i = 0; i < 60 * 9 && !struck; i++)
+        {
+            var res = AmbientDirector.Update(dt2, flareRun, flareParticles);
+            warned |= res.FlareWarned;
+            struck |= res.FlareStruck;
+        }
+        Check("content: solar flare warns then strikes", warned && struck && flareRun.FlareActive > 0f);
+
+        var blizzRun = new Session(World.PlanetDefs.ById("frost"))
+            { MeteorTimer = 9999f, FlareTimer = 9999f, BlizzardTimer = 0.3f };
+        var blizzStarted = false;
+        for (var i = 0; i < 60 && !blizzStarted; i++)
+            blizzStarted |= AmbientDirector.Update(dt2, blizzRun, flareParticles).BlizzardStarted;
+        Check("content: blizzard breaks on the frost world", blizzStarted && blizzRun.BlizzardActive > 0f);
+
         // The long-range survey finds real deposits (ember is the ruby world) and caches.
         var ember = World.PlanetDefs.ById("ember");
         var t0 = Environment.TickCount64;
