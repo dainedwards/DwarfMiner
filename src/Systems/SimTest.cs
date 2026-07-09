@@ -288,6 +288,7 @@ public static class SimTest
         TestSfx();
         TestMeteors();
         TestCaveIn();
+        TestSpaceSim();
 
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
         Environment.Exit(_failed ? 1 : 0);
