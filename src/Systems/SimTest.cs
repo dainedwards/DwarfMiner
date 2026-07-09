@@ -421,7 +421,12 @@ public static class SimTest
         Check("titan: egg cracks open when its health is spent", eggHit.Hatched);
 
         // --- Each variant's special attack fires when aggroed near the player ---
-        foreach (var kind in new[] { TitanKind.Godzilla, TitanKind.Mecha, TitanKind.Sandworm, TitanKind.Kong })
+        foreach (var kind in new[]
+        {
+            TitanKind.Godzilla, TitanKind.Mecha, TitanKind.Sandworm, TitanKind.Kong,
+            TitanKind.Knifehead, TitanKind.Otachi, TitanKind.Leatherback, TitanKind.Raiju,
+            TitanKind.Slattern,
+        })
         {
             var p = WorldGen.Generate(60);
             var c = new Cells(p);
