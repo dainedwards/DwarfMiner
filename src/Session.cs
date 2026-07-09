@@ -34,6 +34,15 @@ public sealed class Session
     public float MeteorTimer;
     public float SurgeTimer;
 
+    /// <summary>Disaster state (see AmbientDirector): solar flares scorch anyone on the
+    /// surface after a warned window (all worlds); blizzards freeze exposed dwarves on snow
+    /// worlds. Timer counts to the next event; Warn/Active count down their phases.</summary>
+    public float FlareTimer;
+    public float FlareWarn;
+    public float FlareActive;
+    public float BlizzardTimer;
+    public float BlizzardActive;
+
     public float EarthquakeTimer;
     public float SpawnTimer;
     public float FaunaTimer;
