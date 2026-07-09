@@ -24,6 +24,9 @@ public sealed class Player
     /// <summary>Crafted air-tank upgrade — one-time, raises the oxygen ceiling so deep dives
     /// last roughly twice as long before you must surface.</summary>
     public bool HasAirTank;
+    /// <summary>Mothership-foundry upgrade (meta gear, re-applied on every entry like the
+    /// jetpack): +50% air ceiling, multiplicative with the craftable air tank.</summary>
+    public bool HasO2Recycler;
 
     public float EffectiveMaxOxygen => HasAirTank ? BaseMaxOxygen * 2f : BaseMaxOxygen;
 
