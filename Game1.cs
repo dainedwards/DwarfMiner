@@ -1000,6 +1000,12 @@ public sealed partial class DwarfMinerGame : Game
             _toastTimer = 4f;
             _sfx.Play("creak", 0.8f, pitch: 0.6f);
         }
+        if (ambient.AcidRainStarted)
+        {
+            _toast = "! TOXIC CLOUD - ACID RAIN. GET UNDER OBSIDIAN OR DIG DEEP !";
+            _toastTimer = 5f;
+            _sfx.Play("creak", 0.9f, pitch: -0.2f);
+        }
         // Exposure: both disasters punish standing in surface air; underground is safe.
         var exposed = DepthBelowSurface() < OxygenRules.AirDepth;
         if (exposed && _run.FlareActive > 0f)
