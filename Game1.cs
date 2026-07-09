@@ -2685,6 +2685,14 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.DrawText(_toast,
                 new Vector2((VirtualWidth - _renderer.MeasureText(_toast, 2)) / 2f, 64), new Color(160, 235, 160), 2);
 
+        // EMP banner — flashes while Leatherback's pulse has the dwarf's tech fried.
+        if (_run.Player.EmpTimer > 0f && ((int)(_run.RunTime * 4f) & 1) == 0)
+        {
+            var empWarn = $"EMP - SYSTEMS OFFLINE {_run.Player.EmpTimer:0.0}S";
+            _renderer.DrawText(empWarn, new Vector2((VirtualWidth - _renderer.MeasureText(empWarn, 2)) / 2f, 132),
+                new Color(120, 190, 255), 2);
+        }
+
         // Cave-in banner — flashes while condemned rock hangs over the dwarf (see UpdateCaveInWarning).
         if (_caveInWarn > 0f && ((int)(_run.RunTime * 6f) & 1) == 0)
         {
