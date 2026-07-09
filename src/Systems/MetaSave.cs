@@ -36,6 +36,53 @@ public sealed class MetaSave
         return b;
     }
 
+    // ── Mothership era (see PLAN.md §0) ──────────────────────────────────────
+
+    /// <summary>Titan souls by TitanKind name ("Godzilla", "Kong", …) — one banked per kill
+    /// of that boss type. The upgrade foundry's premium currency. Killing a titan no longer
+    /// ends the visit, so souls live here rather than in the per-run inventory.</summary>
+    public Dictionary<string, int> TitanSouls { get; set; } = new();
+
+    /// <summary>The mothership's cargo hold (resource id → count). Raw materials still in
+    /// the dwarf's pack when the rocket docks are transferred here; the foundry spends
+    /// from it.</summary>
+    public Dictionary<string, int> ShipCargo { get; set; } = new();
+
+    /// <summary>Fuel units in the mothership's tank — leftover mined fuel transfers on
+    /// docking. Phase 3 burns this per-distance to gate travel to farther worlds.</summary>
+    public int MotherFuel { get; set; }
+
+    /// <summary>Purchased foundry upgrade ids (see Space.Upgrades). Permanent.</summary>
+    public List<string> ShipUpgrades { get; set; } = new();
+
+    public int TotalSouls()
+    {
+        var n = 0;
+        foreach (var (_, c) in TitanSouls) n += c;
+        return n;
+    }
+
+    /// <summary>Deduct <paramref name="n"/> souls of any kind (largest stacks first).
+    /// Returns false untouched if there aren't enough. Kind-specific costs are a phase 3
+    /// upgrade-depth item.</summary>
+    public bool SpendSouls(int n)
+    {
+        if (TotalSouls() < n) return false;
+        while (n > 0)
+        {
+            string? biggest = null;
+            var max = 0;
+            foreach (var (kind, c) in TitanSouls)
+                if (c > max) { max = c; biggest = kind; }
+            if (biggest is null) return false;   // unreachable given the TotalSouls check
+            var take = Math.Min(n, max);
+            TitanSouls[biggest] -= take;
+            if (TitanSouls[biggest] == 0) TitanSouls.Remove(biggest);
+            n -= take;
+        }
+        return true;
+    }
+
     private static string SavePath
     {
         get
