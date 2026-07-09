@@ -696,7 +696,7 @@ public sealed partial class DwarfMinerGame : Game
             _run.Shake = MathF.Max(_run.Shake, 1.6f);
             _particles.EmitDust(_run.Titan.Position, 44f);
             PlayAt("explode", _run.Titan.Position, 1f, pitch: -0.4f);
-            _toast = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} SLAIN — SOUL CLAIMED";
+            _toast = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} SLAIN - SOUL CLAIMED";
             _toastTimer = 3.5f;
         }
         _prevTitanHealth = _run.Titan.Health;
