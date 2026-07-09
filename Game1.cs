@@ -319,7 +319,7 @@ public sealed partial class DwarfMinerGame : Game
         // Camera is null only for the DM_ORBIT boot hook — LoadContent snaps it then.
         if (_camera is not null)
         {
-            _camera.Zoom = 1.4f;
+            _camera.Zoom = 1.1f;
             _camera.SnapTo(_run.StationPos, 0f);
         }
     }
