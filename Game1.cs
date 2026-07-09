@@ -676,7 +676,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             _meta.TitansDefeated++;
             _meta.Save();
-            EndRun($"You felled the {TitanName(_run.Def.Titan)}! Run time: {_run.RunTime:0.0}s. Press R for the star map.");
+            EndRun($"You felled the {TitanName(_run.Def.Titan)}! Run time: {_run.RunTime:0.0}s. Press R to return to your ship.");
         }
 
         for (var i = _run.Boulders.Count - 1; i >= 0; i--)
