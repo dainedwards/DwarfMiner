@@ -2000,12 +2000,21 @@ public sealed partial class DwarfMinerGame : Game
         {
             _meta.RunsCompleted++;
             _meta.CoreShards.Clear();
+            // A conquered system is left behind: reroll the campaign seed so the next run
+            // gets seven freshly generated worlds, and clear the progression that named
+            // the old ones (escapes, banks, unlock depth). Souls/upgrades/ship endure.
+            _meta.WorldSeed = Random.Shared.Next(1, int.MaxValue);
+            _meta.PlanetsEscaped.Clear();
+            _meta.Bank.Clear();
+            _meta.PlanetsUnlocked = 1;
             _meta.Save();
+            PlanetDefs.Activate(PlanetGen.Campaign(_meta.WorldSeed));
+            _space = new SpaceSim();   // rebuild the system view around the new planets
             EndRun("SYSTEM CONQUERED!\n" +
                    $"The Rift titan is slain and you flew out alive. Campaigns completed: {_meta.RunsCompleted}.\n" +
                    $"Escapes {_meta.Escapes}   Titan kills {_meta.TitansDefeated}   Deepest {_meta.DeepestDepth}   Deaths {_meta.Deaths}\n" +
                    "Souls and upgrades endure. The warp home burned your core shards -\n" +
-                   "pierce the five worlds anew to reach the Rift again.\n" +
+                   "and flung you into an UNCHARTED SYSTEM: seven new worlds to pierce.\n" +
                    "Press R to return to your ship.");
             return;
         }
