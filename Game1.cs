@@ -646,7 +646,7 @@ public sealed partial class DwarfMinerGame : Game
         // consumes the same press edge to close itself (previously Esc quit the whole game
         // out from under the menu). Edge-triggered so the close-press doesn't also quit.
         if (Pressed(keys, _prevKeys, Keys.Escape)
-            && !(_screen == GameScreen.Playing && (_craftingMenu.Open || _debugMenu.Open))
+            && !(_screen == GameScreen.Playing && (_craftingMenu.Open || _debugMenu.Open || _loadoutOpen))
             && !(_screen == GameScreen.Space && (_upgradesOpen || _surveyOpen)))
             Exit();
 
