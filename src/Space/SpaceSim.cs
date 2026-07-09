@@ -63,11 +63,33 @@ public sealed class SpaceSim
     /// <summary>Set by Update each tick — the renderer keys the exhaust flame off it.</summary>
     public bool Thrusting;
 
+    // ── Hazards & armament (mothership era) ─────────────────────────────────
+    public const float ShipRadius = 26f;
+    public const int MaxHull = 5;
+    public readonly List<Asteroid> Asteroids = new();
+    public readonly List<ShipShot> Shots = new();
+    public int Hull = MaxHull;
+    /// <summary>Seconds of post-hit invulnerability left — also the renderer's hit flash.</summary>
+    public float HitTimer;
+    /// <summary>Set when a collision drops the hull to zero; Game1 consumes it to run the
+    /// emergency-dock sequence (reposition at the nearest world, restore hull).</summary>
+    public bool HullBreached;
+    /// <summary>Ship tiers, fed from MetaSave upgrades by Game1: 2 = Autocannon II /
+    /// Ion Engines II.</summary>
+    public int GunTier = 1;
+    public int EngineTier = 1;
+    private float _gunCooldown;
+    /// <summary>Target live-asteroid population; maintained by Update inside a spawn donut
+    /// around the ship. Zero disables spawning (tests build their own fields).</summary>
+    public int AsteroidTarget = 22;
+
     private const float Accel = 460f;
     private const float Brake = 380f;
     private const float TurnRate = 3.4f;
     private const float MaxSpeed = 640f;
     private const float Drag = 0.20f;    // per-second exponential decay — coasting bleeds off slowly
+    private const float ShotSpeed = 1050f;
+    private const float ShotDamage = 30f;
 
     public SpaceSim()
     {
