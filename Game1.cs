@@ -1418,13 +1418,29 @@ public sealed partial class DwarfMinerGame : Game
             _meta.ShipCargo[id] = _meta.ShipCargo.GetValueOrDefault(id) + count;
             cargoMoved += count;
         }
+        // The dock's refinery runs as the cargo comes aboard: raw metals smelt 4:1 into the
+        // pure ingots the foundry actually spends; gems stay precious as-is.
+        _meta.RefineCargo();
         _meta.Save();
         // The visit is over (a finished visit can't be resumed), but there's no game-over
         // screen: the rocket docks with the mothership and you have the stick.
         RunSave.Delete();
-        _toast = cargoMoved > 0
-            ? $"DOCKED - {cargoMoved} CARGO TRANSFERRED TO THE HOLD"
-            : $"ESCAPED {_run.Def.Name.ToUpperInvariant()} IN {_run.RunTime:0.0}S - YOU HAVE THE STICK";
+
+        // The campaign finale: escaping the Rift with its titan slain conquers the system.
+        if (_run.Def.Id == "rift" && _run.Titan.Health <= 0)
+        {
+            _meta.RunsCompleted++;
+            _meta.Save();
+            EndRun($"SYSTEM CONQUERED! The Rift titan is slain and you flew out alive. " +
+                   $"Campaigns completed: {_meta.RunsCompleted}. Press R to return to your ship.");
+            return;
+        }
+
+        _toast = _run.Def.Id == "rift"
+            ? "DOCKED - BUT THE RIFT TITAN STILL LIVES. RETURN AND SLAY IT"
+            : cargoMoved > 0
+                ? $"DOCKED - {cargoMoved} CARGO HAULED IN AND REFINED"
+                : $"ESCAPED {_run.Def.Name.ToUpperInvariant()} IN {_run.RunTime:0.0}S - YOU HAVE THE STICK";
         _toastTimer = 4f;
         EnterSpace(idx, exitSpeed: 320f, zoomFromPlanet: true);
     }
