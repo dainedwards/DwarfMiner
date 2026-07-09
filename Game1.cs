@@ -545,6 +545,15 @@ public sealed partial class DwarfMinerGame : Game
             return;
         }
 
+        // Parked in orbit: the player chooses when to drop, where to drop, or to leave.
+        if (_orbiting)
+        {
+            UpdateOrbit(dt, keys);
+            _prevKeys = keys; _prevMouse = mouse;
+            base.Update(gameTime);
+            return;
+        }
+
         // Rover descent owns the frame: steer the pod, everything else waits for touchdown.
         if (_landing)
         {
