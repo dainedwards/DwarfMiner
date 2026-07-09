@@ -159,6 +159,12 @@ public sealed partial class DwarfMinerGame : Game
         _space = new SpaceSim();
         RestoreShipState();
         _sfx.Master = VolumeSteps[Math.Clamp(_meta.VolumeStep, 0, VolumeSteps.Length - 1)];
+        // Warm the survey-world cache in the background so the system view can rasterize
+        // real terrain discs (and the M survey opens instantly) without a frame hitch.
+        System.Threading.Tasks.Task.Run(() =>
+        {
+            foreach (var def in PlanetDefs.All) Space.Survey.WorldFor(def);
+        });
         // DM_AUTOSTART=<planet-id|resume> skips the space screen and jumps straight into a run
         // (or resumes the suspend save) — keeps DM_AUTOSHOT-driven gameplay verification
         // working without menu input.
