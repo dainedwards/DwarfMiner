@@ -276,7 +276,17 @@ public sealed partial class DwarfMinerGame : Game
 
         // Spawn the dwarf on top of whatever mountain is at angle -π/2 — walk down from
         // far above until the first solid tile, then float a few pixels above it.
-        var surfacePos = SpawnDirector.FindSurfaceSpawn(_run.Planet, -MathF.PI / 2f, _run.Planet.Radius);
+        var spawnAngle = -MathF.PI / 2f;
+        // DM_VOLCANO=1 spawns beside the first volcano vent instead, so tooling can
+        // screenshot craters and eruptions without hiking there (pairs with DM_ERUPT).
+        if (Environment.GetEnvironmentVariable("DM_VOLCANO") is { Length: > 0 }
+            && _run.Planet.VolcanoVents.Count > 0)
+        {
+            var (vvx, vvy, _) = _run.Planet.VolcanoVents[0];
+            var vRel = _run.Planet.TileToWorld(vvx, vvy) - _run.Planet.Center;
+            spawnAngle = MathF.Atan2(vRel.Y, vRel.X) + 0.09f;   // offset onto the flank
+        }
+        var surfacePos = SpawnDirector.FindSurfaceSpawn(_run.Planet, spawnAngle, _run.Planet.Radius);
         _run.Player = new Player(surfacePos)
         {
             // Survival by default; DM_GOD=1 starts runs in god mode for testing, and G
