@@ -1629,8 +1629,10 @@ public sealed partial class DwarfMinerGame : Game
 
         var alt = (_launchShipPos - _run.Planet.Center).Length() - _run.Planet.Radius * Planet.TileSize;
         // Climb rate eases to zero approaching the parking orbit — the rocket "arrives"
-        // rather than shooting past the station.
-        var climb = MathHelper.Clamp((Session.OrbitAltitude - alt) * 1.4f, 0f, 270f);
+        // rather than shooting past the station (which is still drifting; the approach
+        // glide below tracks it).
+        _run.MothershipAngle += Session.StationDriftRate * dt;
+        var climb = MathHelper.Clamp((Session.OrbitAltitude - alt) * 1.4f, 0f, 300f);
         _launchShipPos += (up * climb + right * (lat * 220f)) * dt;
 
         // Near orbit altitude the docking computer takes over the final approach.
