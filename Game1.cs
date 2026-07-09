@@ -2146,6 +2146,9 @@ public sealed partial class DwarfMinerGame : Game
         // Storage depot — a squat vault the dwarf banks resources at.
         if (_run.DepotPos is { } depotPos) DrawDepot(depotPos);
 
+        // The spent rover, broken where it came down — the arrival landmark.
+        if (_run.RoverWreck is { } wreck) DrawRoverWreck(wreck);
+
         // Kaiju visibility cull. The kaiju's render block does 100+ draw calls (4 legs × IK +
         // 7-node tail + dorsal spines + head + claws), so skipping it when off-screen is a
         // large win. Camera viewport is 1280×720 at zoom 4 → ~320×180 world units, so the
