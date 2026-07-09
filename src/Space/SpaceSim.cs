@@ -156,14 +156,17 @@ public sealed class SpaceSim
     {
         foreach (var p in Planets) p.Angle += p.AngularVel * dt;
 
-        var engineMul = (EngineTier >= 3 ? 1.75f : EngineTier >= 2 ? 1.4f : 1f) * (HasFuel ? 1f : 0.35f);
+        var engineMul = (EngineTier >= 3 ? 1.75f : EngineTier >= 2 ? 1.4f : 1f)
+                      * (HasFuel || FreeThrust ? 1f : 0.35f);
         ShipHeading += turn * TurnRate * dt;
         Thrusting = thrust;
         if (thrust)
         {
             ShipVel += ShipDir * (Accel * engineMul * dt);
-            // Higher ion tiers sip rather than gulp — range is the real payoff.
-            if (HasFuel) FuelUsed += (EngineTier >= 3 ? 0.2f : EngineTier >= 2 ? 0.28f : 0.4f) * dt;
+            // Higher ion tiers sip rather than gulp — range is the real payoff. The
+            // voidstone reactor skips the tank entirely.
+            if (HasFuel && !FreeThrust)
+                FuelUsed += (EngineTier >= 3 ? 0.2f : EngineTier >= 2 ? 0.28f : 0.4f) * dt;
         }
         if (brake)
         {
