@@ -1570,6 +1570,11 @@ public sealed partial class DwarfMinerGame : Game
         new("Mecha-Titan (drill laser)",  () => SpawnDebugTitan(TitanKind.Mecha)),
         new("Shai-Hulud  (slither/bite)", () => SpawnDebugTitan(TitanKind.Sandworm)),
         new("Stone Ape   (leap slam)",    () => SpawnDebugTitan(TitanKind.Kong)),
+        new("Knifehead   (gore charge)",  () => SpawnDebugTitan(TitanKind.Knifehead)),
+        new("Otachi      (acid spray)",   () => SpawnDebugTitan(TitanKind.Otachi)),
+        new("Leatherback (EMP burst)",    () => SpawnDebugTitan(TitanKind.Leatherback)),
+        new("Raiju       (dash chain)",   () => SpawnDebugTitan(TitanKind.Raiju)),
+        new("Slattern    (spike barrage)",() => SpawnDebugTitan(TitanKind.Slattern)),
         new("Rocket — fuelled, launch-ready", () => SpawnDebugShip(fuelled: true)),
         new("Rocket — dry (mine fuel first)", () => SpawnDebugShip(fuelled: false)),
     };
