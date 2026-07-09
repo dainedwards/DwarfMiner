@@ -258,6 +258,14 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   **orbit-view performance**: `Renderer.DrawWorld` gained a low-detail mode below zoom 0.9 —
   one flat jittered quad per tile (atlas/rims/decor are sub-pixel there) and interior rings
   under r=60 skipped — cutting the orbital draw load by roughly an order of magnitude.
+  Round 2 (the real culprit): `Cells.Draw` and `Cells.AddLights` scanned the FULL cell grid
+  inside the view radius — millions of array reads at orbital radii, plus a lightmap blit
+  per surfaced lava cell. Both now take a `stride` LOD (zoom < 0.9 → 3, < 0.55 → 6: every
+  Nth cell on both axes at N× size, deep rows cut like the tile LOD). Also added a
+  permanent **FPS overlay** top-right on every screen — real rendered FPS (fixed-step
+  MonoGame drops Draws when frames overrun, so this is the stutter number) plus smoothed
+  UPD/DRW CPU ms to attribute blame (Update/Draw are wrapped by thin timing shims around
+  `UpdateFrame`/`DrawFrame`).
 
 **Upgrade ideas still unbuilt** (future foundry slots): further pickaxe tiers, armor suit,
 cargo hold capacity, scanner (ore/titan intel on the HUD), sentry capacity,
