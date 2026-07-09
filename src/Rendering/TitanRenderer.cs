@@ -25,10 +25,15 @@ public static class TitanRenderer
         var f = Frame.For(t, planet);
         switch (t.Kind)
         {
-            case TitanKind.Godzilla: DrawGodzilla(r, t, planet, playerPos, f, time); break;
-            case TitanKind.Mecha:    DrawMecha(r, t, planet, playerPos, f, time); break;
+            case TitanKind.Godzilla:    DrawGodzilla(r, t, planet, playerPos, f, time); break;
+            case TitanKind.Mecha:       DrawMecha(r, t, planet, playerPos, f, time); break;
             case TitanKind.Sandworm:    DrawSandworm(r, t, planet, playerPos, f, time); break;
-            case TitanKind.Kong:     DrawKong(r, t, planet, playerPos, f, time); break;
+            case TitanKind.Kong:        DrawKong(r, t, planet, playerPos, f, time); break;
+            case TitanKind.Knifehead:   DrawKnifehead(r, t, planet, playerPos, f, time); break;
+            case TitanKind.Otachi:      DrawOtachi(r, t, planet, playerPos, f, time); break;
+            case TitanKind.Leatherback: DrawLeatherback(r, t, planet, playerPos, f, time); break;
+            case TitanKind.Raiju:       DrawRaiju(r, t, planet, playerPos, f, time); break;
+            case TitanKind.Slattern:    DrawSlattern(r, t, planet, playerPos, f, time); break;
         }
     }
 
