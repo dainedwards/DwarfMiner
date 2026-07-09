@@ -126,18 +126,26 @@ public sealed partial class DwarfMinerGame
         _camera.SmoothRotation = 0f;
         _camera.Target = Vector2.Lerp(_camera.Target, _space.ShipPos, MathHelper.Clamp(dt * 8f, 0f, 1f));
 
+        // Fuel plumbing: the sim accumulates burn, the meta tank pays it in whole units.
+        // A dry tank drops the engines to reserve power (35%) — slow, never stuck.
+        while (_space.FuelUsed >= 1f)
+        {
+            _space.FuelUsed -= 1f;
+            if (_meta.MotherFuel > 0) _meta.MotherFuel--;
+        }
+        _space.HasFuel = _meta.MotherFuel > 0;
+
         if (!_space.HullBreached) return;
         _space.HullBreached = false;
-        var unlocked = Math.Min(_meta.PlanetsUnlocked, PlanetDefs.All.Length);
         var nearest = 0;
         var bestD = float.MaxValue;
-        for (var i = 0; i < unlocked; i++)
+        for (var i = 0; i < _space.Planets.Count; i++)
         {
             var d = (_space.Planets[i].Pos - _space.ShipPos).LengthSquared();
             if (d < bestD) { bestD = d; nearest = i; }
         }
         _space.PlaceShipAt(nearest);
-        _space.Hull = SpaceSim.MaxHull;
+        _space.Hull = _space.HullMax;
         _space.Asteroids.Clear();
         _camera.SnapTo(_space.ShipPos, 0f);
         _sfx.Play("explode", 0.8f, pitch: -0.3f);
