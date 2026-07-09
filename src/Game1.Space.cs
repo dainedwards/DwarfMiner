@@ -852,6 +852,55 @@ public sealed partial class DwarfMinerGame
             new Color(150, 155, 175));
     }
 
+    /// <summary>The orbit loadout overlay: per-drop supply kits bought with cargo. Same
+    /// visual language as the foundry, but everything here is a consumable manifest that
+    /// pays out when the rover launches.</summary>
+    private void DrawLoadoutMenu(SpriteBatch sb)
+    {
+        const int w = 620;
+        var h = 150 + Loadouts.All.Length * 46;
+        var x = (VirtualWidth - w) / 2;
+        var y = (VirtualHeight - h) / 2;
+
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y, w, h), new Color(10, 12, 22, 235));
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y, w, 2), new Color(150, 220, 255));
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y + h - 2, w, 2), new Color(150, 220, 255));
+        sb.End();
+
+        _renderer.DrawText("ROVER LOADOUT",
+            new Vector2(x + (w - _renderer.MeasureText("ROVER LOADOUT", 3)) / 2f, y + 16), Color.White, 3);
+        _renderer.DrawText($"CARGO HOLD: {CargoSummary()}",
+            new Vector2(x + 24, y + 50), new Color(150, 155, 175));
+
+        for (var i = 0; i < Loadouts.All.Length; i++)
+        {
+            var def = Loadouts.All[i];
+            var rowY = y + 78 + i * 46;
+            var afford = Loadouts.CanAfford(_meta, def);
+            var packed = _pendingKits.GetValueOrDefault(def.Id);
+            if (i == _loadoutCursor)
+            {
+                sb.Begin(samplerState: SamplerState.PointClamp);
+                sb.Draw(_renderer.Pixel, new Rectangle(x + 12, rowY - 5, w - 24, 40), new Color(45, 50, 70, 180));
+                sb.End();
+            }
+            var name = packed > 0 ? $"{def.Name.ToUpperInvariant()} X{packed}" : def.Name.ToUpperInvariant();
+            _renderer.DrawText(name, new Vector2(x + 24, rowY),
+                packed > 0 ? new Color(140, 220, 140) : afford ? Color.White : new Color(130, 132, 145), 2);
+            var cost = "";
+            foreach (var (id, n) in def.Mats)
+                cost += (cost.Length > 0 ? " + " : "") + $"{n} {Tiles.ResourceLabel(id)}";
+            _renderer.DrawText(cost,
+                new Vector2(x + w - 24 - _renderer.MeasureText(cost), rowY + 4),
+                afford ? new Color(255, 225, 140) : new Color(160, 120, 110));
+            _renderer.DrawText(def.Desc.ToUpperInvariant(), new Vector2(x + 24, rowY + 20), new Color(150, 155, 175));
+        }
+
+        _renderer.DrawText("PACKS PAY OUT ON THE NEXT DROP   ENTER BUY   L/ESC CLOSE",
+            new Vector2(x + 24, y + h - 26), new Color(150, 155, 175));
+    }
+
     private string CargoSummary()
     {
         if (_meta.ShipCargo.Count == 0) return "EMPTY";
