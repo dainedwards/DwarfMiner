@@ -1993,7 +1993,6 @@ public sealed partial class DwarfMinerGame : Game
     /// with the camera easing out from planet scale to system scale.</summary>
     private void FinishLaunch()
     {
-        _launching = false;
         _meta.Escapes++;
         if (!_meta.PlanetsEscaped.Contains(_run.Def.Id)) _meta.PlanetsEscaped.Add(_run.Def.Id);
         var idx = PlanetDefs.IndexOf(_run.Def);
