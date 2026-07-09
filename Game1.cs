@@ -229,7 +229,11 @@ public sealed partial class DwarfMinerGame : Game
         _craftingMenu.Reset();
         _invUi.Reset();
         _screen = GameScreen.Playing;
-        _camera?.SnapTo(_run.Player.Position, 0f);
+        if (_camera is not null)
+        {
+            _camera.Zoom = _playZoom;
+            _camera.SnapTo(_run.Player.Position, 0f);
+        }
     }
 
     protected override void LoadContent()
