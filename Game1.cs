@@ -204,6 +204,12 @@ public sealed partial class DwarfMinerGame : Game
         // Camera exists except when DM_AUTOSTART triggers a run during Initialize —
         // LoadContent snaps it then.
         _camera?.SnapTo(_run.Player.Position, 0f);
+
+        if (Environment.GetEnvironmentVariable("DM_DEBUGMENU") is { Length: > 0 })
+        {
+            _debugMenu.SetEntries(BuildDebugEntries());
+            _debugMenu.Toggle();
+        }
     }
 
     /// <summary>Resume the suspended run from disk — RunSave rebuilt the Session; this does
