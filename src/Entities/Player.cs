@@ -594,6 +594,7 @@ public sealed class Player
             // Other tiles take normal hardness — the boost is the power floor only.
             if (k == TileKind.PlanetCore) effectiveHardness = 8;
         }
+        if (tool == MiningTool.MiningLaser) power = Math.Max(power * 2, 6);
 
         var broken = planet.Mine(x, y, power, effectiveHardness);
         MineCooldown = MineCooldownFor(tool);
