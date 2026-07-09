@@ -193,10 +193,11 @@ public sealed partial class DwarfMinerGame
         _space.RiftLocked = _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded;
         TickSpaceCameraAndBreach(dt);
 
-        // Prefetch the world for whatever planet we're approaching, so atmosphere entry is
-        // seamless. Kicked off well outside entry range; the locked Rift never prefetches.
+        // Prefetch the world for whatever planet we're closest to, kicked off far outside
+        // entry range so the build always finishes before the ship arrives (a full-throttle
+        // 2200 px run-in takes ~3.5s; the build takes ~2). The locked Rift never prefetches.
         var (nearP, surfDist) = _space.NearestPlanet();
-        if (nearP is not null && surfDist < 900f && _prefetchId != nearP.Def.Id
+        if (nearP is not null && surfDist < 2200f && _prefetchId != nearP.Def.Id
             && !(nearP.Def.Id == "rift" && _space.RiftLocked))
         {
             var def = nearP.Def;
@@ -204,12 +205,14 @@ public sealed partial class DwarfMinerGame
             _prefetchTask = Task.Run(() => BuildSessionWorld(def));
         }
 
-        // Flying into the upper atmosphere IS the transition — no prompt, no keypress.
+        // Flying into the upper atmosphere IS the transition — no prompt, no keypress. The
+        // bearing you flew in on becomes the bearing you arrive above.
         if (_space.AtmosphereContact() is { } entry)
         {
             CaptureShipState();
             _meta.Save();
-            EnterOrbit(entry.Def);
+            var toShip = _space.ShipPos - entry.Pos;
+            EnterOrbit(entry.Def, MathF.Atan2(toShip.Y, toShip.X));
             return;
         }
 
