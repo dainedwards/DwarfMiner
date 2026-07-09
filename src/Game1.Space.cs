@@ -303,23 +303,40 @@ public sealed partial class DwarfMinerGame
         var sb = _renderer.Batch;
         var view = _camera.View;
 
-        // Parallax starfield: hashed screen positions scrolled against the camera at two
-        // depths and wrapped, so flying reads as motion even with nothing else on screen.
+        // Deep background: soft nebula blobs on the slowest parallax, then a three-layer
+        // starfield with a scattering of tinted stars — hashed screen positions scrolled
+        // against the camera and wrapped, so flying reads as motion everywhere.
         sb.Begin(samplerState: SamplerState.PointClamp);
-        for (var layer = 0; layer < 2; layer++)
+        for (var i = 0; i < 4; i++)
         {
-            var factor = layer == 0 ? 0.04f : 0.11f;
-            var n = layer == 0 ? 130 : 70;
+            var h = (i * 2654435761u) & 0x7fffffff;
+            var nx = Mod((h >> 6) % VirtualWidth - _camera.Target.X * 0.015f, VirtualWidth);
+            var ny = Mod((h >> 16) % VirtualHeight - _camera.Target.Y * 0.015f, VirtualHeight);
+            var nebCol = (i & 1) == 0 ? new Color(90, 60, 140) : new Color(40, 90, 120);
+            for (var ring = 4; ring >= 1; ring--)
+                FillCircleWorld(sb, new Vector2(nx, ny), 36f * ring,
+                    nebCol * (0.016f * (5 - ring)));
+        }
+        for (var layer = 0; layer < 3; layer++)
+        {
+            var factor = layer switch { 0 => 0.03f, 1 => 0.07f, _ => 0.13f };
+            var n = layer switch { 0 => 120, 1 => 90, _ => 55 };
             for (var i = 0; i < n; i++)
             {
                 var h = ((i + layer * 977) * 1013904223 + 1664525) & 0x7fffffff;
                 var x = Mod((h >> 7) % VirtualWidth - _camera.Target.X * factor, VirtualWidth);
                 var y = Mod((h >> 17) % VirtualHeight - _camera.Target.Y * factor, VirtualHeight);
                 var tw = MathF.Sin(_totalTime * (0.6f + (h & 3) * 0.5f) + i) * 0.5f + 0.5f;
-                var bright = (0.2f + tw * 0.5f) * (layer == 0 ? 0.7f : 1f);
+                var bright = (0.2f + tw * 0.5f) * (0.55f + layer * 0.22f);
                 var size = (h & 15) == 0 ? 2 : 1;
-                sb.Draw(_renderer.Pixel, new Rectangle((int)x, (int)y, size, size),
-                    new Color(200, 210, 235) * bright);
+                // Most stars are white; a scattering runs warm or cool.
+                var starCol = (h & 31) switch
+                {
+                    < 3 => new Color(255, 200, 150),
+                    < 6 => new Color(150, 190, 255),
+                    _ => new Color(200, 210, 235),
+                };
+                sb.Draw(_renderer.Pixel, new Rectangle((int)x, (int)y, size, size), starCol * bright);
             }
         }
         sb.End();
