@@ -75,6 +75,7 @@ public sealed partial class DwarfMinerGame
     private void CaptureShipState()
     {
         if (_space is null) return;
+        _meta.ShipStateSaved = true;
         _meta.ShipPosX = _space.ShipPos.X;
         _meta.ShipPosY = _space.ShipPos.Y;
         _meta.ShipHeadingSave = _space.ShipHeading;
