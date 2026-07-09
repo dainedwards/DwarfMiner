@@ -279,8 +279,19 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   40 blocks, and a sentry. Foundry is now 17 lines. 8 new SimTest checks.
   Dropped from the wishlist as non-features: cargo hold capacity (no cap exists — adding
   one would only annoy), sentry capacity (no cap exists), further pickaxe tiers (crafted
-  tiers already cover the curve). Remaining ideas if wanted later: jetpack III, richer
-  loadout picking in orbit.
+  tiers already cover the curve).
+
+- **Phase 10 — wishlist finale (DONE 2026-07-09):** the last wishlist ideas plus a tier-III
+  batch. Foundry (now 22 lines): **JETPACK III** (needs II — 7.8s charge, 190 px/s climb),
+  **AEGIS CAPACITOR** (needs shield — recharge 8s → 4s via `SpaceSim.ShieldTier`),
+  **ORE MAGNET II** (reach 16 → 30 px, `Player.PickupReach`), **O2 RESERVES II** (air ×2,
+  replaces tier I's ×1.5), **HULL PLATING II** (7 → 9 pips). And the **rover loadout menu**
+  (`L` in orbit, `src/Space/Loadouts.cs`): per-drop supply kits priced in cargo (no souls) —
+  Ammo/Med/Demo/Builder/Sentry packs — stack in a pending manifest shown in the orbit HUD
+  and pay out into the pack when the rover launches (manifest survives breaking orbit;
+  cargo already spent). `DM_LOADOUT=1` opens it on arrival for tooling. 9 new SimTest
+  checks (tier curves, shield recharge, loadout economy). The §0 upgrade wishlist is now
+  fully resolved — every idea is either shipped or explicitly dropped with reasoning.
 
 **Open design questions:** does death on a planet cost more than the current visit (e.g. the
 rover)? Do souls/upgrades persist across completed runs (prestige reset vs. permanent)?
