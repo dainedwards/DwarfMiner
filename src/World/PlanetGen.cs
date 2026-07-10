@@ -124,7 +124,7 @@ public static class PlanetGen
                 ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy * 0.95f,
                 Titan: titan, FungalPockets: 2 + rng.Next(3),
                 SizeScale: size, LakeScale: J(2.6f, 3.4f),
-                Volcanoes: strayVolcano, VolcanoScale: strayScale),
+                Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "ocean"),
 
             Biome.Acid => new(id, name,
                 "Acid world - open vitriol pools, and the clouds rain worse",
