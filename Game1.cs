@@ -2699,6 +2699,13 @@ public sealed partial class DwarfMinerGame : Game
             if (_run.PadPos is { } padPos) DrawShip(padPos, 0);
             DrawShip(_launchShipPos, _run.ShipStage, _ascentHeading);
         }
+        else if (_shipParked)
+        {
+            // Rocket set down away from home: bare pad at the build site, hull standing
+            // upright wherever the player left it.
+            if (_run.PadPos is { } padPos) DrawShip(padPos, 0);
+            DrawShip(_launchShipPos, _run.ShipStage, _run.Planet.UpAt(_launchShipPos));
+        }
         else if (_run.PadPos is { } shipPos) DrawShip(shipPos, _run.ShipStage);
 
         // Storage depot — a squat vault the dwarf banks resources at.
