@@ -661,6 +661,7 @@ public sealed class Player
     {
         if (MineCooldown > 0 || SwingActive) return false;
         var aim = worldCursor - Position;
+        SwingCursor = worldCursor;
         SwingAim = aim.LengthSquared() > 0.001f ? Vector2.Normalize(aim) : new Vector2(1f, 0f);
         SwingTool = tool;
         SwingFlip = -SwingFlip;
