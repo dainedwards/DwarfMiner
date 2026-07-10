@@ -127,16 +127,31 @@ public sealed class Titan
     /// locomotion sinks to strafing height while it rains.</summary>
     public bool Bombing;
 
-    /// <summary>Length of each drawn leg bone (thigh and shin are equal). Shared with
+    /// <summary>Thigh and shin length (equal) of the hip→knee→ankle IK chain. Shared with
     /// <see cref="Rendering.TitanRenderer"/>'s two-bone IK so the simulation never plants a
     /// foot farther than the drawn leg can actually reach.</summary>
-    public const float LegBoneLen = 80f;
-    /// <summary>Maximum hip→foot distance — both bones almost straight, with a sliver of
-    /// slack kept so the knee never fully locks out.</summary>
-    public const float LegMaxReach = LegBoneLen * 1.96f;
+    public const float LegBoneLen = 66f;
+    /// <summary>The third joint: the ankle sits this far above the planted toe. The foot bone
+    /// (ankle→toe) is what touches ground — a digitigrade theropod leg, so the knee bows
+    /// forward, the ankle kicks back, and the foot plants flat.</summary>
+    public const float AnkleLift = 26f;
+    /// <summary>…and this far behind the toe (against facing), so the ankle reads as the
+    /// raised backward-bending joint above the heel.</summary>
+    public const float AnkleBack = 12f;
+    /// <summary>Maximum hip→foot distance — thigh, shin and foot almost straight, with a
+    /// sliver of slack kept so the knee never fully locks out.</summary>
+    public const float LegMaxReach = (LegBoneLen * 2f + AnkleLift) * 0.96f;
     /// <summary>Lateral half-spacing between the two hip sockets at the pelvis. Without this
     /// the legs share one origin point and read as a wishbone.</summary>
     public const float HipHalfSpan = 26f;
+    /// <summary>Neutral stance: each foot rests this far to its side of the pelvis center —
+    /// feet nearly under the body, not straddled wide.</summary>
+    public const float StanceHalf = 20f;
+    /// <summary>While walking, a stepping foot plants this far AHEAD of its neutral point in
+    /// the direction of motion, and a planted foot lets the body walk past it until it has
+    /// fallen the same distance behind — so each step covers ~2× this and the feet cross each
+    /// other, a stride rather than a splayed shuffle.</summary>
+    public const float StrideHalf = 52f;
 
     /// <summary>World position of a leg's hip socket — pelvis center offset along the tangent
     /// by the leg's side. Single source of truth used by both the anchor search and the
