@@ -1733,6 +1733,16 @@ public sealed class Creature
             case CreatureKind.Slimelet:
                 r.AddLight(Position, 9f, new Color(90, 200, 160));
                 break;
+            case CreatureKind.CinderSkink:
+                // Ember freckles — a faint coal-glow crossing the night-side basalt.
+                r.AddLight(Position, 8f + MathF.Sin(r.Time * 5f + _phase) * 2f, new Color(255, 140, 50));
+                break;
+            case CreatureKind.PrismSnail:
+                r.AddLight(Position, 12f, new Color(190, 140, 240));
+                break;
+            case CreatureKind.NullMoth:
+                r.AddLight(Position, 10f, new Color(150, 90, 220));
+                break;
         }
     }
 
