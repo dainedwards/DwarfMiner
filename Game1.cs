@@ -1935,8 +1935,22 @@ public sealed partial class DwarfMinerGame : Game
         _ascentVel *= 1f - MathF.Min(1f, 1.8f * dt);
         const float cruise = 120f;
         var speed = _ascentVel.Length();
-        if (speed > cruise) _ascentVel *= cruise / speed;
+        if (speed > cruise) { _ascentVel *= cruise / speed; speed = cruise; }
         _launchShipPos += _ascentVel * dt;
+
+        // Nose-up for the first moments off the pad, then the rocket banks to lead its
+        // trajectory: toward the thrust while burning, along the velocity while coasting,
+        // easing back upright in a hover. The turn is rate-limited so it reads as the
+        // ship swinging its nose around, not snapping.
+        _ascentTime += dt;
+        var want = _ascentTime < 2f ? up
+                 : thrusting ? steer
+                 : speed > 25f ? _ascentVel / speed
+                 : up;
+        var heading = MathF.Atan2(_ascentHeading.Y, _ascentHeading.X);
+        var turn = MathHelper.WrapAngle(MathF.Atan2(want.Y, want.X) - heading);
+        heading += MathHelper.Clamp(turn, -2.5f * dt, 2.5f * dt);
+        _ascentHeading = new Vector2(MathF.Cos(heading), MathF.Sin(heading));
 
         // The ground stays solid on the way up, same as it was on the way down: the rocket
         // rides just clear of terrain (mountainsides included) rather than sinking in.
