@@ -2909,7 +2909,9 @@ public sealed partial class DwarfMinerGame : Game
             0 => "PAD READY",
             1 => "HULL BUILT",
             2 => "ENGINE IN",
-            _ => $"FUEL {_run.ShipFuel}/{FuelToLaunch} - L AT PAD TO FUEL/LAUNCH",
+            _ => _run.ShipFuel < FuelToLaunch
+                ? $"FUEL {_run.ShipFuel}/{FuelToLaunch} - E AT ROCKET TO FUEL"
+                : "FUELLED - E AT ROCKET TO BOARD",
         };
         string titanStatus;
         if (_run.Titan.Health <= 0)
