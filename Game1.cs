@@ -1933,21 +1933,25 @@ public sealed partial class DwarfMinerGame : Game
         if (speed > cruise) _ascentVel *= cruise / speed;
         _launchShipPos += _ascentVel * dt;
 
-        // Keep the flight in the planet's envelope: never into the crust below, never past
-        // the station's orbit into deep space above. Kill the radial velocity on contact so
-        // the rocket slides along the bound instead of pinning against it.
-        var planetR = _run.Planet.Radius * Planet.TileSize;
+        // The ground stays solid on the way up, same as it was on the way down: the rocket
+        // rides just clear of terrain (mountainsides included) rather than sinking in.
+        if (_run.Planet.IsSolidAt(_launchShipPos - up * 5f) || _run.Planet.IsSolidAt(_launchShipPos))
+        {
+            for (var i = 0; i < 60 && _run.Planet.IsSolidAt(_launchShipPos); i++) _launchShipPos += up * 2f;
+            var sink = Vector2.Dot(_ascentVel, up);
+            if (sink < 0f) _ascentVel -= up * sink;
+        }
+
+        // Ceiling just past the station's orbit — no drifting off into deep space.
         var fromCenter = _launchShipPos - _run.Planet.Center;
         var r = fromCenter.Length();
-        var minR = planetR + 60f;
-        var maxR = planetR + Session.OrbitAltitude + 120f;
-        if (r < minR || r > maxR)
+        var maxR = _run.Planet.Radius * Planet.TileSize + Session.OrbitAltitude + 120f;
+        if (r > maxR)
         {
             var radial = fromCenter / r;
-            _launchShipPos = _run.Planet.Center + radial * MathHelper.Clamp(r, minR, maxR);
+            _launchShipPos = _run.Planet.Center + radial * maxR;
             var outward = Vector2.Dot(_ascentVel, radial);
-            if ((r < minR && outward < 0f) || (r > maxR && outward > 0f))
-                _ascentVel -= radial * outward;
+            if (outward > 0f) _ascentVel -= radial * outward;
         }
 
         // Fly near the mothership and the docking computer glides in the last stretch.
