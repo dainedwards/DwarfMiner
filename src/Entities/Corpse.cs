@@ -67,6 +67,13 @@ public sealed class Corpse
         CreatureKind.CrystalCrawler => new[] { ("crystal", 2), ("chitin", 1) },
         // The wraith is the renewable voidstone source — Rift-gated, but farmable.
         CreatureKind.VoidWraith   => new[] { ("voidstone", 1) },
+        CreatureKind.CaveSlime    => new[] { ("meat", 1) },
+        CreatureKind.Slimelet     => Array.Empty<(string, int)>(),
+        CreatureKind.AcidSpitter  => new[] { ("meat", 2) },
+        CreatureKind.BomberBeetle => new[] { ("chitin", 1) },   // unused in practice — bombers self-destruct
+        CreatureKind.SnapperVine  => new[] { ("meat", 1), ("hide", 1) },
+        // The mimic's hoard — the payoff for calling the bluff instead of walking past.
+        CreatureKind.RockMimic    => new[] { ("gold", 3), ("crystal", 1) },
         _                         => new[] { ("meat", 1) },
     };
 
