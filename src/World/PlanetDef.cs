@@ -68,7 +68,11 @@ public sealed record PlanetDef(
     // acid worlds' volcanoes vent acid instead of lava.
     int Volcanoes = 0,
     float VolcanoScale = 1f,
-    bool VolcanoAcid = false);
+    bool VolcanoAcid = false,
+    // Non-null on banded worlds (the debug planet): the surface course cycles through these
+    // tiles, one wedge per entry, instead of painting SurfaceTile everywhere. SurfaceTile
+    // still drives the snow-cap and blizzard gates.
+    TileKind[]? SurfaceBands = null);
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.
 /// <see cref="All"/> is the ACTIVE chain: at boot Game1 swaps in a procedurally generated
