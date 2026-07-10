@@ -460,12 +460,14 @@ public sealed partial class DwarfMinerGame
             // Contact with a world that was never prefetched (a hard swerve at the last
             // second): kick the build now so the hold below overlaps it.
             EnsurePrefetch(entry.Def);
-            // World still building: aerobrake through the atmosphere for the remaining beat —
-            // velocity bleeds off smoothly (no dead stop), the sim keeps rendering, and entry
-            // completes the moment the background build lands. Usually the prefetch finished
-            // long ago and this branch never shows at all.
-            if (_prefetch.TryGetValue(entry.Def.Id, out var bake) && !bake.IsCompleted)
+            // Entry never waits for the liquid pre-settle — cancel whatever settle time is
+            // left and take the world as soon as generation itself is done (~a quarter
+            // second even on the biggest worlds). The leftover settling runs live in the
+            // orbit frames instead: a briefly heavier framerate from orbit beats any hold
+            // here. With normal prefetch lead the settle already finished and this is moot.
+            if (_prefetch.TryGetValue(entry.Def.Id, out var bake) && !bake.Task.IsCompleted)
             {
+                bake.SettleCts.Cancel();
                 _space.ShipVel *= MathF.Exp(-6f * dt);
                 _toast = $"ENTERING {entry.Def.Name.ToUpperInvariant()} ATMOSPHERE";
                 _toastTimer = 0.5f;
