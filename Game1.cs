@@ -923,9 +923,14 @@ public sealed partial class DwarfMinerGame : Game
             _run.Player.Toolbelt.Selected = (_run.Player.Toolbelt.Selected + dir + Toolbelt.SlotCount) % Toolbelt.SlotCount;
         }
         // Q/E cycle through *weapons only*, skipping tools and placeables — the fast way to
-        // switch guns mid-fight now that the armoury outgrows the number row.
+        // switch guns mid-fight now that the armoury outgrows the number row. Standing at
+        // the finished rocket, E boards it instead.
         if (Pressed(keys, _prevKeys, Keys.Q)) CycleWeapon(-1);
-        if (Pressed(keys, _prevKeys, Keys.E)) CycleWeapon(+1);
+        if (Pressed(keys, _prevKeys, Keys.E))
+        {
+            if (NearShip()) TryLaunchShip();
+            else CycleWeapon(+1);
+        }
 
         // Drag-and-drop UI input runs on click edges and updates the carry state. If the click
         // landed on a UI element, we swallow it so the world doesn't also receive it as an LMB
