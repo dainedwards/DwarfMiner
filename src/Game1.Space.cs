@@ -433,37 +433,26 @@ public sealed partial class DwarfMinerGame
         _space.RiftLocked = _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded;
         TickSpaceCameraAndBreach(dt);
 
-        // Prefetch the world for whatever planet we're closest to, kicked off far outside
-        // entry range so the build finishes before the ship arrives. The lead distance is
-        // sized for tier-3 engines (1120 px/s cruise): 4200 px buys ~3.75s against a ~2s
-        // build. The locked Rift never prefetches.
+        // Keep the likely destination baking long before contact: the planet the flight
+        // vector points at (a build's worth of lead even on a dead-ahead burn), plus the
+        // nearest planet as a fallback for slow drifts. Finished builds stay cached, so a
+        // mid-flight course change doesn't throw a built world away.
         var (nearP, surfDist) = _space.NearestPlanet();
-        if (nearP is not null && surfDist < 4200f && _prefetchId != nearP.Def.Id
-            && !(nearP.Def.Id == "rift" && _space.RiftLocked))
-        {
-            var def = nearP.Def;
-            _prefetchId = def.Id;
-            _prefetchTask = Task.Run(() => BuildSessionWorld(def));
-        }
+        if (_space.AimedPlanet() is { } aimed) EnsurePrefetch(aimed.Def);
+        if (nearP is not null && surfDist < 4200f) EnsurePrefetch(nearP.Def);
 
         // Flying into the upper atmosphere IS the transition — no prompt, no keypress. The
         // bearing you flew in on becomes the bearing you arrive above.
         if (_space.AtmosphereContact() is { } entry)
         {
-            // Contact with a world that was never prefetched (a dive straight off the
-            // parking spot, or the wrong prefetch in flight): kick the build now so the
-            // hold below overlaps it instead of TakePrefetchedSession blocking a frame.
-            if (_prefetchId != entry.Def.Id)
-            {
-                var def = entry.Def;
-                _prefetchId = def.Id;
-                _prefetchTask = Task.Run(() => BuildSessionWorld(def));
-            }
+            // Contact with a world that was never prefetched (a hard swerve at the last
+            // second): kick the build now so the hold below overlaps it.
+            EnsurePrefetch(entry.Def);
             // World still building: aerobrake through the atmosphere for the remaining beat —
             // velocity bleeds off smoothly (no dead stop), the sim keeps rendering, and entry
             // completes the moment the background build lands. Usually the prefetch finished
             // long ago and this branch never shows at all.
-            if (_prefetchTask is { IsCompleted: false })
+            if (_prefetch.TryGetValue(entry.Def.Id, out var bake) && !bake.IsCompleted)
             {
                 _space.ShipVel *= MathF.Exp(-6f * dt);
                 _toast = $"ENTERING {entry.Def.Name.ToUpperInvariant()} ATMOSPHERE";
