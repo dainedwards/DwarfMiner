@@ -1351,18 +1351,35 @@ public static class SimTest
         // Acid spitter: parked in line of sight of a target, it must lob acid globs into the
         // shared enemy-shot list within a few seconds.
         {
-            var sPos = FindCavePos(planet2, seedOffset: 4242);
-            if (sPos is { } sp)
+            var sCells = new Cells(verdantWorld);
+            var sPhysics = new Physics(verdantWorld, sCells);
+            // Need a pocket with ~36px of clear air beside the spitter so the LOS check
+            // can pass — probe candidate sites until one has an open lane.
+            Vector2? sSite = null;
+            var preyAt = Vector2.Zero;
+            for (var s = 0; s < 200 && sSite is null; s++)
+            {
+                if (FindCavePos(verdantWorld, seedOffset: 5000 + s * 17) is not { } q) continue;
+                foreach (var lane in new[] { new Vector2(36f, 0f), new Vector2(-36f, 0f),
+                                             new Vector2(0f, 36f), new Vector2(0f, -36f) })
+                {
+                    var open = true;
+                    for (var k = 1; k <= 4 && open; k++)
+                        if (verdantWorld.IsSolidAt(q + lane * (k / 4f))) open = false;
+                    if (open) { sSite = q; preyAt = q + lane; break; }
+                }
+            }
+            if (sSite is { } sp)
             {
                 var spitter = new Creature(sp, CreatureKind.AcidSpitter);
-                var prey = new Player(sp + new Vector2(60f, 0f));
-                var shots = new List<TitanProjectile>();
+                var prey = new Player(preyAt);
+                var shots = new System.Collections.Generic.List<TitanProjectile>();
                 for (var i = 0; i < 60 * 6 && shots.Count == 0; i++)
-                    spitter.Update(dt2, planet2, physics2, cells2, prey, shots);
+                    spitter.Update(dt2, verdantWorld, sPhysics, sCells, prey, shots);
                 Check("fauna: acid spitter opens fire on visible prey",
                     shots.Count > 0 && shots.TrueForAll(s => s.Kind == TitanShotKind.Acid));
             }
-            else Check("fauna: acid spitter cave site found", false, "no cave");
+            else Check("fauna: acid spitter test site found", false, "no open lane");
         }
 
         // The long-range survey finds real deposits (ember is the ruby world) and caches.
