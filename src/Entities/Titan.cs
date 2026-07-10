@@ -519,9 +519,22 @@ public sealed class Titan
                     var surface = SurfacePoint(planet, up);
                     if (Vector2.Dot(surface - Position, up) > 60f) vNormal = 130f;
                 }
-                else if (playerUpDot > 140f && Braced(planet, up, right))
+                else if (playerUpDot > 140f)
                 {
-                    vNormal = 175f;
+                    if (Braced(planet, up, right))
+                    {
+                        vNormal = 175f;
+                    }
+                    else if (Grounded && Kind != TitanKind.Kong && _jumpTimer <= 0f
+                             && Vector2.Dot(SurfacePoint(planet, up) - Position, up) > 60f)
+                    {
+                        // Stuck in a cavern with nothing to chimney — jump after the prey.
+                        // The plow smashes the arc through whatever roof it meets, so
+                        // repeated leaps headbutt a path back toward the surface.
+                        vNormal = 520f;
+                        Leaping = true;
+                        _jumpTimer = 1.1f;
+                    }
                 }
             }
         }
