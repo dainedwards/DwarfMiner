@@ -18,10 +18,9 @@ if (args.Length > 0 && args[0] == "--spawnprobe")
 // Temporary probe: --titanwalk prints body/feet telemetry while a hatched titan walks.
 if (args.Length > 0 && args[0] == "--titanwalk")
 {
-    var def = DwarfMiner.World.PlanetDefs.All[0];
-    var p = DwarfMiner.World.PlanetGen.Generate(def, 1234);
-    var phys = new DwarfMiner.World.Physics(p);
+    var p = DwarfMiner.World.WorldGen.Generate(55);
     var cells = new DwarfMiner.World.Cells(p);
+    var phys = new DwarfMiner.World.Physics(p, cells);
     var t = new DwarfMiner.Entities.Titan(p, -MathF.PI / 2f, DwarfMiner.Entities.TitanKind.Godzilla);
     t.Hatch();
     var bo = new System.Collections.Generic.List<DwarfMiner.Entities.FallingBoulder>();
