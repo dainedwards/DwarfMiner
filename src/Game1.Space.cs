@@ -198,11 +198,39 @@ public sealed partial class DwarfMinerGame
                 $"TITAN {Range(_run.Titan.Position)}");
     }
 
-    /// <summary>Background world build for the planet the ship is loitering near — by the
-    /// time the player presses Enter the Session is usually ready, so landing is seamless.
-    /// BuildSessionWorld touches only fresh objects, so the thread hop is safe.</summary>
-    private Task<Session>? _prefetchTask;
-    private string? _prefetchId;
+    /// <summary>Background world builds keyed by planet id. The aim predictor keeps the
+    /// likely destination baking from the moment the ship points at it, and finished builds
+    /// stay cached through course changes — so atmosphere contact almost always lands on a
+    /// world that's already built. BuildSessionWorld touches only fresh objects, so the
+    /// thread hop is safe; the dictionary itself is only touched on the update thread.</summary>
+    private readonly Dictionary<string, Task<Session>> _prefetch = new();
+    /// <summary>A cached Session retains ~100 MB, so hold at most two: the current target
+    /// plus whatever finished before the last course change.</summary>
+    private const int PrefetchCap = 2;
+
+    /// <summary>Start a background world build for this planet unless one is already cached
+    /// or in flight. At the cap, the finished build farthest from the ship is evicted;
+    /// in-flight builds can't be cancelled, so if everything is still baking, pass.</summary>
+    private void EnsurePrefetch(PlanetDef def)
+    {
+        if (def.Id == "rift" && _space.RiftLocked) return;
+        if (_prefetch.ContainsKey(def.Id)) return;
+        if (_prefetch.Count >= PrefetchCap)
+        {
+            string? evict = null;
+            var worst = -1f;
+            foreach (var (id, task) in _prefetch)
+            {
+                if (!task.IsCompleted) continue;
+                var planet = _space.Planets.Find(sp => sp.Def.Id == id);
+                var d = planet is null ? float.MaxValue : (planet.Pos - _space.ShipPos).Length();
+                if (d > worst) { worst = d; evict = id; }
+            }
+            if (evict is null) return;
+            _prefetch.Remove(evict);
+        }
+        _prefetch[def.Id] = Task.Run(() => BuildSessionWorld(def));
+    }
 
     /// <summary>Disc previews rasterized from each planet's survey world, so the system
     /// view shows real terrain — mountain silhouettes, lakes, lava — not a flat disc.
