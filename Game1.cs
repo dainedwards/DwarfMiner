@@ -1740,8 +1740,8 @@ public sealed partial class DwarfMinerGame : Game
         PlaceLaunchPad();
         _run.ShipStage = 3;
         _run.ShipFuel = fuelled ? FuelToLaunch : 0;
-        _toast = fuelled ? "SPAWNED FUELLED ROCKET — L AT PAD TO LAUNCH"
-                         : "SPAWNED DRY ROCKET — MINE FUEL, THEN L AT PAD";
+        _toast = fuelled ? "SPAWNED FUELLED ROCKET — E AT PAD TO BOARD"
+                         : "SPAWNED DRY ROCKET — MINE FUEL, THEN E AT PAD";
         _toastTimer = 2.5f;
     }
 
