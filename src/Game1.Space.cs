@@ -85,20 +85,20 @@ public sealed partial class DwarfMinerGame
             "..DD......");
         // Swung tools — handle along +X with the head at the far end, vertically symmetric
         // so the swing draw can rotate through the full arc without any flip bookkeeping.
+        // The pick head is a thin ")" arc bowed away from the handle with twin tips curling
+        // back toward it — the classic pickaxe silhouette, not a solid slab of steel.
         _weaponTex["pickaxe"] = T(
-            "............S.",
-            "..........dSS.",
-            "..........dS..",
-            "DDDDDDDDDDdSS.",
-            "..........dS..",
-            "..........dSS.",
-            "............S.");
+            "......SS.",
+            "........S",
+            "DDDDDDDdS",
+            "........S",
+            "......SS.");
         _weaponTex["hammer"] = T(
-            "..........dddd",
-            "..........dSSS",
-            "DDDDDDDDDDdSSS",
-            "..........dSSS",
-            "..........dddd");
+            "......ddd",
+            "......dSS",
+            "DDDDDDdSS",
+            "......dSS",
+            "......ddd");
     }
 
     /// <summary>A solid triangle pointing +X, for the edge-of-screen nav arrows.</summary>
