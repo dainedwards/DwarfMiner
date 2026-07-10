@@ -1018,41 +1018,18 @@ public sealed partial class DwarfMinerGame : Game
         }
         UpdateCaveInWarning(dt);
 
-        // Earthquakes — global shake every so often.
-        _run.EarthquakeTimer -= dt;
-        if (_run.EarthquakeTimer <= 0)
+        // Eruption in progress (started by the disaster clock, or the debug menu): the vent
+        // spawns fresh cells from its deep conduit just above the crater pool until it
+        // overflows the rim and runs down the flanks.
+        if (_run.EruptionLeft > 0f && _run.EruptionVent >= 0
+            && _run.EruptionVent < _run.Planet.VolcanoVents.Count)
         {
-            var anglesAround = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
-            var pos = _run.Planet.Center + new Vector2(MathF.Cos(anglesAround), MathF.Sin(anglesAround)) * _run.Planet.Radius * Planet.TileSize * 0.5f;
-            _run.Physics.Earthquake(pos, 200f, 2);
-            _run.EarthquakeTimer = (30f + (float)Random.Shared.NextDouble() * 20f) * _run.Def.QuakeScale;
-            _run.Shake = MathF.Max(_run.Shake, 1.0f);
-        }
-
-        // Volcanic eruptions — every so often a random vent boils over for a few seconds,
-        // spawning fresh cells from its deep conduit just above the crater pool until it
-        // overflows the rim and runs down the flanks. Restless worlds erupt more.
-        if (_run.Planet.VolcanoVents.Count > 0)
-        {
-            _run.VolcanoTimer -= dt;
-            if (_run.VolcanoTimer <= 0f && _run.EruptionLeft <= 0f)
-            {
-                _run.EruptionVent = Random.Shared.Next(_run.Planet.VolcanoVents.Count);
-                _run.EruptionLeft = 5f + (float)Random.Shared.NextDouble() * 4f;
-                _run.VolcanoTimer = (70f + (float)Random.Shared.NextDouble() * 70f) * _run.Def.QuakeScale;
-                var (vx0, vy0, _) = _run.Planet.VolcanoVents[_run.EruptionVent];
-                _run.Shake = MathF.Max(_run.Shake, 0.8f);
-                PlayAt("collapse", _run.Planet.TileToWorld(vx0, vy0), 0.9f, pitch: -0.5f);
-            }
-            if (_run.EruptionLeft > 0f)
-            {
-                _run.EruptionLeft -= dt;
-                var (vx, vy, vAcid) = _run.Planet.VolcanoVents[_run.EruptionVent];
-                _run.Cells.SpawnInTile(vx, vy + Random.Shared.Next(-1, 2),
-                    vAcid ? Material.Acid : Material.Lava, 12);
-                if (Random.Shared.Next(4) == 0)
-                    _run.Cells.SpawnInTile(Math.Min(vx + 3, _run.Planet.Rings - 1), vy, Material.Smoke, 3);
-            }
+            _run.EruptionLeft -= dt;
+            var (vx, vy, vAcid) = _run.Planet.VolcanoVents[_run.EruptionVent];
+            _run.Cells.SpawnInTile(vx, vy + Random.Shared.Next(-1, 2),
+                vAcid ? Material.Acid : Material.Lava, 12);
+            if (Random.Shared.Next(4) == 0)
+                _run.Cells.SpawnInTile(Math.Min(vx + 3, _run.Planet.Rings - 1), vy, Material.Smoke, 3);
         }
 
         // Population upkeep — cave dwellers, surface herds, sky flyers (see SpawnDirector).
