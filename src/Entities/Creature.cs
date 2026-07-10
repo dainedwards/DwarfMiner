@@ -35,8 +35,14 @@ public enum CreatureKind : byte
     Centipede,    // long segmented tunneller — chews fast winding galleries
     MoleBeast,    // alien mole — digs burrows, shy unless cornered or provoked
     SporeBat,     // fungal-grove flitter — frail, chokes its killer with a spore puff
-    CrystalCrawler, // armoured deep-cave tank with a crystal-shard back — slow, hits hard
-    VoidWraith,   // Rift-only phantom — fast, vicious, sheds voidstone when destroyed
+    CrystalCrawler, // armoured deep-cave tank — slow, hits hard, sprays shards when shot
+    VoidWraith,   // Rift-only phantom — fast, vicious, blinks toward prey, sheds voidstone
+    CaveSlime,    // gelatinous hopper — bounds at the dwarf, splits in two when killed
+    Slimelet,     // half-size split product of a cave slime; never spawns on its own
+    AcidSpitter,  // squat gland-toad — keeps its distance and lobs acid globs
+    BomberBeetle, // volatile scuttler — closes in, arms its abdomen, and detonates
+    SnapperVine,  // rooted lunge-plant — strikes anything that drifts inside its tether
+    RockMimic,    // ore-speckled "boulder" that wakes when prodded or approached
 }
 
 public sealed class Creature
