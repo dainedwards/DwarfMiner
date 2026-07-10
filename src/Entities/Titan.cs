@@ -6,13 +6,16 @@ using Microsoft.Xna.Framework;
 namespace DwarfMiner.Entities;
 
 /// <summary>
-/// Kaiju-scale quadruped boss. The body has a small physics-collision footprint; legs are
-/// procedural — each one ray-marches the terrain for a foot anchor and steps when the body
-/// drifts too far from it. Hip-to-foot distance is capped at <see cref="LegMaxReach"/> (the
-/// two drawn leg bones near-straight): anchors are clamped to reach and a planted leg that
-/// gets overstretched steps early, so legs bend and stride instead of rubber-banding over
-/// terrain. The body is then lifted by its planted feet (spring force toward avg-foot +
-/// hover offset) so it can walk over obstacles its collision footprint alone couldn't clear. Each foot strike damages the tile underneath
+/// Kaiju-scale biped boss. The body has a small physics-collision footprint; legs are
+/// procedural with a real stride gait — each foot stays planted while the body walks past
+/// it, and once it has fallen a full stride behind its thrown-ahead anchor (ray-marched to
+/// terrain) the leg swings forward past the other foot to plant ahead again. Legs alternate:
+/// one may only lift while the other is planted. Hip-to-foot distance is capped at
+/// <see cref="LegMaxReach"/> (thigh + shin + foot near-straight): anchors are clamped to
+/// reach and a planted leg that gets overstretched steps early, so legs bend and stride
+/// instead of rubber-banding over terrain. The body is then lifted by its planted feet
+/// (spring force toward avg-foot + hover offset) so it can walk over obstacles its collision
+/// footprint alone couldn't clear. Each foot strike damages the tile underneath
 /// via Planet.Mine — soft tiles (dirt/grass/snow) crack visibly and break after a few
 /// stomps; harder tiles only crack cosmetically. Anger rises with player depth, unlocking
 /// stomp earthquakes and ranged boulder hurls.
