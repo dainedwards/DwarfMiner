@@ -1491,6 +1491,24 @@ public static class SimTest
             && !pre.Planet.IsSolidAt(pre.StationPos),
             $"alt {stationAlt:0} spawn {preSpawn.Length():0}");
 
+        // Cancellable settle: atmosphere entry fires the token mid-build and takes the world
+        // as soon as generation is done — the leftover settle runs live in the orbit frames.
+        // A pre-cancelled token must still yield a complete world, in a fraction of the time.
+        var settleSw = System.Diagnostics.Stopwatch.StartNew();
+        DwarfMinerGame.BuildSessionWorld(World.PlanetDefs.ById("verdant"));
+        var fullMs = settleSw.ElapsedMilliseconds;
+        using (var settleCts = new System.Threading.CancellationTokenSource())
+        {
+            settleCts.Cancel();
+            settleSw.Restart();
+            var quick = DwarfMinerGame.BuildSessionWorld(World.PlanetDefs.ById("verdant"), settleCts.Token);
+            Check("prefetch: cancelled settle still yields a usable world",
+                quick.Planet is not null && quick.Cells is not null && quick.Physics is not null);
+            Check("prefetch: cancelled settle skips the heavy half",
+                settleSw.ElapsedMilliseconds < fullMs / 2,
+                $"{settleSw.ElapsedMilliseconds}ms vs {fullMs}ms settled");
+        }
+
         // Aim predictor: flying at a planet names it long before it's the nearest body, so
         // the prefetch gets the whole cruise as build lead. Flying the gap names nothing.
         var sim7 = new Space.SpaceSim { AsteroidTarget = 0 };
