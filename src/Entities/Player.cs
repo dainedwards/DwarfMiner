@@ -635,6 +635,14 @@ public sealed class Player
 
     /// <summary>Total sweep of a swing, centred on the aim (~109°).</summary>
     public const float SwingArc = 1.9f;
+    /// <summary>Gap between the dwarf's centre and the tool's grip end.</summary>
+    public const float SwingHandOffset = 1.5f;
+    /// <summary>Drawn length of the swung tool. Tier III's longer platinum haft shows.</summary>
+    public float SwingToolLen => (PickaxeTier >= 3 ? 1.2f : 1.0f) * 4.5f;
+    /// <summary>How far the swing's strike reaches from the body: hand offset + tool length
+    /// + a little slop. Tied to the drawn sprite — the pick only mines what its head can
+    /// visibly touch, not out to the old ray range.</summary>
+    public float SwingReach => SwingHandOffset + SwingToolLen + 1.0f;
     /// <summary>Fraction of the swing that is wind-up — contact can't land before it, so the
     /// slow hammer visibly rears back before the blow while the quick pick barely pauses.</summary>
     public const float SwingWindup = 0.25f;
