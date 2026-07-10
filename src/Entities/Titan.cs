@@ -1156,9 +1156,6 @@ public sealed class Titan
         // Cave-in: shove a shock a few tiles below the footfall so any cavern the boss is
         // standing over loses its roof and collapses. The Settle inside Earthquake dislodges
         // unsupported tiles; Game1 turns the resulting CollapsesThisTick into screen shake.
-        // Only while aggroed — a calm roaming stride shouldn't punch through every thin cave
-        // roof it crosses (it kept dropping the boss into caverns mid-stroll).
-        if (!IsAggro) return;
         var up = planet.UpAt(footPos);
         physics.Earthquake(footPos - up * (Planet.TileSize * 5f), 64f + Anger * 0.5f, 1 + (int)(Anger / 45f));
     }
