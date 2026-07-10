@@ -31,6 +31,11 @@ public enum TileKind : byte
     // Phase-11 rare gems: emerald seams on the living worlds, voidstone only in the Rift.
     Emerald = 28,
     Voidstone = 29,
+    /// <summary>Compacted debris: loose grains (sand/dirt/gravel/tile dust) that sat buried
+    /// and undisturbed long enough re-form into this soft mixed rock. Its exact cell makeup
+    /// lives in Planet's composition side table and spills back out when the tile breaks, so
+    /// dust value is conserved through compaction. See Cells' compaction sweep.</summary>
+    Conglomerate = 30,
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
