@@ -873,18 +873,18 @@ public sealed class Titan
         return false;
     }
 
-    /// <summary>Mean of foot positions for legs that are planted ON SOLID GROUND. Mid-step
-    /// legs are excluded so the body doesn't bob each time a leg arcs, and mid-air "planted"
-    /// feet (reach-clamped over a drop) are excluded so the suspension can't hold the body up
-    /// on phantom footing — off a cliff the kaiju falls like anything else, legs reaching,
-    /// until a foot finds real ground to catch on.</summary>
+    /// <summary>Mean of foot positions for legs that can bear weight (<see cref="FootSupports"/>).
+    /// Mid-step legs are excluded so the body doesn't bob each time a leg arcs; mid-air
+    /// "planted" feet (reach-clamped over a drop) and feet the body has fallen past are
+    /// excluded so the suspension can't hold the body up on phantom footing — off a cliff the
+    /// kaiju falls like anything else, legs reaching, until a foot finds real ground.</summary>
     private Vector2 AvgPlantedFoot(Planet planet, out bool hasAny)
     {
         var sum = Vector2.Zero;
         var count = 0;
         foreach (var leg in Legs)
         {
-            if (FootOnGround(planet, leg)) { sum += leg.FootPos; count++; }
+            if (FootSupports(planet, leg)) { sum += leg.FootPos; count++; }
         }
         hasAny = count > 0;
         return hasAny ? sum / count : Vector2.Zero;
