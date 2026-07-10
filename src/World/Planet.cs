@@ -322,6 +322,34 @@ public sealed class Planet
         return (x + 1, (first + which) % nOut);
     }
 
+    /// <summary>The 2×2 tile block (one legacy 8-px tile's worth of 4-px tiles) around
+    /// (x,y), grown toward <paramref name="towards"/>: the angular partner is picked by the
+    /// tangential side of the point, the radial pair by its radial side. Used so one pick
+    /// swing / one placed block still covers the old full-size tile footprint. Tiles are
+    /// deduped (outer band boundaries can map two inner tiles onto one).</summary>
+    public IEnumerable<(int x, int y)> Footprint2x2(int x, int y, Vector2 towards)
+    {
+        if (!InBounds(x, y)) yield break;
+        var centre = TileToWorld(x, y);
+        var up = UpAt(centre);
+        var right = new Vector2(-up.Y, up.X);
+        var d = towards - centre;
+        var sy = Vector2.Dot(d, right) >= 0f ? 1 : -1;   // angular partner side
+        var outward = Vector2.Dot(d, up) >= 0f;          // radial partner side
+
+        var n = TilesAt(x);
+        var w = ((y % n) + n) % n;
+        yield return (x, w);
+        var w2 = ((w + sy) % n + n) % n;
+        yield return (x, w2);
+
+        (int rx, int ry) a, b;
+        if (outward) { a = OuterNeighbour(x, w); b = OuterNeighbour(x, w2); }
+        else         { a = InnerNeighbour(x, w); b = InnerNeighbour(x, w2); }
+        if (a.rx >= 0 && a.rx < Rings) yield return a;
+        if ((b.rx, b.ry) != (a.rx, a.ry) && b.rx >= 0 && b.rx < Rings) yield return b;
+    }
+
     public IEnumerable<(int x, int y)> AllTiles()
     {
         for (var x = 0; x < Rings; x++)
