@@ -1359,6 +1359,34 @@ public static class SimTest
             slimelet.Health < slime.Health && slimelet.Radius < slime.Radius
             && slimelet.ContactDamage < slime.ContactDamage);
 
+        // Biome herds: each world archetype fields its own neutral surface species — a
+        // frost run stocks snow lopers, never the verdant grazer/hopper pair — and the
+        // Rift's only gentle life is the airborne null moth.
+        {
+            var faunaCells = new Cells(verdantWorld);
+            var faunaPhysics = new Physics(verdantWorld, faunaCells);
+            Session HerdRun(string defId) => new(World.PlanetDefs.ById(defId))
+            {
+                Planet = verdantWorld, Cells = faunaCells, Physics = faunaPhysics,
+                Player = new Player(SpawnDirector.FindSurfaceSpawn(verdantWorld, -MathF.PI / 2f, verdantWorld.Radius)),
+            };
+
+            var frostHerd = HerdRun("frost");
+            SpawnDirector.SpawnInitialFauna(frostHerd);
+            var lopers = frostHerd.Creatures.FindAll(c => c.Kind == CreatureKind.SnowLoper);
+            Check("fauna: frost world stocks snow lopers, no verdant herd",
+                lopers.Count > 0 && lopers.TrueForAll(c => !c.Hostile)
+                && !frostHerd.Creatures.Exists(c => c.Kind is CreatureKind.Grazer or CreatureKind.Hopper),
+                $"{lopers.Count} lopers");
+
+            var riftHerd = HerdRun("rift");
+            SpawnDirector.SpawnInitialFauna(riftHerd);
+            Check("fauna: rift's neutral life is airborne null moths only",
+                riftHerd.Creatures.Exists(c => c.Kind == CreatureKind.NullMoth)
+                && !riftHerd.Creatures.Exists(c => c.IsSurfaceKind)
+                && !riftHerd.Creatures.Exists(c => c.Kind is CreatureKind.SkyMoth));
+        }
+
         // Acid spitter: parked in line of sight of a target, it must lob acid globs into the
         // shared enemy-shot list within a few seconds.
         {
