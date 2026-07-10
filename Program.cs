@@ -20,17 +20,26 @@ if (args.Length > 0 && args[0] == "--spawnprobe")
 if (args.Length > 0 && args[0] == "--buildprobe")
 {
     DwarfMiner.World.PlanetDefs.Activate(DwarfMiner.World.PlanetGen.Campaign(12345));
-    var warmup = System.Threading.Tasks.Task.Run(() =>
+    foreach (var id in new[] { "debug", "gen5-duria" })
     {
-        foreach (var def in DwarfMiner.World.PlanetDefs.All) DwarfMiner.Space.Survey.WorldFor(def);
-    });
-    foreach (var def in DwarfMiner.World.PlanetDefs.All)
-    {
+        var def = DwarfMiner.World.PlanetDefs.ById(id);
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        DwarfMinerGame.BuildSessionWorld(def);
-        System.Console.WriteLine($"{def.Id,-12} scale {def.SizeScale:0.0}  {sw.ElapsedMilliseconds} ms");
+        var run = new DwarfMiner.Session(def);
+        run.Planet = DwarfMiner.World.WorldGen.Generate(12345, def);
+        var tGen = sw.ElapsedMilliseconds;
+        run.Cells = new DwarfMiner.Systems.Cells(run.Planet);
+        run.Physics = new DwarfMiner.Systems.Physics(run.Planet, run.Cells);
+        if (def.LavaFillFrac > 0f)
+            run.Cells.FillSkyTilesWithin(run.Planet.Radius * def.LavaFillFrac, DwarfMiner.Systems.Material.Lava);
+        foreach (var (lx, ly) in run.Planet.LavaSeeds) run.Cells.FillTile(lx, ly, DwarfMiner.Systems.Material.Lava);
+        foreach (var (wx, wy) in run.Planet.WaterSeeds) run.Cells.FillTile(wx, wy, DwarfMiner.Systems.Material.Water);
+        foreach (var (gx, gy) in run.Planet.GasSeeds) run.Cells.FillTile(gx, gy, DwarfMiner.Systems.Material.Gas);
+        foreach (var (ax, ay) in run.Planet.AcidSeeds) run.Cells.FillTile(ax, ay, DwarfMiner.Systems.Material.Acid);
+        var tSeed = sw.ElapsedMilliseconds;
+        for (var i = 0; i < 120; i++) run.Cells.Update(1f / 60f);
+        System.Console.WriteLine(
+            $"{id,-12} gen {tGen} ms  seed {tSeed - tGen} ms  settle {sw.ElapsedMilliseconds - tSeed} ms");
     }
-    System.Console.WriteLine($"warmup done: {warmup.IsCompleted}");
     return;
 }
 
