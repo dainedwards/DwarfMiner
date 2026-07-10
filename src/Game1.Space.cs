@@ -82,6 +82,22 @@ public sealed partial class DwarfMinerGame
             "DSGGGGGGSm",
             ".dSSSSSSd.",
             "..DD......");
+        // Swung tools — handle along +X with the head at the far end, vertically symmetric
+        // so the swing draw can rotate through the full arc without any flip bookkeeping.
+        _weaponTex["pickaxe"] = T(
+            "............S.",
+            "..........dSS.",
+            "..........dS..",
+            "DDDDDDDDDDdSS.",
+            "..........dS..",
+            "..........dSS.",
+            "............S.");
+        _weaponTex["hammer"] = T(
+            "..........dddd",
+            "..........dSSS",
+            "DDDDDDDDDDdSSS",
+            "..........dSSS",
+            "..........dddd");
     }
 
     /// <summary>A solid triangle pointing +X, for the edge-of-screen nav arrows.</summary>
