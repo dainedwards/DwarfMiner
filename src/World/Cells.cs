@@ -252,12 +252,28 @@ public sealed class Cells
 
     /// <summary>Spawn a checkerboard of dust cells filling half the polar tile, tagged with the
     /// source TileKind so the cells render in that tile's colours and pay out that tile's drop on
-    /// pickup. Deterministic count (DustCellsPerTile = Density² / 2 = 8) so accumulation math is
-    /// exact: collecting every cell from one tile yields exactly drop.count units.</summary>
+    /// pickup. Deterministic count (DustCellsPerTile = Density² / 2) so accumulation math is
+    /// exact: collecting every cell from a 2×2 tile quad yields exactly drop.count units.
+    /// A shattered Conglomerate ignores the checkerboard and spills the exact cells that were
+    /// pressed into it (see the compaction sweep) — value round-trips, nothing is minted.</summary>
     public void SpawnDustInTile(int tx, int ty, TileKind src)
     {
         var c0y = tx * Density;
         var c0x = ty * Density;
+        if (src == TileKind.Conglomerate)
+        {
+            if (Planet.TakeComposition(tx, ty) is { } comp)
+            {
+                var slot = 0;
+                foreach (var (mat, dustSrc, count) in comp.Parts)
+                    for (var i = 0; i < count && slot < Density * Density; i++, slot++)
+                        Place(c0x + slot % Density, c0y + slot / Density,
+                            (Material)mat, (TileKind)dustSrc);
+            }
+            // No stored composition (stale save edge case): the tile just crumbles to nothing
+            // rather than minting dust that was never paid in.
+            return;
+        }
         for (var dy = 0; dy < Density; dy++)
             for (var dx = 0; dx < Density; dx++)
                 if (((dx + dy) & 1) == 0)
