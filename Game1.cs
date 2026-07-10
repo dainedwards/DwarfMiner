@@ -637,6 +637,9 @@ public sealed partial class DwarfMinerGame : Game
         _run.RoverWreck = _landerPos - up * 2f;
 
         _run.Player.Position = _landerPos;
+        // The terrain-probed zoom above has all but converged by now; close the last sliver
+        // so play never starts wide (a fast dive onto a peak can outrun the ease).
+        _camera.Zoom = _playZoom;
         _particles.EmitDust(_landerPos, 22f);
         _run.Shake = MathF.Max(_run.Shake, 0.7f);
         _sfx.Play("collapse", 0.55f, pitch: 0.1f);
