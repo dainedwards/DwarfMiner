@@ -1157,9 +1157,14 @@ public sealed class Titan
                 {
                     // Foot just touched down — stomp the tile. Damage falls off across a small
                     // radius so each step leaves a small footprint of cracked dirt rather than
-                    // a single gouged tile.
+                    // a single gouged tile. A dig slam additionally excavates a crater-layer.
                     leg.FootPos = leg.StepTarget;
                     StompTile(planet, physics, cells, leg.FootPos);
+                    if (_digPending)
+                    {
+                        _digPending = false;
+                        DigCrater(planet, physics, cells);
+                    }
                 }
                 else
                 {
@@ -1167,9 +1172,11 @@ public sealed class Titan
                     var smooth = t * t * (3f - 2f * t);
                     var pos = Vector2.Lerp(leg.StepStart, leg.StepTarget, smooth);
                     // Lift scales with the stride so a long step clears ground and a small
-                    // re-plant shuffle doesn't high-kick.
+                    // re-plant shuffle doesn't high-kick; dig slams rear up extra high so the
+                    // pounding reads from across the screen.
                     var lift = MathHelper.Clamp(
-                        14f + (leg.StepTarget - leg.StepStart).Length() * 0.32f, 16f, 50f);
+                        14f + (leg.StepTarget - leg.StepStart).Length() * 0.32f, 16f, 50f)
+                        + (Digging ? 30f : 0f);
                     pos += planet.UpAt(pos) * (MathF.Sin(t * MathF.PI) * lift);
                     leg.FootPos = pos;
                 }
