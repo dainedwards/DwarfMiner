@@ -434,11 +434,14 @@ public sealed class Titan
             planted = AvgPlantedFoot(planet, out hasPlanted);
             if (hasPlanted && !Leaping)   // a leaping Kong ignores its suspension so it can launch
             {
+                // Vehicle-style suspension, same shape as the worm/flyer branches: ease the
+                // body toward ride height over its supporting feet by setting the normal
+                // velocity directly. (A spring-accelerated suspension pogo-pumped here — the
+                // support window snaps on/off as feet plant, and each catch-and-launch cycle
+                // added energy until the boss was catapulting thousands of pixels.)
                 var heightAboveFeet = Vector2.Dot(Position - planted, up);
                 var deficit = Hover - heightAboveFeet;
-                var springAcc = MathHelper.Clamp(deficit * 9f, -500f, 800f);
-                var dampAcc = -vNormal * 4f;
-                vNormal += (Gravity + springAcc + dampAcc) * dt;
+                vNormal = MathHelper.Clamp(deficit * 6f, -160f, 230f);
             }
         }
 
