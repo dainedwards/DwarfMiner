@@ -1158,7 +1158,12 @@ public sealed class TitanProjectile
     /// first wall. Flame has none (it splashes on rock).</summary>
     private int _drill;
 
-    public TitanProjectile(Vector2 pos, Vector2 vel, TitanShotKind kind)
+    /// <summary>Contact damage to the player. Defaults to the Titan's per-kind tuning;
+    /// creature-fired shots (acid spitters, crystal-crawler shards) pass a smaller value —
+    /// they borrow the Titan's shot physics, not its boss-fight punch.</summary>
+    public readonly float Damage;
+
+    public TitanProjectile(Vector2 pos, Vector2 vel, TitanShotKind kind, float? damage = null)
     {
         Position = pos;
         Velocity = vel;
@@ -1170,6 +1175,14 @@ public sealed class TitanProjectile
             TitanShotKind.Lava  => (7f, 3.4f),
             TitanShotKind.Spike => (4f, 1.6f),
             _                   => (4f, 0.9f),   // Laser
+        };
+        Damage = damage ?? kind switch
+        {
+            TitanShotKind.Flame => 9f,
+            TitanShotKind.Acid  => 13f,
+            TitanShotKind.Lava  => 15f,
+            TitanShotKind.Spike => 16f,
+            _                   => 28f,   // Laser
         };
         _drill = kind == TitanShotKind.Laser ? 3 : 0;
     }
