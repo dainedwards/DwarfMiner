@@ -949,7 +949,7 @@ public sealed class Cells
     {
         var radial = (float)Planet.TileSize / Density;
         var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
-        if (stride > 1) cyMin = Math.Max(cyMin, 60 * Density);   // matches the tile LOD's interior cut
+        if (stride > 1) cyMin = Math.Max(cyMin, 120 * Density);   // matches the tile LOD's interior cut
         for (var cy = cyMin; cy <= cyMax; cy += stride)
         {
             var n = _cellsAt[cy];
