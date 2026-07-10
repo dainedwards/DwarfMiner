@@ -133,7 +133,8 @@ public static class PlanetDefs
         SizeScale: 1.8f, LakeScale: 1.4f,
         AcidPools: 3, AcidRain: true,
         Volcanoes: 3, VolcanoScale: 1.1f,
-        SurfaceBands: new[] { TileKind.Grass, TileKind.Snow, TileKind.Gravel, TileKind.Dirt, TileKind.Basalt });
+        SurfaceBands: new[] { TileKind.Grass, TileKind.Snow, TileKind.Gravel, TileKind.Dirt, TileKind.Basalt },
+        Biome: "debug");
 
     public static readonly PlanetDef[] Classic =
     {
