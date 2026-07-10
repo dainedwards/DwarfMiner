@@ -689,7 +689,7 @@ public sealed class Player
 
         var reach = EffectiveMineRange;
         var self = planet.WorldToTile(Position);
-        var aimedTile = planet.WorldToTile(Position + SwingAim * MathF.Min(reach, 6f));
+        var aimedTile = planet.WorldToTile(SwingCursor);
 
         (int X, int Y)? Contact(Vector2 dir)
         {
