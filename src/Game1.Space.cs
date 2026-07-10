@@ -908,6 +908,7 @@ public sealed partial class DwarfMinerGame
 
         if (_upgradesOpen) DrawUpgradeMenu(sb);
         if (_surveyOpen) DrawSurveyMenu(sb);
+        if (_debugMenu.Open) _debugMenu.Draw(_renderer, VirtualWidth, VirtualHeight);
         DrawTransitionFlash();
     }
 
