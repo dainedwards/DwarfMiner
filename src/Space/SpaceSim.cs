@@ -202,6 +202,20 @@ public sealed class SpaceSim
             ShipPos = outward * minSun;
             var radial = Vector2.Dot(ShipVel, outward);
             if (radial < 0f) ShipVel -= outward * (radial * 1.6f);
+            // The corona is a hazard, not just a wall: each contact scorches the hull on
+            // the asteroid-strike cadence (a charged shield eats one lick, then recharges).
+            // Press against the sun long enough and the ship burns down to a breach — the
+            // emergency dock is the way out.
+            if (HitTimer <= 0f)
+            {
+                if (ShieldReady) { ShieldCooldown = ShieldRechargeTime; HitTimer = 0.4f; }
+                else
+                {
+                    Hull--;
+                    HitTimer = 1.0f;
+                    if (Hull <= 0) HullBreached = true;
+                }
+            }
         }
 
         // Planets are open sky now — flying into one is how you enter its atmosphere. The
