@@ -147,6 +147,27 @@ public sealed class Creature
                 break;
             case CreatureKind.VoidWraith:
                 Radius = 3.8f; Health = 20f; MoveSpeed = 62f; ContactDamage = 15f;
+                _cd = 1f + (float)Random.Shared.NextDouble() * 1.5f; // first blink is never instant
+                break;
+            case CreatureKind.CaveSlime:
+                Radius = 4.5f; Health = 16f; MoveSpeed = 55f; ContactDamage = 7f;
+                break;
+            case CreatureKind.Slimelet:
+                Radius = 2.4f; Health = 5f; MoveSpeed = 65f; ContactDamage = 4f;
+                break;
+            case CreatureKind.AcidSpitter:
+                Radius = 4.2f; Health = 18f; MoveSpeed = 28f; ContactDamage = 6f;
+                break;
+            case CreatureKind.BomberBeetle:
+                Radius = 3.6f; Health = 12f; MoveSpeed = 70f; ContactDamage = 5f;
+                break;
+            case CreatureKind.SnapperVine:
+                Radius = 3.5f; Health = 24f; MoveSpeed = 130f; ContactDamage = 12f;
+                break;
+            case CreatureKind.RockMimic:
+                // Plays dead: Hostile stays off until it wakes so sentries ignore the
+                // "boulder" and the ambush actually lands.
+                Radius = 5f; Health = 60f; MoveSpeed = 58f; ContactDamage = 14f; Hostile = false;
                 break;
         }
     }
