@@ -534,9 +534,9 @@ public sealed class Titan
                         vNormal = 175f;
                     }
                     else if (Grounded && Kind != TitanKind.Kong && _jumpTimer <= 0f
-                             && Vector2.Dot(SurfacePoint(planet, up) - Position, up) > 60f)
+                             && BelowLocalTerrain(planet, up, right))
                     {
-                        // Stuck in a cavern with nothing to chimney — jump after the prey.
+                        // Down a hole with nothing to chimney — jump after the prey.
                         // The plow smashes the arc through whatever roof it meets, so
                         // repeated leaps headbutt a path back toward the surface.
                         vNormal = 520f;
