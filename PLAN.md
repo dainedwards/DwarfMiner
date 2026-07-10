@@ -129,6 +129,15 @@
 >   atmosphere halo, no more grinding into the disc), parking spots moved to
 >   `BodyRadius + EntryRange + 80` so nothing parks inside the shell, and the
 >   world-still-building hold aerobrakes (velocity bleeds off) instead of freezing dead.
+> - **Unified disaster clock (DONE 2026-07-10):** the big disasters — solar flare, blizzard,
+>   acid rain, magma surge, volcanic eruption, earthquake — now share ONE clock per planet
+>   (AmbientDirector): only one disaster live at a time (the clock holds while any warn/
+>   active/eruption phase runs), spaced by the new `PlanetDef.Difficulty` (0..1, stamped by
+>   PlanetGen from the slot, hand-set on Classic): ~7 min between disasters on the gentlest
+>   world down to ~2 min on the hardest (±15% jitter). Meteors stay an ambient dodge hazard
+>   on their own cadence. The F9 debug menu grew "Disaster — …" rows that force each kind at
+>   once (cutting short whatever's live, then re-rolling the clock); DM_FLARE/DM_ACIDRAIN/
+>   DM_ERUPT=<s> now schedule that kind via `Session.NextDisaster`. 4 SimTest checks.
 > Next up: weapon variety, a settings UI beyond the F6 volume cycle, difficulty/balance
 > tuning from playtests, or a run-summary/stats screen.
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
