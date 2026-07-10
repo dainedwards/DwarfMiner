@@ -416,6 +416,14 @@ public sealed class Titan
             speedMul = Charging ? 4.4f : 0f;
         }
 
+        // Close the generic hunt-jump's airtime window (Kong's special manages its own
+        // Leaping; the timer is only ever armed for the other kinds).
+        if (_jumpTimer > 0f)
+        {
+            _jumpTimer -= dt;
+            if (_jumpTimer <= 0f && Kind != TitanKind.Kong) Leaping = false;
+        }
+
         // ── Dig-down hunt ─────────────────────────────────────────────────────
         // Only once truly enraged (past DigAngerGate), with the player deep below and
         // roughly underfoot. It stops walking and pounds: a slam every _digTimer beat,
