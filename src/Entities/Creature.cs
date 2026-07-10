@@ -1361,6 +1361,132 @@ public sealed class Creature
                 r.DrawCircle(Position, Radius + pulse * 0.5f, Tinted(new Color(70, 30, 110)) * 0.85f);
                 r.DrawCircle(Position, Radius * 0.55f, Tinted(new Color(140, 80, 200)));
                 r.DrawCircle(Position, 1.1f, Tinted(new Color(240, 220, 255)));
+                // Post-blink shimmer: an expanding ring where it re-materialised.
+                if (_swing > 0f)
+                {
+                    var ringT = 1f - _swing / 0.35f;
+                    r.DrawCircle(Position, Radius + 2f + ringT * 8f, new Color(180, 120, 255) * (0.5f * (1f - ringT)));
+                }
+                break;
+            }
+            case CreatureKind.CaveSlime:
+            case CreatureKind.Slimelet:
+            {
+                // Gelatinous dome: squashes on the ground, stretches mid-hop, jiggles at rest.
+                var grounded = IsGrounded(planet, up);
+                var jiggle = MathF.Sin(t * 8f + _phase) * 0.08f;
+                var squashX = (grounded ? 1.15f : 0.85f) + jiggle;
+                var squashY = (grounded ? 0.8f : 1.15f) - jiggle;
+                var gel = Kind == CreatureKind.Slimelet
+                    ? Tinted(new Color(120, 210, 170)) * 0.85f
+                    : Tinted(new Color(80, 180, 150)) * 0.85f;
+                r.DrawRect(Position, new Vector2(Radius * 2f * squashX, Radius * 1.7f * squashY), gel, rot);
+                r.DrawCircle(Position + up * (Radius * 0.35f * squashY), Radius * 0.9f * squashX, gel);
+                // Nucleus blob drifting inside — reads as "creature", not "puddle".
+                r.DrawCircle(Position + right * (facing * 0.8f) - up * 0.3f, Radius * 0.4f,
+                    Tinted(new Color(50, 130, 105)));
+                r.DrawCircle(Position + right * (facing * Radius * 0.45f) + up * (Radius * 0.3f), 0.8f, Color.Black);
+                if (Kind == CreatureKind.CaveSlime)
+                    r.DrawCircle(Position + right * (facing * Radius * 0.1f) + up * (Radius * 0.35f), 0.7f, Color.Black);
+                break;
+            }
+            case CreatureKind.AcidSpitter:
+            {
+                // Squat gland-toad: wide warty body, swollen throat sac that pulses brighter
+                // as the next glob readies, maw gaping while it spits.
+                var body = Tinted(new Color(96, 122, 62));
+                var belly = Tinted(new Color(140, 168, 88));
+                r.DrawCircle(Position - up * 0.6f, Radius, body);
+                r.DrawCircle(Position + up * 1.2f, Radius * 0.75f, body);
+                r.DrawCircle(Position - up * 1.2f + right * (facing * 1.2f), Radius * 0.55f, belly);
+                // Throat sac: dim just after a spit, glowing full as the cooldown ends.
+                var charge = 1f - MathHelper.Clamp(_cd / 2.4f, 0f, 1f);
+                var sac = Color.Lerp(new Color(110, 150, 60), new Color(190, 240, 90), charge);
+                r.DrawCircle(Position + right * (facing * 2.2f) - up * 0.4f, 1.6f + charge * 0.8f, Tinted(sac));
+                var head = Position + up * 2.6f + right * (facing * 1.6f);
+                r.DrawCircle(head, 2.0f, body);
+                if (_swing > 0f) // maw agape mid-spit
+                    r.DrawCircle(head + right * (facing * 1.4f), 1.2f, Tinted(new Color(210, 250, 120)));
+                r.DrawCircle(head + up * 1.0f + right * (facing * 0.6f), 0.7f, new Color(230, 220, 90));
+                r.DrawCircle(head + up * 1.0f - right * (facing * 0.8f), 0.6f, new Color(230, 220, 90));
+                break;
+            }
+            case CreatureKind.BomberBeetle:
+            {
+                // Scuttling legs up front, volatile amber abdomen behind. Armed, the abdomen
+                // strobes faster and faster until the bang.
+                var shellCol = Tinted(new Color(56, 50, 44));
+                var swing = MathF.Min(MathF.Abs(Vector2.Dot(Velocity, right)) / 40f, 1f);
+                for (var i = -1; i <= 1; i++)
+                {
+                    var a = MathF.Sin(t * 18f + _phase + i * 2.1f) * 0.5f * swing;
+                    r.DrawRect(Position - up * 1.0f + right * (i * 1.6f), new Vector2(0.8f, 3.2f), shellCol, rot + a);
+                }
+                var abdomen = new Color(210, 130, 40);
+                if (_fuse > 0f)
+                {
+                    // Strobe accelerates as the fuse runs down.
+                    var rate = 10f + (0.7f - _fuse) * 40f;
+                    abdomen = MathF.Sin(t * rate) > 0f ? new Color(255, 240, 220) : new Color(255, 60, 30);
+                }
+                r.DrawCircle(Position - right * (facing * 2.2f), Radius * 0.95f, Tinted(abdomen));
+                r.DrawCircle(Position + right * (facing * 1.2f), 2.4f, shellCol);
+                r.DrawCircle(Position + right * (facing * 3.0f) + up * 0.6f, 0.6f, new Color(255, 190, 90));
+                break;
+            }
+            case CreatureKind.SnapperVine:
+            {
+                // Stalk drawn root→head in sagging segments, base leaves, and a bud-jaw that
+                // gapes as prey gets close.
+                var stem = Tinted(new Color(70, 120, 55));
+                var leaf = Tinted(new Color(95, 150, 70));
+                var rootUp = planet.UpAt(_rooted ? _root : Position);
+                var basePos = _rooted ? _root : Position;
+                r.DrawRect(basePos + new Vector2(-rootUp.Y, rootUp.X) * 2.2f, new Vector2(4.4f, 1.4f), leaf,
+                    MathF.Atan2(rootUp.X, -rootUp.Y) + 0.9f);
+                r.DrawRect(basePos - new Vector2(-rootUp.Y, rootUp.X) * 2.2f, new Vector2(4.4f, 1.4f), leaf,
+                    MathF.Atan2(rootUp.X, -rootUp.Y) - 0.9f);
+                for (var i = 1; i <= 4; i++)
+                {
+                    var f = i / 5f;
+                    var seg = Vector2.Lerp(basePos, Position, f);
+                    seg += new Vector2(-rootUp.Y, rootUp.X) * (MathF.Sin(t * 2f + _phase + f * 4f) * 1.2f * (1f - f));
+                    r.DrawCircle(seg, 1.6f - f * 0.4f, stem);
+                }
+                var toP = player.Position - Position;
+                var headDir = toP.LengthSquared() > 0.01f ? Vector2.Normalize(toP) : rootUp;
+                var hAngV = MathF.Atan2(headDir.Y, headDir.X);
+                var gape = MathHelper.Clamp(1f - toP.Length() / 120f, 0f, 1f) * 0.9f + 0.15f;
+                r.DrawCircle(Position, Radius, Tinted(new Color(110, 60, 90)));       // bud
+                r.DrawCircle(Position + headDir * 1.2f, Radius * 0.5f, Tinted(new Color(200, 90, 120))); // maw
+                r.DrawRect(Position + Rotate(headDir, gape) * (Radius + 0.8f), new Vector2(4.2f, 1.3f),
+                    Tinted(new Color(80, 130, 60)), hAngV + gape);
+                r.DrawRect(Position + Rotate(headDir, -gape) * (Radius + 0.8f), new Vector2(4.2f, 1.3f),
+                    Tinted(new Color(80, 130, 60)), hAngV - gape);
+                break;
+            }
+            case CreatureKind.RockMimic:
+            {
+                // Disguise: a lichen-flecked boulder with a gold glint — bait for a miner.
+                // Awake it's the same boulder with a maw and hateful eyes, moving fast.
+                var rock = Tinted(new Color(104, 100, 96));
+                var dark = Tinted(new Color(84, 80, 78));
+                var lurch = _awake ? MathF.Sin(t * 10f + _phase) * 0.6f : 0f;
+                r.DrawCircle(Position - up * 0.6f, Radius, rock);
+                r.DrawCircle(Position + right * (2.4f + lurch) + up * 1.4f, Radius * 0.6f, dark);
+                r.DrawCircle(Position - right * (2.6f - lurch) + up * 1.2f, Radius * 0.55f, dark);
+                r.DrawCircle(Position + up * 2.6f, Radius * 0.5f, rock);
+                // The bait: gold speckles, twinkling faintly.
+                var glint = MathF.Sin(t * 3f + _phase) * 0.5f + 0.5f;
+                r.DrawCircle(Position + right * 1.8f - up * 0.8f, 0.7f, Color.Lerp(new Color(190, 150, 40), new Color(255, 220, 110), glint));
+                r.DrawCircle(Position - right * 1.2f + up * 1.8f, 0.6f, new Color(210, 170, 60));
+                if (_awake)
+                {
+                    r.DrawRect(Position + right * (facing * 1.0f) - up * 1.2f, new Vector2(5.4f, 2.0f),
+                        Tinted(new Color(30, 24, 22)), rot); // maw
+                    r.DrawCircle(Position + right * (facing * 2.0f) + up * 1.6f, 0.9f, new Color(255, 70, 40));
+                    r.DrawCircle(Position + right * (facing * 0.2f) + up * 1.9f, 0.8f, new Color(255, 70, 40));
+                }
                 break;
             }
         }
