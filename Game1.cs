@@ -233,7 +233,7 @@ public sealed partial class DwarfMinerGame : Game
     /// liquid pre-settle. Static and touching only freshly built objects, so the space
     /// screen can run it on a background thread while the player is still flying — by the
     /// time they press Enter the world is usually already built (seamless landing).</summary>
-    internal static Session BuildSessionWorld(PlanetDef def)
+    internal static Session BuildSessionWorld(PlanetDef def, System.Threading.CancellationToken settleToken = default)
     {
         var seed = (int)DateTime.Now.Ticks;
         var run = new Session(def);
