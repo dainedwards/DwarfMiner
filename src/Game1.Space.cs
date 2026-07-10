@@ -201,9 +201,11 @@ public sealed partial class DwarfMinerGame
     /// <summary>Background world builds keyed by planet id. The aim predictor keeps the
     /// likely destination baking from the moment the ship points at it, and finished builds
     /// stay cached through course changes — so atmosphere contact almost always lands on a
-    /// world that's already built. BuildSessionWorld touches only fresh objects, so the
+    /// world that's already built. Each bake carries a token that cancels the liquid
+    /// pre-settle (the slow half): atmosphere entry fires it and takes the world as soon as
+    /// generation itself is done. BuildSessionWorld touches only fresh objects, so the
     /// thread hop is safe; the dictionary itself is only touched on the update thread.</summary>
-    private readonly Dictionary<string, Task<Session>> _prefetch = new();
+    private readonly Dictionary<string, (Task<Session> Task, CancellationTokenSource SettleCts)> _prefetch = new();
     /// <summary>A cached Session retains ~100 MB, so hold at most two: the current target
     /// plus whatever finished before the last course change.</summary>
     private const int PrefetchCap = 2;
@@ -219,9 +221,9 @@ public sealed partial class DwarfMinerGame
         {
             string? evict = null;
             var worst = -1f;
-            foreach (var (id, task) in _prefetch)
+            foreach (var (id, bake) in _prefetch)
             {
-                if (!task.IsCompleted) continue;
+                if (!bake.Task.IsCompleted) continue;
                 var planet = _space.Planets.Find(sp => sp.Def.Id == id);
                 var d = planet is null ? float.MaxValue : (planet.Pos - _space.ShipPos).Length();
                 if (d > worst) { worst = d; evict = id; }
@@ -229,7 +231,8 @@ public sealed partial class DwarfMinerGame
             if (evict is null) return;
             _prefetch.Remove(evict);
         }
-        _prefetch[def.Id] = Task.Run(() => BuildSessionWorld(def));
+        var cts = new CancellationTokenSource();
+        _prefetch[def.Id] = (Task.Run(() => BuildSessionWorld(def, cts.Token)), cts);
     }
 
     /// <summary>Disc previews rasterized from each planet's survey world, so the system
