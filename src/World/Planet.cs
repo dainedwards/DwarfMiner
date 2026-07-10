@@ -383,6 +383,17 @@ public sealed class Planet
             w.Write(y);
             w.Write(acid);
         }
+        w.Write(_composition.Count);
+        foreach (var (idx, comp) in _composition)
+        {
+            w.Write(idx);
+            w.Write(comp.Tint.R); w.Write(comp.Tint.G); w.Write(comp.Tint.B);
+            w.Write((byte)comp.Parts.Length);
+            foreach (var (mat, src, count) in comp.Parts)
+            {
+                w.Write(mat); w.Write(src); w.Write(count);
+            }
+        }
     }
 
     /// <summary>Restore state written by <see cref="WriteState"/>. Throws on a geometry
