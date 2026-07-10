@@ -855,27 +855,32 @@ public sealed class Titan
         SpecialState = 2.0f;
     }
 
-    /// <summary>True if any planted foot actually rests on solid ground. A planted foot can
+    /// <summary>True if this planted foot actually rests on solid ground. A planted foot can
     /// hang in mid-air (anchors clamp to leg reach over a cliff), so StepT alone can't answer
     /// "is it standing" — probe just below the sole, where a ground-resolved anchor always
     /// has the tile it planted on.</summary>
+    private static bool FootOnGround(Planet planet, TitanLeg leg)
+        => leg.StepT >= 1f && ProbeSolid(planet, leg.FootPos - planet.UpAt(leg.FootPos) * 10f);
+
     private bool AnyFootOnGround(Planet planet)
     {
         foreach (var leg in Legs)
-            if (leg.StepT >= 1f && ProbeSolid(planet, leg.FootPos - planet.UpAt(leg.FootPos) * 10f))
-                return true;
+            if (FootOnGround(planet, leg)) return true;
         return false;
     }
 
-    /// <summary>Mean of foot positions for legs that are currently planted (StepT ≥ 1).
-    /// Mid-step legs are excluded so the body doesn't bob each time a leg arcs.</summary>
-    private Vector2 AvgPlantedFoot(out bool hasAny)
+    /// <summary>Mean of foot positions for legs that are planted ON SOLID GROUND. Mid-step
+    /// legs are excluded so the body doesn't bob each time a leg arcs, and mid-air "planted"
+    /// feet (reach-clamped over a drop) are excluded so the suspension can't hold the body up
+    /// on phantom footing — off a cliff the kaiju falls like anything else, legs reaching,
+    /// until a foot finds real ground to catch on.</summary>
+    private Vector2 AvgPlantedFoot(Planet planet, out bool hasAny)
     {
         var sum = Vector2.Zero;
         var count = 0;
         foreach (var leg in Legs)
         {
-            if (leg.StepT >= 1f) { sum += leg.FootPos; count++; }
+            if (FootOnGround(planet, leg)) { sum += leg.FootPos; count++; }
         }
         hasAny = count > 0;
         return hasAny ? sum / count : Vector2.Zero;
