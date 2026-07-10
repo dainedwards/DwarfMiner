@@ -15,19 +15,5 @@ if (args.Length > 0 && args[0] == "--spawnprobe")
     return;
 }
 
-// Temporary diagnostic: `--buildprobe` times BuildSessionWorld for every planet.
-if (args.Length > 0 && args[0] == "--buildprobe")
-{
-    var keep = new System.Collections.Generic.List<object>();
-    foreach (var def in DwarfMiner.World.PlanetDefs.All)
-    {
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        keep.Add(DwarfMinerGame.BuildSessionWorld(def));
-        System.Console.WriteLine(
-            $"{def.Id,-12} {sw.ElapsedMilliseconds} ms  heap {System.GC.GetTotalMemory(true) / (1024 * 1024)} MB");
-    }
-    return;
-}
-
 using var game = new DwarfMinerGame();
 game.Run();
