@@ -2066,10 +2066,12 @@ public sealed partial class DwarfMinerGame : Game
 
     /// <summary>The rocket is flown by hand, Asteroids-style: A/D (or arrows) swing the
     /// nose — it points wherever the player leaves it, nothing rights it — and SPACE (or
-    /// W/up) burns along it. Drag eases the ship to a hover when the engine is off. The
-    /// rocket can't sink into the crust or wander past the station's orbit into deep
-    /// space. E sets it down and steps out (ExitShip); flying close to the mothership
-    /// engages a short approach glide that completes the docking = FinishLaunch.</summary>
+    /// W/up) burns along it. Flight is ballistic: gravity pulls toward the planet core
+    /// the whole way up, momentum carries through a coast, and cutting the jets means
+    /// arcing over and falling back to the surface. The rocket can't sink into the crust
+    /// or wander past the station's orbit into deep space. E sets it down and steps out
+    /// (ExitShip); flying close to the mothership engages a short approach glide that
+    /// completes the docking = FinishLaunch.</summary>
     private void UpdateAscent(float dt, KeyboardState keys)
     {
         var up = _run.Planet.UpAt(_launchShipPos);
