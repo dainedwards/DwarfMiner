@@ -408,7 +408,7 @@ public sealed partial class DwarfMinerGame : Game
             _landerPos = _run.StationPos;
             _run.Player.Position = _landerPos;
             _transitionFlash = 0.6f;
-            _toast = "ROVER AWAY - A/D STEER";
+            _toast = "ROVER AWAY - A/D STEER, S DIVE";
             _toastTimer = 3.5f;
         }
         else if (Environment.GetEnvironmentVariable("DM_LAUNCH") is { Length: > 0 })
