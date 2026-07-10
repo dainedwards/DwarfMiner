@@ -189,7 +189,8 @@ public static class PlanetDefs
             CrystalPockets: 3, FungalPockets: 2,
             // The breach world: a fresh kaiju rolls out of the pool on every visit, so no two
             // Coreheart dives face the same monster. Titan above stays as the fallback label.
-            TitanPool: new[] { TitanKind.Knifehead, TitanKind.Otachi, TitanKind.Leatherback, TitanKind.Raiju }),
+            TitanPool: new[] { TitanKind.Knifehead, TitanKind.Otachi, TitanKind.Leatherback, TitanKind.Raiju },
+            Biome: "crystal"),
 
         // The warp world — out of normal flight range, reachable only with all five core
         // shards. Everything is turned up: swarming caves, toxins, near-vacuum air, lava at
