@@ -28,10 +28,15 @@ public enum Material : byte
 
 public static class Materials
 {
-    /// <summary>Tiles that crumble straight to dust the moment their inward neighbour is empty.</summary>
+    /// <summary>Tiles that crumble straight to dust the moment their inward neighbour is empty.
+    /// Conglomerate is compacted debris, so undercutting it spills its stored cells back out.</summary>
     public static bool IsLoose(TileKind k) => k is
         TileKind.Dirt or TileKind.Grass or TileKind.MossStone or
-        TileKind.Gravel or TileKind.Snow;
+        TileKind.Gravel or TileKind.Snow or TileKind.Conglomerate;
+
+    /// <summary>Cell materials the compaction sweep may press into a Conglomerate tile.</summary>
+    public static bool IsCompactable(Material m) => m is
+        Material.Sand or Material.Dirt or Material.Gravel or Material.Dust;
 }
 
 /// <summary>
