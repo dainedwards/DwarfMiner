@@ -214,11 +214,17 @@ public sealed class Creature
             case CreatureKind.HornedDelver: TickDelver(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.Centipede:  TickCentipede(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.MoleBeast:  TickMole(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
-            // New biome fauna reuse proven brains: bats and wraiths patrol tunnels like the
-            // cave eye (the stats make them feel nothing alike); crawlers stalk like grubs.
-            case CreatureKind.SporeBat:
-            case CreatureKind.VoidWraith: TickCaveEye(dt, planet, toPlayer, dist, speedMul); break;
-            case CreatureKind.CrystalCrawler: TickGrub(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            // Spore bats patrol tunnels on the proven cave-eye brain — the stats make them
+            // feel nothing alike.
+            case CreatureKind.SporeBat: TickCaveEye(dt, planet, toPlayer, dist, speedMul); break;
+            case CreatureKind.VoidWraith: TickWraith(dt, planet, toPlayer, dist, speedMul); break;
+            case CreatureKind.CrystalCrawler: TickCrawler(dt, planet, up, right, toPlayer, dist, speedMul, shots); break;
+            case CreatureKind.CaveSlime:
+            case CreatureKind.Slimelet:   TickSlime(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.AcidSpitter: TickSpitter(dt, planet, up, right, toPlayer, dist, speedMul, shots); break;
+            case CreatureKind.BomberBeetle: TickBomber(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.SnapperVine: TickVine(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.RockMimic:  TickMimic(dt, planet, up, right, toPlayer, dist, speedMul); break;
         }
 
         // Substepped integration: each step moves at most ~60% of the body radius so a fast
