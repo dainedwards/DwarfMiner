@@ -2091,13 +2091,18 @@ public sealed partial class DwarfMinerGame : Game
         var heading = MathF.Atan2(_ascentHeading.Y, _ascentHeading.X) + turn * 2.8f * dt;
         _ascentHeading = new Vector2(MathF.Cos(heading), MathF.Sin(heading));
 
-        // Burn along the nose, drag toward a hover when coasting: holding SPACE builds to
-        // a leisurely cruise, letting go eases the rocket to a stop.
-        if (thrusting) _ascentVel += _ascentHeading * 240f * dt;
-        _ascentVel *= 1f - MathF.Min(1f, 1.8f * dt);
-        const float cruise = 120f;
+        // Real ballistics: the burn accelerates along the nose, gravity drags the whole
+        // flight back toward the core, and coasting keeps its momentum — only a whisper
+        // of drag caps runaway speed. Cut the jets and the rocket arcs over and falls
+        // home; the burn has to outmuscle the planet the whole way up.
+        const float thrust = 430f;
+        const float gravity = 175f;
+        const float maxSpeed = 300f;
+        if (thrusting) _ascentVel += _ascentHeading * thrust * dt;
+        _ascentVel += _run.Planet.GravityAt(_launchShipPos) * gravity * dt;
+        _ascentVel *= 1f - MathF.Min(1f, 0.12f * dt);
         var speed = _ascentVel.Length();
-        if (speed > cruise) _ascentVel *= cruise / speed;
+        if (speed > maxSpeed) _ascentVel *= maxSpeed / speed;
         _launchShipPos += _ascentVel * dt;
 
         // The ground stays solid on the way up, same as it was on the way down: the rocket
@@ -2107,6 +2112,11 @@ public sealed partial class DwarfMinerGame : Game
             for (var i = 0; i < 60 && _run.Planet.IsSolidAt(_launchShipPos); i++) _launchShipPos += up * 2f;
             var sink = Vector2.Dot(_ascentVel, up);
             if (sink < 0f) _ascentVel -= up * sink;
+            // Grounded: the fins bite, so a rocket that fell back down settles where it
+            // landed instead of skating sideways across the crust under gravity.
+            var right = new Vector2(-up.Y, up.X);
+            var slide = Vector2.Dot(_ascentVel, right);
+            _ascentVel -= right * (slide * MathF.Min(1f, 6f * dt));
         }
 
         // Ceiling just past the station's orbit — no drifting off into deep space.
