@@ -1343,10 +1343,11 @@ public static class SimTest
         Check("fauna: rock mimic hoards gold and spawns disguised (non-hostile)",
             System.Array.Exists(Corpse.DropsFor(CreatureKind.RockMimic), d => d.id == "gold")
             && !new Creature(Vector2.Zero, CreatureKind.RockMimic).Hostile);
+        var slimelet = new Creature(Vector2.Zero, CreatureKind.Slimelet);
+        var slime = new Creature(Vector2.Zero, CreatureKind.CaveSlime);
         Check("fauna: slimelet is a strictly smaller cave slime",
-            new Creature(Vector2.Zero, CreatureKind.Slimelet).Health
-                < new Creature(Vector2.Zero, CreatureKind.CaveSlime).Health
-            && Corpse.DropsFor(CreatureKind.Slimelet).Length == 0);
+            slimelet.Health < slime.Health && slimelet.Radius < slime.Radius
+            && slimelet.ContactDamage < slime.ContactDamage);
 
         // Acid spitter: parked in line of sight of a target, it must lob acid globs into the
         // shared enemy-shot list within a few seconds.
