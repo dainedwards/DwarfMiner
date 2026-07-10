@@ -970,6 +970,11 @@ public sealed partial class DwarfMinerGame
     private int _mapHoverPlanet = -1;
     private bool _mapHoverSun;
 
+    /// <summary>DM_SURVEY's value when it names a body ("sun" or a planet id) — the forced-
+    /// hover screenshot hook. "1" (the plain open-at-boot switch) resolves to null.</summary>
+    private static readonly string? SurveyHoverHook =
+        Environment.GetEnvironmentVariable("DM_SURVEY") is { Length: > 1 } s ? s : null;
+
     /// <summary>Pixel radius of the chart (the outermost orbit ring).</summary>
     private const float StarMapRadius = VirtualHeight / 2f - 84f;
     private static Vector2 StarMapCentre => new(VirtualWidth / 2f, VirtualHeight / 2f + 10f);
