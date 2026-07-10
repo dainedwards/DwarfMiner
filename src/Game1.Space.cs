@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DwarfMiner.Rendering;
 using DwarfMiner.Space;
 using DwarfMiner.Systems;
+using DwarfMiner.UI;
 using DwarfMiner.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
