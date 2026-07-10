@@ -592,10 +592,13 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.Position = _landerPos;
         _run.Player.Velocity = Vector2.Zero;
         // Altitude-driven zoom: stay wide while high (see the terrain you're steering at),
-        // then close to play zoom only for the final stretch.
-        var alt = (_landerPos - _run.Planet.Center).Length()
-                  - (Planet.RingMin + _run.Planet.SurfaceRing) * Planet.TileSize;
-        var zoomTarget = MathHelper.Lerp(_playZoom, 0.72f, MathHelper.Clamp(alt / 650f, 0f, 1f));
+        // then close to play zoom only for the final stretch. Clearance is probed against
+        // the actual ground under the pod, not the baseline surface ring — touching down on
+        // a mountain top must still arrive at full play zoom, not orbit scale.
+        var clearance = 900f;
+        for (var probe = 12f; probe < 900f; probe += 12f)
+            if (_run.Planet.IsSolidAt(_landerPos - up * probe)) { clearance = probe; break; }
+        var zoomTarget = MathHelper.Lerp(_playZoom, 0.72f, MathHelper.Clamp(clearance / 650f, 0f, 1f));
         _camera.Zoom = MathHelper.Lerp(_camera.Zoom, zoomTarget, MathHelper.Clamp(dt * 2.4f, 0f, 1f));
         _camera.Follow(_landerPos, up, dt);
         // The station keeps drifting while the pod falls.
