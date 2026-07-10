@@ -561,7 +561,7 @@ public sealed partial class DwarfMinerGame : Game
         }
         else
         {
-            _toast = "ROVER AWAY - A/D STEER";
+            _toast = "ROVER AWAY - A/D STEER, S DIVE";
         }
         _toastTimer = 3.5f;
     }
