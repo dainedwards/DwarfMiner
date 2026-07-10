@@ -37,7 +37,7 @@ public sealed class Titan
     public bool Grounded;
     public float Facing = 1f;         // smoothed -1..+1; which way the head/snout points along the local tangent
     public float Pulse;               // body breathing/anger pulsation (radians, advanced each tick)
-    public TitanLeg[] Legs = null!;   // 4 procedural legs (quadruped)
+    public TitanLeg[] Legs = null!;   // 2 procedural legs (biped); empty for the worm/flyers
     public Vector2[] TailNodes = null!;     // verlet chain — node 0 anchors to the body's rump
     public Vector2[] TailPrev = null!;      // previous-frame positions for verlet integration
 
