@@ -1038,11 +1038,17 @@ public sealed partial class DwarfMinerGame
             _mapHoverSun = true;
 
         // DM_SURVEY=<planet id|sun> forces that body hovered (on top of opening the map at
-        // boot), so tooling can screenshot the tooltip without mouse access.
-        if (_mapHoverPlanet < 0 && !_mapHoverSun && SurveyHoverHook is { } forced)
+        // boot), so tooling can screenshot the tooltip without mouse access. It overrides
+        // the real mouse — headless tooling can't move the cursor off a marker it happens
+        // to be parked on.
+        if (SurveyHoverHook is { } forced)
         {
-            if (forced == "sun") _mapHoverSun = true;
-            else _mapHoverPlanet = _space.Planets.FindIndex(p => p.Def.Id == forced);
+            var idx = _space.Planets.FindIndex(p => p.Def.Id == forced);
+            if (forced == "sun" || idx >= 0)
+            {
+                _mapHoverSun = forced == "sun";
+                _mapHoverPlanet = idx;
+            }
         }
 
         if (!PlanetDefs.DebugMode) return;
