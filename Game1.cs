@@ -86,9 +86,15 @@ public sealed partial class DwarfMinerGame : Game
     private float _transitionFlash;
 
     /// <summary>Manual escape flight: the rocket is the player's from the instant it leaves
-    /// the pad — free 2D flight anywhere around the planet (WASD/arrows). Flying close to
+    /// the pad — A/D swing the nose, SPACE burns along it, E steps out. Flying close to
     /// the mothership engages an approach glide that completes the docking.</summary>
     private bool _ascending;
+
+    /// <summary>Set once the rocket has been flown off the pad and set down somewhere else
+    /// on the planet (E mid-flight). While parked, the hull draws at
+    /// <see cref="_launchShipPos"/> and E within reach boards it again. Not persisted — a
+    /// reloaded run finds the rocket back on its pad.</summary>
+    private bool _shipParked;
 
     /// <summary>Parked in orbit after an atmosphere entry: the world is live below, the
     /// station holds at its anchor, and the player decides when (and where — A/D shifts the
