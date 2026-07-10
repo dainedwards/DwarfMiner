@@ -307,6 +307,22 @@ public sealed partial class DwarfMinerGame
         _space.ShipPos = new Vector2(_meta.ShipPosX, _meta.ShipPosY);
         _space.ShipHeading = _meta.ShipHeadingSave;
         if (_meta.ShipHull > 0) _space.Hull = Math.Min(_meta.ShipHull, _space.HullMax);
+
+        // The snapshot may date from the moment of atmosphere entry, and the planets re-rack
+        // to their boot angles regardless of where they'd orbited to — either way the saved
+        // point can sit inside a planet's entry range, which would suck the ship straight
+        // back down on the first frame. Shove it out to the standard parking distance.
+        foreach (var p in _space.Planets)
+        {
+            var d = _space.ShipPos - p.Pos;
+            var dist = d.Length();
+            var min = p.BodyRadius + 80f;
+            if (dist >= min) continue;
+            var outward = dist > 1f ? d / dist
+                : p.Pos.LengthSquared() > 1f ? Vector2.Normalize(p.Pos) : new Vector2(0f, -1f);
+            _space.ShipPos = p.Pos + outward * min;
+            _space.ShipVel = Vector2.Zero;
+        }
     }
 
     /// <summary>Snapshot the mothership into MetaSave — called wherever meta already saves
