@@ -543,7 +543,9 @@ public static class SimTest
         Check("titan: Coreheart rolls from the kaiju pool",
             PlanetDefs.ById("core").TitanPool is { Length: 4 });
 
-        // --- Terrain plow: a boss overlapping solid rock smashes through it ---
+        // --- Terrain plow: an aggroed boss smashes rock blocking it at body height, but the
+        // ground under it is footing, not demolition fodder (it used to pulverise every tile
+        // beneath itself the moment it hatched) ---
         {
             var pp = WorldGen.Generate(70);
             var pc = new Cells(pp);
@@ -551,22 +553,37 @@ public static class SimTest
             var psh = new System.Collections.Generic.List<TitanProjectile>();
             var pbo = new System.Collections.Generic.List<FallingBoulder>();
             var boss = new Titan(pp, -MathF.PI / 2f, TitanKind.Kong);
-            boss.Hatch();
-            // Fill the tiles under the body's centre with solid rock, then tick once.
+            boss.Hatch();   // hatch = aggroed, so the plow runs at full power
+            // A stone slab at body height (3 rings up, inside the plow radius) and a stone
+            // row well below the body centre (the floor sector), then tick once.
             var (bx, by) = pp.WorldToTile(boss.Position);
-            for (var dx = -1; dx <= 1; dx++)
+            for (var dy = -1; dy <= 1; dy++)
+            {
+                for (var dx = 2; dx <= 4; dx++) pp.Set(bx + dx, by + dy, TileKind.Stone);
+                pp.Set(bx - 5, by + dy, TileKind.Stone);
+            }
+            int CountSlab()
+            {
+                var n = 0;
                 for (var dy = -1; dy <= 1; dy++)
-                    pp.Set(bx + dx, by + dy, TileKind.Stone);
-            var solidBefore = 0;
-            for (var dx = -1; dx <= 1; dx++)
+                    for (var dx = 2; dx <= 4; dx++)
+                        if (Tiles.IsSolid(pp.Get(bx + dx, by + dy))) n++;
+                return n;
+            }
+            int CountFloor()
+            {
+                var n = 0;
                 for (var dy = -1; dy <= 1; dy++)
-                    if (Tiles.IsSolid(pp.Get(bx + dx, by + dy))) solidBefore++;
+                    if (Tiles.IsSolid(pp.Get(bx - 5, by + dy))) n++;
+                return n;
+            }
+            var slabBefore = CountSlab();
+            var floorBefore = CountFloor();
             boss.Update(1f / 60f, pp, pphys, pc, boss.Position, pbo, psh);
-            var solidAfter = 0;
-            for (var dx = -1; dx <= 1; dx++)
-                for (var dy = -1; dy <= 1; dy++)
-                    if (Tiles.IsSolid(pp.Get(bx + dx, by + dy))) solidAfter++;
-            Check($"titan: boss plows through rock it overlaps ({solidBefore}→{solidAfter})", solidAfter < solidBefore);
+            Check($"titan: boss plows rock blocking it at body height ({slabBefore}→{CountSlab()})",
+                CountSlab() < slabBefore);
+            Check($"titan: the floor under the boss survives the plow ({floorBefore}→{CountFloor()})",
+                CountFloor() == floorBefore);
         }
     }
 
