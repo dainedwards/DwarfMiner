@@ -641,12 +641,13 @@ public sealed class Creature
     /// <summary>CaveEye: hovers through open tunnels. Never digs — it steers by probing ahead
     /// and turning toward open space, so it genuinely explores whatever tunnel network exists
     /// (natural caves, player shafts, borer galleries).</summary>
-    private void TickCaveEye(float dt, Planet planet, Vector2 toPlayer, float dist, float speedMul)
+    private void TickCaveEye(float dt, Planet planet, Vector2 toPlayer, float dist, float speedMul,
+        float aggro = 200f)
     {
         // Idle drift wobbles the heading; a nearby dwarf pulls it.
         _heading += ((float)Random.Shared.NextDouble() - 0.5f) * 2.4f * dt;
         var speed = MoveSpeed;
-        if (dist < 110f && dist > 0.01f)
+        if (dist < aggro && dist > 0.01f)
         {
             var want = MathF.Atan2(toPlayer.Y, toPlayer.X);
             _heading += WrapPi(want - _heading) * MathF.Min(1f, 3.5f * dt);
