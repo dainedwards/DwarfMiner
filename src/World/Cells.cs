@@ -469,8 +469,10 @@ public sealed class Cells
             _velR[i] = 0f;
             _travel[i] = 0f;
             var d = _rng.Next(2) == 0 ? 1 : -1;
-            if (_rng.Next(100) < SlipChance((Material)_mat[i]) && !IsBlocked(cx + d, cy))
-                TryMoveTo(cx, cy, icx + d, icy);
+            if (_rng.Next(100) < SlipChance((Material)_mat[i]) && !IsBlocked(cx + d, cy)
+                && TryMoveTo(cx, cy, icx + d, icy))
+                return;
+            RecordRest(cx, cy);   // held in place — its tile is a compaction candidate
             return;
         }
 
