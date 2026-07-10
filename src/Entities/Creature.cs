@@ -1540,6 +1540,143 @@ public sealed class Creature
                 }
                 break;
             }
+            case CreatureKind.SnowLoper:
+            {
+                // Woolly body riding high on two stilt legs, frost-blue crest — built to
+                // keep its belly off the ice.
+                var wool = Tinted(new Color(226, 234, 242));
+                var dusk = Tinted(new Color(168, 186, 204));
+                var moving = MathF.Abs(Vector2.Dot(Velocity, right)) > 4f;
+                for (var i = -1; i <= 1; i += 2)
+                {
+                    var a = moving ? MathF.Sin(t * 7f + _phase + i * 1.7f) * 0.35f : 0f;
+                    r.DrawRect(Position + up * 1.2f + right * (i * 2.2f), new Vector2(1.0f, 7.0f), dusk, rot + a);
+                }
+                r.DrawCircle(Position + up * 4.6f, 4.0f, wool);
+                r.DrawCircle(Position + up * 5.6f - right * (facing * 2.2f), 2.8f, wool); // rump tuft
+                var head = Position + up * 7.0f + right * (facing * 4.6f);
+                r.DrawRect(Position + up * 6.0f + right * (facing * 3.2f), new Vector2(1.4f, 3.6f), wool, rot + facing * 0.5f);
+                r.DrawCircle(head, 1.8f, dusk);
+                r.DrawCircle(head + right * (facing * 1.1f) + up * 0.3f, 0.6f, Color.Black);
+                r.DrawCircle(head + up * 1.6f, 0.8f, new Color(140, 200, 255)); // crest glow
+                break;
+            }
+            case CreatureKind.CinderSkink:
+            {
+                // Low basalt-hided lizard, ember freckles pulsing down the spine while it
+                // basks; legs scissor into a blur when it bolts.
+                var hide = Tinted(new Color(66, 50, 48));
+                var d = right * facing;
+                r.DrawRect(Position - d * 3.4f, new Vector2(4.2f, 1.2f), hide, rot); // tail
+                var scur = MathF.Min(MathF.Abs(Vector2.Dot(Velocity, right)) / 40f, 1f);
+                for (var i = -1; i <= 1; i += 2)
+                {
+                    var a = MathF.Sin(t * 20f + _phase + i * 2.0f) * 0.6f * scur;
+                    r.DrawRect(Position - up * 0.8f + right * (i * 1.4f), new Vector2(0.7f, 2.2f), hide, rot + a);
+                }
+                r.DrawCircle(Position, 2.4f, hide);
+                r.DrawCircle(Position + d * 2.6f + up * 0.4f, 1.5f, hide);
+                for (var i = 0; i < 3; i++)
+                {
+                    var glow = MathF.Sin(t * 5f + _phase + i * 1.9f) * 0.5f + 0.5f;
+                    r.DrawCircle(Position + up * 1.2f - d * (i * 1.6f - 1.2f), 0.6f,
+                        Color.Lerp(new Color(200, 90, 30), new Color(255, 200, 90), glow));
+                }
+                r.DrawCircle(Position + d * 3.2f + up * 0.8f, 0.5f, new Color(255, 220, 120));
+                break;
+            }
+            case CreatureKind.RustBack:
+            {
+                // Dome-shelled grazer plated in oxidised scrap — it eats the metal-rich
+                // gravel, and the shell shows it: rust ridge, oxide speckle, verdigris.
+                var shell = Tinted(new Color(140, 84, 52));
+                var plate = Tinted(new Color(170, 110, 66));
+                var hide = Tinted(new Color(96, 88, 82));
+                var plod = MathF.Min(MathF.Abs(Vector2.Dot(Velocity, right)) / 20f, 1f);
+                for (var i = -1; i <= 1; i++)
+                {
+                    var a = MathF.Sin(t * 5f + _phase + i * 2.1f) * 0.3f * plod;
+                    r.DrawRect(Position - up * 1.2f + right * (i * 2.6f), new Vector2(1.2f, 2.6f), hide, rot + a);
+                }
+                r.DrawCircle(Position + up * 1.6f, Radius, shell);
+                r.DrawRect(Position + up * 2.8f, new Vector2(5.6f, 1.2f), plate, rot);
+                r.DrawCircle(Position + up * 3.4f, 1.4f, plate);
+                var head = Position + right * (facing * (Radius + 1.2f)) + up * 0.6f;
+                r.DrawCircle(head, 1.6f, hide);
+                r.DrawCircle(head + right * (facing * 0.9f) + up * 0.4f, 0.5f, Color.Black);
+                r.DrawCircle(Position + up * 1.8f + right * 1.8f, 0.6f, new Color(210, 140, 60));
+                r.DrawCircle(Position + up * 2.4f - right * 1.6f, 0.5f, new Color(96, 150, 130));
+                break;
+            }
+            case CreatureKind.TidePuddler:
+            {
+                // Glossy shoreline amphibian: squashes on landing, stretches mid-hop, tail
+                // fin flicking as if it's swimming through the air.
+                var skin = Tinted(new Color(70, 150, 170));
+                var belly = Tinted(new Color(150, 210, 210));
+                var squish = IsGrounded(planet, up) ? 0.8f : 1.15f;
+                var flick = MathF.Sin(t * 12f + _phase) * 0.5f;
+                r.DrawRect(Position - right * (facing * (Radius + 1.2f)), new Vector2(2.8f, 1.6f), skin, rot + flick);
+                r.DrawCircle(Position, Radius * squish, skin);
+                r.DrawCircle(Position - up * 0.6f + right * (facing * 0.6f), Radius * 0.6f, belly);
+                var eye = Position + up * (Radius * 0.7f) + right * (facing * 1.2f);
+                r.DrawCircle(eye, 1.2f, Color.White);
+                r.DrawCircle(eye + right * (facing * 0.4f), 0.7f, Color.Black);
+                break;
+            }
+            case CreatureKind.AcidStrider:
+            {
+                // Stilt-walker: three splayed legs hold the body high over the vitriol
+                // pools it drinks from through a dangling proboscis.
+                var chit = Tinted(new Color(112, 128, 60));
+                var pale = Tinted(new Color(168, 186, 90));
+                var moving = MathF.Abs(Vector2.Dot(Velocity, right)) > 4f;
+                for (var i = -1; i <= 1; i++)
+                {
+                    var a = (moving ? MathF.Sin(t * 8f + _phase + i * 2.1f) * 0.35f : 0f) + i * 0.18f;
+                    r.DrawRect(Position + up * 1.4f + right * (i * 2.0f), new Vector2(0.7f, 8.0f), chit, rot + a);
+                }
+                r.DrawRect(Position + up * 5.4f, new Vector2(7.0f, 2.8f), pale, rot);
+                var head = Position + up * 6.0f + right * (facing * 4.4f);
+                r.DrawCircle(head, 1.6f, chit);
+                r.DrawRect(head + right * (facing * 1.6f) - up * 0.8f, new Vector2(3.0f, 0.6f), chit, rot + facing * 0.9f);
+                r.DrawCircle(head + up * 0.6f, 0.6f, new Color(220, 250, 120));
+                break;
+            }
+            case CreatureKind.PrismSnail:
+            {
+                // A walking geode at snail pace: gliding foot, one eyestalk, and a faceted
+                // crystal shell that catches the light.
+                var foot = Tinted(new Color(150, 130, 170));
+                r.DrawRect(Position - up * 0.6f, new Vector2(Radius * 2.2f, 1.8f), foot, rot);
+                var head = Position + right * (facing * (Radius + 0.8f));
+                r.DrawCircle(head, 1.3f, foot);
+                r.DrawRect(head + up * 1.4f + right * (facing * 0.5f), new Vector2(0.5f, 2.0f), foot, rot + facing * 0.3f);
+                r.DrawCircle(head + up * 2.4f + right * (facing * 0.9f), 0.5f, new Color(230, 210, 255));
+                var glint = MathF.Sin(t * 2.5f + _phase) * 0.5f + 0.5f;
+                var gem = Color.Lerp(new Color(160, 110, 220), new Color(220, 180, 255), glint);
+                r.DrawCircle(Position + up * 1.6f - right * (facing * 0.8f), Radius * 0.9f, Tinted(new Color(110, 80, 150)));
+                for (var i = 0; i < 3; i++)
+                    r.DrawRect(Position + up * (2.2f + (i == 1 ? 1.0f : 0f)) + right * ((i - 1) * 1.8f - facing * 0.8f),
+                        new Vector2(1.3f, 2.8f), Tinted(gem), rot + (i - 1) * 0.4f);
+                break;
+            }
+            case CreatureKind.NullMoth:
+            {
+                // A moth-shaped absence: void-black wings edged in violet, and a single
+                // bright mote where a face should be.
+                var beat = MathF.Sin(t * 7f + _phase) * 0.8f;
+                var wing = Tinted(new Color(30, 22, 44));
+                var fringe = new Color(120, 70, 190) * 0.6f;
+                r.DrawRect(Position + right * 2.6f + up * 0.5f, new Vector2(5.6f, 2.0f), wing, rot + 1.57f + beat);
+                r.DrawRect(Position - right * 2.6f + up * 0.5f, new Vector2(5.6f, 2.0f), wing, rot + 1.57f - beat);
+                r.DrawCircle(Position + right * 4.2f + up * 0.5f, 0.7f, fringe);
+                r.DrawCircle(Position - right * 4.2f + up * 0.5f, 0.7f, fringe);
+                r.DrawCircle(Position, 1.9f, Tinted(new Color(18, 14, 26)));
+                r.DrawCircle(Position - up * 1.6f, 1.2f, Tinted(new Color(26, 20, 36)));
+                r.DrawCircle(Position + up * 0.6f, 0.6f, new Color(190, 140, 255));
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
