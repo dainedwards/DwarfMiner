@@ -327,7 +327,7 @@ public sealed class Creature
             return;
         }
         float moveAxis;
-        if (dist < 130f)
+        if (dist < 240f)
         {
             moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right));
         }
