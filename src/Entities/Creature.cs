@@ -78,8 +78,12 @@ public sealed class Creature
     private int _orbitSign = 1;    // flyers: orbit direction around the planet
     private readonly float _phase; // per-creature animation phase offset
     private float _aggroT;         // HornedDelver: seconds of aggro memory remaining
-    private float _swing;          // HornedDelver: pickaxe swing animation timer
+    private float _swing;          // HornedDelver: pickaxe swing / spit-maw / blink-shimmer timer
     private float _provokedT;      // MoleBeast: seconds of rage remaining after being hit
+    private float _fuse;           // BomberBeetle: armed-detonation countdown (0 = not armed)
+    private Vector2 _root;         // SnapperVine: anchor point it is tethered to
+    private bool _rooted;          // SnapperVine: anchor captured on first tick
+    private bool _awake;           // RockMimic: dropped the boulder disguise
     // Centipede body: breadcrumb ring buffer of past head positions; segments sit along the
     // trail so the body snakes through the exact tunnel the head chewed, never through rock.
     private const int CrumbCount = 64;
