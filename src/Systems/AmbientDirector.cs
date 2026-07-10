@@ -107,7 +107,7 @@ public static class AmbientDirector
 
     /// <summary>Roll the next disaster from whatever this world has armed. Flares and quakes
     /// threaten everywhere; the rest are gated by the def / generated terrain.</summary>
-    private static DisasterKind? Pick(Session run)
+    private static DisasterKind Pick(Session run)
     {
         Span<DisasterKind> armed = stackalloc DisasterKind[6];
         var n = 0;
