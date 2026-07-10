@@ -74,6 +74,15 @@ public sealed class Corpse
         CreatureKind.SnapperVine  => new[] { ("meat", 1), ("hide", 1) },
         // The mimic's hoard — the payoff for calling the bluff instead of walking past.
         CreatureKind.RockMimic    => new[] { ("gold", 3), ("crystal", 1) },
+        // Biome fauna: hunting the local herd pays in that world's flavour — wool-hide on
+        // the ice, coal off the skink's back, iron scrap from the rustback's shell.
+        CreatureKind.SnowLoper    => new[] { ("meat", 2), ("hide", 2) },
+        CreatureKind.CinderSkink  => new[] { ("meat", 1), ("coal", 1) },
+        CreatureKind.RustBack     => new[] { ("meat", 1), ("iron", 1) },
+        CreatureKind.TidePuddler  => new[] { ("meat", 1) },
+        CreatureKind.AcidStrider  => new[] { ("meat", 1), ("chitin", 1) },
+        CreatureKind.PrismSnail   => new[] { ("meat", 1), ("crystal", 1) },
+        CreatureKind.NullMoth     => new[] { ("hide", 1) },
         _                         => new[] { ("meat", 1) },
     };
 
