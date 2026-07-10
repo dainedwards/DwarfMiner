@@ -138,7 +138,10 @@ public sealed class Planet
         InBounds(x, y) && _composition.TryGetValue(Index(x, y), out var c) ? c : null;
 
     /// <summary>Remove and return the composition at (x,y) — called when the tile shatters and
-    /// its cells spill back into the sim.</summary>
+    /// its cells spill back into the sim. Entries are deliberately NOT cleared by
+    /// <see cref="Set"/> (a crumbling tile Sets Sky first, then spawns its debris); an entry
+    /// orphaned by melt/corrosion is harmless — it's only read while the tile is Conglomerate
+    /// and gets overwritten if the tile ever compacts again.</summary>
     public TileComposition? TakeComposition(int x, int y)
     {
         if (!InBounds(x, y)) return null;
