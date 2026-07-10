@@ -91,8 +91,7 @@ public sealed class Titan
     /// grace between contact hits so an overlap doesn't shred the player every frame.</summary>
     private int _dashesLeft;
     private float _clipTimer;
-    /// <summary>Slattern alternates tail-spike barrages with sonic pulses.</summary>
-    private bool _slatternPulse;
+    /// <summary>Slattern alternates tail-spike barrages with sonic pulses.
 
     /// <summary>Projectiles can hit the boss/egg except while the Sandworm is burrowed.</summary>
     public bool Targetable => !Submerged;
