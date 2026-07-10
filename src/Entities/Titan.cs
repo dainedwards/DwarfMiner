@@ -1121,9 +1121,12 @@ public sealed class Titan
     /// with anger so an angry kaiju cracks ground faster. Mine() applies hardness scaling, so
     /// dirt/grass/snow break in a few stomps while stone/granite only get visible cracks.
     /// When a tile actually breaks, falling-cell debris of the appropriate material is spawned
-    /// in its place so the gap fills with tumbling dust rather than a clean hole.</summary>
+    /// in its place so the gap fills with tumbling dust rather than a clean hole.
+    /// Aggro-gated entirely: a calm boss pacing the same stretch of surface was grinding its
+    /// own patrol path into a pit and falling in — only a riled kaiju wrecks what it walks on.</summary>
     private void StompTile(Planet planet, Physics physics, Cells cells, Vector2 footPos)
     {
+        if (!IsAggro) return;
         var (fx, fy) = planet.WorldToTile(footPos);
         // A wider footprint than a single tile — these are hundred-foot feet. Full power at the
         // centre falling off to the rim; power scales with anger so an enraged boss gouges deeper.
