@@ -954,7 +954,7 @@ public sealed partial class DwarfMinerGame
             new Color(120, 125, 145));
 
         if (_upgradesOpen) DrawUpgradeMenu(sb);
-        if (_surveyOpen) DrawSurveyMenu(sb);
+        if (_surveyOpen) DrawStarMap(sb);
         if (_debugMenu.Open) _debugMenu.Draw(_renderer, VirtualWidth, VirtualHeight);
         DrawTransitionFlash();
     }
