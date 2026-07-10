@@ -1209,25 +1209,17 @@ public sealed class TitanProjectile
         var diff = player.Position - Position;
         if (diff.Length() < Radius + player.Radius)
         {
+            player.TakeDamage(Damage);
             switch (Kind)
             {
-                case TitanShotKind.Flame:
-                    player.TakeDamage(9f);
-                    break;
                 case TitanShotKind.Acid:
-                    player.TakeDamage(13f);
-                    Splash(planet, cells);
-                    break;
                 case TitanShotKind.Lava:
-                    player.TakeDamage(15f);
                     Splash(planet, cells);
                     break;
                 case TitanShotKind.Spike:
-                    player.TakeDamage(16f);
                     if (diff.LengthSquared() > 0.0001f) player.Velocity += Vector2.Normalize(diff) * 160f;
                     break;
-                default:   // Laser
-                    player.TakeDamage(28f);
+                case TitanShotKind.Laser:
                     if (diff.LengthSquared() > 0.0001f) player.Velocity += Vector2.Normalize(diff) * 200f;
                     break;
             }
