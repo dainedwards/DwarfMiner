@@ -1236,6 +1236,22 @@ public sealed class Titan
         physics.Earthquake(footPos - up * (Planet.TileSize * 5f), 64f + Anger * 0.5f, 1 + (int)(Anger / 45f));
     }
 
+    /// <summary>True when there's rock close on BOTH sides of the body — inside a dig shaft or
+    /// sealed in solid ground. Being braced is what lets the hunt-climb ascend: the kaiju
+    /// chimneys between the walls (or plows through overburden) after prey above it, but has
+    /// nothing to push on out in the open. Probes two heights per side so a ragged shaft wall
+    /// still counts.</summary>
+    private bool Braced(Planet planet, Vector2 up, Vector2 right)
+    {
+        var reach = BodyRadius + 26f;
+        for (var s = -1; s <= 1; s += 2)
+        {
+            var side = Position + right * (s * reach);
+            if (!planet.IsSolidAt(side) && !planet.IsSolidAt(side - up * 30f)) return false;
+        }
+        return true;
+    }
+
     /// <summary>One dig-slam's excavation: pulverise a body-wide bowl beneath the pelvis so the
     /// feet can re-anchor deeper and the suspension follows them down. Tied to a landed stomp
     /// and paced by the dig timer — the boss has to pound its way down, it can't just sink.
