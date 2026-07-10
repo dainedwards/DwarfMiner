@@ -15,14 +15,19 @@ namespace DwarfMiner.World;
 public sealed class Planet
 {
     /// <summary>Ring count of a scale-1.0 planet — the norm PlanetDef.SizeScale multiplies.</summary>
-    public const int StandardRings = 200;
-    public const int RingMin = 20;
-    public const int TileSize = 8;
+    public const int StandardRings = 400;
+    public const int RingMin = 40;
+    public const int TileSize = 4;
+
+    /// <summary>World-gen scale shim: how many of today's rings span one legacy 8-px tile.
+    /// The 4-px tile grid quartered every block, but feature sizes (mountains, caves, depth
+    /// bands) are still authored in the original 8-px tile units and multiplied by this.</summary>
+    public const float LegacyTileScale = 8f / TileSize;
 
     /// <summary>Rings of headroom kept between the baseline surface and the top of the tile
     /// grid, at every planet size — enough for the tallest mountains plus clear sky. The
     /// surface therefore sits at <see cref="SurfaceRing"/> = Rings − SkyHeadroom.</summary>
-    public const int SkyHeadroom = 71;
+    public const int SkyHeadroom = 142;
 
     /// <summary>Playable ring count for THIS planet — varies with PlanetDef.SizeScale
     /// (≈140 for a 0.7× dwarf world up to ≈360 for a 1.8× giant).</summary>
