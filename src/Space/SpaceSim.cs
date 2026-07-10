@@ -52,8 +52,11 @@ public sealed class ShipShot
 public sealed class SpaceSim
 {
     public const float SunRadius = 240f;
-    /// <summary>Surface distance at which flying at a planet becomes an atmosphere entry.</summary>
-    public const float EntryRange = 18f;
+    /// <summary>Surface distance at which flying at a planet becomes an atmosphere entry.
+    /// Generous on purpose: entry should trigger the moment the ship visibly meets the
+    /// atmosphere halo, not after grinding into the disc itself. Parking spots
+    /// (<see cref="PlaceShipAt"/>) must sit safely outside this shell.</summary>
+    public const float EntryRange = 90f;
     /// <summary>Set by Game1 each frame from the shard count — while locked, the Rift is the
     /// one world whose disc stays solid (its storms repel you); every other planet can be
     /// flown straight into, No Man's Sky style.</summary>
