@@ -385,6 +385,34 @@ public sealed class SpaceSim
         return (best, bestD);
     }
 
+    /// <summary>The planet the ship is flying at: the closest body whose disc sits inside
+    /// a cone (~18° half-angle) around the velocity — or the nose, when nearly still. Null
+    /// when nothing is dead ahead. Drives the world prefetch, which wants the *destination*
+    /// planet long before it becomes the nearest one.</summary>
+    public SpacePlanet? AimedPlanet()
+    {
+        var dir = ShipVel.LengthSquared() > 40f * 40f ? Vector2.Normalize(ShipVel) : ShipDir;
+        SpacePlanet? best = null;
+        var bestDist = float.MaxValue;
+        foreach (var p in Planets)
+        {
+            var to = p.Pos - ShipPos;
+            var dist = to.Length();
+            if (dist <= 1f || dist >= bestDist) continue;
+            var along = Vector2.Dot(to, dir);
+            if (along <= 0f) continue;   // behind the ship
+            // Hit when the lateral miss distance is inside the disc plus a cone that
+            // widens with range (0.32 ≈ tan 18°) — coarse aim far out still counts.
+            var lateral = MathF.Sqrt(MathF.Max(0f, dist * dist - along * along));
+            if (lateral < p.BodyRadius + EntryRange + along * 0.32f)
+            {
+                best = p;
+                bestDist = dist;
+            }
+        }
+        return best;
+    }
+
     /// <summary>The planet whose upper atmosphere the ship has just flown into, or null.
     /// The locked Rift never returns — its storm wall keeps the ship outside this range.</summary>
     public SpacePlanet? AtmosphereContact()
