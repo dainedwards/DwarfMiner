@@ -450,8 +450,11 @@ public sealed class Titan
         // floor, so it doesn't dig itself under.
         Plow(planet, physics, cells);
 
-        // Grounded probe a little under the body using the (smaller) body collision radius.
-        Grounded = ProbeSolid(planet, Position - up * (BodyRadius + 2f));
+        // Grounded: either terrain right under the body (belly contact — worm, or a walker
+        // shoved into a hillside), or standing on legs — a planted foot with solid ground
+        // under it. The body-only probe alone can never fire for a walker at ride height
+        // (it hangs Hover above its feet), which starved the stomp/landing-slam gates.
+        Grounded = ProbeSolid(planet, Position - up * (BodyRadius + 2f)) || AnyFootOnGround(planet);
 
         // Smoothly turn to face the direction of motion.
         if (MathF.Abs(vTangent) > 6f)
