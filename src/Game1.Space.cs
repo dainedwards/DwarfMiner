@@ -1032,6 +1032,14 @@ public sealed partial class DwarfMinerGame
         if (_mapHoverPlanet < 0 && (StarMapCentre - m).Length() < MapSunMarker + 8f)
             _mapHoverSun = true;
 
+        // DM_SURVEY=<planet id|sun> forces that body hovered (on top of opening the map at
+        // boot), so tooling can screenshot the tooltip without mouse access.
+        if (_mapHoverPlanet < 0 && !_mapHoverSun && SurveyHoverHook is { } forced)
+        {
+            if (forced == "sun") _mapHoverSun = true;
+            else _mapHoverPlanet = _space.Planets.FindIndex(p => p.Def.Id == forced);
+        }
+
         if (!PlanetDefs.DebugMode) return;
         if (mouse.RightButton != ButtonState.Pressed
             || _prevMouse.RightButton == ButtonState.Pressed) return;
