@@ -122,13 +122,12 @@ public sealed partial class DwarfMinerGame : Game
 
     /// <summary>Escape-flight ship state: <see cref="_launchShipPos"/>/<see cref="_ascentVel"/>
     /// track the rocket, <see cref="_launchUp"/> the local vertical for the camera and the
-    /// riding dwarf, <see cref="_ascentHeading"/> the way the nose points — locked upright
-    /// for the first moments off the pad, then banking toward the direction of flight.</summary>
+    /// riding dwarf, <see cref="_ascentHeading"/> the way the nose points — upright at
+    /// liftoff, then entirely the player's to swing with A/D.</summary>
     private Vector2 _launchShipPos;
     private Vector2 _launchUp;
     private Vector2 _ascentVel;
     private Vector2 _ascentHeading;
-    private float _ascentTime;
     /// <summary>Wall-clock seconds since launch — drives the DM_AUTOSHOT capture schedule so
     /// tooling can screenshot any screen, including the star map before a run starts.</summary>
     private float _totalTime;
