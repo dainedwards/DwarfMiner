@@ -121,6 +121,14 @@
 >   force-enters a planet** — the saved mothership position dates from atmosphere entry
 >   while planets re-rack to boot angles, so `RestoreShipState` now re-parks (standard
 >   sun-away spot) when the saved point boots within 260px of any planet's surface.
+> - **Feel fixes (DONE 2026-07-10):** walking off a ledge is a real fall now — the old
+>   ground-snap teleported the player onto any block within one ring (and terrain steps are
+>   always whole rings, so every walk-off popped instantly down); replaced with a small
+>   seeded downward velocity so the arc starts at once, same shape as a jump's descent.
+>   Atmosphere entry is seamless: `SpaceSim.EntryRange` 18 → 90 (entry fires at the visible
+>   atmosphere halo, no more grinding into the disc), parking spots moved to
+>   `BodyRadius + EntryRange + 80` so nothing parks inside the shell, and the
+>   world-still-building hold aerobrakes (velocity bleeds off) instead of freezing dead.
 > Next up: weapon variety, a settings UI beyond the F6 volume cycle, difficulty/balance
 > tuning from playtests, or a run-summary/stats screen.
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
