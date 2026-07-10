@@ -84,8 +84,52 @@ public static class PlanetDefs
 {
     public static PlanetDef[] All { get; private set; } = null!;
 
+    /// <summary>Dev switch, ON by default for now (DM_DEBUG=0 turns it off): Activate appends
+    /// <see cref="DebugWorld"/> — the kitchen-sink QA planet — to whatever chain the game
+    /// rolls, parked on a close-in orbit near the sun (see SpaceSim).</summary>
+    public static bool DebugMode { get; } = Environment.GetEnvironmentVariable("DM_DEBUG") != "0";
+
     /// <summary>Swap in a generated campaign chain (call before anything caches planets).</summary>
-    public static void Activate(PlanetDef[] chain) => All = chain;
+    public static void Activate(PlanetDef[] chain)
+    {
+        if (DebugMode)
+        {
+            var withDebug = new PlanetDef[chain.Length + 1];
+            chain.CopyTo(withDebug, 0);
+            withDebug[^1] = DebugWorld;
+            chain = withDebug;
+        }
+        All = chain;
+    }
+
+    /// <summary>The kitchen-sink QA world: max size, every disaster armed (quakes, meteors,
+    /// flares, blizzards, acid rain, magma surges, eruptions, gas + acid pockets, cave-ins),
+    /// every biome feature (banded surface, lakes, acid pools, crystal caverns, fungal
+    /// groves, volcanoes), every ore findable, and the standard cave enemies. SurfaceTile is
+    /// Snow because the blizzard and snow-cap gates key off it; the actual ground cycles
+    /// through SurfaceBands. Its core holds no shard — it's a test rig, not a campaign world.</summary>
+    public static readonly PlanetDef DebugWorld = new("debug", "Debug",
+        "QA test rig - every biome and every disaster at once",
+        new Color(225, 110, 200), new Color(255, 190, 245),
+        TileKind.Snow,
+        LakeMin: 4, LakeExtra: 1, MountainMin: 10, MountainExtra: 3,
+        MountainHeightScale: 1.3f, LavaFillFrac: 0.55f, HasWater: true,
+        OreBias: new[]
+        {
+            (TileKind.CoalOre, 0.03f), (TileKind.FuelOre, 0.02f), (TileKind.IronOre, 0.03f),
+            (TileKind.SilverOre, 0.03f), (TileKind.GoldOre, 0.03f), (TileKind.PlatinumOre, 0.03f),
+            (TileKind.Ruby, 0.03f), (TileKind.Sapphire, 0.03f), (TileKind.Crystal, 0.03f),
+            (TileKind.Emerald, 0.03f), (TileKind.Diamond, 0.03f), (TileKind.Voidstone, 0.105f),
+        },
+        QuakeScale: 0.45f, CaveSpawnCap: 20,
+        ShipOre: "gold", ShipOreCount: 3,
+        OxygenDrainScale: 1.5f, SeedsGas: true, SeedsAcid: true,
+        Titan: TitanKind.Godzilla,
+        CrystalPockets: 3, FungalPockets: 3,
+        SizeScale: 1.8f, LakeScale: 1.4f,
+        AcidPools: 3, AcidRain: true,
+        Volcanoes: 3, VolcanoScale: 1.1f,
+        SurfaceBands: new[] { TileKind.Grass, TileKind.Snow, TileKind.Gravel, TileKind.Dirt, TileKind.Basalt });
 
     public static readonly PlanetDef[] Classic =
     {
