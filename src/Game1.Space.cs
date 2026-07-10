@@ -435,12 +435,13 @@ public sealed partial class DwarfMinerGame
                 _prefetchId = def.Id;
                 _prefetchTask = Task.Run(() => BuildSessionWorld(def));
             }
-            // World still building: hold at the atmosphere edge for the remaining beat —
-            // the sim keeps rendering (no frozen frame) and entry completes the moment the
-            // background build lands. Steering away cancels the hold naturally.
+            // World still building: aerobrake through the atmosphere for the remaining beat —
+            // velocity bleeds off smoothly (no dead stop), the sim keeps rendering, and entry
+            // completes the moment the background build lands. Usually the prefetch finished
+            // long ago and this branch never shows at all.
             if (_prefetchTask is { IsCompleted: false })
             {
-                _space.ShipVel = Vector2.Zero;
+                _space.ShipVel *= MathF.Exp(-6f * dt);
                 _toast = $"ENTERING {entry.Def.Name.ToUpperInvariant()} ATMOSPHERE";
                 _toastTimer = 0.5f;
                 return;
