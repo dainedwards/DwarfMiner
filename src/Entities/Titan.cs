@@ -948,23 +948,23 @@ public sealed class Titan
         return v + MathF.Sign(d) * maxDelta;
     }
 
-    /// <summary>Search for a foot anchor for one leg by ray-marching downward (along -planet-up
-    /// from the leg's lateral search start) until a solid tile is found. Returns the world-space
-    /// anchor position, biased forward by the body's tangential motion so feet step ahead of
-    /// where the body is going. The result is always clamped to <see cref="LegMaxReach"/> from
+    /// <summary>Search for a foot anchor for one leg by ray-marching downward (along -planet-up)
+    /// until a solid tile is found. The search column sits at the leg's neutral stance point
+    /// (<see cref="StanceHalf"/> to its side of the pelvis) shifted by <paramref name="lead"/>
+    /// along the tangent — the gait passes +StrideHalf in the walk direction so feet plant
+    /// ahead of the body. The result is always clamped to <see cref="LegMaxReach"/> from
     /// the hip — over a cliff or pit the foot stops at full extension in mid-air rather than
     /// stretching, and the body suspension then lowers the body until the legs reach ground.</summary>
-    private Vector2 ResolveFootAnchor(TitanLeg leg, Vector2 up, Vector2 right, Vector2 motionBias)
+    private Vector2 ResolveFootAnchor(TitanLeg leg, Vector2 up, Vector2 right, float lead)
     {
-        const float legSideStride = 70f;
         const float legSearchUp = 35f;
         const float legSearchDown = 360f;
         const float legProbeStep = 4f;
 
         var hipWorld = HipWorld(leg, up, right);
-        var anchorStart = hipWorld + right * (leg.Side * legSideStride) + up * legSearchUp;
+        var anchorStart = Position + right * (leg.Side * StanceHalf + lead)
+                                   + up * (leg.HipUp + legSearchUp);
 
-        var found = false;
         var foot = anchorStart - up * legSearchDown;
         for (var d = 0f; d <= legSearchDown; d += legProbeStep)
         {
@@ -972,13 +972,11 @@ public sealed class Titan
             if (_planet.IsSolidAt(probe))
             {
                 foot = probe + _planet.UpAt(probe) * 5f;
-                found = true;
                 break;
             }
         }
-        if (found) foot += motionBias;
 
-        // Never plant beyond what the two drawn leg bones can span (slightly inside full
+        // Never plant beyond what the drawn leg bones can span (slightly inside full
         // extension so the knee keeps a visible bend even at max stride).
         var toFoot = foot - hipWorld;
         var reach = toFoot.Length();
