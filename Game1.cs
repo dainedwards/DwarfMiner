@@ -1988,7 +1988,7 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
-        _run.Player.Position = _launchShipPos + _launchUp * 8f;
+        _run.Player.Position = _launchShipPos + _ascentHeading * 8f;
         _run.Player.Velocity = Vector2.Zero;
         // The rover descent in reverse: altitude above the baseline surface drives the zoom,
         // easing from play scale at the pad out to descent-wide by high sky — the terrain
