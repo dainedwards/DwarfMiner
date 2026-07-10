@@ -109,9 +109,11 @@ public sealed class Titan
     private int _flameTick;           // frame counter throttling fire-breath grain spawns
 
     /// <summary>Hover height — distance the body wants to maintain above the average planted-foot
-    /// position along planet-up. Higher values let the kaiju stride over taller terrain. The
-    /// serpent Sandworm rides much lower (<see cref="Hover"/>) since it has no legs.</summary>
-    public const float BodyHover = 105f;
+    /// position along planet-up. Higher values let the kaiju stride over taller terrain. Sized
+    /// so the three-bone leg (thigh + shin + foot) stands with a visible knee bend at rest and
+    /// still has extension in reserve for the ends of a stride. The serpent Sandworm rides much
+    /// lower (<see cref="Hover"/>) since it has no legs.</summary>
+    public const float BodyHover = 118f;
 
     /// <summary>Effective body ride-height for this kind — bipeds stand tall, the legless
     /// serpent slithers close to the ground.</summary>
