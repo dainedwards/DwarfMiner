@@ -194,6 +194,9 @@ public sealed class Planet
         var i = Index(x, y);
         _tiles[i] = k;
         _damage[i] = 0;
+        // Overwriting a Conglomerate (placement, melt, corrode) discards its stored cells —
+        // the composition only survives a *shatter*, which goes through Mine + TakeComposition.
+        _composition.Remove(i);
     }
 
     public byte Damage(int x, int y) =>
