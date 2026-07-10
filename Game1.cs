@@ -2037,10 +2037,10 @@ public sealed partial class DwarfMinerGame : Game
         _sfx.Play("launch", 1f);
         _launchShipPos = pad;
         _launchUp = _run.Planet.UpAt(pad);
-        _ascentVel = _launchUp * 30f;
+        _ascentVel = _launchUp * 60f;
         _ascentHeading = _launchUp;
         _ascending = true;
-        _toast = "ROCKET IS YOURS - A/D TURN, SPACE BURN, E STEP OUT";
+        _toast = "ROCKET IS YOURS - A/D TURN, SPACE BURN OR GRAVITY WINS, E STEP OUT";
         _toastTimer = 3.5f;
     }
 
