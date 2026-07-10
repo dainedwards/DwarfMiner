@@ -500,6 +500,7 @@ public sealed class Cells
             i = Idx(cx, cy);
             _velR[i] = 0f;
             _travel[i] = 0f;
+            RecordRest(cx, cy);
             return;
         }
         // Covered the full distance without obstruction — TryMoveTo kept the cell awake.
