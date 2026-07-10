@@ -118,6 +118,7 @@ public static class Tiles
         TileKind.Grass => new Color(70, 110, 55),
         TileKind.Snow => new Color(220, 230, 240),
         TileKind.Gravel => new Color(120, 115, 105),
+        TileKind.Conglomerate => new Color(140, 120, 95),
         TileKind.Stone => new Color(95, 95, 105),
         TileKind.MossStone => new Color(80, 100, 80),
         TileKind.Granite => new Color(140, 110, 110),
