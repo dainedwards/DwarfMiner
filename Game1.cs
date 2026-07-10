@@ -1392,22 +1392,49 @@ public sealed partial class DwarfMinerGame : Game
         var broken = _run.Player.TryMine(_run.Planet, _run.Physics, worldCursor, tool);
         if (broken is { } bk && target is { } bt)
         {
-            if (Tiles.Drop(bk) is not null) _meta.TotalOreMined++;
-            var depth = _run.Planet.Radius - (int)((_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize);
-            if (depth > _meta.DeepestDepth) _meta.DeepestDepth = depth;
-            var (btx, bty) = (bt.X, bt.Y);
-            if (tool == MiningTool.Hammer && Tiles.Hardness(bk) >= 4)
-            {
-                _particles.EmitHammerImpact(_run.Planet.TileToWorld(btx, bty), bk);
-                _run.Shake = MathF.Max(_run.Shake, 0.4f);
-            }
-            else
-            {
-                _particles.EmitChips(_run.Planet.TileToWorld(btx, bty), bk);
-            }
-            _run.Cells.SpawnDustInTile(btx, bty, bk);
-            PlayAt("break", _run.Planet.TileToWorld(btx, bty), 0.6f,
-                pitch: -0.1f + (float)Random.Shared.NextDouble() * 0.25f);
+            OnTileBroken(bt.X, bt.Y, bk, tool);
+        }
+    }
+
+    /// <summary>Everything that happens when a mined tile shatters — ore/depth meta stats,
+    /// hammer quake vs chip burst, the collectable dust pile, and the break sound. Shared by
+    /// the cursor tools (DoMine) and the physical swing (TickSwing).</summary>
+    private void OnTileBroken(int x, int y, TileKind bk, MiningTool tool)
+    {
+        if (Tiles.Drop(bk) is not null) _meta.TotalOreMined++;
+        var depth = _run.Planet.Radius - (int)((_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize);
+        if (depth > _meta.DeepestDepth) _meta.DeepestDepth = depth;
+        if (tool == MiningTool.Hammer && Tiles.Hardness(bk) >= 4)
+        {
+            _particles.EmitHammerImpact(_run.Planet.TileToWorld(x, y), bk);
+            _run.Shake = MathF.Max(_run.Shake, 0.4f);
+        }
+        else
+        {
+            _particles.EmitChips(_run.Planet.TileToWorld(x, y), bk);
+        }
+        _run.Cells.SpawnDustInTile(x, y, bk);
+        PlayAt("break", _run.Planet.TileToWorld(x, y), 0.6f,
+            pitch: -0.1f + (float)Random.Shared.NextDouble() * 0.25f);
+    }
+
+    /// <summary>Advance an in-flight pickaxe/hammer swing and land its strike. Runs every
+    /// frame (not just while LMB is held) so a started swing always completes. Contact that
+    /// only damages — or clinks off something unbreakable — still gets the pick-tick and a
+    /// tiny chip puff, so every landed blow reads.</summary>
+    private void TickSwing(float dt)
+    {
+        if (_run.Player.UpdateSwing(_run.Planet, _run.Physics, dt) is not { } strike) return;
+        var hitPos = _run.Planet.TileToWorld(strike.X, strike.Y);
+        PlayAt("dig", hitPos, 0.35f,
+            pitch: 0.1f + (float)Random.Shared.NextDouble() * 0.3f, minGap: 0.09f);
+        if (strike.Broken is { } bk)
+        {
+            OnTileBroken(strike.X, strike.Y, bk, _run.Player.SwingTool);
+        }
+        else
+        {
+            _particles.EmitMiningTick(hitPos, strike.Kind);
         }
     }
 
