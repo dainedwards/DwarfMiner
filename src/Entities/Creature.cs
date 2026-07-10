@@ -680,7 +680,7 @@ public sealed class Creature
     /// crosshair was.</summary>
     private void TickWraith(float dt, Planet planet, Vector2 toPlayer, float dist, float speedMul)
     {
-        TickCaveEye(dt, planet, toPlayer, dist, speedMul);
+        TickCaveEye(dt, planet, toPlayer, dist, speedMul, aggro: 220f);
         if (_swing > 0f) _swing -= dt;
         _cd -= dt;
         if (_cd <= 0f && dist < 200f && dist > 40f)
