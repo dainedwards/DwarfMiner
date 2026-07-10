@@ -1228,6 +1228,46 @@ public sealed class Titan
         physics.Earthquake(footPos - up * (Planet.TileSize * 5f), 64f + Anger * 0.5f, 1 + (int)(Anger / 45f));
     }
 
+    /// <summary>One dig-slam's excavation: pulverise a body-wide bowl beneath the pelvis so the
+    /// feet can re-anchor deeper and the suspension follows them down. Tied to a landed stomp
+    /// and paced by the dig timer — the boss has to pound its way down, it can't just sink.
+    /// Mining power sits below the plow's so hard rock (granite, basalt) takes several slams
+    /// per layer; anchored tiles stop the shaft cold.</summary>
+    private void DigCrater(Planet planet, Physics physics, Cells cells)
+    {
+        var up = planet.UpAt(Position);
+        var centre = Position - up * (Hover * 0.85f);
+        var radius = BodyRadius + 12f;
+        var (tx, _) = planet.WorldToTile(centre);
+        var rel = centre - planet.Center;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
+        var span = (int)MathF.Ceiling(radius / Planet.TileSize) + 1;
+        var rSq = radius * radius;
+
+        for (var dx = -span; dx <= span; dx++)
+        {
+            var x = tx + dx;
+            if (x < 0 || x >= planet.Rings) continue;
+            // Per-ring angular index, same as Plow — ring tile counts differ.
+            var nRing = planet.TilesAt(x);
+            var ty0 = (int)(ang / MathHelper.TwoPi * nRing);
+            for (var dy = -span; dy <= span; dy++)
+            {
+                var y = ty0 + dy;
+                var k = planet.Get(x, y);
+                if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
+                if ((planet.TileToWorld(x, y) - centre).LengthSquared() > rSq) continue;
+                if (planet.Mine(x, y, 18) is { } broken)
+                {
+                    physics.MarkDirty(x, y);
+                    cells.SpawnDustInTile(x, y, broken);
+                }
+            }
+        }
+        physics.Earthquake(centre, radius + 30f, 2);
+    }
+
     /// <summary>Verlet-integrated spine chain. For bipeds node 0 anchors at the rump (opposite the
     /// head's facing) so the tail drags behind and droops; for the Sandworm node 0 anchors at the
     /// HEAD so the whole chain — the worm's body — stays welded to the maw and undulates behind it
