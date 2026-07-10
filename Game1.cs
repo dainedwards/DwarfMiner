@@ -1471,14 +1471,13 @@ public sealed partial class DwarfMinerGame : Game
             ang = theta - p.SwingFlip * Player.SwingArc * 0.5f;
         }
         var dir = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
-        // Half the dwarf's ~7 px visual height — a hand tool, not a polearm. The mining
-        // hitbox still reaches EffectiveMineRange; the sprite is presentation only.
-        const float toolLen = 3.6f;
-        var scale = toolLen / tex.Width;
+        // Length and grip offset come from Player so the drawn blade and the swing's
+        // mining reach (Player.SwingReach) stay one and the same object.
+        var scale = p.SwingToolLen / tex.Width;
         var tint = p.PickaxeTier >= 4 ? new Color(200, 235, 255)
                  : p.PickaxeTier == 3 ? new Color(235, 235, 245)
                  : Color.White;
-        _renderer.Batch.Draw(tex, p.Position + dir * 1.5f, null, tint,
+        _renderer.Batch.Draw(tex, p.Position + dir * Player.SwingHandOffset, null, tint,
             ang, new Vector2(0.5f, tex.Height / 2f), scale, SpriteEffects.None, 0f);
     }
 
