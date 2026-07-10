@@ -96,6 +96,12 @@ public sealed class Corpse
         CreatureKind.SporeBat     => new Color(120, 140, 105),
         CreatureKind.CrystalCrawler => new Color(85, 80, 105),
         CreatureKind.VoidWraith   => new Color(70, 45, 95),
+        CreatureKind.CaveSlime    => new Color(70, 140, 118),
+        CreatureKind.Slimelet     => new Color(95, 160, 132),
+        CreatureKind.AcidSpitter  => new Color(82, 100, 56),
+        CreatureKind.BomberBeetle => new Color(48, 42, 38),
+        CreatureKind.SnapperVine  => new Color(72, 100, 58),
+        CreatureKind.RockMimic    => new Color(92, 88, 84),
         _                         => new Color(110, 90, 90),
     };
 }
