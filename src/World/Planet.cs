@@ -416,5 +416,16 @@ public sealed class Planet
         var vents = r.ReadInt32();
         for (var i = 0; i < vents; i++)
             VolcanoVents.Add((r.ReadInt32(), r.ReadInt32(), r.ReadBoolean()));
+        _composition.Clear();
+        var comps = r.ReadInt32();
+        for (var i = 0; i < comps; i++)
+        {
+            var idx = r.ReadInt32();
+            var tint = new Color(r.ReadByte(), r.ReadByte(), r.ReadByte());
+            var parts = new (byte mat, byte src, byte count)[r.ReadByte()];
+            for (var p = 0; p < parts.Length; p++)
+                parts[p] = (r.ReadByte(), r.ReadByte(), r.ReadByte());
+            _composition[idx] = new TileComposition(tint, parts);
+        }
     }
 }
