@@ -310,14 +310,15 @@ public sealed partial class DwarfMinerGame
 
         // The snapshot may date from the moment of atmosphere entry, and the planets re-rack
         // to their boot angles regardless of where they'd orbited to — either way the saved
-        // point can sit inside a planet's entry range, which would suck the ship straight
-        // back down on the first frame. Re-park at the standard spot off that planet: the
-        // sun-away radial, where the planet's tangential orbit motion grazes past the parked
-        // ship instead of plowing into it.
+        // point can boot inside (or skimming) a planet, and a planet's orbital motion sweeps
+        // over an idle ship parked near its surface within seconds. Either way the run opens
+        // with a forced atmosphere entry. Re-park at the standard spot off that planet: the
+        // sun-away radial, where the orbit motion grazes past the parked ship instead of
+        // plowing into it.
         for (var i = 0; i < _space.Planets.Count; i++)
         {
             var p = _space.Planets[i];
-            if ((_space.ShipPos - p.Pos).Length() - p.BodyRadius >= 60f) continue;
+            if ((_space.ShipPos - p.Pos).Length() - p.BodyRadius >= 260f) continue;
             _space.PlaceShipAt(i);
             break;
         }
