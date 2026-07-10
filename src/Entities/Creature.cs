@@ -221,7 +221,7 @@ public sealed class Creature
             case CreatureKind.MoleBeast:  TickMole(dt, planet, physics, cells, up, right, toPlayer, dist, speedMul); break;
             // Spore bats patrol tunnels on the proven cave-eye brain — the stats make them
             // feel nothing alike.
-            case CreatureKind.SporeBat: TickCaveEye(dt, planet, toPlayer, dist, speedMul); break;
+            case CreatureKind.SporeBat: TickCaveEye(dt, planet, toPlayer, dist, speedMul, aggro: 150f); break;
             case CreatureKind.VoidWraith: TickWraith(dt, planet, toPlayer, dist, speedMul); break;
             case CreatureKind.CrystalCrawler: TickCrawler(dt, planet, up, right, toPlayer, dist, speedMul, shots); break;
             case CreatureKind.CaveSlime:
