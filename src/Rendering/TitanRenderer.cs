@@ -863,25 +863,34 @@ public static class TitanRenderer
             if (leg.Side == faceSign) DrawLeg(r, t, f, leg, thigh, shin, mech);
     }
 
-    /// <summary>2-bone leg with a haunch at the hip, a forward-bent knee (backward for the
-    /// digitigrade mech), a tapering shin and a clawed planted foot. Shares its hip socket and
-    /// bone length with the simulation (<see cref="Titan.HipWorld"/>/<see cref="Titan.LegBoneLen"/>)
+    /// <summary>3-bone digitigrade leg: hip→knee (thigh), knee→ankle (shin), ankle→toe (foot).
+    /// The knee bows toward the facing direction and the ankle kicks back behind the toes —
+    /// the theropod silhouette (the mech reverses the knee for a robot's backward joint).
+    /// Shares its hip socket, bone lengths and ankle geometry with the simulation
+    /// (<see cref="Titan.HipWorld"/>/<see cref="Titan.LegBoneLen"/>/<see cref="Titan.AnkleLift"/>)
     /// so the drawn leg roots exactly where the anchor search thinks it does and can never
-    /// out-reach it. <paramref name="far"/> shades the whole leg for the away side.</summary>
+    /// out-reach it. Mid-swing the toes droop and the sole tilts so a lifted foot dangles
+    /// instead of hovering flat. <paramref name="far"/> shades the whole leg for the away side.</summary>
     private static void DrawLeg(Renderer r, Titan t, Frame f, TitanLeg leg, float thigh, float shin,
         bool mech = false, bool far = false)
     {
         var hip = t.HipWorld(leg, f.Up, f.Right);
+        var groundFwd = new Vector2(-f.Up.Y, f.Up.X) * (f.Face >= 0f ? 1f : -1f);
+        var swing = leg.StepT < 1f ? MathF.Sin(leg.StepT * MathF.PI) : 0f;
+
+        // Ankle joint: lifted above and pulled back from the toe contact point.
         var foot = leg.FootPos;
-        var toFoot = foot - hip;
-        var dist = toFoot.Length();
+        var ankle = foot + f.Up * Titan.AnkleLift - groundFwd * Titan.AnkleBack;
+        var toAnkle = ankle - hip;
+        var dist = toAnkle.Length();
         const float l = Titan.LegBoneLen;
         // The sim clamps anchors to reach, but a mid-swing frame can momentarily exceed it —
-        // pin the drawn foot at full extension so the leg never rubber-bands on screen.
+        // pin the drawn ankle at full extension (foot follows) so the leg never rubber-bands.
         if (dist > 2f * l)
         {
-            foot = hip + toFoot * (2f * l / dist);
-            toFoot = foot - hip;
+            ankle = hip + toAnkle * (2f * l / dist);
+            foot = ankle - f.Up * Titan.AnkleLift + groundFwd * Titan.AnkleBack;
+            toAnkle = ankle - hip;
             dist = 2f * l;
         }
 
@@ -890,16 +899,16 @@ public static class TitanRenderer
         var cLite = far ? Shade(f.HideLight, 0.62f) : f.HideLight;
         var cJoint = far ? Shade(f.Chitin, 0.7f) : f.Chitin;
 
+        // Two-bone IK hip→ankle for the knee.
         Vector2 knee;
         if (dist < 0.5f) knee = hip - f.Up * l * 0.5f;
         else
         {
-            var dir = toFoot / dist;
+            var dir = toAnkle / dist;
             var perp = new Vector2(-dir.Y, dir.X);
-            // Knee bows toward the facing direction (a striding plantigrade), or away from it
-            // for the digitigrade mech — both knees agree, instead of splaying outward.
-            var fwd = f.Right * (f.Face >= 0f ? 1f : -1f);
-            if (Vector2.Dot(perp, fwd) < 0) perp = -perp;
+            // Knee bows toward the facing direction (theropod), or away from it for the
+            // reverse-jointed mech — both knees agree, instead of splaying outward.
+            if (Vector2.Dot(perp, groundFwd) < 0) perp = -perp;
             var half = MathF.Min(dist * 0.5f, l);
             var bend = MathF.Sqrt(MathF.Max(0f, l * l - half * half));
             knee = hip + dir * half + perp * bend * (mech ? -1f : 1f);
@@ -915,22 +924,25 @@ public static class TitanRenderer
         r.DrawCircle(knee, MathF.Max(thigh, shin) * 0.55f, cDark);
         r.DrawCircle(knee, MathF.Max(thigh, shin) * 0.3f, cJoint);
         // Shin: lighter, slimmer, with a highlight edge so the lower leg pops off the thigh.
-        Seg(r, knee, foot, shin, cMid);
-        Seg(r, knee, foot, shin * 0.42f, cLite);
+        Seg(r, knee, ankle, shin, cMid);
+        Seg(r, knee, ankle, shin * 0.42f, cLite);
+        // Ankle — the visible backward-bending third joint above the heel.
+        r.DrawCircle(ankle, shin * 0.6f, cMid);
+        r.DrawCircle(ankle, shin * 0.32f, cJoint);
 
-        // Foot: an elongated sole planted flat along the ground with the toes pointing the way
-        // the body faces, an ankle joint, and three splayed claws. Reads as a heavy planted
-        // foot digging in rather than a round stump.
-        var groundFwd = new Vector2(-f.Up.Y, f.Up.X) * f.Face;   // planet tangent, facing direction
-        var heel = foot - groundFwd * (shin * 0.6f);
-        var toe = foot + groundFwd * (shin * 1.05f);
+        // Foot bone from the ankle down to the toes, then the sole and claws. Planted it lies
+        // flat along the ground; mid-swing the toes droop below the ball so the foot dangles.
+        var toe = foot + groundFwd * (shin * 1.0f * (1f - 0.3f * swing)) - f.Up * (7f * swing);
+        var heel = foot - groundFwd * (shin * 0.5f) + f.Up * (5f * swing);
+        Seg(r, ankle, foot, shin * 0.8f, cMid);                  // metatarsal
         Seg(r, heel, toe, shin * 0.9f, cDark);                   // sole
         r.DrawCircle(heel, shin * 0.42f, cDark);                 // heel pad
-        r.DrawCircle(foot, shin * 0.62f, cMid);                  // ankle knuckle
+        r.DrawCircle(foot, shin * 0.62f, cMid);                  // ball of the foot
         var clawLen = mech ? 8f : 13f;
         var clawThick = mech ? 3f : 4.5f;
         for (var c = -1; c <= 1; c++)
-            Seg(r, toe, toe + groundFwd * clawLen + f.Up * (c * shin * 0.34f), clawThick, cJoint);
+            Seg(r, toe, toe + groundFwd * clawLen + f.Up * (c * shin * 0.34f - 4f * swing),
+                clawThick, cJoint);
     }
 
     private static Color Shade(Color c, float m) => new(
