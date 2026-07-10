@@ -262,7 +262,9 @@ public sealed class Titan
         var right = new Vector2(-up.Y, up.X);
         foreach (var leg in Legs)
         {
-            leg.FootPos = ResolveFootAnchor(leg, up, right, Vector2.Zero);
+            // Seed one foot a quarter-stride ahead and the other behind so the first steps
+            // trigger half a cycle apart — the gait starts alternating instead of clumped.
+            leg.FootPos = ResolveFootAnchor(leg, up, right, (leg.Phase - 0.25f) * 2f * StrideHalf);
             leg.StepStart = leg.FootPos;
             leg.StepTarget = leg.FootPos;
             leg.StepT = 1f;
