@@ -267,8 +267,13 @@ public sealed partial class DwarfMinerGame : Game
         // Pre-settle the seeded liquids during load: the first ~2s of cell ticks carry every
         // seeded cell awake (tens of ms per tick at Density 8). Burning them here turns a
         // visible gameplay stutter into a slightly longer world-gen pause; after settling,
-        // hemmed pool interiors sleep and the steady-state tick is cheap.
-        for (var i = 0; i < 120; i++) run.Cells.Update(1f / 60f);
+        // hemmed pool interiors sleep and the steady-state tick is cheap. The settle is by
+        // far the heavy half (the generation above is ~200 ms; a big world settles for many
+        // seconds), so it's cancellable: atmosphere entry takes the world the moment the
+        // token fires and the leftover settling runs live in the orbit/descent frames — a
+        // few heavy frames from orbit beat any hold at the atmosphere.
+        for (var i = 0; i < 120 && !settleToken.IsCancellationRequested; i++)
+            run.Cells.Update(1f / 60f);
         return run;
     }
 
