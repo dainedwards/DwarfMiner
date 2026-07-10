@@ -148,12 +148,14 @@ public sealed class SpaceSim
     public Vector2 ShipDir => new(MathF.Cos(ShipHeading), MathF.Sin(ShipHeading));
 
     /// <summary>Park the ship just off a planet's outward (sun-away) side, nose pointing out —
-    /// where you appear after launching off that world, dying on it, or booting the game.</summary>
+    /// where you appear after launching off that world, dying on it, or booting the game.
+    /// The distance must clear <see cref="EntryRange"/> with margin, or parking would
+    /// immediately re-enter the atmosphere.</summary>
     public void PlaceShipAt(int planetIndex, float exitSpeed = 0f)
     {
         var p = Planets[Math.Clamp(planetIndex, 0, Planets.Count - 1)];
         var outward = p.Pos.LengthSquared() > 1f ? Vector2.Normalize(p.Pos) : new Vector2(0f, -1f);
-        ShipPos = p.Pos + outward * (p.BodyRadius + 80f);
+        ShipPos = p.Pos + outward * (p.BodyRadius + EntryRange + 80f);
         ShipVel = outward * exitSpeed;
         ShipHeading = MathF.Atan2(outward.Y, outward.X);
     }
