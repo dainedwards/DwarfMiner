@@ -2003,6 +2003,10 @@ public sealed partial class DwarfMinerGame : Game
     {
         _ascending = false;
         _shipParked = true;
+        // Settle onto the ground when it's just below — a low hover parks as a landing;
+        // a genuinely high exit leaves the hull floating where the player bailed.
+        for (var i = 0; i < 12 && !_run.Planet.IsSolidAt(_launchShipPos - up * 5f); i++)
+            _launchShipPos -= up * 2f;
         var pos = _launchShipPos + up * 6f;
         for (var i = 0; i < 60 && _run.Planet.IsSolidAt(pos); i++) pos += up * 2f;
         _run.Player.Position = pos;
