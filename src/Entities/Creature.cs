@@ -24,6 +24,9 @@ namespace DwarfMiner.Entities;
 ///     BomberBeetle closes, arms, and detonates on any death; SnapperVine lunges on a rooted
 ///     tether; RockMimic plays boulder until poked; VoidWraith blinks; CrystalCrawler sprays
 ///     shards when shot.
+///   • Biome fauna (SnowLoper … NullMoth): neutral signature species, one per planet
+///     archetype, spawned by SpawnDirector off PlanetDef.Biome. They reuse the grazer /
+///     hopper / flyer movement brains — the identity is in stats, silhouette and palette.
 /// </summary>
 public enum CreatureKind : byte
 {
