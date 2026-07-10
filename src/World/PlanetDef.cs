@@ -160,7 +160,7 @@ public static class PlanetDefs
             OreBias: new[] { (TileKind.Sapphire, 0.030f), (TileKind.SilverOre, 0.020f), (TileKind.Emerald, 0.015f) },
             QuakeScale: 1.2f, CaveSpawnCap: 16,
             ShipOre: "sapphire", ShipOreCount: 4, OxygenDrainScale: 1.1f, Titan: TitanKind.Sandworm,
-            CrystalPockets: 3, FungalPockets: 2, Biome: "frost"),
+            CrystalPockets: 3, FungalPockets: 2, Biome: "frost", Difficulty: 0.2f),
 
         new("ember", "Ember", "Volcanic furnace, lava high, rubies below",
             new Color(190, 90, 50), new Color(255, 170, 90),
