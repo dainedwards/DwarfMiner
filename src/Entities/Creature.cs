@@ -183,6 +183,27 @@ public sealed class Creature
                 // "boulder" and the ambush actually lands.
                 Radius = 5f; Health = 60f; MoveSpeed = 58f; ContactDamage = 14f; Hostile = false;
                 break;
+            case CreatureKind.SnowLoper:
+                Radius = 5f; Health = 22f; MoveSpeed = 26f; ContactDamage = 0f; Hostile = false;
+                break;
+            case CreatureKind.CinderSkink:
+                Radius = 3f; Health = 10f; MoveSpeed = 55f; ContactDamage = 0f; Hostile = false;
+                break;
+            case CreatureKind.RustBack:
+                Radius = 5f; Health = 32f; MoveSpeed = 12f; ContactDamage = 0f; Hostile = false;
+                break;
+            case CreatureKind.TidePuddler:
+                Radius = 3f; Health = 8f; MoveSpeed = 42f; ContactDamage = 0f; Hostile = false;
+                break;
+            case CreatureKind.AcidStrider:
+                Radius = 4.5f; Health = 14f; MoveSpeed = 34f; ContactDamage = 0f; Hostile = false;
+                break;
+            case CreatureKind.PrismSnail:
+                Radius = 3.5f; Health = 26f; MoveSpeed = 7f; ContactDamage = 0f; Hostile = false;
+                break;
+            case CreatureKind.NullMoth:
+                Radius = 3.5f; Health = 9f; MoveSpeed = 30f; ContactDamage = 0f; Hostile = false;
+                break;
         }
     }
 
