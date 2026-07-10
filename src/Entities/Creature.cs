@@ -514,7 +514,7 @@ public sealed class Creature
         Vector2 up, Vector2 right, Vector2 toPlayer, float dist, float speedMul)
     {
         if (_swing > 0f) _swing -= dt;
-        if (dist < 150f) _aggroT = 6f; else _aggroT -= dt;
+        if (dist < 220f) _aggroT = 6f; else _aggroT -= dt;
 
         if (_aggroT > 0f)
         {
