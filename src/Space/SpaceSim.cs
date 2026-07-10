@@ -160,6 +160,26 @@ public sealed class SpaceSim
         ShipHeading = MathF.Atan2(outward.Y, outward.X);
     }
 
+    /// <summary>Surface clearance for the boot-time park (<see cref="ParkShipTrailing"/>) —
+    /// far enough out that the world build kicked at boot finishes before even a beeline
+    /// dive can cross back into <see cref="EntryRange"/>.</summary>
+    public const float BootParkDistance = 600f;
+
+    /// <summary>Boot-time park, used when a save restores the ship near a planet: sit on the
+    /// planet's own orbit ring, trailing <see cref="BootParkDistance"/> behind the disc with
+    /// the nose aimed at it. The ring is the one line no *other* body's sweep crosses, and
+    /// the planet's orbital motion recedes from a trailing ship — so an idle ship stays
+    /// parked. The distance (vs. PlaceShipAt's snug 170 px) is build lead: the approach burn
+    /// outlasts the background world build, so atmosphere entry is instant.</summary>
+    public void ParkShipTrailing(int planetIndex)
+    {
+        var p = Planets[Math.Clamp(planetIndex, 0, Planets.Count - 1)];
+        var angle = p.Angle - (p.BodyRadius + BootParkDistance) / p.OrbitRadius;
+        ShipPos = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * p.OrbitRadius;
+        ShipVel = Vector2.Zero;
+        ShipHeading = MathF.Atan2(p.Pos.Y - ShipPos.Y, p.Pos.X - ShipPos.X);
+    }
+
     /// <summary>One tick: turn ∈ [-1, 1], thrust along the nose, brake kills velocity directly
     /// (retro jets), then drag, the speed cap, and solid-body pushes off the sun and planets.</summary>
     public void Update(float dt, float turn, bool thrust, bool brake)
