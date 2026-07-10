@@ -687,13 +687,15 @@ public sealed class Player
 
         var reach = EffectiveMineRange;
         var self = planet.WorldToTile(Position);
+        var aimedTile = planet.WorldToTile(Position + SwingAim * MathF.Min(reach, 6f));
 
         (int X, int Y)? Contact(Vector2 dir)
         {
-            for (var t = 4f; t <= reach; t += 2f)
+            for (var t = 0f; t <= reach; t += 2f)
             {
                 var (x, y) = planet.WorldToTile(Position + dir * t);
-                if ((x, y) == self) continue;   // don't chew the ladder being climbed
+                // Don't chew the ladder being climbed — unless it's what's being aimed at.
+                if ((x, y) == self && (x, y) != aimedTile) continue;
                 if (planet.Get(x, y) != TileKind.Sky) return (x, y);
             }
             return null;
