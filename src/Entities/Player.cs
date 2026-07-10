@@ -628,6 +628,7 @@ public sealed class Player
     public float SwingTime;                    // seconds remaining in the active swing
     public float SwingDuration;                // full length of the active swing
     public Vector2 SwingAim = new(1f, 0f);     // unit aim captured at swing start
+    public Vector2 SwingCursor;                // raw world cursor captured at swing start
     public MiningTool SwingTool;               // tool the active swing belongs to
     public int SwingFlip = 1;                  // alternates so consecutive chops go down-up-down
     public bool SwingLanded;                   // the active swing already spent its strike
