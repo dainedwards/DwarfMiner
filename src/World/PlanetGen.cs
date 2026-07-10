@@ -151,7 +151,7 @@ public static class PlanetGen
                 QuakeScale: quake, CaveSpawnCap: caveCap,
                 ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy * 1.05f,
                 Titan: titan, CrystalPockets: 1 + rng.Next(2), FungalPockets: rng.Next(3),
-                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale),
+                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "frost"),
 
             Biome.Ember => new(id, name,
                 "Volcanic world - lava at the door and gas in the deeps",
