@@ -411,6 +411,41 @@ public sealed class Titan
             speedMul = Charging ? 4.4f : 0f;
         }
 
+        // ── Dig-down hunt ─────────────────────────────────────────────────────
+        // Only once truly enraged (past DigAngerGate), with the player deep below and
+        // roughly underfoot. It stops walking and pounds: a slam every _digTimer beat,
+        // each excavating one crater-layer via the landed stomp — much slower than its
+        // walk, and it can't sink without stomping. A player off to the side instead gets
+        // chased laterally (the aggro plow carves sideways tunnels at full power), and the
+        // stair-step of walking over + digging down closes on prey at any angle.
+        var playerUpDot = Vector2.Dot(playerPos - Position, up);
+        var playerSideDist = MathF.Abs(Vector2.Dot(playerPos - Position, right));
+        Digging = IsAggro && Anger > DigAngerGate && Legs.Length > 0 && Grounded
+                  && !Leaping && SpecialState <= 0f
+                  && playerUpDot < -140f && playerSideDist < 130f;
+        if (Digging)
+        {
+            moveAxis = 0;   // plant and pound — no pacing while excavating
+            _digTimer -= dt;
+            if (_digTimer <= 0f)
+            {
+                // Rear up whichever leg is planted (alternating) and slam it in place; the
+                // landing branch in UpdateLegs runs the excavation.
+                for (var i = 0; i < Legs.Length; i++)
+                {
+                    var leg = Legs[(_digLeg + i) % Legs.Length];
+                    if (leg.StepT < 1f) continue;
+                    leg.StepStart = leg.FootPos;
+                    leg.StepTarget = leg.FootPos;
+                    leg.StepT = 0f;
+                    _digPending = true;
+                    _digLeg = (_digLeg + i + 1) % Legs.Length;
+                    break;
+                }
+                _digTimer = 1.6f;
+            }
+        }
+
         // Decompose velocity into tangent and normal components so gravity, walking, and the
         // leg-spring lift can be handled independently of where on the planet we are.
         var vTangent = Vector2.Dot(Velocity, right);
