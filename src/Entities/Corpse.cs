@@ -111,6 +111,13 @@ public sealed class Corpse
         CreatureKind.BomberBeetle => new Color(48, 42, 38),
         CreatureKind.SnapperVine  => new Color(72, 100, 58),
         CreatureKind.RockMimic    => new Color(92, 88, 84),
+        CreatureKind.SnowLoper    => new Color(196, 206, 216),
+        CreatureKind.CinderSkink  => new Color(58, 46, 44),
+        CreatureKind.RustBack     => new Color(120, 78, 52),
+        CreatureKind.TidePuddler  => new Color(72, 130, 145),
+        CreatureKind.AcidStrider  => new Color(100, 112, 58),
+        CreatureKind.PrismSnail   => new Color(120, 100, 140),
+        CreatureKind.NullMoth     => new Color(40, 32, 56),
         _                         => new Color(110, 90, 90),
     };
 }
