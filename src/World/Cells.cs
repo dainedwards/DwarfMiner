@@ -643,7 +643,8 @@ public sealed class Cells
 
     private static bool IsMeltable(TileKind k) => k is
         TileKind.Dirt or TileKind.Grass or TileKind.Gravel or
-        TileKind.MossStone or TileKind.Snow or TileKind.Support;
+        TileKind.MossStone or TileKind.Snow or TileKind.Support or
+        TileKind.Conglomerate;
 
     /// <summary>Tiles acid can dissolve — most materials, ores included (spilled acid
     /// destroying a vein is a real hazard). Only obsidian and the anchor-class tiles
