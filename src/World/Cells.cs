@@ -392,6 +392,12 @@ public sealed class Cells
     {
         _time += dt;
 
+        if (_time >= _compactSweepAt)
+        {
+            _compactSweepAt = _time + CompactSweepPeriod;
+            SweepCompaction();
+        }
+
         (_active, _next) = (_next, _active);
         _next.Clear();
         if (_active.Count == 0) return;
