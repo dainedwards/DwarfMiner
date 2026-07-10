@@ -22,7 +22,7 @@ if (args.Length > 0 && args[0] == "--buildprobe")
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         DwarfMinerGame.BuildSessionWorld(def);
-        Console.WriteLine($"{def.Id,-12} {sw.ElapsedMilliseconds} ms");
+        System.Console.WriteLine($"{def.Id,-12} {sw.ElapsedMilliseconds} ms");
     }
     return;
 }
