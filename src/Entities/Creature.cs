@@ -295,11 +295,14 @@ public sealed class Creature
 
     // ---------------------------------------------------------------- cave walkers
 
+    // Hunt ranges are deliberately larger than the spawn donut's inner edge (200px): a
+    // creature the director places just off-screen must be able to *sense* the dwarf and
+    // come looking, or the local population never turns into encounters.
     private void TickGrub(float dt, Planet planet, Vector2 up, Vector2 right,
         Vector2 toPlayer, float dist, float speedMul)
     {
         float moveAxis;
-        if (dist < 140f)
+        if (dist < 260f)
         {
             moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right));
         }
