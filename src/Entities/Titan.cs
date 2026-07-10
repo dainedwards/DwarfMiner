@@ -500,15 +500,16 @@ public sealed class Titan
                 var deficit = Hover - heightAboveFeet;
                 vNormal = MathHelper.Clamp(deficit * 6f, -160f, 230f);
             }
-            // Self-rescue: a de-aggroed walker sealed beneath the surface (its footstep
-            // quakes caved in the roof it stood on, or a chase plowed it deep) climbs
-            // straight up, bulldozing through the rock overhead, until it breaches — a
-            // roaming boss should never live out the run stuck in a cave the player can't
-            // even see. Aggro pursuit skips this: a hunting kaiju tunnels after its prey.
-            if (!IsAggro && !Leaping)
+            // Climb back to daylight. Two triggers share the move: (1) self-rescue — a
+            // de-aggroed walker sealed beneath the surface (a caved-in roof, or a chase that
+            // plowed it deep) should never live out the run stuck in a cave the player can't
+            // even see; (2) mid-hunt — the prey jetpacked back ABOVE it (out of the dig
+            // shaft), so it bursts upward through the overburden after them, faster than the
+            // idle climb. A hunting kaiju whose prey is still below keeps tunnelling down.
+            if (!Leaping && (!IsAggro || playerUpDot > 140f))
             {
                 var surface = SurfacePoint(planet, up);
-                if (Vector2.Dot(surface - Position, up) > 60f) vNormal = 130f;
+                if (Vector2.Dot(surface - Position, up) > 60f) vNormal = IsAggro ? 175f : 130f;
             }
         }
 
