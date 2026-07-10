@@ -224,11 +224,8 @@ public sealed class Player
         var jumpEdge = jumpHeld && !_jumpHeldPrev;
         _jumpHeldPrev = jumpHeld;
 
-        // Snapshot grounded state for the "ground-snap" surface-stickiness check at the end
-        // of Update. World-gen's ±1.5-tile surface elevation noise means adjacent columns
-        // can sit on different rings — without snap, walking over a 1-tile drop produces a
-        // multi-frame visible fall before gravity accumulates enough to pull the player
-        // into collision range of the lower tile.
+        // Snapshot grounded state for the walk-off-an-edge check at the end of Update (it
+        // seeds the fall so leaving a ledge drops immediately instead of hovering).
         var wasGrounded = Grounded;
 
         if (FlyMode)
