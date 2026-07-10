@@ -396,6 +396,8 @@ public sealed partial class DwarfMinerGame : Game
         _invUi.Reset();
         _screen = GameScreen.Playing;
         _orbiting = false;
+        _ascending = false;
+        _shipParked = false;
         // Test-hook starts (DM_AUTOSTART) spawn straight on the surface; DM_DESCEND=1
         // forces the rover descent for tooling; DM_LAUNCH=1 plants a fuelled rocket and
         // lifts off at once (screenshots the escape ascent). The real gameplay path goes
