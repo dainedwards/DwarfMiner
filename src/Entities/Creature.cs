@@ -48,6 +48,15 @@ public enum CreatureKind : byte
     BomberBeetle, // volatile scuttler — closes in, arms its abdomen, and detonates
     SnapperVine,  // rooted lunge-plant — strikes anything that drifts inside its tether
     RockMimic,    // ore-speckled "boulder" that wakes when prodded or approached
+    // Biome fauna (all neutral): every planet archetype keeps its own signature species —
+    // SpawnDirector rolls these off PlanetDef.Biome so no two world types share a herd.
+    SnowLoper,    // frost — stilt-legged woolly strider, plods the ice fields
+    CinderSkink,  // ember — ember-freckled lizard basking on the basalt
+    RustBack,     // slag — dome-shelled grazer plated in oxidised scrap
+    TidePuddler,  // ocean — glossy amphibian that flops along the shorelines
+    AcidStrider,  // acid — long-legged wader, sips the vitriol pools unharmed
+    PrismSnail,   // crystal — crystalline-shelled snail with a faint gem glow
+    NullMoth,     // rift — void-black flyer, the one gentle thing out there
 }
 
 public sealed class Creature
