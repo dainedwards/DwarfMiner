@@ -234,7 +234,12 @@ public static class WorldGen
                 TileKind k;
                 if (depth < 1f)
                 {
-                    k = def.SurfaceTile;
+                    // Banded worlds (the debug planet) cycle their ground cover through every
+                    // biome's surface tile, one wedge per band, so all of them are walkable
+                    // on a single world; ordinary worlds paint one tile everywhere.
+                    k = def.SurfaceBands is { Length: > 0 } bands
+                        ? bands[(int)(ang / MathHelper.TwoPi * bands.Length) % bands.Length]
+                        : def.SurfaceTile;
                 }
                 else if (depth < 10f + AngularSample(surfC, ang) * 2f)
                 {
