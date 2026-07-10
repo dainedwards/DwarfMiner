@@ -1,4 +1,3 @@
-using System;
 using DwarfMiner;
 
 // Headless sim check: `dotnet run -- --simtest` exercises creature physics without a window.
