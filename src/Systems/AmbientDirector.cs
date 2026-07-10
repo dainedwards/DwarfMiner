@@ -97,7 +97,7 @@ public static class AmbientDirector
             {
                 var kind = run.NextDisaster ?? Pick(run);
                 run.NextDisaster = null;
-                if (kind is { } k) TryBegin(k, run, particles, ref result);
+                TryBegin(kind, run, particles, ref result);
                 run.DisasterTimer = NextInterval(run.Def);
             }
         }
