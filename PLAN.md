@@ -109,14 +109,26 @@
 >   biome-special override roll keyed off def pocket counts / rift id. Collision sweep now
 >   covers all 7 tested kinds (175 placements); 3 new checks. `DM_FAUNA=1` parades the new
 >   kinds beside spawn for screenshots.
+> - **Debug world + boot clearance (DONE 2026-07-09):** debug mode is ON by default for now
+>   (`PlanetDefs.DebugMode`, `DM_DEBUG=0` disables) — every campaign gets a **DEBUG planet**
+>   appended (id `debug`, tight 950px orbit near the sun): max size (1.8×), every disaster
+>   armed (quakes, meteors, flares, blizzards, acid rain, magma surges, eruptions, gas +
+>   acid pockets), every biome feature (new `PlanetDef.SurfaceBands` cycles the ground
+>   through grass/snow/gravel/dirt/basalt wedges; lakes, acid pools, crystal caverns, fungal
+>   groves, 3 volcanoes), every ore biased findable, standard cave enemies (cap 20). Its
+>   core holds no shard and it's excluded from `WarpShardsNeeded`, so the campaign math is
+>   untouched. `DM_AUTOSTART=debug` drops straight onto it. Also fixed: **booting no longer
+>   force-enters a planet** — the saved mothership position dates from atmosphere entry
+>   while planets re-rack to boot angles, so `RestoreShipState` now re-parks (standard
+>   sun-away spot) when the saved point boots within 260px of any planet's surface.
 > Next up: weapon variety, a settings UI beyond the F6 volume cycle, difficulty/balance
 > tuning from playtests, or a run-summary/stats screen.
 > Test hooks: `DM_AUTOSHOT=<s>` screenshots on a schedule; `DM_AUTOSTART=<planet-id|resume>`
-> skips the space screen (ids: verdant, frost, ember, slag, core); `DM_AUTOSAVE=<s>` timed
+> skips the space screen (ids: verdant, frost, ember, slag, core, debug); `DM_AUTOSAVE=<s>` timed
 > suspend-save; `DM_GOD=1` starts runs in god mode (fly, free weapons); `DM_UPGRADES=1`
 > opens the mothership foundry at boot; `DM_SURVEY=1` opens the system survey at boot;
 > `DM_DESCEND=1` forces the rover descent under DM_AUTOSTART; `DM_ORBIT=<planet-id>` boots
-> straight into the parking orbit.
+> straight into the parking orbit; `DM_DEBUG=0` drops the debug planet from the system.
 
 Current state: circular polar planet with a Noita-style cell sim (water/lava/dust), structural
 physics with collapses, a Titan boss, cave/surface/sky fauna, a 30+ recipe crafting tree, three
