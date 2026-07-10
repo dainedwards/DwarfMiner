@@ -1152,13 +1152,13 @@ public sealed partial class DwarfMinerGame : Game
                     // sideways so the split reads, and they don't split further.
                     case CreatureKind.CaveSlime:
                     {
-                        var up = _run.Planet.UpAt(c.Position);
-                        var right = new Vector2(-up.Y, up.X);
+                        var slUp = _run.Planet.UpAt(c.Position);
+                        var slRight = new Vector2(-slUp.Y, slUp.X);
                         for (var s = -1; s <= 1; s += 2)
                         {
-                            var lite = new Creature(c.Position + right * (s * 3f), CreatureKind.Slimelet)
+                            var lite = new Creature(c.Position + slRight * (s * 3f), CreatureKind.Slimelet)
                             {
-                                Velocity = right * (s * 55f) + up * 90f,
+                                Velocity = slRight * (s * 55f) + slUp * 90f,
                             };
                             _run.Creatures.Add(lite);
                         }
