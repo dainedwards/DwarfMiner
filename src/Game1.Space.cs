@@ -311,17 +311,15 @@ public sealed partial class DwarfMinerGame
         // The snapshot may date from the moment of atmosphere entry, and the planets re-rack
         // to their boot angles regardless of where they'd orbited to — either way the saved
         // point can sit inside a planet's entry range, which would suck the ship straight
-        // back down on the first frame. Shove it out to the standard parking distance.
-        foreach (var p in _space.Planets)
+        // back down on the first frame. Re-park at the standard spot off that planet: the
+        // sun-away radial, where the planet's tangential orbit motion grazes past the parked
+        // ship instead of plowing into it.
+        for (var i = 0; i < _space.Planets.Count; i++)
         {
-            var d = _space.ShipPos - p.Pos;
-            var dist = d.Length();
-            var min = p.BodyRadius + 80f;
-            if (dist >= min) continue;
-            var outward = dist > 1f ? d / dist
-                : p.Pos.LengthSquared() > 1f ? Vector2.Normalize(p.Pos) : new Vector2(0f, -1f);
-            _space.ShipPos = p.Pos + outward * min;
-            _space.ShipVel = Vector2.Zero;
+            var p = _space.Planets[i];
+            if ((_space.ShipPos - p.Pos).Length() - p.BodyRadius >= 60f) continue;
+            _space.PlaceShipAt(i);
+            break;
         }
     }
 
