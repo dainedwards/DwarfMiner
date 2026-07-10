@@ -1343,6 +1343,15 @@ public sealed partial class DwarfMinerGame : Game
     /// stays one-liner-per-case.</summary>
     private void DoMine(Vector2 worldCursor, MiningTool tool)
     {
+        // Pickaxe and hammer are physical swings now: LMB starts the sweep and the strike
+        // resolves in TickSwing where the blade actually contacts rock — not here. Fly mode
+        // keeps instant cursor mining (dev tool).
+        if (!_run.Player.FlyMode && tool is MiningTool.Pickaxe or MiningTool.Hammer)
+        {
+            _run.Player.TryStartSwing(worldCursor, tool);
+            return;
+        }
+
         // Where the strike actually lands — the swung tools ray out from the body toward the
         // aim, so effects must key off the resolved tile, not the raw cursor.
         var target = _run.Player.ResolveMineTarget(_run.Planet, worldCursor, tool);
