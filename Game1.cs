@@ -2998,21 +2998,28 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.DrawCircle(pos + up * 24f + right * 10f, 2.4f, lamp);
     }
 
-    private void DrawShip(Vector2 pos, int stage)
+    /// <summary>Draw the pad-and-rocket assembly at a world position, oriented to the local
+    /// vertical. In flight a <paramref name="heading"/> overrides the orientation — the hull
+    /// aligns to the nose instead of planet-up, and the pad slab is left off (it stays on
+    /// the ground where it was built).</summary>
+    private void DrawShip(Vector2 pos, int stage, Vector2? heading = null)
     {
-        var up = _run.Planet.UpAt(pos);
+        var up = heading ?? _run.Planet.UpAt(pos);
         var right = new Vector2(-up.Y, up.X);
         var rot = MathF.Atan2(up.X, -up.Y);
         var steel = new Color(150, 155, 170);
         var steelDark = new Color(95, 100, 115);
         var frame = new Color(70, 60, 50);
 
-        // Pad: a broad slab on two squat legs, with hazard-stripe ends.
-        _renderer.DrawRect(pos - up * 3f + right * 10f, new Vector2(3f, 4f), frame, rot);
-        _renderer.DrawRect(pos - up * 3f - right * 10f, new Vector2(3f, 4f), frame, rot);
-        _renderer.DrawRect(pos, new Vector2(30f, 3f), steelDark, rot);
-        _renderer.DrawRect(pos + right * 13f, new Vector2(4f, 3f), new Color(200, 170, 60), rot);
-        _renderer.DrawRect(pos - right * 13f, new Vector2(4f, 3f), new Color(200, 170, 60), rot);
+        if (heading is null)
+        {
+            // Pad: a broad slab on two squat legs, with hazard-stripe ends.
+            _renderer.DrawRect(pos - up * 3f + right * 10f, new Vector2(3f, 4f), frame, rot);
+            _renderer.DrawRect(pos - up * 3f - right * 10f, new Vector2(3f, 4f), frame, rot);
+            _renderer.DrawRect(pos, new Vector2(30f, 3f), steelDark, rot);
+            _renderer.DrawRect(pos + right * 13f, new Vector2(4f, 3f), new Color(200, 170, 60), rot);
+            _renderer.DrawRect(pos - right * 13f, new Vector2(4f, 3f), new Color(200, 170, 60), rot);
+        }
 
         if (stage >= 1)
         {
