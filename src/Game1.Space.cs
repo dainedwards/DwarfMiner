@@ -959,54 +959,346 @@ public sealed partial class DwarfMinerGame
         DrawTransitionFlash();
     }
 
-    /// <summary>The M-key long-range survey: every planet's titan (with souls banked of that
-    /// kind) and its biggest ore deposits with approximate counts — see Space.Survey for why
-    /// "approximate" is honest. First open generates each world once (a beat of hitch).</summary>
-    private void DrawSurveyMenu(SpriteBatch sb)
+    // ── The M-key star map ──────────────────────────────────────────────────
+    // A top-down chart of the whole system: the sun (a marked hazard) at the centre, every
+    // orbit as a dotted ring, every planet at its live position, and the mothership marker.
+    // Hovering a body opens the long-range survey tooltip — ore deposits (see Space.Survey
+    // for why the counts are approximate), the titan and its soul kind, and the hazard
+    // manifest read straight off the PlanetDef. In debug mode right-click warps the ship.
+
+    /// <summary>Chart hover state, written by UpdateStarMap and read by DrawStarMap.</summary>
+    private int _mapHoverPlanet = -1;
+    private bool _mapHoverSun;
+
+    /// <summary>Pixel radius of the chart (the outermost orbit ring).</summary>
+    private const float StarMapRadius = VirtualHeight / 2f - 84f;
+    private static Vector2 StarMapCentre => new(VirtualWidth / 2f, VirtualHeight / 2f + 10f);
+
+    /// <summary>The largest orbit the chart must contain (with a little breathing room).</summary>
+    private float MapMaxOrbit()
     {
-        const int w = 860;
-        var count = PlanetDefs.All.Length;
-        var h = 120 + count * 66;
-        var x = (VirtualWidth - w) / 2;
-        var y = (VirtualHeight - h) / 2;
+        var max = SpaceSim.SunRadius;
+        foreach (var p in _space.Planets) max = MathF.Max(max, p.OrbitRadius);
+        return max * 1.06f;
+    }
+
+    /// <summary>Projected chart radius for a space distance from the sun. Radial sqrt
+    /// compression: the inner orbits spread out readably while the far-flung Rift still
+    /// fits the panel. Angles pass through untouched, so orbits stay circles.</summary>
+    private float MapProjectR(float spaceR) =>
+        StarMapRadius * MathF.Sqrt(MathHelper.Clamp(spaceR / MapMaxOrbit(), 0f, 1f));
+
+    private Vector2 MapProject(Vector2 spacePos)
+    {
+        var len = spacePos.Length();
+        if (len < 1f) return StarMapCentre;
+        return StarMapCentre + spacePos / len * MapProjectR(len);
+    }
+
+    /// <summary>Chart point back to space coordinates — the debug warp's landing math.</summary>
+    private Vector2 MapUnproject(Vector2 screenPos)
+    {
+        var d = screenPos - StarMapCentre;
+        var len = d.Length();
+        if (len < 1f) return Vector2.Zero;
+        var frac = MathF.Min(len / StarMapRadius, 1f);
+        return d / len * (frac * frac * MapMaxOrbit());
+    }
+
+    /// <summary>Marker size on the chart — tracks the real body radius, clamped readable.</summary>
+    private static float MapMarkerRadius(SpacePlanet p) =>
+        MathHelper.Clamp(p.BodyRadius * 0.06f, 5f, 15f);
+
+    private const float MapSunMarker = 16f;
+
+    /// <summary>Star-map input: hover detection for the survey tooltip, and — debug mode
+    /// only — a right-click warp that teleports the mothership across the system (onto a
+    /// hovered planet's parking spot, or to the clicked point in open space).</summary>
+    private void UpdateStarMap(MouseState mouse)
+    {
+        var m = new Vector2(mouse.X, mouse.Y);
+        _mapHoverPlanet = -1;
+        _mapHoverSun = false;
+        var bestD = float.MaxValue;
+        for (var i = 0; i < _space.Planets.Count; i++)
+        {
+            var d = (MapProject(_space.Planets[i].Pos) - m).Length();
+            if (d < MapMarkerRadius(_space.Planets[i]) + 8f && d < bestD)
+            {
+                bestD = d;
+                _mapHoverPlanet = i;
+            }
+        }
+        if (_mapHoverPlanet < 0 && (StarMapCentre - m).Length() < MapSunMarker + 8f)
+            _mapHoverSun = true;
+
+        if (!PlanetDefs.DebugMode) return;
+        if (mouse.RightButton != ButtonState.Pressed
+            || _prevMouse.RightButton == ButtonState.Pressed) return;
+        if (_mapHoverPlanet >= 0)
+        {
+            // Park at the planet's standard spot (outside atmosphere-entry range), same as
+            // launching off it — warping never force-feeds an entry.
+            _space.PlaceShipAt(_mapHoverPlanet);
+            _toast = $"DEBUG WARP - {_space.Planets[_mapHoverPlanet].Def.Name.ToUpperInvariant()}";
+        }
+        else
+        {
+            // Open-space warp to the clicked point, held outside the corona: the sun is a
+            // hazard, not a destination.
+            var target = MapUnproject(m);
+            var minSun = SpaceSim.SunRadius + 110f;
+            if (target.Length() < minSun)
+                target = (target.LengthSquared() > 1f ? Vector2.Normalize(target) : -Vector2.UnitY) * minSun;
+            _space.ShipPos = target;
+            _space.ShipVel = Vector2.Zero;
+            _toast = "DEBUG WARP";
+        }
+        _space.Asteroids.Clear();
+        _spaceZoom = SpaceZoom;
+        _camera.SnapTo(_space.ShipPos, 0f);
+        _sfx.Play("launch", 0.6f, pitch: 0.5f);
+        _toastTimer = 2.5f;
+    }
+
+    /// <summary>Ores whose deposits read as RARE FINDS in the survey tooltip.</summary>
+    private static readonly HashSet<string> RareOres = new()
+        { "CRYSTAL", "RUBY", "SAPPHIRE", "EMERALD", "DIAMOND", "VOIDSTONE" };
+
+    /// <summary>The hazard manifest for a world, read off the same PlanetDef knobs that arm
+    /// each danger in worldgen and the ambient director.</summary>
+    private static List<string> HazardsOf(PlanetDef def)
+    {
+        var list = new List<string>();
+        if (def.LavaFillFrac >= 0.5f) list.Add("MAGMA SURGES");
+        if (def.Volcanoes > 0) list.Add(def.VolcanoAcid ? "ACID VOLCANOES" : "VOLCANOES");
+        if (def.SeedsGas) list.Add("TOXIC GAS");
+        if (def.SeedsAcid) list.Add("ACID POCKETS");
+        if (def.AcidPools > 0) list.Add("ACID POOLS");
+        if (def.AcidRain) list.Add("ACID RAIN");
+        if (def.QuakeScale <= 0.6f) list.Add("QUAKES");
+        if (def.OxygenDrainScale >= 1.3f) list.Add("THIN AIR + METEORS");
+        if (def.SurfaceTile == TileKind.Snow) list.Add("BLIZZARDS");
+        if (def.CaveSpawnCap >= 20) list.Add("SWARMING CAVES");
+        return list;
+    }
+
+    /// <summary>The star map itself: dim the live scene, then chart orbits, sun, planets,
+    /// and the mothership; finish with the hover tooltip. First hover of a planet may
+    /// generate its survey world (a beat of hitch) if the boot warm-up hasn't reached it.</summary>
+    private void DrawStarMap(SpriteBatch sb)
+    {
+        var centre = StarMapCentre;
+        var dotCol = new Color(70, 76, 100);
 
         sb.Begin(samplerState: SamplerState.PointClamp);
-        sb.Draw(_renderer.Pixel, new Rectangle(x, y, w, h), new Color(10, 12, 22, 235));
-        sb.Draw(_renderer.Pixel, new Rectangle(x, y, w, 2), new Color(140, 200, 255));
-        sb.Draw(_renderer.Pixel, new Rectangle(x, y + h - 2, w, 2), new Color(140, 200, 255));
-        sb.End();
+        sb.Draw(_renderer.Pixel, new Rectangle(0, 0, VirtualWidth, VirtualHeight),
+            new Color(4, 6, 14, 222));
 
-        _renderer.DrawText("SYSTEM SURVEY",
-            new Vector2(x + (w - _renderer.MeasureText("SYSTEM SURVEY", 3)) / 2f, y + 16), Color.White, 3);
-
-        for (var i = 0; i < count; i++)
+        // Orbit rings — dotted, one per world.
+        foreach (var p in _space.Planets)
         {
-            var def = PlanetDefs.All[i];
-            var rowY = y + 62 + i * 66;
-            var souls = _meta.SoulsOf(def.Titan.ToString());
-            var slain = souls > 0 ? $"SOULS {souls}" : "NO SOULS YET";
-            _renderer.DrawText(def.Name.ToUpperInvariant(), new Vector2(x + 24, rowY), Color.White, 2);
-            // Pooled planets roll a fresh kaiju per visit — the census can't name it ahead.
-            _renderer.DrawText(def.TitanPool is { Length: > 0 }
-                    ? "TITAN: UNSTABLE - ROLLS EACH VISIT"
-                    : $"TITAN: {TitanName(def.Titan).ToUpperInvariant()}  [{slain}]",
-                new Vector2(x + 250, rowY + 4),
-                def.TitanPool is { Length: > 0 } ? new Color(220, 140, 220)
-                    : souls > 0 ? new Color(140, 220, 140) : new Color(200, 160, 120));
-            if (def.Id != "rift")
-                _renderer.DrawText(_meta.CoreShards.Contains(def.Id) ? "SHARD SECURED" : "SHARD IN CORE",
-                    new Vector2(x + w - 24 - _renderer.MeasureText(_meta.CoreShards.Contains(def.Id) ? "SHARD SECURED" : "SHARD IN CORE"), rowY + 4),
-                    _meta.CoreShards.Contains(def.Id) ? new Color(150, 230, 255) : new Color(120, 125, 145));
-            var deposits = "";
-            foreach (var (label, n) in Survey.For(def))
-                deposits += $"{label} {FormatCount(n)}   ";
-            _renderer.DrawText(deposits.TrimEnd(),
-                new Vector2(x + 24, rowY + 28), new Color(150, 155, 175));
+            var rr = MapProjectR(p.OrbitRadius);
+            var dots = Math.Max(28, (int)(rr * 0.5f));
+            for (var d = 0; d < dots; d++)
+            {
+                var a = d * MathHelper.TwoPi / dots;
+                var pos = centre + new Vector2(MathF.Cos(a), MathF.Sin(a)) * rr;
+                sb.Draw(_renderer.Pixel, new Rectangle((int)pos.X - 1, (int)pos.Y - 1, 2, 2), dotCol);
+            }
         }
 
-        _renderer.DrawText("M/ESC CLOSE",
-            new Vector2(x + (w - _renderer.MeasureText("M/ESC CLOSE")) / 2f, y + h - 26),
+        // The corona no-go ring: the radius inside which the sun starts burning the hull.
+        var burnR = MapProjectR(SpaceSim.SunRadius + 70f) + 6f;
+        for (var d = 0; d < 40; d++)
+        {
+            var a = d * MathHelper.TwoPi / 40 + _totalTime * 0.25f;
+            var pos = centre + new Vector2(MathF.Cos(a), MathF.Sin(a)) * burnR;
+            sb.Draw(_renderer.Pixel, new Rectangle((int)pos.X - 1, (int)pos.Y - 1, 2, 2),
+                new Color(255, 110, 70) * 0.55f);
+        }
+
+        // The sun, breathing slightly like the live one.
+        var flick = 1f + MathF.Sin(_totalTime * 1.7f) * 0.05f;
+        FillCircleWorld(sb, centre, MapSunMarker + 6f * flick, new Color(255, 170, 60, 40));
+        FillCircleWorld(sb, centre, MapSunMarker, new Color(255, 190, 80));
+        FillCircleWorld(sb, centre, MapSunMarker * 0.55f, new Color(255, 245, 200));
+
+        // Planets at their live orbital positions.
+        for (var i = 0; i < _space.Planets.Count; i++)
+        {
+            var p = _space.Planets[i];
+            var pos = MapProject(p.Pos);
+            var r = MapMarkerRadius(p);
+            if (i == _mapHoverPlanet)
+                FillCircleWorld(sb, pos, r + 4f, p.Def.MapAccent * 0.5f);
+            FillCircleWorld(sb, pos, r, p.Def.MapColor);
+            FillCircleWorld(sb, pos - new Vector2(r * 0.3f, r * 0.3f), r * 0.35f, p.Def.MapAccent * 0.8f);
+        }
+
+        // The mothership: heading arrow with a slow-pulsing halo ring.
+        var ship = MapProject(_space.ShipPos);
+        var pulse = MapMarkerRadius(_space.Planets[0]) + 6f + MathF.Sin(_totalTime * 3f) * 2f;
+        for (var d = 0; d < 18; d++)
+        {
+            var a = d * MathHelper.TwoPi / 18;
+            var pos = ship + new Vector2(MathF.Cos(a), MathF.Sin(a)) * pulse;
+            sb.Draw(_renderer.Pixel, new Rectangle((int)pos.X - 1, (int)pos.Y - 1, 2, 2),
+                new Color(150, 220, 255) * 0.8f);
+        }
+        sb.Draw(_arrowTex, ship, null, Color.White, _space.ShipHeading,
+            new Vector2(7.5f, 7.5f), 1.0f, SpriteEffects.None, 0f);
+        sb.End();
+
+        _renderer.DrawText("YOU",
+            new Vector2(ship.X - _renderer.MeasureText("YOU") / 2f, ship.Y + pulse + 4f),
+            new Color(150, 220, 255));
+
+        // Labels — name under every world, sun caption, title, and the footer hints.
+        for (var i = 0; i < _space.Planets.Count; i++)
+        {
+            var p = _space.Planets[i];
+            var pos = MapProject(p.Pos);
+            var warpLocked = p.Def.Id == "rift" && _space.RiftLocked;
+            var name = p.Def.Name.ToUpperInvariant();
+            _renderer.DrawText(name,
+                new Vector2(pos.X - _renderer.MeasureText(name) / 2f, pos.Y + MapMarkerRadius(p) + 5f),
+                warpLocked ? new Color(255, 110, 90)
+                    : i == _mapHoverPlanet ? Color.White : new Color(185, 190, 210));
+        }
+        _renderer.DrawText("SUN",
+            new Vector2(centre.X - _renderer.MeasureText("SUN") / 2f, centre.Y + MapSunMarker + 8f),
+            new Color(255, 190, 80));
+
+        _renderer.DrawText("SYSTEM STAR MAP",
+            new Vector2((VirtualWidth - _renderer.MeasureText("SYSTEM STAR MAP", 3)) / 2f, 18),
+            Color.White, 3);
+        var footer = "HOVER A WORLD FOR SURVEY DETAIL   M/ESC CLOSE"
+                   + (PlanetDefs.DebugMode ? "   RIGHT CLICK: DEBUG WARP" : "");
+        _renderer.DrawText(footer,
+            new Vector2((VirtualWidth - _renderer.MeasureText(footer)) / 2f, VirtualHeight - 26),
             new Color(150, 155, 175));
+
+        if (_mapHoverPlanet >= 0) DrawMapPlanetTooltip(sb, _space.Planets[_mapHoverPlanet]);
+        else if (_mapHoverSun) DrawMapSunTooltip(sb);
+    }
+
+    /// <summary>Greedy word-wrap for tooltip item runs: "PREFIX A 1.2K   B 900" split across
+    /// as many lines as needed to stay under maxW pixels.</summary>
+    private void AddWrapped(List<(string text, Color col, int scale)> lines, string prefix,
+        IEnumerable<string> items, Color col, int maxW)
+    {
+        var line = prefix;
+        var any = false;
+        foreach (var item in items)
+        {
+            any = true;
+            var candidate = line.Length == 0 ? "  " + item : line + "   " + item;
+            if (line.Length > 0 && _renderer.MeasureText(candidate) > maxW)
+            {
+                lines.Add((line, col, 1));
+                line = "  " + item;
+            }
+            else line = candidate;
+        }
+        if (any) lines.Add((line, col, 1));
+    }
+
+    /// <summary>The hover tooltip for a world: survey deposits (rare finds split out), the
+    /// titan with its soul kind and banked count, hazards, shard status, and range.</summary>
+    private void DrawMapPlanetTooltip(SpriteBatch sb, SpacePlanet p)
+    {
+        const int maxW = 470;
+        var def = p.Def;
+        var grey = new Color(150, 155, 175);
+        var lines = new List<(string text, Color col, int scale)>
+        {
+            (def.Name.ToUpperInvariant()
+                + (def.Id == "rift" && _space.RiftLocked ? "  [WARP LOCKED]" : ""), def.MapAccent, 2),
+            (def.Tagline.ToUpperInvariant(), grey, 1),
+            ($"RANGE {MathF.Max(0f, (p.Pos - _space.ShipPos).Length() - p.BodyRadius) / 10f:0} KM", grey, 1),
+        };
+
+        // Titan census: pooled worlds roll a fresh kaiju per visit, so no name ahead of time.
+        if (def.TitanPool is { Length: > 0 })
+            lines.Add(("TITAN: UNSTABLE - ROLLS EACH VISIT", new Color(220, 140, 220), 1));
+        else
+        {
+            var souls = _meta.SoulsOf(def.Titan.ToString());
+            lines.Add(($"TITAN: {TitanName(def.Titan).ToUpperInvariant()}"
+                    + $"  ({TitanName(def.Titan).ToUpperInvariant()} SOUL{(souls > 0 ? $" - {souls} BANKED" : "")})",
+                souls > 0 ? new Color(140, 220, 140) : new Color(200, 160, 120), 1));
+        }
+
+        // Deposits, biggest first, rare gems split onto their own line.
+        var common = new List<string>();
+        var rare = new List<string>();
+        foreach (var (label, n) in Survey.For(def, 12))
+            (RareOres.Contains(label) ? rare : common).Add($"{label} {FormatCount(n)}");
+        if (common.Count > 0) AddWrapped(lines, "MATERIALS: ", common, new Color(200, 205, 220), maxW);
+        if (rare.Count > 0) AddWrapped(lines, "RARE FINDS: ", rare, new Color(150, 230, 255), maxW);
+
+        var hazards = HazardsOf(def);
+        AddWrapped(lines, "HAZARDS: ",
+            hazards.Count > 0 ? hazards : new List<string> { "NONE CHARTED" },
+            hazards.Count > 0 ? new Color(255, 140, 110) : new Color(140, 220, 140), maxW);
+
+        if (def.Id != "rift" && def.Id != "debug")
+            lines.Add((_meta.CoreShards.Contains(def.Id) ? "CORE SHARD SECURED" : "CORE SHARD IN CORE",
+                _meta.CoreShards.Contains(def.Id) ? new Color(150, 230, 255) : grey, 1));
+        if (_meta.PlanetsEscaped.Contains(def.Id))
+            lines.Add(("ESCAPED", new Color(140, 220, 140), 1));
+        if (PlanetDefs.DebugMode)
+            lines.Add(("RIGHT CLICK - WARP HERE", new Color(255, 225, 140), 1));
+
+        DrawMapTooltipBox(sb, MapProject(p.Pos), MapMarkerRadius(p), def.MapAccent, lines);
+    }
+
+    /// <summary>The sun's hover card — it's a charted hazard, not a destination.</summary>
+    private void DrawMapSunTooltip(SpriteBatch sb)
+    {
+        DrawMapTooltipBox(sb, StarMapCentre, MapSunMarker, new Color(255, 190, 80),
+            new List<(string, Color, int)>
+            {
+                ("THE SUN", new Color(255, 190, 80), 2),
+                ("NOT LANDABLE - THE CORONA REPELS ALL APPROACH", new Color(150, 155, 175), 1),
+                ("HAZARD: CORONA CONTACT BURNS THE HULL", new Color(255, 140, 110), 1),
+            });
+    }
+
+    /// <summary>Panel plumbing shared by the planet and sun tooltips: size to the widest
+    /// line, float beside the hovered marker, clamp on-screen, draw with an accent rule.</summary>
+    private void DrawMapTooltipBox(SpriteBatch sb, Vector2 anchor, float markerR, Color accent,
+        List<(string text, Color col, int scale)> lines)
+    {
+        const int pad = 14;
+        var w = 0;
+        var h = pad * 2;
+        foreach (var (text, _, scale) in lines)
+        {
+            w = Math.Max(w, (int)_renderer.MeasureText(text, scale));
+            h += scale >= 2 ? 24 : 17;
+        }
+        w += pad * 2;
+
+        // Prefer the right of the marker; flip left when that runs off-screen.
+        var x = (int)(anchor.X + markerR + 18f);
+        if (x + w > VirtualWidth - 8) x = (int)(anchor.X - markerR - 18f) - w;
+        x = Math.Clamp(x, 8, VirtualWidth - 8 - w);
+        var y = Math.Clamp((int)(anchor.Y - h / 2f), 8, VirtualHeight - 8 - h);
+
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y, w, h), new Color(10, 12, 22, 240));
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y, w, 2), accent);
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y + h - 2, w, 2), accent * 0.5f);
+        sb.End();
+
+        var ty = y + pad;
+        foreach (var (text, col, scale) in lines)
+        {
+            _renderer.DrawText(text, new Vector2(x + pad, ty), col, scale);
+            ty += scale >= 2 ? 24 : 17;
+        }
     }
 
     /// <summary>Approximate-count formatting for the survey ("1.4K" style) — the rounding is
