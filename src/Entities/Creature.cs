@@ -19,6 +19,11 @@ namespace DwarfMiner.Entities;
 ///   • Surface fauna (Grazer, Hopper — passive walkers that flee) and sky fauna (SkyMoth
 ///     passive, SkyStinger dive-bomber) — flyers hold an altitude band, collide with
 ///     terrain, and climb over mountains rather than clipping them.
+///   • Ambushers &amp; artillery (Noita/Terraria-school threats): CaveSlime bounds at prey and
+///     splits when killed; AcidSpitter lobs ballistic acid globs into the cell sim;
+///     BomberBeetle closes, arms, and detonates on any death; SnapperVine lunges on a rooted
+///     tether; RockMimic plays boulder until poked; VoidWraith blinks; CrystalCrawler sprays
+///     shards when shot.
 /// </summary>
 public enum CreatureKind : byte
 {
