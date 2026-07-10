@@ -327,6 +327,23 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   checks (tier curves, shield recharge, loadout economy). The §0 upgrade wishlist is now
   fully resolved — every idea is either shipped or explicitly dropped with reasoning.
 
+- **Star map + sun hazard (DONE 2026-07-09):** the M-key text survey is now a real **star
+  map**: full-screen chart with the sun at the centre, every orbit as a dotted ring, planets
+  at their live orbital positions, and the mothership as a heading arrow ("YOU") with a
+  pulsing halo. Radial **sqrt compression** spreads the inner orbits while the far Rift
+  still fits (`MapProject`/`MapUnproject`). **Hovering** a planet opens the long-range
+  survey tooltip: ore deposits (rare gems split out as RARE FINDS), the titan with its soul
+  kind + banked count (pooled worlds read UNSTABLE), a **hazard manifest** read off the
+  PlanetDef knobs (magma surges, volcanoes, gas/acid, quakes, thin air + meteors, blizzards,
+  swarming caves), core-shard status, and range. The sun is a charted hazard with a dotted
+  corona no-go ring and its own hover card — and a REAL hazard now: `SpaceSim` burns one
+  hull per invulnerability window on corona contact (shield eats a lick; breach = the usual
+  emergency dock). In debug mode (`DM_DEBUG` default-on) **right-click warps** the
+  mothership: onto a hovered planet's parking spot, or to the clicked point in open space
+  (held outside the corona). `DM_SURVEY=<planet id|sun>` forces that body hovered for
+  headless tooltip screenshots (plain `DM_SURVEY=1` still just opens the map). New SimTest:
+  corona contact burns the hull.
+
 **Open design questions:** does death on a planet cost more than the current visit (e.g. the
 rover)? Do souls/upgrades persist across completed runs (prestige reset vs. permanent)?
 Should the warp world end the game or open a second system?
