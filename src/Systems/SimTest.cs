@@ -30,7 +30,9 @@ public static class SimTest
         var embedded = 0;
         var tested = 0;
         foreach (var kind in new[] { CreatureKind.Grub, CreatureKind.Skitterer, CreatureKind.Grazer, CreatureKind.CaveEye,
-                                     CreatureKind.SporeBat, CreatureKind.CrystalCrawler, CreatureKind.VoidWraith })
+                                     CreatureKind.SporeBat, CreatureKind.CrystalCrawler, CreatureKind.VoidWraith,
+                                     CreatureKind.CaveSlime, CreatureKind.Slimelet, CreatureKind.AcidSpitter,
+                                     CreatureKind.BomberBeetle, CreatureKind.SnapperVine, CreatureKind.RockMimic })
         {
             for (var i = 0; i < 25; i++)
             {
