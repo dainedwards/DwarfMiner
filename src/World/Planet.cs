@@ -107,7 +107,7 @@ public sealed class Planet
     /// <summary>Playable ring count for a planet of the given size scale — shared by world
     /// gen and the run-save loader so restored planets get matching geometry.</summary>
     public static int RingsFor(float sizeScale) =>
-        Math.Max(120, (int)MathF.Round(StandardRings * sizeScale));
+        Math.Max(240, (int)MathF.Round(StandardRings * sizeScale));
 
     private readonly TileKind[] _tiles;
     private readonly byte[] _damage;
