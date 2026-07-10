@@ -554,27 +554,34 @@ public static class SimTest
             var pbo = new System.Collections.Generic.List<FallingBoulder>();
             var boss = new Titan(pp, -MathF.PI / 2f, TitanKind.Kong);
             boss.Hatch();   // hatch = aggroed, so the plow runs at full power
-            // A stone slab at body height (3 rings up, inside the plow radius) and a stone
-            // row well below the body centre (the floor sector), then tick once.
-            var (bx, by) = pp.WorldToTile(boss.Position);
+            // A stone slab at body height (16-32px up, inside the plow radius) and a stone
+            // row well below the body centre (the floor sector), then tick once. Tiles are
+            // placed through world coordinates — ring tile counts differ, so reusing one
+            // angular index across rings would drift the slab away from the body.
+            var bup = pp.UpAt(boss.Position);
+            var bright = new Vector2(-bup.Y, bup.X);
+            var slab = new System.Collections.Generic.List<(int x, int y)>();
+            var floor = new System.Collections.Generic.List<(int x, int y)>();
             for (var dy = -1; dy <= 1; dy++)
             {
-                for (var dx = 2; dx <= 4; dx++) pp.Set(bx + dx, by + dy, TileKind.Stone);
-                pp.Set(bx - 5, by + dy, TileKind.Stone);
+                for (var dx = 2; dx <= 4; dx++)
+                    slab.Add(pp.WorldToTile(boss.Position + bup * (dx * Planet.TileSize)
+                                                          + bright * (dy * Planet.TileSize)));
+                floor.Add(pp.WorldToTile(boss.Position - bup * (5 * Planet.TileSize)
+                                                       + bright * (dy * Planet.TileSize)));
             }
+            foreach (var (x, y) in slab) pp.Set(x, y, TileKind.Stone);
+            foreach (var (x, y) in floor) pp.Set(x, y, TileKind.Stone);
             int CountSlab()
             {
                 var n = 0;
-                for (var dy = -1; dy <= 1; dy++)
-                    for (var dx = 2; dx <= 4; dx++)
-                        if (Tiles.IsSolid(pp.Get(bx + dx, by + dy))) n++;
+                foreach (var (x, y) in slab) if (Tiles.IsSolid(pp.Get(x, y))) n++;
                 return n;
             }
             int CountFloor()
             {
                 var n = 0;
-                for (var dy = -1; dy <= 1; dy++)
-                    if (Tiles.IsSolid(pp.Get(bx - 5, by + dy))) n++;
+                foreach (var (x, y) in floor) if (Tiles.IsSolid(pp.Get(x, y))) n++;
                 return n;
             }
             var slabBefore = CountSlab();
