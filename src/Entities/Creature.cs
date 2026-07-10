@@ -663,6 +663,232 @@ public sealed class Creature
         Velocity = Vector2.Lerp(Velocity, dir * speed * speedMul, MathF.Min(1f, 4f * dt));
     }
 
+    // ---------------------------------------------------------------- ambushers & artillery
+
+    /// <summary>VoidWraith: patrols like a cave eye, but every few seconds it *blinks* — a
+    /// short teleport toward nearby prey through open space. It never phases through rock
+    /// (the blink is refused if the destination is solid), it just stops being where your
+    /// crosshair was.</summary>
+    private void TickWraith(float dt, Planet planet, Vector2 toPlayer, float dist, float speedMul)
+    {
+        TickCaveEye(dt, planet, toPlayer, dist, speedMul);
+        if (_swing > 0f) _swing -= dt;
+        _cd -= dt;
+        if (_cd <= 0f && dist < 200f && dist > 40f)
+        {
+            var hop = toPlayer / dist * MathF.Min(46f, dist - 24f);
+            if (!planet.IsSolidAt(Position + hop))
+            {
+                Position += hop;
+                _heading = MathF.Atan2(toPlayer.Y, toPlayer.X); // arrive already facing prey
+                _swing = 0.35f;                                 // afterimage shimmer
+                _cd = 2.2f + (float)Random.Shared.NextDouble() * 1.2f;
+            }
+            else
+            {
+                _cd = 0.6f; // wall in the way — retry once it has drifted somewhere open
+            }
+        }
+    }
+
+    /// <summary>CrystalCrawler: stalks like a grub, but shooting it is a mistake at close
+    /// range — each hit that lands (off an internal cooldown) shatters part of its back into
+    /// a radial spray of crystal shards.</summary>
+    private void TickCrawler(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul, List<TitanProjectile>? shots)
+    {
+        TickGrub(dt, planet, up, right, toPlayer, dist, speedMul);
+        if (_swing > 0f) _swing -= dt;
+        _cd -= dt;
+        // HitFlash is set to 0.15 the frame a hit lands and decays with dt, so > 0.12
+        // reads "was hit within the last frame or two".
+        if (HitFlash > 0.12f && _cd <= 0f && shots is not null)
+        {
+            _cd = 1.6f;
+            _swing = 0.3f;
+            for (var i = 0; i < 6; i++)
+            {
+                var a = _phase + i * (MathF.Tau / 6f);
+                var dir = Rotate(up, a);
+                shots.Add(new TitanProjectile(Position + dir * (Radius + 2f), dir * 170f,
+                    TitanShotKind.Spike, damage: 6f));
+            }
+        }
+    }
+
+    /// <summary>CaveSlime / Slimelet: a hopper with intent. Grounded and off cooldown it
+    /// bounds toward the dwarf (higher arc when the prey is above); between hops it sits and
+    /// jiggles. Killing a full-size slime splits it into two slimelets — handled at the death
+    /// site in Game1, since a creature can't add to the list it lives in.</summary>
+    private void TickSlime(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul)
+    {
+        _cd -= dt;
+        if (IsGrounded(planet, up))
+        {
+            if (_cd <= 0f)
+            {
+                var small = Kind == CreatureKind.Slimelet;
+                _cd = (small ? 0.7f : 1.0f) + (float)Random.Shared.NextDouble() * 0.7f;
+                var s = dist < 190f
+                    ? MathF.Sign(Vector2.Dot(toPlayer, right))           // bound at the dwarf
+                    : (Random.Shared.Next(2) == 0 ? 1f : -1f);           // idle wandering hop
+                // Leap higher when the prey is above — slimes climb ledges by committing.
+                var lift = dist < 190f && Vector2.Dot(toPlayer, up) > 15f ? 150f : 110f;
+                Velocity = right * (s * MoveSpeed * speedMul) + up * (small ? lift * 0.8f : lift);
+                return;
+            }
+            var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 300f * dt);
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
+            Velocity = right * vT + up * vN;
+        }
+        else
+        {
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
+            Velocity = right * Vector2.Dot(Velocity, right) + up * vN;
+        }
+    }
+
+    /// <summary>AcidSpitter: cave artillery. It shuffles to hold a comfortable band — backing
+    /// off when crowded — and lobs ballistic acid globs at anything it can see. The globs are
+    /// TitanShotKind.Acid at spitter damage: they arc, burst into live acid cells, and the
+    /// cell sim does the area denial.</summary>
+    private void TickSpitter(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul, List<TitanProjectile>? shots)
+    {
+        if (_swing > 0f) _swing -= dt;
+        _cd -= dt;
+
+        float moveAxis;
+        if (dist < 60f)
+        {
+            moveAxis = -MathF.Sign(Vector2.Dot(toPlayer, right)); // too close — waddle away
+        }
+        else
+        {
+            Wander -= dt;
+            if (Wander <= 0) Wander = 2.5f + (float)Random.Shared.NextDouble() * 3f;
+            moveAxis = MathF.Sin(Wander * 1.8f) * 0.4f;
+        }
+        GroundMove(dt, planet, up, right, moveAxis, speedMul);
+
+        if (dist < 185f && dist > 0.01f && _cd <= 0f && shots is not null
+            && HasLineOfSight(planet, toPlayer, dist))
+        {
+            // Lofted lead: aim above the straight line, more loft with range, so the
+            // gravity-pulled glob comes down on the target instead of undershooting.
+            var dir = toPlayer / dist;
+            var aim = Vector2.Normalize(dir + up * (0.2f + dist * 0.0022f));
+            shots.Add(new TitanProjectile(Position + aim * (Radius + 2f), aim * 155f,
+                TitanShotKind.Acid, damage: 8f));
+            _cd = 2.4f + (float)Random.Shared.NextDouble() * 0.8f;
+            _swing = 0.4f; // maw-open animation
+        }
+    }
+
+    /// <summary>BomberBeetle: a fast scuttler with a volatile abdomen. It sprints at the
+    /// dwarf; at arm's length it stops, arms (rapid flashing), and detonates. Any death —
+    /// fuse-out or gunned down mid-charge — explodes it (see the death handler in Game1),
+    /// so range is the counter and packed corridors are a chain reaction waiting to happen.</summary>
+    private void TickBomber(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul)
+    {
+        if (_fuse > 0f)
+        {
+            _fuse -= dt;
+            GroundMove(dt, planet, up, right, 0f, speedMul); // plants its feet and cooks
+            if (_fuse <= 0f) Health = 0f;                    // death handler does the blast
+            return;
+        }
+        if (dist < 26f)
+        {
+            _fuse = 0.7f;
+            return;
+        }
+        float moveAxis;
+        if (dist < 170f)
+        {
+            moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right));
+        }
+        else
+        {
+            Wander -= dt;
+            if (Wander <= 0) Wander = 1f + (float)Random.Shared.NextDouble() * 1.5f;
+            moveAxis = MathF.Sin(Wander * 4f);
+        }
+        GroundMove(dt, planet, up, right, moveAxis, speedMul);
+    }
+
+    /// <summary>SnapperVine: a lunge-plant rooted where it sprouted. The head sways on its
+    /// stalk until something edible drifts inside range, then whips at it — but it can never
+    /// leave its tether, so the counter is simply staying a step outside the circle (or
+    /// shooting the head off from there).</summary>
+    private void TickVine(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul)
+    {
+        if (!_rooted)
+        {
+            _root = Position;
+            _rooted = true;
+        }
+        const float tether = 52f;
+        Wander += dt;
+
+        Vector2 desired;
+        if (dist < 120f && dist > 0.01f)
+        {
+            desired = toPlayer / dist * MoveSpeed * speedMul; // strike
+        }
+        else
+        {
+            // Idle: hover above the root, swaying.
+            var rest = _root + up * 16f + right * (MathF.Sin(Wander * 1.4f + _phase) * 9f);
+            desired = (rest - Position) * 3f;
+        }
+
+        // Tether spring: past the limit the stalk hauls the head back hard, so a whiffed
+        // lunge snaps back instead of dragging the plant across the cave.
+        var fromRoot = Position - _root;
+        var stretch = fromRoot.Length();
+        if (stretch > tether)
+            desired += -fromRoot / stretch * ((stretch - tether) * 10f);
+
+        Velocity = Vector2.Lerp(Velocity, desired, MathF.Min(1f, 6f * dt));
+    }
+
+    /// <summary>RockMimic: sits disguised as an ore-speckled boulder — the gold glint is the
+    /// bait. It wakes when a dwarf gets greedy (close approach) or pokes it with anything,
+    /// then chases hard and permanently. Until it wakes it is non-hostile so sentries ignore
+    /// the disguise too.</summary>
+    private void TickMimic(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul)
+    {
+        if (!_awake)
+        {
+            GroundMove(dt, planet, up, right, 0f, speedMul); // settle like any loose rock
+            if (dist < 42f || HitFlash > 0f)
+            {
+                _awake = true;
+                Hostile = true;
+                _swing = 0.5f; // wake-lurch animation
+            }
+            return;
+        }
+        if (_swing > 0f) _swing -= dt;
+        float moveAxis;
+        if (dist < 240f) // long memory, wide aggro — once it's up, it's coming
+        {
+            moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right));
+        }
+        else
+        {
+            Wander -= dt;
+            if (Wander <= 0) Wander = 1.5f + (float)Random.Shared.NextDouble() * 2f;
+            moveAxis = MathF.Sin(Wander * 3f);
+        }
+        GroundMove(dt, planet, up, right, moveAxis, speedMul);
+    }
+
     // ---------------------------------------------------------------- sky fauna
 
     private void TickFlyer(float dt, Planet planet, Vector2 up, Vector2 right,
