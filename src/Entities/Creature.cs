@@ -739,11 +739,11 @@ public sealed class Creature
             {
                 var small = Kind == CreatureKind.Slimelet;
                 _cd = (small ? 0.7f : 1.0f) + (float)Random.Shared.NextDouble() * 0.7f;
-                var s = dist < 190f
+                var s = dist < 260f
                     ? MathF.Sign(Vector2.Dot(toPlayer, right))           // bound at the dwarf
                     : (Random.Shared.Next(2) == 0 ? 1f : -1f);           // idle wandering hop
                 // Leap higher when the prey is above — slimes climb ledges by committing.
-                var lift = dist < 190f && Vector2.Dot(toPlayer, up) > 15f ? 150f : 110f;
+                var lift = dist < 260f && Vector2.Dot(toPlayer, up) > 15f ? 150f : 110f;
                 Velocity = right * (s * MoveSpeed * speedMul) + up * (small ? lift * 0.8f : lift);
                 return;
             }
