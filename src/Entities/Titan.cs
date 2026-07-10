@@ -984,6 +984,20 @@ public sealed class Titan
         return v + MathF.Sign(d) * maxDelta;
     }
 
+    /// <summary>True when a walker's next stride in <paramref name="dir"/> has no ground within
+    /// stepping reach below the lead-foot line — the lip of a chasm or cave mouth. The probe
+    /// allows a generous step-down (the suspension lowers the body down slopes) before calling
+    /// it a cliff.</summary>
+    private bool CliffAhead(Planet planet, Vector2 up, Vector2 right, int dir)
+    {
+        if (Legs.Length == 0) return false;
+        var start = Position + right * (dir * (StanceHalf + StrideHalf + 46f)) + up * 40f;
+        var maxDrop = 40f + Hover + 110f;   // body height above feet + slope allowance
+        for (var d = 0f; d <= maxDrop; d += 8f)
+            if (planet.IsSolidAt(start - up * d)) return false;
+        return true;
+    }
+
     /// <summary>Search for a foot anchor for one leg by ray-marching downward (along -planet-up)
     /// until a solid tile is found. The search column sits at the leg's neutral stance point
     /// (<see cref="StanceHalf"/> to its side of the pelvis) shifted by <paramref name="lead"/>
