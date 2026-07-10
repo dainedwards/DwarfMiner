@@ -506,6 +506,130 @@ public sealed class Cells
         // Covered the full distance without obstruction — TryMoveTo kept the cell awake.
     }
 
+    /// <summary>Note the owning planet tile of a grain that just came to rest.</summary>
+    private void RecordRest(int cx, int cy)
+    {
+        var tx = cy / Density;
+        var ty = WrapX(cx, _cellsAt[cy]) / Density;
+        _restTiles.Add(Planet.Index(tx, ty));
+    }
+
+    /// <summary>Compaction sweep (every <see cref="CompactSweepPeriod"/>): convert candidate
+    /// tiles whose second look finds them unchanged, then promote freshly rested tiles to
+    /// candidates. Both passes are bounded by actual grain churn, not world size.</summary>
+    private void SweepCompaction()
+    {
+        if (_compacting.Count > 0)
+        {
+            _compactScratch.Clear();
+            foreach (var (idx, (fill, due)) in _compacting)
+                if (_time >= due) _compactScratch.Add(idx);
+            foreach (var idx in _compactScratch)
+            {
+                _compacting.Remove(idx);
+                var (tx, ty) = Planet.UnIndex(idx);
+                // Convert only if the fill is exactly what it was CompactDelay ago — any
+                // grain that arrived or left since means the pile is still live, and the
+                // tile has to earn a fresh undisturbed window via _restTiles.
+                if (CompactableFill(tx, ty) == _compacting.GetValueOrDefault(idx).fill) { }
+                if (CompactableFill(tx, ty) is var f && f > 0 && f == _compacting.GetValueOrDefault(idx, (f, 0f)).fill)
+                    Compact(tx, ty);
+            }
+        }
+
+        if (_restTiles.Count == 0) return;
+        foreach (var idx in _restTiles)
+        {
+            if (_compacting.ContainsKey(idx)) continue;
+            var (tx, ty) = Planet.UnIndex(idx);
+            var fill = CompactableFill(tx, ty);
+            if (fill > 0) _compacting[idx] = (fill, _time + CompactDelay);
+        }
+        _restTiles.Clear();
+    }
+
+    /// <summary>Occupied-cell count if the tile at (tx,ty) is eligible to compact, else -1.
+    /// Eligible: open (Sky) tile, resting on a solid tile, at least <see cref="CompactMinFill"/>
+    /// cells all holding compactable grain (any liquid/gas/void beyond the tolerance disqualifies),
+    /// fully roofed by blocked cells (buried — surface piles stay loose and pourable), and not
+    /// within <see cref="CompactExclusionRadius"/> of the player.</summary>
+    private int CompactableFill(int tx, int ty)
+    {
+        if (Planet.Get(tx, ty) != TileKind.Sky) return -1;
+        if (tx <= 0 || !Tiles.IsSolid(Planet.Get(Planet.InnerNeighbour(tx, ty).x, Planet.InnerNeighbour(tx, ty).y)))
+            return -1;
+        if (CompactionExclusion is { } avoid
+            && Vector2.DistanceSquared(Planet.TileToWorld(tx, ty), avoid)
+               < CompactExclusionRadius * CompactExclusionRadius)
+            return -1;
+
+        var c0y = tx * Density;
+        var c0x = ty * Density;
+        var fill = 0;
+        for (var dy = 0; dy < Density; dy++)
+            for (var dx = 0; dx < Density; dx++)
+            {
+                var m = (Material)_mat[Idx(c0x + dx, c0y + dy)];
+                if (m == Material.Empty) continue;
+                if (!Materials.IsCompactable(m)) return -1;
+                fill++;
+            }
+        if (fill < CompactMinFill) return -1;
+
+        // Buried: every cell along the tile's outer edge has something (cell or solid tile)
+        // directly above it, so this is pile interior — never the loose, visible crest.
+        var topRow = c0y + Density - 1;
+        for (var dx = 0; dx < Density; dx++)
+        {
+            var (ocx, ocy) = OuterCell(c0x + dx, topRow);
+            if (!IsBlocked(ocx, ocy)) return -1;
+        }
+        return fill;
+    }
+
+    /// <summary>Press the tile's grains into a Conglomerate: record the exact cell makeup
+    /// (so breaking it spills the same cells back out), blend a display tint, clear the
+    /// cells, and stamp the solid tile.</summary>
+    private void Compact(int tx, int ty)
+    {
+        var c0y = tx * Density;
+        var c0x = ty * Density;
+        var counts = new Dictionary<(byte mat, byte src), byte>();
+        int rSum = 0, gSum = 0, bSum = 0, n = 0;
+        for (var dy = 0; dy < Density; dy++)
+            for (var dx = 0; dx < Density; dx++)
+            {
+                var i = Idx(c0x + dx, c0y + dy);
+                var m = (Material)_mat[i];
+                if (m == Material.Empty) continue;
+                var key = ((byte)m, _srcTile[i]);
+                counts.TryGetValue(key, out var c);
+                counts[key] = (byte)(c + 1);
+                var col = GrainColor(m, (TileKind)_srcTile[i]);
+                rSum += col.R; gSum += col.G; bSum += col.B; n++;
+                _mat[i] = 0;
+                _srcTile[i] = 0;
+                ClearKinetics(i);
+            }
+        if (n == 0) return;
+
+        var parts = new (byte mat, byte src, byte count)[counts.Count];
+        var p = 0;
+        foreach (var ((mat, src), count) in counts) parts[p++] = (mat, src, count);
+        Planet.SetConglomerate(tx, ty,
+            new Planet.TileComposition(new Color(rSum / n, gSum / n, bSum / n), parts));
+    }
+
+    /// <summary>Flat display colour of one grain, for composition tint blending.</summary>
+    private static Color GrainColor(Material m, TileKind src) => m switch
+    {
+        Material.Sand => new Color(190, 158, 92),
+        Material.Dirt => new Color(115, 75, 42),
+        Material.Gravel => new Color(125, 120, 110),
+        Material.Dust when src != TileKind.Sky => Tiles.BaseColor(src),
+        _ => new Color(190, 158, 92),
+    };
+
     private void TickLiquid(int cx, int cy, float dt)
     {
         var i = Idx(cx, cy);
