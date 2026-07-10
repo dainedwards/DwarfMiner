@@ -1903,6 +1903,8 @@ public sealed partial class DwarfMinerGame : Game
         _launchShipPos = pad;
         _launchUp = _run.Planet.UpAt(pad);
         _ascentVel = _launchUp * 30f;
+        _ascentHeading = _launchUp;
+        _ascentTime = 0f;
         _ascending = true;
         _toast = "ROCKET IS YOURS - WASD/ARROWS FLY, DOCK AT THE MOTHERSHIP";
         _toastTimer = 3.5f;
