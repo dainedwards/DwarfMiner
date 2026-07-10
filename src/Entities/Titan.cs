@@ -1151,10 +1151,12 @@ public sealed class Titan
 
 /// <summary>One procedural leg of the Titan. Hip is body-local (see <see cref="Titan.HipWorld"/>
 /// — the two sockets sit <see cref="Titan.HipHalfSpan"/> apart on the pelvis); foot is
-/// world-space and persists across frames — feet stay planted until the body has moved enough
-/// to trigger a step, then arc to a new terrain-resolved anchor. Hip→foot distance is capped
-/// at <see cref="Titan.LegMaxReach"/>: anchors clamp to reach and an overstretched planted leg
-/// steps early, so legs compress and bend but never rubber-band.</summary>
+/// world-space and persists across frames — a foot stays planted while the body strides past
+/// it, then swings ahead of the body to a new terrain-resolved anchor (see
+/// <see cref="Titan.StrideHalf"/>; legs alternate so one foot is always down). Hip→foot
+/// distance is capped at <see cref="Titan.LegMaxReach"/>: anchors clamp to reach and an
+/// overstretched planted leg steps early, so legs compress and bend but never rubber-band.
+/// The drawn leg is three-boned — hip→knee→ankle→toe (<see cref="Titan.AnkleLift"/>).</summary>
 public sealed class TitanLeg
 {
     public float HipForward;       // body-tangent offset of the hip (signed: front/back)
