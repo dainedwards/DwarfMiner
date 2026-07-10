@@ -91,7 +91,21 @@ public sealed class Titan
     /// grace between contact hits so an overlap doesn't shred the player every frame.</summary>
     private int _dashesLeft;
     private float _clipTimer;
-    /// <summary>Slattern alternates tail-spike barrages with sonic pulses.
+    /// <summary>Slattern alternates tail-spike barrages with sonic pulses.</summary>
+    private bool _slatternPulse;
+
+    /// <summary>Dig-down hunt: very angry, prey deep below and roughly underfoot → the walker
+    /// plants itself and pounds the ground. Each timed slam (see the dig block in
+    /// <see cref="Update"/>) forces a leg to rear up and stomp in place; the landing excavates
+    /// a body-wide crater (<see cref="DigCrater"/>), the feet re-anchor into the hole and the
+    /// suspension follows them down — it sinks toward the player one deliberate slam at a
+    /// time rather than gliding through rock.</summary>
+    public bool Digging { get; private set; }
+    /// <summary>Anger required before it starts digging down after a burrowed player.</summary>
+    public const float DigAngerGate = 55f;
+    private float _digTimer;
+    private int _digLeg;
+    private bool _digPending;
 
     /// <summary>Projectiles can hit the boss/egg except while the Sandworm is burrowed.</summary>
     public bool Targetable => !Submerged;
