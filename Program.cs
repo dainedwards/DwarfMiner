@@ -22,7 +22,7 @@ if (args.Length > 0 && args[0] == "--titanwalk")
     var p = DwarfMiner.World.WorldGen.Generate(55);
     var cells = new DwarfMiner.World.Cells(p);
     var phys = new DwarfMiner.World.Physics(p, cells);
-    var t = new DwarfMiner.Entities.Titan(p, -MathF.PI / 2f, DwarfMiner.Entities.TitanKind.Godzilla);
+    var t = new DwarfMiner.Entities.Titan(p, -MathF.PI / 2f, DwarfMiner.World.TitanKind.Godzilla);
     t.Hatch();
     var bo = new System.Collections.Generic.List<DwarfMiner.Entities.FallingBoulder>();
     var sh = new System.Collections.Generic.List<DwarfMiner.Entities.TitanProjectile>();
