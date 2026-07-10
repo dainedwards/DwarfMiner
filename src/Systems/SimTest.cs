@@ -1466,6 +1466,21 @@ public static class SimTest
             MathF.Abs(stationAlt - Session.OrbitAltitude) < 1f
             && !pre.Planet.IsSolidAt(pre.StationPos),
             $"alt {stationAlt:0} spawn {preSpawn.Length():0}");
+
+        // Aim predictor: flying at a planet names it long before it's the nearest body, so
+        // the prefetch gets the whole cruise as build lead. Flying the gap names nothing.
+        var sim7 = new Space.SpaceSim { AsteroidTarget = 0 };
+        var target = sim7.Planets[2];
+        var away = target.Pos + Vector2.Normalize(target.Pos) * 3000f;   // sun-away, far out
+        sim7.ShipPos = away;
+        sim7.ShipVel = Vector2.Normalize(target.Pos - away) * 500f;
+        Check("prefetch: aim predictor names the planet dead ahead",
+            sim7.AimedPlanet()?.Def.Id == target.Def.Id);
+        sim7.ShipVel = new Vector2(-sim7.ShipVel.Y, sim7.ShipVel.X);   // 90° off — no target
+        var offAim = sim7.AimedPlanet();
+        Check("prefetch: aim predictor stays quiet flying past",
+            offAim is null || offAim.Def.Id != target.Def.Id,
+            offAim is null ? "null" : offAim.Def.Id);
     }
 
     private static void Check(string name, bool ok, string detail = "")
