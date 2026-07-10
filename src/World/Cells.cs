@@ -101,6 +101,30 @@ public sealed class Cells
     private readonly Dictionary<string, float> _dustAccum = new();
     private float _time;
 
+    // --- Compaction: buried, undisturbed grains re-form into Conglomerate tiles. ---
+    // Per-cell timers would keep every resting grain awake, so the mechanic is tile-level
+    // and sweep-based instead: TickSand records the owning tile whenever a grain comes to
+    // rest, a slow sweep promotes full+buried tiles to candidates, and a candidate converts
+    // only if a *second* look CompactDelay later finds its fill untouched — "undisturbed for
+    // N seconds" without any bookkeeping in the hot move path.
+    /// <summary>Planet tile indices where a grain came to rest since the last sweep.</summary>
+    private readonly HashSet<int> _restTiles = new();
+    /// <summary>Candidate tiles awaiting their second look: fill count at promotion + due time.</summary>
+    private readonly Dictionary<int, (int fill, float due)> _compacting = new();
+    private readonly List<int> _compactScratch = new();
+    private float _compactSweepAt;
+    private const float CompactSweepPeriod = 1.5f;
+    /// <summary>Seconds a candidate must sit untouched before it converts.</summary>
+    private const float CompactDelay = 10f;
+    /// <summary>Occupied-cell floor for conversion — near-full so surface piles stay loose;
+    /// a couple of voids are tolerated because craggy interlocked piles keep small gaps.</summary>
+    private const int CompactMinFill = Density * Density - 2;
+    /// <summary>No compaction this close to the player (world px) — never entomb the dwarf
+    /// or solidify the dust pile they're actively vacuuming.</summary>
+    private const float CompactExclusionRadius = 24f;
+    /// <summary>Player position, refreshed by Game1 each frame; null in headless contexts.</summary>
+    public Vector2? CompactionExclusion;
+
     public Cells(Planet planet)
     {
         Planet = planet;
