@@ -745,7 +745,7 @@ public sealed partial class DwarfMinerGame : Game
         // out from under the menu). Edge-triggered so the close-press doesn't also quit.
         if (Pressed(keys, _prevKeys, Keys.Escape)
             && !(_screen == GameScreen.Playing && (_craftingMenu.Open || _debugMenu.Open || _loadoutOpen))
-            && !(_screen == GameScreen.Space && (_upgradesOpen || _surveyOpen)))
+            && !(_screen == GameScreen.Space && (_upgradesOpen || _surveyOpen || _debugMenu.Open)))
             Exit();
 
         // F12 → defer one-shot screenshot until end of next Draw, where the backbuffer
