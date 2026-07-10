@@ -485,6 +485,70 @@ public sealed partial class DwarfMinerGame
         _toastTimer = 3.5f;
     }
 
+    /// <summary>The space screen's developer menu rows — godmode grants for testing the
+    /// foundry, loadouts, and the warp gate without grinding. Mirrors the planet-side
+    /// boss-spawn menu on the same F9 key.</summary>
+    private DebugMenu.Entry[] BuildSpaceDebugEntries() => new DebugMenu.Entry[]
+    {
+        new("GODMODE — everything below at once", GrantGodmode),
+        new("Fill cargo hold (9999 of every resource)", GrantAllMaterials),
+        new("Secure all core shards (warp ready)", GrantCoreShards),
+        new("Top up fuel + rovers", GrantFuelAndRovers),
+    };
+
+    /// <summary>Debug godmode: every resource in the hold, every titan soul banked, every
+    /// core shard secured (warp-ready), and fuel/rovers/hull topped off — effectively
+    /// unlimited materials. Re-run it from the menu whenever the pile runs low.</summary>
+    private void GrantGodmode()
+    {
+        GrantAllMaterials();
+        GrantCoreShards();
+        GrantFuelAndRovers();
+        foreach (var kind in Enum.GetNames<TitanKind>())
+            _meta.TitanSouls[kind] = 99;
+        _space.Hull = _space.HullMax;
+        _meta.Save();
+        _toast = "GODMODE - HOLD STOCKED, SHARDS SECURED, SOULS BANKED";
+        _toastTimer = 3f;
+    }
+
+    /// <summary>Stock the mothership's hold with 9999 of every resource id the game knows —
+    /// the inventory catalogue, the harvest drops, and the refined pure_ metals the foundry
+    /// bills in — so nothing is ever short.</summary>
+    private void GrantAllMaterials()
+    {
+        foreach (var id in Tiles.ResourceOrder)
+            _meta.ShipCargo[id] = 9999;
+        foreach (var id in new[] { "meat", "hide", "chitin" })
+            _meta.ShipCargo[id] = 9999;
+        foreach (var id in new[] { "iron", "coal", "silver", "gold", "platinum" })
+            _meta.ShipCargo["pure_" + id] = 9999;
+        _meta.Save();
+        _toast = "CARGO HOLD STOCKED - 9999 OF EVERYTHING";
+        _toastTimer = 3f;
+    }
+
+    /// <summary>Secure every planet's core shard — the warp-drive material — so the Rift
+    /// unlocks and J warps immediately.</summary>
+    private void GrantCoreShards()
+    {
+        foreach (var def in PlanetDefs.All)
+            if (def.Id != "rift" && !_meta.CoreShards.Contains(def.Id))
+                _meta.CoreShards.Add(def.Id);
+        _meta.Save();
+        _toast = $"ALL CORE SHARDS SECURED ({_meta.CoreShards.Count}/{PlanetDefs.WarpShardsNeeded}) - WARP READY";
+        _toastTimer = 3f;
+    }
+
+    private void GrantFuelAndRovers()
+    {
+        _meta.MotherFuel = 9999;
+        _meta.Rovers = 99;
+        _meta.Save();
+        _toast = "TANK AND ROVER BAY FULL";
+        _toastTimer = 3f;
+    }
+
     private void UpdateUpgradeMenu(KeyboardState keys)
     {
         if (Pressed(keys, _prevKeys, Keys.Escape)) _upgradesOpen = false;
