@@ -270,15 +270,11 @@ public sealed partial class DwarfMinerGame
     }
 
     /// <summary>Claim a prefetched Session for this planet, waiting out any remaining build
-    /// time (still faster than restarting). Null when nothing (or the wrong world) was
-    /// prefetched — the caller builds synchronously.</summary>
+    /// time (still faster than restarting). Null when this world was never prefetched —
+    /// the caller builds synchronously.</summary>
     private Session? TakePrefetchedSession(PlanetDef def)
     {
-        var task = _prefetchTask;
-        var id = _prefetchId;
-        _prefetchTask = null;
-        _prefetchId = null;
-        if (task is null || id != def.Id) return null;
+        if (!_prefetch.Remove(def.Id, out var task)) return null;
         try { return task.GetAwaiter().GetResult(); }
         catch { return null; }   // background build died — rebuild on the main thread
     }
