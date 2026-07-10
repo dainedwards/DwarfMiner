@@ -147,6 +147,16 @@ public static class SpawnDirector
                      : CreatureKind.RockMimic;
             }
 
+            // Stationary ambushers have their own small allowance (they don't count toward
+            // the cave cap); when it's full, the slot becomes a hunter from the same band so
+            // the spawn tick is never wasted on a fourth vine.
+            if (IsStationary(kind) && CountKindsNear(run, 550f, stationary: true) >= 3)
+            {
+                kind = depth > 45f ? CreatureKind.HornedDelver
+                     : depth > 20f ? CreatureKind.Borer
+                     : CreatureKind.CaveSlime;
+            }
+
             // Biome specials override the generic roster: wraiths haunt the Rift at every
             // depth, crawlers stalk the deeps of crystal-pocket worlds, and spore bats flit
             // through the shallow caves of worlds with fungal groves.
