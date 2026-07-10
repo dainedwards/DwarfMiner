@@ -1531,6 +1531,20 @@ public sealed class Creature
                 r.AddLight(Position, 22f + pulse, new Color(150, 80, 220));
                 break;
             }
+            case CreatureKind.AcidSpitter:
+                // Throat sac glows as the next glob charges — the tell in a dark cave.
+                r.AddLight(Position, 8f + (1f - MathHelper.Clamp(_cd / 2.4f, 0f, 1f)) * 8f,
+                    new Color(160, 220, 80));
+                break;
+            case CreatureKind.BomberBeetle:
+                // An armed bomber floods its corridor with strobing warning light.
+                if (_fuse > 0f)
+                    r.AddLight(Position, 20f + MathF.Sin(r.Time * 30f) * 8f, new Color(255, 120, 50));
+                break;
+            case CreatureKind.CaveSlime:
+            case CreatureKind.Slimelet:
+                r.AddLight(Position, 9f, new Color(90, 200, 160));
+                break;
         }
     }
 
