@@ -363,7 +363,11 @@ public sealed partial class DwarfMinerGame
         if (_upgradesOpen || _surveyOpen)
         {
             if (_upgradesOpen) UpdateUpgradeMenu(keys);
-            else if (Pressed(keys, _prevKeys, Keys.Escape)) _surveyOpen = false;
+            else
+            {
+                if (Pressed(keys, _prevKeys, Keys.Escape)) _surveyOpen = false;
+                UpdateStarMap(mouse);
+            }
             _space.Update(dt, 0f, thrust: false, brake: false);
             TickSpaceCameraAndBreach(dt);
             return;
