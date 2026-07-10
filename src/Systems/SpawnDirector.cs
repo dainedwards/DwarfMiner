@@ -332,7 +332,13 @@ public static class SpawnDirector
         alt = MathF.Min(alt, (run.Planet.Radius - 6) * Planet.TileSize);
         var pos = run.Planet.Center + dir * alt;
         if ((pos - run.Player.Position).Length() < 160f) return;
-        var kind = Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth : CreatureKind.SkyStinger;
+        // The Rift's sky belongs to null moths — its one neutral species. Everywhere else
+        // flies the moth/stinger mix (the debug rig throws null moths into the pot too).
+        var kind = run.Def.Biome == "rift"
+            ? CreatureKind.NullMoth
+            : run.Def.Biome == "debug" && Random.Shared.Next(3) == 0
+                ? CreatureKind.NullMoth
+                : Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth : CreatureKind.SkyStinger;
         var c = new Creature(pos, kind);
         ClearSpawnSpace(run, pos, c.Radius); // altitude is above local ground, but a mountain flank can still clip the band
         run.Creatures.Add(c);
