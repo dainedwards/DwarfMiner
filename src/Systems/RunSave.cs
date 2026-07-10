@@ -201,7 +201,7 @@ public static class RunSave
             }
 
             // Timers restart at their run-start defaults — a beat of calm after resuming.
-            run.EarthquakeTimer = 25f * def.QuakeScale;
+            run.DisasterTimer = AmbientDirector.NextInterval(def) * 0.5f;
             run.SpawnTimer = 6f;
             run.FaunaTimer = 8f;
             return run;
