@@ -124,7 +124,7 @@ public static class PlanetGen
                 ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy * 0.95f,
                 Titan: titan, FungalPockets: 2 + rng.Next(3),
                 SizeScale: size, LakeScale: J(2.6f, 3.4f),
-                Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "ocean"),
+                Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "ocean", Difficulty: difficulty),
 
             Biome.Acid => new(id, name,
                 "Acid world - open vitriol pools, and the clouds rain worse",
@@ -139,7 +139,7 @@ public static class PlanetGen
                 CrystalPockets: 1 + rng.Next(2),
                 SizeScale: size, AcidPools: 4 + rng.Next(3), AcidRain: true,
                 Volcanoes: 1 + rng.Next(2), VolcanoScale: J(0.75f, 1.05f), VolcanoAcid: true,
-                Biome: "acid"),
+                Biome: "acid", Difficulty: difficulty),
 
             Biome.Frost => new(id, name,
                 "Frozen world - blizzards bite anyone caught on the ice",
@@ -151,7 +151,8 @@ public static class PlanetGen
                 QuakeScale: quake, CaveSpawnCap: caveCap,
                 ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy * 1.05f,
                 Titan: titan, CrystalPockets: 1 + rng.Next(2), FungalPockets: rng.Next(3),
-                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "frost"),
+                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "frost",
+                Difficulty: difficulty),
 
             Biome.Ember => new(id, name,
                 "Volcanic world - lava at the door and gas in the deeps",
@@ -164,7 +165,8 @@ public static class PlanetGen
                 ShipOre: shipOre, ShipOreCount: shipOreCount,
                 OxygenDrainScale: oxy * 1.2f, SeedsGas: true, Titan: titan,
                 CrystalPockets: rng.Next(3), SizeScale: size,
-                Volcanoes: 2 + rng.Next(2), VolcanoScale: J(1.0f, 1.3f), Biome: "ember"),
+                Volcanoes: 2 + rng.Next(2), VolcanoScale: J(1.0f, 1.3f), Biome: "ember",
+                Difficulty: difficulty),
 
             Biome.Slag => new(id, name,
                 "Dead metal world - thin air, meteor-scarred, rich veins",
@@ -176,7 +178,8 @@ public static class PlanetGen
                 QuakeScale: quake, CaveSpawnCap: caveCap + 2,
                 ShipOre: shipOre, ShipOreCount: shipOreCount,
                 OxygenDrainScale: oxy * 1.35f, SeedsAcid: rng.Next(2) == 0, Titan: titan,
-                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "slag"),
+                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "slag",
+                Difficulty: difficulty),
 
             Biome.Crystal => new(id, name,
                 "Crystalline world - glittering, swarming, and deeply unkind",
@@ -189,7 +192,8 @@ public static class PlanetGen
                 ShipOre: shipOre, ShipOreCount: shipOreCount,
                 OxygenDrainScale: oxy * 1.25f, SeedsGas: true, SeedsAcid: true, Titan: titan,
                 CrystalPockets: 3 + rng.Next(2), FungalPockets: rng.Next(2),
-                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "crystal"),
+                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "crystal",
+                Difficulty: difficulty),
 
             _ => new(id, name,
                 "Living world - gentle green, lakes, moss, iron",
@@ -201,7 +205,7 @@ public static class PlanetGen
                 QuakeScale: quake, CaveSpawnCap: caveCap,
                 ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy,
                 Titan: titan, CrystalPockets: 1, FungalPockets: 3 + rng.Next(3),
-                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale),
+                SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Difficulty: difficulty),
         };
     }
 

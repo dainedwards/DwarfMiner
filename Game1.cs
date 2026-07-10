@@ -381,23 +381,21 @@ public sealed partial class DwarfMinerGame : Game
                 _run.Creatures.Add(new Creature(
                     _run.Player.Position + fRight * (26f + i * 22f) + fUp * 8f, kinds[i]));
         }
-        _run.EarthquakeTimer = 25f * def.QuakeScale;
         _run.SpawnTimer = 6f;
         _run.FaunaTimer = 8f;
         // DM_METEOR=<s> overrides the first-strike delay for testing.
         _run.MeteorTimer = float.TryParse(Environment.GetEnvironmentVariable("DM_METEOR"), out var mt)
             ? mt : 16f + (float)Random.Shared.NextDouble() * 14f;   // first strike ~16-30s in
-        _run.SurgeTimer = 22f;
-        // Disasters: first flare well into the visit; DM_FLARE=<s> forces it for testing.
-        _run.FlareTimer = float.TryParse(Environment.GetEnvironmentVariable("DM_FLARE"), out var ft)
-            ? ft : 75f + (float)Random.Shared.NextDouble() * 60f;
-        _run.BlizzardTimer = 50f + (float)Random.Shared.NextDouble() * 45f;
-        // DM_ERUPT=<seconds> forces the first volcanic eruption for tooling.
-        _run.VolcanoTimer = float.TryParse(Environment.GetEnvironmentVariable("DM_ERUPT"), out var vt)
-            ? vt : 50f + (float)Random.Shared.NextDouble() * 50f;
-        // DM_ACIDRAIN=<seconds> forces the first toxic-cloud storm for tooling.
-        _run.AcidRainTimer = float.TryParse(Environment.GetEnvironmentVariable("DM_ACIDRAIN"), out var art)
-            ? art : 45f + (float)Random.Shared.NextDouble() * 50f;
+        // Disasters share one clock (AmbientDirector): one at a time, spaced by planet
+        // difficulty (~7 min gentle → ~2 min brutal). First one lands about mid-spacing.
+        // DM_FLARE / DM_ACIDRAIN / DM_ERUPT =<seconds> force that kind then, for tooling.
+        _run.DisasterTimer = AmbientDirector.NextInterval(def) * 0.5f;
+        if (float.TryParse(Environment.GetEnvironmentVariable("DM_FLARE"), out var ft))
+            { _run.DisasterTimer = ft; _run.NextDisaster = DisasterKind.Flare; }
+        if (float.TryParse(Environment.GetEnvironmentVariable("DM_ACIDRAIN"), out var art))
+            { _run.DisasterTimer = art; _run.NextDisaster = DisasterKind.AcidRain; }
+        if (float.TryParse(Environment.GetEnvironmentVariable("DM_ERUPT"), out var vt))
+            { _run.DisasterTimer = vt; _run.NextDisaster = DisasterKind.Eruption; }
         _gameOverReason = "";
         _craftingMenu.Reset();
         _invUi.Reset();
