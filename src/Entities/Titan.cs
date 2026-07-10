@@ -500,16 +500,24 @@ public sealed class Titan
                 var deficit = Hover - heightAboveFeet;
                 vNormal = MathHelper.Clamp(deficit * 6f, -160f, 230f);
             }
-            // Climb back to daylight. Two triggers share the move: (1) self-rescue — a
-            // de-aggroed walker sealed beneath the surface (a caved-in roof, or a chase that
-            // plowed it deep) should never live out the run stuck in a cave the player can't
-            // even see; (2) mid-hunt — the prey jetpacked back ABOVE it (out of the dig
-            // shaft), so it bursts upward through the overburden after them, faster than the
-            // idle climb. A hunting kaiju whose prey is still below keeps tunnelling down.
-            if (!Leaping && (!IsAggro || playerUpDot > 140f))
+            // Climb back to daylight. Two triggers: (1) self-rescue — a de-aggroed walker
+            // sealed beneath the surface (a caved-in roof, or a chase that plowed it deep)
+            // should never live out the run stuck in a cave the player can't even see;
+            // (2) mid-hunt — the prey jetpacked back ABOVE it (out of the dig shaft), so it
+            // scrambles upward after them, faster than the idle climb. The hunt climb needs
+            // walls to brace against — it chimneys up its own shaft or plows through solid
+            // overburden, but can't rocket into open sky from flat ground.
+            if (!Leaping)
             {
-                var surface = SurfacePoint(planet, up);
-                if (Vector2.Dot(surface - Position, up) > 60f) vNormal = IsAggro ? 175f : 130f;
+                if (!IsAggro)
+                {
+                    var surface = SurfacePoint(planet, up);
+                    if (Vector2.Dot(surface - Position, up) > 60f) vNormal = 130f;
+                }
+                else if (playerUpDot > 140f && Braced(planet, up, right))
+                {
+                    vNormal = 175f;
+                }
             }
         }
 
