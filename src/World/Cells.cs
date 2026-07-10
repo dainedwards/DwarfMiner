@@ -46,14 +46,18 @@ public static class Materials
 /// </summary>
 public sealed class Cells
 {
-    /// <summary>Cells per tile edge. 8 → 1-px grains (Noita-style fine sand); the sim and
+    /// <summary>Cells per tile edge. Tiles are 4 px now, so 4 keeps 1-px grains (Noita-style
+    /// fine sand) and the same total cell count as the old 8-px/Density-8 grid; the sim and
     /// draw loops are view-culled and hemmed liquids sleep, which is what makes this
     /// resolution affordable.</summary>
-    public const int Density = 8;
-    /// <summary>How many dust cells one broken tile spawns (checkerboard = Density²/2). Each
-    /// cell carries drop.count / DustCellsPerTile worth of resource — 1 tile fully collected
-    /// → 1 × drop.count.</summary>
+    public const int Density = 4;
+    /// <summary>How many dust cells one broken tile spawns (checkerboard = Density²/2).</summary>
     public const int DustCellsPerTile = Density * Density / 2;
+    /// <summary>Dust cells that add up to one whole drop unit. Four 4-px tiles occupy one
+    /// legacy 8-px tile's area, so a *quad* of broken tiles — not a single tile — pays out
+    /// drop.count. Keeps the resource economy identical to the old coarse grid (and makes
+    /// 2×2-stamped placeables refund exactly what they cost).</summary>
+    public const int DustCellsPerDrop = DustCellsPerTile * 4;
 
     // --- Per-cell velocity tuning (cells/sec units, radial axis). Expressed relative to
     // Density so the *world-space* fall speed and spread stay identical if the grain
