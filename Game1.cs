@@ -1971,13 +1971,13 @@ public sealed partial class DwarfMinerGame : Game
 
         _run.Player.Position = _launchShipPos + _launchUp * 8f;
         _run.Player.Velocity = Vector2.Zero;
-        // Framing widens with altitude: near the ground the terrain fills the view, and by
-        // the parking orbit it matches the orbit screen's zoom so the planet limb, rocket,
-        // and station all fit. The upward bias grows the same way to pull the station in.
-        var alt = MathHelper.Clamp((r - planetR) / Session.OrbitAltitude, 0f, 1f);
-        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, MathHelper.Lerp(1.0f, 0.44f, alt),
-            MathHelper.Clamp(dt * 2.2f, 0f, 1f));
-        _camera.Follow(_run.Player.Position + up * (260f * alt), up, dt);
+        // The rover descent in reverse: altitude above the baseline surface drives the zoom,
+        // easing from play scale at the pad out to descent-wide by high sky — the terrain
+        // shrinks away below exactly the way it grew on the way down.
+        var alt = r - (Planet.RingMin + _run.Planet.SurfaceRing) * Planet.TileSize;
+        var zoomTarget = MathHelper.Lerp(_playZoom, 0.72f, MathHelper.Clamp(alt / 650f, 0f, 1f));
+        _camera.Zoom = MathHelper.Lerp(_camera.Zoom, zoomTarget, MathHelper.Clamp(dt * 2.4f, 0f, 1f));
+        _camera.Follow(_launchShipPos, up, dt);
         _launchUp = up;
 
         if (thrusting)
