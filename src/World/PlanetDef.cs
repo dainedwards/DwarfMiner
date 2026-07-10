@@ -138,7 +138,7 @@ public static class PlanetDefs
         AcidPools: 3, AcidRain: true,
         Volcanoes: 3, VolcanoScale: 1.1f,
         SurfaceBands: new[] { TileKind.Grass, TileKind.Snow, TileKind.Gravel, TileKind.Dirt, TileKind.Basalt },
-        Biome: "debug");
+        Biome: "debug", Difficulty: 1f);
 
     public static readonly PlanetDef[] Classic =
     {
