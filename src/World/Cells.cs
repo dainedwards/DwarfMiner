@@ -818,7 +818,7 @@ public sealed class Cells
                 if (drop is { } d)
                 {
                     _dustAccum.TryGetValue(d.id, out var existing);
-                    _dustAccum[d.id] = existing + (float)d.count / DustCellsPerTile;
+                    _dustAccum[d.id] = existing + (float)d.count / DustCellsPerDrop;
                 }
                 _mat[idx] = 0;
                 _srcTile[idx] = 0;
