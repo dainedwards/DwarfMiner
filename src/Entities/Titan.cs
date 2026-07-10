@@ -913,11 +913,17 @@ public sealed class Titan
         return hasAny ? sum / count : Vector2.Zero;
     }
 
-    /// <summary>Bulldoze terrain: mine every non-anchored solid tile overlapping the body's
-    /// collision radius so the boss smashes a tunnel through mountains it walks into instead of
-    /// being shoved over them. Anchored tiles (planet core, player supports) can't be chewed —
-    /// the body is pushed off those. Broken tiles drop tumbling debris + wake the settle
-    /// physics, so plowing a mountain also caves in whatever it was holding up.</summary>
+    /// <summary>Bulldoze terrain: mine non-anchored solid tiles overlapping the body's
+    /// collision radius so the boss smashes a notch through mountains it walks into instead of
+    /// being shoved over them. Walkers NEVER chew the floor: tiles in the bottom sector of the
+    /// body act as collision (push the body out) rather than demolition — without that guard a
+    /// freshly-hatched or landing boss, body still below ride height, pulverised every block
+    /// under itself before the suspension could lift it. The Sandworm is the exception (it
+    /// tunnels through the planet by design), and anchored tiles (planet core, player supports)
+    /// always push back. Plowing is also gentler while calm — a roaming boss shoulders a few
+    /// blocks out of its way; an aggroed one shatters rock at full power. Broken tiles drop
+    /// tumbling debris + wake the settle physics, so plowing a mountain also caves in whatever
+    /// it was holding up.</summary>
     private void Plow(Planet planet, Physics physics, Cells cells)
     {
         var (tx, _) = planet.WorldToTile(Position);
@@ -925,8 +931,12 @@ public sealed class Titan
         var ang = MathF.Atan2(rel.Y, rel.X);
         if (ang < 0) ang += MathHelper.TwoPi;
         var span = (int)MathF.Ceiling(BodyRadius / Planet.TileSize) + 1;
-        var plowPow = 26 + (int)(Anger / 16f);   // shatters surface rock (dirt/stone/granite) fast
+        // Full power shatters surface rock (dirt/stone/granite) fast; calm roamers only nudge
+        // soft ground loose, so a stroll leaves the landscape standing.
+        var plowPow = (IsAggro ? 26 : 12) + (int)(Anger / 16f);
         var rSq = BodyRadius * BodyRadius;
+        var up = planet.UpAt(Position);
+        var keepFloor = Kind != TitanKind.Sandworm;
 
         for (var dx = -span; dx <= span; dx++)
         {
@@ -944,7 +954,9 @@ public sealed class Titan
                 var centre = planet.TileToWorld(x, y);
                 if ((centre - Position).LengthSquared() > rSq) continue;
 
-                if (Tiles.IsAnchored(k))
+                // Ground under a walker is footing, not demolition fodder.
+                var floor = keepFloor && Vector2.Dot(centre - Position, up) < -BodyRadius * 0.35f;
+                if (Tiles.IsAnchored(k) || floor)
                 {
                     var diff = Position - centre;
                     var dist = diff.Length();
