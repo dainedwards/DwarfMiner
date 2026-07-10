@@ -60,14 +60,23 @@ public static class SpawnDirector
         return planet.Center + dir * ((radius + 12) * Planet.TileSize);
     }
 
-    /// <summary>Population count within a radius of the player, filtered by habitat kind.</summary>
+    /// <summary>Rooted / lying-in-wait kinds. They never seek the player, so they must not
+    /// eat the cave-population budget — a cap full of vines and disguised mimics plays as an
+    /// empty planet. They get their own small allowance instead (see TrySpawnCreature).</summary>
+    private static bool IsStationary(CreatureKind k) =>
+        k is CreatureKind.SnapperVine or CreatureKind.RockMimic;
+
+    /// <summary>Population count within a radius of the player, filtered by habitat kind.
+    /// Stationary ambushers are excluded from the cave count — see <see cref="IsStationary"/>.</summary>
     private static int CountKindsNear(Session run, float radius,
-        bool cave = false, bool surface = false, bool sky = false)
+        bool cave = false, bool surface = false, bool sky = false, bool stationary = false)
     {
         var rSq = radius * radius;
         var n = 0;
         foreach (var c in run.Creatures)
-            if ((cave && c.IsCaveKind) || (surface && c.IsSurfaceKind) || (sky && c.IsSkyKind))
+            if ((cave && c.IsCaveKind && !IsStationary(c.Kind))
+                || (surface && c.IsSurfaceKind) || (sky && c.IsSkyKind)
+                || (stationary && IsStationary(c.Kind)))
                 if ((c.Position - run.Player.Position).LengthSquared() < rSq)
                     n++;
         return n;
