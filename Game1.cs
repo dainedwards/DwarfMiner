@@ -2131,11 +2131,14 @@ public sealed partial class DwarfMinerGame : Game
             if (outward > 0f) _ascentVel -= radial * outward;
         }
 
-        // Fly near the mothership and the docking computer glides in the last stretch.
+        // Fly near the mothership and the docking computer glides in the last stretch —
+        // it also bleeds off momentum so gravity can't yank the rocket back out of the
+        // approach mid-glide.
         var to = _run.StationPos - _launchShipPos;
         var d = to.Length();
         if (d < 150f)
         {
+            _ascentVel *= 1f - MathF.Min(1f, 3f * dt);
             _launchShipPos += to / d * MathF.Min(200f * dt, d);
             if (d < 48f)
             {
