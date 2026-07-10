@@ -1340,6 +1340,30 @@ public static class SimTest
         Check("fauna: stat blocks read right",
             bat.Health < crawler.Health && wraith.MoveSpeed > crawler.MoveSpeed
             && crawler.ContactDamage > bat.ContactDamage);
+        Check("fauna: rock mimic hoards gold and spawns disguised (non-hostile)",
+            System.Array.Exists(Corpse.DropsFor(CreatureKind.RockMimic), d => d.id == "gold")
+            && !new Creature(Vector2.Zero, CreatureKind.RockMimic).Hostile);
+        Check("fauna: slimelet is a strictly smaller cave slime",
+            new Creature(Vector2.Zero, CreatureKind.Slimelet).Health
+                < new Creature(Vector2.Zero, CreatureKind.CaveSlime).Health
+            && Corpse.DropsFor(CreatureKind.Slimelet).Length == 0);
+
+        // Acid spitter: parked in line of sight of a target, it must lob acid globs into the
+        // shared enemy-shot list within a few seconds.
+        {
+            var sPos = FindCavePos(planet2, seedOffset: 4242);
+            if (sPos is { } sp)
+            {
+                var spitter = new Creature(sp, CreatureKind.AcidSpitter);
+                var prey = new Player(sp + new Vector2(60f, 0f));
+                var shots = new List<TitanProjectile>();
+                for (var i = 0; i < 60 * 6 && shots.Count == 0; i++)
+                    spitter.Update(dt2, planet2, physics2, cells2, prey, shots);
+                Check("fauna: acid spitter opens fire on visible prey",
+                    shots.Count > 0 && shots.TrueForAll(s => s.Kind == TitanShotKind.Acid));
+            }
+            else Check("fauna: acid spitter cave site found", false, "no cave");
+        }
 
         // The long-range survey finds real deposits (ember is the ruby world) and caches.
         var ember = World.PlanetDefs.ById("ember");
