@@ -30,34 +30,35 @@ public sealed class Session
     public readonly List<Meteor> Meteors = new();
     public readonly List<Sentry> Sentries = new();
 
-    /// <summary>Ambient-event timers (meteor strikes, magma surges) — see AmbientDirector.</summary>
+    /// <summary>Meteor-strike cadence — the frequent ambient dodge hazard, outside the
+    /// disaster clock. See AmbientDirector.</summary>
     public float MeteorTimer;
-    public float SurgeTimer;
 
-    /// <summary>Disaster state (see AmbientDirector): solar flares scorch anyone on the
-    /// surface after a warned window (all worlds); blizzards freeze exposed dwarves on snow
-    /// worlds. Timer counts to the next event; Warn/Active count down their phases.</summary>
-    public float FlareTimer;
+    /// <summary>The shared disaster clock (see AmbientDirector): counts down to the next
+    /// disaster while the world is quiet, holds while one is live (only one at a time), and
+    /// its reset interval scales with <see cref="World.PlanetDef.Difficulty"/> — ~7 min on
+    /// the gentlest worlds down to ~2 min on the hardest. <see cref="NextDisaster"/>, when
+    /// set (DM_FLARE-style tooling hooks), forces which kind fires next.</summary>
+    public float DisasterTimer = 240f;
+    public Systems.DisasterKind? NextDisaster;
+
+    /// <summary>Solar-flare phases: a warned get-underground window, then a scorching phase
+    /// that burns anyone in surface air. Blizzards freeze exposed dwarves for their window.</summary>
     public float FlareWarn;
     public float FlareActive;
-    public float BlizzardTimer;
     public float BlizzardActive;
 
     /// <summary>Acid-rain storm state (acid worlds, PlanetDef.AcidRain): a toxic cloud
     /// parks over a bearing and rains live acid cells for the active window. The cloud
     /// drifts while it rains — see AmbientDirector.</summary>
-    public float AcidRainTimer;
     public float AcidRainActive;
     public float AcidRainAngle;
 
-    /// <summary>Volcano state: countdown to the next eruption, which vent is erupting, and
-    /// how long it keeps spewing. Vent sites live on <see cref="World.Planet.VolcanoVents"/>;
-    /// worlds without volcanoes never tick these.</summary>
-    public float VolcanoTimer = 60f;
+    /// <summary>Eruption in progress: which vent is erupting and how long it keeps spewing.
+    /// Vent sites live on <see cref="World.Planet.VolcanoVents"/>.</summary>
     public float EruptionLeft;
     public int EruptionVent = -1;
 
-    public float EarthquakeTimer;
     public float SpawnTimer;
     public float FaunaTimer;
     public float Shake;
