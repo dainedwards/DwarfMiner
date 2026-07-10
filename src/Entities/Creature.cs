@@ -344,7 +344,7 @@ public sealed class Creature
         Vector2 toPlayer, float dist, float speedMul)
     {
         float moveAxis;
-        if (dist < 90f)
+        if (dist < 170f)
         {
             moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right));
         }
