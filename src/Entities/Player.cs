@@ -574,23 +574,28 @@ public sealed class Player
     /// <summary>Try to mine with a specific tool at the strike point resolved by
     /// <see cref="ResolveMineTarget"/>. Pickaxe is the default; drill / hammer / laser change
     /// cooldown + power profile. PlanetCore needs the hammer, the Core needs the core drill.
-    /// Tier IV gets a 2× power bonus on Obsidian; hammer gets a flat power floor + an
-    /// effective-hardness override so it bites bedrock at all; the mining laser doubles the
-    /// pick's power (floor 6) on top of its stream cadence, so it eats rock far quicker.</summary>
+    /// The pickaxe and hammer normally mine via the physical swing instead
+    /// (<see cref="TryStartSwing"/> / <see cref="UpdateSwing"/>) — this path still serves the
+    /// drill, the mining laser, and fly mode's cursor targeting.</summary>
     public TileKind? TryMine(Planet planet, Physics physics, Vector2 worldCursor, MiningTool tool = MiningTool.Pickaxe)
     {
         if (MineCooldown > 0) return null;
         if (ResolveMineTarget(planet, worldCursor, tool) is not { } target) return null;
         var (x, y) = target;
-        var k = planet.Get(x, y);
-        if (!CanBreak(k, tool))
-        {
-            MineCooldown = MineCooldownFor(tool);   // still spend a swing for feedback
-            return null;
-        }
+        MineCooldown = MineCooldownFor(tool);   // spent whether or not the tile can break
+        if (!CanBreak(planet.Get(x, y), tool)) return null;
+        return StrikeTile(planet, physics, x, y, tool);
+    }
 
-        // Tool-aware power. Drill matches pickaxe power but mines fast; hammer hits hard but
-        // slow; hammer is the only tool that can punch PlanetCore (with the hardness override).
+    /// <summary>Land one tool blow on a specific tile: the tool-aware power profile applied to
+    /// <see cref="Planet.Mine"/>. Tier IV gets a 2× power bonus on Obsidian; hammer gets a flat
+    /// power floor + an effective-hardness override so it bites bedrock at all; the mining
+    /// laser doubles the pick's power (floor 6) on top of its stream cadence. Shared by the
+    /// cursor path (<see cref="TryMine"/>) and the swing hitbox (<see cref="UpdateSwing"/>).
+    /// Returns the broken tile kind, or null if the tile survived the blow.</summary>
+    private TileKind? StrikeTile(Planet planet, Physics physics, int x, int y, MiningTool tool)
+    {
+        var k = planet.Get(x, y);
         var power = EffectivePickaxePower;
         int? effectiveHardness = null;
         if (k == TileKind.Obsidian && PickaxeTier >= 4) power *= 2;
@@ -604,7 +609,6 @@ public sealed class Player
         if (tool == MiningTool.MiningLaser) power = Math.Max(power * 2, 6);
 
         var broken = planet.Mine(x, y, power, effectiveHardness);
-        MineCooldown = MineCooldownFor(tool);
         if (broken is { } bk)
         {
             physics.MarkDirty(x, y);
@@ -613,6 +617,107 @@ public sealed class Player
             return bk;
         }
         return null;
+    }
+
+    // ---- Physical swing: pickaxe & hammer -----------------------------------------------
+    // The swung tools are real objects now, not an invisible ray. LMB starts a swing: the
+    // tool sweeps SwingArc radians through the aim direction over the tool's cooldown, and
+    // the strike lands where the blade actually contacts rock during the sweep. One strike
+    // per swing; the next swing starts as this one ends, so the mining cadence is unchanged.
+
+    public float SwingTime;                    // seconds remaining in the active swing
+    public float SwingDuration;                // full length of the active swing
+    public Vector2 SwingAim = new(1f, 0f);     // unit aim captured at swing start
+    public MiningTool SwingTool;               // tool the active swing belongs to
+    public int SwingFlip = 1;                  // alternates so consecutive chops go down-up-down
+    public bool SwingLanded;                   // the active swing already spent its strike
+
+    /// <summary>Total sweep of a swing, centred on the aim (~109°).</summary>
+    public const float SwingArc = 1.9f;
+    /// <summary>Fraction of the swing that is wind-up — contact can't land before it, so the
+    /// slow hammer visibly rears back before the blow while the quick pick barely pauses.</summary>
+    public const float SwingWindup = 0.25f;
+
+    public bool SwingActive => SwingTime > 0f;
+    public float SwingProgress => SwingActive ? 1f - SwingTime / SwingDuration : 1f;
+
+    /// <summary>Arm angle of the active swing at a given progress: sweeps from one side of the
+    /// aim to the other, smoothstep-eased so the blade accelerates into the strike. The draw
+    /// code uses the same angle as the hitbox, so the strike lands exactly where the head is.</summary>
+    public float SwingAngleAt(float progress)
+    {
+        var theta = MathF.Atan2(SwingAim.Y, SwingAim.X);
+        var s = progress * progress * (3f - 2f * progress);
+        return theta + SwingFlip * SwingArc * (0.5f - s);
+    }
+
+    public float SwingAngle => SwingAngleAt(SwingProgress);
+
+    /// <summary>Begin a pickaxe/hammer swing toward the cursor. Fails while the previous swing
+    /// (or its cooldown) is still in flight. The swing direction alternates each time, and each
+    /// swing starts where the last one ended — a natural chopping pendulum.</summary>
+    public bool TryStartSwing(Vector2 worldCursor, MiningTool tool)
+    {
+        if (MineCooldown > 0 || SwingActive) return false;
+        var aim = worldCursor - Position;
+        SwingAim = aim.LengthSquared() > 0.001f ? Vector2.Normalize(aim) : new Vector2(1f, 0f);
+        SwingTool = tool;
+        SwingFlip = -SwingFlip;
+        SwingDuration = SwingTime = MineCooldownFor(tool);
+        MineCooldown = SwingDuration;
+        SwingLanded = false;
+        return true;
+    }
+
+    /// <summary>One landed swing contact: the tile the blade struck, its kind, and what broke
+    /// (null when the blow only damaged it — or clinked off something this tool can't break).</summary>
+    public readonly record struct SwingStrike(int X, int Y, TileKind Kind, TileKind? Broken);
+
+    /// <summary>Advance the active swing and resolve its hitbox. Called every frame by Game1
+    /// (independent of LMB, so a started swing always completes). Past the wind-up, the blade
+    /// looks for its strike: first straight along the aim (so precision digging targets the
+    /// tile under the cursor, and can't reach through walls), then swept across the arc
+    /// covered so far (so the swipe still bites rock beside the aim on a near-miss). Samples
+    /// run body-out at 2 px — under the 8 px tile so nothing is skipped.</summary>
+    public SwingStrike? UpdateSwing(Planet planet, Physics physics, float dt)
+    {
+        if (!SwingActive) return null;
+        SwingTime = MathF.Max(0f, SwingTime - dt);
+        if (SwingLanded || SwingProgress < SwingWindup) return null;
+
+        var reach = EffectiveMineRange;
+        var self = planet.WorldToTile(Position);
+
+        (int X, int Y)? Contact(Vector2 dir)
+        {
+            for (var t = 4f; t <= reach; t += 2f)
+            {
+                var (x, y) = planet.WorldToTile(Position + dir * t);
+                if ((x, y) == self) continue;   // don't chew the ladder being climbed
+                if (planet.Get(x, y) != TileKind.Sky) return (x, y);
+            }
+            return null;
+        }
+
+        var hit = Contact(SwingAim);
+        if (hit is null)
+        {
+            // Sweep the arc from the end of the wind-up to the blade's current angle.
+            var from = SwingAngleAt(SwingWindup);
+            var to = SwingAngle;
+            var steps = Math.Max(1, (int)(MathF.Abs(to - from) / 0.12f));
+            for (var i = 0; i <= steps && hit is null; i++)
+            {
+                var a = from + (to - from) * i / steps;
+                hit = Contact(new Vector2(MathF.Cos(a), MathF.Sin(a)));
+            }
+        }
+        if (hit is not { } h) return null;
+
+        SwingLanded = true;
+        var k = planet.Get(h.X, h.Y);
+        if (!CanBreak(k, SwingTool)) return new SwingStrike(h.X, h.Y, k, null);
+        return new SwingStrike(h.X, h.Y, k, StrikeTile(planet, physics, h.X, h.Y, SwingTool));
     }
 
     /// <summary>Backwards-compat overload: defaults to the pickaxe.</summary>
