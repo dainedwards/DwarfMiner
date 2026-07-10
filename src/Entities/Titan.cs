@@ -985,30 +985,39 @@ public sealed class Titan
         return foot;
     }
 
-    /// <summary>Per-frame leg simulation. Each leg compares its current planted foot position to
-    /// the freshly-resolved terrain anchor; if they've drifted past a per-leg threshold, the leg
-    /// lifts and steps to the new anchor along a sin-arc. When a step lands, the tile under the
-    /// foot takes damage via Planet.Mine — soft ground cracks visibly each stomp and breaks
-    /// after a few; hard rock just gets cosmetic cracks.</summary>
+    /// <summary>Per-frame leg simulation — a strided, alternating biped gait. While walking,
+    /// the step anchor is thrown <see cref="StrideHalf"/> ahead of each leg's neutral point;
+    /// a planted foot stays put while the body walks past it and only lifts once it has fallen
+    /// a full stride behind that anchor, so each swing carries the foot forward past the other
+    /// leg to plant ahead again. A leg may only lift while the other is planted (one foot is
+    /// always down), except when overstretched — a foot about to rubber-band steps regardless.
+    /// Standing still, a small drift threshold re-plants feet after turns or terrain changes.
+    /// When a step lands, the tile under the foot takes damage via Planet.Mine — soft ground
+    /// cracks visibly each stomp and breaks after a few; hard rock just gets cosmetic cracks.</summary>
     private void UpdateLegs(float dt, Planet planet, Physics physics, Cells cells, Vector2 up, Vector2 right, float vTangent)
     {
-        var biasMag = MathHelper.Clamp(vTangent / 80f, -1.4f, 1.4f);
-        var motionBias = right * (biasMag * 28f);
+        var walking = MathF.Abs(vTangent) > 8f;
+        var lead = walking ? MathF.Sign(vTangent) * StrideHalf : 0f;
 
-        foreach (var leg in Legs)
+        for (var i = 0; i < Legs.Length; i++)
         {
-            var ideal = ResolveFootAnchor(leg, up, right, motionBias);
+            var leg = Legs[i];
+            var other = Legs[Legs.Length - 1 - i];
+            var ideal = ResolveFootAnchor(leg, up, right, lead);
 
             if (leg.StepT >= 1f)
             {
-                var threshold = 28f + leg.Phase * 22f;
-                // Step when the terrain anchor has drifted away from the planted foot — or
-                // earlier if the body has walked the leg near full extension, so a planted
-                // foot never gets left behind stretching the leg past its bone length.
                 var hip = HipWorld(leg, up, right);
                 var overstretched = (leg.FootPos - hip).LengthSquared()
                     > LegMaxReach * LegMaxReach * (0.92f * 0.92f);
-                if (overstretched || (leg.FootPos - ideal).LengthSquared() > threshold * threshold)
+                // Walking: lift once the foot has fallen a full stride behind the thrown-ahead
+                // anchor. Standing: just re-plant after modest drift. Phase skews the trigger
+                // per leg so a disturbed gait drifts back out of lockstep on its own.
+                var trigger = walking ? StrideHalf * 2f * (0.9f + leg.Phase * 0.2f)
+                                      : 26f + leg.Phase * 16f;
+                var otherPlanted = other == leg || other.StepT >= 1f;
+                if (overstretched
+                    || (otherPlanted && (leg.FootPos - ideal).LengthSquared() > trigger * trigger))
                 {
                     leg.StepStart = leg.FootPos;
                     leg.StepTarget = ideal;
@@ -1019,7 +1028,7 @@ public sealed class Titan
             {
                 // Slow, deliberate swing — a hundred-foot leg doesn't snap forward. Rate scales
                 // gently with pace so it still keeps up at a run without ever looking twitchy.
-                var stepRate = 2.4f + MathF.Abs(vTangent) * 0.03f;
+                var stepRate = 2.2f + MathF.Abs(vTangent) * 0.014f;
                 var prevT = leg.StepT;
                 leg.StepT = MathF.Min(1f, leg.StepT + dt * stepRate);
                 if (leg.StepT >= 1f && prevT < 1f)
@@ -1035,8 +1044,11 @@ public sealed class Titan
                     var t = leg.StepT;
                     var smooth = t * t * (3f - 2f * t);
                     var pos = Vector2.Lerp(leg.StepStart, leg.StepTarget, smooth);
-                    var arc = MathF.Sin(t * MathF.PI) * 44f;   // high, ponderous lift
-                    pos += planet.UpAt(pos) * arc;
+                    // Lift scales with the stride so a long step clears ground and a small
+                    // re-plant shuffle doesn't high-kick.
+                    var lift = MathHelper.Clamp(
+                        14f + (leg.StepTarget - leg.StepStart).Length() * 0.32f, 16f, 50f);
+                    pos += planet.UpAt(pos) * (MathF.Sin(t * MathF.PI) * lift);
                     leg.FootPos = pos;
                 }
             }
