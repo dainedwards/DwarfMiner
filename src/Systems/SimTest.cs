@@ -603,7 +603,6 @@ public static class SimTest
             var pbo = new System.Collections.Generic.List<FallingBoulder>();
             var boss = new Titan(pp, -MathF.PI / 2f, TitanKind.Godzilla);
             boss.Hatch();
-            const float dt = 1f / 60f;
             // Settle onto its feet, then hold it enraged with the player 420px straight down.
             for (var i = 0; i < 180; i++) boss.Update(dt, pp, pphys, pc, boss.Position, pbo, psh);
             var digPlayer = boss.Position - pp.UpAt(boss.Position) * 420f;
