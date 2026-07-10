@@ -348,26 +348,14 @@ public sealed class Player
                 || ProbeSolid(planet, feetCentre + footOff)
                 || ProbeSolid(planet, feetCentre - footOff);
 
-        // Ground-snap: if we were grounded before this Update, are walking, and aren't ascending
-        // from a jump, but are now floating in air, probe up to one tile below the feet for the
-        // next solid surface. If found, snap onto it and re-resolve collisions to align cleanly.
-        // This handles surface elevation noise (1-tile drops between adjacent columns) without
-        // letting the player visibly fall multiple pixels before gravity accumulates. Cliffs
-        // taller than one tile still drop normally because the probe finds nothing.
-        if (!Grounded && wasGrounded && moveAxis != 0 && Vector2.Dot(Velocity, up) < 5f)
-        {
-            const float snapMaxBelow = Planet.TileSize + 1f;   // ≈ 1 tile below the feet
-            for (var d = 1.5f; d <= snapMaxBelow; d += 1.0f)
-            {
-                if (ProbeSolid(planet, feetCentre - up * d))
-                {
-                    Position -= up * d;
-                    ResolveCollision(planet);
-                    Grounded = true;
-                    break;
-                }
-            }
-        }
+        // Walked off an edge (not a jump): seed a little downward velocity so the fall arc
+        // begins this frame instead of hovering while gravity accumulates from zero. The old
+        // ground-snap teleported the player onto any tile within one ring here — and since
+        // terrain steps are always whole rings, every ledge walk-off popped instantly onto
+        // the block below instead of falling. Now every drop is a real gravity arc, same as
+        // the descent of a jump.
+        if (!Grounded && wasGrounded && Vector2.Dot(Velocity, up) <= 0f)
+            Velocity -= up * 40f;
 
         // When grounded, scrub any residual along-up velocity (it should be zero — the player
         // is sitting on a surface). This kills the curvature-reprojection drift that would
