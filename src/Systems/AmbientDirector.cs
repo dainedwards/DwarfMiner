@@ -6,12 +6,19 @@ using Microsoft.Xna.Framework;
 
 namespace DwarfMiner.Systems;
 
+/// <summary>The scheduled planet disasters. Which of these a world can roll depends on its
+/// def (blizzards need snow, acid rain needs AcidRain, surges need serious lava, eruptions
+/// need vents); flares and earthquakes threaten every world.</summary>
+public enum DisasterKind { Flare, Blizzard, AcidRain, MagmaSurge, Eruption, Earthquake }
+
 /// <summary>
-/// Drives ambient world events on timers: meteor strikes (all worlds, more frequent on
-/// thin-atmosphere planets where more rocks get through) and magma surges (lava-rich worlds,
-/// where lava suddenly wells up into a nearby cave). Meteors are added to
-/// <see cref="Session.Meteors"/> for Game1 to update/draw; surges mutate the cell sim directly
-/// and are reported back so Game1 can shake + sound them.
+/// Drives ambient world events. Meteors stay a frequent dodge-it hazard on their own cadence
+/// (shorter with thin atmosphere). Everything bigger — solar flares, blizzards, acid rain,
+/// magma surges, volcanic eruptions, earthquakes — runs on ONE shared disaster clock per
+/// planet: only one disaster can be live at a time, and consecutive disasters are spaced by
+/// planet difficulty (~7 min on the gentlest worlds down to ~2 min on the hardest). Meteors
+/// are added to <see cref="Session.Meteors"/> for Game1 to update/draw; the rest mutate the
+/// run directly and report back so Game1 can toast/shake/sound them.
 /// </summary>
 public static class AmbientDirector
 {
@@ -23,7 +30,25 @@ public static class AmbientDirector
         public bool FlareStruck;
         public bool BlizzardStarted;
         public bool AcidRainStarted;
+        public bool EruptionStarted;
+        public Vector2 EruptionPos;
+        public bool QuakeStruck;
     }
+
+    /// <summary>Disaster spacing before jitter: 7 minutes on a difficulty-0 world easing to
+    /// 2 minutes at difficulty 1.</summary>
+    public static float BaseInterval(PlanetDef def) => MathHelper.Lerp(420f, 120f, def.Difficulty);
+
+    /// <summary>A fresh roll of the shared disaster clock (base spacing ±15%).</summary>
+    public static float NextInterval(PlanetDef def)
+        => BaseInterval(def) * (0.85f + (float)Random.Shared.NextDouble() * 0.3f);
+
+    /// <summary>True while any disaster is still playing out — the shared clock holds (and
+    /// nothing new can start) until the world is quiet again. Surges and quakes are
+    /// instantaneous, so they never hold the clock.</summary>
+    public static bool DisasterActive(Session run) =>
+        run.FlareWarn > 0f || run.FlareActive > 0f || run.BlizzardActive > 0f
+        || run.AcidRainActive > 0f || run.EruptionLeft > 0f;
 
     public static Result Update(float dt, Session run, Particles particles)
     {
@@ -39,14 +64,10 @@ public static class AmbientDirector
             run.MeteorTimer = interval * (0.6f + (float)Random.Shared.NextDouble() * 0.9f);
         }
 
-        // Solar flare: every world's star occasionally spits a radiation burst. A warned
-        // window (get underground!) then a scorching phase — anyone in surface air burns.
+        // Tick whatever disaster is live. Phases only — starting a new one is the shared
+        // clock's job below, so these never reschedule themselves.
         if (run.FlareActive > 0f)
-        {
             run.FlareActive -= dt;
-            if (run.FlareActive <= 0f)
-                run.FlareTimer = 90f + (float)Random.Shared.NextDouble() * 70f;
-        }
         else if (run.FlareWarn > 0f)
         {
             run.FlareWarn -= dt;
@@ -56,79 +77,104 @@ public static class AmbientDirector
                 result.FlareStruck = true;
             }
         }
-        else
+
+        if (run.BlizzardActive > 0f)
+            run.BlizzardActive -= dt;
+
+        if (run.AcidRainActive > 0f)
         {
-            run.FlareTimer -= dt;
-            if (run.FlareTimer <= 0f)
-            {
-                run.FlareWarn = 7f;
-                result.FlareWarned = true;
-            }
+            run.AcidRainActive -= dt;
+            run.AcidRainAngle += 0.012f * dt;   // slow downwind drift
+            RainAcid(run);
         }
 
-        // Blizzards — snow worlds only: a freezing squall that bites anyone caught outside.
-        if (run.Def.SurfaceTile == TileKind.Snow)
+        // The shared disaster clock: it only runs while the world is quiet, so disasters
+        // can never overlap, and the spacing between them is the difficulty interval.
+        if (!DisasterActive(run))
         {
-            if (run.BlizzardActive > 0f)
+            run.DisasterTimer -= dt;
+            if (run.DisasterTimer <= 0f)
             {
-                run.BlizzardActive -= dt;
-                if (run.BlizzardActive <= 0f)
-                    run.BlizzardTimer = 70f + (float)Random.Shared.NextDouble() * 55f;
-            }
-            else
-            {
-                run.BlizzardTimer -= dt;
-                if (run.BlizzardTimer <= 0f)
-                {
-                    run.BlizzardActive = 15f;
-                    result.BlizzardStarted = true;
-                }
-            }
-        }
-
-        // Acid rain — acid worlds only: a toxic cloud parks over the player's bearing and
-        // rains live acid cells for the storm window. The drops feed the ordinary cell sim,
-        // so the rain pools where it lands and (with the buffed corrosion) eats through the
-        // roofs the dwarf shelters under. The cloud drifts slowly while it rains.
-        if (run.Def.AcidRain)
-        {
-            if (run.AcidRainActive > 0f)
-            {
-                run.AcidRainActive -= dt;
-                run.AcidRainAngle += 0.012f * dt;   // slow downwind drift
-                RainAcid(run);
-                if (run.AcidRainActive <= 0f)
-                    run.AcidRainTimer = 55f + (float)Random.Shared.NextDouble() * 45f;
-            }
-            else
-            {
-                run.AcidRainTimer -= dt;
-                if (run.AcidRainTimer <= 0f)
-                {
-                    var rel = run.Player.Position - run.Planet.Center;
-                    run.AcidRainAngle = MathF.Atan2(rel.Y, rel.X);
-                    run.AcidRainActive = 12f;
-                    result.AcidRainStarted = true;
-                }
-            }
-        }
-
-        // Magma surges — only where there's serious lava (ember, core).
-        if (run.Def.LavaFillFrac >= 0.5f)
-        {
-            run.SurgeTimer -= dt;
-            if (run.SurgeTimer <= 0f)
-            {
-                if (MagmaSurge(run, particles, out var pos))
-                {
-                    result.Surge = true;
-                    result.SurgePos = pos;
-                }
-                run.SurgeTimer = 20f + (float)Random.Shared.NextDouble() * 16f;
+                var kind = run.NextDisaster ?? Pick(run);
+                run.NextDisaster = null;
+                if (kind is { } k) TryBegin(k, run, particles, ref result);
+                run.DisasterTimer = NextInterval(run.Def);
             }
         }
 
         return result;
+    }
+
+    /// <summary>Roll the next disaster from whatever this world has armed. Flares and quakes
+    /// threaten everywhere; the rest are gated by the def / generated terrain.</summary>
+    private static DisasterKind? Pick(Session run)
+    {
+        Span<DisasterKind> armed = stackalloc DisasterKind[6];
+        var n = 0;
+        armed[n++] = DisasterKind.Flare;
+        armed[n++] = DisasterKind.Earthquake;
+        if (run.Def.SurfaceTile == TileKind.Snow) armed[n++] = DisasterKind.Blizzard;
+        if (run.Def.AcidRain) armed[n++] = DisasterKind.AcidRain;
+        if (run.Def.LavaFillFrac >= 0.5f) armed[n++] = DisasterKind.MagmaSurge;
+        if (run.Planet is { VolcanoVents.Count: > 0 }) armed[n++] = DisasterKind.Eruption;
+        return armed[Random.Shared.Next(n)];
+    }
+
+    /// <summary>Start a disaster right now (the clock firing, or a debug-menu force). Returns
+    /// false when this world can't host it — no vents to erupt, no enclosed pocket to surge
+    /// into. The caller owns resetting the shared clock.</summary>
+    public static bool TryBegin(DisasterKind kind, Session run, Particles particles, ref Result result)
+    {
+        switch (kind)
+        {
+            case DisasterKind.Flare:
+                run.FlareWarn = 7f;
+                result.FlareWarned = true;
+                return true;
+
+            case DisasterKind.Blizzard:
+                run.BlizzardActive = 15f;
+                result.BlizzardStarted = true;
+                return true;
+
+            case DisasterKind.AcidRain:
+            {
+                var rel = run.Player.Position - run.Planet.Center;
+                run.AcidRainAngle = MathF.Atan2(rel.Y, rel.X);
+                run.AcidRainActive = 12f;
+                result.AcidRainStarted = true;
+                return true;
+            }
+
+            case DisasterKind.MagmaSurge:
+                if (!MagmaSurge(run, particles, out var pos)) return false;
+                result.Surge = true;
+                result.SurgePos = pos;
+                return true;
+
+            case DisasterKind.Eruption:
+            {
+                if (run.Planet is not { VolcanoVents.Count: > 0 }) return false;
+                run.EruptionVent = Random.Shared.Next(run.Planet.VolcanoVents.Count);
+                run.EruptionLeft = 5f + (float)Random.Shared.NextDouble() * 4f;
+                var (vx, vy, _) = run.Planet.VolcanoVents[run.EruptionVent];
+                result.EruptionStarted = true;
+                result.EruptionPos = run.Planet.TileToWorld(vx, vy);
+                return true;
+            }
+
+            case DisasterKind.Earthquake:
+            {
+                if (run.Physics is null) return false;
+                var ang = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
+                var epi = run.Planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
+                    * run.Planet.Radius * Planet.TileSize * 0.5f;
+                run.Physics.Earthquake(epi, 200f, 2);
+                result.QuakeStruck = true;
+                return true;
+            }
+        }
+        return false;
     }
 
     /// <summary>One storm tick: drop a few acid cells from cloud height across the cloud's
@@ -149,7 +195,7 @@ public static class AmbientDirector
         }
     }
 
-    private static void SpawnMeteor(Session run)
+    public static void SpawnMeteor(Session run)
     {
         var planet = run.Planet;
         // Aim near the player, offset by up to ~±14° so it's a dodgeable threat, not a homing
@@ -181,7 +227,6 @@ public static class AmbientDirector
             if (tx < 0 || tx >= planet.Rings) continue;
             if (planet.Get(tx, ty) != TileKind.Sky) continue;
             if (planet.GetWall(tx, ty) == TileKind.Sky) continue;   // must be enclosed rock, not open sky
-
             run.Cells.SpawnInTile(tx, ty, Material.Lava, Cells.Density * Cells.Density);
             var inner = planet.InnerNeighbour(tx, ty);
             run.Cells.SpawnInTile(inner.x, inner.y, Material.Lava, Cells.Density * 2);
