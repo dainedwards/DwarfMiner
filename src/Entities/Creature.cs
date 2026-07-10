@@ -263,6 +263,15 @@ public sealed class Creature
             case CreatureKind.BomberBeetle: TickBomber(dt, planet, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.SnapperVine: TickVine(dt, planet, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.RockMimic:  TickMimic(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            // Biome fauna ride the proven ambience brains — grazer amble/flee, hopper
+            // bounce, moth orbit — with per-species stats doing the differentiating.
+            case CreatureKind.SnowLoper:
+            case CreatureKind.CinderSkink:
+            case CreatureKind.RustBack:
+            case CreatureKind.AcidStrider:
+            case CreatureKind.PrismSnail: TickGrazer(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.TidePuddler: TickHopper(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.NullMoth:   TickFlyer(dt, planet, up, right, toPlayer, dist, speedMul); break;
         }
 
         // Substepped integration: each step moves at most ~60% of the body radius so a fast
