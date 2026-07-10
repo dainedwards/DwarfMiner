@@ -431,7 +431,7 @@ public sealed class Titan
         }
         else
         {
-            planted = AvgPlantedFoot(out hasPlanted);
+            planted = AvgPlantedFoot(planet, out hasPlanted);
             if (hasPlanted && !Leaping)   // a leaping Kong ignores its suspension so it can launch
             {
                 var heightAboveFeet = Vector2.Dot(Position - planted, up);
