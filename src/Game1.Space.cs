@@ -277,8 +277,8 @@ public sealed partial class DwarfMinerGame
     /// the caller builds synchronously.</summary>
     private Session? TakePrefetchedSession(PlanetDef def)
     {
-        if (!_prefetch.Remove(def.Id, out var task)) return null;
-        try { return task.GetAwaiter().GetResult(); }
+        if (!_prefetch.Remove(def.Id, out var bake)) return null;
+        try { return bake.Task.GetAwaiter().GetResult(); }
         catch { return null; }   // background build died — rebuild on the main thread
     }
 
