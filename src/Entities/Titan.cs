@@ -855,17 +855,21 @@ public sealed class Titan
         SpecialState = 2.0f;
     }
 
-    /// <summary>True if this planted foot actually rests on solid ground. A planted foot can
-    /// hang in mid-air (anchors clamp to leg reach over a cliff), so StepT alone can't answer
-    /// "is it standing" — probe just below the sole, where a ground-resolved anchor always
-    /// has the tile it planted on.</summary>
-    private static bool FootOnGround(Planet planet, TitanLeg leg)
-        => leg.StepT >= 1f && ProbeSolid(planet, leg.FootPos - planet.UpAt(leg.FootPos) * 10f);
+    /// <summary>True if this planted foot can actually bear weight: it rests on solid ground
+    /// AND sits below the body. A planted foot can hang in mid-air (anchors clamp to leg reach
+    /// over a cliff), so StepT alone can't answer "is it standing" — probe just below the
+    /// sole, where a ground-resolved anchor always has the tile it planted on. And a foot the
+    /// body has fallen PAST can't push it back up — without the below-body check the ride-
+    /// height spring fires its full lift off a foot overhead and catapults the boss skyward.</summary>
+    private bool FootSupports(Planet planet, TitanLeg leg)
+        => leg.StepT >= 1f
+           && Vector2.Dot(Position - leg.FootPos, planet.UpAt(leg.FootPos)) > 20f
+           && ProbeSolid(planet, leg.FootPos - planet.UpAt(leg.FootPos) * 10f);
 
     private bool AnyFootOnGround(Planet planet)
     {
         foreach (var leg in Legs)
-            if (FootOnGround(planet, leg)) return true;
+            if (FootSupports(planet, leg)) return true;
         return false;
     }
 
