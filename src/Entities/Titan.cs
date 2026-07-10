@@ -452,6 +452,16 @@ public sealed class Titan
                 var deficit = Hover - heightAboveFeet;
                 vNormal = MathHelper.Clamp(deficit * 6f, -160f, 230f);
             }
+            // Self-rescue: a de-aggroed walker sealed beneath the surface (its footstep
+            // quakes caved in the roof it stood on, or a chase plowed it deep) climbs
+            // straight up, bulldozing through the rock overhead, until it breaches — a
+            // roaming boss should never live out the run stuck in a cave the player can't
+            // even see. Aggro pursuit skips this: a hunting kaiju tunnels after its prey.
+            if (!IsAggro && !Leaping)
+            {
+                var surface = SurfacePoint(planet, up);
+                if (Vector2.Dot(surface - Position, up) > 60f) vNormal = 130f;
+            }
         }
 
         Velocity = right * vTangent + up * vNormal;
