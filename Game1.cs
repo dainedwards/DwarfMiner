@@ -2012,47 +2012,39 @@ public sealed partial class DwarfMinerGame : Game
         _toastTimer = 2.5f;
     }
 
-    /// <summary>The escape is flown by hand: free 2D flight anywhere around the planet —
-    /// WASD/arrows thrust in any direction, drag eases the rocket to a hover when the stick
-    /// is released, and nothing climbs on its own. The rocket can't sink into the crust or
-    /// wander past the station's orbit into deep space. Flying close to the mothership
+    /// <summary>The rocket is flown by hand, Asteroids-style: A/D (or arrows) swing the
+    /// nose — it points wherever the player leaves it, nothing rights it — and SPACE (or
+    /// W/up) burns along it. Drag eases the ship to a hover when the engine is off. The
+    /// rocket can't sink into the crust or wander past the station's orbit into deep
+    /// space. E sets it down and steps out (ExitShip); flying close to the mothership
     /// engages a short approach glide that completes the docking = FinishLaunch.</summary>
     private void UpdateAscent(float dt, KeyboardState keys)
     {
         var up = _run.Planet.UpAt(_launchShipPos);
-        var right = new Vector2(-up.Y, up.X);
-        var lat = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
-                + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
-        var vert = (keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up) ? 1f : 0f)
-                 + (keys.IsKeyDown(Keys.S) || keys.IsKeyDown(Keys.Down) ? -1f : 0f);
 
         _run.MothershipAngle += Session.StationDriftRate * dt;
 
-        // Thrust with drag: holding a direction builds to a leisurely cruise, letting go
-        // eases the rocket to a hover — slow enough to sightsee, quick enough to arrive.
-        var steer = right * lat + up * vert;
-        var thrusting = steer != Vector2.Zero;
-        if (thrusting) steer.Normalize();
-        _ascentVel += steer * 240f * dt;
+        if (Pressed(keys, _prevKeys, Keys.E))
+        {
+            ExitShip(up);
+            return;
+        }
+
+        var turn = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
+                 + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
+        var thrusting = keys.IsKeyDown(Keys.Space)
+                     || keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up);
+        var heading = MathF.Atan2(_ascentHeading.Y, _ascentHeading.X) + turn * 2.8f * dt;
+        _ascentHeading = new Vector2(MathF.Cos(heading), MathF.Sin(heading));
+
+        // Burn along the nose, drag toward a hover when coasting: holding SPACE builds to
+        // a leisurely cruise, letting go eases the rocket to a stop.
+        if (thrusting) _ascentVel += _ascentHeading * 240f * dt;
         _ascentVel *= 1f - MathF.Min(1f, 1.8f * dt);
         const float cruise = 120f;
         var speed = _ascentVel.Length();
-        if (speed > cruise) { _ascentVel *= cruise / speed; speed = cruise; }
+        if (speed > cruise) _ascentVel *= cruise / speed;
         _launchShipPos += _ascentVel * dt;
-
-        // Nose-up for the first moments off the pad, then the rocket banks to lead its
-        // trajectory: toward the thrust while burning, along the velocity while coasting,
-        // easing back upright in a hover. The turn is rate-limited so it reads as the
-        // ship swinging its nose around, not snapping.
-        _ascentTime += dt;
-        var want = _ascentTime < 2f ? up
-                 : thrusting ? steer
-                 : speed > 25f ? _ascentVel / speed
-                 : up;
-        var heading = MathF.Atan2(_ascentHeading.Y, _ascentHeading.X);
-        var turn = MathHelper.WrapAngle(MathF.Atan2(want.Y, want.X) - heading);
-        heading += MathHelper.Clamp(turn, -2.5f * dt, 2.5f * dt);
-        _ascentHeading = new Vector2(MathF.Cos(heading), MathF.Sin(heading));
 
         // The ground stays solid on the way up, same as it was on the way down: the rocket
         // rides just clear of terrain (mountainsides included) rather than sinking in.
