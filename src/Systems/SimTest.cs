@@ -1481,6 +1481,24 @@ public static class SimTest
         Check("prefetch: aim predictor stays quiet flying past",
             offAim is null || offAim.Def.Id != target.Def.Id,
             offAim is null ? "null" : offAim.Def.Id);
+
+        // Boot park: restoring a save near a planet re-parks the ship trailing it on its
+        // own orbit ring — far enough for the boot build to win the dive race, nose on the
+        // planet, and receding from (not swept by) the orbital motion when left idle.
+        var sim8 = new Space.SpaceSim { AsteroidTarget = 0 };
+        sim8.ParkShipTrailing(2);
+        var parked = sim8.Planets[2];
+        var parkSurf = (sim8.ShipPos - parked.Pos).Length() - parked.BodyRadius;
+        Check("bootpark: parks a build-lead outside the surface",
+            parkSurf > Space.SpaceSim.BootParkDistance * 0.9f
+            && parkSurf < Space.SpaceSim.BootParkDistance * 1.1f, $"{parkSurf:0}");
+        Check("bootpark: sits on the planet's own orbit ring",
+            MathF.Abs(sim8.ShipPos.Length() - parked.OrbitRadius) < 1f);
+        Check("bootpark: nose aimed at the planet",
+            Vector2.Dot(sim8.ShipDir, Vector2.Normalize(parked.Pos - sim8.ShipPos)) > 0.99f);
+        for (var t = 0; t < 1800; t++) sim8.Update(1f / 60f, 0f, thrust: false, brake: false);
+        Check("bootpark: idle ship recedes instead of being swept",
+            (sim8.ShipPos - parked.Pos).Length() - parked.BodyRadius > parkSurf - 1f);
     }
 
     private static void Check(string name, bool ok, string detail = "")
