@@ -1942,11 +1942,19 @@ public sealed partial class DwarfMinerGame : Game
     /// full, fire the liftoff cinematic. Needs all three stages installed and the dwarf
     /// standing at the pad. Fuel loads incrementally, so partial progress survives wandering
     /// off to mine more.</summary>
+    /// <summary>Where the finished rocket currently sits: wherever it was last parked, or
+    /// its build pad if it has never flown. Null until all three stages are installed.</summary>
+    private Vector2? ShipAt()
+        => _run.ShipStage < 3 ? null : _shipParked ? _launchShipPos : _run.PadPos;
+
+    private bool NearShip()
+        => ShipAt() is { } at && (_run.Player.Position - at).Length() <= 60f;
+
     private void TryLaunchShip()
     {
         if (_ascending) return;
-        if (_run.ShipStage < 3 || _run.PadPos is not { } pad) return;
-        if ((_run.Player.Position - pad).Length() > 60f) return;
+        if (ShipAt() is not { } ship) return;
+        if ((_run.Player.Position - ship).Length() > 60f) return;
 
         // Top up the tanks from carried fuel, capped at the launch requirement.
         var need = FuelToLaunch - _run.ShipFuel;
@@ -1958,7 +1966,7 @@ public sealed partial class DwarfMinerGame : Game
             {
                 _run.ShipFuel += load;
                 need -= load;
-                _particles.EmitDust(pad, 6f);
+                _particles.EmitDust(ship, 6f);
             }
         }
 
@@ -1969,12 +1977,13 @@ public sealed partial class DwarfMinerGame : Game
             return;
         }
 
-        BeginLaunch(pad);
+        BeginLaunch(ship);
     }
 
-    /// <summary>Fire the escape flight from the pad: a gentle hop clears the ground and the
-    /// stick is live immediately — <see cref="UpdateAscent"/> flies every frame from here
-    /// until the player docks at the mothership (<see cref="FinishLaunch"/>).</summary>
+    /// <summary>Board and fire up the rocket: a gentle hop clears the ground and the stick
+    /// is live immediately — <see cref="UpdateAscent"/> flies every frame from here until
+    /// the player docks at the mothership (<see cref="FinishLaunch"/>) or steps back out
+    /// (<see cref="ExitShip"/>).</summary>
     private void BeginLaunch(Vector2 pad)
     {
         _sfx.Play("launch", 1f);
@@ -1982,10 +1991,25 @@ public sealed partial class DwarfMinerGame : Game
         _launchUp = _run.Planet.UpAt(pad);
         _ascentVel = _launchUp * 30f;
         _ascentHeading = _launchUp;
-        _ascentTime = 0f;
         _ascending = true;
-        _toast = "ROCKET IS YOURS - WASD/ARROWS FLY, DOCK AT THE MOTHERSHIP";
+        _toast = "ROCKET IS YOURS - A/D TURN, SPACE BURN, E STEP OUT";
         _toastTimer = 3.5f;
+    }
+
+    /// <summary>E mid-flight: set the rocket down where it is and step out. The hull stays
+    /// parked at this spot (E within reach boards it again) and normal play resumes with
+    /// the dwarf beside it — high-altitude exits are the player's own skydive to make.</summary>
+    private void ExitShip(Vector2 up)
+    {
+        _ascending = false;
+        _shipParked = true;
+        var pos = _launchShipPos + up * 6f;
+        for (var i = 0; i < 60 && _run.Planet.IsSolidAt(pos); i++) pos += up * 2f;
+        _run.Player.Position = pos;
+        _run.Player.Velocity = Vector2.Zero;
+        _camera.Zoom = _playZoom;
+        _toast = "E AT THE ROCKET TO BOARD AGAIN";
+        _toastTimer = 2.5f;
     }
 
     /// <summary>The escape is flown by hand: free 2D flight anywhere around the planet —
