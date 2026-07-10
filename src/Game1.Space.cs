@@ -391,10 +391,11 @@ public sealed partial class DwarfMinerGame
         TickSpaceCameraAndBreach(dt);
 
         // Prefetch the world for whatever planet we're closest to, kicked off far outside
-        // entry range so the build always finishes before the ship arrives (a full-throttle
-        // 2200 px run-in takes ~3.5s; the build takes ~2). The locked Rift never prefetches.
+        // entry range so the build finishes before the ship arrives. The lead distance is
+        // sized for tier-3 engines (1120 px/s cruise): 4200 px buys ~3.75s against a ~2s
+        // build. The locked Rift never prefetches.
         var (nearP, surfDist) = _space.NearestPlanet();
-        if (nearP is not null && surfDist < 2200f && _prefetchId != nearP.Def.Id
+        if (nearP is not null && surfDist < 4200f && _prefetchId != nearP.Def.Id
             && !(nearP.Def.Id == "rift" && _space.RiftLocked))
         {
             var def = nearP.Def;
@@ -406,6 +407,25 @@ public sealed partial class DwarfMinerGame
         // bearing you flew in on becomes the bearing you arrive above.
         if (_space.AtmosphereContact() is { } entry)
         {
+            // Contact with a world that was never prefetched (a dive straight off the
+            // parking spot, or the wrong prefetch in flight): kick the build now so the
+            // hold below overlaps it instead of TakePrefetchedSession blocking a frame.
+            if (_prefetchId != entry.Def.Id)
+            {
+                var def = entry.Def;
+                _prefetchId = def.Id;
+                _prefetchTask = Task.Run(() => BuildSessionWorld(def));
+            }
+            // World still building: hold at the atmosphere edge for the remaining beat —
+            // the sim keeps rendering (no frozen frame) and entry completes the moment the
+            // background build lands. Steering away cancels the hold naturally.
+            if (_prefetchTask is { IsCompleted: false })
+            {
+                _space.ShipVel = Vector2.Zero;
+                _toast = $"ENTERING {entry.Def.Name.ToUpperInvariant()} ATMOSPHERE";
+                _toastTimer = 0.5f;
+                return;
+            }
             CaptureShipState();
             _meta.Save();
             var toShip = _space.ShipPos - entry.Pos;
