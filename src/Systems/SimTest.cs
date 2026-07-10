@@ -1379,7 +1379,7 @@ public static class SimTest
             voidSim.FuelUsed == 0f && (voidSim.ShipPos - v0).Length() > 500f);
 
         var flareRun = new Session(World.PlanetDefs.ById("verdant"))
-            { MeteorTimer = 9999f, FlareTimer = 0.3f, BlizzardTimer = 9999f };
+            { MeteorTimer = 9999f, DisasterTimer = 0.3f, NextDisaster = DisasterKind.Flare };
         var flareParticles = new Rendering.Particles();
         bool warned = false, struck = false;
         for (var i = 0; i < 60 * 9 && !struck; i++)
@@ -1390,8 +1390,32 @@ public static class SimTest
         }
         Check("content: solar flare warns then strikes", warned && struck && flareRun.FlareActive > 0f);
 
+        // One disaster at a time: with the flare still burning, the shared clock must hold —
+        // a due earthquake can't fire until the world is quiet again.
+        flareRun.DisasterTimer = 0.05f;
+        flareRun.NextDisaster = DisasterKind.Earthquake;
+        var held = true;
+        for (var i = 0; i < 30; i++)
+            held &= !AmbientDirector.Update(dt2, flareRun, flareParticles).QuakeStruck;
+        Check("disasters: only one at a time (clock holds while live)",
+            held && flareRun.DisasterTimer >= 0.05f && AmbientDirector.DisasterActive(flareRun));
+
+        // Spacing scales with planet difficulty: 7 minutes on the gentlest world down to
+        // 2 minutes on the hardest, jitter within ±15%.
+        Check("disasters: spacing 7 min gentle → 2 min brutal",
+            MathF.Abs(AmbientDirector.BaseInterval(World.PlanetDefs.ById("verdant")) - 420f) < 0.01f
+            && MathF.Abs(AmbientDirector.BaseInterval(World.PlanetDefs.ById("rift")) - 120f) < 0.01f);
+        var spaced = true;
+        for (var i = 0; i < 20; i++)
+        {
+            var roll = AmbientDirector.NextInterval(World.PlanetDefs.ById("frost"));
+            var expect = AmbientDirector.BaseInterval(World.PlanetDefs.ById("frost"));
+            spaced &= roll >= expect * 0.85f - 0.01f && roll <= expect * 1.15f + 0.01f;
+        }
+        Check("disasters: clock re-rolls stay within the jitter band", spaced);
+
         var blizzRun = new Session(World.PlanetDefs.ById("frost"))
-            { MeteorTimer = 9999f, FlareTimer = 9999f, BlizzardTimer = 0.3f };
+            { MeteorTimer = 9999f, DisasterTimer = 0.3f, NextDisaster = DisasterKind.Blizzard };
         var blizzStarted = false;
         for (var i = 0; i < 60 && !blizzStarted; i++)
             blizzStarted |= AmbientDirector.Update(dt2, blizzRun, flareParticles).BlizzardStarted;
