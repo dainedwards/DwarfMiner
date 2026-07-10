@@ -21,7 +21,9 @@ public enum TitanKind { Godzilla, Mecha, Sandworm, Kong, Knifehead, Otachi, Leat
 /// </summary>
 /// <param name="OreBias">Threshold reductions for ores this planet is rich in. Each entry
 /// lowers that ore's world-gen noise threshold, so 0.02–0.04 turns "rare" into "signature".</param>
-/// <param name="QuakeScale">Multiplies the earthquake interval — below 1 means more quakes.</param>
+/// <param name="QuakeScale">Restless-crust rating — 0.6 and below flags the QUAKES hazard on
+/// the star map. (Quake cadence itself now rides the shared disaster clock; see
+/// AmbientDirector and <paramref name="Difficulty"/>.)</param>
 /// <param name="ShipOre">Extra resource id demanded by the ship's nav core on this planet —
 /// chosen to force a deep dive into the planet's signature ore before you can leave.</param>
 /// <param name="OxygenDrainScale">Multiplies how fast the dwarf's air supply depletes at
