@@ -85,9 +85,21 @@ public static class SpawnDirector
     private static void TrySpawnCreature(Session run)
     {
         var planet = run.Planet;
-        // Pick a cave tile (Sky foreground with a rock wall behind it) in a donut around the
-        // player: close enough to be met within a minute of wandering, far enough to never
-        // pop in on-screen.
+
+        // Preferred: a cave tile *air-connected* to the player. A creature placed there can
+        // physically walk/fly to the dwarf, so the spawn becomes an encounter instead of a
+        // ghost in a sealed pocket the player will never open.
+        var spots = ReachableCaveSpots(run, 200f, 450f);
+        if (spots.Count > 0)
+        {
+            var (r, t) = spots[Random.Shared.Next(spots.Count)];
+            SpawnAt(run, planet.TileToWorld(r, t), connected: true);
+            return;
+        }
+
+        // Fallback (no connected caves in range — fresh surface landing, or the player has
+        // sealed themselves in): pick any cave tile in the donut and spawn a tunneller that
+        // can dig its own way toward the prey.
         for (var attempt = 0; attempt < 40; attempt++)
         {
             var a = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
@@ -99,67 +111,89 @@ public static class SpawnDirector
             if (planet.GetWall(r, t) == TileKind.Sky) continue;
             var pos = planet.TileToWorld(r, t);
             if ((pos - run.Player.Position).Length() < 180f) continue;
+            SpawnAt(run, pos, connected: false);
+            return;
+        }
+    }
 
-            // Roster shifts with depth: slimes, moles and skitterers riddle the upper crust
-            // (with snapper vines in the pockets), the mid-band belongs to the diggers plus
-            // the nasty tricks (spitters, bombers), and the lava zone is magma slugs, spitter
-            // batteries and hardened delver war-parties. Rock mimics are a rare bad day at
-            // any depth below the surface.
-            var fromCenter = (pos - planet.Center).Length() / Planet.TileSize;
-            var depth = planet.SurfaceRing - (fromCenter - Planet.RingMin); // tiles below the baseline surface
-            var roll = Random.Shared.NextDouble();
-            CreatureKind kind;
-            if (depth > 45f)
-            {
-                kind = roll < 0.28 ? CreatureKind.MagmaSlug
-                     : roll < 0.44 ? CreatureKind.HornedDelver
-                     : roll < 0.56 ? CreatureKind.Centipede
-                     : roll < 0.68 ? CreatureKind.AcidSpitter
-                     : roll < 0.78 ? CreatureKind.CaveEye
-                     : roll < 0.87 ? CreatureKind.BomberBeetle
-                     : roll < 0.96 ? CreatureKind.Grub
-                     : CreatureKind.RockMimic;
-            }
-            else if (depth > 20f)
-            {
-                kind = roll < 0.14 ? CreatureKind.HornedDelver
-                     : roll < 0.26 ? CreatureKind.Centipede
-                     : roll < 0.38 ? CreatureKind.Borer
-                     : roll < 0.48 ? CreatureKind.MoleBeast
-                     : roll < 0.58 ? CreatureKind.CaveSlime
-                     : roll < 0.68 ? CreatureKind.AcidSpitter
-                     : roll < 0.76 ? CreatureKind.BomberBeetle
-                     : roll < 0.84 ? CreatureKind.CaveEye
-                     : roll < 0.90 ? CreatureKind.Grub
-                     : roll < 0.97 ? CreatureKind.SnapperVine
-                     : CreatureKind.RockMimic;
-            }
-            else
-            {
-                kind = roll < 0.20 ? CreatureKind.Skitterer
-                     : roll < 0.40 ? CreatureKind.CaveSlime
-                     : roll < 0.55 ? CreatureKind.MoleBeast
-                     : roll < 0.65 ? CreatureKind.Grub
-                     : roll < 0.75 ? CreatureKind.CaveEye
-                     : roll < 0.85 ? CreatureKind.SnapperVine
-                     : roll < 0.93 ? CreatureKind.HornedDelver
-                     : roll < 0.98 ? CreatureKind.BomberBeetle
-                     : CreatureKind.RockMimic;
-            }
+    /// <summary>Roll a kind for the depth band at <paramref name="pos"/> and spawn it.
+    /// Unconnected sites only ever get diggers — anything else would be stranded.</summary>
+    private static void SpawnAt(Session run, Vector2 pos, bool connected)
+    {
+        var planet = run.Planet;
+        // Roster shifts with depth: slimes, moles and skitterers riddle the upper crust
+        // (with snapper vines in the pockets), the mid-band belongs to the diggers plus
+        // the nasty tricks (spitters, bombers), and the lava zone is magma slugs, spitter
+        // batteries and hardened delver war-parties. Rock mimics are a rare bad day at
+        // any depth below the surface.
+        var fromCenter = (pos - planet.Center).Length() / Planet.TileSize;
+        var depth = planet.SurfaceRing - (fromCenter - Planet.RingMin); // tiles below the baseline surface
+        var roll = Random.Shared.NextDouble();
+        CreatureKind kind;
+        if (!connected)
+        {
+            // Sealed pocket: tunnellers only. They chew toward prey, so even these spawns
+            // eventually knock on the player's walls.
+            kind = depth > 45f ? (roll < 0.5 ? CreatureKind.HornedDelver : CreatureKind.Centipede)
+                 : roll < 0.35 ? CreatureKind.Borer
+                 : roll < 0.60 ? CreatureKind.MoleBeast
+                 : roll < 0.80 ? CreatureKind.Centipede
+                 : CreatureKind.HornedDelver;
+        }
+        else if (depth > 45f)
+        {
+            kind = roll < 0.28 ? CreatureKind.MagmaSlug
+                 : roll < 0.44 ? CreatureKind.HornedDelver
+                 : roll < 0.56 ? CreatureKind.Centipede
+                 : roll < 0.68 ? CreatureKind.AcidSpitter
+                 : roll < 0.78 ? CreatureKind.CaveEye
+                 : roll < 0.87 ? CreatureKind.BomberBeetle
+                 : roll < 0.96 ? CreatureKind.Grub
+                 : CreatureKind.RockMimic;
+        }
+        else if (depth > 20f)
+        {
+            kind = roll < 0.14 ? CreatureKind.HornedDelver
+                 : roll < 0.26 ? CreatureKind.Centipede
+                 : roll < 0.38 ? CreatureKind.Borer
+                 : roll < 0.48 ? CreatureKind.MoleBeast
+                 : roll < 0.58 ? CreatureKind.CaveSlime
+                 : roll < 0.68 ? CreatureKind.AcidSpitter
+                 : roll < 0.76 ? CreatureKind.BomberBeetle
+                 : roll < 0.84 ? CreatureKind.CaveEye
+                 : roll < 0.90 ? CreatureKind.Grub
+                 : roll < 0.97 ? CreatureKind.SnapperVine
+                 : CreatureKind.RockMimic;
+        }
+        else
+        {
+            kind = roll < 0.20 ? CreatureKind.Skitterer
+                 : roll < 0.40 ? CreatureKind.CaveSlime
+                 : roll < 0.55 ? CreatureKind.MoleBeast
+                 : roll < 0.65 ? CreatureKind.Grub
+                 : roll < 0.75 ? CreatureKind.CaveEye
+                 : roll < 0.85 ? CreatureKind.SnapperVine
+                 : roll < 0.93 ? CreatureKind.HornedDelver
+                 : roll < 0.98 ? CreatureKind.BomberBeetle
+                 : CreatureKind.RockMimic;
+        }
 
-            // Stationary ambushers have their own small allowance (they don't count toward
-            // the cave cap); when it's full, the slot becomes a hunter from the same band so
-            // the spawn tick is never wasted on a fourth vine.
-            if (IsStationary(kind) && CountKindsNear(run, 550f, stationary: true) >= 3)
-            {
-                kind = depth > 45f ? CreatureKind.HornedDelver
-                     : depth > 20f ? CreatureKind.Borer
-                     : CreatureKind.CaveSlime;
-            }
+        // Stationary ambushers have their own small allowance (they don't count toward
+        // the cave cap); when it's full, the slot becomes a hunter from the same band so
+        // the spawn tick is never wasted on a fourth vine.
+        if (IsStationary(kind) && CountKindsNear(run, 550f, stationary: true) >= 3)
+        {
+            kind = depth > 45f ? CreatureKind.HornedDelver
+                 : depth > 20f ? CreatureKind.Borer
+                 : CreatureKind.CaveSlime;
+        }
 
-            // Biome specials override the generic roster: wraiths haunt the Rift at every
-            // depth, crawlers stalk the deeps of crystal-pocket worlds, and spore bats flit
-            // through the shallow caves of worlds with fungal groves.
+        // Biome specials override the generic roster: wraiths haunt the Rift at every
+        // depth, crawlers stalk the deeps of crystal-pocket worlds, and spore bats flit
+        // through the shallow caves of worlds with fungal groves. Connected sites only —
+        // none of the specials can dig out of a sealed pocket.
+        if (connected)
+        {
             var special = Random.Shared.NextDouble();
             if (run.Def.Id == "rift" && special < 0.25)
                 kind = CreatureKind.VoidWraith;
@@ -167,13 +201,78 @@ public static class SpawnDirector
                 kind = CreatureKind.CrystalCrawler;
             else if (run.Def.FungalPockets > 0 && depth < 30f && special < 0.22)
                 kind = CreatureKind.SporeBat;
+        }
 
-            var c = new Creature(pos, kind);
-            ClearSpawnSpace(run, pos, c.Radius);
-            run.Creatures.Add(c);
-            return;
+        var c = new Creature(pos, kind);
+        ClearSpawnSpace(run, pos, c.Radius);
+        run.Creatures.Add(c);
+    }
+
+    // Scratch collections for the reachability flood — single-threaded reuse, zero per-tick GC.
+    private static readonly List<(int r, int t)> _spotScratch = new();
+    private static readonly Queue<(int r, int t)> _bfsQueue = new();
+    private static readonly HashSet<(int r, int t)> _bfsSeen = new();
+
+    /// <summary>Cave tiles (open foreground, rock wall behind) that are air-connected to the
+    /// player, within a world-distance band. Bounded BFS over the polar grid from the
+    /// player's tile through non-solid tiles; radial steps re-map the angular index because
+    /// ring tile counts differ. Runs once per cave-spawn tick (~every 3s), capped at 8000
+    /// visited tiles, so cost stays negligible.</summary>
+    private static List<(int r, int t)> ReachableCaveSpots(Session run, float minDist, float maxDist)
+    {
+        var planet = run.Planet;
+        _spotScratch.Clear();
+        _bfsQueue.Clear();
+        _bfsSeen.Clear();
+
+        var (pr, pt) = planet.WorldToTile(run.Player.Position);
+        if (pr < 0 || pr >= planet.Rings) return _spotScratch;
+        pt = Mod(pt, planet.TilesAt(pr));
+        if (Tiles.IsSolid(planet.Get(pr, pt))) return _spotScratch; // buried — fall back
+
+        var minSq = minDist * minDist;
+        var maxSq = maxDist * maxDist;
+        _bfsQueue.Enqueue((pr, pt));
+        _bfsSeen.Add((pr, pt));
+        while (_bfsQueue.Count > 0 && _bfsSeen.Count < 8000)
+        {
+            var (r, t) = _bfsQueue.Dequeue();
+            var world = planet.TileToWorld(r, t);
+            var dSq = (world - run.Player.Position).LengthSquared();
+            if (dSq > maxSq) continue; // band edge — don't expand outward past it
+            if (dSq >= minSq && planet.GetWall(r, t) != TileKind.Sky)
+                _spotScratch.Add((r, t));
+
+            var n = planet.TilesAt(r);
+            Push(r, Mod(t - 1, n));
+            Push(r, Mod(t + 1, n));
+            if (r > 0)
+            {
+                // Inward: the single tile covering this tile's centre angle.
+                var n2 = planet.TilesAt(r - 1);
+                Push(r - 1, Mod((int)((t + 0.5f) * n2 / n), n2));
+            }
+            if (r < planet.Rings - 1)
+            {
+                // Outward: every tile overlapping this tile's angular span (outer rings
+                // have more tiles, so one inner tile can face several outer ones).
+                var n2 = planet.TilesAt(r + 1);
+                var first = (int)((float)t * n2 / n);
+                var last = (int)((t + 1f) * n2 / n);
+                for (var t2 = first; t2 <= last && t2 - first < 4; t2++)
+                    Push(r + 1, Mod(t2, n2));
+            }
+        }
+        return _spotScratch;
+
+        void Push(int r, int t)
+        {
+            if (!Tiles.IsSolid(planet.Get(r, t)) && _bfsSeen.Add((r, t)))
+                _bfsQueue.Enqueue((r, t));
         }
     }
+
+    private static int Mod(int a, int n) => ((a % n) + n) % n;
 
     /// <summary>Angle a few hundred px along the surface from the player — fauna spawns in
     /// the player's neighbourhood (just off-screen), not at a random point on the planet.</summary>
