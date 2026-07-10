@@ -887,6 +887,7 @@ public sealed partial class DwarfMinerGame : Game
         }
 
         _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, verticalAxis);
+        TickSwing(dt);
         TickOxygen(dt);
         TickHazardContact(dt);
 
