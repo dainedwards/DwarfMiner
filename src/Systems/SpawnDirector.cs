@@ -91,38 +91,51 @@ public static class SpawnDirector
             var pos = planet.TileToWorld(r, t);
             if ((pos - run.Player.Position).Length() < 180f) continue;
 
-            // Roster shifts with depth: moles and skitterers riddle the upper crust, the
-            // mid-band belongs to the diggers (delvers, centipedes, borers, moles), and the
-            // lava zone is magma slugs plus hardened delver war-parties.
+            // Roster shifts with depth: slimes, moles and skitterers riddle the upper crust
+            // (with snapper vines in the pockets), the mid-band belongs to the diggers plus
+            // the nasty tricks (spitters, bombers), and the lava zone is magma slugs, spitter
+            // batteries and hardened delver war-parties. Rock mimics are a rare bad day at
+            // any depth below the surface.
             var fromCenter = (pos - planet.Center).Length() / Planet.TileSize;
             var depth = planet.SurfaceRing - (fromCenter - Planet.RingMin); // tiles below the baseline surface
             var roll = Random.Shared.NextDouble();
             CreatureKind kind;
             if (depth > 45f)
             {
-                kind = roll < 0.35 ? CreatureKind.MagmaSlug
-                     : roll < 0.55 ? CreatureKind.HornedDelver
-                     : roll < 0.70 ? CreatureKind.Centipede
-                     : roll < 0.85 ? CreatureKind.CaveEye
-                     : CreatureKind.Grub;
+                kind = roll < 0.28 ? CreatureKind.MagmaSlug
+                     : roll < 0.44 ? CreatureKind.HornedDelver
+                     : roll < 0.56 ? CreatureKind.Centipede
+                     : roll < 0.68 ? CreatureKind.AcidSpitter
+                     : roll < 0.78 ? CreatureKind.CaveEye
+                     : roll < 0.87 ? CreatureKind.BomberBeetle
+                     : roll < 0.96 ? CreatureKind.Grub
+                     : CreatureKind.RockMimic;
             }
             else if (depth > 20f)
             {
-                kind = roll < 0.20 ? CreatureKind.HornedDelver
-                     : roll < 0.35 ? CreatureKind.Centipede
-                     : roll < 0.50 ? CreatureKind.Borer
-                     : roll < 0.65 ? CreatureKind.MoleBeast
-                     : roll < 0.78 ? CreatureKind.Grub
-                     : roll < 0.90 ? CreatureKind.CaveEye
-                     : CreatureKind.Skitterer;
+                kind = roll < 0.14 ? CreatureKind.HornedDelver
+                     : roll < 0.26 ? CreatureKind.Centipede
+                     : roll < 0.38 ? CreatureKind.Borer
+                     : roll < 0.48 ? CreatureKind.MoleBeast
+                     : roll < 0.58 ? CreatureKind.CaveSlime
+                     : roll < 0.68 ? CreatureKind.AcidSpitter
+                     : roll < 0.76 ? CreatureKind.BomberBeetle
+                     : roll < 0.84 ? CreatureKind.CaveEye
+                     : roll < 0.90 ? CreatureKind.Grub
+                     : roll < 0.97 ? CreatureKind.SnapperVine
+                     : CreatureKind.RockMimic;
             }
             else
             {
-                kind = roll < 0.30 ? CreatureKind.Skitterer
+                kind = roll < 0.20 ? CreatureKind.Skitterer
+                     : roll < 0.40 ? CreatureKind.CaveSlime
                      : roll < 0.55 ? CreatureKind.MoleBeast
-                     : roll < 0.70 ? CreatureKind.Grub
-                     : roll < 0.85 ? CreatureKind.CaveEye
-                     : CreatureKind.HornedDelver;
+                     : roll < 0.65 ? CreatureKind.Grub
+                     : roll < 0.75 ? CreatureKind.CaveEye
+                     : roll < 0.85 ? CreatureKind.SnapperVine
+                     : roll < 0.93 ? CreatureKind.HornedDelver
+                     : roll < 0.98 ? CreatureKind.BomberBeetle
+                     : CreatureKind.RockMimic;
             }
 
             // Biome specials override the generic roster: wraiths haunt the Rift at every
