@@ -1455,8 +1455,7 @@ public sealed partial class DwarfMinerGame : Game
     /// Mid-swing it rotates through Player.SwingAngle — the identical angle the mining
     /// hitbox samples, so the strike lands exactly where the head is drawn. At rest it
     /// hangs where the last swing ended (which is also where the next one starts, so the
-    /// chopping pendulum never teleports). Scaled so the head tip sits at the mining
-    /// reach; tier III's longer haft and tier IV's icy diamond sheen both show.</summary>
+    /// chopping pendulum never teleports). Tier IV's icy diamond sheen shows as a tint.</summary>
     private void DrawSwungTool(Texture2D tex, Vector2 aim)
     {
         var p = _run.Player;
@@ -1471,12 +1470,14 @@ public sealed partial class DwarfMinerGame : Game
             ang = theta - p.SwingFlip * Player.SwingArc * 0.5f;
         }
         var dir = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
-        var reach = MathF.Min(p.EffectiveMineRange, 30f);   // clamp: god mode's 200 px reach
-        var scale = reach * 0.85f / tex.Width;
+        // Half the dwarf's ~7 px visual height — a hand tool, not a polearm. The mining
+        // hitbox still reaches EffectiveMineRange; the sprite is presentation only.
+        const float toolLen = 3.6f;
+        var scale = toolLen / tex.Width;
         var tint = p.PickaxeTier >= 4 ? new Color(200, 235, 255)
                  : p.PickaxeTier == 3 ? new Color(235, 235, 245)
                  : Color.White;
-        _renderer.Batch.Draw(tex, p.Position + dir * 2f, null, tint,
+        _renderer.Batch.Draw(tex, p.Position + dir * 1.5f, null, tint,
             ang, new Vector2(0.5f, tex.Height / 2f), scale, SpriteEffects.None, 0f);
     }
 
