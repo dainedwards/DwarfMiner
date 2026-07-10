@@ -44,6 +44,9 @@ public static class SpawnProbe
 
         const float dt = 1f / 60f;
         var shots = new List<TitanProjectile>();
+        // "Encounters" = unique creatures that ever closed to within 150px of the player —
+        // the number the player would actually have to fight over the window.
+        var encountered = new HashSet<Creature>();
         for (var step = 0; step < 60 * 180; step++)   // 3 sim-minutes
         {
             SpawnDirector.Update(dt, run);
@@ -51,6 +54,8 @@ public static class SpawnProbe
             {
                 var c = run.Creatures[i];
                 c.Update(dt, run.Planet, run.Physics, run.Cells, run.Player, shots);
+                if (c.Hostile && (c.Position - run.Player.Position).LengthSquared() < 150f * 150f)
+                    encountered.Add(c);
                 if (c.Health <= 0 || (c.Position - run.Player.Position).LengthSquared() > 1000f * 1000f)
                     run.Creatures.RemoveAt(i);
             }
@@ -63,7 +68,8 @@ public static class SpawnProbe
         var hist = near550.GroupBy(c => c.Kind).OrderByDescending(g => g.Count())
             .Select(g => $"{g.Key}:{g.Count()}");
         Console.WriteLine($"[{defId} {(surface ? "surface" : "cave")}] cap={def.CaveSpawnCap} " +
-            $"total={run.Creatures.Count} cave<550px={near550.Count} cave<250px={near250}");
+            $"total={run.Creatures.Count} cave<550px={near550.Count} cave<250px={near250} " +
+            $"encounters(3min)={encountered.Count}");
         Console.WriteLine($"    mix: {string.Join(" ", hist)}");
     }
 
