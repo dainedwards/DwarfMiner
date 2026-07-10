@@ -996,7 +996,7 @@ public sealed class Cells
     public void AddLights(Renderer r, Vector2 viewCentre, float viewRadius, int stride = 1)
     {
         var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
-        if (stride > 1) cyMin = Math.Max(cyMin, 60 * Density);
+        if (stride > 1) cyMin = Math.Max(cyMin, 120 * Density);
         var step = 0;
         for (var cy = cyMin; cy <= cyMax; cy += stride)
         {
