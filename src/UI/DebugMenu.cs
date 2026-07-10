@@ -89,7 +89,7 @@ public sealed class DebugMenu
         }
         sb.End();
 
-        renderer.DrawDebugLabel("DEBUG: SPAWN  (Up/Down, Enter, or number — F9/Esc to close)",
+        renderer.DrawDebugLabel("DEBUG  (Up/Down, Enter, or number — F9/Esc to close)",
             new Vector2(panelX + 12, panelY + 14), new Color(255, 200, 150));
 
         for (var i = 0; i < _entries.Length; i++)
