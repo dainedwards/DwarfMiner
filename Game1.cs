@@ -2001,7 +2001,7 @@ public sealed partial class DwarfMinerGame : Game
 
         if (thrusting)
         {
-            _particles.EmitRocketExhaust(_launchShipPos - up * 2f, -up);
+            _particles.EmitRocketExhaust(_launchShipPos - _ascentHeading * 2f, -_ascentHeading);
             _run.Shake = MathF.Max(_run.Shake, 0.25f);
         }
         _run.Physics.Update(dt);
