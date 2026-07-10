@@ -68,7 +68,7 @@ public sealed class Corpse
         // The wraith is the renewable voidstone source — Rift-gated, but farmable.
         CreatureKind.VoidWraith   => new[] { ("voidstone", 1) },
         CreatureKind.CaveSlime    => new[] { ("meat", 1) },
-        CreatureKind.Slimelet     => Array.Empty<(string, int)>(),
+        CreatureKind.Slimelet     => new[] { ("meat", 1) },
         CreatureKind.AcidSpitter  => new[] { ("meat", 2) },
         CreatureKind.BomberBeetle => new[] { ("chitin", 1) },   // unused in practice — bombers self-destruct
         CreatureKind.SnapperVine  => new[] { ("meat", 1), ("hide", 1) },
