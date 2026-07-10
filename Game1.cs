@@ -369,7 +369,9 @@ public sealed partial class DwarfMinerGame : Game
         {
             var fUp = _run.Planet.UpAt(_run.Player.Position);
             var fRight = new Vector2(-fUp.Y, fUp.X);
-            var kinds = new[] { CreatureKind.SporeBat, CreatureKind.CrystalCrawler, CreatureKind.VoidWraith };
+            var kinds = new[] { CreatureKind.SporeBat, CreatureKind.CrystalCrawler, CreatureKind.VoidWraith,
+                                CreatureKind.CaveSlime, CreatureKind.AcidSpitter, CreatureKind.BomberBeetle,
+                                CreatureKind.SnapperVine, CreatureKind.RockMimic };
             for (var i = 0; i < kinds.Length; i++)
                 _run.Creatures.Add(new Creature(
                     _run.Player.Position + fRight * (26f + i * 22f) + fUp * 8f, kinds[i]));
