@@ -1110,18 +1110,60 @@ public sealed partial class DwarfMinerGame : Game
         for (var i = _run.Creatures.Count - 1; i >= 0; i--)
         {
             var c = _run.Creatures[i];
-            c.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player);
+            c.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player, _run.TitanShots);
             if (c.Health <= 0)
             {
                 // Killed — leave a harvestable corpse where it fell. Distance culls (below)
                 // don't: those creatures just wandered out of the simulation bubble.
-                _run.Corpses.Add(new Corpse(c.Position, c.Kind, c.Radius));
+                // (Bomber beetles leave a crater instead of a corpse.)
+                if (c.Kind != CreatureKind.BomberBeetle)
+                    _run.Corpses.Add(new Corpse(c.Position, c.Kind, c.Radius));
                 _particles.EmitDust(c.Position, 5f);
-                // Spore bats burst into a choking puff — kill them at arm's length.
-                if (c.Kind == CreatureKind.SporeBat)
+                switch (c.Kind)
                 {
-                    var (sx, sy) = _run.Planet.WorldToTile(c.Position);
-                    _run.Cells.SpawnInTile(sx, sy, Material.Gas, Cells.Density * 2);
+                    // Spore bats burst into a choking puff — kill them at arm's length.
+                    case CreatureKind.SporeBat:
+                    {
+                        var (sx, sy) = _run.Planet.WorldToTile(c.Position);
+                        _run.Cells.SpawnInTile(sx, sy, Material.Gas, Cells.Density * 2);
+                        break;
+                    }
+                    // Magma slugs are living coals — the hide bursts into live lava where
+                    // they die, so meleeing one down is a commitment.
+                    case CreatureKind.MagmaSlug:
+                    {
+                        var (lx, ly) = _run.Planet.WorldToTile(c.Position);
+                        _run.Cells.SpawnInTile(lx, ly, Material.Lava, Cells.Density);
+                        break;
+                    }
+                    // Bomber beetles detonate on any death — fuse-out or gunned down. The
+                    // instant-fuse dynamite carves the crater and applies creature AoE via
+                    // the normal projectile path (so bombers chain each other); the player
+                    // blast damage is applied here with the same linear falloff.
+                    case CreatureKind.BomberBeetle:
+                    {
+                        _run.Projectiles.Add(new Projectile(c.Position, Vector2.Zero, 16f, 0.02f,
+                            ProjectileKind.Dynamite));
+                        var pd = (_run.Player.Position - c.Position).Length();
+                        if (pd < 50f) _run.Player.TakeDamage(24f * (1f - 0.6f * pd / 50f));
+                        break;
+                    }
+                    // Terraria rules: a dead slime is two smaller ones. Slimelets pop off
+                    // sideways so the split reads, and they don't split further.
+                    case CreatureKind.CaveSlime:
+                    {
+                        var up = _run.Planet.UpAt(c.Position);
+                        var right = new Vector2(-up.Y, up.X);
+                        for (var s = -1; s <= 1; s += 2)
+                        {
+                            var lite = new Creature(c.Position + right * (s * 3f), CreatureKind.Slimelet)
+                            {
+                                Velocity = right * (s * 55f) + up * 90f,
+                            };
+                            _run.Creatures.Add(lite);
+                        }
+                        break;
+                    }
                 }
                 _run.Creatures.RemoveAt(i);
             }
