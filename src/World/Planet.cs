@@ -115,6 +115,39 @@ public sealed class Planet
     /// Visible as a darker silhouette behind Sky tiles inside the planet (Terraria-style).</summary>
     private readonly TileKind[] _wall;
 
+    /// <summary>What a compacted Conglomerate tile is made of: the exact cells (material +
+    /// dust source, run-length counted) that pressed into it, plus the blended display tint.
+    /// Breaking the tile spills these cells back out, so resource value round-trips exactly
+    /// through compaction. Sparse — only Conglomerate tiles have entries.</summary>
+    public sealed record TileComposition(Color Tint, (byte mat, byte src, byte count)[] Parts);
+
+    private readonly Dictionary<int, TileComposition> _composition = new();
+
+    /// <summary>Stamp a compacted Conglomerate tile with its cell composition.</summary>
+    public void SetConglomerate(int x, int y, TileComposition comp)
+    {
+        if (!InBounds(x, y)) return;
+        var i = Index(x, y);
+        _tiles[i] = TileKind.Conglomerate;
+        _damage[i] = 0;
+        _composition[i] = comp;
+    }
+
+    /// <summary>Composition of the Conglomerate tile at (x,y), or null. Read-only peek (renderer tint).</summary>
+    public TileComposition? GetComposition(int x, int y) =>
+        InBounds(x, y) && _composition.TryGetValue(Index(x, y), out var c) ? c : null;
+
+    /// <summary>Remove and return the composition at (x,y) — called when the tile shatters and
+    /// its cells spill back into the sim.</summary>
+    public TileComposition? TakeComposition(int x, int y)
+    {
+        if (!InBounds(x, y)) return null;
+        var i = Index(x, y);
+        if (!_composition.TryGetValue(i, out var c)) return null;
+        _composition.Remove(i);
+        return c;
+    }
+
     public Planet(Vector2 center, int rings = StandardRings)
     {
         Center = center;
