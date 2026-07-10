@@ -76,7 +76,11 @@ public sealed record PlanetDef(
     // Which biome archetype stamped this world — keys the ambient wildlife roster
     // (SpawnDirector): every biome keeps its own signature neutral species. One of
     // verdant / frost / ember / slag / ocean / acid / crystal / rift / debug.
-    string Biome = "verdant");
+    string Biome = "verdant",
+    // Where this world sits on the campaign ramp, 0 (gentlest) .. 1 (hardest). PlanetGen
+    // stamps it from the slot index; the Classic chain hand-sets it. Drives the shared
+    // disaster clock's spacing (AmbientDirector: ~7 min at 0 down to ~2 min at 1).
+    float Difficulty = 0f);
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.
 /// <see cref="All"/> is the ACTIVE chain: at boot Game1 swaps in a procedurally generated
