@@ -954,6 +954,16 @@ public static class SimTest
         Check("space: sun corona repels the ship", sim.ShipPos.Length() > Space.SpaceSim.SunRadius,
             $"dist {sim.ShipPos.Length():0}");
 
+        // The corona is also a hazard: 4s pressed against it must scorch hull off (one hit
+        // per invulnerability window, same cadence as an asteroid strike).
+        sim.Hull = sim.HullMax;
+        sim.HitTimer = 0f;
+        sim.ShipPos = new Vector2(Space.SpaceSim.SunRadius + 71f, 0f);
+        sim.ShipVel = Vector2.Zero;
+        sim.ShipHeading = MathF.PI;
+        for (var i = 0; i < 240; i++) sim.Update(dt, 0f, thrust: true, brake: false);
+        Check("space: corona contact burns the hull", sim.Hull < sim.HullMax, $"hull {sim.Hull}");
+
         // Fly at an ordinary planet: no wall — the ship reaches atmosphere-entry contact.
         var p = sim.Planets[2];
         sim.ShipPos = p.Pos + new Vector2(p.BodyRadius + 300f, 0f);
