@@ -81,6 +81,7 @@ public static class Tiles
         TileKind.Dirt => 1,
         TileKind.Grass => 1,
         TileKind.Snow => 1,
+        TileKind.Conglomerate => 1,
         TileKind.Gravel => 2,
         TileKind.Stone => 2,
         TileKind.MossStone => 2,
