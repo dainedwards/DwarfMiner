@@ -176,7 +176,11 @@ public sealed class Creature
     public bool IsSurfaceKind => Kind is CreatureKind.Grazer or CreatureKind.Hopper;
     public bool IsCaveKind => !IsSkyKind && !IsSurfaceKind;
 
-    public void Update(float dt, Planet planet, Physics physics, Cells cells, Player player)
+    /// <summary><paramref name="shots"/> is the shared enemy-shot list (the Titan's): ranged
+    /// creatures (acid spitters, crystal crawlers) add their projectiles to it and the existing
+    /// shot update/draw path handles the rest. Null (headless tests) just disables spitting.</summary>
+    public void Update(float dt, Planet planet, Physics physics, Cells cells, Player player,
+        List<TitanProjectile>? shots = null)
     {
         // Status effect tick: burn drains HP per-second; freeze halves move speed.
         if (BurnSeconds > 0f)
