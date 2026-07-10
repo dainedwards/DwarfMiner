@@ -968,7 +968,7 @@ public sealed partial class DwarfMinerGame : Game
             BeaconRecall(bp);
         }
 
-        // Launch the completed ship with L while standing at the pad.
+        // Board the completed ship with L (or E, above) while standing at it.
         if (Pressed(keys, _prevKeys, Keys.L)) TryLaunchShip();
 
         // Storage depot: B banks raw mats, N withdraws the stash — when standing at the depot.
