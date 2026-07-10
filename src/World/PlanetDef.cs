@@ -72,7 +72,11 @@ public sealed record PlanetDef(
     // Non-null on banded worlds (the debug planet): the surface course cycles through these
     // tiles, one wedge per entry, instead of painting SurfaceTile everywhere. SurfaceTile
     // still drives the snow-cap and blizzard gates.
-    TileKind[]? SurfaceBands = null);
+    TileKind[]? SurfaceBands = null,
+    // Which biome archetype stamped this world — keys the ambient wildlife roster
+    // (SpawnDirector): every biome keeps its own signature neutral species. One of
+    // verdant / frost / ember / slag / ocean / acid / crystal / rift / debug.
+    string Biome = "verdant");
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.
 /// <see cref="All"/> is the ACTIVE chain: at boot Game1 swaps in a procedurally generated
