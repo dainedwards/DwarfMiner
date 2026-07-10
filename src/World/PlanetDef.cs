@@ -176,7 +176,7 @@ public static class PlanetDefs
             OreBias: new[] { (TileKind.PlatinumOre, 0.030f), (TileKind.GoldOre, 0.020f), (TileKind.IronOre, 0.025f) },
             QuakeScale: 0.45f, CaveSpawnCap: 20,
             ShipOre: "platinum", ShipOreCount: 5, OxygenDrainScale: 1.7f, SeedsAcid: true, Titan: TitanKind.Mecha,
-            CrystalPockets: 3),
+            CrystalPockets: 3, Biome: "slag"),
 
         new("core", "Coreheart", "The finale, diamond-rich, swarming, lava at the door",
             new Color(120, 70, 160), new Color(220, 150, 255),
