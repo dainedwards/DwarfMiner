@@ -1262,18 +1262,36 @@ public sealed class Titan
         physics.Earthquake(footPos - up * (Planet.TileSize * 5f), 64f + Anger * 0.5f, 1 + (int)(Anger / 45f));
     }
 
-    /// <summary>True when there's rock close on BOTH sides of the body — inside a dig shaft or
-    /// sealed in solid ground. Being braced is what lets the hunt-climb ascend: the kaiju
-    /// chimneys between the walls (or plows through overburden) after prey above it, but has
-    /// nothing to push on out in the open. Probes two heights per side so a ragged shaft wall
-    /// still counts.</summary>
+    /// <summary>True when there's rock within a leg's reach on BOTH sides of the body — inside
+    /// a dig shaft (including its wider crater-bowl bottom) or sealed in solid ground. Being
+    /// braced is what lets the hunt-climb ascend: the kaiju chimneys between the walls (or
+    /// plows through overburden) after prey above it, but has nothing to push on out in the
+    /// open. Probes two heights per side so a ragged shaft wall still counts.</summary>
     private bool Braced(Planet planet, Vector2 up, Vector2 right)
     {
-        var reach = BodyRadius + 26f;
+        var reach = BodyRadius + 64f;
         for (var s = -1; s <= 1; s += 2)
         {
             var side = Position + right * (s * reach);
             if (!planet.IsSolidAt(side) && !planet.IsSolidAt(side - up * 30f)) return false;
+        }
+        return true;
+    }
+
+    /// <summary>True when terrain rises above the body on BOTH flanks — the floor of a pit,
+    /// dig shaft, or cavern rather than open ground. Sampled in columns to the sides, never
+    /// through the body's own radial (a dug shaft is open straight up, so a radial surface
+    /// probe reports "surface below" from the bottom of a hole). Gates the hunt-jump so the
+    /// boss springs out of holes after airborne prey but doesn't pogo across open plains.</summary>
+    private bool BelowLocalTerrain(Planet planet, Vector2 up, Vector2 right)
+    {
+        for (var s = -1; s <= 1; s += 2)
+        {
+            var col = Position + right * (s * 90f);
+            var found = false;
+            for (var d = 40f; d <= 320f; d += 12f)
+                if (planet.IsSolidAt(col + up * d)) { found = true; break; }
+            if (!found) return false;
         }
         return true;
     }
