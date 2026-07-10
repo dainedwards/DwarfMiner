@@ -379,6 +379,15 @@ public sealed class Titan
         {
             moveAxis = _roamDir;
             speedMul = 0.45f;   // slow roam — kaiju is just wandering, not hunting
+            // Don't wander off a chasm edge: a fall into a cave system is one the boss can
+            // never climb back out of, so it would spend the rest of the run underground.
+            // Turn around at the edge (or stand, if it's somehow on a pillar). Aggro pursuit
+            // deliberately skips this — a hunting kaiju will drop off a cliff after you.
+            if (moveAxis != 0 && CliffAhead(planet, up, right, moveAxis))
+            {
+                moveAxis = CliffAhead(planet, up, right, -moveAxis) ? 0 : -moveAxis;
+                _roamDir = moveAxis;
+            }
         }
 
         // Knifehead's gore owns the pace: plant and crouch through the windup, then sprint
