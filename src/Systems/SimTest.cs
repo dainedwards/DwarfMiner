@@ -592,6 +592,43 @@ public static class SimTest
             Check($"titan: the floor under the boss survives the plow ({floorBefore}→{CountFloor()})",
                 CountFloor() == floorBefore);
         }
+
+        // --- Dig-down hunt: an enraged boss stomps a shaft toward a player deep below it,
+        // then bursts back up through the overburden when the player gets above it ---
+        {
+            var pp = WorldGen.Generate(70);
+            var pc = new Cells(pp);
+            var pphys = new Physics(pp, pc);
+            var psh = new System.Collections.Generic.List<TitanProjectile>();
+            var pbo = new System.Collections.Generic.List<FallingBoulder>();
+            var boss = new Titan(pp, -MathF.PI / 2f, TitanKind.Godzilla);
+            boss.Hatch();
+            const float dt = 1f / 60f;
+            // Settle onto its feet, then hold it enraged with the player 420px straight down.
+            for (var i = 0; i < 180; i++) boss.Update(dt, pp, pphys, pc, boss.Position, pbo, psh);
+            var digPlayer = boss.Position - pp.UpAt(boss.Position) * 420f;
+            var startRadial = (boss.Position - pp.Center).Length();
+            for (var i = 0; i < 60 * 30; i++)
+            {
+                boss.OnDamage();
+                boss.Anger = 90f;   // hold it past DigAngerGate (UpdateAnger lerps slowly)
+                boss.Update(dt, pp, pphys, pc, digPlayer, pbo, psh);
+            }
+            var dugRadial = (boss.Position - pp.Center).Length();
+            Check($"titan: enraged boss stomps a shaft down toward buried prey ({startRadial - dugRadial:0}px)",
+                startRadial - dugRadial > 120f);
+
+            // Prey escapes upward — the boss should climb back toward the surface.
+            var upPlayer = boss.Position + pp.UpAt(boss.Position) * 500f;
+            for (var i = 0; i < 60 * 20; i++)
+            {
+                boss.OnDamage();
+                boss.Anger = 90f;
+                boss.Update(dt, pp, pphys, pc, upPlayer, pbo, psh);
+            }
+            var rose = (boss.Position - pp.Center).Length() - dugRadial;
+            Check($"titan: boss bursts back up when the prey gets above it ({rose:0}px)", rose > 120f);
+        }
     }
 
     /// <summary>Hazard cells: gas rises and flash-burns near lava, acid dissolves soft tiles,
