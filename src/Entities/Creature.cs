@@ -571,7 +571,7 @@ public sealed class Creature
         Vector2 up, Vector2 right, Vector2 toPlayer, float dist, float speedMul)
     {
         _retarget -= dt;
-        if (dist < 130f && dist > 0.01f)
+        if (dist < 200f && dist > 0.01f)
         {
             _digDir = toPlayer / dist;
         }
