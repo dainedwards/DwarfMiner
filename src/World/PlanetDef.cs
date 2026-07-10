@@ -203,8 +203,17 @@ public static class PlanetDefs
 
     static PlanetDefs() => All = Classic;
 
-    /// <summary>Core shards needed to warp — one from every world except the Rift itself.</summary>
-    public static int WarpShardsNeeded => All.Length - 1;
+    /// <summary>Core shards needed to warp — one from every world except the Rift itself
+    /// (and the shard-less debug rig, when it's aboard).</summary>
+    public static int WarpShardsNeeded
+    {
+        get
+        {
+            var n = 0;
+            foreach (var d in All) if (d.Id != "rift" && d.Id != "debug") n++;
+            return n;
+        }
+    }
 
     public static PlanetDef ById(string id)
     {
