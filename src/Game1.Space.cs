@@ -324,6 +324,22 @@ public sealed partial class DwarfMinerGame
     {
         _toastTimer -= dt;
 
+        // F9 — developer menu, space edition: godmode grants instead of boss spawns. The
+        // system keeps drifting behind it, same as the other overlays.
+        if (_debugMenu.Open)
+        {
+            _debugMenu.Update(keys, _prevKeys);
+            _space.Update(dt, 0f, thrust: false, brake: false);
+            TickSpaceCameraAndBreach(dt);
+            return;
+        }
+        if (Pressed(keys, _prevKeys, Keys.F9))
+        {
+            _debugMenu.SetEntries(BuildSpaceDebugEntries());
+            _debugMenu.Toggle();
+            return;
+        }
+
         // Overlays capture input while the system keeps drifting behind them; opening one
         // closes the other.
         if (Pressed(keys, _prevKeys, Keys.U)) { _upgradesOpen = !_upgradesOpen; _surveyOpen = false; }
