@@ -164,7 +164,7 @@ public static class PlanetGen
                 ShipOre: shipOre, ShipOreCount: shipOreCount,
                 OxygenDrainScale: oxy * 1.2f, SeedsGas: true, Titan: titan,
                 CrystalPockets: rng.Next(3), SizeScale: size,
-                Volcanoes: 2 + rng.Next(2), VolcanoScale: J(1.0f, 1.3f)),
+                Volcanoes: 2 + rng.Next(2), VolcanoScale: J(1.0f, 1.3f), Biome: "ember"),
 
             Biome.Slag => new(id, name,
                 "Dead metal world - thin air, meteor-scarred, rich veins",
