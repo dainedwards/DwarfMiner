@@ -287,12 +287,35 @@ public static class SpawnDirector
         return playerAng + sign * (arc / surfaceRadius);
     }
 
+    /// <summary>The debug rig's menagerie — every ground species at once, for QA sweeps.</summary>
+    private static readonly CreatureKind[] AllSurfaceFauna =
+    {
+        CreatureKind.Grazer, CreatureKind.Hopper, CreatureKind.SnowLoper, CreatureKind.CinderSkink,
+        CreatureKind.RustBack, CreatureKind.TidePuddler, CreatureKind.AcidStrider, CreatureKind.PrismSnail,
+    };
+
+    /// <summary>Each planet archetype keeps its own herd: the verdant start rolls the classic
+    /// grazer/hopper pair, every other biome fields its signature species. Null = no ground
+    /// fauna (the Rift's only gentle life is airborne — see the sky spawner).</summary>
+    private static CreatureKind? SurfaceFaunaFor(PlanetDef def) => def.Biome switch
+    {
+        "frost"   => CreatureKind.SnowLoper,
+        "ember"   => CreatureKind.CinderSkink,
+        "slag"    => CreatureKind.RustBack,
+        "ocean"   => CreatureKind.TidePuddler,
+        "acid"    => CreatureKind.AcidStrider,
+        "crystal" => CreatureKind.PrismSnail,
+        "rift"    => null,
+        "debug"   => AllSurfaceFauna[Random.Shared.Next(AllSurfaceFauna.Length)],
+        _         => Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper,
+    };
+
     private static void TrySpawnSurfaceAnimal(Session run)
     {
+        if (SurfaceFaunaFor(run.Def) is not { } kind) return;
         var angle = NearbySurfaceAngle(run, 220f, 550f);
         var pos = FindSurfaceSpawn(run.Planet, angle, run.Planet.Radius);
         if ((pos - run.Player.Position).Length() < 160f) return; // don't pop in on-screen
-        var kind = Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper;
         var c = new Creature(pos, kind);
         ClearSpawnSpace(run, pos, c.Radius);
         run.Creatures.Add(c);
