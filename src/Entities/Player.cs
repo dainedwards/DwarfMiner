@@ -695,7 +695,7 @@ public sealed class Player
         SwingTime = MathF.Max(0f, SwingTime - dt);
         if (SwingLanded || SwingProgress < SwingWindup) return null;
 
-        var reach = EffectiveMineRange;
+        var reach = SwingReach;
         var self = planet.WorldToTile(Position);
         var aimedTile = planet.WorldToTile(SwingCursor);
 
