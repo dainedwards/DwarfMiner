@@ -106,6 +106,11 @@ public sealed class Titan
     private float _digTimer;
     private int _digLeg;
     private bool _digPending;
+    /// <summary>Airtime window for the generic hunt-jump (prey above, no shaft walls to
+    /// chimney) — while it runs, <see cref="Leaping"/> suppresses the suspension so the leap
+    /// actually leaves the ground; it clears Leaping when it expires. Kong is excluded (its
+    /// special owns Leaping).</summary>
+    private float _jumpTimer;
 
     /// <summary>Projectiles can hit the boss/egg except while the Sandworm is burrowed.</summary>
     public bool Targetable => !Submerged;
