@@ -2591,7 +2591,12 @@ public sealed partial class DwarfMinerGame : Game
         // Spaceship build site — the pad plus however many stages are installed. Drawn as
         // world-space rects rotated to local-up, same as every other surface structure. During
         // liftoff the ship is drawn at its climbing position instead of on the pad.
-        if (_ascending) DrawShip(_launchShipPos, _run.ShipStage);
+        if (_ascending)
+        {
+            // The pad stays behind on the ground; the rocket flies free on its own heading.
+            if (_run.PadPos is { } padPos) DrawShip(padPos, 0);
+            DrawShip(_launchShipPos, _run.ShipStage, _ascentHeading);
+        }
         else if (_run.PadPos is { } shipPos) DrawShip(shipPos, _run.ShipStage);
 
         // Storage depot — a squat vault the dwarf banks resources at.
