@@ -323,29 +323,38 @@ public sealed partial class DwarfMinerGame
     private void RestoreShipState()
     {
         ApplyShipTiers();
+        _space.RiftLocked = _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded;
         if (!_meta.ShipStateSaved)
         {
-            _space.PlaceShipAt(Math.Min(_meta.PlanetsUnlocked, PlanetDefs.All.Length) - 1);
-            return;
+            _space.ParkShipTrailing(Math.Min(_meta.PlanetsUnlocked, PlanetDefs.All.Length) - 1);
         }
-        _space.ShipPos = new Vector2(_meta.ShipPosX, _meta.ShipPosY);
-        _space.ShipHeading = _meta.ShipHeadingSave;
-        if (_meta.ShipHull > 0) _space.Hull = Math.Min(_meta.ShipHull, _space.HullMax);
-
-        // The snapshot may date from the moment of atmosphere entry, and the planets re-rack
-        // to their boot angles regardless of where they'd orbited to — either way the saved
-        // point can boot inside (or skimming) a planet, and a planet's orbital motion sweeps
-        // over an idle ship parked near its surface within seconds. Either way the run opens
-        // with a forced atmosphere entry. Re-park at the standard spot off that planet: the
-        // sun-away radial, where the orbit motion grazes past the parked ship instead of
-        // plowing into it.
-        for (var i = 0; i < _space.Planets.Count; i++)
+        else
         {
-            var p = _space.Planets[i];
-            if ((_space.ShipPos - p.Pos).Length() - p.BodyRadius >= 260f) continue;
-            _space.PlaceShipAt(i);
-            break;
+            _space.ShipPos = new Vector2(_meta.ShipPosX, _meta.ShipPosY);
+            _space.ShipHeading = _meta.ShipHeadingSave;
+            if (_meta.ShipHull > 0) _space.Hull = Math.Min(_meta.ShipHull, _space.HullMax);
+
+            // The snapshot may date from the moment of atmosphere entry, and the planets
+            // re-rack to their boot angles regardless of where they'd orbited to — either
+            // way the saved point can boot inside (or skimming) a planet, forcing an
+            // atmosphere entry before its world build has finished. Any spawn closer than
+            // the boot-park shell re-parks trailing the planet on its own orbit ring: far
+            // enough out that the build kicked below wins the race back in, and clear of
+            // every body's orbital sweep so an idle ship stays parked.
+            for (var i = 0; i < _space.Planets.Count; i++)
+            {
+                var p = _space.Planets[i];
+                if ((_space.ShipPos - p.Pos).Length() - p.BodyRadius >= SpaceSim.BootParkDistance)
+                    continue;
+                _space.ParkShipTrailing(i);
+                break;
+            }
         }
+
+        // Start the nearest world building now, during the rest of boot — by the time the
+        // player has oriented and burned back across the park distance, entry is instant.
+        var (nearP, _) = _space.NearestPlanet();
+        if (nearP is not null) EnsurePrefetch(nearP.Def);
     }
 
     /// <summary>Snapshot the mothership into MetaSave — called wherever meta already saves
