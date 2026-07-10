@@ -1735,7 +1735,80 @@ public sealed partial class DwarfMinerGame : Game
         new("Vitriodactyl (acid rain)",   () => SpawnDebugTitan(TitanKind.Vitriodactyl)),
         new("Rocket — fuelled, launch-ready", () => SpawnDebugShip(fuelled: true)),
         new("Rocket — dry (mine fuel first)", () => SpawnDebugShip(fuelled: false)),
+        new("Disaster — solar flare",   () => TriggerDebugDisaster(DisasterKind.Flare)),
+        new("Disaster — blizzard",      () => TriggerDebugDisaster(DisasterKind.Blizzard)),
+        new("Disaster — acid rain",     () => TriggerDebugDisaster(DisasterKind.AcidRain)),
+        new("Disaster — magma surge",   () => TriggerDebugDisaster(DisasterKind.MagmaSurge)),
+        new("Disaster — eruption",      () => TriggerDebugDisaster(DisasterKind.Eruption)),
+        new("Disaster — earthquake",    () => TriggerDebugDisaster(DisasterKind.Earthquake)),
+        new("Meteor strike (ambient)",  () => AmbientDirector.SpawnMeteor(_run)),
     };
+
+    /// <summary>Feedback for AmbientDirector results — toasts, shake, and sound for whatever
+    /// began this tick. Shared by the normal update and the debug-menu disaster trigger.</summary>
+    private void ApplyAmbient(in AmbientDirector.Result ambient)
+    {
+        if (ambient.Surge)
+        {
+            _run.Shake = MathF.Max(_run.Shake, 0.7f);
+            PlayAt("collapse", ambient.SurgePos, 0.9f, pitch: -0.3f);
+        }
+        if (ambient.FlareWarned)
+        {
+            _toast = "! SOLAR FLARE INBOUND - GET UNDERGROUND !";
+            _toastTimer = 6.5f;
+            _sfx.Play("creak", 0.9f, pitch: 0.4f);
+        }
+        if (ambient.FlareStruck)
+        {
+            _toast = "SOLAR FLARE - THE SURFACE IS BURNING";
+            _toastTimer = 3.5f;
+            _sfx.Play("explode", 0.7f, pitch: -0.5f);
+        }
+        if (ambient.BlizzardStarted)
+        {
+            _toast = "BLIZZARD - GET OUT OF THE WIND";
+            _toastTimer = 4f;
+            _sfx.Play("creak", 0.8f, pitch: 0.6f);
+        }
+        if (ambient.AcidRainStarted)
+        {
+            _toast = "! TOXIC CLOUD - ACID RAIN. GET UNDER OBSIDIAN OR DIG DEEP !";
+            _toastTimer = 5f;
+            _sfx.Play("creak", 0.9f, pitch: -0.2f);
+        }
+        if (ambient.EruptionStarted)
+        {
+            _toast = "VOLCANIC ERUPTION";
+            _toastTimer = 4f;
+            _run.Shake = MathF.Max(_run.Shake, 0.8f);
+            PlayAt("collapse", ambient.EruptionPos, 0.9f, pitch: -0.5f);
+        }
+        if (ambient.QuakeStruck)
+            _run.Shake = MathF.Max(_run.Shake, 1.0f);
+    }
+
+    /// <summary>Debug-menu action: force a disaster right now. Any disaster already playing
+    /// out is cut short first (the shared clock allows only one at a time), and the clock is
+    /// re-rolled so the natural spacing resumes after the forced one ends.</summary>
+    private void TriggerDebugDisaster(DisasterKind kind)
+    {
+        _run.FlareWarn = 0f;
+        _run.FlareActive = 0f;
+        _run.BlizzardActive = 0f;
+        _run.AcidRainActive = 0f;
+        _run.EruptionLeft = 0f;
+        var result = new AmbientDirector.Result();
+        if (!AmbientDirector.TryBegin(kind, _run, _particles, ref result))
+        {
+            _toast = kind == DisasterKind.Eruption ? "NO VOLCANO VENTS ON THIS WORLD"
+                                                   : "NO SITE FOUND FOR THAT DISASTER";
+            _toastTimer = 2.5f;
+            return;
+        }
+        _run.DisasterTimer = AmbientDirector.NextInterval(_run.Def);
+        ApplyAmbient(result);
+    }
 
     /// <summary>Debug-menu action: plant a fully-built, launch-ready ship at the player's feet,
     /// skipping the pad/hull/engine/nav-core craft chain. When <paramref name="fuelled"/> the
