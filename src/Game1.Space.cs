@@ -479,6 +479,13 @@ public sealed partial class DwarfMinerGame
             _toast = $"THE RIFT STORMS REPEL YOU - {PlanetDefs.WarpShardsNeeded - _meta.CoreShards.Count} MORE CORE SHARDS NEEDED";
             _toastTimer = 2.5f;
         }
+
+        // Corona feedback while the sun chews the hull (the sim applies the burn itself).
+        if (_space.ShipPos.Length() < SpaceSim.SunRadius + 100f && _toastTimer <= 0f)
+        {
+            _toast = "SOLAR CORONA - HULL BURNING, PULL AWAY";
+            _toastTimer = 1.5f;
+        }
     }
 
     /// <summary>Per-frame space camera easing, plus the hull-breach consequence: an
