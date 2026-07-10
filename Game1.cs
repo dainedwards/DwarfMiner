@@ -1439,6 +1439,35 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
+    /// <summary>Draw the held pickaxe/hammer as a physical object in the dwarf's grip.
+    /// Mid-swing it rotates through Player.SwingAngle — the identical angle the mining
+    /// hitbox samples, so the strike lands exactly where the head is drawn. At rest it
+    /// hangs where the last swing ended (which is also where the next one starts, so the
+    /// chopping pendulum never teleports). Scaled so the head tip sits at the mining
+    /// reach; tier III's longer haft and tier IV's icy diamond sheen both show.</summary>
+    private void DrawSwungTool(Texture2D tex, Vector2 aim)
+    {
+        var p = _run.Player;
+        float ang;
+        if (p.SwingActive)
+        {
+            ang = p.SwingAngle;
+        }
+        else
+        {
+            var theta = MathF.Atan2(aim.Y, aim.X);
+            ang = theta - p.SwingFlip * Player.SwingArc * 0.5f;
+        }
+        var dir = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
+        var reach = MathF.Min(p.EffectiveMineRange, 30f);   // clamp: god mode's 200 px reach
+        var scale = reach * 0.85f / tex.Width;
+        var tint = p.PickaxeTier >= 4 ? new Color(200, 235, 255)
+                 : p.PickaxeTier == 3 ? new Color(235, 235, 245)
+                 : Color.White;
+        _renderer.Batch.Draw(tex, p.Position + dir * 2f, null, tint,
+            ang, new Vector2(0.5f, tex.Height / 2f), scale, SpriteEffects.None, 0f);
+    }
+
     /// <summary>Fire a basic bullet from the "bullets" slot. Intrinsic — always available;
     /// no cannon needed. Low damage, fast cadence.</summary>
     private void FireBullet(Vector2 worldCursor)
