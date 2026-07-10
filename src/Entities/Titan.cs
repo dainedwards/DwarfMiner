@@ -855,6 +855,18 @@ public sealed class Titan
         SpecialState = 2.0f;
     }
 
+    /// <summary>True if any planted foot actually rests on solid ground. A planted foot can
+    /// hang in mid-air (anchors clamp to leg reach over a cliff), so StepT alone can't answer
+    /// "is it standing" — probe just below the sole, where a ground-resolved anchor always
+    /// has the tile it planted on.</summary>
+    private bool AnyFootOnGround(Planet planet)
+    {
+        foreach (var leg in Legs)
+            if (leg.StepT >= 1f && ProbeSolid(planet, leg.FootPos - planet.UpAt(leg.FootPos) * 10f))
+                return true;
+        return false;
+    }
+
     /// <summary>Mean of foot positions for legs that are currently planted (StepT ≥ 1).
     /// Mid-step legs are excluded so the body doesn't bob each time a leg arcs.</summary>
     private Vector2 AvgPlantedFoot(out bool hasAny)
