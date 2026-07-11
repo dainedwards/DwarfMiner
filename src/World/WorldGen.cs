@@ -236,8 +236,8 @@ public static class WorldGen
                 }
 
                 var pos = planet.TileToWorld(r, t);
-                var wx = (pos.X - planet.Center.X) / Planet.TileSize;
-                var wy = (pos.Y - planet.Center.Y) / Planet.TileSize;
+                var wx = (pos.X - planet.Center.X) / (Planet.TileSize * S);
+                var wy = (pos.Y - planet.Center.Y) / (Planet.TileSize * S);
 
                 TileKind k;
                 if (depth < 1f)
