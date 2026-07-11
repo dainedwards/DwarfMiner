@@ -317,9 +317,15 @@ public sealed class Renderer
                     var exposeMask = (outerSky ? 1 : 0) | (innerSky ? 2 : 0)
                                    | (leftSky ? 4 : 0) | (rightSky ? 8 : 0);
                     var shade = (int)(255 * BlobShade(centre));
+                    var drawCol = tintF == Vector3.One
+                        ? new Color(shade, shade, shade)
+                        : new Color(
+                            (int)Math.Clamp(shade * tintF.X, 0f, 255f),
+                            (int)Math.Clamp(shade * tintF.Y, 0f, 255f),
+                            (int)Math.Clamp(shade * tintF.Z, 0f, 255f));
                     _sb.Draw(_tileAtlas, centre,
                         TileAtlas.Source(k, VariantFor(k, r, t, hash), exposeMask),
-                        new Color(shade, shade, shade), rotation,
+                        drawCol, rotation,
                         new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
                         new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
                         SpriteEffects.None, 0f);
