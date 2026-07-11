@@ -487,18 +487,37 @@ public sealed class Player
         return planet.Get(x, y);
     }
 
-    /// <summary>Place a block from inventory into a sky tile under the cursor. Stone first, then dirt.</summary>
+    /// <summary>The open (Sky) tiles of the 2×2 footprint under the cursor that one placed
+    /// block will fill — grown toward the cursor's position inside the aimed tile, so the
+    /// stamp hugs where the player points. Empty when the aimed tile is occupied or every
+    /// footprint tile would seal the dwarf in. One inventory unit buys the whole stamp: a
+    /// 2×2 of 4-px tiles is exactly the legacy block the unit was mined from (and mining it
+    /// back returns exactly one unit through the dust economy).</summary>
+    private List<(int x, int y)>? PlacementStamp(Planet planet, Vector2 worldCursor, bool passable)
+    {
+        var (x, y) = planet.WorldToTile(worldCursor);
+        if (planet.Get(x, y) != TileKind.Sky) return null;
+        List<(int x, int y)>? stamp = null;
+        foreach (var (fx, fy) in planet.Footprint2x2(x, y, worldCursor))
+        {
+            if (planet.Get(fx, fy) != TileKind.Sky) continue;
+            // Don't seal the dwarf inside a tile — keep at least a body's distance for
+            // blocking tiles. (Passable placeables can go right at the feet.)
+            if (!passable
+                && (planet.TileToWorld(fx, fy) - Position).Length() < Radius + Planet.TileSize * 0.55f)
+                continue;
+            (stamp ??= new List<(int x, int y)>()).Add((fx, fy));
+        }
+        return stamp;
+    }
+
+    /// <summary>Place a block from inventory into the sky tiles under the cursor. Stone first, then dirt.</summary>
     public TileKind? TryPlace(Planet planet, Physics physics, Vector2 worldCursor)
     {
         if (MineCooldown > 0) return null;
         var d = worldCursor - Position;
         if (d.Length() > EffectiveMineRange) return null;
-        var (x, y) = planet.WorldToTile(worldCursor);
-        if (planet.Get(x, y) != TileKind.Sky) return null;
-
-        // Don't seal the dwarf inside a tile — keep at least a body's distance.
-        var tilePos = planet.TileToWorld(x, y);
-        if ((tilePos - Position).Length() < Radius + Planet.TileSize * 0.55f) return null;
+        if (PlacementStamp(planet, worldCursor, passable: false) is not { } stamp) return null;
 
         // Priority: plain stone (most abundant) → richer stone variants (granite/basalt/etc) →
         // dirt. Each variant places its own tile kind so a granite stockpile builds granite
@@ -513,8 +532,11 @@ public sealed class Player
         else if (Inventory.TryConsume("dirt", 1))       placed = TileKind.Dirt;
         else return null;
 
-        planet.Set(x, y, placed);
-        physics.MarkDirty(x, y);
+        foreach (var (fx, fy) in stamp)
+        {
+            planet.Set(fx, fy, placed);
+            physics.MarkDirty(fx, fy);
+        }
         MineCooldown = 0.10f;
         return placed;
     }
