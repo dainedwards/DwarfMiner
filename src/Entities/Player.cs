@@ -702,7 +702,7 @@ public sealed class Player
 
         (int X, int Y)? Contact(Vector2 dir)
         {
-            for (var t = 0f; t <= reach; t += 2f)
+            for (var t = 0f; t <= reach; t += 1f)
             {
                 var (x, y) = planet.WorldToTile(Position + dir * t);
                 // Don't chew the ladder being climbed — unless it's what's being aimed at.
