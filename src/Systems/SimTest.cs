@@ -555,21 +555,25 @@ public static class SimTest
             var pbo = new System.Collections.Generic.List<FallingBoulder>();
             var boss = new Titan(pp, -MathF.PI / 2f, TitanKind.Kong);
             boss.Hatch();   // hatch = aggroed, so the plow runs at full power
+            // Let the hatch transient finish first: the freshly hatched body pops tens of px
+            // up to ride height over the first ticks, which would carry it away from any
+            // slab placed around the pre-hatch position.
+            for (var i = 0; i < 30; i++)
+                boss.Update(1f / 60f, pp, pphys, pc, boss.Position, pbo, psh);
             // A stone slab at body height (16-32px up, inside the plow radius) and a stone
-            // row well below the body centre (the floor sector), then tick once. Tiles are
-            // placed through world coordinates — ring tile counts differ, so reusing one
-            // angular index across rings would drift the slab away from the body.
+            // row well below the body centre (-40px — inside the protected floor sector),
+            // then tick once. Offsets are world px so the geometry is tile-size-independent;
+            // tiles are placed through world coordinates — ring tile counts differ, so
+            // reusing one angular index across rings would drift the slab away from the body.
             var bup = pp.UpAt(boss.Position);
             var bright = new Vector2(-bup.Y, bup.X);
             var slab = new System.Collections.Generic.List<(int x, int y)>();
             var floor = new System.Collections.Generic.List<(int x, int y)>();
-            for (var dy = -1; dy <= 1; dy++)
+            for (var dyPx = -8; dyPx <= 8; dyPx += Planet.TileSize)
             {
-                for (var dx = 2; dx <= 4; dx++)
-                    slab.Add(pp.WorldToTile(boss.Position + bup * (dx * Planet.TileSize)
-                                                          + bright * (dy * Planet.TileSize)));
-                floor.Add(pp.WorldToTile(boss.Position - bup * (5 * Planet.TileSize)
-                                                       + bright * (dy * Planet.TileSize)));
+                for (var dxPx = 16; dxPx <= 32; dxPx += Planet.TileSize)
+                    slab.Add(pp.WorldToTile(boss.Position + bup * dxPx + bright * dyPx));
+                floor.Add(pp.WorldToTile(boss.Position - bup * 40f + bright * dyPx));
             }
             foreach (var (x, y) in slab) pp.Set(x, y, TileKind.Stone);
             foreach (var (x, y) in floor) pp.Set(x, y, TileKind.Stone);
