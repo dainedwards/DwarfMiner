@@ -16,7 +16,8 @@ namespace DwarfMiner.Systems;
 public static class RunSave
 {
     // Bump when the format or the planet/cell geometry changes — old saves are discarded.
-    private const int Version = 7;
+    // v8: 4-px tiles (doubled ring geometry) + Conglomerate composition table.
+    private const int Version = 8;
     private const uint Magic = 0x444D5253; // "DMRS"
 
     private static string SavePath
