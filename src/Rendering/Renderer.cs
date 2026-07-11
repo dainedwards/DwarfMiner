@@ -250,9 +250,9 @@ public sealed class Renderer
                 if (k == TileKind.Conglomerate && planet.GetComposition(r, t) is { } comp)
                 {
                     tintF = new Vector3(
-                        comp.Tint.R / (float)Math.Max(1, col.R),
-                        comp.Tint.G / (float)Math.Max(1, col.G),
-                        comp.Tint.B / (float)Math.Max(1, col.B));
+                        comp.Tint.R / (float)Math.Max(1, (int)col.R),
+                        comp.Tint.G / (float)Math.Max(1, (int)col.G),
+                        comp.Tint.B / (float)Math.Max(1, (int)col.B));
                     col = comp.Tint;
                 }
                 col = new Color(
