@@ -185,8 +185,9 @@ public static class WorldGen
                     continue;
                 }
 
-                // Below the surface: layered ground.
-                var depth = surfaceR - r;
+                // Below the surface: layered ground. Depth is measured in legacy 8-px tile
+                // units so every threshold below keeps its original world-space meaning.
+                var depth = (surfaceR - r) / S;
 
                 // Lake basin: carve the bowl out of the surface and seed it with water. The
                 // top course (depth < 1) stays air so the waterline sits just below the shore.
