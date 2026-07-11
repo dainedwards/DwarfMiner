@@ -1446,9 +1446,10 @@ public sealed partial class DwarfMinerGame : Game
         var hitPos = _run.Planet.TileToWorld(strike.X, strike.Y);
         PlayAt("dig", hitPos, 0.35f,
             pitch: 0.1f + (float)Random.Shared.NextDouble() * 0.3f, minGap: 0.09f);
-        if (strike.Broken is { } bk)
+        if (strike.Broken is not null)
         {
-            OnTileBroken(strike.X, strike.Y, bk, _run.Player.SwingTool);
+            foreach (var (bx, by, bk) in _run.Player.LastBroken)
+                OnTileBroken(bx, by, bk, _run.Player.SwingTool);
         }
         else
         {
