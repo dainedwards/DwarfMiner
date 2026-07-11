@@ -507,17 +507,19 @@ public static class WorldGen
 
             // The throat: a primed channel from the chamber roof up to the crater floor,
             // sleeved in basalt so the soft dirt band it crosses can't slump into it.
+            // Span keeps the legacy world width: open channel ≈24 px, 8-px walls each side.
+            var throatSpan = (int)(2 * S) + 1;
             for (var r = chamberR + chamberRad - 1; r <= floorR; r++)
             {
                 if (r < 2 || r >= planet.Rings) continue;
                 var n = planet.TilesAt(r);
                 var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
-                for (var dt = -2; dt <= 2; dt++)
+                for (var dt = -throatSpan; dt <= throatSpan; dt++)
                 {
                     var t = ((t0 + dt) % n + n) % n;
                     if (Tiles.IsAnchored(planet.Get(r, t))) continue;
                     planet.SetWall(r, t, TileKind.Basalt);
-                    if (dt is -2 or 2)
+                    if (Math.Abs(dt) >= throatSpan - 1)
                     {
                         planet.Set(r, t, TileKind.Basalt);
                     }
@@ -530,7 +532,7 @@ public static class WorldGen
             }
 
             // Vent: just above the pool surface — where eruptions spawn fresh cells.
-            var ventR = Math.Min(planet.Rings - 1, surfaceR + (int)poolTop + 2);
+            var ventR = Math.Min(planet.Rings - 1, surfaceR + (int)poolTop + (int)(2 * S));
             var ventT = (int)((ang / MathHelper.TwoPi + 1f) % 1f * planet.TilesAt(ventR));
             planet.VolcanoVents.Add((ventR, ventT, def.VolcanoAcid));
         }
