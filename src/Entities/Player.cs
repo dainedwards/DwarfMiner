@@ -569,39 +569,55 @@ public sealed class Player
         var (x, y) = target;
         MineCooldown = MineCooldownFor(tool);   // spent whether or not the tile can break
         if (!CanBreak(planet.Get(x, y), tool)) return null;
-        return StrikeTile(planet, physics, x, y, tool);
+        return StrikeTile(planet, physics, x, y, tool, worldCursor);
     }
 
-    /// <summary>Land one tool blow on a specific tile: the tool-aware power profile applied to
-    /// <see cref="Planet.Mine"/>. Tier IV gets a 2× power bonus on Obsidian; hammer gets a flat
+    /// <summary>Every tile broken by the most recent strike — Game1 reads this after
+    /// <see cref="TryMine"/> / <see cref="UpdateSwing"/> to spawn dust piles and stats per
+    /// tile. A strike covers a 2×2 footprint (one legacy 8-px tile), so up to four entries.</summary>
+    public readonly List<(int X, int Y, TileKind Kind)> LastBroken = new();
+
+    /// <summary>Land one tool blow: the tool-aware power profile applied to
+    /// <see cref="Planet.Mine"/> across the 2×2 footprint grown from the struck tile toward
+    /// the aim point — tiles are 4 px now, so a single blow still clears the old full-size
+    /// tile's worth of rock. Tier IV gets a 2× power bonus on Obsidian; hammer gets a flat
     /// power floor + an effective-hardness override so it bites bedrock at all; the mining
     /// laser doubles the pick's power (floor 6) on top of its stream cadence. Shared by the
     /// cursor path (<see cref="TryMine"/>) and the swing hitbox (<see cref="UpdateSwing"/>).
-    /// Returns the broken tile kind, or null if the tile survived the blow.</summary>
-    private TileKind? StrikeTile(Planet planet, Physics physics, int x, int y, MiningTool tool)
+    /// Returns the broken kind of the aimed tile (or the first that broke); every broken
+    /// tile lands in <see cref="LastBroken"/>.</summary>
+    private TileKind? StrikeTile(Planet planet, Physics physics, int x, int y, MiningTool tool,
+        Vector2 towards)
     {
-        var k = planet.Get(x, y);
-        var power = EffectivePickaxePower;
-        int? effectiveHardness = null;
-        if (k == TileKind.Obsidian && PickaxeTier >= 4) power *= 2;
-        if (tool == MiningTool.Hammer)
+        LastBroken.Clear();
+        TileKind? primary = null;
+        var aimed = planet.WorldToTile(planet.TileToWorld(x, y)); // wrapped key for identity
+        foreach (var (fx, fy) in planet.Footprint2x2(x, y, towards))
         {
-            power = Math.Max(power, 4);
-            // Treat PlanetCore as basalt-class so the hammer's swing actually does damage.
-            // Other tiles take normal hardness — the boost is the power floor only.
-            if (k == TileKind.PlanetCore) effectiveHardness = 8;
-        }
-        if (tool == MiningTool.MiningLaser) power = Math.Max(power * 2, 6);
+            var k = planet.Get(fx, fy);
+            if (k == TileKind.Sky || !CanBreak(k, tool)) continue;
+            var power = EffectivePickaxePower;
+            int? effectiveHardness = null;
+            if (k == TileKind.Obsidian && PickaxeTier >= 4) power *= 2;
+            if (tool == MiningTool.Hammer)
+            {
+                power = Math.Max(power, 4);
+                // Treat PlanetCore as basalt-class so the hammer's swing actually does damage.
+                // Other tiles take normal hardness — the boost is the power floor only.
+                if (k == TileKind.PlanetCore) effectiveHardness = 8;
+            }
+            if (tool == MiningTool.MiningLaser) power = Math.Max(power * 2, 6);
 
-        var broken = planet.Mine(x, y, power, effectiveHardness);
-        if (broken is { } bk)
-        {
-            physics.MarkDirty(x, y);
-            // Drop is no longer credited instantly here — Game1 spawns a dust pile of `bk` and the
-            // player collects it by walking through (Cells.CollectInRadius). Mining = create dust.
-            return bk;
+            if (planet.Mine(fx, fy, power, effectiveHardness) is { } bk)
+            {
+                physics.MarkDirty(fx, fy);
+                // Drop is not credited instantly — Game1 spawns a dust pile per broken tile
+                // and the player collects it by walking through (Cells.CollectInRadius).
+                LastBroken.Add((fx, fy, bk));
+                if (primary is null || (fx, fy) == aimed) primary = bk;
+            }
         }
-        return null;
+        return primary;
     }
 
     // ---- Physical swing: pickaxe & hammer -----------------------------------------------
