@@ -1408,11 +1408,10 @@ public sealed partial class DwarfMinerGame : Game
                 pitch: 0.1f + (float)Random.Shared.NextDouble() * 0.3f, minGap: 0.09f);
         }
 
-        var broken = _run.Player.TryMine(_run.Planet, _run.Physics, worldCursor, tool);
-        if (broken is { } bk && target is { } bt)
-        {
-            OnTileBroken(bt.X, bt.Y, bk, tool);
-        }
+        // A strike clears a 2×2 footprint of the fine 4-px tiles; handle every tile it broke.
+        if (_run.Player.TryMine(_run.Planet, _run.Physics, worldCursor, tool) is not null)
+            foreach (var (bx, by, bk) in _run.Player.LastBroken)
+                OnTileBroken(bx, by, bk, tool);
     }
 
     /// <summary>Everything that happens when a mined tile shatters — ore/depth meta stats,
