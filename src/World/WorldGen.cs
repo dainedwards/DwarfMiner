@@ -456,7 +456,7 @@ public static class WorldGen
                     var k = TileKind.Basalt;
                     if (f < craterFrac + 0.1f)
                         k = rng.Next(3) == 0 ? TileKind.Obsidian : TileKind.Basalt;
-                    else if (f > 0.55f && above > h - 1.5f)
+                    else if (f > 0.55f && above > h - 1.5f * S)
                         k = TileKind.Gravel;                       // ash skirt
                     planet.SetWall(r, t, TileKind.Basalt);
                     planet.Set(r, t, k);
