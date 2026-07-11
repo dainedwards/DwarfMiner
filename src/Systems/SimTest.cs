@@ -883,6 +883,58 @@ public static class SimTest
             buried.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
     }
 
+    /// <summary>Compaction: buried, undisturbed grains press into a Conglomerate tile whose
+    /// stored cells spill back out when it shatters — dust value round-trips exactly.</summary>
+    private static void TestCompaction()
+    {
+        var planet = WorldGen.Generate(11);
+        var cells = new Cells(planet);
+        const float dt = 1f / 60f;
+
+        // A sealed one-tile pocket deep in stone, packed full of stone dust: solid floor
+        // below, solid roof above (buried), nothing moving — the compaction sweep's second
+        // look ~10s later presses it into a Conglomerate.
+        var r = planet.SurfaceRing - 60;
+        const int t = 33;
+        for (var dr = -1; dr <= 1; dr++)
+            for (var da = -1; da <= 1; da++)
+                planet.Set(r + dr, t + da, TileKind.Stone);
+        planet.Set(r, t, TileKind.Sky);
+        for (var dy = 0; dy < Cells.Density; dy++)
+            for (var dx = 0; dx < Cells.Density; dx++)
+                cells.Place(t * Cells.Density + dx, r * Cells.Density + dy, Material.Dust, TileKind.Stone);
+
+        for (var i = 0; i < 60 * 14 && planet.Get(r, t) != TileKind.Conglomerate; i++)
+            cells.Update(dt);
+        Check("compaction: buried undisturbed dust re-forms into conglomerate",
+            planet.Get(r, t) == TileKind.Conglomerate);
+
+        var comp = planet.GetComposition(r, t);
+        var stored = 0;
+        var rightCells = true;
+        if (comp is not null)
+            foreach (var (mat, src, count) in comp.Parts)
+            {
+                stored += count;
+                rightCells &= (Material)mat == Material.Dust && (TileKind)src == TileKind.Stone;
+            }
+        Check($"compaction: composition stores the pressed cells ({stored})",
+            comp is not null && stored == Cells.Density * Cells.Density && rightCells);
+
+        // Shatter it: the exact cells spill back out — value round-trips, nothing minted.
+        Check("compaction: conglomerate mines like soft rock",
+            planet.Mine(r, t, 99) == TileKind.Conglomerate);
+        cells.SpawnDustInTile(r, t, TileKind.Conglomerate);
+        var spilled = 0;
+        for (var dy = 0; dy < Cells.Density; dy++)
+            for (var dx = 0; dx < Cells.Density; dx++)
+                if (cells.Get(t * Cells.Density + dx, r * Cells.Density + dy) == Material.Dust) spilled++;
+        Check($"compaction: shattering spills the stored cells back ({spilled})",
+            spilled == Cells.Density * Cells.Density);
+        Check("compaction: composition entry consumed on shatter",
+            planet.GetComposition(r, t) is null);
+    }
+
     /// <summary>Volcanoes: fire worlds raise lava-primed cones whose plumbing reaches a deep
     /// chamber; the acid flag reroutes the fluid to the acid seed channel.</summary>
     private static void TestVolcanoes()
