@@ -106,7 +106,7 @@ public sealed class Renderer
         // tile and skips the deep interior (buried under opaque rock; the odd shaft reads
         // as a dark speck at this scale) — this is what keeps the orbital shot at 60 fps.
         var lowDetail = cam.Zoom < 0.9f;
-        if (lowDetail) minRing = Math.Max(minRing, 60);
+        if (lowDetail) minRing = Math.Max(minRing, 120);
 
         // Elevation-layered skybox: backdrop and stars belong to different altitude bands.
         // Underground reads near-black, the lower atmosphere is a moody dusk blue with no

@@ -1690,9 +1690,9 @@ public sealed partial class DwarfMinerGame : Game
     private void TryCoreDrill()
     {
         var distFromCentre = (_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize;
-        // Innermost ~3 rings count as "at the core". Tunable; keeping it tight rewards the
-        // player for actually digging all the way to the bottom.
-        if (distFromCentre > Planet.RingMin + 3f) return;
+        // Innermost ~6 rings (3 legacy tiles) count as "at the core". Tunable; keeping it
+        // tight rewards the player for actually digging all the way to the bottom.
+        if (distFromCentre > Planet.RingMin + 6f) return;
 
         _particles.EmitImpact(_run.Planet.Center, ProjectileKind.Nuke);
         _run.Shake = MathF.Max(_run.Shake, 1.5f);

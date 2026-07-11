@@ -53,7 +53,7 @@ public sealed class Meteor
     private void Impact(Planet planet, Physics physics, Cells cells, Player player, Particles particles)
     {
         var (cx, cy) = planet.WorldToTile(Position);
-        const int r = 5;
+        const int r = 10;
         for (var dy = -r; dy <= r; dy++)
         {
             for (var dx = -r; dx <= r; dx++)
@@ -64,7 +64,7 @@ public sealed class Meteor
                 var k = planet.Get(x, y);
                 if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
 
-                if (d2 <= 2)
+                if (d2 <= 8)
                 {
                     // Ore core — an exposed nugget in the crater floor. Fuel-heavy so meteor
                     // hunting feeds the ship's tank; the odd gold slug sweetens it.

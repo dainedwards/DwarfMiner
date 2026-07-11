@@ -38,16 +38,16 @@ public sealed class Physics
     public const float SettleInterval = 0.05f; // seconds between settle ticks
     /// <summary>Max collapsible region size for baseline rock (Stone, hardness 2). Regions
     /// bigger than their strength-derived budget are treated as supported.</summary>
-    public const int StoneCollapseBudget = 48;
+    public const int StoneCollapseBudget = 192;
     /// <summary>Budget shaved off per hardness tier above Stone — stronger material holds
     /// larger unsupported spans, so only smaller pockets of it can cave in.</summary>
-    public const int BudgetPerHardness = 8;
+    public const int BudgetPerHardness = 32;
     /// <summary>Obsidian is brittle: any unsupported span bigger than this caves in.</summary>
-    public const int ObsidianCollapseBudget = 6;
+    public const int ObsidianCollapseBudget = 24;
     /// <summary>Hard flood cap for regions entirely above the crust. Airborne rock gets no
     /// size-based reprieve — this only bounds the flood's worst-case work (the biggest
-    /// giant-world massifs run ~7-8k tiles).</summary>
-    public const int SkyRegionCap = 20000;
+    /// giant-world massifs run ~28-32k tiles on the 4-px grid).</summary>
+    public const int SkyRegionCap = 80000;
     private int _regionBudgetSum;
     /// <summary>Whether the current flood region reaches at or below the crust line
     /// (baseline surface + margin). Only such regions earn the too-big-to-fall valve.</summary>
@@ -245,7 +245,7 @@ public sealed class Physics
         _floodRegion.Clear();
         _regionBudgetSum = 0;
         _regionTouchesCrust = false;
-        var crustRing = _planet.SurfaceRing + 2;   // covers the ±1.5-tile surface elev noise
+        var crustRing = _planet.SurfaceRing + 4;   // covers the ±3-ring (±1.5 legacy tile) surface elev noise
 
         var startIdx = _planet.Index(sx, sy);
         _floodStack.Push(startIdx);

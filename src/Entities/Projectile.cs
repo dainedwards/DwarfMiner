@@ -298,6 +298,9 @@ public sealed class Projectile
         Particles? particles = null, bool dust = true)
     {
         if (tiles <= 0) return;
+        // Callers still author radii in legacy 8-px tiles; convert to today's finer grid so
+        // craters keep their world size.
+        tiles = (int)(tiles * Planet.LegacyTileScale);
         var maxDist = tiles * Planet.TileSize;
         var maxDistSq = maxDist * maxDist;
         var rel = Position - planet.Center;

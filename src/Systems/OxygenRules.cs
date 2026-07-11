@@ -10,11 +10,11 @@ namespace DwarfMiner.Systems;
 /// </summary>
 public static class OxygenRules
 {
-    // Above AirDepth (a few tiles into the ground) surface air refills the supply; below it the
+    // Above AirDepth (a few rings into the ground) surface air refills the supply; below it the
     // drain ramps linearly to MaxDrain at DeepDepth. Tuned so a base 100-air dwarf can reach
     // the mid-crust ore band and return, while the deep gem/diamond bands need the air tank.
-    public const float AirDepth = 6f;
-    public const float DeepDepth = 120f;
+    public const float AirDepth = 12f;
+    public const float DeepDepth = 240f;
     public const float RefillRate = 45f;
     public const float MaxDrain = 7.5f;
     public const float SuffocationDps = 6f;

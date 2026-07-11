@@ -543,11 +543,11 @@ public sealed class Player
 
         // Skip the tile the dwarf's own centre occupies (a ladder being climbed, a glowshroom
         // at the feet) unless the cursor is actually inside it — otherwise every swing taken
-        // from a ladder would chew the ladder instead of the wall being aimed at. Step 2 px:
-        // comfortably under the 8 px tile so the ray can't jump a tile corner.
+        // from a ladder would chew the ladder instead of the wall being aimed at. Step 1 px:
+        // comfortably under the 4 px tile so the ray can't jump a tile corner.
         var self = planet.WorldToTile(Position);
         var cursorTile = planet.WorldToTile(worldCursor);
-        for (var t = 0f; t <= range; t += 2f)
+        for (var t = 0f; t <= range; t += 1f)
         {
             var (x, y) = planet.WorldToTile(Position + dir * t);
             if ((x, y) == self && (x, y) != cursorTile) continue;

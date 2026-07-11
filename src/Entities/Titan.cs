@@ -1259,7 +1259,7 @@ public sealed class Titan
         // standing over loses its roof and collapses. The Settle inside Earthquake dislodges
         // unsupported tiles; Game1 turns the resulting CollapsesThisTick into screen shake.
         var up = planet.UpAt(footPos);
-        physics.Earthquake(footPos - up * (Planet.TileSize * 5f), 64f + Anger * 0.5f, 1 + (int)(Anger / 45f));
+        physics.Earthquake(footPos - up * (Planet.TileSize * 10f), 64f + Anger * 0.5f, 1 + (int)(Anger / 45f));
     }
 
     /// <summary>True when there's rock within a leg's reach on BOTH sides of the body — inside
@@ -1458,7 +1458,7 @@ public sealed class TitanProjectile
             TitanShotKind.Spike => 16f,
             _                   => 28f,   // Laser
         };
-        _drill = kind == TitanShotKind.Laser ? 3 : 0;
+        _drill = kind == TitanShotKind.Laser ? 6 : 0;
     }
 
     /// <summary>Acid and Lava globs are the ballistic shots — they loft, arc, and rain down,

@@ -511,20 +511,21 @@ public sealed class Creature
         // Bite an area, not a single tile: chip every mineable tile whose centre falls within
         // the bite disc. The disc spans the body cross-section plus the adjacent corner tiles,
         // so a digger can't be pinned by a block a single-tile probe would miss.
-        var biteR = Radius + Planet.TileSize * 0.9f;
+        var biteR = Radius + Planet.TileSize * 1.8f;
         var relC = centre - planet.Center;
         var ang = MathF.Atan2(relC.Y, relC.X);
         if (ang < 0) ang += MathHelper.TwoPi;
         var (cx, _) = planet.WorldToTile(centre);
         var bit = false;
         var blocked = false;
-        for (var dx = -2; dx <= 2; dx++)
+        var span = (int)(biteR / Planet.TileSize) + 1;
+        for (var dx = -span; dx <= span; dx++)
         {
             var x = cx + dx;
             if (x < 0 || x >= planet.Rings) continue;
             // Angular index recomputed per ring — rings have different tile counts.
             var ty0 = (int)(ang / MathHelper.TwoPi * planet.TilesAt(x));
-            for (var dy = -2; dy <= 2; dy++)
+            for (var dy = -span; dy <= span; dy++)
             {
                 var y = ty0 + dy;
                 var k = planet.Get(x, y);

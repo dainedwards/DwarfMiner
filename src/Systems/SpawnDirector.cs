@@ -52,13 +52,13 @@ public static class SpawnDirector
     {
         var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
         // Start well above the highest possible peak and step inward until we hit solid.
-        for (var d = radius + 30; d > 10; d--)
+        for (var d = radius + 60; d > 20; d--)
         {
             var p = planet.Center + dir * (d * Planet.TileSize);
             if (planet.IsSolidAt(p))
                 return p - dir * (Planet.TileSize * 1.5f);
         }
-        return planet.Center + dir * ((radius + 12) * Planet.TileSize);
+        return planet.Center + dir * ((radius + 24) * Planet.TileSize);
     }
 
     /// <summary>Rooted / lying-in-wait kinds. They never seek the player, so they must not
@@ -128,7 +128,7 @@ public static class SpawnDirector
         // batteries and hardened delver war-parties. Rock mimics are a rare bad day at
         // any depth below the surface.
         var fromCenter = (pos - planet.Center).Length() / Planet.TileSize;
-        var depth = planet.SurfaceRing - (fromCenter - Planet.RingMin); // tiles below the baseline surface
+        var depth = (planet.SurfaceRing - (fromCenter - Planet.RingMin)) / Planet.LegacyTileScale; // legacy 8-px tiles below the baseline surface
         var roll = Random.Shared.NextDouble();
         CreatureKind kind;
         if (!connected)
@@ -329,7 +329,7 @@ public static class SpawnDirector
         // 60–200 px above the local terrain, capped inside the tile grid so the flyer's
         // collision probes stay in-bounds.
         var alt = (ground - run.Planet.Center).Length() + 60f + (float)Random.Shared.NextDouble() * 140f;
-        alt = MathF.Min(alt, (run.Planet.Radius - 6) * Planet.TileSize);
+        alt = MathF.Min(alt, (run.Planet.Radius - 12) * Planet.TileSize);
         var pos = run.Planet.Center + dir * alt;
         if ((pos - run.Player.Position).Length() < 160f) return;
         // The Rift's sky belongs to null moths — its one neutral species. Everywhere else

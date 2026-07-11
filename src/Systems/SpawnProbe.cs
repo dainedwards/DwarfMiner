@@ -78,7 +78,7 @@ public static class SpawnProbe
         var rng = new Random(4321);
         for (var attempt = 0; attempt < 4000; attempt++)
         {
-            var r = planet.SurfaceRing - 30 + rng.Next(20); // ~10-30 tiles down
+            var r = planet.SurfaceRing - 60 + rng.Next(40); // ~10-30 legacy tiles down
             var t = rng.Next(planet.TilesAt(r));
             if (planet.Get(r, t) != TileKind.Sky) continue;
             if (planet.GetWall(r, t) == TileKind.Sky) continue;

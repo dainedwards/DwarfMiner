@@ -22,7 +22,7 @@ public static class SimTest
         var cells = new Cells(planet);
         var physics = new Physics(planet, cells);
         // Park the player far away on the surface so aggro doesn't skew the wander tests.
-        var player = new Player(planet.Center + new Vector2(0, -(129 + Planet.RingMin) * Planet.TileSize));
+        var player = new Player(planet.Center + new Vector2(0, -(planet.SurfaceRing + Planet.RingMin) * Planet.TileSize));
 
         const float dt = 1f / 60f;
 
@@ -190,7 +190,7 @@ public static class SimTest
             // 5d. Explosion craters: tiles removed, rim crumbled into dust cells, and the
             // settle physics + cell sim tick clean afterwards.
             {
-                var launch = pPlanet.Center + new Vector2(0, (Planet.RingMin + 145) * Planet.TileSize);
+                var launch = pPlanet.Center + new Vector2(0, (Planet.RingMin + pPlanet.SurfaceRing + 32) * Planet.TileSize);
                 var rocket = new Projectile(launch, pPlanet.GravityAt(launch) * 250f, 60f, 3f, ProjectileKind.Rocket);
                 var before = CountSolidPlanet(pPlanet);
                 for (var step = 0; step < 60 * 3 && !rocket.Dead; step++)
@@ -320,9 +320,10 @@ public static class SimTest
             run.Cells = new Cells(run.Planet);
             run.Physics = new Physics(run.Planet, run.Cells);
             // Mutations a real run would have: mined tunnel, damaged tile, spilled cells.
-            for (var r = 120; r < 129; r++) run.Planet.Set(r, 10, TileKind.Sky);
-            run.Planet.Mine(119, 10, 1);
-            run.Cells.FillTile(125, 10, Material.Water);
+            var sfc = run.Planet.SurfaceRing;
+            for (var r = sfc - 9; r < sfc; r++) run.Planet.Set(r, 10, TileKind.Sky);
+            run.Planet.Mine(sfc - 10, 10, 1);
+            run.Cells.FillTile(sfc - 4, 10, Material.Water);
 
             run.Player = new Player(new Vector2(2400, 1300))
             {
@@ -829,7 +830,7 @@ public static class SimTest
         var cells = new Cells(planet);
         var physics = new Physics(planet, cells);
         const float dt = 1f / 60f;
-        const int slabH = 8, slabW = 16;   // 128 tiles — well past the stone budget of 48
+        const int slabH = 16, slabW = 32;   // 512 tiles (same world size as ever) — past the stone budget of 192
 
         // Find a stretch of open sky above the surface (clear of mountains/volcanoes).
         var ring0 = planet.SurfaceRing + 20;
@@ -886,7 +887,7 @@ public static class SimTest
             + $"{ember.LavaSeeds.Count} lava sites)",
             ember.VolcanoVents.Count >= 1 && ember.LavaSeeds.Count > 0);
         var deep = false;
-        foreach (var (x, _) in ember.LavaSeeds) deep |= x < ember.SurfaceRing - 40;
+        foreach (var (x, _) in ember.LavaSeeds) deep |= x < ember.SurfaceRing - 80;
         Check("volcano: throat is primed down to a deep magma chamber", deep);
         var aboveSurface = false;
         foreach (var (x, _) in ember.LavaSeeds) aboveSurface |= x > ember.SurfaceRing;
@@ -1616,7 +1617,7 @@ public static class SimTest
         var rng = new Random(1000 + seedOffset);
         for (var attempt = 0; attempt < 4000; attempt++)
         {
-            var r = 90 + rng.Next(35); // depth ~4..39 below baseline surface (ring 129)
+            var r = planet.SurfaceRing - 78 + rng.Next(70); // depth ~4..39 legacy tiles below baseline surface
             var t = rng.Next(planet.TilesAt(r));
             if (planet.Get(r, t) != TileKind.Sky) continue;
             if (planet.GetWall(r, t) == TileKind.Sky) continue;
