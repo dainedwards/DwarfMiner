@@ -292,6 +292,7 @@ public static class SimTest
         TestMeteors();
         TestCaveIn();
         TestSkyCollapse();
+        TestCompaction();
         TestVolcanoes();
         TestSpaceSim();
 
