@@ -591,7 +591,8 @@ public sealed class Player
     {
         LastBroken.Clear();
         TileKind? primary = null;
-        var aimed = planet.WorldToTile(planet.TileToWorld(x, y)); // wrapped key for identity
+        var nAim = planet.TilesAt(x);
+        var aimed = (x, ((y % nAim) + nAim) % nAim);   // wrapped, to match Footprint2x2 output
         foreach (var (fx, fy) in planet.Footprint2x2(x, y, towards))
         {
             var k = planet.Get(fx, fy);
