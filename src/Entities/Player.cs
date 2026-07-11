@@ -769,27 +769,23 @@ public sealed class Player
         if (MineCooldown > 0) return null;
         var d = worldCursor - Position;
         if (d.Length() > EffectiveMineRange) return null;
-        var (x, y) = planet.WorldToTile(worldCursor);
-        if (planet.Get(x, y) != TileKind.Sky) return null;
 
         var placedKind = BuildIdToTile(invId);
         if (placedKind == TileKind.Sky) return null;   // unrecognised build id
 
-        // Don't seal the dwarf inside a tile — keep at least a body's distance for
-        // *blocking* tiles. Passable build items (ladder/glowshroom/beacon) skip this check
-        // so you can drop a torch right next to your feet.
-        var passable = Tiles.IsPassable(placedKind);
-        if (!passable)
-        {
-            var tilePos = planet.TileToWorld(x, y);
-            if ((tilePos - Position).Length() < Radius + Planet.TileSize * 0.55f) return null;
-        }
-
+        // Passable build items (ladder/glowshroom/beacon) skip the seal-in check inside the
+        // stamp, so you can drop a torch right next to your feet.
+        if (PlacementStamp(planet, worldCursor, Tiles.IsPassable(placedKind)) is not { } stamp)
+            return null;
         if (!Inventory.TryConsume(invId, 1)) return null;
 
-        planet.Set(x, y, placedKind);
-        physics.MarkDirty(x, y);
-        if (placedKind == TileKind.Beacon) BeaconWorld = planet.TileToWorld(x, y);
+        foreach (var (fx, fy) in stamp)
+        {
+            planet.Set(fx, fy, placedKind);
+            physics.MarkDirty(fx, fy);
+        }
+        if (placedKind == TileKind.Beacon)
+            BeaconWorld = planet.TileToWorld(stamp[0].x, stamp[0].y);
         MineCooldown = 0.10f;
         return placedKind;
     }
