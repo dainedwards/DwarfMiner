@@ -1432,8 +1432,9 @@ public sealed partial class DwarfMinerGame : Game
             _particles.EmitChips(_run.Planet.TileToWorld(x, y), bk);
         }
         _run.Cells.SpawnDustInTile(x, y, bk);
+        // minGap: one strike now shatters up to 4 fine tiles in the same frame — one crack, not a burst.
         PlayAt("break", _run.Planet.TileToWorld(x, y), 0.6f,
-            pitch: -0.1f + (float)Random.Shared.NextDouble() * 0.25f);
+            pitch: -0.1f + (float)Random.Shared.NextDouble() * 0.25f, minGap: 0.05f);
     }
 
     /// <summary>Advance an in-flight pickaxe/hammer swing and land its strike. Runs every
