@@ -591,9 +591,7 @@ public static class SimTest
             }
             var slabBefore = CountSlab();
             var floorBefore = CountFloor();
-            var posBefore = boss.Position;
             boss.Update(1f / 60f, pp, pphys, pc, boss.Position, pbo, psh);
-            Console.WriteLine($"DBG plow: moved {(boss.Position - posBefore).Length():0.0}px, aggro {boss.IsAggro}, anger {boss.Anger:0.0}, bodyR {boss.BodyRadius}, dmg[0] {pp.Damage(slab[0].x, slab[0].y)}, slabK {pp.Get(slab[0].x, slab[0].y)}");
             Check($"titan: boss plows rock blocking it at body height ({slabBefore}→{CountSlab()})",
                 CountSlab() < slabBefore);
             Check($"titan: the floor under the boss survives the plow ({floorBefore}→{CountFloor()})",
