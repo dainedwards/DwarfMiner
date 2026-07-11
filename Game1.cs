@@ -1010,6 +1010,9 @@ public sealed partial class DwarfMinerGame : Game
             _sfx.Play("pickup", 0.4f, 0.2f, 0f, minGap: 0.11f);
         }
 
+        // Keep the compaction sweep away from the dwarf — never solidify the pile they're
+        // standing in / vacuuming (headless contexts leave this null and compact freely).
+        _run.Cells.CompactionExclusion = _run.Player.Position;
         _run.Cells.Update(dt);
         if (_run.Physics.CollapsesThisTick > 0)
         {
