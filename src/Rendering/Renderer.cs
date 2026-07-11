@@ -242,6 +242,19 @@ public sealed class Renderer
 
                 var jitter = ((hash >> 4) & 31) - 16;
                 var col = Tiles.BaseColor(k);
+                // Conglomerate tiles carry a per-tile tint blended from the exact grains that
+                // compacted into them — a sandy pile presses into sandy rock, an ore-dust
+                // pile keeps its glint. Applied as a multiply factor over the near-neutral
+                // atlas art (and directly here for the low-detail quad).
+                var tintF = Vector3.One;
+                if (k == TileKind.Conglomerate && planet.GetComposition(r, t) is { } comp)
+                {
+                    tintF = new Vector3(
+                        comp.Tint.R / (float)Math.Max(1, col.R),
+                        comp.Tint.G / (float)Math.Max(1, col.G),
+                        comp.Tint.B / (float)Math.Max(1, col.B));
+                    col = comp.Tint;
+                }
                 col = new Color(
                     Math.Clamp(col.R + jitter / 4, 0, 255),
                     Math.Clamp(col.G + jitter / 4, 0, 255),
