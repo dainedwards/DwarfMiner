@@ -526,14 +526,13 @@ public sealed class Cells
                 if (_time >= due) _compactScratch.Add(idx);
             foreach (var idx in _compactScratch)
             {
+                var fill = _compacting[idx].fill;
                 _compacting.Remove(idx);
                 var (tx, ty) = Planet.UnIndex(idx);
                 // Convert only if the fill is exactly what it was CompactDelay ago — any
                 // grain that arrived or left since means the pile is still live, and the
                 // tile has to earn a fresh undisturbed window via _restTiles.
-                if (CompactableFill(tx, ty) == _compacting.GetValueOrDefault(idx).fill) { }
-                if (CompactableFill(tx, ty) is var f && f > 0 && f == _compacting.GetValueOrDefault(idx, (f, 0f)).fill)
-                    Compact(tx, ty);
+                if (CompactableFill(tx, ty) == fill) Compact(tx, ty);
             }
         }
 
