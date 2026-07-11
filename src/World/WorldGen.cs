@@ -557,11 +557,11 @@ public static class WorldGen
             for (var i = 0; i < count; i++)
             {
                 var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
-                // Crystal runs deep (rings 30-70 below baseline); groves stay shallow (8-30).
-                var depth = crystal ? 30 + rng.Next(40) : 8 + rng.Next(22);
+                // Crystal runs deep (legacy tiles 30-70 below baseline); groves stay shallow (8-30).
+                var depth = (int)((crystal ? 30 + rng.Next(40) : 8 + rng.Next(22)) * S);
                 var cr = planet.SurfaceRing - depth;
-                if (cr < 8) continue;
-                var radius = crystal ? 4 + rng.Next(4) : 3 + rng.Next(3);
+                if (cr < 8 * S) continue;
+                var radius = (int)((crystal ? 4 + rng.Next(4) : 3 + rng.Next(3)) * S);
                 var n = planet.TilesAt(cr);
                 var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
                 var centre = planet.TileToWorld(cr, ct);
