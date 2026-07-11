@@ -466,15 +466,15 @@ public static class WorldGen
             // The magma chamber: an obsidian-shelled pool deep under the cone. Obsidian
             // resists both lava melt and acid corrosion, so the reservoir holds until the
             // player (or a cave-in) breaches it.
-            var chamberRad = 4 + rng.Next(3) + (int)(scale * 1.5f);
-            var chamberR = surfaceR - (55 + rng.Next(26));
+            var chamberRad = (int)((4 + rng.Next(3) + scale * 1.5f) * S);
+            var chamberR = surfaceR - (int)((55 + rng.Next(26)) * S);
             if (def.VolcanoAcid)
             {
                 // Keep acid plumbing above the global lava flood so the two never mix.
                 var lavaTop = (int)(planet.Radius * def.LavaFillFrac) - Planet.RingMin;
-                chamberR = Math.Max(chamberR, lavaTop + chamberRad + 4);
+                chamberR = Math.Max(chamberR, lavaTop + chamberRad + (int)(4 * S));
             }
-            chamberR = Math.Max(chamberR, 14 + chamberRad);
+            chamberR = Math.Max(chamberR, (int)(14 * S) + chamberRad);
 
             var nC = planet.TilesAt(chamberR);
             var centre = planet.TileToWorld(chamberR, (int)((ang / MathHelper.TwoPi + 1f) % 1f * nC));
