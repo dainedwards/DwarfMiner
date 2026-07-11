@@ -135,8 +135,8 @@ public static class WorldGen
             {
                 var ang = (t + 0.5f) / n * MathHelper.TwoPi;
 
-                // Very subtle surface variation — at most ±1.5 tiles. The planet stays round.
-                var elev = AngularSample(surfA, ang) * 2f;
+                // Very subtle surface variation — at most ±1.5 legacy tiles. The planet stays round.
+                var elev = AngularSample(surfA, ang) * 2f * S;
 
                 // Mountain height at this angle: max contribution across all peaks. The
                 // pow-1.7 falloff keeps a sharp summit but flares wider at the base than
