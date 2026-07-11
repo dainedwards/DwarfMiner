@@ -20,6 +20,13 @@ public static class WorldGen
     /// <summary>Legacy overload — the starter planet's tuning (used by SimTest).</summary>
     public static Planet Generate(int seed) => Generate(seed, PlanetDefs.All[0]);
 
+    /// <summary>Feature sizes below are authored in legacy 8-px tile units; S converts them
+    /// to today's finer rings wherever a value meets ring indices. Depth thresholds instead
+    /// divide the ring depth back into legacy units (see <c>depth</c>), and noise is sampled
+    /// at 8-px world pitch — so the generated worlds are geometrically identical to the old
+    /// coarse grid, just carved at 4× the tile resolution.</summary>
+    private const float S = Planet.LegacyTileScale;
+
     public static Planet Generate(int seed, PlanetDef def)
     {
         // Planet size scales with the def (0.7× dwarf worlds up to 1.8× giants). The sky
