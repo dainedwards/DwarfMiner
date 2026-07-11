@@ -730,7 +730,7 @@ public sealed class Player
         SwingLanded = true;
         var k = planet.Get(h.X, h.Y);
         if (!CanBreak(k, SwingTool)) return new SwingStrike(h.X, h.Y, k, null);
-        return new SwingStrike(h.X, h.Y, k, StrikeTile(planet, physics, h.X, h.Y, SwingTool));
+        return new SwingStrike(h.X, h.Y, k, StrikeTile(planet, physics, h.X, h.Y, SwingTool, SwingCursor));
     }
 
     /// <summary>Backwards-compat overload: defaults to the pickaxe.</summary>
