@@ -425,8 +425,8 @@ public static class WorldGen
             // flank falling to the footprint edge, and a bowl dipping to the crater floor
             // inside the mouth. Basalt body with obsidian around the throat and a loose
             // ash-gravel skin low on the flanks.
-            var topR = Math.Min(planet.Rings - 1, surfaceR + (int)coneH + 2);
-            for (var r = Math.Max(2, surfaceR - 3); r <= topR; r++)
+            var topR = Math.Min(planet.Rings - 1, surfaceR + (int)coneH + (int)(2 * S));
+            for (var r = Math.Max(2, surfaceR - (int)(3 * S)); r <= topR; r++)
             {
                 var n = planet.TilesAt(r);
                 var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
