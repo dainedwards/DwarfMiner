@@ -416,6 +416,28 @@ public static class TileAtlas
                 }
                 break;
             }
+            case TileKind.Conglomerate:
+            {
+                // Pressed-debris look: clasts of the loose materials (sand / dirt / gravel)
+                // cemented in the base matrix. The renderer multiplies the whole tile by the
+                // composition tint stored at compaction time, so keep the palette near-neutral
+                // and let hue come from what actually got pressed in.
+                var clasts = new[]
+                {
+                    new Color(190, 158, 92),   // sand
+                    new Color(115, 75, 42),    // dirt
+                    new Color(125, 120, 110),  // gravel
+                    Shade(baseCol, -18),
+                };
+                for (var i = 0; i < 7; i++)
+                {
+                    var cx = 2 + rng.Next(Res - 4);
+                    var cy = 2 + rng.Next(Res - 4);
+                    Blob(cx, cy, 1 + rng.Next(2), 1 + rng.Next(2), clasts[rng.Next(clasts.Length)]);
+                    Set(cx, cy + 2, Shade(baseCol, -26));   // seat shadow under each clast
+                }
+                break;
+            }
             case TileKind.Grass:
             {
                 // Bright blade mottling near the sky edge, fading into dirt at the root line.
