@@ -395,7 +395,7 @@ public static class WorldGen
         for (var v = 0; v < def.Volcanoes; v++)
         {
             var scale = def.VolcanoScale * (0.85f + (float)rng.NextDouble() * 0.3f);
-            var coneH = MathF.Min((30f + (float)rng.NextDouble() * 16f) * scale, Planet.SkyHeadroom - 6f);
+            var coneH = MathF.Min((30f + (float)rng.NextDouble() * 16f) * scale * S, Planet.SkyHeadroom - 6f * S);
             var coneW = (0.13f + (float)rng.NextDouble() * 0.05f) * MathF.Sqrt(scale);
 
             // Placement: clear of mountains, lake/pool basins, other volcanoes — and the
