@@ -689,7 +689,7 @@ public sealed class Player
     /// looks for its strike: first straight along the aim (so precision digging targets the
     /// tile under the cursor, and can't reach through walls), then swept across the arc
     /// covered so far (so the swipe still bites rock beside the aim on a near-miss). Samples
-    /// run body-out at 2 px — under the 8 px tile so nothing is skipped.</summary>
+    /// run body-out at 1 px — under the 4 px tile so nothing is skipped.</summary>
     public SwingStrike? UpdateSwing(Planet planet, Physics physics, float dt)
     {
         if (!SwingActive) return null;
