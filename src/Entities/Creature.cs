@@ -323,7 +323,10 @@ public sealed class Creature
     public bool IsSurfaceKind => Kind is CreatureKind.Grazer or CreatureKind.Hopper
         or CreatureKind.SnowLoper or CreatureKind.CinderSkink or CreatureKind.RustBack
         or CreatureKind.TidePuddler or CreatureKind.AcidStrider or CreatureKind.PrismSnail
-        or CreatureKind.Civilian or CreatureKind.Peacekeeper;
+        or CreatureKind.Civilian or CreatureKind.Peacekeeper
+        // The moon's dust devil is surface-budgeted like the herds — but it's no herd
+        // animal: it hunts (the one hostile the surface spawner places).
+        or CreatureKind.DustDevil;
     /// <summary>Aquatic-only kinds — spawned into water by the director's lake spawner and
     /// budgeted separately from every land habitat.</summary>
     public bool IsWaterKind => Kind is CreatureKind.AlienWhale or CreatureKind.AlienCrab;
