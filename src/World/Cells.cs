@@ -766,10 +766,10 @@ public sealed class Cells
             for (var s = 0; s < steps && cy > 0; s++)
             {
                 var (icx, icy) = InnerCell(cx, cy);
-                if (TryMoveTo(cx, cy, icx, icy)) { cx = icx; cy = icy; continue; }
+                if (TryMoveTo(cx, cy, icx, icy, s == 0)) { cx = icx; cy = icy; continue; }
                 var dd = _rng.Next(2) == 0 ? 1 : -1;
-                if (TryMoveTo(cx, cy, icx + dd, icy)) { cx = WrapX(icx + dd, CellsAt(icy)); cy = icy; continue; }
-                if (TryMoveTo(cx, cy, icx - dd, icy)) { cx = WrapX(icx - dd, CellsAt(icy)); cy = icy; continue; }
+                if (TryMoveTo(cx, cy, icx + dd, icy, s == 0)) { cx = WrapX(icx + dd, CellsAt(icy)); cy = icy; continue; }
+                if (TryMoveTo(cx, cy, icx - dd, icy, s == 0)) { cx = WrapX(icx - dd, CellsAt(icy)); cy = icy; continue; }
                 // Hit the surface: remaining fall speed becomes lateral splash below.
                 i = Idx(cx, cy);
                 impact = _velR[i];
