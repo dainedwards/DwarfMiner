@@ -34,7 +34,7 @@ public sealed class Meteor
     public void Update(float dt, Planet planet, Physics physics, Cells cells, Player player, Particles particles)
     {
         _life -= dt;
-        Velocity += planet.GravityAt(Position) * 520f * dt;   // accelerates as it plunges
+        Velocity += planet.GravityAt(Position) * 200f * dt;   // accelerates gently as it plunges
         Position += Velocity * dt;
 
         // Fiery trail pointing back along travel.
