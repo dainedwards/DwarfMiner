@@ -625,15 +625,15 @@ public sealed class Cells
     }
 
     /// <summary>Occupied-cell count if the tile at (tx,ty) is eligible to compact, else -1.
-    /// Always required: open (Sky) tile, resting on a solid tile, only compactable grain
-    /// (any liquid/gas disqualifies), and not within <see cref="CompactExclusionRadius"/>
-    /// of the player. Then one of two burial proofs:
-    /// - sealed: near-full (<see cref="CompactMinFill"/>) with every outer-edge cell roofed —
-    ///   the original rule, still what lets a dust-packed stone pocket re-form; or
+    /// Always required: open (Sky) tile, only compactable grain (any liquid/gas
+    /// disqualifies), at least half full, and not within
+    /// <see cref="CompactExclusionRadius"/> of the player. Then one of two burial proofs:
     /// - pressed: at least <see cref="CompactPressureMin"/> tiles of loose grains stacked
-    ///   above. Naturally settled piles interlock with voids and craggy tops, so they never
-    ///   pass the sealed rule — pressure is the proof of burial instead, and Compact's
-    ///   steal pass fills the voids from that same column.</summary>
+    ///   above. Naturally settled piles interlock with voids and craggy tops, so this is
+    ///   their only route — Compact's steal pass fills the voids from that same column; or
+    /// - sealed: on a solid floor, near-full (<see cref="CompactMinFill"/>), every
+    ///   outer-edge cell roofed — the original rule, still what lets a dust-packed stone
+    ///   pocket re-form.</summary>
     private int CompactableFill(int tx, int ty)
     {
         if (tx <= 0 || Planet.Get(tx, ty) != TileKind.Sky) return -1;
