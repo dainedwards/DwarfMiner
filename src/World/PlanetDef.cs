@@ -75,9 +75,18 @@ public sealed record PlanetDef(
     // tiles, one wedge per entry, instead of painting SurfaceTile everywhere. SurfaceTile
     // still drives the snow-cap and blizzard gates.
     TileKind[]? SurfaceBands = null,
+    // ── Civilisation knobs ─────────────────────────────────────────────────────
+    // CityLots raises that many alien skyscrapers on the surface (WorldGen.RaiseCity):
+    // alloy-hulled towers with glowing window bands, floor slabs, a street-level doorway
+    // and a beacon-tipped antenna. Civilians (neutral fauna) inhabit them. LizardCities
+    // buries that many lizardman warrens underground (WorldGen.CarveLizardCities): brick
+    // chamber halls joined by tunnel networks, with huts, glowshroom lighting, a treasure
+    // vault, a surface entrance shaft — and evil lizardman warriors guarding it all.
+    int CityLots = 0,
+    int LizardCities = 0,
     // Which biome archetype stamped this world — keys the ambient wildlife roster
     // (SpawnDirector): every biome keeps its own signature neutral species. One of
-    // verdant / frost / ember / slag / ocean / acid / crystal / rift / debug.
+    // verdant / frost / ember / slag / ocean / acid / crystal / city / rift / debug.
     string Biome = "verdant",
     // Where this world sits on the campaign ramp, 0 (gentlest) .. 1 (hardest). PlanetGen
     // stamps it from the slot index; the Classic chain hand-sets it. Drives the shared
