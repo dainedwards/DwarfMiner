@@ -61,6 +61,17 @@ public sealed class SpaceSim
     /// one world whose disc stays solid (its storms repel you); every other planet can be
     /// flown straight into, No Man's Sky style.</summary>
     public bool RiftLocked = true;
+    /// <summary>Set by Game1 each frame from the foundry: true until the Vac Suit upgrade is
+    /// installed. While locked, airless worlds (the Hollow) repel the ship like the storm-
+    /// walled Rift — there's no atmosphere to enter, only hard vacuum and harder rock.</summary>
+    public bool VacSuitLocked = true;
+
+    /// <summary>The outer asteroid belt's centre-line orbit — the Hollow rides it, and the
+    /// rock field thickens dramatically around it (see the spawner in UpdateAsteroids).
+    /// Beyond the last ordinary planet, well short of the warp-locked Rift.</summary>
+    public const float BeltOrbitRadius = 11500f;
+    /// <summary>How far the dense belt rock spreads to either side of the centre line.</summary>
+    public const float BeltHalfWidth = 320f;
 
     public readonly List<SpacePlanet> Planets = new();
     public Vector2 ShipPos;
