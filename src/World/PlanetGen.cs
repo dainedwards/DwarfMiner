@@ -103,7 +103,8 @@ public static class PlanetGen
 
     /// <summary>Build one planet from its biome archetype + ramp inputs.</summary>
     private static PlanetDef Stamp(Random rng, Biome biome, int slot, float difficulty,
-        float size, TitanKind titan, string shipOre, int shipOreCount, string name)
+        float size, TitanKind titan, string shipOre, int shipOreCount, string name,
+        bool goldVein, bool silverVein)
     {
         var id = $"gen{slot}-{name.ToLowerInvariant()}";
         float J(float lo, float hi) => lo + (float)rng.NextDouble() * (hi - lo);
