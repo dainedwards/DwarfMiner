@@ -142,7 +142,10 @@ public static class RunSave
 
             // Ring count must match the def's size scale or ReadState rejects the geometry —
             // generated campaign worlds are almost never the standard 200 rings.
-            run.Planet = new Planet(new Vector2(2400, 2400), Planet.RingsFor(def.SizeScale));
+            run.Planet = new Planet(new Vector2(2400, 2400), Planet.RingsFor(def.SizeScale))
+            {
+                GravityScale = def.GravityScale,   // def-derived, not in the save
+            };
             run.Planet.ReadState(r);
             run.Cells = new Cells(run.Planet);
             run.Cells.ReadState(r);
