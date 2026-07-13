@@ -500,6 +500,74 @@ public static class TileAtlas
                 Vein(Tiles.OreSpeckle(k), sparkle: k != TileKind.IronOre);
                 break;
             }
+            case TileKind.AlienAlloy:
+            {
+                // Riveted hull plating: panel seam lines with highlight bevels and dark
+                // rivet dots at the seam crossings — engineered, not geological.
+                var seamY = 5 + rng.Next(6);
+                for (var x = 0; x < Res; x++)
+                {
+                    Set(x, seamY, Shade(baseCol, -26));
+                    Set(x, seamY + 1, Shade(baseCol, 14));
+                }
+                var seamX = 4 + rng.Next(8);
+                for (var y = 0; y < Res; y++)
+                {
+                    Set(seamX, y, Shade(baseCol, -22));
+                    Set(seamX + 1, y, Shade(baseCol, 10));
+                }
+                Set(seamX, seamY, Shade(baseCol, -40));
+                for (var i = 0; i < 4; i++)
+                    Set(1 + rng.Next(Res - 2), 1 + rng.Next(Res - 2), Shade(baseCol, -30));
+                for (var i = 0; i < 3; i++)
+                    Set(1 + rng.Next(Res - 2), 1 + rng.Next(Res - 2), Tint(baseCol, 14, 22, 30));
+                break;
+            }
+            case TileKind.CityGlass:
+            {
+                // Lit window pane: warm interior glow behind a cool glass sheen, a bright
+                // diagonal reflection streak, and a dark frame rim.
+                var warm = new Color(240, 205, 130);
+                for (var y = 2; y < Res - 2; y++)
+                    for (var x = 2; x < Res - 2; x++)
+                        if (rng.Next(4) == 0) Set(x, y, Color.Lerp(baseCol, warm, 0.45f));
+                var d0 = rng.Next(6);
+                for (var i = 0; i < Res; i++)
+                {
+                    Set(i + d0 - 4, i, Tint(baseCol, 45, 45, 40));
+                    Set(i + d0 - 3, i, Tint(baseCol, 25, 25, 22));
+                }
+                for (var i = 0; i < Res; i++)
+                {
+                    Set(i, 0, Shade(baseCol, -50)); Set(i, Res - 1, Shade(baseCol, -50));
+                    Set(0, i, Shade(baseCol, -50)); Set(Res - 1, i, Shade(baseCol, -50));
+                }
+                break;
+            }
+            case TileKind.LizardBrick:
+            {
+                // Coursed masonry: offset brick rows split by dark mortar lines, the odd
+                // brick lighter or mossy — carved, ancient, and slightly unmaintained.
+                for (var row = 0; row < 4; row++)
+                {
+                    var y = row * 4;
+                    for (var x = 0; x < Res; x++) Set(x, y, Shade(baseCol, -34));
+                    var off = row % 2 == 0 ? 0 : 4;
+                    for (var x = off; x < Res + 8; x += 8)
+                        for (var yy = y + 1; yy < y + 4 && yy < Res; yy++)
+                            Set(x % Res, yy, Shade(baseCol, -30));
+                    // Per-brick tonal variety.
+                    if (rng.Next(2) == 0)
+                    {
+                        var bx = (off + rng.Next(2) * 8) % Res;
+                        var tintUp = rng.Next(3) > 0;
+                        for (var yy = y + 1; yy < y + 4 && yy < Res; yy++)
+                            for (var xx = bx + 1; xx < bx + 8 && xx < Res; xx++)
+                                Set(xx, yy, tintUp ? Shade(baseCol, 12) : Tint(baseCol, -14, 2, -12));
+                    }
+                }
+                break;
+            }
             // Player-built kinds (Support, Ladder, Rail, Glowshroom, Beacon, Core…) keep
             // their authored DrawDeco art in DrawWorld; their atlas rows are just base fill.
         }
