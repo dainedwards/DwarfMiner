@@ -578,30 +578,26 @@ public sealed class Renderer
                     var flip = (hash & 0x100) != 0;
                     var cc = Color.White * MathHelper.Min(0.45f + dmg / 400f, 0.85f);
                     void Crack(float lx, float ly, float lw, float lh)
-                        => DrawDeco(centre, right, up, rotation, chord, flip ? 8f - lx - lw : lx, ly, lw, lh, cc);
-                    // Stage 1: hairline at the impact point.
-                    Crack(3.5f, 3f, 0.5f, 1.5f);
-                    Crack(4f, 4.5f, 0.5f, 0.5f);
+                        => DrawDeco(centre, right, up, rotation, chord,
+                            flip ? Planet.TileSize - lx - lw : lx, ly, lw, lh, cc);
+                    // Stage 1: a nick at the impact point.
+                    Crack(1.8f, 1.4f, 0.4f, 0.8f);
                     if (dmg > 70)
                     {   // Stage 2: the crack runs diagonally across the face.
-                        Crack(2.5f, 2f, 0.5f, 1f);
-                        Crack(4.5f, 5f, 0.5f, 1f);
-                        Crack(5f, 2.5f, 1f, 0.5f);
+                        Crack(1.4f, 0.8f, 0.4f, 0.6f);
+                        Crack(2.2f, 2.2f, 0.4f, 0.6f);
                     }
                     if (dmg > 140)
-                    {   // Stage 3: branches split off toward the corners.
-                        Crack(1.5f, 1.5f, 1f, 0.5f);
-                        Crack(2f, 4.5f, 0.5f, 1f);
-                        Crack(5f, 6f, 0.5f, 1f);
-                        Crack(6f, 2f, 0.5f, 0.5f);
+                    {   // Stage 3: branches split off toward the sides.
+                        Crack(0.8f, 1.8f, 0.6f, 0.4f);
+                        Crack(2.6f, 1.2f, 0.6f, 0.4f);
                     }
                     if (dmg > 200)
                     {   // Stage 4: fractures reach the edges; the tile is about to give.
-                        Crack(0.5f, 1f, 1f, 0.5f);
-                        Crack(4f, 0.5f, 0.5f, 1f);
-                        Crack(6.5f, 1f, 0.5f, 0.5f);
-                        Crack(6.5f, 5.5f, 1f, 0.5f);
-                        Crack(1f, 6f, 0.5f, 1f);
+                        Crack(0.2f, 0.6f, 0.5f, 0.4f);
+                        Crack(2.8f, 0.2f, 0.4f, 0.5f);
+                        Crack(3.2f, 2.6f, 0.4f, 0.5f);
+                        Crack(0.6f, 3.0f, 0.5f, 0.4f);
                     }
                 }
             }
