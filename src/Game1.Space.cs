@@ -1189,9 +1189,25 @@ public sealed partial class DwarfMinerGame
         sb.Draw(_renderer.Pixel, new Rectangle(0, 0, VirtualWidth, VirtualHeight),
             new Color(4, 6, 14, 222));
 
-        // Orbit rings — dotted, one per world.
+        // Orbit rings — dotted, one per world. Moons get a small dotted halo around their
+        // parent's chart marker instead of a sun ring (the sqrt-compressed projection can't
+        // draw a true off-centre circle, and the halo reads exactly right at chart scale).
         foreach (var p in _space.Planets)
         {
+            if (p.Def.MoonOf is not null)
+            {
+                var parent = _space.Planets.Find(q => q.Def.Id == p.Def.MoonOf);
+                if (parent is null) continue;
+                var pc = MapProject(parent.Pos);
+                var hr = MapMarkerRadius(parent) + 9f;
+                for (var d = 0; d < 14; d++)
+                {
+                    var a = d * MathHelper.TwoPi / 14;
+                    var pos = pc + new Vector2(MathF.Cos(a), MathF.Sin(a)) * hr;
+                    sb.Draw(_renderer.Pixel, new Rectangle((int)pos.X - 1, (int)pos.Y - 1, 2, 2), dotCol);
+                }
+                continue;
+            }
             var rr = MapProjectR(p.OrbitRadius);
             var dots = Math.Max(28, (int)(rr * 0.5f));
             for (var d = 0; d < dots; d++)
