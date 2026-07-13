@@ -136,8 +136,9 @@ public static class SpawnDirector
         CreatureKind kind;
         if (!connected)
         {
-            // Sealed pocket: tunnellers only. They chew toward prey, so even these spawns
-            // eventually knock on the player's walls.
+            // Sealed pocket: tunnellers only — the one habitat class that can open its own
+            // way out. (Since the provocation gate they wander-dig rather than beeline at
+            // the dwarf, so these are ambience and future ambushes, not homing threats.)
             kind = depth > 45f ? (roll < 0.5 ? CreatureKind.HornedDelver : CreatureKind.Centipede)
                  : roll < 0.35 ? CreatureKind.Borer
                  : roll < 0.60 ? CreatureKind.MoleBeast
