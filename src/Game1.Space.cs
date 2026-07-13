@@ -937,12 +937,16 @@ public sealed partial class DwarfMinerGame
         if (approaching is not null && approachDist < 650f)
         {
             var riftLocked = approaching.Def.Id == "rift" && _space.RiftLocked;
+            var suitLocked = approaching.Def.Airless && _space.VacSuitLocked;
             var line1 = riftLocked
                 ? "STORM WALL AHEAD - THE RIFT IS WARP-LOCKED"
+                : suitLocked
+                ? "AIRLESS ROCK AHEAD - THE VAC SUIT IS REQUIRED TO LAND"
                 : $"ENTERING {approaching.Def.Name.ToUpperInvariant()} APPROACH - FLY IN TO MAKE ORBIT";
             _renderer.DrawText(line1,
                 new Vector2((VirtualWidth - _renderer.MeasureText(line1, 2)) / 2f, VirtualHeight - 140),
-                riftLocked ? new Color(255, 110, 90) : new Color(255, 225, 140), 2);
+                riftLocked ? new Color(255, 110, 90)
+                    : suitLocked ? new Color(255, 190, 90) : new Color(255, 225, 140), 2);
             var line2 = $"{approaching.Def.Tagline.ToUpperInvariant()}   NAV CORE: {approaching.Def.ShipOreCount} {Tiles.ResourceLabel(approaching.Def.ShipOre)}";
             _renderer.DrawText(line2,
                 new Vector2((VirtualWidth - _renderer.MeasureText(line2)) / 2f, VirtualHeight - 112),
