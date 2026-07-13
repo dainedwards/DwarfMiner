@@ -1119,16 +1119,33 @@ public sealed class Creature
             NavAxis(planet, up, right, _amble * 0.5f, avoidCliffs: true), speedMul);
     }
 
-    /// <summary>Saucer: the city's air patrol. On quiet watch it cruises an altitude band
-    /// above the rooftops on its orbit sign, bobbing gently. Handed a target by Game1's
-    /// militia pass, it slides over to hold station ~90px above the threat and lets the
-    /// shared bolt-fire pass do the shooting. Terrain (or a tower) ahead makes it climb —
-    /// it never rams the skyline it guards.</summary>
+    /// <summary>Saucer: the city's air patrol. On quiet watch it sweeps back and forth over
+    /// the band above ITS city — turning back at the district edge rather than orbiting the
+    /// whole planet — bobbing gently. Handed a target by Game1's militia pass, it slides over
+    /// to hold station ~90px above the threat and lets the shared bolt-fire pass do the
+    /// shooting. Terrain (or a tower) ahead makes it climb — it never rams the skyline it
+    /// guards.</summary>
     private void TickSaucer(float dt, Planet planet, Vector2 up, Vector2 right, float speedMul)
     {
         if (_swing > 0f) _swing -= dt;
         var alt = (Position - planet.Center).Length();
         if (_prefAlt <= 0f) _prefAlt = alt;
+
+        // Adopt the nearest city district as the patrol beat (self-heals for saucers restocked
+        // after a save/load, which don't carry the spawn-time bearing). A generous margin on
+        // the district half-width lets the lap sweep the full skyline, edge to edge.
+        var rel = Position - planet.Center;
+        var bearing = MathF.Atan2(rel.Y, rel.X);
+        if (float.IsNaN(_patrolAng))
+        {
+            var best = float.MaxValue;
+            foreach (var (ang, half) in planet.CityDistricts)
+            {
+                var d = AngleGap(bearing, ang);
+                if (d < best) { best = d; _patrolAng = ang; _patrolHalf = half + 0.18f; }
+            }
+            if (float.IsNaN(_patrolAng)) { _patrolAng = bearing; _patrolHalf = 0.35f; }
+        }
 
         Vector2 desired;
         if (GuardTarget is { } threat)
@@ -1141,6 +1158,13 @@ public sealed class Creature
         }
         else
         {
+            // Bounce off the district edges: past the band, aim the lap back toward the city
+            // (right = +bearing, so +1 heads to higher angles). This keeps the patrol over the
+            // towers instead of drifting off across open ground.
+            var off = WrapPi(bearing - _patrolAng);
+            if (off > _patrolHalf) _orbitSign = -1;
+            else if (off < -_patrolHalf) _orbitSign = 1;
+
             Wander += dt * 1.8f;
             desired = right * (_orbitSign * MoveSpeed * speedMul);
             desired += up * MathHelper.Clamp((_prefAlt - alt) * 0.8f, -40f, 40f);
