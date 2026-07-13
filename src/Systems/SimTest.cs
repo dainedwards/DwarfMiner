@@ -957,50 +957,65 @@ public static class SimTest
                 cells.Place(t3 * Cells.Density + dx, r3 * Cells.Density + dy, Material.Sand);
                 grains++;
             }
-        for (var i = 0; i < 60 * 150 && planet.Get(r3 + 1, t3) != TileKind.Conglomerate; i++)
+        for (var i = 0; i < 60 * 150 && planet.Get(r3 + 1, t3) != TileKind.Gravel; i++)
             cells.Update(dt);
-        var storedSand = 0;
+        // Grain accounting is approximate now (a compacted tile is a plain tile, not a
+        // stored composition), so assert the shape of the outcome: pressed layers hardened
+        // into gravel (sand's granular rock), loose sand still present above them, and the
+        // pile actually consumed grains (some loose sand gone).
         var looseSand = 0;
         for (var dr = 0; dr <= 4; dr++)
-        {
-            if (planet.GetComposition(r3 + dr, t3) is { } cmp)
-                foreach (var (_, _, count) in cmp.Parts) storedSand += count;
             for (var dy = 0; dy < Cells.Density; dy++)
                 for (var dx = 0; dx < Cells.Density; dx++)
                     if (cells.Get(t3 * Cells.Density + dx, (r3 + dr) * Cells.Density + dy) == Material.Sand)
                         looseSand++;
-        }
         Check("compaction: voided pile hardens under pressure, crest stays sand",
-            planet.Get(r3, t3) == TileKind.Conglomerate
-            && planet.Get(r3 + 1, t3) == TileKind.Conglomerate
+            planet.Get(r3, t3) == TileKind.Gravel
+            && planet.Get(r3 + 1, t3) == TileKind.Gravel
             && planet.Get(r3 + 3, t3) == TileKind.Sky);
-        Check($"compaction: steal pass conserves grains ({storedSand} stored + {looseSand} loose = {grains})",
-            storedSand + looseSand == grains);
+        Check($"compaction: crest sand survives, hardened layers ate the rest ({looseSand} loose of {grains})",
+            looseSand > 0 && looseSand < grains);
 
-        var comp = planet.GetComposition(r, t);
-        var stored = 0;
-        var rightCells = true;
-        if (comp is not null)
-            foreach (var (mat, src, count) in comp.Parts)
-            {
-                stored += count;
-                rightCells &= (Material)mat == Material.Dust && (TileKind)src == TileKind.Stone;
-            }
-        Check($"compaction: composition stores the pressed cells ({stored})",
-            comp is not null && stored == Cells.Density * Cells.Density && rightCells);
+        // The re-formed tile is a real tile of its kind — mines like stone, drops like stone.
+        Check("compaction: re-formed stone mines as stone",
+            planet.Mine(r, t, 99) == TileKind.Stone);
+    }
 
-        // Shatter it: the exact cells spill back out — value round-trips, nothing minted.
-        Check("compaction: conglomerate mines like soft rock",
-            planet.Mine(r, t, 99) == TileKind.Conglomerate);
-        cells.SpawnDustInTile(r, t, TileKind.Conglomerate);
-        var spilled = 0;
+    /// <summary>Gem tiles don't crumble to dust: shattering one queues a physical pickup
+    /// site (drained into Session.Pickups by Game1) and spawns no cells.</summary>
+    private static void TestGemDrops()
+    {
+        var planet = WorldGen.Generate(13);
+        var cells = new Cells(planet);
+        var r = planet.SurfaceRing - 40;
+        const int t = 21;
+        planet.Set(r, t, TileKind.Ruby);
+
+        planet.Set(r, t, TileKind.Sky);
+        cells.SpawnDustInTile(r, t, TileKind.Ruby);
+        var dust = 0;
         for (var dy = 0; dy < Cells.Density; dy++)
             for (var dx = 0; dx < Cells.Density; dx++)
-                if (cells.Get(t * Cells.Density + dx, r * Cells.Density + dy) == Material.Dust) spilled++;
-        Check($"compaction: shattering spills the stored cells back ({spilled})",
-            spilled == Cells.Density * Cells.Density);
-        Check("compaction: composition entry consumed on shatter",
-            planet.GetComposition(r, t) is null);
+                if (cells.Get(t * Cells.Density + dx, r * Cells.Density + dy) != Material.Empty)
+                    dust++;
+        Check("gems: shattered ruby spawns no dust cells", dust == 0);
+        Check("gems: shattered ruby queues one physical drop site",
+            cells.PendingGemDrops.Count == 1 && cells.PendingGemDrops[0].kind == TileKind.Ruby);
+        Check("gems: ordinary stone still dusts", StoneStillDusts(planet, cells));
+    }
+
+    private static bool StoneStillDusts(Planet planet, Cells cells)
+    {
+        var r = planet.SurfaceRing - 40;
+        const int t = 25;
+        planet.Set(r, t, TileKind.Sky);
+        cells.SpawnDustInTile(r, t, TileKind.Stone);
+        var dust = 0;
+        for (var dy = 0; dy < Cells.Density; dy++)
+            for (var dx = 0; dx < Cells.Density; dx++)
+                if (cells.Get(t * Cells.Density + dx, r * Cells.Density + dy) == Material.Dust)
+                    dust++;
+        return dust == Cells.DustCellsPerTile;
     }
 
     /// <summary>Volcanoes: fire worlds raise lava-primed cones whose plumbing reaches a deep
