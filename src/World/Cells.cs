@@ -122,7 +122,7 @@ public sealed class Cells
     private float _compactSweepAt;
     private const float CompactSweepPeriod = 1.5f;
     /// <summary>Seconds a candidate must sit untouched before it converts.</summary>
-    private const float CompactDelay = 10f;
+    private const float CompactDelay = 45f;
     /// <summary>Occupied-cell floor for conversion — near-full so surface piles stay loose;
     /// a couple of voids are tolerated because craggy interlocked piles keep small gaps.</summary>
     private const int CompactMinFill = Density * Density - 2;
