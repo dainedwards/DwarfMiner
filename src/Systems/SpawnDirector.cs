@@ -42,17 +42,122 @@ public static class SpawnDirector
         }
     }
 
-    /// <summary>Populate the fresh planet with ambient life: herds on the surface, flyers in
-    /// the sky. Run-start only; Update keeps numbers topped up afterwards. All spawn helpers
-    /// place relative to the player, so this stocks the starting neighbourhood.</summary>
+    /// <summary>Populate the fresh planet with ambient life: the planet-wide RESIDENT census
+    /// first (cities staffed, warrens garrisoned, lakes stocked, wild herds scattered — all
+    /// in place before the player goes anywhere), then the usual local warm-up around the
+    /// spawn. Update keeps only the local wildlife topped up afterwards.</summary>
     public static void SpawnInitialFauna(Session run)
     {
-        var surface = run.Def.Biome == "city" ? 14 : 7;
-        for (var i = 0; i < surface; i++) TrySpawnSurfaceAnimal(run);
+        PopulateWorld(run);
+        for (var i = 0; i < 7; i++) TrySpawnSurfaceAnimal(run);
         for (var i = 0; i < 6; i++) TrySpawnSkyAnimal(run);
         for (var i = 0; i < 12; i++) TrySpawnCreature(run);
         if (run.Def.HasWater)
             for (var i = 0; i < 4; i++) TrySpawnAquatic(run);
+    }
+
+    /// <summary>Seed the whole planet's population up front (run start AND resume — creatures
+    /// aren't saved): every city address staffed, saucers on station over each district, a
+    /// guard pair in every warren hall, each lake stocked, and wild herds scattered across
+    /// the surface. Everything spawns as a <see cref="Creature.Resident"/> so it exists
+    /// before the player arrives and is never distance-culled — the dynamic spawners below
+    /// only top up wildlife, and never inside a city.</summary>
+    public static void PopulateWorld(Session run)
+    {
+        var planet = run.Planet;
+
+        // City dwellers: staff the addresses (doorways + apartments), mostly citizens with
+        // a peacekeeper watch mixed in. Budgeted so a megacity can't triple the census.
+        var budget = 70;
+        foreach (var (r, t) in planet.CitySpawns)
+        {
+            if (budget <= 0) break;
+            if (Random.Shared.NextDouble() > 0.7) continue;
+            var home = planet.TileToWorld(r, t);
+            var kind = Random.Shared.Next(4) == 0 ? CreatureKind.Peacekeeper : CreatureKind.Civilian;
+            var c = new Creature(home, kind) { Resident = true };
+            ClearSpawnSpace(run, home, c.Radius);
+            run.Creatures.Add(c);
+            budget--;
+        }
+
+        // Air patrol: two saucers on station over every district.
+        foreach (var (ang, half) in planet.CityDistricts)
+        {
+            for (var i = 0; i < 2; i++)
+            {
+                var a = ang + ((float)Random.Shared.NextDouble() * 2f - 1f) * half;
+                var ground = FindSurfaceSpawn(planet, a, planet.Radius);
+                var alt = (ground - planet.Center).Length() + 80f + (float)Random.Shared.NextDouble() * 120f;
+                alt = MathF.Min(alt, (planet.Radius - 12) * Planet.TileSize);
+                var pos = planet.Center + new Vector2(MathF.Cos(a), MathF.Sin(a)) * alt;
+                run.Creatures.Add(new Creature(pos, CreatureKind.Saucer) { Resident = true });
+            }
+        }
+
+        // Warren garrisons: a guard pair in every hall.
+        foreach (var (dr, dt) in planet.LizardDens)
+        {
+            var den = planet.TileToWorld(dr, dt);
+            var denRight = new Vector2(-planet.UpAt(den).Y, planet.UpAt(den).X);
+            for (var i = 0; i < 2; i++)
+            {
+                var post = den + denRight * (((float)Random.Shared.NextDouble() - 0.5f) * 36f);
+                var g = new Creature(post, CreatureKind.Lizardman) { Resident = true };
+                ClearSpawnSpace(run, post, g.Radius);
+                run.Creatures.Add(g);
+            }
+        }
+
+        // Lake fauna: sweep the whole ring for open water and stock every find.
+        if (run.Def.HasWater)
+        {
+            var aquatics = 0;
+            for (var a = 0f; a < MathHelper.TwoPi && aquatics < 12; a += 0.22f)
+            {
+                var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+                for (var d = planet.Radius + 40; d > 20; d--)
+                {
+                    var p = planet.Center + dir * (d * Planet.TileSize);
+                    if (planet.IsSolidAt(p)) break;
+                    if (run.Cells.CountWaterNear(p, 3f) < 3) continue;
+                    var splash = p - dir * 10f;
+                    var deep = run.Cells.CountWaterNear(splash - dir * 14f, 5f) >= 8;
+                    var kind = deep && Random.Shared.NextDouble() < 0.35
+                        ? CreatureKind.AlienWhale : CreatureKind.AlienCrab;
+                    run.Creatures.Add(new Creature(splash, kind) { Resident = true });
+                    aquatics++;
+                    break;
+                }
+            }
+        }
+
+        // Wild herds scattered planet-wide, clear of the cities.
+        for (var a = 0.15f; a < MathHelper.TwoPi; a += 0.4f)
+        {
+            if (Random.Shared.Next(2) == 0) continue;
+            var jig = a + ((float)Random.Shared.NextDouble() - 0.5f) * 0.2f;
+            var pos = FindSurfaceSpawn(planet, jig, planet.Radius);
+            if (InCityDistrict(planet, pos)) continue;
+            if (SurfaceFaunaFor(run.Def) is not { } kind) continue;
+            var c = new Creature(pos, kind) { Resident = true };
+            ClearSpawnSpace(run, pos, c.Radius);
+            run.Creatures.Add(c);
+        }
+    }
+
+    /// <summary>True when the bearing of <paramref name="pos"/> falls inside a city district
+    /// (plus a margin). The dynamic spawners keep out of the cities entirely — city life is
+    /// seeded once by <see cref="PopulateWorld"/>, so nothing ever pops into existence on a
+    /// watched street or inside an apartment.</summary>
+    private static bool InCityDistrict(Planet planet, Vector2 pos, float margin = 0.06f)
+    {
+        if (planet.CityDistricts.Count == 0) return false;
+        var rel = pos - planet.Center;
+        var a = MathF.Atan2(rel.Y, rel.X);
+        foreach (var (ang, half) in planet.CityDistricts)
+            if (MathF.Abs(MathHelper.WrapAngle(a - ang)) < half + margin) return true;
+        return false;
     }
 
     /// <summary>Walk down from far above the given angle until the first solid tile, then
