@@ -59,7 +59,11 @@ public static class Tiles
     public static bool IsAnchored(TileKind k) =>
         k is TileKind.PlanetCore or TileKind.Core or TileKind.Support
           or TileKind.ReinforcedSupport or TileKind.Ladder or TileKind.Rail
-          or TileKind.Glowshroom or TileKind.Beacon;
+          or TileKind.Glowshroom or TileKind.Beacon
+          // Built architecture: skyscraper hulls and lizard-city masonry never crumble —
+          // mining one wall must not condemn the tower above it (they also shrug off acid,
+          // which corrodes any non-anchored tile).
+          or TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick;
 
     /// <summary>Tiles the player walks through (climb / pass through) instead of colliding with.
     /// Ladders are passable so the dwarf can climb; small placed lights are passable too so the
