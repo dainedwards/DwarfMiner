@@ -916,9 +916,20 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
+        // Immersion probes feed the swim model and the breath meter: body-centre water for
+        // the movement flip, a head-height sample for the drowning clock. Sampled here
+        // because Player.Update deliberately has no Cells reference.
+        {
+            var p = _run.Player;
+            var pUp = _run.Planet.UpAt(p.Position);
+            p.InWater = _run.Cells.CountWaterNear(p.Position, p.Radius + 1.5f) >= 3;
+            p.HeadInWater = p.InWater
+                && _run.Cells.CountWaterNear(p.Position + pUp * (p.Radius + 1f), 2f) >= 2;
+        }
         _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, verticalAxis);
         TickSwing(dt);
         TickOxygen(dt);
+        TickBreath(dt);
         TickHazardContact(dt);
 
         // Camera follows player, rotating so up = away from planet center. DM_BOSSCAM frames
