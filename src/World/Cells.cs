@@ -562,7 +562,14 @@ public sealed class Cells
     {
         var tx = cy / Density;
         var ty = WrapX(cx, _cellsAt[cy]) / Density;
-        _restTiles.Add(Planet.Index(tx, ty));
+        RecordRestTile(Planet.Index(tx, ty));
+    }
+
+    private void RecordRestTile(int idx)
+    {
+        if (_restStamp[idx] == _restGen) return;
+        _restStamp[idx] = _restGen;
+        _restList.Add(idx);
     }
 
     /// <summary>Compaction sweep (every <see cref="CompactSweepPeriod"/>): convert candidate
