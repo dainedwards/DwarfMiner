@@ -14,13 +14,17 @@ public static class AcidProbe
 {
     public static void Run()
     {
+        // Acid biome worlds (surface pools + acid volcano) plus slag (sealed buried veins only).
+        var worlds = new System.Collections.Generic.List<(int seed, PlanetDef def)>();
         for (var seed = 1; seed <= 3; seed++)
         {
             var chain = PlanetGen.Campaign(1000 + seed);
-            PlanetDef acid = null!;
-            foreach (var d in chain) if (d.Biome == "acid") { acid = d; break; }
-            if (acid is null) { Console.WriteLine($"seed {seed}: no acid world"); continue; }
+            foreach (var d in chain) if (d.Biome == "acid") { worlds.Add((seed, d)); break; }
+        }
+        worlds.Add((5, PlanetDefs.ById("slag")));
 
+        foreach (var (seed, acid) in worlds)
+        {
             var planet = WorldGen.Generate(seed, acid);
             var cells = new Cells(planet);
             var _ = new Physics(planet, cells);
