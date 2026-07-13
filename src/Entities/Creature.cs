@@ -300,6 +300,19 @@ public sealed class Creature
     public bool Swims => Kind is CreatureKind.TidePuddler or CreatureKind.Lizardman
         or CreatureKind.Grub or CreatureKind.AlienWhale;
 
+    /// <summary>Whether this kind can live inside a hazard cell — the gate the spawner uses so a
+    /// creature is never dropped into a material that would drown/burn/dissolve it. Water: only
+    /// swimmers and water-native kinds. Lava: molten-blooded fire fauna (magma slugs, cinder
+    /// skinks). Acid: the acid-world natives (striders and acid spitters). Everything else stays
+    /// out of the pool. Anything not a body-contact hazard (gas, empty) never blocks a spawn.</summary>
+    public bool ImmuneTo(Material m) => m switch
+    {
+        Material.Water => Swims || IsWaterKind,
+        Material.Lava => Kind is CreatureKind.MagmaSlug or CreatureKind.CinderSkink,
+        Material.Acid => Kind is CreatureKind.AcidStrider or CreatureKind.AcidSpitter,
+        _ => true,
+    };
+
     /// <summary><paramref name="shots"/> is the shared enemy-shot list (the Titan's): ranged
     /// creatures (acid spitters, crystal crawlers) add their projectiles to it and the existing
     /// shot update/draw path handles the rest. Null (headless tests) just disables spitting.</summary>
