@@ -1026,7 +1026,17 @@ public sealed class Creature
         if (_swing > 0f) _swing -= dt;
         _cd -= dt;
         _retarget -= dt;
-        if (dist < 240f) _aggroT = 7f; else _aggroT -= dt;
+        if (dist < 240f)
+        {
+            // Fresh sighting (calm → aggro edge): shriek for backup. Game1's war-cry pass
+            // rallies every guard in a wide radius onto the same hunt.
+            if (_aggroT <= 0f) CallingBackup = true;
+            _aggroT = 7f;
+        }
+        else
+        {
+            _aggroT -= dt;
+        }
 
         if (_aggroT > 0f)
         {
