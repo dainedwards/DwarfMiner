@@ -104,6 +104,7 @@ public static class SpawnDirector
             {
                 var post = den + denRight * (((float)Random.Shared.NextDouble() - 0.5f) * 36f);
                 var g = new Creature(post, CreatureKind.Lizardman) { Resident = true };
+                if (HazardRejectsSpawn(run, post, g)) continue;   // not into a lava hall breach
                 ClearSpawnSpace(run, post, g.Radius);
                 run.Creatures.Add(g);
             }
