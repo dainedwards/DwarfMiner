@@ -307,7 +307,9 @@ public static class WorldGen
                 }
                 else if (depth < 10f + AngularSample(surfC, ang) * 2f)
                 {
-                    k = TileKind.Dirt;
+                    // Asteroids have no soil: the belt world's sub-surface band is loose
+                    // regolith (gravel), not dirt — nothing ever lived or rotted here.
+                    k = def.Biome == "belt" ? TileKind.Gravel : TileKind.Dirt;
                 }
                 else
                 {
