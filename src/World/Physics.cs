@@ -188,7 +188,7 @@ public sealed class Physics
             // Stone-like: connectivity check. Skip the cheap-pass bail-outs first — only run a
             // flood when at least one cardinal neighbour is non-solid (otherwise definitely supported).
             if (!HasEmptyCardinalNeighbor(x, y)) continue;
-            if (_anchoredCache.Contains(idx)) continue;
+            if (_anchorStamp[idx] == _anchorGen) continue;
             if (IsRegionAnchored(x, y)) continue;
 
             CollapseRegion(_floodRegion);
