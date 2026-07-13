@@ -890,6 +890,22 @@ public sealed class Titan
     /// the Kong leap — and reads false mid-leap/mid-fall so they can't re-trigger in the air.</summary>
     private bool Standing() => ProbeSolid(_planet, Position - _planet.UpAt(Position) * (BodyHover + 12f));
 
+    /// <summary>Clamp a breath/spray aim toward the horizon. Walking titans hosing fire or
+    /// acid at prey right under their chin used to pour the stream straight down and trench
+    /// the ground they stood on. The clamped aim keeps its tangent direction but never dips
+    /// more than ~15 degrees below level, so the gout sweeps across the surface (and the
+    /// prey scrambling along it) instead of excavating a pit.</summary>
+    private Vector2 LevelAim(Vector2 aim)
+    {
+        var up = _planet.UpAt(Position);
+        const float maxDip = 0.26f;   // sin of ~15 degrees
+        var aN = Vector2.Dot(aim, up);
+        if (aN >= -maxDip) return aim;
+        var right = new Vector2(-up.Y, up.X);
+        var sign = Vector2.Dot(aim, right) >= 0f ? 1f : -1f;
+        return right * (MathF.Sqrt(1f - maxDip * maxDip) * sign) + up * -maxDip;
+    }
+
     /// <summary>The Godzilla-style atomic breath: a short bright wind-up (dorsal spines pulse —
     /// see the renderer), then a dense ~1.4s cone of fire poured from the mouth at the player.
     /// The renderer reads <see cref="SpecialState"/> for the spine glow; here we hose flame.</summary>
