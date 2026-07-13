@@ -256,7 +256,8 @@ public static class SpawnDirector
             var (r, t) = planet.WorldToTile(candidate);
             if (r < 0 || r >= planet.Rings) continue;
             if (planet.Get(r, t) != TileKind.Sky) continue;
-            if (planet.GetWall(r, t) == TileKind.Sky) continue;
+            var wall = planet.GetWall(r, t);
+            if (wall is TileKind.Sky or TileKind.AlienAlloy or TileKind.CityGlass) continue;
             var pos = planet.TileToWorld(r, t);
             if ((pos - run.Player.Position).Length() < 180f) continue;
             SpawnAt(run, pos, connected: false);
