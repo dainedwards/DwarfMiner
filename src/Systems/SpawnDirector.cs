@@ -503,6 +503,8 @@ public static class SpawnDirector
         // pops in downtown); the dynamic spawner only tops up the wild herds outside town.
         "city"    => Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper,
         "rift"    => null,
+        // Airless rock grows no herds: the Hollow's only life is the hostiles in its caves.
+        "belt"    => null,
         "debug"   => AllSurfaceFauna[Random.Shared.Next(AllSurfaceFauna.Length)],
         _         => Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper,
     };
