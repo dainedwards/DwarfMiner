@@ -1209,7 +1209,7 @@ public sealed class Titan
             }
         }
 
-        if (worm && canMine) _biteTimer = 0.18f;
+        if (worm && canMine) _biteTimer = 0.36f;   // was 0.18 — the worm bores rock half as fast
         if (wrecked) _wreckTimer = 0.2f;   // was 0.3 — titans batter architecture 50% faster
     }
 
