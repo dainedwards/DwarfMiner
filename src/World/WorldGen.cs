@@ -437,7 +437,7 @@ public static class WorldGen
         foreach (var (r, t) in planet.AcidSeeds)
             if (visited.Add(Key(r, t))) frontier.Enqueue((r, t, 0));
 
-        var lineSet = new List<(int x, int y)>(12);
+        var nb = new List<(int x, int y)>(12);
         while (frontier.Count > 0)
         {
             var (r, t, d) = frontier.Dequeue();
@@ -449,16 +449,16 @@ public static class WorldGen
             // different tile counts, so an air tile's cells spill into the inner/outer tiles of
             // its ANGULAR neighbours too; lining those as well closes the cell-straddle gaps
             // that otherwise leave a pool floor tile bare at the reservoir's edge.
-            lineSet.Clear();
-            foreach (var at in stackalloc[] { left, t, right })
+            nb.Clear();
+            foreach (var at in new[] { left, t, right })
             {
-                lineSet.Add(planet.InnerNeighbour(r, at));
+                nb.Add(planet.InnerNeighbour(r, at));
                 var oc = planet.OuterNeighbourCount(r, at);
-                for (var i = 0; i < oc; i++) lineSet.Add(planet.OuterNeighbour(r, at, i));
+                for (var i = 0; i < oc; i++) nb.Add(planet.OuterNeighbour(r, at, i));
             }
-            lineSet.Add((r, left));
-            lineSet.Add((r, right));
-            foreach (var (lr, lt) in lineSet)
+            nb.Add((r, left));
+            nb.Add((r, right));
+            foreach (var (lr, lt) in nb)
             {
                 if (lr < 0 || lr >= planet.Rings) continue;
                 var k = planet.Get(lr, lt);
@@ -470,11 +470,10 @@ public static class WorldGen
             }
 
             // Flood on through enclosed air only (a rock wall behind it); an open-sky background
-            // means we've reached the atmosphere, so stop before escaping the reservoir.
+            // means we've reached the atmosphere, so stop before escaping the reservoir. (nb
+            // already holds this tile's direct radial + angular neighbours.)
             if (d >= maxDepth) continue;
-            Span<(int x, int y)> air = stackalloc (int, int)[]
-                { (r, left), (r, right), planet.InnerNeighbour(r, t), planet.OuterNeighbour(r, t) };
-            foreach (var (ar, at) in air)
+            foreach (var (ar, at) in nb)
             {
                 if (ar < 0 || ar >= planet.Rings) continue;
                 if (Tiles.IsSolid(planet.Get(ar, at))) continue;
