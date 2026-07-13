@@ -33,8 +33,9 @@ public static class SpawnDirector
         {
             run.FaunaTimer = 6f + (float)Random.Shared.NextDouble() * 4f;
             var surfaceCap = run.Def.Biome == "city" ? 14 : 7;
+            var skyCap = run.Def.Biome == "city" ? 8 : 6;
             if (CountKindsNear(run, 700f, surface: true) < surfaceCap) TrySpawnSurfaceAnimal(run);
-            if (CountKindsNear(run, 700f, sky: true) < 6) TrySpawnSkyAnimal(run);
+            if (CountKindsNear(run, 700f, sky: true) < skyCap) TrySpawnSkyAnimal(run);
         }
     }
 
