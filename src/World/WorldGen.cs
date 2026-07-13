@@ -131,6 +131,25 @@ public static class WorldGen
                 w: 0.05f + (float)rng.NextDouble() * 0.045f);
         }
 
+        // Impact craters (the belt asteroid): dry bowls scooped out of the surface exactly
+        // like lake basins, but left empty — the meteor-blasted look. Wider and shallower
+        // than lakes so they read as scars, not pits.
+        var craters = new (float ang, float depth, float w)[def.Craters];
+        for (var i = 0; i < craters.Length; i++)
+        {
+            float ang;
+            var tries = 0;
+            do
+            {
+                ang = (float)(rng.NextDouble() * MathHelper.TwoPi);
+                tries++;
+            } while (tries < 40 && NearMountain(mountains, ang, 0.14f));
+            craters[i] = (
+                ang,
+                depth: 3f + (float)rng.NextDouble() * 4f,
+                w: 0.07f + (float)rng.NextDouble() * 0.07f);
+        }
+
         var baselineR = planet.SurfaceRing;
 
         for (var r = 0; r < planet.Rings; r++)
