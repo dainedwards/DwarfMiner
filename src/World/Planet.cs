@@ -83,6 +83,12 @@ public sealed class Planet
     public int Radius => RingMin + Rings;
     public int Size => Rings;
 
+    /// <summary>Gravity multiplier for every body on this world (PlanetDef.GravityScale —
+    /// 0.45 on the Hollow asteroid). Not persisted: WorldGen stamps it at generation and
+    /// RunSave re-stamps it from the def on load. Creatures read it through their ticks;
+    /// the player's copy lives on Player.Gravity, set the same way.</summary>
+    public float GravityScale = 1f;
+
     /// <summary>Tiles world gen wants filled with water cells (surface lakes + underground
     /// reservoirs). Water lives exclusively in the cell sim — never as solid tiles — so gen
     /// only records the sites here and Game1 pours the cells in once Cells exists.</summary>
