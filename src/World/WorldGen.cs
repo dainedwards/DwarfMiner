@@ -454,6 +454,20 @@ public static class WorldGen
             }
         }
 
+        // Stamp the terrain line (baseline + elevation/lumps, mountains excluded) so
+        // depth-below-surface reads against the LOCAL ground — on a lumpy asteroid a
+        // valley floor under open sky must count as the surface, not as underground.
+        {
+            const int samples = 720;
+            var profile = new float[samples];
+            for (var i = 0; i < samples; i++)
+            {
+                var a = (i + 0.5f) / samples * MathHelper.TwoPi;
+                profile[i] = baselineR + AngularSample(surfA, a) * 2f * S + LumpAt(a);
+            }
+            planet.SurfaceProfile = profile;
+        }
+
         SeedBiomePockets(planet, def, rng);
         if (def.GreatGeode) CarveGreatGeode(planet, rng);
 
