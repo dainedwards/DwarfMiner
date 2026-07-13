@@ -616,7 +616,9 @@ public sealed class Cells
             if (_compacting.ContainsKey(idx)) continue;
             var (tx, ty) = Planet.UnIndex(idx);
             var fill = CompactableFill(tx, ty);
-            if (fill > 0) _compacting[idx] = (fill, _time + CompactDelay);
+            // Weight above shortens the wait: a lone buried tile takes the full delay,
+            // the bottom of a CompactPressureCap-deep pile ~1/5th of it.
+            if (fill > 0) _compacting[idx] = (fill, _time + CompactDelay / (1f + PressureAbove(tx, ty)));
         }
         _restList.Clear();
         _restGen++;
