@@ -84,10 +84,15 @@ public sealed class Planet
     public int Size => Rings;
 
     /// <summary>Gravity multiplier for every body on this world (PlanetDef.GravityScale —
-    /// 0.45 on the Hollow asteroid). Not persisted: WorldGen stamps it at generation and
+    /// 0.25 on the Hollow asteroid). Not persisted: WorldGen stamps it at generation and
     /// RunSave re-stamps it from the def on load. Creatures read it through their ticks;
     /// the player's copy lives on Player.Gravity, set the same way.</summary>
     public float GravityScale = 1f;
+
+    /// <summary>True on airless worlds (PlanetDef.Airless): the renderer drops the whole
+    /// atmosphere kit — no dusk backdrop, no haze shell, stars burning from the surface up.
+    /// Stamped alongside <see cref="GravityScale"/>, not persisted.</summary>
+    public bool Airless;
 
     /// <summary>Tiles world gen wants filled with water cells (surface lakes + underground
     /// reservoirs). Water lives exclusively in the cell sim — never as solid tiles — so gen
