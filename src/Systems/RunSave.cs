@@ -17,9 +17,10 @@ public static class RunSave
 {
     // Bump when the format or the planet/cell geometry changes — old saves are discarded.
     // v8: 4-px tiles (doubled ring geometry) + Conglomerate composition table.
-    private const int Version = 11;  // 9: planet gem-overlay section
+    private const int Version = 12;  // 9: planet gem-overlay section
                                      // 10: city civilian spawn sites + lizardman dens in planet state
                                      // 11: toolbelt widened 13 → 24 slots (belt block length changed)
+                                     // 12: surface-profile section in planet state (lumpy asteroid)
     private const uint Magic = 0x444D5253; // "DMRS"
 
     private static string SavePath
