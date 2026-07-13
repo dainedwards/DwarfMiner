@@ -1240,6 +1240,38 @@ public sealed class Cells
         return (lava, acid, gas);
     }
 
+    /// <summary>Water cell count within a world-space radius — the immersion probe behind
+    /// swimming (player and creatures) and the breath meter. Same polar row/col walk as
+    /// <see cref="SampleHazardsNear"/>, counting only water.</summary>
+    public int CountWaterNear(Vector2 worldPos, float radius)
+    {
+        var rSq = radius * radius;
+        var (_, cy0) = WorldToCell(worldPos);
+        var radial = (float)Planet.TileSize / Density;
+        var rRows = (int)MathF.Ceiling(radius / radial) + 1;
+        var rel = worldPos - Planet.Center;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
+        var water = 0;
+        for (var dy = -rRows; dy <= rRows; dy++)
+        {
+            var cy = cy0 + dy;
+            if (cy < 0 || cy >= Height) continue;
+            var n = _cellsAt[cy];
+            var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
+            var chord = MathHelper.TwoPi * ringRadius / n;
+            var rCols = (int)MathF.Ceiling(radius / MathF.Max(chord, 0.01f)) + 1;
+            var cx0 = (int)(ang / MathHelper.TwoPi * n);
+            for (var dx = -rCols; dx <= rCols; dx++)
+            {
+                if ((Material)_mat[Idx(cx0 + dx, cy)] != Material.Water) continue;
+                if (Vector2.DistanceSquared(CellToWorld(cx0 + dx, cy), worldPos) > rSq) continue;
+                water++;
+            }
+        }
+        return water;
+    }
+
     /// <summary>Flash-burn any gas cells within a small world-space radius (Godzilla's breath
     /// igniting a pocket). Gas → smoke, waking neighbours so the burn chains through the cloud
     /// on subsequent ticks exactly like a lava-triggered ignition.</summary>
