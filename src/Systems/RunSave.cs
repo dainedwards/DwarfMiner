@@ -108,9 +108,11 @@ public static class RunSave
                 w.Write(s.Health);
             }
         }
-        catch
+        catch (Exception ex)
         {
             // Best-effort persistence — never crash the game on disk errors.
+            if (Environment.GetEnvironmentVariable("DM_SAVEDEBUG") is { Length: > 0 })
+                Console.WriteLine($"[runsave] write failed: {ex}");
         }
     }
 
