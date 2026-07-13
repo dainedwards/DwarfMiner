@@ -184,7 +184,7 @@ public static class PlanetDefs
     /// VacLeech, Glimmermaw, VoidBarnacle, StarJelly). The Starspawn — a cosmic octopus —
     /// incubates in an egg buried near the core, guarding the deepest riches.</summary>
     public static readonly PlanetDef HollowWorld = new("hollow", "The Hollow",
-        "Mega-asteroid in the outer belt - airless, half gravity, absurdly rich",
+        "Mega-asteroid in the outer belt - no air, no gravity to speak of, absurdly rich",
         new Color(138, 132, 122), new Color(212, 202, 182),
         TileKind.Gravel,
         LakeMin: 0, LakeExtra: 0, MountainMin: 7, MountainExtra: 3,
