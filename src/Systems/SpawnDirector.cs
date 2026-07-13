@@ -541,6 +541,8 @@ public static class SpawnDirector
         "rift"    => null,
         // Airless rock grows no herds: the Hollow's only life is the hostiles in its caves.
         "belt"    => null,
+        // The cratered moon's "herd" hunts you: charged regolith vortices roam the craters.
+        "moon"    => CreatureKind.DustDevil,
         "debug"   => AllSurfaceFauna[Random.Shared.Next(AllSurfaceFauna.Length)],
         _         => Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper,
     };
