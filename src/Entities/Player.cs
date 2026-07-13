@@ -80,12 +80,10 @@ public sealed class Player
     /// <summary>Mothership-foundry upgrades (not craftable in-run, not in the run save —
     /// re-applied from MetaSave on every planet entry). Jetpack: hold jump while airborne to
     /// fly on a charge that refills on the ground; tier II doubles the charge and climbs
-    /// harder. Magnet: loose ore leaps to the pack from much farther.</summary>
+    /// harder.</summary>
     public bool HasJetpack;
     public bool JetTier2;
     public bool JetTier3;
-    public bool HasMagnet;
-    public bool MagnetTier2;
     public float JetCharge = JetChargeMax;
     public const float JetChargeMax = 2.6f;   // seconds of burn (tier I)
     public float JetChargeCap => JetChargeMax * (JetTier3 ? 3f : JetTier2 ? 2f : 1f);
