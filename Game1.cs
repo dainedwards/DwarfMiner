@@ -2113,8 +2113,16 @@ public sealed partial class DwarfMinerGame : Game
     /// ordnance from the previous boss is cleared so the new fight starts clean.</summary>
     private void SpawnDebugTitan(TitanKind kind)
     {
-        var rel = _run.Player.Position - _run.Planet.Center;
-        var ang = MathF.Atan2(rel.Y, rel.X) + 0.22f;
+        // Spawn at the mouse cursor's bearing around the planet (the constructor snaps the egg to
+        // the surface / core at that angle), so the tester drops the boss exactly where they're
+        // pointing. Falls back to just off the player if the cursor sits dead-on the planet centre.
+        var mouse = Mouse.GetState();
+        var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
+        var rel = worldCursor - _run.Planet.Center;
+        var ang = rel.LengthSquared() > 1f
+            ? MathF.Atan2(rel.Y, rel.X)
+            : MathF.Atan2(_run.Player.Position.Y - _run.Planet.Center.Y,
+                          _run.Player.Position.X - _run.Planet.Center.X) + 0.22f;
         _run.Titan = new Titan(_run.Planet, ang, kind);
         _run.Titan.Hatch();
         _run.TitanShots.Clear();
