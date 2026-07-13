@@ -487,7 +487,10 @@ public sealed class Creature
         Vector2 up, Vector2 right, Vector2 toPlayer, float dist, float speedMul)
     {
         _retarget -= dt;
-        if (dist < 180f && dist > 0.01f)
+        // Provocation-gated hunting: an unprovoked borer just chews its own galleries. It
+        // only turns its jaws on the dwarf after taking a hit (8s grudge) or being crowded
+        // at point-blank range.
+        if ((_provokedT > 0f || dist < 45f) && dist > 0.01f)
         {
             _digDir = toPlayer / dist; // smells the dwarf through rock
         }
