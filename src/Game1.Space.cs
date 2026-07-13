@@ -1130,6 +1130,7 @@ public sealed partial class DwarfMinerGame
         if (def.OxygenDrainScale >= 1.3f) list.Add("THIN AIR + METEORS");
         if (def.SurfaceTile == TileKind.Snow) list.Add("BLIZZARDS");
         if (def.CaveSpawnCap >= 20) list.Add("SWARMING CAVES");
+        if (def.LizardCities > 0) list.Add("LIZARDMAN WARRENS");
         return list;
     }
 
