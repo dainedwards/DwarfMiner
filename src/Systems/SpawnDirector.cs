@@ -36,6 +36,9 @@ public static class SpawnDirector
             var skyCap = run.Def.Biome == "city" ? 8 : 6;
             if (CountKindsNear(run, 700f, surface: true) < surfaceCap) TrySpawnSurfaceAnimal(run);
             if (CountKindsNear(run, 700f, sky: true) < skyCap) TrySpawnSkyAnimal(run);
+            // Lakes get their own small population of aquatic-only life.
+            if (run.Def.HasWater && CountKindsNear(run, 700f, water: true) < 4)
+                TrySpawnAquatic(run);
         }
     }
 
