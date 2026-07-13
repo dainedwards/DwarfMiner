@@ -336,6 +336,14 @@ public sealed class Cells
     /// pressed into it (see the compaction sweep) — value round-trips, nothing is minted.</summary>
     public void SpawnDustInTile(int tx, int ty, TileKind src)
     {
+        // Gem-class tiles don't crumble to dust — they pop a physical pickup instead. Cells
+        // has no entity access, so shatter sites queue here and Game1 drains the queue into
+        // Session.Pickups each frame (headless callers just leave it; the list is per-planet).
+        if (Tiles.IsGem(src))
+        {
+            PendingGemDrops.Add((Planet.TileToWorld(tx, ty), src));
+            return;
+        }
         var c0y = tx * Density;
         var c0x = ty * Density;
         if (src == TileKind.Conglomerate)
