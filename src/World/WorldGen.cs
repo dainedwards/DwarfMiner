@@ -396,7 +396,11 @@ public static class WorldGen
         foreach (var a in acidPools) blocked.Add((a.ang, a.w));
         CarveVolcanoes(planet, def, rng, mountains, blocked);
         RaiseCity(planet, def, rng, mountains, blocked);
-        CarveLizardCities(planet, def, rng, mountains, blocked);
+        // One civilisation per planet, enforced here regardless of what the def says: a
+        // world with an alien city never also hides lizardman warrens — the lizardmen
+        // survive only where nobody built over them.
+        if (def.CityLots <= 0)
+            CarveLizardCities(planet, def, rng, mountains, blocked);
 
         return planet;
     }
