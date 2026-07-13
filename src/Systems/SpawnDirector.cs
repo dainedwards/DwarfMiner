@@ -508,6 +508,7 @@ public static class SpawnDirector
         if ((pos - run.Player.Position).Length() < 160f) return; // don't pop in on-screen
         if (InCityDistrict(run.Planet, pos)) return;             // city life never pops in
         var c = new Creature(pos, kind);
+        if (HazardRejectsSpawn(run, pos, c)) return;             // not into a surface acid pond
         ClearSpawnSpace(run, pos, c.Radius);
         run.Creatures.Add(c);
     }
