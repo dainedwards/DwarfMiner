@@ -376,7 +376,9 @@ public sealed class Creature
             var wantN = Hostile && dist < 260f && dist > 0.01f
                 ? MathHelper.Clamp(Vector2.Dot(toPlayer, up) * 0.5f, -45f, 45f)
                 : 26f;
-            var swimN = MoveToward(Vector2.Dot(Velocity, up), wantN, 300f * dt);
+            // The correction rate must clearly beat the ~320/s gravity the tick already
+            // applied, or buoyancy only slows the sink instead of winning it.
+            var swimN = MoveToward(Vector2.Dot(Velocity, up), wantN, 900f * dt);
             Velocity = right * (swimT * MathF.Exp(-1.1f * dt)) + up * swimN;
         }
 
