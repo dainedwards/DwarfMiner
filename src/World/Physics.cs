@@ -247,6 +247,7 @@ public sealed class Physics
 
             CollapseRegion(_floodRegion);
         }
+        _dirtyWork.Clear();
     }
 
     /// <summary>True iff this tile has a ReinforcedSupport tile within the 8-neighbour ring.
