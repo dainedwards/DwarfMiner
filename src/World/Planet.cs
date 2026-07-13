@@ -555,6 +555,10 @@ public sealed class Planet
         var gems = new byte[_totalTiles];
         for (var i = 0; i < _totalTiles; i++) gems[i] = (byte)_gem[i];
         w.Write(gems);
+        // Surface profile (lumpy-world terrain line) — count-prefixed; 0 = flat world.
+        w.Write(SurfaceProfile?.Length ?? 0);
+        if (SurfaceProfile is not null)
+            foreach (var s in SurfaceProfile) w.Write(s);
     }
 
     /// <summary>Restore state written by <see cref="WriteState"/>. Throws on a geometry
