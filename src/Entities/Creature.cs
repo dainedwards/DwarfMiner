@@ -1213,6 +1213,39 @@ public sealed class Creature
     private bool IsGrounded(Planet planet, Vector2 up) =>
         planet.IsSolidAt(Position - up * (Radius + 1.5f));
 
+    /// <summary>Terrain sense for walkers: adjusts a desired walk axis so the creature
+    /// navigates instead of grinding. A climbable lip passes through unchanged (GroundMove's
+    /// reflex hop handles it); a TALL wall — a building hull, a cliff face — returns 0 and
+    /// flips the amble so the walker turns around rather than hopping against it forever;
+    /// with <paramref name="avoidCliffs"/>, a drop of more than ~7 tiles past the next step
+    /// also turns it around, so citizens pace their tower floors and plazas instead of
+    /// raining off the edges. Panic states (fleeing, hunting) skip this on purpose.</summary>
+    private float NavAxis(Planet planet, Vector2 up, Vector2 right, float moveAxis, bool avoidCliffs)
+    {
+        if (MathF.Abs(moveAxis) < 0.1f || !IsGrounded(planet, up)) return moveAxis;
+        var dir = MathF.Sign(moveAxis);
+        var ahead = Position + right * (dir * (Radius + 4f));
+        if (planet.IsSolidAt(ahead) && planet.IsSolidAt(ahead + up * 10f)
+            && planet.IsSolidAt(ahead + up * 18f))
+        {
+            _amble = -(int)dir;
+            return 0f;
+        }
+        if (avoidCliffs)
+        {
+            var step = Position + right * (dir * (Radius + 6f));
+            var footing = false;
+            for (var d = 0f; d <= 28f && !footing; d += 6f)
+                footing = planet.IsSolidAt(step - up * (Radius + 2f + d));
+            if (!footing)
+            {
+                _amble = -(int)dir;
+                return 0f;
+            }
+        }
+        return moveAxis;
+    }
+
     /// <summary>Pick a wander heading for a digger: tangent-biased with a random radial tilt,
     /// sampled a few times preferring a heading that points into nearby rock — so tunnellers
     /// spend their time tunnelling instead of pinballing around open caverns.</summary>
