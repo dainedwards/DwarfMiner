@@ -114,8 +114,12 @@ public sealed class Cells
     // rest, a slow sweep promotes full+buried tiles to candidates, and a candidate converts
     // only if a *second* look CompactDelay later finds its fill untouched — "undisturbed for
     // N seconds" without any bookkeeping in the hot move path.
-    /// <summary>Planet tile indices where a grain came to rest since the last sweep.</summary>
-    private readonly HashSet<int> _restTiles = new();
+    /// <summary>Planet tile indices where a grain came to rest since the last sweep, as a
+    /// stamp array + list (RecordRest fires for every held grain every tick during a settle
+    /// wave, so HashSet hashing here was hot). Stamp == _restGen means already recorded.</summary>
+    private readonly int[] _restStamp;
+    private int _restGen = 1;
+    private readonly List<int> _restList = new();
     /// <summary>Candidate tiles awaiting their second look: fill count at promotion + due time.</summary>
     private readonly Dictionary<int, (int fill, float due)> _compacting = new();
     private readonly List<int> _compactScratch = new();
