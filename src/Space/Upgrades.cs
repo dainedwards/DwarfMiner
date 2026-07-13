@@ -118,6 +118,26 @@ public static class Upgrades
             "Mothership hull raised from 7 to 9",
             Souls: 2, Mats: new[] { ("pure_iron", 4), ("pure_platinum", 2) }, SoulKind: "Kong", Requires: "hull2"),
 
+        // ── Aquatics: swimming and the breath meter ──
+
+        new("fins", "Hydrofoil Fins",
+            "Swim twice as fast - water becomes the fast lane",
+            Souls: 1, Mats: new[] { ("pure_silver", 2), ("crystal", 1) }, SoulKind: "Sandworm"),
+
+        new("lungs", "Deep Lungs",
+            "Breath meter doubled - twice as long underwater",
+            Souls: 1, Mats: new[] { ("sapphire", 2) }, SoulKind: "Godzilla"),
+
+        new("lungs2", "Abyssal Lungs",
+            "Breath meter tripled - the lake floor is a stroll",
+            Souls: 1, Mats: new[] { ("sapphire", 2), ("emerald", 1) }, SoulKind: "Godzilla",
+            Requires: "lungs"),
+
+        new("gills", "Gill Graft",
+            "Breathe water like air - the meter never drains",
+            Souls: 2, Mats: new[] { ("emerald", 2), ("diamond", 1) }, SoulKind: "Sandworm",
+            Requires: "lungs2"),
+
         // ── Rare-gem capstones (phase 11): emerald seams + Rift voidstone ──
 
         new("vitality", "Emerald Weave",
