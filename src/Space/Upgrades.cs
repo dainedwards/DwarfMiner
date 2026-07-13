@@ -130,10 +130,10 @@ public static class Upgrades
             Souls: 2, Mats: new[] { ("emerald", 2), ("diamond", 1) }, SoulKind: "Sandworm",
             Requires: "lungs2"),
 
-        // ── The outer belt: the Vac Suit opens the airless mega-asteroid ──
+        // ── The Vac Suit opens every airless world: the belt Hollow + the cratered moon ──
 
         new("vacsuit", "Vac Suit",
-            "Sealed exosuit - required to land on the airless Hollow in the outer belt",
+            "Sealed exosuit - required to land on airless worlds (the Hollow, dead moons)",
             Souls: 1, Mats: new[] { ("pure_iron", 4), ("sapphire", 2) }, SoulKind: "Mecha"),
 
         // ── Rare-gem capstones (phase 11): emerald seams + Rift voidstone ──
