@@ -60,6 +60,9 @@ public enum CreatureKind : byte
     AcidStrider,  // acid — long-legged wader, sips the vitriol pools unharmed
     PrismSnail,   // crystal — crystalline-shelled snail with a faint gem glow
     NullMoth,     // rift — void-black flyer, the one gentle thing out there
+    // Civilisation (city worlds + lizard warrens):
+    Civilian,     // city — timid alien citizen, ambles the streets and towers, flees trouble
+    Lizardman,    // warren guard — evil lizardman warrior: patrols, hurls bone spears, lunges
 }
 
 public sealed class Creature
