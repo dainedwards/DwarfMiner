@@ -292,6 +292,68 @@ public sealed class Planet
         return null;
     }
 
+    private List<(float ang, float halfWidth)>? _cityDistricts;
+
+    /// <summary>City district bearings and angular half-widths, clustered from the doorway
+    /// angles in <see cref="CitySpawns"/> (computed once, cached). Guard saucers use these to
+    /// patrol the band over the city they defend instead of orbiting the whole planet. Empty
+    /// on worlds with no city.</summary>
+    public IReadOnlyList<(float ang, float halfWidth)> CityDistricts
+    {
+        get
+        {
+            if (_cityDistricts != null) return _cityDistricts;
+            _cityDistricts = new List<(float, float)>();
+            if (CitySpawns.Count == 0) return _cityDistricts;
+
+            // Doorway bearings, sorted around the ring.
+            var angs = new List<float>(CitySpawns.Count);
+            foreach (var (x, y) in CitySpawns)
+            {
+                var rel = TileToWorld(x, y) - Center;
+                var a = MathF.Atan2(rel.Y, rel.X);
+                if (a < 0) a += MathHelper.TwoPi;
+                angs.Add(a);
+            }
+            angs.Sort();
+
+            // Split into clusters at any gap wider than a district's spacing; the districts
+            // themselves are raised ≥0.95 rad apart (WorldGen.RaiseCity), so a 0.5 rad gap
+            // never splits a single city yet always separates neighbouring ones.
+            const float gap = 0.5f;
+            var groups = new List<List<float>> { new() { angs[0] } };
+            for (var i = 1; i < angs.Count; i++)
+            {
+                if (angs[i] - angs[i - 1] > gap) groups.Add(new List<float>());
+                groups[^1].Add(angs[i]);
+            }
+            // Merge the first and last group if the city straddles the 0/2π seam.
+            if (groups.Count > 1 && MathHelper.TwoPi - angs[^1] + angs[0] <= gap)
+            {
+                groups[0].AddRange(groups[^1]);
+                groups.RemoveAt(groups.Count - 1);
+            }
+
+            foreach (var g in groups)
+            {
+                // Vector mean for a wrap-safe centre, then the widest offset as the half-width.
+                var sum = Vector2.Zero;
+                foreach (var a in g) sum += new Vector2(MathF.Cos(a), MathF.Sin(a));
+                var centre = MathF.Atan2(sum.Y, sum.X);
+                if (centre < 0) centre += MathHelper.TwoPi;
+                var half = 0f;
+                foreach (var a in g)
+                {
+                    var d = MathF.Abs(a - centre);
+                    if (d > MathHelper.Pi) d = MathHelper.TwoPi - d;
+                    if (d > half) half = d;
+                }
+                _cityDistricts.Add((centre, half));
+            }
+            return _cityDistricts;
+        }
+    }
+
     public Vector2 TileToWorld(int x, int y)
     {
         if (x < 0) return Center;
