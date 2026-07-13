@@ -1105,6 +1105,45 @@ public sealed class Creature
         GroundMove(dt, planet, up, right, _amble * 0.5f, speedMul);
     }
 
+    /// <summary>Saucer: the city's air patrol. On quiet watch it cruises an altitude band
+    /// above the rooftops on its orbit sign, bobbing gently. Handed a target by Game1's
+    /// militia pass, it slides over to hold station ~90px above the threat and lets the
+    /// shared bolt-fire pass do the shooting. Terrain (or a tower) ahead makes it climb —
+    /// it never rams the skyline it guards.</summary>
+    private void TickSaucer(float dt, Planet planet, Vector2 up, Vector2 right, float speedMul)
+    {
+        if (_swing > 0f) _swing -= dt;
+        var alt = (Position - planet.Center).Length();
+        if (_prefAlt <= 0f) _prefAlt = alt;
+
+        Vector2 desired;
+        if (GuardTarget is { } threat)
+        {
+            // Combat station: hover above the threat, matching its drift.
+            var hover = threat + planet.UpAt(threat) * 90f;
+            desired = (hover - Position) * 2.2f;
+            var len = desired.Length();
+            if (len > 130f) desired *= 130f / len;
+        }
+        else
+        {
+            Wander += dt * 1.8f;
+            desired = right * (_orbitSign * MoveSpeed * speedMul);
+            desired += up * MathHelper.Clamp((_prefAlt - alt) * 0.8f, -40f, 40f);
+            desired += up * MathF.Sin(_phase + Wander) * 6f;   // gentle patrol bob
+        }
+
+        // Skyline ahead: climb over it, occasionally reversing the patrol lap.
+        var probe = desired.LengthSquared() > 1f ? Vector2.Normalize(desired) : right * _orbitSign;
+        if (planet.IsSolidAt(Position + probe * (Radius + 10f)))
+        {
+            desired = up * 60f;
+            if (Random.Shared.Next(40) == 0) _orbitSign = -_orbitSign;
+        }
+
+        Velocity = Vector2.Lerp(Velocity, desired, MathF.Min(1f, 3.5f * dt));
+    }
+
     // ---------------------------------------------------------------- sky fauna
 
     private void TickFlyer(float dt, Planet planet, Vector2 up, Vector2 right,
