@@ -1881,6 +1881,14 @@ public sealed class Creature
             case CreatureKind.NullMoth:
                 r.AddLight(Position, 10f, new Color(150, 90, 220));
                 break;
+            case CreatureKind.Civilian:
+                // The antenna mood-light — a soft teal bob drifting down a night street.
+                r.AddLight(Position, 9f, new Color(110, 200, 190));
+                break;
+            case CreatureKind.Lizardman:
+                // Hunting guards announce themselves with a red eye-gleam, like the delver.
+                if (_aggroT > 0f) r.AddLight(Position, 12f, new Color(255, 60, 40));
+                break;
         }
     }
 
