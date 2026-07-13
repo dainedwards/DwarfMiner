@@ -383,6 +383,107 @@ public static class TitanRenderer
         }
     }
 
+    // ── Starspawn: the Hollow's cosmic octopus ──────────────────────────────────
+
+    /// <summary>A weightless abyss god: a towering dome mantle with a galaxy inside it —
+    /// twinkling star-flecks drift across the nebula hide — over two huge staring eyes and
+    /// eight sine-curled tentacles studded with glowing suckers. The gravity-well windup
+    /// spins a collapsing swirl of motes into the body; the void-volley windup flares the
+    /// under-mantle beak instead.</summary>
+    private static void DrawStarspawn(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
+    {
+        var breath = MathF.Sin(f.Pulse) * 3f;
+
+        // Tentacles first (behind the mantle): eight arms rooted around the mantle skirt,
+        // each a chain of segments curling on its own phase. Far arms draw darker so the
+        // bundle reads with depth instead of as a flat broom.
+        for (var arm = 0; arm < 8; arm++)
+        {
+            var spread = (arm / 7f - 0.5f) * 2f;             // -1 .. 1 across the skirt
+            var back = (arm & 1) == 0;                        // alternate near/far arms
+            var armCol = back ? f.HideDark : f.Hide;
+            var p = f.Tp - f.Up * 24f + f.Right * (spread * 52f);
+            var d = -f.Up + f.Right * (spread * 0.85f + f.Face * 0.15f);
+            d.Normalize();
+            var thick = 17f;
+            for (var s = 0; s < 7; s++)
+            {
+                var curl = MathF.Sin(f.Pulse * 1.5f + arm * 0.9f + s * 0.6f) * 0.30f
+                         + spread * 0.05f;
+                d = Rot(d, curl);
+                var q = p + d * 25f;
+                Seg(r, p, q, thick, (s & 1) == 0 ? armCol : Shade(armCol, 0.85f));
+                // Sucker pips down the inner face, glowing faintly.
+                if ((s & 1) == 1)
+                {
+                    var perp = new Vector2(-d.Y, d.X);
+                    r.DrawCircle((p + q) * 0.5f + perp * (thick * 0.34f), 2.6f, f.Glow * 0.8f);
+                }
+                p = q;
+                thick *= 0.78f;
+            }
+            r.DrawCircle(p, 3f, f.Glow);   // luminous arm tip
+        }
+
+        // Mantle: a tall dome, dark rim over nebula hide, breathing with the pulse.
+        var top = f.Tp + f.Up * (96f + breath);
+        DrawTaper(r, f.Tp - f.Up * 20f, top, 124f, 42f, f.HideDark, f.Rot);
+        DrawTaper(r, f.Tp - f.Up * 14f, top - f.Up * 6f, 104f, 34f, f.Hide, f.Rot);
+        r.DrawCircle(top, 20f, f.Hide);
+
+        // The galaxy inside: hashed star-flecks drifting slowly across the mantle,
+        // twinkling on their own phases — the hide is a window into somewhere else.
+        for (var i = 0; i < 14; i++)
+        {
+            var h = (i * 1013904223 + 17) & 0x7fffffff;
+            var sx = (((h >> 5) & 0x7F) - 64) / 64f;          // -1 .. 1
+            var sy = ((h >> 13) & 0x7F) / 127f;               //  0 .. 1
+            var drift = MathF.Sin(time * 0.4f + i) * 6f;
+            var fleck = f.Tp + f.Up * (2f + sy * 82f)
+                       + f.Right * (sx * (86f - sy * 52f) + drift);
+            var tw = MathF.Sin(time * (2f + (h & 3)) + i) * 0.5f + 0.5f;
+            r.DrawCircle(fleck, 1.4f + tw * 1.2f, Color.Lerp(f.Glow, Color.White, tw) * (0.5f + tw * 0.5f));
+        }
+
+        // Two vast eyes on the mantle front — bigger sockets than anything else alive.
+        DrawEyes(r, t, f, f.Tp + f.Up * 34f, playerPos, 11f, 7.5f);
+
+        // Under-mantle beak (the muzzle — keep in sync with Titan.Mouth()).
+        var beak = f.Tp - f.Up * 26f + f.Right * (f.Face * 30f);
+        r.DrawCircle(beak, 10f, f.Chitin);
+        r.DrawCircle(beak + f.Right * (f.Face * 5f), 6f, new Color(240, 232, 214));
+
+        // Windup telegraphs: the gravity well spirals collapsing motes INTO the body; the
+        // void volley charges a growing null-orb at the beak.
+        if (t.SpecialState > 0f)
+        {
+            var prog = 1f - t.SpecialState / Titan.GravityWellWindup;
+            if (t.OctoPulseNext)
+            {
+                for (var i = 0; i < 10; i++)
+                {
+                    var a = time * 3f + i * (MathHelper.TwoPi / 10f);
+                    var rad = MathHelper.Lerp(200f, 30f, (prog + i * 0.04f) % 1f);
+                    var mote = f.Tp + f.Up * 30f
+                             + new Vector2(MathF.Cos(a), MathF.Sin(a)) * rad;
+                    r.DrawCircle(mote, 3f, f.Glow * 0.9f);
+                }
+            }
+            else
+            {
+                r.DrawCircle(beak, 4f + prog * 10f, new Color(40, 20, 60));
+                r.DrawCircle(beak, 2f + prog * 5f, f.Glow);
+            }
+        }
+    }
+
+    private static Vector2 Rot(Vector2 v, float a)
+    {
+        var c = MathF.Cos(a);
+        var s = MathF.Sin(a);
+        return new Vector2(v.X * c - v.Y * s, v.X * s + v.Y * c);
+    }
+
     // ── Kong: big-armed ape ─────────────────────────────────────────────────────
 
     private static void DrawKong(Renderer r, Titan t, Planet planet, Vector2 playerPos, Frame f, float time)
