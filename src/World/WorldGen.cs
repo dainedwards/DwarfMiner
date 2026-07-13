@@ -559,6 +559,334 @@ public static class WorldGen
             var ventT = (int)((ang / MathHelper.TwoPi + 1f) % 1f * planet.TilesAt(ventR));
             planet.VolcanoVents.Add((ventR, ventT, def.VolcanoAcid));
         }
+
+        // Later stamping passes (city towers, lizard-city shafts) must keep clear of the cones.
+        avoid.AddRange(placed);
+    }
+
+    /// <summary>City worlds: raise <c>def.CityLots</c> alien skyscrapers on the surface.
+    /// Each tower is an anchored alloy hull (buildings don't cave in) with straight px-width
+    /// sides, storeys of floor slabs with an alternating stair gap, glowing window bands in
+    /// the skin, a street-level doorway, an alloy plinth footing, and a beacon-tipped antenna
+    /// mast. Doorway and apartment-floor tiles are recorded in <see cref="Planet.CitySpawns"/>
+    /// so the spawn director can stock the towers with civilians.</summary>
+    private static void RaiseCity(Planet planet, PlanetDef def, Random rng,
+        (float ang, float h, float w)[] mountains, List<(float ang, float w)> avoid)
+    {
+        var surfaceR = planet.SurfaceRing;
+        var placed = new List<(float ang, float w)>();
+
+        for (var lot = 0; lot < def.CityLots; lot++)
+        {
+            // Proportions are authored in pixels and converted to per-ring angles below, so
+            // tower sides stay straight instead of flaring with radius like a constant-angle
+            // wedge would.
+            var halfWidthPx = 22f + (float)rng.NextDouble() * 14f;            // 44–72 px across
+            var height = (int)((22f + (float)rng.NextDouble() * 26f) * S);    // 44–96 rings tall
+            height = Math.Min(height, (int)(Planet.SkyHeadroom - 16 * S));
+            var footAng = halfWidthPx / ((Planet.RingMin + surfaceR) * Planet.TileSize);
+
+            // Placement: off the mountains, basins, volcanoes and the rover drop bearing.
+            // Towers pack close together (small mutual margin) so the skyline reads as a
+            // city district rather than lone spires.
+            var ang = 0f;
+            var ok = false;
+            for (var tries = 0; tries < 90 && !ok; tries++)
+            {
+                ang = (float)(rng.NextDouble() * MathHelper.TwoPi);
+                ok = !NearMountain(mountains, ang, footAng + 0.03f)
+                     && AngDist(ang, MathF.PI * 1.5f) > footAng + 0.12f;
+                for (var i = 0; ok && i < avoid.Count; i++)
+                    ok = AngDist(ang, avoid[i].ang) > footAng + avoid[i].w + 0.03f;
+                for (var i = 0; ok && i < placed.Count; i++)
+                    ok = AngDist(ang, placed[i].ang) > footAng + placed[i].w + 0.035f;
+            }
+            if (!ok) continue;
+            placed.Add((ang, footAng));
+
+            var baseR = surfaceR + 1;
+            var topR = Math.Min(planet.Rings - 2, baseR + height);
+            var floorEvery = (int)(4 * S);            // one storey per 4 legacy tiles (32 px)
+            var doorH = (int)(2.5f * S);              // street door: 20 px of headroom
+            var doorSide = rng.Next(2) == 0 ? -1 : 1;
+
+            for (var r = Math.Max(2, surfaceR - (int)(3 * S)); r <= topR; r++)
+            {
+                var n = planet.TilesAt(r);
+                var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
+                var halfAng = halfWidthPx / ringRadius;
+                var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                var span = (int)(halfAng / MathHelper.TwoPi * n) + 1;
+                var storey = r - baseR;
+                for (var dt = -span; dt <= span; dt++)
+                {
+                    var t = ((t0 + dt) % n + n) % n;
+                    if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                    planet.SetWall(r, t, TileKind.AlienAlloy);
+
+                    // Below the baseline surface: solid plinth footing, whatever the local
+                    // elevation noise did to the ground line.
+                    if (r <= surfaceR) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
+
+                    // Roof cap.
+                    if (storey >= height - 2) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
+
+                    var edge = Math.Abs(dt) >= span - 1;
+                    if (edge)
+                    {
+                        // Street-level doorway on one side; glowing window bands above the
+                        // ground floor; alloy hull everywhere else.
+                        if (storey < doorH && Math.Sign(dt) == doorSide)
+                            planet.Set(r, t, TileKind.Sky);
+                        else if (storey >= floorEvery && storey % floorEvery >= 3
+                                 && storey % floorEvery <= floorEvery - 3)
+                            planet.Set(r, t, TileKind.CityGlass);
+                        else
+                            planet.Set(r, t, TileKind.AlienAlloy);
+                        continue;
+                    }
+
+                    // Interior: floor slab at the base of every storey, with a stair gap
+                    // hugging alternating walls so the shaft zig-zags up the tower.
+                    var slab = storey % floorEvery < 2 && storey > 0;
+                    if (slab)
+                    {
+                        var gapSide = storey / floorEvery % 2 == 0 ? 1 : -1;
+                        slab = dt * gapSide < span - 4;
+                    }
+                    planet.Set(r, t, slab ? TileKind.AlienAlloy : TileKind.Sky);
+                }
+            }
+
+            // Antenna mast: a thin anchored spike off the roof with a glowing beacon tip.
+            var mastTop = Math.Min(planet.Rings - 2, topR + (int)(3 * S) + rng.Next((int)(3 * S)));
+            for (var r = topR + 1; r <= mastTop; r++)
+            {
+                var t = (int)((ang / MathHelper.TwoPi + 1f) % 1f * planet.TilesAt(r));
+                if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                planet.Set(r, t, r == mastTop ? TileKind.Beacon : TileKind.AlienAlloy);
+                planet.SetWall(r, t, TileKind.AlienAlloy);
+            }
+
+            // Civilian spawn sites: the doorway, and one apartment per second storey.
+            {
+                var nD = planet.TilesAt(baseR + 1);
+                var tD = (int)((ang / MathHelper.TwoPi + 1f) % 1f * nD);
+                planet.CitySpawns.Add((baseR + 1, tD));
+                for (var storey = floorEvery; storey < height - 4; storey += floorEvery * 2)
+                {
+                    var r = baseR + storey + 2;
+                    var tA = (int)((ang / MathHelper.TwoPi + 1f) % 1f * planet.TilesAt(r));
+                    planet.CitySpawns.Add((r, tA));
+                }
+            }
+        }
+
+        avoid.AddRange(placed);
+    }
+
+    /// <summary>Underground lizardman cities: <c>def.LizardCities</c> buried warrens. Each is
+    /// a descending chain of brick-shelled chamber halls joined by carved tunnels, entered
+    /// through a brick-lined shaft that breaks the surface. Chambers hold glowshroom lamps and
+    /// brick huts; the deepest hall is the treasure vault, its floor studded with gold and a
+    /// gem. Chamber hearts are recorded in <see cref="Planet.LizardDens"/> — the spawn
+    /// director garrisons lizardman warriors around them. Everything stays above the lava
+    /// flood line so the halls are found dry.</summary>
+    private static void CarveLizardCities(Planet planet, PlanetDef def, Random rng,
+        (float ang, float h, float w)[] mountains, List<(float ang, float w)> avoid)
+    {
+        var surfaceR = planet.SurfaceRing;
+        // Ring index of the global lava flood's top (see Game1's FillSkyTilesWithin call),
+        // plus margin — chambers and tunnels must stay above it or they generate flooded.
+        var lavaTop = (int)(planet.Radius * def.LavaFillFrac) - Planet.RingMin;
+        var minRing = Math.Max((int)(10 * S), lavaTop + (int)(7 * S));
+
+        for (var city = 0; city < def.LizardCities; city++)
+        {
+            // Entrance bearing: clear of everything already stamped and of the rover drop.
+            var ang = 0f;
+            var ok = false;
+            for (var tries = 0; tries < 90 && !ok; tries++)
+            {
+                ang = (float)(rng.NextDouble() * MathHelper.TwoPi);
+                ok = !NearMountain(mountains, ang, 0.08f)
+                     && AngDist(ang, MathF.PI * 1.5f) > 0.25f;
+                for (var i = 0; ok && i < avoid.Count; i++)
+                    ok = AngDist(ang, avoid[i].ang) > avoid[i].w + 0.06f;
+            }
+            if (!ok) continue;
+            avoid.Add((ang, 0.1f));
+
+            // Chamber chain: the entrance hall sits shallow, each later hall steps deeper
+            // and drifts sideways, so the warren reads as a descending gallery network.
+            var count = 4 + rng.Next(3);
+            var centres = new List<Vector2>();
+            var cAng = ang;
+            var cr = surfaceR - (int)((14 + rng.Next(5)) * S);
+            for (var i = 0; i < count; i++)
+            {
+                cr = Math.Max(cr, minRing);
+                var halfH = (int)(3 * S) + rng.Next((int)(2 * S) + 1);       // 24–40 px tall
+                var halfWpx = 30f + (float)rng.NextDouble() * 30f;           // 60–120 px wide
+                var vault = i == count - 1;
+                CarveChamber(planet, rng, cr, cAng, halfH, halfWpx, vault);
+
+                var nC = planet.TilesAt(cr);
+                var ct = (int)((cAng / MathHelper.TwoPi + 1f) % 1f * nC);
+                planet.LizardDens.Add((cr, ct));
+                centres.Add(planet.TileToWorld(cr, ct));
+
+                cAng += ((float)rng.NextDouble() * 0.12f + 0.05f) * (rng.Next(2) == 0 ? 1f : -1f);
+                cr -= (int)((8 + rng.Next(7)) * S);
+            }
+
+            // Tunnels: brick-walled bores linking each hall to the next.
+            for (var i = 0; i + 1 < centres.Count; i++)
+                CarveTunnel(planet, centres[i], centres[i + 1]);
+
+            // Entrance shaft: from the first hall's roof straight up through the surface,
+            // brick-lined so the soft dirt band can't slump into it.
+            var entryR = surfaceR - (int)((14 + 4) * S);
+            for (var r = Math.Max(minRing, entryR); r <= surfaceR + (int)S; r++)
+            {
+                if (r >= planet.Rings) break;
+                var n = planet.TilesAt(r);
+                var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                for (var dt = -3; dt <= 3; dt++)
+                {
+                    var t = ((t0 + dt) % n + n) % n;
+                    if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                    if (Math.Abs(dt) <= 1)
+                    {
+                        planet.SetWall(r, t, TileKind.LizardBrick);
+                        planet.Set(r, t, TileKind.Sky);
+                    }
+                    else if (Tiles.IsSolid(planet.Get(r, t)))
+                    {
+                        planet.Set(r, t, TileKind.LizardBrick);
+                        planet.SetWall(r, t, TileKind.LizardBrick);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>One lizard-city hall: a brick-shelled rectangular chamber in polar space —
+    /// interior air over brick backdrop, glowshroom lamps on the floor, a hut in the wider
+    /// halls, and gold + a gem studding the vault's floor.</summary>
+    private static void CarveChamber(Planet planet, Random rng, int cr, float cAng,
+        int halfH, float halfWpx, bool vault)
+    {
+        var interiorFloor = new List<(int r, int t)>();
+        for (var dr = -halfH - 2; dr <= halfH + 2; dr++)
+        {
+            var r = cr + dr;
+            if (r < 2 || r >= planet.Rings) continue;
+            var n = planet.TilesAt(r);
+            var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
+            var span = (int)(halfWpx / ringRadius / MathHelper.TwoPi * n) + 1;
+            var t0 = (int)((cAng / MathHelper.TwoPi + 1f) % 1f * n);
+            for (var dt = -span - 2; dt <= span + 2; dt++)
+            {
+                var t = ((t0 + dt) % n + n) % n;
+                if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                var interior = Math.Abs(dr) <= halfH && Math.Abs(dt) <= span;
+                if (interior)
+                {
+                    planet.SetWall(r, t, TileKind.LizardBrick);
+                    planet.Set(r, t, TileKind.Sky);
+                    if (dr == -halfH) interiorFloor.Add((r, t));
+                }
+                else if (Tiles.IsSolid(planet.Get(r, t)))
+                {
+                    planet.Set(r, t, TileKind.LizardBrick);
+                    planet.SetWall(r, t, TileKind.LizardBrick);
+                }
+            }
+        }
+
+        // Glowshroom lamps: scattered along the floor so the hall glows from within.
+        for (var i = 0; i < 3 + rng.Next(3) && interiorFloor.Count > 0; i++)
+        {
+            var (fr, ft) = interiorFloor[rng.Next(interiorFloor.Count)];
+            planet.Set(fr, ft, TileKind.Glowshroom);
+        }
+
+        // The vault's floor is studded with the hoard — gold seams and a cut gem, set into
+        // the brick course just under the interior.
+        if (vault)
+        {
+            for (var i = 0; i < 4 + rng.Next(3) && interiorFloor.Count > 0; i++)
+            {
+                var (fr, ft) = interiorFloor[rng.Next(interiorFloor.Count)];
+                if (fr - 1 >= 2 && planet.Get(fr - 1, ft) == TileKind.LizardBrick)
+                    planet.Set(fr - 1, ft, i == 0 ? TileKind.Ruby : TileKind.GoldOre);
+            }
+        }
+        else if (halfWpx > 40f && interiorFloor.Count > 8)
+        {
+            // A brick hut leaning on the hall floor: hollow box, one open doorway.
+            var hutHalfW = 3;
+            var hutH = (int)(2 * S);
+            var side = rng.Next(2) == 0 ? -1 : 1;
+            var nF = planet.TilesAt(cr - halfH);
+            var hutT0 = (int)((cAng / MathHelper.TwoPi + 1f) % 1f * nF)
+                        + side * (int)(halfWpx / Planet.TileSize / 2f);
+            for (var hr = 0; hr <= hutH; hr++)
+            {
+                var r = cr - halfH + hr;
+                if (r < 2 || r >= planet.Rings) continue;
+                var n = planet.TilesAt(r);
+                for (var dt = -hutHalfW; dt <= hutHalfW; dt++)
+                {
+                    var t = ((hutT0 + dt) % n + n) % n;
+                    if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                    var wall = hr == hutH || Math.Abs(dt) == hutHalfW;
+                    // Door: the lower two courses on the leeward side stay open.
+                    if (wall && hr < hutH - 1 && dt == -side * hutHalfW) wall = false;
+                    planet.Set(r, t, wall ? TileKind.LizardBrick : TileKind.Sky);
+                    planet.SetWall(r, t, TileKind.LizardBrick);
+                }
+            }
+        }
+    }
+
+    /// <summary>Bore a walkable tunnel between two world points: step along the line and
+    /// clear a disc at each step, backing every cleared tile with brick so the bore reads
+    /// carved rather than natural. Same polar-aware neighbourhood math as the colliders —
+    /// angular indices are recomputed per ring.</summary>
+    private static void CarveTunnel(Planet planet, Vector2 from, Vector2 to)
+    {
+        const float radius = 7f;
+        var d = to - from;
+        var len = d.Length();
+        if (len < 1f) return;
+        var step = d / len * 3f;
+        var steps = (int)(len / 3f) + 1;
+        var pos = from;
+        for (var s = 0; s <= steps; s++, pos += step)
+        {
+            var (cx, _) = planet.WorldToTile(pos);
+            var rel = pos - planet.Center;
+            var pAng = MathF.Atan2(rel.Y, rel.X);
+            if (pAng < 0) pAng += MathHelper.TwoPi;
+            for (var dx = -2; dx <= 2; dx++)
+            {
+                var x = cx + dx;
+                if (x < 2 || x >= planet.Rings) continue;
+                var n = planet.TilesAt(x);
+                var ty0 = (int)(pAng / MathHelper.TwoPi * n);
+                for (var dy = -2; dy <= 2; dy++)
+                {
+                    var y = ((ty0 + dy) % n + n) % n;
+                    var k = planet.Get(x, y);
+                    if (Tiles.IsAnchored(k)) continue;
+                    if ((planet.TileToWorld(x, y) - pos).LengthSquared() > radius * radius) continue;
+                    planet.SetWall(x, y, TileKind.LizardBrick);
+                    if (Tiles.IsSolid(k)) planet.Set(x, y, TileKind.Sky);
+                }
+            }
+        }
     }
 
     /// <summary>Shortest angular distance between two bearings, in radians.</summary>
