@@ -332,6 +332,7 @@ public static class WorldGen
 
                 if (IsOreHost(k))
                 {
+                    var baseRock = k;
                     var oreN = SampleNoise(oreNoise, wx * 0.31f, wy * 0.31f);
                     // Depth bonus lowers thresholds so deeper tiles produce more ore overall.
                     // Rarer tiers (gems) get a smaller bonus to keep them genuinely rare.
@@ -348,18 +349,36 @@ public static class WorldGen
                     // so it's common enough to gather without a deep dive.
                     if (oreN > 0.905f - boost - Bias(TileKind.FuelOre) && depth > 12f) k = TileKind.FuelOre;
                     if (oreN > 0.92f - boost - Bias(TileKind.IronOre) && depth > 16f) k = TileKind.IronOre;
-                    if (oreN > 0.94f - boost * 0.8f - Bias(TileKind.SilverOre) && depth > 30f) k = TileKind.SilverOre;
-                    if (oreN > 0.955f - boost * 0.7f - Bias(TileKind.GoldOre) && depth > 40f) k = TileKind.GoldOre;
+                    // Silver and gold are charted rarities: their base thresholds are
+                    // unreachable (like voidstone's), so veins exist only on worlds whose def
+                    // carries the bias — the star map's RARE FINDS line is the prospecting map.
+                    if (oreN > 1.05f - Bias(TileKind.SilverOre) && depth > 30f) k = TileKind.SilverOre;
+                    if (oreN > 1.05f - Bias(TileKind.GoldOre) && depth > 40f) k = TileKind.GoldOre;
                     if (oreN > 0.965f - boost * 0.6f - Bias(TileKind.PlatinumOre) && depth > 55f) k = TileKind.PlatinumOre;
-                    if (oreN > 0.972f - boost * 0.5f - Bias(TileKind.Ruby) && depth > 65f) k = TileKind.Ruby;
-                    if (oreN > 0.978f - boost * 0.4f - Bias(TileKind.Sapphire) && depth > 75f) k = TileKind.Sapphire;
-                    if (oreN > 0.984f - boost * 0.3f - Bias(TileKind.Crystal) && depth > 42f) k = TileKind.Crystal;
-                    if (oreN > 0.989f - boost * 0.2f - Bias(TileKind.Diamond) && depth > 95f) k = TileKind.Diamond;
+
+                    // Gems are not blocks: a gem site keeps its host tile (whatever common
+                    // rock/ore the cascade above chose) and seats a gem overlay inside it —
+                    // except the precious metals, which stay pure veins (a gem never rides
+                    // silver/gold/platinum; the host reverts to plain rock instead). Only
+                    // every 4th qualifying site gets a gem: each embedded gem pays out one
+                    // whole drop, so the thinning keeps a vein's total yield matched to the
+                    // old 4-fine-tiles-per-drop dust economy.
+                    var gem = TileKind.Sky;
+                    if (oreN > 0.972f - boost * 0.5f - Bias(TileKind.Ruby) && depth > 65f) gem = TileKind.Ruby;
+                    if (oreN > 0.978f - boost * 0.4f - Bias(TileKind.Sapphire) && depth > 75f) gem = TileKind.Sapphire;
+                    if (oreN > 0.984f - boost * 0.3f - Bias(TileKind.Crystal) && depth > 42f) gem = TileKind.Crystal;
+                    if (oreN > 0.989f - boost * 0.2f - Bias(TileKind.Diamond) && depth > 95f) gem = TileKind.Diamond;
                     // Emerald seams sit deep on the living worlds (verdant/frost carry the
                     // bias). Voidstone's base threshold is unreachable — only the Rift's
                     // bias pulls it into existence, making it the campaign's endgame gem.
-                    if (oreN > 0.986f - boost * 0.3f - Bias(TileKind.Emerald) && depth > 80f) k = TileKind.Emerald;
-                    if (oreN > 1.05f - Bias(TileKind.Voidstone) && depth > 100f) k = TileKind.Voidstone;
+                    if (oreN > 0.986f - boost * 0.3f - Bias(TileKind.Emerald) && depth > 80f) gem = TileKind.Emerald;
+                    if (oreN > 1.05f - Bias(TileKind.Voidstone) && depth > 100f) gem = TileKind.Voidstone;
+                    if (gem != TileKind.Sky && (((r * 73856093) ^ (t * 19349663)) & 3) == 0)
+                    {
+                        if (k is TileKind.SilverOre or TileKind.GoldOre or TileKind.PlatinumOre)
+                            k = baseRock;
+                        planet.SetGem(r, t, gem);
+                    }
                 }
 
                 planet.Set(r, t, k);
