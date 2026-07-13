@@ -291,14 +291,14 @@ public static class PlanetDefs
 
     static PlanetDefs() => All = Classic;
 
-    /// <summary>Core shards needed to warp — one from every world except the Rift itself
-    /// (and the shard-less debug rig, when it's aboard).</summary>
+    /// <summary>Core shards needed to warp — one from every world except the Rift itself,
+    /// the shard-less Hollow (its geode heart holds riches, not a shard), and the debug rig.</summary>
     public static int WarpShardsNeeded
     {
         get
         {
             var n = 0;
-            foreach (var d in All) if (d.Id != "rift" && d.Id != "debug") n++;
+            foreach (var d in All) if (d.Id is not ("rift" or "debug" or "hollow")) n++;
             return n;
         }
     }
@@ -309,6 +309,9 @@ public static class PlanetDefs
         // Classic ids (verdant, frost, …) stay resolvable while a generated campaign is
         // active — the DM_AUTOSTART/DM_ORBIT tooling hooks and sim tests name them directly.
         foreach (var d in Classic) if (d.Id == id) return d;
+        // The fixed extras resolve even when nothing Activated (headless sim tests).
+        if (id == "hollow") return HollowWorld;
+        if (id == "debug") return DebugWorld;
         return All[0];
     }
 
