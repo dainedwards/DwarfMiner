@@ -1076,7 +1076,9 @@ public sealed class Creature
                 Wander = 2f + (float)Random.Shared.NextDouble() * 2.5f;
                 _amble = Random.Shared.Next(3) - 1;
             }
-            GroundMove(dt, planet, up, right, _amble * 0.6f, speedMul);
+            // Patrol with terrain sense: about-face at hall walls and shaft edges.
+            GroundMove(dt, planet, up, right,
+                NavAxis(planet, up, right, _amble * 0.6f, avoidCliffs: true), speedMul);
         }
     }
 
