@@ -39,7 +39,7 @@ public sealed class Physics
     /// tick (50ms later). Bounds the frame spike after a mass break — condemned regions get
     /// a 0.35s tremble anyway, so a tick or two of extra detection latency is invisible.
     /// Normal play never comes close (a whole meteor marks ~3k entries).</summary>
-    public const int SettleBudget = 20000;
+    public const int SettleBudget = 4000;
     // Flood-fill visited/anchored sets as generation-stamped arrays instead of HashSets:
     // membership is one array compare, "clear" is bumping the generation. The flood is the
     // innermost loop of cave-in detection and earthquakes re-flood thousands of tiles per

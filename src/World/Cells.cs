@@ -130,6 +130,17 @@ public sealed class Cells
     /// <summary>Occupied-cell floor for conversion — near-full so surface piles stay loose;
     /// a couple of voids are tolerated because craggy interlocked piles keep small gaps.</summary>
     private const int CompactMinFill = Density * Density - 2;
+    /// <summary>Occupied-cell floor for a tile converting under grain pressure. Naturally
+    /// settled piles interlock with 10-25% voids, so the sealed-pocket floor above would
+    /// strand every layer after the first; a pressed tile instead pulls grains down from
+    /// the column above to fill its gaps (see the steal pass in Compact).</summary>
+    private const int CompactPressedMinFill = Density * Density / 2;
+    /// <summary>Tiles' worth of grains that must sit above a tile before the pressed
+    /// (void-tolerant, accelerated) rules apply. Below this it's a loose crest.</summary>
+    private const float CompactPressureMin = 1f;
+    /// <summary>Pressure cap, in tiles of grains — bounds both the eligibility scan and
+    /// the delay speed-up (a 4-deep pile hardens ~5× faster than a lone buried tile).</summary>
+    private const int CompactPressureCap = 4;
     /// <summary>No compaction this close to the player (world px) — never entomb the dwarf
     /// or solidify the dust pile they're actively vacuuming.</summary>
     private const float CompactExclusionRadius = 24f;
