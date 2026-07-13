@@ -299,7 +299,7 @@ public sealed class Planet
         if (x <= 0) return (-1, 0);
         var nIn = TilesAt(x - 1);
         var nOut = TilesAt(x);
-        var w = ((y % nOut) + nOut) % nOut;
+        var w = (uint)y < (uint)nOut ? y : ((y % nOut) + nOut) % nOut;
         if (nIn == nOut) return (x - 1, w);
         return (x - 1, (int)((w + 0.5) * nIn / nOut) % nIn);
     }
