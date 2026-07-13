@@ -120,17 +120,17 @@ public static class PlanetDefs
     /// rolls, parked on a close-in orbit near the sun (see SpaceSim).</summary>
     public static bool DebugMode { get; } = Environment.GetEnvironmentVariable("DM_DEBUG") != "0";
 
-    /// <summary>Swap in a generated campaign chain (call before anything caches planets).</summary>
+    /// <summary>Swap in a generated campaign chain (call before anything caches planets).
+    /// The Hollow — the landable mega-asteroid in the outer belt — rides along on every
+    /// chain: it's a fixed bonus destination like the Rift, not a campaign slot.</summary>
     public static void Activate(PlanetDef[] chain)
     {
-        if (DebugMode)
-        {
-            var withDebug = new PlanetDef[chain.Length + 1];
-            chain.CopyTo(withDebug, 0);
-            withDebug[^1] = DebugWorld;
-            chain = withDebug;
-        }
-        All = chain;
+        var extras = DebugMode ? 2 : 1;
+        var withExtras = new PlanetDef[chain.Length + extras];
+        chain.CopyTo(withExtras, 0);
+        withExtras[chain.Length] = HollowWorld;
+        if (DebugMode) withExtras[^1] = DebugWorld;
+        All = withExtras;
     }
 
     /// <summary>The kitchen-sink QA world: max size, every disaster armed (quakes, meteors,
