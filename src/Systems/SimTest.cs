@@ -929,6 +929,53 @@ public static class SimTest
             planet.Get(r2, t2) == TileKind.Conglomerate
             && planet.Get(r2 + 1, t2) == TileKind.Conglomerate);
 
+        // A naturally-settled-style column in a stone shaft: the bottom tile has craggy
+        // voids (12/16) and the crest is a loose dusting (6/16). The pressed rules must
+        // still harden the weighed-down layers — pulling grains down to fill the voids —
+        // while the under-crest layer and crest stay loose sand ("not enough sand").
+        var r3 = planet.SurfaceRing - 80;
+        const int t3 = 77;
+        for (var dr = -1; dr <= 4; dr++)
+            for (var da = -1; da <= 1; da++)
+                planet.Set(r3 + dr, t3 + da, TileKind.Stone);
+        for (var dr = 0; dr <= 3; dr++)
+            planet.Set(r3 + dr, t3, TileKind.Sky);
+        planet.Set(r3 + 4, t3, TileKind.Sky);   // open headroom above the pile
+        var grains = 0;
+        for (var dy = 0; dy < Cells.Density * 4; dy++)
+            for (var dx = 0; dx < Cells.Density; dx++)
+            {
+                var voidCell = dy switch
+                {
+                    < Cells.Density => (dx + dy) % 4 == 1,          // bottom tile: 12/16
+                    >= Cells.Density * 3 => dy % Cells.Density > 0
+                        || dx is 0 or 2,                            // crest: 2/16 after settle
+                    _ => false,                                     // middle tiles: full
+                };
+                if (voidCell) continue;
+                cells.Place(t3 * Cells.Density + dx, r3 * Cells.Density + dy, Material.Sand);
+                grains++;
+            }
+        for (var i = 0; i < 60 * 150 && planet.Get(r3 + 1, t3) != TileKind.Conglomerate; i++)
+            cells.Update(dt);
+        var storedSand = 0;
+        var looseSand = 0;
+        for (var dr = 0; dr <= 4; dr++)
+        {
+            if (planet.GetComposition(r3 + dr, t3) is { } cmp)
+                foreach (var (_, _, count) in cmp.Parts) storedSand += count;
+            for (var dy = 0; dy < Cells.Density; dy++)
+                for (var dx = 0; dx < Cells.Density; dx++)
+                    if (cells.Get(t3 * Cells.Density + dx, (r3 + dr) * Cells.Density + dy) == Material.Sand)
+                        looseSand++;
+        }
+        Check("compaction: voided pile hardens under pressure, crest stays sand",
+            planet.Get(r3, t3) == TileKind.Conglomerate
+            && planet.Get(r3 + 1, t3) == TileKind.Conglomerate
+            && planet.Get(r3 + 3, t3) == TileKind.Sky);
+        Check($"compaction: steal pass conserves grains ({storedSand} stored + {looseSand} loose = {grains})",
+            storedSand + looseSand == grains);
+
         var comp = planet.GetComposition(r, t);
         var stored = 0;
         var rightCells = true;
