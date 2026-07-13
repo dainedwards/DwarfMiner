@@ -238,14 +238,15 @@ public sealed class Titan
         // category-5 apex (biggest body, deepest health pool, guards the Rift).
         (Health, MoveSpeed) = kind switch
         {
-            TitanKind.Knifehead    => (2300f, 62f),
-            TitanKind.Otachi       => (2100f, 60f),
-            TitanKind.Leatherback  => (3000f, 46f),
-            TitanKind.Raiju        => (1700f, 96f),
-            TitanKind.Slattern     => (4200f, 62f),
-            TitanKind.Pyrodactyl   => (2000f, 88f),
-            TitanKind.Vitriodactyl => (2000f, 88f),
-            _                      => (Health, MoveSpeed),
+            TitanKind.Knifehead     => (2300f, 62f),
+            TitanKind.Otachi        => (2100f, 60f),
+            TitanKind.Leatherback   => (3000f, 46f),
+            TitanKind.Raiju         => (1700f, 96f),
+            TitanKind.Slattern      => (4200f, 62f),
+            TitanKind.Pyrodactyl    => (2000f, 88f),
+            TitanKind.Vitriodactyl  => (2000f, 88f),
+            TitanKind.CosmicOctopus => (3400f, 66f),
+            _                       => (Health, MoveSpeed),
         };
         MaxHealth = Health;
         if (kind == TitanKind.Slattern) { Radius = 150f; BodyRadius = 70f; }
@@ -257,10 +258,22 @@ public sealed class Titan
             TitanKind.Slattern => (10, 32f),
             _                  => (7, 26f),
         };
-        // Rest the egg near the ground; the hatched boss rises to hover height on its own once
-        // its legs plant and the suspension lifts it.
-        var hover = FindSurfaceSpawn(planet, startAngle);
-        Position = hover - planet.UpAt(hover) * (BodyHover - 24f);
+        if (kind == TitanKind.CosmicOctopus)
+        {
+            // The Starspawn's egg isn't laid on the surface — it's buried in the abyss a
+            // stone's throw off the core, guarding the deepest ore bands. StartNewRun
+            // carves a nest cavern around it so the shell sits in a real chamber.
+            Position = planet.Center
+                + new Vector2(MathF.Cos(startAngle), MathF.Sin(startAngle))
+                * ((Planet.RingMin + 34f) * Planet.TileSize);
+        }
+        else
+        {
+            // Rest the egg near the ground; the hatched boss rises to hover height on its own
+            // once its legs plant and the suspension lifts it.
+            var hover = FindSurfaceSpawn(planet, startAngle);
+            Position = hover - planet.UpAt(hover) * (BodyHover - 24f);
+        }
         InitLegs();
         InitTail();
     }
