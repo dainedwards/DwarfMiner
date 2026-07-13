@@ -208,8 +208,10 @@ public static class RunSave
             run.FaunaTimer = 8f;
             return run;
         }
-        catch
+        catch (Exception ex)
         {
+            if (Environment.GetEnvironmentVariable("DM_SAVEDEBUG") is { Length: > 0 })
+                Console.WriteLine($"[runsave] load failed: {ex}");
             Delete();
             return null;
         }
