@@ -473,6 +473,7 @@ public static class WorldGen
                 frontier.Enqueue((nr, nt, d + 1));
             }
         }
+        System.Console.WriteLine($"  [LineAcid] seeds={planet.AcidSeeds.Count} processed={processed} lined={lined}");
     }
 
     /// <summary>Volcanoes: basalt cones raised on the surface, each holding an open crater
