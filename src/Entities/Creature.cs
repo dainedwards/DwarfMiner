@@ -85,6 +85,13 @@ public sealed class Creature
     /// sentries won't waste shots on them. The player can still hit them with anything.</summary>
     public bool Hostile = true;
 
+    /// <summary>Pre-seeded population (SpawnDirector.PopulateWorld): city dwellers, warren
+    /// garrisons, lake fauna and the scattered wild herds that exist from the moment the
+    /// world does — BEFORE the player arrives anywhere. Residents are never distance-culled;
+    /// Game1 freezes their updates beyond ~900px instead, so the planet-wide census costs
+    /// nothing until the player walks into it.</summary>
+    public bool Resident;
+
     /// <summary>Burning debuff. While > 0, ticks ~3 HP per second and emits ember light. Set
     /// by ruby cannon shells / incendiary hits. Decays linearly with dt.</summary>
     public float BurnSeconds;
