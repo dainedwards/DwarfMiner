@@ -1877,6 +1877,41 @@ public sealed class Creature
                 r.DrawRect(grip + spearDir * 5.8f, new Vector2(2.2f, 1.2f), bone, sAng);
                 break;
             }
+            case CreatureKind.Peacekeeper:
+            {
+                // City militia: the civilian frame in an armoured navy uniform — visored
+                // helmet over the big head, shoulder plates, and an alloy sidearm that
+                // comes up level when a threat is on the scope.
+                var uniform = Tinted(new Color(58, 78, 112));
+                var plate = Tinted(new Color(120, 140, 170));
+                var skin = Tinted(new Color(180, 195, 175));
+                var moving = MathF.Abs(Vector2.Dot(Velocity, right)) > 4f;
+                for (var i = -1; i <= 1; i += 2)
+                {
+                    var a = moving ? MathF.Sin(t * 11f + _phase + i * 1.6f) * 0.45f : 0f;
+                    r.DrawRect(Position - up * 1.6f + right * (i * 1.0f), new Vector2(1.0f, 3.0f), uniform, rot + a);
+                }
+                r.DrawRect(Position + up * 1.4f, new Vector2(4.0f, 4.6f), uniform, rot);
+                r.DrawRect(Position + up * 3.2f + right * 1.9f, new Vector2(1.6f, 1.2f), plate, rot);
+                r.DrawRect(Position + up * 3.2f - right * 1.9f, new Vector2(1.6f, 1.2f), plate, rot);
+                var head = Position + up * 4.8f;
+                r.DrawCircle(head, 2.6f, skin);
+                // Visored helmet: a plated cap with a glowing scan-line eye slit.
+                r.DrawRect(head + up * 1.2f, new Vector2(5.0f, 2.2f), plate, rot);
+                var alert = GuardTarget is not null;
+                r.DrawRect(head + right * (facing * 0.6f) + up * 0.2f, new Vector2(2.8f, 0.8f),
+                    alert ? new Color(255, 150, 90) : new Color(120, 220, 255), rot);
+                // Sidearm: holstered angle at ease, levelled at the threat when tracking.
+                var aimDir = GuardTarget is { } g && (g - Position).LengthSquared() > 1f
+                    ? Vector2.Normalize(g - Position)
+                    : Rotate(right * facing, -0.5f * facing);
+                var gAng = MathF.Atan2(aimDir.Y, aimDir.X);
+                var gripP = Position + right * (facing * 2.2f) + up * 1.6f;
+                r.DrawRect(gripP + aimDir * 2.0f, new Vector2(3.6f, 1.1f), Tinted(new Color(150, 160, 180)), gAng);
+                if (_swing > 0f) // muzzle flash the frame a bolt leaves
+                    r.DrawCircle(gripP + aimDir * 4.4f, 1.4f, new Color(160, 235, 255));
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
