@@ -19,16 +19,25 @@ public static class OxygenRules
     public const float MaxDrain = 7.5f;
     public const float SuffocationDps = 6f;
 
+    /// <summary>On airless worlds the suit's starlight recycler is the only top-up: it works
+    /// at this fraction of the normal surface refill, and only under the open sky.</summary>
+    public const float AirlessRefillFrac = 0.25f;
+
     /// <summary>True when <paramref name="depthBelowSurface"/> is shallow enough to breathe —
-    /// the air refills rather than drains.</summary>
-    public static bool AtSurfaceAir(float depthBelowSurface) => depthBelowSurface <= AirDepth;
+    /// the air refills rather than drains. On an airless world there is nothing to breathe;
+    /// only the open-sky band still refills (slowly — the suit recycler, not the air).</summary>
+    public static bool AtSurfaceAir(float depthBelowSurface, bool airless = false)
+        => depthBelowSurface <= (airless ? AirDepth * 0.5f : AirDepth);
 
     /// <summary>Air units drained per second at this depth on this planet. Zero at/above the
-    /// surface-air line, ramping to <see cref="MaxDrain"/> × scale at <see cref="DeepDepth"/>.</summary>
-    public static float DrainPerSecond(float depthBelowSurface, float drainScale)
+    /// surface-air line, ramping to <see cref="MaxDrain"/> × scale at <see cref="DeepDepth"/>.
+    /// Airless worlds get no grace band at all — the tank starts paying from the first
+    /// tile underground, because there is no atmosphere seeping down the shaft.</summary>
+    public static float DrainPerSecond(float depthBelowSurface, float drainScale, bool airless = false)
     {
-        if (depthBelowSurface <= AirDepth) return 0f;
-        var t = MathHelper.Clamp((depthBelowSurface - AirDepth) / (DeepDepth - AirDepth), 0f, 1f);
+        var grace = airless ? 0f : AirDepth;
+        if (depthBelowSurface <= grace) return 0f;
+        var t = MathHelper.Clamp((depthBelowSurface - grace) / (DeepDepth - grace), 0f, 1f);
         return MaxDrain * t * drainScale;
     }
 }
