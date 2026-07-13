@@ -2969,6 +2969,11 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.AddLight(p.Position, r, col);
         }
 
+        // Gem pickups shed a soft glow in their own colour, so a popped ruby is findable
+        // even when it bounces into an unlit corner of the dig.
+        foreach (var g in _run.Pickups)
+            _renderer.AddLight(g.Position, 9f, Tiles.OreSpeckle(g.Kind));
+
         // Sentry muzzle glow: a small pre-flash that ramps with cooldown — about-to-fire
         // turrets pulse, idle ones are nearly dark. Helps the player see active overwatch in
         // a dim cave at a glance.
