@@ -776,11 +776,11 @@ public sealed class Cells
             }
         if (n == 0) return;
 
-        var parts = new (byte mat, byte src, byte count)[counts.Count];
-        var p = 0;
-        foreach (var ((mat, src), count) in counts) parts[p++] = (mat, src, count);
-        Planet.SetConglomerate(tx, ty,
-            new Planet.TileComposition(new Color(rSum / n, gSum / n, bSum / n), parts));
+        var best = ((byte)0, (byte)0);
+        var bestCount = 0;
+        foreach (var (key, count) in counts)
+            if (count > bestCount) { bestCount = count; best = key; }
+        Planet.Set(tx, ty, MajorityKind((Material)best.Item1, (TileKind)best.Item2));
 
         // The grains above now rest on a solid tile, but they're asleep and will never
         // fire RecordRest again — re-nominate the outer neighbours so a buried pile keeps
