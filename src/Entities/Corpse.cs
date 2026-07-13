@@ -89,6 +89,8 @@ public sealed class Corpse
         CreatureKind.Lizardman    => new[] { ("hide", 1), ("gold", 1) },
         // A downed peacekeeper's alloy sidearm strips to scrap iron.
         CreatureKind.Peacekeeper  => new[] { ("iron", 1) },
+        // A crashed patrol saucer is a small salvage yard.
+        CreatureKind.Saucer       => new[] { ("iron", 2), ("crystal", 1) },
         _                         => new[] { ("meat", 1) },
     };
 
