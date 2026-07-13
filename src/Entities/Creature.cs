@@ -210,6 +210,13 @@ public sealed class Creature
             case CreatureKind.NullMoth:
                 Radius = 3.5f; Health = 9f; MoveSpeed = 30f; ContactDamage = 0f; Hostile = false;
                 break;
+            case CreatureKind.Civilian:
+                Radius = 3.5f; Health = 12f; MoveSpeed = 42f; ContactDamage = 0f; Hostile = false;
+                break;
+            case CreatureKind.Lizardman:
+                Radius = 4f; Health = 30f; MoveSpeed = 58f; ContactDamage = 12f;
+                _cd = 0.8f + (float)Random.Shared.NextDouble(); // first spear is never instant
+                break;
         }
     }
 
