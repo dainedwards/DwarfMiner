@@ -763,11 +763,13 @@ public sealed class Titan
                 if (aim.LengthSquared() > 0.01f)
                 {
                     aim.Normalize();
-                    aim = LevelAim(aim);   // spray across the ground, not into it
                     var up = _planet.UpAt(Position);
                     var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.5f;
                     var c = MathF.Cos(spread); var s = MathF.Sin(spread);
-                    var d = new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c);
+                    // Clamped AFTER the spread: the volley sweeps across the ground and the
+                    // loft below arcs it down on the prey — it never jets into the titan's
+                    // own footing.
+                    var d = LevelAim(new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c));
                     // Loft the glob so it arcs — the acid rains down rather than darting flat.
                     var vel = d * (200f + (float)Random.Shared.NextDouble() * 90f) + up * 130f;
                     shots.Add(new TitanProjectile(mouth + d * 12f, vel, TitanShotKind.Acid));
