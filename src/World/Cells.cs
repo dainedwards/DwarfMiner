@@ -589,7 +589,7 @@ public sealed class Cells
                 var (tx, ty) = Planet.UnIndex(idx);
                 // Convert only if the fill is exactly what it was CompactDelay ago — any
                 // grain that arrived or left since means the pile is still live, and the
-                // tile has to earn a fresh undisturbed window via _restTiles.
+                // tile has to earn a fresh undisturbed window via the rest list.
                 if (CompactableFill(tx, ty) == fill) Compact(tx, ty);
             }
         }
