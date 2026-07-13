@@ -238,8 +238,9 @@ public sealed class Physics
     private void VisitFloodNeighbour(int x, int y)
     {
         var ni = _planet.Index(x, y);
-        if (_floodVisited.Contains(ni)) return;
-        _floodVisited.Add(ni);
+        if (_floodStamp[ni] == _floodGen) return;
+        _floodStamp[ni] = _floodGen;
+        _floodVisitList.Add(ni);
         var nk = _planet.Get(x, y);
         if (!Tiles.IsSolid(nk)) return;
         _floodStack.Push(ni);
