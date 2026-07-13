@@ -387,6 +387,20 @@ public static class WorldGen
                     }
                 }
 
+                // Sealed acid veins (SeedsAcid worlds without surface pools, e.g. slag): a
+                // sparse mid-crust noise channel seeds acid pockets INSIDE solid rock — never an
+                // open cave, so they can't drain into the cavern network the way the old cave
+                // seeps did. LineAcidReservoirs skins each one in obsidian, leaving a contained
+                // corrosive vein the player only meets by mining into it.
+                if (def.SeedsAcid && Tiles.IsSolid(k) && !acidBuffer
+                    && depth > 20f && depth < 60f
+                    && SampleNoise(oreNoise, wx * 0.05f + 41f, wy * 0.05f + 41f) > 0.86f)
+                {
+                    planet.SetWall(r, t, TileKind.Stone);
+                    k = TileKind.Sky;
+                    planet.AcidSeeds.Add((r, t));
+                }
+
                 planet.Set(r, t, k);
             }
         }
