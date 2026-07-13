@@ -43,7 +43,16 @@ public sealed class Particles
         {
             var p = _list[i];
             p.Life -= dt;
-            if (p.Life <= 0) { _list.RemoveAt(i); continue; }
+            if (p.Life <= 0)
+            {
+                // Swap-remove: RemoveAt(i) shifts the whole tail, which turns mass die-offs
+                // (disaster bursts expiring together) into O(n²) struct copies. Order doesn't
+                // matter for 1-2 px unsorted quads. The last element was already updated this
+                // pass (we iterate backwards), so no particle is skipped.
+                _list[i] = _list[_list.Count - 1];
+                _list.RemoveAt(_list.Count - 1);
+                continue;
+            }
 
             if (p.GravityScale != 0f)
                 p.Velocity += planet.GravityAt(p.Position) * GravityStrength * p.GravityScale * dt;
