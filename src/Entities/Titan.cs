@@ -1205,7 +1205,9 @@ public sealed class Titan
         // a fraction of that AND only on its bite cadence — it bores slowly through the
         // planet instead of vaporising everything its long body sweeps.
         var plowPow = (IsAggro ? 26 : 12) + (int)(Anger / 16f);
-        var worm = Kind == TitanKind.Sandworm;
+        // The Starspawn swims through rock exactly like the worm bores it: throttled bite
+        // cadence, reduced power, and no floor preservation (nothing walks on the abyss).
+        var worm = Kind is TitanKind.Sandworm or TitanKind.CosmicOctopus;
         if (worm) plowPow = Math.Max(4, plowPow / 3);
         var canMine = !worm || _biteTimer <= 0f;
         var rSq = BodyRadius * BodyRadius;
