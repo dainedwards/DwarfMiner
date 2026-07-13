@@ -406,7 +406,11 @@ public static class SpawnDirector
             var world = planet.TileToWorld(r, t);
             var dSq = (world - run.Player.Position).LengthSquared();
             if (dSq > maxSq) continue; // band edge — don't expand outward past it
-            if (dSq >= minSq && planet.GetWall(r, t) != TileKind.Sky)
+            // Building interiors (alloy-backed walls) are off the spawn menu: nothing
+            // materialises inside an apartment the player might be looking at.
+            var wall = planet.GetWall(r, t);
+            if (dSq >= minSq && wall != TileKind.Sky
+                && wall != TileKind.AlienAlloy && wall != TileKind.CityGlass)
                 _spotScratch.Add((r, t));
 
             var n = planet.TilesAt(r);
