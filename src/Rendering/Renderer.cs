@@ -652,7 +652,7 @@ public sealed class Renderer
     /// <summary>The rock a gem tile appears embedded in: the most common of its solid,
     /// non-gem cardinal neighbours. A gem surrounded only by other gems (cluster interior)
     /// or open air falls back to Stone.</summary>
-    private static TileKind HostRockFor(TileKind gem, TileKind outerK, TileKind innerK,
+    private static TileKind HostRockFor(TileKind outerK, TileKind innerK,
         TileKind leftK, TileKind rightK)
     {
         Span<TileKind> hosts = stackalloc TileKind[4];
