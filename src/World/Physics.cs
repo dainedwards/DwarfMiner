@@ -88,7 +88,13 @@ public sealed class Physics
     /// before the "collapse" boom that <see cref="CollapsesThisTick"/> drives.</summary>
     public int NewlyCondemnedThisTick { get; private set; }
 
-    public Physics(Planet planet, Cells cells) { _planet = planet; _cells = cells; }
+    public Physics(Planet planet, Cells cells)
+    {
+        _planet = planet;
+        _cells = cells;
+        _anchorStamp = new int[planet.TileCount];
+        _floodStamp = new int[planet.TileCount];
+    }
 
     public void MarkDirty(int x, int y)
     {
