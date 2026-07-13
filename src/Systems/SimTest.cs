@@ -2234,10 +2234,7 @@ public static class SimTest
         Check("tiers: jetpack charge 1x/2x/3x",
             MathF.Abs(cap1 - 2.6f) < 0.01f && MathF.Abs(cap2 - 5.2f) < 0.01f
             && MathF.Abs(tiers.JetChargeCap - 7.8f) < 0.01f);
-        tiers.HasMagnet = true;
-        var reach1 = tiers.PickupReach;
-        tiers.MagnetTier2 = true;
-        Check("tiers: magnet reach 16 then 30", reach1 == 16f && tiers.PickupReach == 30f);
+        Check("tiers: pickup reach stays touch-range (no magnet)", tiers.PickupReach == 4f);
         tiers.HasO2Recycler = true;
         tiers.O2Tier2 = true;
         Check("tiers: O2 reserves II doubles the ceiling",
