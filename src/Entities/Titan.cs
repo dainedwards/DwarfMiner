@@ -617,6 +617,7 @@ public sealed class Titan
 
         StompCooldown -= dt;
         HurlCooldown -= dt;
+        _smashCooldown -= dt;
 
         // Stomp: earthquake centered at the kaiju's standing point. Only when aggroed and
         // grounded — a passive kaiju doesn't pound the ground, and a stomp mid-air looks
