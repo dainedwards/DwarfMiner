@@ -2543,6 +2543,114 @@ public static class SimTest
             (sim8.ShipPos - parked.Pos).Length() - parked.BodyRadius > parkSurf - 1f);
     }
 
+    /// <summary>Moons: every campaign hangs a cratered airless moon on a mid-chain host;
+    /// a second rolled ocean world becomes an atmospheric ocean moon; SpaceSim rides moons
+    /// on live satellite orbits around their parents; and the cratered moon's world is
+    /// airless, dirt-free regolith with a closed vacuum-native roster.</summary>
+    private static void TestMoons()
+    {
+        // The cratered moon def, and the water-moon conversion across many seeds.
+        var chain = PlanetGen.Campaign(1234);
+        var crater = chain[8];
+        var hostFound = Array.Exists(chain[..7], d => d.Id == crater.MoonOf);
+        Check("moons: cratered moon orbits a campaign world",
+            crater.Id == "moon" && crater.MoonOf is not null && hostFound);
+        Check("moons: cratered moon is airless, low-g, and actually cratered",
+            crater.Airless && crater.GravityScale < 1f && crater.Craters > 0
+            && crater.Biome == "moon");
+
+        var sawTwoOceans = false;
+        var conversionOk = true;
+        for (var seed = 1; seed <= 60 && !sawTwoOceans; seed++)
+        {
+            var c = PlanetGen.Campaign(seed);
+            var oceans = 0;
+            foreach (var d in c[..7]) if (d.Biome == "ocean") oceans++;
+            if (oceans < 2) continue;
+            sawTwoOceans = true;
+            var oceanMoons = 0;
+            var solarOceans = 0;
+            foreach (var d in c[..7])
+            {
+                if (d.Biome != "ocean") continue;
+                if (d.MoonOf is not null)
+                {
+                    oceanMoons++;
+                    // Atmospheric moon: keeps its seas and its air (no vac gate).
+                    conversionOk &= !d.Airless && d.HasWater
+                        && Array.Exists(c[..7], h => h.Id == d.MoonOf);
+                }
+                else solarOceans++;
+            }
+            conversionOk &= oceanMoons == 1 && solarOceans >= 1;
+        }
+        Check("moons: a second ocean world becomes an atmospheric ocean moon",
+            sawTwoOceans && conversionOk);
+
+        // Satellite orbits: Activate the chain and watch the moon ride its parent.
+        World.PlanetDefs.Activate(chain);
+        var sim = new Space.SpaceSim { AsteroidTarget = 0 };
+        var moonP = sim.Planets.Find(p => p.Def.Id == "moon")!;
+        var host2 = sim.Planets.Find(p => p.Def.Id == crater.MoonOf)!;
+        Check("moons: sim binds the moon to its parent", moonP.Parent == host2);
+        var maxSep = 0f;
+        var swept = 0f;
+        var prevBearing = MathF.Atan2(moonP.Pos.Y - host2.Pos.Y, moonP.Pos.X - host2.Pos.X);
+        for (var i = 0; i < 60 * 30; i++)
+        {
+            sim.Update(1f / 60f, 0f, thrust: false, brake: false);
+            maxSep = MathF.Max(maxSep, (moonP.Pos - host2.Pos).Length());
+            var b = MathF.Atan2(moonP.Pos.Y - host2.Pos.Y, moonP.Pos.X - host2.Pos.X);
+            var db = b - prevBearing;
+            while (db > MathF.PI) db -= MathF.Tau;
+            while (db < -MathF.PI) db += MathF.Tau;
+            swept += MathF.Abs(db);
+            prevBearing = b;
+        }
+        Check($"moons: moon stays leashed to its host ({maxSep:0} px max)",
+            maxSep < host2.BodyRadius + 800f);
+        Check($"moons: moon actually circles its host ({swept:0.0} rad in 30s)", swept > 2f);
+        sim.ParkShipTrailing(sim.Planets.IndexOf(moonP));
+        var parkDist = (sim.ShipPos - moonP.Pos).Length() - moonP.BodyRadius;
+        Check($"moons: boot park trails the moon itself ({parkDist:0} px)",
+            parkDist > Space.SpaceSim.EntryRange && parkDist < 900f);
+
+        // The cratered moon's world: airless regolith, craters, closed roster.
+        var moonWorld = WorldGen.Generate(777, crater);
+        Check("moons: moon world is airless + low-g", moonWorld.Airless
+            && MathF.Abs(moonWorld.GravityScale - crater.GravityScale) < 0.001f);
+        var moonDirt = 0;
+        foreach (var (x, y) in moonWorld.AllTiles())
+            if (moonWorld.Get(x, y) == TileKind.Dirt) moonDirt++;
+        Check($"moons: no dirt on the dead moon ({moonDirt} tiles)", moonDirt == 0);
+
+        var mCells = new Cells(moonWorld);
+        var mPhysics = new Physics(moonWorld, mCells);
+        var mSurface = SpawnDirector.FindSurfaceSpawn(moonWorld, -MathF.PI / 2f, moonWorld.Radius);
+        var moonRun = new Session(crater)
+        {
+            Planet = moonWorld, Cells = mCells, Physics = mPhysics,
+            Player = new Player(mSurface),
+        };
+        SpawnDirector.SpawnInitialFauna(moonRun);
+        for (var i = 0; i < 40; i++)
+        {
+            moonRun.SpawnTimer = 0f;
+            moonRun.FaunaTimer = 0f;
+            SpawnDirector.Update(0.05f, moonRun);
+        }
+        var moonNatives = 0;
+        var moonOutsiders = 0;
+        foreach (var c in moonRun.Creatures)
+        {
+            if (c.Kind is CreatureKind.Moonlet or CreatureKind.VacLeech or CreatureKind.Selenite
+                or CreatureKind.DustDevil or CreatureKind.StarJelly) moonNatives++;
+            else moonOutsiders++;
+        }
+        Check($"moons: only vacuum natives spawn ({moonNatives} natives, {moonOutsiders} outsiders)",
+            moonNatives > 0 && moonOutsiders == 0);
+    }
+
     /// <summary>The Hollow — the landable mega-asteroid in the outer belt: def shape, the
     /// airless/low-gravity/geode worldgen promises, the vac-suit space gate, and the belt
     /// natives' signature behaviours (the moonlet's orbit, the vac leech's air siphon).</summary>
