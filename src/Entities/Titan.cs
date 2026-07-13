@@ -564,6 +564,8 @@ public sealed class Titan
         // non-anchored tile it overlaps, carving a body-sized tunnel through mountains it walks
         // into. On flat ground the body rides high enough that its plow radius never reaches the
         // floor, so it doesn't dig itself under.
+        _biteTimer -= dt;
+        _wreckTimer -= dt;
         Plow(planet, physics, cells);
 
         // Grounded: either terrain right under the body (belly contact — worm, or a walker
