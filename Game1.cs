@@ -413,7 +413,18 @@ public sealed partial class DwarfMinerGame : Game
         _gravityWellTimer = 0f;
         // The Starspawn's egg is buried near the core — carve its nest cavern so the shell
         // rests in a real chamber the player breaks INTO, not a ghost drawn inside rock.
-        if (_run.Titan.Kind == TitanKind.CosmicOctopus) CarveTitanNest();
+        if (_run.Titan.Kind == TitanKind.CosmicOctopus)
+        {
+            CarveTitanNest();
+            // DM_BOSSCAM can't reach an egg buried by the core: surface the boss hatched
+            // beside the dwarf instead, so tooling can actually frame it.
+            if (Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 })
+            {
+                var camUp = _run.Planet.UpAt(_run.Player.Position);
+                _run.Titan.Position = _run.Player.Position + camUp * 130f;
+                _run.Titan.Hatch();
+            }
+        }
         SpawnDirector.SpawnInitialFauna(_run);
         // DM_FAUNA=1 parades the biome fauna beside the spawn so tooling can screenshot
         // creature art without hunting for natural spawns.
