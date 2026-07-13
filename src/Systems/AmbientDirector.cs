@@ -209,7 +209,7 @@ public static class AmbientDirector
         var start = ground + up * (360f + (float)Random.Shared.NextDouble() * 220f);
         var dir = ground - start;
         if (dir.LengthSquared() > 0.001f) dir.Normalize();
-        var vel = dir * 240f + right * (((float)Random.Shared.NextDouble() - 0.5f) * 120f);
+        var vel = dir * 110f + right * (((float)Random.Shared.NextDouble() - 0.5f) * 70f);
         run.Meteors.Add(new Meteor(start, vel, ground));
     }
 
