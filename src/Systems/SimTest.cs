@@ -905,10 +905,10 @@ public static class SimTest
             for (var dx = 0; dx < Cells.Density; dx++)
                 cells.Place(t * Cells.Density + dx, r * Cells.Density + dy, Material.Dust, TileKind.Stone);
 
-        for (var i = 0; i < 60 * 50 && planet.Get(r, t) != TileKind.Conglomerate; i++)
+        for (var i = 0; i < 60 * 50 && planet.Get(r, t) != TileKind.Stone; i++)
             cells.Update(dt);
-        Check("compaction: buried undisturbed dust re-forms into conglomerate",
-            planet.Get(r, t) == TileKind.Conglomerate);
+        Check("compaction: buried undisturbed stone dust re-forms into stone",
+            planet.Get(r, t) == TileKind.Stone);
 
         // A sealed two-tile-tall pocket: only the bottom tile rests on solid at first, so
         // it converts alone; converting must re-nominate the tile above so the pile keeps
