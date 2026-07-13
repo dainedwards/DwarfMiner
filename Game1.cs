@@ -2918,6 +2918,12 @@ public sealed partial class DwarfMinerGame : Game
             for (var dx = -oreScanR; dx <= oreScanR; dx++)
             {
                 if (dx * dx + dy * dy > oreScanR * oreScanR) continue;
+                // Embedded gems shed a slight glow in their own colour — a seam of them
+                // twinkles down a dark tunnel before the tiles themselves resolve.
+                var og = _run.Planet.GemAt(ptx + dx, pty + dy);
+                if (og != TileKind.Sky)
+                    _renderer.AddLight(_run.Planet.TileToWorld(ptx + dx, pty + dy), 10f,
+                        Tiles.OreSpeckle(og));
                 var k = _run.Planet.Get(ptx + dx, pty + dy);
                 Color glow; float r;
                 switch (k)
