@@ -2514,11 +2514,22 @@ public sealed class Creature
     }
 
     /// <summary>Light emission for the lighting pass. Magma slugs are living coals; cave eyes
-    /// carry a faint cold gleam so you spot one drifting down a dark tunnel before it spots you.</summary>
-    public void AddLight(Renderer r)
+    /// carry a faint cold gleam so you spot one drifting down a dark tunnel before it spots
+    /// you. <paramref name="planet"/> is only needed by kinds whose light hangs off the body
+    /// (the glimmermaw's lure); headless callers may pass null.</summary>
+    public void AddLight(Renderer r, Planet? planet = null)
     {
         switch (Kind)
         {
+            case CreatureKind.Glimmermaw:
+            {
+                // The whole hunt: a gem-glint twinkling in a dark cave, indistinguishable
+                // from a dropped diamond until it's much too close.
+                var twinkle = MathF.Sin(r.Time * 3.1f + _phase) * 5f;
+                r.AddLight(planet is null ? Position : LurePos(planet), 15f + twinkle,
+                    new Color(170, 225, 245));
+                break;
+            }
             case CreatureKind.MagmaSlug:
             {
                 var flick = MathF.Sin(r.Time * 7f + _phase) * 4f;
