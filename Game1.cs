@@ -2745,6 +2745,13 @@ public sealed partial class DwarfMinerGame : Game
                 case ProjectileKind.Pistol:
                     _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 240, 180));
                     break;
+                case ProjectileKind.CivicBolt:
+                {
+                    // Militia stun-bolt: a short cyan dash, visibly not the player's ammo.
+                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
+                    _renderer.DrawRect(p.Position, new Vector2(4.5f, 1.3f), new Color(120, 225, 255), ang);
+                    break;
+                }
                 case ProjectileKind.MachineGun:
                 {
                     // Short tracer streak so held fire reads as a stream.
