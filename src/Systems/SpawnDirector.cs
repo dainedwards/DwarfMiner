@@ -374,15 +374,6 @@ public static class SpawnDirector
 
     private static void TrySpawnSkyAnimal(Session run)
     {
-        var angle = NearbySurfaceAngle(run, 220f, 550f);
-        var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-        var ground = FindSurfaceSpawn(run.Planet, angle, run.Planet.Radius);
-        // 60–200 px above the local terrain, capped inside the tile grid so the flyer's
-        // collision probes stay in-bounds.
-        var alt = (ground - run.Planet.Center).Length() + 60f + (float)Random.Shared.NextDouble() * 140f;
-        alt = MathF.Min(alt, (run.Planet.Radius - 12) * Planet.TileSize);
-        var pos = run.Planet.Center + dir * alt;
-        if ((pos - run.Player.Position).Length() < 160f) return;
         // The Rift's sky belongs to null moths — its one neutral species. City skies are
         // patrolled by guard saucers (with the odd wild moth drifting through); everywhere
         // else flies the moth/stinger mix (the debug rig throws null moths into the pot too).
@@ -393,6 +384,36 @@ public static class SpawnDirector
             : run.Def.Biome == "debug" && Random.Shared.Next(3) == 0
                 ? CreatureKind.NullMoth
                 : Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth : CreatureKind.SkyStinger;
+
+        // Guard saucers spawn over a city district (the one nearest the player, so they show
+        // up where the action is) and patrol its band — never out over empty ground. Other
+        // sky fauna drift in near the player as before.
+        float angle;
+        if (kind == CreatureKind.Saucer && run.Planet.CityDistricts.Count > 0)
+        {
+            var rel = run.Player.Position - run.Planet.Center;
+            var pAng = MathF.Atan2(rel.Y, rel.X);
+            var best = float.MaxValue;
+            var chosen = run.Planet.CityDistricts[0];
+            foreach (var dct in run.Planet.CityDistricts)
+            {
+                var d = MathF.Abs(WrapPi(pAng - dct.ang));
+                if (d < best) { best = d; chosen = dct; }
+            }
+            angle = chosen.ang + ((float)Random.Shared.NextDouble() * 2f - 1f) * chosen.halfWidth;
+        }
+        else
+        {
+            angle = NearbySurfaceAngle(run, 220f, 550f);
+        }
+        var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+        var ground = FindSurfaceSpawn(run.Planet, angle, run.Planet.Radius);
+        // 60–200 px above the local terrain, capped inside the tile grid so the flyer's
+        // collision probes stay in-bounds.
+        var alt = (ground - run.Planet.Center).Length() + 60f + (float)Random.Shared.NextDouble() * 140f;
+        alt = MathF.Min(alt, (run.Planet.Radius - 12) * Planet.TileSize);
+        var pos = run.Planet.Center + dir * alt;
+        if ((pos - run.Player.Position).Length() < 160f) return;
         var c = new Creature(pos, kind);
         ClearSpawnSpace(run, pos, c.Radius); // altitude is above local ground, but a mountain flank can still clip the band
         run.Creatures.Add(c);
