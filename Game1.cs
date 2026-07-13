@@ -1195,7 +1195,10 @@ public sealed partial class DwarfMinerGame : Game
                 }
                 _run.Creatures.RemoveAt(i);
             }
-            else if ((c.Position - _run.Player.Position).LengthSquared() > 1000f * 1000f)
+            // Residents are exempt from the distance cull — they're the standing population
+            // of a place (a city, a warren, a lake), not bubble wildlife. They froze above.
+            else if (!c.Resident
+                && (c.Position - _run.Player.Position).LengthSquared() > 1000f * 1000f)
             {
                 _run.Creatures.RemoveAt(i);
             }
