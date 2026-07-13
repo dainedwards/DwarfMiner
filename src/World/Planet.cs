@@ -114,6 +114,11 @@ public sealed class Planet
     /// <summary>Background "wall" tile kind per cell — what was there before caves were carved.
     /// Visible as a darker silhouette behind Sky tiles inside the planet (Terraria-style).</summary>
     private readonly TileKind[] _wall;
+    /// <summary>Embedded gem per tile (Sky = none). Gems aren't blocks of their own — each is
+    /// an object seated inside a host tile of ordinary rock or common ore. The renderer draws
+    /// it as a glowing lozenge on the host's face; shattering the host pops a physical Pickup
+    /// (see Cells.SpawnDustInTile); acid/lava destroying the host destroys the gem with it.</summary>
+    private readonly TileKind[] _gem;
 
     /// <summary>What a compacted Conglomerate tile is made of: the exact cells (material +
     /// dust source, run-length counted) that pressed into it, plus the blended display tint.
