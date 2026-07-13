@@ -34,6 +34,7 @@ public static class WorldGen
         var planet = new Planet(new Vector2(2400, 2400), Planet.RingsFor(def.SizeScale))
         {
             GravityScale = def.GravityScale,
+            Airless = def.Airless,
         };
         var rng = new Random(seed);
 
