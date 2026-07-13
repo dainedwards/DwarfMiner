@@ -814,8 +814,6 @@ public static class WorldGen
                 }
             }
         }
-
-        avoid.AddRange(placed);
     }
 
     /// <summary>Underground lizardman cities: <c>def.LizardCities</c> buried warrens. Each is
