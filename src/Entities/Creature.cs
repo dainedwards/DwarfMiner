@@ -958,6 +958,56 @@ public sealed class Creature
         GroundMove(dt, planet, up, right, moveAxis, speedMul);
     }
 
+    /// <summary>Lizardman: a warren-guard warrior. Off aggro it patrols its gallery like a
+    /// sentry on rounds. Aggroed (long memory, like the delver) it presses the prey on foot,
+    /// hurls a bone spear from mid-range whenever it has line of sight, and lunges into bite
+    /// range up close. It never digs — the warren's tunnels are its ground, and a dwarf who
+    /// seals himself in has genuinely escaped it.</summary>
+    private void TickLizardman(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul, List<TitanProjectile>? shots)
+    {
+        if (_swing > 0f) _swing -= dt;
+        _cd -= dt;
+        _retarget -= dt;
+        if (dist < 240f) _aggroT = 7f; else _aggroT -= dt;
+
+        if (_aggroT > 0f)
+        {
+            var tDist = Vector2.Dot(toPlayer, right);
+            var moveAxis = MathF.Abs(tDist) > 8f ? MathF.Sign(tDist) : 0f;
+            GroundMove(dt, planet, up, right, moveAxis, speedMul);
+
+            // Bone spear: mid-range, sighted, off cooldown. Slight loft so the cast drops
+            // onto the target rather than undershooting.
+            if (dist > 70f && dist < 210f && _cd <= 0f && shots is not null
+                && HasLineOfSight(planet, toPlayer, dist))
+            {
+                var dir = toPlayer / dist;
+                var aim = Vector2.Normalize(dir + up * (0.05f + dist * 0.001f));
+                shots.Add(new TitanProjectile(Position + aim * (Radius + 2f), aim * 230f,
+                    TitanShotKind.Spike, damage: 9f));
+                _cd = 2.4f + (float)Random.Shared.NextDouble() * 0.9f;
+                _swing = 0.35f;
+            }
+            // Lunge: a short leap into bite range when the spear arm is spent.
+            else if (dist < 60f && dist > 0.01f && _retarget <= 0f && IsGrounded(planet, up))
+            {
+                Velocity = toPlayer / dist * 115f * speedMul + up * 65f;
+                _retarget = 1.5f;
+            }
+        }
+        else
+        {
+            Wander -= dt;
+            if (Wander <= 0f)
+            {
+                Wander = 2f + (float)Random.Shared.NextDouble() * 2.5f;
+                _amble = Random.Shared.Next(3) - 1;
+            }
+            GroundMove(dt, planet, up, right, _amble * 0.6f, speedMul);
+        }
+    }
+
     // ---------------------------------------------------------------- sky fauna
 
     private void TickFlyer(float dt, Planet planet, Vector2 up, Vector2 right,
