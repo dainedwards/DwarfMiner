@@ -402,6 +402,14 @@ public sealed class Cells
         return _mat[Idx(cx, cy)] != 0;
     }
 
+    /// <summary>Whether the cell at a world position holds settled powder (sand/dirt/gravel/
+    /// dust). Pickups treat these as ground so a dropped gem rests on a pile, not under it.</summary>
+    public bool PowderAtWorld(Vector2 worldPos)
+    {
+        var (cx, cy) = WorldToCell(worldPos);
+        return Materials.IsCompactable(Get(cx, cy));
+    }
+
     private bool IsTileSolidAt(int cx, int cy)
     {
         if (cy < 0 || cy >= Height) return true;
