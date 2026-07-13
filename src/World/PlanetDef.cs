@@ -211,7 +211,7 @@ public static class PlanetDefs
             QuakeScale: 1.0f, CaveSpawnCap: 16,
             ShipOre: "gold", ShipOreCount: 4, OxygenDrainScale: 1.05f, Titan: TitanKind.Mecha,
             CrystalPockets: 1, FungalPockets: 1,
-            CityLots: 11, LizardCities: 1, Biome: "city", Difficulty: 0.4f),
+            CityLots: 14, Biome: "city", Difficulty: 0.4f),
 
         new("core", "Coreheart", "The finale, diamond-rich, swarming, lava at the door",
             new Color(120, 70, 160), new Color(220, 150, 255),
