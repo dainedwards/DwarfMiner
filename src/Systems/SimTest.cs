@@ -44,11 +44,7 @@ public static class SimTest
                 var c = new Creature(p, kind);
                 for (var step = 0; step < 60 * 8; step++)
                     c.Update(dt, planet, physics, cells, player);
-                if (EmbeddedInRock(planet, c.Position))
-                {
-                    embedded++;
-                    Console.WriteLine($"  [info] embedded: {kind} at {c.Position} (spawned {p})");
-                }
+                if (EmbeddedInRock(planet, c.Position)) embedded++;
             }
         }
         Check("collision: no creature embedded in rock after 8s", embedded == 0,
