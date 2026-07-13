@@ -309,6 +309,7 @@ public static class SpawnDirector
     {
         CreatureKind.Grazer, CreatureKind.Hopper, CreatureKind.SnowLoper, CreatureKind.CinderSkink,
         CreatureKind.RustBack, CreatureKind.TidePuddler, CreatureKind.AcidStrider, CreatureKind.PrismSnail,
+        CreatureKind.Civilian,
     };
 
     /// <summary>Each planet archetype keeps its own herd: the verdant start rolls the classic
