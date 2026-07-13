@@ -594,15 +594,16 @@ public sealed class Cells
             }
         }
 
-        if (_restTiles.Count == 0) return;
-        foreach (var idx in _restTiles)
+        if (_restList.Count == 0) return;
+        foreach (var idx in _restList)
         {
             if (_compacting.ContainsKey(idx)) continue;
             var (tx, ty) = Planet.UnIndex(idx);
             var fill = CompactableFill(tx, ty);
             if (fill > 0) _compacting[idx] = (fill, _time + CompactDelay);
         }
-        _restTiles.Clear();
+        _restList.Clear();
+        _restGen++;
     }
 
     /// <summary>Occupied-cell count if the tile at (tx,ty) is eligible to compact, else -1.
