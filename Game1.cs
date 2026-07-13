@@ -1156,10 +1156,14 @@ public sealed partial class DwarfMinerGame : Game
         // dwarf into its crossfire.
         foreach (var pk in _run.Creatures)
         {
-            if (pk.Kind != CreatureKind.Peacekeeper || pk.Health <= 0) continue;
+            if (pk.Kind is not (CreatureKind.Peacekeeper or CreatureKind.Saucer) || pk.Health <= 0)
+                continue;
+            // Saucers watch a wider circle from altitude and fire from further out.
+            var scanR = pk.Kind == CreatureKind.Saucer ? 320f : 240f;
+            var fireR = pk.Kind == CreatureKind.Saucer ? 280f : 230f;
             pk.GuardFireCd -= dt;
             Vector2? threat = null;
-            var bestSq = 240f * 240f;
+            var bestSq = scanR * scanR;
             foreach (var other in _run.Creatures)
             {
                 if (!other.Hostile || other.Health <= 0) continue;
@@ -1167,14 +1171,14 @@ public sealed partial class DwarfMinerGame : Game
                 if (dSq < bestSq) { bestSq = dSq; threat = other.Position; }
             }
             if (threat is null && _run.Titan.Hatched && _run.Titan.Health > 0
-                && (_run.Titan.Position - pk.Position).LengthSquared() < 320f * 320f)
+                && (_run.Titan.Position - pk.Position).LengthSquared() < 380f * 380f)
                 threat = _run.Titan.Position;
             pk.GuardTarget = threat;
             if (threat is { } tp && pk.GuardFireCd <= 0f)
             {
                 var diff = tp - pk.Position;
                 var d = diff.Length();
-                if (d is > 10f and < 230f)
+                if (d > 10f && d < fireR)
                 {
                     var dir = diff / d;
                     _run.Projectiles.Add(new Projectile(
@@ -1185,6 +1189,21 @@ public sealed partial class DwarfMinerGame : Game
                     PlayAt("shoot", pk.Position, 0.35f, pitch: 0.45f, minGap: 0.1f);
                 }
             }
+        }
+
+        // Lizardman war-cry: the first guard to sight prey shrieks, and every lizardman in
+        // a wide radius picks up the hunt — aggro one and the warren answers together.
+        foreach (var lz in _run.Creatures)
+        {
+            if (lz.Kind != CreatureKind.Lizardman || !lz.CallingBackup) continue;
+            lz.CallingBackup = false;
+            foreach (var ally in _run.Creatures)
+                if (!ReferenceEquals(ally, lz) && ally.Kind == CreatureKind.Lizardman
+                    && ally.Health > 0
+                    && (ally.Position - lz.Position).LengthSquared() < 800f * 800f)
+                    ally.RallyToWar();
+            // A guttural down-pitched cry so the pile-on is telegraphed, not a mugging.
+            PlayAt("hurt", lz.Position, 0.7f, pitch: -0.4f, minGap: 0.25f);
         }
 
         // Corpses — settle under gravity, decay on a timer, and are harvested for materials
