@@ -1687,6 +1687,40 @@ public static class SimTest
             if (c is { Kind: CreatureKind.Lizardman, Resident: true }) guards++;
         Check($"census: warrens garrisoned before arrival ({guards} guards / {warren.Planet.LizardDens.Count} dens)",
             guards >= warren.Planet.LizardDens.Count * 2);
+
+        // Per-material immunity: only the natives can live in each hazard.
+        Check("spawn: immunity maps to the right natives",
+            new Creature(Vector2.Zero, CreatureKind.MagmaSlug).ImmuneTo(Material.Lava)
+            && !new Creature(Vector2.Zero, CreatureKind.Grazer).ImmuneTo(Material.Lava)
+            && new Creature(Vector2.Zero, CreatureKind.AcidStrider).ImmuneTo(Material.Acid)
+            && !new Creature(Vector2.Zero, CreatureKind.Grazer).ImmuneTo(Material.Acid)
+            && new Creature(Vector2.Zero, CreatureKind.AlienWhale).ImmuneTo(Material.Water)
+            && !new Creature(Vector2.Zero, CreatureKind.Grazer).ImmuneTo(Material.Water));
+
+        // Nothing is ever seeded inside a hazard it can't survive: flood a lava/acid world's
+        // caves and pools, populate it, and confirm no non-immune creature sits in the burn.
+        var slagDef = PlanetDefs.ById("slag");
+        var slag = new Session(slagDef) { Planet = WorldGen.Generate(5, slagDef) };
+        slag.Cells = new Cells(slag.Planet);
+        slag.Physics = new Physics(slag.Planet, slag.Cells);
+        slag.Player = new Player(SpawnDirector.FindSurfaceSpawn(slag.Planet, -MathF.PI / 2f, slag.Planet.Radius));
+        slag.Cells.FillSkyTilesWithin(slag.Planet.Radius * slagDef.LavaFillFrac, Material.Lava);
+        foreach (var (ax, ay) in slag.Planet.AcidSeeds) slag.Cells.FillTile(ax, ay, Material.Acid);
+        for (var i = 0; i < 120; i++) slag.Cells.Update(1f / 60f);
+        SpawnDirector.PopulateWorld(slag);
+        for (var i = 0; i < 120; i++) SpawnDirector.TrySpawnCreature(slag);
+        for (var i = 0; i < 40; i++) SpawnDirector.TrySpawnSurfaceAnimal(slag);
+        var trapped = 0;
+        foreach (var c in slag.Creatures)
+        {
+            var (lava, acid, _) = slag.Cells.SampleHazardsNear(c.Position, c.Radius + 2f);
+            if ((lava > 0 && !c.ImmuneTo(Material.Lava))
+                || (acid > 0 && !c.ImmuneTo(Material.Acid))
+                || (!c.ImmuneTo(Material.Water) && slag.Cells.CountWaterNear(c.Position, c.Radius + 2f) > 0))
+                trapped++;
+        }
+        Check($"spawn: nobody hatches inside lava/acid they can't survive ({trapped} trapped of {slag.Creatures.Count})",
+            trapped == 0);
     }
 
     /// <summary>The aquatics: player swimming (strokes rise, idle sinks gently, fins are
