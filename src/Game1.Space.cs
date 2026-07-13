@@ -782,8 +782,12 @@ public sealed partial class DwarfMinerGame
             var sunward = c.LengthSquared() > 1f ? Vector2.Normalize(c) : Vector2.UnitY;
 
             // Atmosphere: two translucent accent halos (the Rift's reads as a red storm).
-            FillCircleWorld(sb, c, p.BodyRadius + 16f, accent * 0.10f);
-            FillCircleWorld(sb, c, p.BodyRadius + 7f, accent * 0.16f);
+            // Airless rock (the Hollow) gets none — bare regolith against black space.
+            if (!p.Def.Airless)
+            {
+                FillCircleWorld(sb, c, p.BodyRadius + 16f, accent * 0.10f);
+                FillCircleWorld(sb, c, p.BodyRadius + 7f, accent * 0.16f);
+            }
 
             // The disc is the planet's real (survey) terrain once its preview is ready —
             // mountains on the limb, lakes and lava where they'll actually be. Until the
