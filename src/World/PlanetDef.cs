@@ -106,7 +106,12 @@ public sealed record PlanetDef(
     float GravityScale = 1f,
     bool Airless = false,
     int Craters = 0,
-    bool GreatGeode = false);
+    bool GreatGeode = false,
+    // Silhouette undulation in legacy tiles: 0 keeps the classic lathed-round planet;
+    // the belt asteroid runs ~20, so its surface radius swings by whole lobes — a potato,
+    // not a circle. WorldGen stamps the resulting terrain line into Planet.SurfaceProfile
+    // so depth-below-surface (oxygen, exposure) follows the local ground.
+    float Lumpiness = 0f);
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.
 /// <see cref="All"/> is the ACTIVE chain: at boot Game1 swaps in a procedurally generated
