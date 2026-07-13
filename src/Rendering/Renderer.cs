@@ -563,42 +563,40 @@ public sealed class Renderer
 
                 // (Ore veins and sparkles are baked into the atlas patterns.)
 
-                // Progressive cracks: segments spider out from the impact point in
-                // four stages as damage accumulates, instead of darkening the tile.
-                // A hash bit mirrors the pattern so neighbours don't crack identically.
+                // Progressive cracks: thin white hairlines spider out from the impact
+                // point in four stages as damage accumulates — the block visibly weakens
+                // rather than darkening. A hash bit mirrors the pattern so neighbours
+                // don't crack identically.
                 var dmg = planet.Damage(r, t);
                 if (dmg > 0)
                 {
                     var flip = (hash & 0x100) != 0;
-                    var cc = new Color((byte)0, (byte)0, (byte)0, (byte)Math.Min(120 + dmg / 2, 215));
-                    void Crack(int lx, int ly, int lw, int lh)
-                        => DrawDeco(centre, right, up, rotation, chord, flip ? 8 - lx - lw : lx, ly, lw, lh, cc);
+                    var cc = Color.White * MathHelper.Min(0.45f + dmg / 400f, 0.85f);
+                    void Crack(float lx, float ly, float lw, float lh)
+                        => DrawDeco(centre, right, up, rotation, chord, flip ? 8f - lx - lw : lx, ly, lw, lh, cc);
                     // Stage 1: hairline at the impact point.
-                    Crack(3, 3, 1, 2);
-                    Crack(4, 4, 1, 1);
+                    Crack(3.5f, 3f, 0.5f, 1.5f);
+                    Crack(4f, 4.5f, 0.5f, 0.5f);
                     if (dmg > 70)
                     {   // Stage 2: the crack runs diagonally across the face.
-                        Crack(2, 2, 1, 1);
-                        Crack(4, 5, 1, 1);
-                        Crack(5, 6, 1, 1);
-                        Crack(4, 2, 2, 1);
+                        Crack(2.5f, 2f, 0.5f, 1f);
+                        Crack(4.5f, 5f, 0.5f, 1f);
+                        Crack(5f, 2.5f, 1f, 0.5f);
                     }
                     if (dmg > 140)
                     {   // Stage 3: branches split off toward the corners.
-                        Crack(1, 1, 1, 1);
-                        Crack(1, 4, 1, 1);
-                        Crack(2, 5, 1, 1);
-                        Crack(6, 2, 1, 1);
-                        Crack(6, 6, 1, 1);
+                        Crack(1.5f, 1.5f, 1f, 0.5f);
+                        Crack(2f, 4.5f, 0.5f, 1f);
+                        Crack(5f, 6f, 0.5f, 1f);
+                        Crack(6f, 2f, 0.5f, 0.5f);
                     }
                     if (dmg > 200)
                     {   // Stage 4: fractures reach the edges; the tile is about to give.
-                        Crack(0, 0, 1, 1);
-                        Crack(3, 0, 1, 1);
-                        Crack(7, 1, 1, 1);
-                        Crack(7, 4, 1, 1);
-                        Crack(6, 7, 1, 1);
-                        Crack(0, 5, 1, 1);
+                        Crack(0.5f, 1f, 1f, 0.5f);
+                        Crack(4f, 0.5f, 0.5f, 1f);
+                        Crack(6.5f, 1f, 0.5f, 0.5f);
+                        Crack(6.5f, 5.5f, 1f, 0.5f);
+                        Crack(1f, 6f, 0.5f, 1f);
                     }
                 }
             }
