@@ -732,7 +732,7 @@ public sealed class Cells
                 for (var k = 0; k < Density * CompactPressureCap; k++)
                 {
                     (cx, cy) = OuterCell(cx, cy);
-                    if (cy >= Height || IsBlocked(cx, cy) && _mat[Idx(cx, cy)] == 0) break;
+                    if (cy >= Height || (IsBlocked(cx, cy) && _mat[Idx(cx, cy)] == 0)) break;
                     var gi = Idx(cx, cy);
                     var gm = (Material)_mat[gi];
                     if (gm == Material.Empty) continue;
