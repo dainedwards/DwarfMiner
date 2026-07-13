@@ -754,8 +754,9 @@ public sealed class Creature
             var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
             Velocity = right * vT + up * vN;
         }
-        // Big claws — digs faster than a borer bites.
-        Chew(dt, planet, physics, cells, _digDir, 0.2f, 9);
+        // Big claws but an unhurried pace — half the old bite rate, so a mole's burrow
+        // creeps rather than races.
+        Chew(dt, planet, physics, cells, _digDir, 0.4f, 9);
     }
 
     /// <summary>CaveEye: hovers through open tunnels. Never digs — it steers by probing ahead
