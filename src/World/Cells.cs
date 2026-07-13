@@ -1021,6 +1021,8 @@ public sealed class Cells
         var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
         var k = Planet.Get(tx, ty);
         if (!IsCorrodible(k)) return;
+        Planet.TakeGem(tx, ty);   // acid dissolves the gem along with its host — the old
+                                  // "spilled acid destroys a vein" hazard, kept intact
         Planet.Set(tx, ty, TileKind.Sky);
         SpawnInTile(tx, ty, Material.Smoke, Density / 2); // acrid fizz
     }
