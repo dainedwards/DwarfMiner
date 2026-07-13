@@ -28,8 +28,18 @@ public sealed class Physics
 {
     private readonly Planet _planet;
     private readonly Cells _cells;
-    private readonly HashSet<int> _dirty = new();
+    // Dirty set as a stamp array + list (same pattern as the flood stamps below): a mass
+    // break marks ~9 dirty tiles per broken tile, so HashSet hashing made both MarkDirty and
+    // the settle drain part of the break-frame hitch. Stamp == _dirtyGen means already listed.
+    private readonly int[] _dirtyStamp;
+    private int _dirtyGen = 1;
+    private readonly List<int> _dirtyList = new();
     private readonly Queue<int> _processQueue = new();
+    /// <summary>Max tiles one settle pass may dequeue; the remainder rolls to the next settle
+    /// tick (50ms later). Bounds the frame spike after a mass break — condemned regions get
+    /// a 0.35s tremble anyway, so a tick or two of extra detection latency is invisible.
+    /// Normal play never comes close (a whole meteor marks ~3k entries).</summary>
+    public const int SettleBudget = 20000;
     // Flood-fill visited/anchored sets as generation-stamped arrays instead of HashSets:
     // membership is one array compare, "clear" is bumping the generation. The flood is the
     // innermost loop of cave-in detection and earthquakes re-flood thousands of tiles per
