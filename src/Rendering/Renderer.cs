@@ -328,12 +328,33 @@ public sealed class Renderer
                             (int)Math.Clamp(shade * tintF.X, 0f, 255f),
                             (int)Math.Clamp(shade * tintF.Y, 0f, 255f),
                             (int)Math.Clamp(shade * tintF.Z, 0f, 255f));
+                    // Gem tiles draw as the surrounding rock with the gem embedded in it: the
+                    // face samples the atlas of whatever material the majority of its solid
+                    // neighbours are (a ruby beside stone sits *in* stone, one in a dirt seam
+                    // sits in dirt), then a faceted lozenge of the gem's own colour goes on
+                    // top with a bright glint.
+                    var atlasKind = k;
+                    if (Tiles.IsGem(k))
+                        atlasKind = HostRockFor(k, outerK, innerK, leftK, rightK);
                     _sb.Draw(_tileAtlas, centre,
-                        TileAtlas.Source(k, VariantFor(k, r, t, hash), exposeMask),
+                        TileAtlas.Source(atlasKind, VariantFor(atlasKind, r, t, hash), exposeMask),
                         drawCol, rotation,
                         new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
                         new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
                         SpriteEffects.None, 0f);
+                    if (Tiles.IsGem(k))
+                    {
+                        var gem = Tiles.BaseColor(k);
+                        var edge = new Color(gem.R / 2, gem.G / 2, gem.B / 2);
+                        // Lozenge: pointed top/bottom rows around a wide middle band, with a
+                        // darker rim row so the facet reads at 4 px, plus a glint pixel.
+                        DrawDeco(centre, right, up, rotation, chord, 3, 1, 2, 1, edge);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 2, 4, 1, gem);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 3, 4, 2, gem);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 5, 4, 1, edge);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 6, 2, 1, edge);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 2, 1, 1, Tiles.OreSpeckle(k));
+                    }
                 }
 
                 // Grass hugs exposed edges, Terraria-style: the green wraps down exposed
