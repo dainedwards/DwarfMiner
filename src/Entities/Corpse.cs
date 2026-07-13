@@ -87,6 +87,8 @@ public sealed class Corpse
         CreatureKind.Civilian     => System.Array.Empty<(string, int)>(),
         // Warren guards carry their kit: scaled hide, and the odd looted nugget.
         CreatureKind.Lizardman    => new[] { ("hide", 1), ("gold", 1) },
+        // A downed peacekeeper's alloy sidearm strips to scrap iron.
+        CreatureKind.Peacekeeper  => new[] { ("iron", 1) },
         _                         => new[] { ("meat", 1) },
     };
 
