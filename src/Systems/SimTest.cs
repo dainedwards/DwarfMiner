@@ -1104,6 +1104,30 @@ public static class SimTest
             }
             Check($"city: towers stand in districts ({clustered}/{bearings.Count} have a close neighbour)",
                 bearings.Count >= 8 && clustered >= bearings.Count * 7 / 10);
+
+            // Capital layout: split the sorted bearings into groups at gaps > 0.25 rad —
+            // there must be one dominant metropolis plus one or two smaller towns.
+            bearings.Sort();
+            var groups = new List<int>();
+            var size = 1;
+            for (var i = 1; i < bearings.Count; i++)
+            {
+                if (bearings[i] - bearings[i - 1] > 0.25f) { groups.Add(size); size = 1; }
+                else size++;
+            }
+            // The list wraps: merge the last run into the first when the seam gap is small.
+            if (groups.Count > 0
+                && bearings[0] + MathHelper.TwoPi - bearings[^1] <= 0.25f)
+            {
+                groups[0] += size;
+            }
+            else
+            {
+                groups.Add(size);
+            }
+            groups.Sort();
+            Check($"city: one capital plus smaller towns (groups {string.Join("/", groups)})",
+                groups.Count is >= 2 and <= 3 && groups[^1] >= bearings.Count * 45 / 100);
         }
 
         // City coverage: at one ring above the streets, the alloy-backed footprint (towers,
