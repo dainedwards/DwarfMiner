@@ -1193,6 +1193,19 @@ public sealed partial class DwarfMinerGame
             }
         }
 
+        // The outer belt on the chart: a grainy dust band around the Hollow's orbit.
+        var beltR = MapProjectR(SpaceSim.BeltOrbitRadius);
+        var beltSpread = MapProjectR(SpaceSim.BeltOrbitRadius + SpaceSim.BeltHalfWidth) - beltR;
+        for (var i = 0; i < 170; i++)
+        {
+            var h = (uint)(i * 2654435761u + 97u);
+            var a = (h & 0xffff) / 65535f * MathHelper.TwoPi;
+            var rr = beltR + (((h >> 16) & 0xff) / 255f * 2f - 1f) * beltSpread;
+            var pos = centre + new Vector2(MathF.Cos(a), MathF.Sin(a)) * rr;
+            sb.Draw(_renderer.Pixel, new Rectangle((int)pos.X - 1, (int)pos.Y - 1, 2, 2),
+                new Color(150, 140, 125) * 0.5f);
+        }
+
         // The corona no-go ring: the radius inside which the sun starts burning the hull.
         var burnR = MapProjectR(SpaceSim.SunRadius + 70f) + 6f;
         for (var d = 0; d < 40; d++)
