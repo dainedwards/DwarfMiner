@@ -1141,7 +1141,7 @@ public sealed class Creature
             var best = float.MaxValue;
             foreach (var (ang, half) in planet.CityDistricts)
             {
-                var d = AngleGap(bearing, ang);
+                var d = MathF.Abs(WrapPi(bearing - ang));
                 if (d < best) { best = d; _patrolAng = ang; _patrolHalf = half + 0.18f; }
             }
             if (float.IsNaN(_patrolAng)) { _patrolAng = bearing; _patrolHalf = 0.35f; }
