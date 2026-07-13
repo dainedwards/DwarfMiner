@@ -626,8 +626,14 @@ public static class WorldGen
             var floorEvery = (int)(4 * S);            // one storey per 4 legacy tiles (32 px)
             var doorH = (int)(2.5f * S);              // street door: 20 px of headroom
             var doorSide = rng.Next(2) == 0 ? -1 : 1;
+            // Facade style: banded windows (spandrel rows between glass strips) or a sheer
+            // curtain wall (glass all the way up, broken only by the slab lines).
+            var curtainWall = rng.Next(3) == 0;
+            // The foundation runs well past the dirt layer into bedrock (14 legacy tiles),
+            // one tile wider than the hull — towers stand on pilings, not on topsoil.
+            var footingR = Math.Max(2, surfaceR - (int)(14 * S));
 
-            for (var r = Math.Max(2, surfaceR - (int)(3 * S)); r <= topR; r++)
+            for (var r = footingR; r <= topR; r++)
             {
                 var n = planet.TilesAt(r);
                 var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
@@ -635,38 +641,47 @@ public static class WorldGen
                 var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
                 var span = (int)(halfAng / MathHelper.TwoPi * n) + 1;
                 var storey = r - baseR;
-                for (var dt = -span; dt <= span; dt++)
+                var slabRow = storey % floorEvery < 2 && storey >= floorEvery && storey < height - 2;
+                // Slab rows carry a one-tile exterior ledge — horizontal ribs that break up
+                // the hull. The foundation is a tile wider than the tower for the same span
+                // bump, so the plinth reads as a footing, not a buried wall.
+                var spanHere = span + (slabRow || r <= surfaceR ? 1 : 0);
+                for (var dt = -spanHere; dt <= spanHere; dt++)
                 {
                     var t = ((t0 + dt) % n + n) % n;
                     if (Tiles.IsAnchored(planet.Get(r, t))) continue;
                     planet.SetWall(r, t, TileKind.AlienAlloy);
 
-                    // Below the baseline surface: solid plinth footing, whatever the local
+                    // Below the baseline surface: solid piling, whatever the local
                     // elevation noise did to the ground line.
                     if (r <= surfaceR) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
 
                     // Roof cap.
                     if (storey >= height - 2) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
 
-                    var edge = Math.Abs(dt) >= span - 1;
+                    var edge = Math.Abs(dt) >= spanHere - 1;
                     if (edge)
                     {
-                        // Street-level doorway on one side; glowing window bands above the
-                        // ground floor; alloy hull everywhere else.
+                        // Street-level doorway (with a glass transom over the lintel) on one
+                        // side; windows above the ground floor per the facade style; alloy
+                        // hull everywhere else.
+                        var window = curtainWall
+                            ? storey >= floorEvery && !slabRow
+                            : storey >= floorEvery && storey % floorEvery >= 3
+                                                   && storey % floorEvery <= floorEvery - 3;
                         if (storey < doorH && Math.Sign(dt) == doorSide)
                             planet.Set(r, t, TileKind.Sky);
-                        else if (storey >= floorEvery && storey % floorEvery >= 3
-                                 && storey % floorEvery <= floorEvery - 3)
+                        else if (storey == doorH && Math.Sign(dt) == doorSide)
                             planet.Set(r, t, TileKind.CityGlass);
                         else
-                            planet.Set(r, t, TileKind.AlienAlloy);
+                            planet.Set(r, t, window ? TileKind.CityGlass : TileKind.AlienAlloy);
                         continue;
                     }
 
                     // Interior: floor slab at the base of every storey above the ground
                     // floor (the plinth is street level's floor), with a stair gap hugging
                     // alternating walls so the shaft zig-zags up the tower.
-                    var slab = storey % floorEvery < 2 && storey >= floorEvery;
+                    var slab = slabRow;
                     if (slab)
                     {
                         var gapSide = storey / floorEvery % 2 == 0 ? 1 : -1;
@@ -676,14 +691,69 @@ public static class WorldGen
                 }
             }
 
-            // Antenna mast: a thin anchored spike off the roof with a glowing beacon tip.
-            var mastTop = Math.Min(planet.Rings - 2, topR + (int)(3 * S) + rng.Next((int)(3 * S)));
-            for (var r = topR + 1; r <= mastTop; r++)
+            // Rooftop furniture, by class: spires carry the beacon-tipped antenna mast,
+            // low-rises a stepped crown or a glass conservatory dome, mid-rises any of the
+            // three — so the skyline tops read varied instead of stamped.
+            var roofStyle = classRoll >= 0.75 ? 0 : classRoll < 0.30 ? 1 + rng.Next(2) : rng.Next(3);
+            if (roofStyle == 0)
             {
-                var t = (int)((ang / MathHelper.TwoPi + 1f) % 1f * planet.TilesAt(r));
-                if (Tiles.IsAnchored(planet.Get(r, t))) continue;
-                planet.Set(r, t, r == mastTop ? TileKind.Beacon : TileKind.AlienAlloy);
-                planet.SetWall(r, t, TileKind.AlienAlloy);
+                // Antenna mast: a thin anchored spike off the roof with a glowing beacon tip.
+                var mastTop = Math.Min(planet.Rings - 2, topR + (int)(3 * S) + rng.Next((int)(3 * S)));
+                for (var r = topR + 1; r <= mastTop; r++)
+                {
+                    var t = (int)((ang / MathHelper.TwoPi + 1f) % 1f * planet.TilesAt(r));
+                    if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                    planet.Set(r, t, r == mastTop ? TileKind.Beacon : TileKind.AlienAlloy);
+                    planet.SetWall(r, t, TileKind.AlienAlloy);
+                }
+            }
+            else if (roofStyle == 1)
+            {
+                // Stepped crown: two shrinking alloy tiers, a little ziggurat cap.
+                for (var step = 0; step < 2; step++)
+                {
+                    var stepW = halfWidthPx * (0.65f - step * 0.28f);
+                    for (var dr = 1 + step * (int)S; dr <= (1 + step) * (int)S; dr++)
+                    {
+                        var r = topR + dr;
+                        if (r >= planet.Rings - 1) break;
+                        var n = planet.TilesAt(r);
+                        var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                        var sw = (int)(stepW / ((Planet.RingMin + r + 0.5f) * Planet.TileSize)
+                                       / MathHelper.TwoPi * n) + 1;
+                        for (var dt = -sw; dt <= sw; dt++)
+                        {
+                            var t = ((t0 + dt) % n + n) % n;
+                            if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                            planet.Set(r, t, TileKind.AlienAlloy);
+                            planet.SetWall(r, t, TileKind.AlienAlloy);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Conservatory dome: a hollow glass half-shell over the roof garden.
+                var domeH = (int)(2.5f * S);
+                for (var dr = 1; dr <= domeH; dr++)
+                {
+                    var r = topR + dr;
+                    if (r >= planet.Rings - 1) break;
+                    var f = dr / (float)domeH;
+                    var domeW = halfWidthPx * 0.85f * MathF.Sqrt(MathF.Max(0.05f, 1f - f * f));
+                    var n = planet.TilesAt(r);
+                    var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                    var sw = (int)(domeW / ((Planet.RingMin + r + 0.5f) * Planet.TileSize)
+                                   / MathHelper.TwoPi * n) + 1;
+                    for (var dt = -sw; dt <= sw; dt++)
+                    {
+                        var t = ((t0 + dt) % n + n) % n;
+                        if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                        var shell = Math.Abs(dt) >= sw - 1 || dr == domeH;
+                        planet.Set(r, t, shell ? TileKind.CityGlass : TileKind.Sky);
+                        planet.SetWall(r, t, TileKind.AlienAlloy);
+                    }
+                }
             }
 
             // Civilian spawn sites: the doorway, and one apartment per second storey.
