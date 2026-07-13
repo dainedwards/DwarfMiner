@@ -2718,6 +2718,16 @@ public sealed class Creature
                 // flaring while the tongue reels something in.
                 r.AddLight(Position, Pulling ? 16f : 7f, new Color(160, 110, 230));
                 break;
+            case CreatureKind.Selenite:
+                // Cold crystal gleam — a wandering glint in a dark crater cave.
+                r.AddLight(Position, 10f + MathF.Sin(r.Time * 4f + _phase) * 3f,
+                    new Color(190, 215, 245));
+                break;
+            case CreatureKind.DustDevil:
+                // Static discharge flickers through the column.
+                if (((int)(r.Time * 7f + _phase) & 3) == 0)
+                    r.AddLight(Position, 12f, new Color(170, 210, 255));
+                break;
             case CreatureKind.MagmaSlug:
             {
                 var flick = MathF.Sin(r.Time * 7f + _phase) * 4f;
