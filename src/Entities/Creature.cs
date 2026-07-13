@@ -253,8 +253,12 @@ public sealed class Creature
             BurnSeconds -= dt;
         }
         if (FreezeSeconds > 0f) FreezeSeconds -= dt;
-        // A shot mole holds a grudge — the pain flash doubles as the provocation signal.
-        if (HitFlash > 0f && Kind == CreatureKind.MoleBeast) _provokedT = 8f;
+        // A shot digger holds a grudge — the pain flash doubles as the provocation signal.
+        // All the tunnelling kinds use it: unprovoked, they wander-dig their own galleries
+        // and leave the dwarf alone; only a hit (or point-blank crowding, per-kind) turns
+        // their jaws toward the player.
+        if (HitFlash > 0f && Kind is CreatureKind.MoleBeast or CreatureKind.Borer
+            or CreatureKind.Centipede or CreatureKind.HornedDelver) _provokedT = 8f;
         if (_provokedT > 0f) _provokedT -= dt;
         if (HitFlash > 0) HitFlash -= dt;
         var speedMul = FreezeSeconds > 0f ? 0.5f : 1.0f;
