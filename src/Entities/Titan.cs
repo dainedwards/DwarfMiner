@@ -1524,11 +1524,15 @@ public sealed class Titan
 
         // Verlet integration on the free nodes. The worm's body follows the head's weave rather
         // than drooping, so it barely feels gravity; a biped's tail hangs under full gravity.
+        // The worm's chain is also damped much harder — a hundred-metre body boring through
+        // rock is inert mass, and the lighter damping had its tail end whipping and spinning
+        // around every head turn.
         var gravMag = worm ? 90f : 380f;
+        var damp = worm ? 0.80f : 0.94f;
         for (var i = 1; i < TailNodes.Length; i++)
         {
             var temp = TailNodes[i];
-            var velocity = (TailNodes[i] - TailPrev[i]) * 0.94f;  // damping
+            var velocity = (TailNodes[i] - TailPrev[i]) * damp;
             var grav = planet.GravityAt(TailNodes[i]) * gravMag;
             TailNodes[i] += velocity + grav * (dt * dt);
             TailPrev[i] = temp;
