@@ -428,9 +428,11 @@ public sealed class Planet
         var tiles = r.ReadBytes(_totalTiles);
         var damage = r.ReadBytes(_totalTiles);
         var walls = r.ReadBytes(_totalTiles);
+        ReinforcedCount = 0;
         for (var i = 0; i < _totalTiles; i++)
         {
             _tiles[i] = (TileKind)tiles[i];
+            if (_tiles[i] == TileKind.ReinforcedSupport) ReinforcedCount++;
             _damage[i] = damage[i];
             _wall[i] = (TileKind)walls[i];
         }
