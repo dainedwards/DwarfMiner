@@ -725,24 +725,25 @@ public sealed class Cells
         return total / (float)(Density * Density);
     }
 
-    /// <summary>Press the tile's grains into a Conglomerate: record the exact cell makeup
-    /// (so breaking it spills the same cells back out), blend a display tint, clear the
-    /// cells, and stamp the solid tile. Voids are filled by pulling grains down from the
-    /// column above (compression — the pile visibly settles), never invented.</summary>
+    /// <summary>Press the tile's grains into a solid tile of whatever kind the majority of
+    /// them came from — stone dust re-forms stone, dirt beds back into dirt, mixed piles go
+    /// to the biggest constituent. Voids are filled by pulling grains down from the column
+    /// above (compression — the pile visibly settles), never invented. (Old saves may still
+    /// hold composition-backed Conglomerate tiles; their spill path in SpawnDustInTile
+    /// remains for those.)</summary>
     private void Compact(int tx, int ty)
     {
         var c0y = tx * Density;
         var c0x = ty * Density;
         var counts = new Dictionary<(byte mat, byte src), byte>();
-        int rSum = 0, gSum = 0, bSum = 0, n = 0;
+        var n = 0;
         void Absorb(int i)
         {
             var m = (Material)_mat[i];
             var key = ((byte)m, _srcTile[i]);
             counts.TryGetValue(key, out var c);
             counts[key] = (byte)(c + 1);
-            var col = GrainColor(m, (TileKind)_srcTile[i]);
-            rSum += col.R; gSum += col.G; bSum += col.B; n++;
+            n++;
             _mat[i] = 0;
             _srcTile[i] = 0;
             ClearKinetics(i);
