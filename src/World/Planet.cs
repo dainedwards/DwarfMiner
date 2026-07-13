@@ -481,6 +481,14 @@ public sealed class Planet
         var vents = r.ReadInt32();
         for (var i = 0; i < vents; i++)
             VolcanoVents.Add((r.ReadInt32(), r.ReadInt32(), r.ReadBoolean()));
+        CitySpawns.Clear();
+        var citySpawns = r.ReadInt32();
+        for (var i = 0; i < citySpawns; i++)
+            CitySpawns.Add((r.ReadInt32(), r.ReadInt32()));
+        LizardDens.Clear();
+        var dens = r.ReadInt32();
+        for (var i = 0; i < dens; i++)
+            LizardDens.Add((r.ReadInt32(), r.ReadInt32()));
         _composition.Clear();
         var comps = r.ReadInt32();
         for (var i = 0; i < comps; i++)
