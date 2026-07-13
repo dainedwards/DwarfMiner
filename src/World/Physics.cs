@@ -255,6 +255,9 @@ public sealed class Physics
     /// Uses the polar neighbour helpers for inner/outer so band-boundary mapping is correct.</summary>
     private bool HasReinforcedNeighbor(int x, int y)
     {
+        // No reinforced supports on the whole planet (the common case — they're crafted,
+        // not generated): skip the ~10 neighbour reads this costs per flooded tile.
+        if (_planet.ReinforcedCount == 0) return false;
         var (inR, inT) = _planet.InnerNeighbour(x, y);
         if (_planet.Get(inR, inT) == TileKind.ReinforcedSupport) return true;
         if (_planet.Get(inR, inT - 1) == TileKind.ReinforcedSupport) return true;
