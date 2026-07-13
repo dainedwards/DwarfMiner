@@ -1043,6 +1043,88 @@ public static class SimTest
             acidVent && acidWorld.LavaSeeds.Count == 0 && acidWorld.AcidSeeds.Count > 0);
     }
 
+    /// <summary>City world + lizard warrens: towers rise with civilian addresses recorded,
+    /// warrens carve brick halls above the lava line with dens recorded, and both survive
+    /// generation without stranding their spawn sites inside rock.</summary>
+    private static void TestCities()
+    {
+        var city = WorldGen.Generate(11, PlanetDefs.ById("city"));
+        int alloy = 0, glass = 0, brick = 0;
+        foreach (var (x, y) in city.AllTiles())
+        {
+            var k = city.Get(x, y);
+            if (k == TileKind.AlienAlloy) alloy++;
+            else if (k == TileKind.CityGlass) glass++;
+            else if (k == TileKind.LizardBrick) brick++;
+        }
+        Check($"city: skyscrapers stand (alloy {alloy}, glass {glass})", alloy > 400 && glass > 40);
+        Check($"city: civilian addresses recorded ({city.CitySpawns.Count})", city.CitySpawns.Count >= 5);
+        var openHomes = 0;
+        foreach (var (r, t) in city.CitySpawns)
+            if (!Tiles.BlocksPlayer(city.Get(r, t))) openHomes++;
+        Check($"city: civilian addresses are open air ({openHomes}/{city.CitySpawns.Count})",
+            openHomes == city.CitySpawns.Count);
+        var towersAboveSurface = false;
+        foreach (var (x, y) in city.AllTiles())
+            if (x > city.SurfaceRing + 20 && city.Get(x, y) == TileKind.AlienAlloy)
+            { towersAboveSurface = true; break; }
+        Check("city: towers rise well above the surface", towersAboveSurface);
+
+        Check($"warren: lizard city carved (brick {brick})", brick > 200);
+        Check($"warren: dens recorded ({city.LizardDens.Count})", city.LizardDens.Count >= 4);
+        var openDens = 0;
+        var lavaTop = (int)(city.Radius * PlanetDefs.ById("city").LavaFillFrac) - Planet.RingMin;
+        var allAboveLava = true;
+        foreach (var (r, t) in city.LizardDens)
+        {
+            if (!Tiles.BlocksPlayer(city.Get(r, t))) openDens++;
+            allAboveLava &= r > lavaTop;
+        }
+        Check($"warren: den hearts are open hall air ({openDens}/{city.LizardDens.Count})",
+            openDens == city.LizardDens.Count);
+        Check("warren: every hall sits above the lava flood line", allAboveLava);
+        var gold = 0;
+        foreach (var (x, y) in city.AllTiles())
+            if (city.Get(x, y) == TileKind.GoldOre) gold++;
+        Check($"warren: vault hoard seeded ({gold} gold tiles)", gold > 0);
+
+        // Lizardman guard: drop one in a warren hall with the dwarf beside it; it must fight
+        // (spear casts and/or contact pressure) without ending the fight embedded in a wall.
+        var (dr, dt) = city.LizardDens[0];
+        var denPos = city.TileToWorld(dr, dt);
+        var cells = new Cells(city);
+        var physics = new Physics(city, cells);
+        var prey = new Player(denPos + new Vector2(30f, 0f));
+        var guard = new Creature(denPos, CreatureKind.Lizardman);
+        var shots = new List<TitanProjectile>();
+        for (var step = 0; step < 60 * 8; step++)
+            guard.Update(1f / 60f, city, physics, cells, prey, shots);
+        Check("warren: guard is not embedded after 8s of combat", !EmbeddedInRock(city, guard.Position));
+        Check($"warren: guard fought back ({shots.Count} spears, prey hp {prey.Health:0})",
+            shots.Count > 0 || prey.Health < 100f);
+
+        // Civilian: ambles the city surface without ending up inside a tower wall.
+        var home = city.CitySpawns[0];
+        var civPos = city.TileToWorld(home.x, home.y);
+        var civ = new Creature(civPos, CreatureKind.Civilian);
+        var farPlayer = new Player(civPos + new Vector2(500f, 0f));
+        for (var step = 0; step < 60 * 8; step++)
+            civ.Update(1f / 60f, city, physics, cells, farPlayer);
+        Check("city: civilian not embedded after 8s", !EmbeddedInRock(city, civ.Position));
+
+        // Generated campaigns always include exactly one metropolis (plus the fixed finale).
+        var chain = PlanetGen.Campaign(1234);
+        var cities = 0;
+        var warrens = 0;
+        foreach (var d in chain)
+        {
+            if (d.Biome == "city") cities++;
+            if (d.LizardCities > 0) warrens++;
+        }
+        Check($"campaign: one metropolis and some warrens roll ({cities} city, {warrens} warrens)",
+            cities == 1 && warrens >= 1);
+    }
+
     /// <summary>True if the position sits inside a tile that actually blocks bodies —
     /// creature collision uses Tiles.BlocksPlayer, so passable tiles (glowshrooms in a
     /// fungal grove, ladders) don't count as "embedded in rock".</summary>
