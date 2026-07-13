@@ -64,6 +64,7 @@ public enum CreatureKind : byte
     Civilian,     // city — timid alien citizen, ambles the streets and towers, flees trouble
     Lizardman,    // warren guard — evil lizardman warrior: patrols, hurls bone spears, lunges
     Peacekeeper,  // city militia — armed alien: neutral to the dwarf, guns down hostile invaders
+    Saucer,       // city air patrol — disc-craft cruising over the towers, guns down invaders
 }
 
 public sealed class Creature
