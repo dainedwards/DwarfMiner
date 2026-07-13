@@ -153,7 +153,21 @@ public sealed class Cells
         _travel = new float[_rowOffsets[Height]];
         _flow = new sbyte[_rowOffsets[Height]];
         _queued = new bool[_rowOffsets[Height]];
+        _restStamp = new int[planet.TileCount];
+        // Coarse row lookup for UnIdx: the row containing the first cell of each block.
+        _rowOfBlock = new int[(_rowOffsets[Height] >> RowBlockShift) + 2];
+        var row = 0;
+        for (var b = 0; b < _rowOfBlock.Length; b++)
+        {
+            var first = b << RowBlockShift;
+            while (row < Height - 1 && _rowOffsets[row + 1] <= first) row++;
+            _rowOfBlock[b] = row;
+        }
     }
+
+    private const int RowBlockShift = 12;
+    /// <summary>Row containing cell index (block « RowBlockShift) — see <see cref="UnIdx"/>.</summary>
+    private readonly int[] _rowOfBlock;
 
     /// <summary>Queue the cell for the next tick (deduplicated).</summary>
     private void Enqueue(int i)
