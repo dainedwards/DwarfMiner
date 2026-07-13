@@ -867,10 +867,12 @@ public enum MiningTool { Pickaxe, Drill, Hammer, MiningLaser }
 /// </summary>
 public sealed class Toolbelt
 {
-    // 13 slots: 3 intrinsic tools + room for the full 10-weapon armoury god mode loans out.
-    // Number keys only reach the first 9; the rest are selected by wheel, Q/E weapon cycle,
-    // or clicking the HUD slot.
-    public const int SlotCount = 13;
+    // 24 slots: 3 intrinsic tools + the full weapon armoury god mode loans out + generous
+    // headroom for crafted tools, consumables, placeables, and future items — so nothing gets
+    // stranded off the belt when god mode fills it. The HUD strip auto-scales to fit whatever
+    // this is set to, so growing it later is a one-line change. Number keys only reach the
+    // first 9; the rest are selected by wheel, Q/E weapon cycle, or clicking the HUD slot.
+    public const int SlotCount = 24;
     public readonly string?[] Slots = new string?[SlotCount];
     public int Selected;
 
