@@ -541,6 +541,26 @@ public static class SimTest
             // Size actually changes the tile grid.
             Check($"plangen: SizeScale drives real ring counts ({oceanWorld.Rings} vs {plainWorld.Rings})",
                 WorldGen.Generate(9, chainA[6]).Rings > WorldGen.Generate(9, chainA[0]).Rings);
+
+            // The metropolis always draws a walking titan (the worm/flyer swaps elsewhere),
+            // and the swap never costs the campaign its farmable Sandworm. Sweep seeds —
+            // the guarantee is a per-roll swap, not a one-seed accident.
+            var cityWalks = true; var wormStays = true;
+            for (var seed = 0; seed < 200; seed++)
+            {
+                var chain = PlanetGen.Campaign(seed);
+                var sawWorm = false;
+                for (var i = 0; i < 7; i++)
+                {
+                    if (chain[i].Biome == "city")
+                        cityWalks &= chain[i].Titan is not (TitanKind.Sandworm
+                            or TitanKind.Pyrodactyl or TitanKind.Vitriodactyl);
+                    sawWorm |= chain[i].Titan == TitanKind.Sandworm;
+                }
+                wormStays &= sawWorm;
+            }
+            Check("plangen: city worlds always get a walking titan (200 seeds)", cityWalks);
+            Check("plangen: the worm swap keeps Shai-Hulud farmable (200 seeds)", wormStays);
         }
 
         // --- Planet mapping wires distinct bosses ---
