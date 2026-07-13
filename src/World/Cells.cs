@@ -192,7 +192,14 @@ public sealed class Cells
 
     public int CellsAt(int cy) => (cy < 0 || cy >= Height) ? 1 : _cellsAt[cy];
 
-    private int WrapX(int cx, int n) => ((cx % n) + n) % n;
+    private static int WrapX(int cx, int n)
+    {
+        // Fast path: neighbour probes are almost always already in range, so skip the two
+        // divisions of the general modulo — this is the innermost op of the whole sim.
+        if ((uint)cx < (uint)n) return cx;
+        cx %= n;
+        return cx < 0 ? cx + n : cx;
+    }
 
     public int Idx(int cx, int cy)
     {
