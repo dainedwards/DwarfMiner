@@ -709,6 +709,9 @@ public sealed partial class DwarfMinerGame : Game
         if (Upgrades.Owned(_meta, "vitality")) run.Player.MaxHealth = 140f;
         // Loading woke every cell; burn the resettle here like world gen's pre-settle pass.
         for (var i = 0; i < 45; i++) _run.Cells.Update(1f / 60f);
+        // Creatures aren't saved — re-seed the planet-wide resident census (cities staffed,
+        // warrens garrisoned, lakes stocked) so a resumed world isn't a ghost town.
+        SpawnDirector.PopulateWorld(_run);
         _gameOverReason = "";
         _craftingMenu.Reset();
         _invUi.Reset();
