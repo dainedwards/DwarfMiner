@@ -1990,6 +1990,11 @@ public sealed class Creature
                 // Hunting guards announce themselves with a red eye-gleam, like the delver.
                 if (_aggroT > 0f) r.AddLight(Position, 12f, new Color(255, 60, 40));
                 break;
+            case CreatureKind.Peacekeeper:
+                // Visor scan-line: cool on patrol, hot amber when tracking a threat.
+                r.AddLight(Position, 10f, GuardTarget is not null
+                    ? new Color(255, 150, 80) : new Color(90, 190, 230));
+                break;
         }
     }
 
