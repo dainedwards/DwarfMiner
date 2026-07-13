@@ -476,6 +476,8 @@ public sealed class Creature
     private void TickGrazer(float dt, Planet planet, Vector2 up, Vector2 right,
         Vector2 toPlayer, float dist, float speedMul)
     {
+        // Citizens caught in a disaster drop everything and run for shelter.
+        if (TakeCover && TickTakeCover(dt, planet, up, right, speedMul)) return;
         Wander -= dt;
         if (Wander <= 0)
         {
