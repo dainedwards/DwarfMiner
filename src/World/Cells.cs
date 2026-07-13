@@ -420,8 +420,13 @@ public sealed class Cells
         }
     }
 
-    /// <summary>Move from (sCx,sCy) to (dCx,dCy). Both rows are bounds-checked; angles wrap.</summary>
-    private bool TryMoveTo(int sCx, int sCy, int dCx, int dCy)
+    /// <summary>Move from (sCx,sCy) to (dCx,dCy). Both rows are bounds-checked; angles wrap.
+    /// <paramref name="wakeSource"/> false = this is an intermediate hop of a multi-step move
+    /// this tick: the cell being vacated was empty before the tick started (the mover only
+    /// transited it), so the neighbourhood's net state is unchanged and no wake is owed —
+    /// only the *original* departure cell is a real change. At terminal velocity this cuts
+    /// the wake fan-out of a falling grain by up to 8×.</summary>
+    private bool TryMoveTo(int sCx, int sCy, int dCx, int dCy, bool wakeSource = true)
     {
         if (dCy < 0 || dCy >= Height) return false;
         if (IsTileSolidAt(dCx, dCy)) return false;
