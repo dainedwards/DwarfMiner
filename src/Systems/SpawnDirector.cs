@@ -79,17 +79,50 @@ public static class SpawnDirector
     /// <summary>Population count within a radius of the player, filtered by habitat kind.
     /// Stationary ambushers are excluded from the cave count — see <see cref="IsStationary"/>.</summary>
     private static int CountKindsNear(Session run, float radius,
-        bool cave = false, bool surface = false, bool sky = false, bool stationary = false)
+        bool cave = false, bool surface = false, bool sky = false, bool stationary = false,
+        bool water = false)
     {
         var rSq = radius * radius;
         var n = 0;
         foreach (var c in run.Creatures)
             if ((cave && c.IsCaveKind && !IsStationary(c.Kind))
                 || (surface && c.IsSurfaceKind) || (sky && c.IsSkyKind)
+                || (water && c.IsWaterKind)
                 || (stationary && IsStationary(c.Kind)))
                 if ((c.Position - run.Player.Position).LengthSquared() < rSq)
                     n++;
         return n;
+    }
+
+    /// <summary>Aquatic fauna: find open water along a bearing near the player — walk down
+    /// the radial from the sky; hitting dry ground first means no lake on that bearing —
+    /// and drop a water-only creature into it. Whales want room, so they take the deeper
+    /// finds; crabs take whatever puddle is going.</summary>
+    private static void TrySpawnAquatic(Session run)
+    {
+        for (var attempt = 0; attempt < 8; attempt++)
+        {
+            var angle = NearbySurfaceAngle(run, 200f, 600f);
+            var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+            Vector2? found = null;
+            for (var d = run.Planet.Radius + 60; d > 20; d--)
+            {
+                var p = run.Planet.Center + dir * (d * Planet.TileSize);
+                if (run.Planet.IsSolidAt(p)) break;                    // dry shore — no lake here
+                if (run.Cells.CountWaterNear(p, 3f) >= 3) { found = p - dir * 10f; break; }
+            }
+            if (found is not { } splash) continue;
+            if ((splash - run.Player.Position).Length() < 160f) continue;
+
+            // Depth gate: a whale needs a real basin under it; shallows get crabs.
+            var deep = run.Cells.CountWaterNear(splash - dir * 14f, 5f) >= 8;
+            var kind = deep && Random.Shared.NextDouble() < 0.35
+                ? CreatureKind.AlienWhale
+                : CreatureKind.AlienCrab;
+            var c = new Creature(splash, kind);
+            run.Creatures.Add(c);
+            return;
+        }
     }
 
     private static void TrySpawnCreature(Session run)
