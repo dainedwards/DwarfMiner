@@ -1884,7 +1884,7 @@ public sealed partial class DwarfMinerGame : Game
         // warp-drive material (one per world, straight into meta: shards are too important
         // to lose to a death on the climb back out). All five shards let the mothership warp
         // to the Rift.
-        if (_run.Def.Id != "rift" && _run.Def.Id != "debug" && !_meta.CoreShards.Contains(_run.Def.Id))
+        if (_run.Def.Id is not ("rift" or "debug" or "hollow") && !_meta.CoreShards.Contains(_run.Def.Id))
         {
             _meta.CoreShards.Add(_run.Def.Id);
             _meta.Save();
