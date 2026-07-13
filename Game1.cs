@@ -1167,9 +1167,9 @@ public sealed partial class DwarfMinerGame : Game
                 while (acc >= 1f)
                 {
                     acc -= 1f;
-                    var up = _run.Planet.UpAt(gpos);
-                    var kick = up * (55f + (float)Random.Shared.NextDouble() * 30f)
-                             + new Vector2(-up.Y, up.X) * (((float)Random.Shared.NextDouble() - 0.5f) * 50f);
+                    var gemUp = _run.Planet.UpAt(gpos);
+                    var kick = gemUp * (55f + (float)Random.Shared.NextDouble() * 30f)
+                             + new Vector2(-gemUp.Y, gemUp.X) * (((float)Random.Shared.NextDouble() - 0.5f) * 50f);
                     _run.Pickups.Add(new Pickup(gpos, gkind, kick));
                 }
                 _run.GemDropAccum[gd.id] = acc;
