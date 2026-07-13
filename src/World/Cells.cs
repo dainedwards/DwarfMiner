@@ -267,7 +267,9 @@ public sealed class Cells
         _mat[i] = (byte)m;
         _srcTile[i] = (byte)src;
         ClearKinetics(i);
-        if (m != Material.Empty) _active.Add(i);
+        // Queue into _next (not the being-consumed _active) so a cell placed between ticks —
+        // or mid-tick by a melt/corrode reaction — is guaranteed to get its first tick.
+        if (m != Material.Empty) Enqueue(i);
         WakeNeighbors(cx, cy);
     }
 
