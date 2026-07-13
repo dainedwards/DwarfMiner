@@ -246,9 +246,10 @@ public sealed partial class DwarfMinerGame
     private const int PreviewSize = 200;
 
     /// <summary>Rasterize a planet's survey world into a disc texture: each pixel samples
-    /// the tile at the matching polar coordinate. Sky above the surface stays transparent
-    /// (real mountain silhouettes on the limb); sky inside the crust (caves) reads as dark
-    /// rock so the disc doesn't look moth-eaten.</summary>
+    /// the tile at the matching polar coordinate. Sky above the LOCAL terrain line stays
+    /// transparent (real mountain silhouettes on the limb — and on the lumpy asteroid, the
+    /// whole potato outline); sky inside the crust (caves) reads as dark rock so the disc
+    /// doesn't look moth-eaten.</summary>
     private Texture2D BuildPlanetPreview(Planet world)
     {
         var data = new Color[PreviewSize * PreviewSize];
@@ -265,8 +266,10 @@ public sealed partial class DwarfMinerGame
                 var pos = world.Center + new Vector2(dx, dy) * worldRadius;
                 var (tx, ty) = world.WorldToTile(pos);
                 var kind = world.Get(tx, ty);
+                var aboveGround = rr * worldRadius
+                    > world.SurfaceRadiusAt(pos) * Planet.TileSize - Planet.TileSize;
                 data[py * PreviewSize + px] = kind == TileKind.Sky
-                    ? (rr > 0.80f ? Color.Transparent : cave)
+                    ? (aboveGround ? Color.Transparent : cave)
                     : Tiles.BaseColor(kind);
             }
         var tex = new Texture2D(GraphicsDevice, PreviewSize, PreviewSize);
