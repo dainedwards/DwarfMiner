@@ -991,8 +991,19 @@ public sealed class Creature
     {
         if (!_rooted)
         {
-            _rooted = true;
-            _root = Position;
+            // Settle first, cement second: fall until the shell rests on rock and the
+            // collider has had its say, THEN root there. Rooting at the raw spawn point
+            // re-fights the push-out every tick (the body is wider than one tile), and in
+            // a tight slit that fight can walk the shell into solid rock.
+            var up0 = planet.UpAt(Position);
+            Velocity = up0 * MathF.Max(Vector2.Dot(Velocity, up0) - Grav(planet) * dt, -120f);
+            if (IsGrounded(planet, up0))
+            {
+                _rooted = true;
+                _root = Position;
+                Velocity = Vector2.Zero;
+            }
+            return;
         }
         Position = _root;
         Velocity = Vector2.Zero;
