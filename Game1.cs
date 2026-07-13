@@ -1375,7 +1375,7 @@ public sealed partial class DwarfMinerGame : Game
         for (var i = _run.Pickups.Count - 1; i >= 0; i--)
         {
             var g = _run.Pickups[i];
-            g.Update(dt, _run.Planet);
+            g.Update(dt, _run.Planet, _run.Cells);
             var reach = _run.Player.Radius + 3.5f;
             if ((g.Position - _run.Player.Position).LengthSquared() < reach * reach)
             {
