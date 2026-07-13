@@ -890,6 +890,85 @@ public sealed class Creature
         Velocity = Vector2.Lerp(Velocity, dir * speed * speedMul, MathF.Min(1f, 4f * dt));
     }
 
+    // ---------------------------------------------------------------- belt natives
+
+    /// <summary>Moonlet: a boulder-parasite that treats anything massive as a primary. Far
+    /// from prey it drifts weightlessly through the caves; close in, it falls into a tight
+    /// orbit around the DWARF and circles like a captured moon — then drops out of orbit
+    /// and slingshots itself straight at them, re-entering orbit after the pass. Shooting
+    /// the rock is the only way off the gravity leash.</summary>
+    private void TickMoonlet(float dt, Vector2 toPlayer, float dist, float speedMul)
+    {
+        _cd -= dt;
+        if (_swing > 0f)
+        {
+            // Mid-slingshot: pure ballistics, no steering — dodge it and it sails past.
+            _swing -= dt;
+            return;
+        }
+        if (dist < 300f && dist > 0.01f)
+        {
+            if (_cd <= 0f && dist < 190f)
+            {
+                Velocity = toPlayer / dist * 270f * speedMul;
+                _cd = 3.4f;
+                _swing = 0.55f;
+                return;
+            }
+            // Servo onto the orbit slot circling the dwarf.
+            _heading += 2.1f * _orbitSign * dt;
+            var anchor = Position + toPlayer;
+            var slot = anchor + new Vector2(MathF.Cos(_heading), MathF.Sin(_heading)) * 74f;
+            Velocity = Vector2.Lerp(Velocity, (slot - Position) * 4f,
+                MathHelper.Clamp(dt * 6f, 0f, 1f));
+            var spd = Velocity.Length();
+            var cap = 170f * speedMul;
+            if (spd > cap) Velocity *= cap / spd;
+        }
+        else
+        {
+            // Unmoored: a slow weightless drift, re-aimed every few seconds. It's a rock
+            // that floats — on the half-gravity Hollow, nobody questions it.
+            Wander -= dt;
+            if (Wander <= 0f)
+            {
+                Wander = 2f + (float)Random.Shared.NextDouble() * 2.5f;
+                _heading = (float)Random.Shared.NextDouble() * MathF.Tau;
+            }
+            var drift = new Vector2(MathF.Cos(_heading), MathF.Sin(_heading)) * 18f;
+            Velocity = Vector2.Lerp(Velocity, drift, MathHelper.Clamp(dt * 2f, 0f, 1f));
+        }
+    }
+
+    /// <summary>Glimmermaw: a barely-visible drifting maw dangling a gem-bright lure. It
+    /// patrols the tunnels on the cave-eye brain but never chases — the lure does the
+    /// hunting, glinting like a dropped gem across a dark cave. Anything that comes to
+    /// collect gets the lunge.</summary>
+    private void TickGlimmermaw(float dt, Planet planet, Vector2 toPlayer, float dist, float speedMul)
+    {
+        if (_swing > 0f) _swing -= dt;
+        _cd -= dt;
+        if (_cd <= 0f && dist < 105f && dist > 0.01f)
+        {
+            Velocity = toPlayer / dist * 310f * speedMul;
+            _cd = 2.8f;
+            _swing = 0.5f;
+            return;
+        }
+        if (_swing > 0f) return;   // mid-lunge: commit
+        // aggro 0: it drifts its patrol loop and lets the lure bring dinner to it.
+        TickCaveEye(dt, planet, toPlayer, dist, speedMul, aggro: 0f);
+    }
+
+    /// <summary>The lure's world position — a stalk length above the maw. Shared by the
+    /// sprite, the light pass, and nothing else (it has no hitbox; the maw is the hitbox).</summary>
+    private Vector2 LurePos(Planet planet)
+    {
+        var up = planet.UpAt(Position);
+        var sway = MathF.Sin(_phase + _heading) * 2f;
+        return Position + up * (Radius + 5.5f) + new Vector2(-up.Y, up.X) * sway;
+    }
+
     // ---------------------------------------------------------------- ambushers & artillery
 
     /// <summary>VoidWraith: patrols like a cave eye, but every few seconds it *blinks* — a
