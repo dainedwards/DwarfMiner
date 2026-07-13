@@ -326,7 +326,9 @@ public static class SpawnDirector
         "ocean"   => CreatureKind.TidePuddler,
         "acid"    => CreatureKind.AcidStrider,
         "crystal" => CreatureKind.PrismSnail,
-        "city"    => CreatureKind.Civilian,
+        // City streets: mostly citizens, with a peacekeeper patrol mixed in every few
+        // spawns — enough militia that an invading creature gets met with return fire.
+        "city"    => Random.Shared.Next(3) == 0 ? CreatureKind.Peacekeeper : CreatureKind.Civilian,
         "rift"    => null,
         "debug"   => AllSurfaceFauna[Random.Shared.Next(AllSurfaceFauna.Length)],
         _         => Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper,
