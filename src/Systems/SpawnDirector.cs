@@ -341,7 +341,9 @@ public static class SpawnDirector
         // Citizens prefer their own addresses: when a skyscraper doorway or apartment floor
         // (Planet.CitySpawns) sits in the spawn band, place the civilian there so the towers
         // read inhabited — street/wilderness spawns are the fallback, not the rule.
-        if (kind == CreatureKind.Civilian && run.Planet.CitySpawns.Count > 0)
+        // Peacekeepers post at the same addresses (tower doors are their beat).
+        if (kind is CreatureKind.Civilian or CreatureKind.Peacekeeper
+            && run.Planet.CitySpawns.Count > 0)
         {
             var sites = new List<Vector2>();
             foreach (var (sr, st) in run.Planet.CitySpawns)
