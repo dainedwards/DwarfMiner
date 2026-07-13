@@ -233,12 +233,7 @@ public sealed class Physics
             // flood when at least one cardinal neighbour is non-solid (otherwise definitely supported).
             if (!HasEmptyCardinalNeighbor(x, y)) continue;
             if (_anchorStamp[idx] == _anchorGen) continue;
-            var dbgSw = System.Diagnostics.Stopwatch.StartNew();
-            var anchored = IsRegionAnchored(x, y);
-            DbgFloodMs += dbgSw.Elapsed.TotalMilliseconds;
-            DbgFloods++;
-            DbgFloodVisits += _floodVisitList.Count;
-            if (anchored) continue;
+            if (IsRegionAnchored(x, y)) continue;
 
             CollapseRegion(_floodRegion);
         }
