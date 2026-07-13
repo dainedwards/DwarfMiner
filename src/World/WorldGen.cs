@@ -402,7 +402,68 @@ public static class WorldGen
         if (def.CityLots <= 0)
             CarveLizardCities(planet, def, rng, mountains, blocked);
 
+        // Skin every acid reservoir (surface pools, volcano plumbing, and the scattered crust
+        // seeps) in obsidian so the acid can't chew outward through the crust. Obsidian shrugs
+        // off both acid and lava but is still mineable/blastable, so the pools stay contained
+        // yet remain breachable — and, crucially, hemmed-in acid falls asleep once it settles
+        // instead of corroding forever, which is what melts the whole acid world and tanks the
+        // frame rate.
+        LineAcidReservoirs(planet);
+
         return planet;
+    }
+
+    /// <summary>Obsidian-line the walls of every pocket of air that holds acid. A multi-source
+    /// flood starts at every acid seed and spreads a few tiles through ENCLOSED air only —
+    /// stopping at open atmosphere (a Sky background wall) so it never spills out of a pool's
+    /// open mouth and skins the whole surface — converting each corrodible solid tile it borders
+    /// into acid-proof (and lava-proof) obsidian. Anchored tiles and existing obsidian are left
+    /// alone. The shallow depth budget keeps it hugging the reservoir instead of glassing entire
+    /// cave systems that merely touch an acid seep.</summary>
+    private static void LineAcidReservoirs(Planet planet)
+    {
+        if (planet.AcidSeeds.Count == 0) return;
+        const int maxDepth = 10;                 // air tiles to flood out from any acid seed
+        var visited = new HashSet<long>();
+        long Key(int r, int t) => (long)r * 4_000_000L + (uint)t;
+
+        var frontier = new Queue<(int r, int t, int depth)>();
+        foreach (var (r, t) in planet.AcidSeeds)
+            if (visited.Add(Key(r, t))) frontier.Enqueue((r, t, 0));
+
+        var neighbours = new List<(int x, int y)>(6);
+        while (frontier.Count > 0)
+        {
+            var (r, t, d) = frontier.Dequeue();
+            neighbours.Clear();
+            var n = planet.TilesAt(r);
+            neighbours.Add((r, ((t - 1) % n + n) % n));
+            neighbours.Add((r, (t + 1) % n));
+            neighbours.Add(planet.InnerNeighbour(r, t));
+            var oc = planet.OuterNeighbourCount(r, t);
+            for (var i = 0; i < oc; i++) neighbours.Add(planet.OuterNeighbour(r, t, i));
+
+            foreach (var (nr, nt) in neighbours)
+            {
+                if (nr < 0 || nr >= planet.Rings) continue;
+                var k = planet.Get(nr, nt);
+                if (Tiles.IsSolid(k))
+                {
+                    if (!Tiles.IsAnchored(k) && k != TileKind.Obsidian)
+                    {
+                        planet.Set(nr, nt, TileKind.Obsidian);
+                        planet.SetWall(nr, nt, TileKind.Obsidian);
+                    }
+                    continue;
+                }
+                // Air: keep flooding through enclosed air (a rock wall behind it); an open-sky
+                // background means we've reached the atmosphere, so stop before escaping.
+                if (planet.GetWall(nr, nt) == TileKind.Sky) continue;
+                if (d >= maxDepth) continue;
+                if (!visited.Add(Key(nr, nt))) continue;
+                frontier.Enqueue((nr, nt, d + 1));
+            }
+        }
     }
 
     /// <summary>Volcanoes: basalt cones raised on the surface, each holding an open crater
