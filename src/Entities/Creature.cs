@@ -591,13 +591,13 @@ public sealed class Creature
             }
             // Resting between hops: bleed tangent speed, keep gravity glue.
             var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 300f * dt);
-            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - Grav(planet) * dt, -260f);
             Velocity = right * vT + up * vN;
         }
         else
         {
             // Mid-hop: ballistic, with the shared terminal-velocity cap.
-            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - Grav(planet) * dt, -260f);
             Velocity = right * Vector2.Dot(Velocity, right) + up * vN;
         }
     }
@@ -635,7 +635,7 @@ public sealed class Creature
         else
         {
             var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 100f * dt);
-            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - Grav(planet) * dt, -260f);
             Velocity = right * vT + up * vN;
         }
 
@@ -812,7 +812,7 @@ public sealed class Creature
         else
         {
             var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 100f * dt);
-            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - Grav(planet) * dt, -260f);
             Velocity = right * vT + up * vN;
         }
         Chew(dt, planet, physics, cells, _digDir, 0.15f, 6);
@@ -848,7 +848,7 @@ public sealed class Creature
         else
         {
             var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 100f * dt);
-            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - Grav(planet) * dt, -260f);
             Velocity = right * vT + up * vN;
         }
         // Big claws but an unhurried pace — half the old bite rate, so a mole's burrow
@@ -1045,12 +1045,12 @@ public sealed class Creature
                 return;
             }
             var vT = MoveToward(Vector2.Dot(Velocity, right), 0f, 300f * dt);
-            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - Grav(planet) * dt, -260f);
             Velocity = right * vT + up * vN;
         }
         else
         {
-            var vN = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -260f);
+            var vN = MathF.Max(Vector2.Dot(Velocity, up) - Grav(planet) * dt, -260f);
             Velocity = right * Vector2.Dot(Velocity, right) + up * vN;
         }
     }
