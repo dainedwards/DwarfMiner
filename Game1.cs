@@ -1303,8 +1303,9 @@ public sealed partial class DwarfMinerGame : Game
             _particles.EmitDust(_run.Titan.Position, 30f);
             PlayAt("hatch", _run.Titan.Position, 1f);
         }
-        // Melee shockwave from a Kong slam / Sandworm eruption — quake already fired inside the
-        // Titan; here we knock back and hurt the player if they're inside the radius.
+        // Melee shockwave from a Kong slam/fist-smash / Sandworm eruption — quake already fired
+        // inside the Titan; here we knock back and hurt the player and any creature inside the
+        // radius (a titan's fist doesn't care whether it lands on the dwarf or the militia).
         if (_run.Titan.PendingShockwave is { } sw)
         {
             _run.Titan.PendingShockwave = null;
@@ -1317,6 +1318,15 @@ public sealed partial class DwarfMinerGame : Game
             {
                 _run.Player.TakeDamage(sw.damage * (1f - d / sw.radius));
                 if (d > 0.01f) _run.Player.Velocity += toPlayer / d * 260f;
+            }
+            foreach (var c in _run.Creatures)
+            {
+                var toC = c.Position - sw.pos;
+                var dc = toC.Length();
+                if (dc >= sw.radius + c.Radius) continue;
+                c.Health -= sw.damage * (1f - MathHelper.Clamp(dc / sw.radius, 0f, 1f));
+                c.HitFlash = 0.15f;
+                if (dc > 0.01f) c.Velocity += toC / dc * 260f;
             }
         }
         // Leatherback's EMP: inside the radius the dwarf's tech dies — jetpack and energy
