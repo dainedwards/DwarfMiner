@@ -145,15 +145,18 @@ public sealed class SpaceSim
             // sun where a QA flight can reach it in seconds.
             var rift = def.Id == "rift";
             var debug = def.Id == "debug";
+            // The Hollow rides the outer asteroid belt's centre line, past every ordinary
+            // orbit — reaching it means crossing (and then threading) the dense rock field.
+            var hollow = def.Id == "hollow";
             // Body radius tracks the def's SizeScale so the system view honestly previews
             // how big each world is - the far giants loom, the near dwarfs look like moons.
             Planets.Add(new SpacePlanet(def,
                 // The rift stays >1.5× beyond the outermost ordinary orbit even as the def
                 // chain grows (the city def's arrival pushed the old 9800 inside that margin).
-                orbitRadius: rift ? 14000f : debug ? 950f : 1500f + i * 1050f,
-                bodyRadius: rift ? 210f : 130f * def.SizeScale,
+                orbitRadius: rift ? 14000f : hollow ? BeltOrbitRadius : debug ? 950f : 1500f + i * 1050f,
+                bodyRadius: rift ? 210f : hollow ? 165f : 130f * def.SizeScale,
                 angle: i * 2.23f + 0.6f,
-                angularVel: rift ? 0.004f : debug ? 0.014f : 0.012f / MathF.Sqrt(1f + i * 0.7f)));
+                angularVel: rift ? 0.004f : hollow ? 0.0035f : debug ? 0.014f : 0.012f / MathF.Sqrt(1f + i * 0.7f)));
         }
         PlaceShipAt(0);
     }
