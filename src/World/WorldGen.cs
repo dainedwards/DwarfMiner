@@ -854,15 +854,21 @@ public static class WorldGen
 
             // Chamber chain: the entrance hall sits shallow, each later hall steps deeper
             // and drifts sideways, so the warren reads as a descending gallery network.
-            var count = 4 + rng.Next(3);
+            var count = 5 + rng.Next(3);
             var centres = new List<Vector2>();
             var cAng = ang;
             var cr = surfaceR - (int)((14 + rng.Next(5)) * S);
             for (var i = 0; i < count; i++)
             {
-                cr = Math.Max(cr, minRing);
-                var halfH = (int)(3 * S) + rng.Next((int)(2 * S) + 1);       // 24–40 px tall
-                var halfWpx = 30f + (float)rng.NextDouble() * 30f;           // 60–120 px wide
+                var halfH = (int)(4 * S) + rng.Next((int)(2 * S) + 1);       // 32–48 px tall
+                var halfWpx = 39f + (float)rng.NextDouble() * 39f;           // 78–156 px wide
+                // On lava-rich worlds (the ember homeland floods at 62%!) the dry band
+                // between flood line and surface is thin: squash the hall to fit, and pin
+                // its centre so the interior floor stays dry and the roof stays buried.
+                halfH = Math.Min(halfH, Math.Max((int)(2 * S), (surfaceR - lavaTop) / 2 - (int)(3 * S)));
+                var crLo = lavaTop + halfH + (int)(3 * S);
+                var crHi = surfaceR - halfH - (int)(2 * S);
+                cr = crLo <= crHi ? Math.Clamp(cr, crLo, crHi) : crHi;
                 var vault = i == count - 1;
                 CarveChamber(planet, rng, cr, cAng, halfH, halfWpx, vault);
 
