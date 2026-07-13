@@ -111,7 +111,12 @@ public sealed record PlanetDef(
     // the belt asteroid runs ~20, so its surface radius swings by whole lobes — a potato,
     // not a circle. WorldGen stamps the resulting terrain line into Planet.SurfaceProfile
     // so depth-below-surface (oxygen, exposure) follows the local ground.
-    float Lumpiness = 0f);
+    float Lumpiness = 0f,
+    // Non-null on MOONS: the id of the planet this world orbits. SpaceSim hangs it on a
+    // tight, fast satellite orbit around that parent instead of a solar orbit. Moons come
+    // in two kinds: with an atmosphere (the ocean moon — lands like any planet) and
+    // without (the cratered moon — vac-suit gated like the Hollow, via Airless).
+    string? MoonOf = null);
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.
 /// <see cref="All"/> is the ACTIVE chain: at boot Game1 swaps in a procedurally generated
