@@ -105,12 +105,6 @@ public sealed class Physics
     public HashSet<int> TremblingTiles => _pendingTiles;
     public int CollapsesThisTick { get; private set; }
 
-    // TEMP perf instrumentation — remove after the settle-spike investigation.
-    public static double DbgFloodMs;
-    public static int DbgFloods;
-    public static long DbgFloodVisits;
-    public static int DbgLooseCrumbles;
-
     /// <summary>Tiles newly condemned this Update (they entered the tremble window but haven't
     /// crumbled yet). Game1 reads this to sound the cave-in warning creak with lead time,
     /// before the "collapse" boom that <see cref="CollapsesThisTick"/> drives.</summary>
