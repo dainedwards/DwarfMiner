@@ -317,7 +317,7 @@ public sealed class Titan
         // the flyers never touch down (airborne locomotion + tucked talons), so those get no
         // legs at all. Hip sockets sit HipHalfSpan apart on the pelvis (via HipWorld); Side is
         // the lateral stance sign.
-        Legs = Kind == TitanKind.Sandworm || Flyer
+        Legs = Kind is TitanKind.Sandworm or TitanKind.CosmicOctopus || Flyer
             ? System.Array.Empty<TitanLeg>()
             : new[]
             {
