@@ -1588,6 +1588,100 @@ public static class SimTest
         }
     }
 
+    /// <summary>The aquatics: player swimming (strokes rise, idle sinks gently, fins are
+    /// faster), breath-ceiling tiers, land-swimmer buoyancy, and the two water-only species
+    /// living in a carved test pool without embedding or beaching.</summary>
+    private static void TestAquatics()
+    {
+        const float dt = 1f / 60f;
+        var planet = WorldGen.Generate(88);
+        var cells = new Cells(planet);
+        var physics = new Physics(planet, cells);
+
+        // Carve a test pool below the baseline surface and fill it with water cells.
+        const float pAng = 1.0f;
+        var surfaceR = planet.SurfaceRing;
+        for (var r = surfaceR - 14; r <= surfaceR - 1; r++)
+        {
+            var n = planet.TilesAt(r);
+            var t0 = (int)(pAng / MathHelper.TwoPi * n);
+            for (var dt2 = -16; dt2 <= 16; dt2++)
+            {
+                var tt = ((t0 + dt2) % n + n) % n;
+                planet.Set(r, tt, TileKind.Sky);
+                planet.SetWall(r, tt, TileKind.Stone);
+                if (r <= surfaceR - 3) cells.FillTile(r, tt, Material.Water);
+            }
+        }
+        for (var i = 0; i < 90; i++) cells.Update(dt);
+        var nC = planet.TilesAt(surfaceR - 8);
+        var poolCentre = planet.TileToWorld(surfaceR - 8, (int)(pAng / MathHelper.TwoPi * nC));
+        var upP = planet.UpAt(poolCentre);
+        Check($"aquatic: test pool holds water ({cells.CountWaterNear(poolCentre, 6f)} cells)",
+            cells.CountWaterNear(poolCentre, 6f) >= 8);
+
+        // --- Player swimming ---
+        {
+            var swimmer = new Player(poolCentre) { InWater = true };
+            for (var i = 0; i < 60; i++) swimmer.Update(dt, planet, 0, false, +1);
+            var rose = Vector2.Dot(swimmer.Position - poolCentre, upP);
+            Check($"swim: stroking up rises ({rose:0}px in 1s)", rose > 8f);
+
+            var idler = new Player(poolCentre) { InWater = true };
+            for (var i = 0; i < 60; i++) idler.Update(dt, planet, 0, false);
+            var sank = Vector2.Dot(idler.Position - poolCentre, upP);
+            Check($"swim: idle sink is gentle ({sank:0}px in 1s)", sank < 0f && sank > -35f);
+
+            var finned = new Player(poolCentre) { InWater = true, HasFins = true };
+            var slow = new Player(poolCentre) { InWater = true };
+            for (var i = 0; i < 45; i++)
+            {
+                finned.Update(dt, planet, +1, false);
+                slow.Update(dt, planet, +1, false);
+            }
+            var upF = planet.UpAt(poolCentre);
+            var rF = new Vector2(-upF.Y, upF.X);
+            var dFin = Vector2.Dot(finned.Position - poolCentre, rF);
+            var dSlow = Vector2.Dot(slow.Position - poolCentre, rF);
+            Check($"swim: fins double the stroke ({dSlow:0} -> {dFin:0}px)", dFin > dSlow * 1.5f);
+
+            var lungs = new Player(Vector2.Zero);
+            var ok = lungs.EffectiveMaxBreath == Player.BaseMaxBreath;
+            lungs.LungTier = 1; ok &= lungs.EffectiveMaxBreath == Player.BaseMaxBreath * 2f;
+            lungs.LungTier = 2; ok &= lungs.EffectiveMaxBreath == Player.BaseMaxBreath * 3f;
+            Check("swim: lung tiers scale the breath ceiling x1/x2/x3", ok);
+        }
+
+        // --- Land swimmer buoyancy: a lizardman dropped to the pool floor strokes back up ---
+        {
+            var floorPos = poolCentre - upP * 18f;
+            var reptile = new Creature(floorPos, CreatureKind.Lizardman);
+            var nobody = new Player(poolCentre + upP * 900f);
+            for (var i = 0; i < 60 * 4; i++) reptile.Update(dt, planet, physics, cells, nobody);
+            var rise = Vector2.Dot(reptile.Position - floorPos, planet.UpAt(floorPos));
+            Check($"aquatic: submerged lizardman floats up ({rise:0}px)", rise > 6f);
+        }
+
+        // --- Water-only species stay put and stay legal ---
+        {
+            var whale = new Creature(poolCentre - upP * 6f, CreatureKind.AlienWhale);
+            var nobody = new Player(poolCentre + upP * 900f);
+            for (var i = 0; i < 60 * 8; i++)
+            {
+                whale.Update(dt, planet, physics, cells, nobody);
+                cells.Update(dt);
+            }
+            Check("aquatic: whale not embedded after 8s", !EmbeddedInRock(planet, whale.Position));
+            Check($"aquatic: whale stays in its basin ({cells.CountWaterNear(whale.Position, whale.Radius)} water cells around it)",
+                cells.CountWaterNear(whale.Position, whale.Radius) >= 3);
+
+            var crab = new Creature(poolCentre, CreatureKind.AlienCrab);
+            for (var i = 0; i < 60 * 6; i++) crab.Update(dt, planet, physics, cells, nobody);
+            Check("aquatic: crab settles the lakebed without embedding",
+                !EmbeddedInRock(planet, crab.Position));
+        }
+    }
+
     /// <summary>True if the position sits inside a tile that actually blocks bodies —
     /// creature collision uses Tiles.BlocksPlayer, so passable tiles (glowshrooms in a
     /// fungal grove, ladders) don't count as "embedded in rock".</summary>
