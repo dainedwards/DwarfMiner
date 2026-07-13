@@ -218,6 +218,10 @@ public sealed class Projectile
                 ExplodesOnFuse = true;
                 CreaturePierces = -1;
                 break;
+            case ProjectileKind.CivicBolt:
+                Radius = 1.3f;
+                FriendlyToNeutrals = true;
+                break;
         }
     }
 
