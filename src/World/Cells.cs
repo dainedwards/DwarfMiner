@@ -156,7 +156,7 @@ public sealed class Cells
     {
         if (_queued[i]) return;
         _queued[i] = true;
-        _next.Add(i);
+        Enqueue(i);
     }
 
     private void ClearKinetics(int i)
@@ -187,7 +187,7 @@ public sealed class Cells
         r.ReadBytes(n).CopyTo(_mat, 0);
         r.ReadBytes(n).CopyTo(_srcTile, 0);
         for (var i = 0; i < n; i++)
-            if (_mat[i] != 0) _next.Add(i);
+            if (_mat[i] != 0) Enqueue(i);
     }
 
     public int CellsAt(int cy) => (cy < 0 || cy >= Height) ? 1 : _cellsAt[cy];
@@ -352,7 +352,7 @@ public sealed class Cells
     {
         if (cy < 0 || cy >= Height) return;
         var idx = Idx(cx, cy);
-        if (_mat[idx] != 0) _next.Add(idx);
+        if (_mat[idx] != 0) Enqueue(idx);
     }
 
     private void WakeNeighbors(int cx, int cy)
@@ -398,7 +398,7 @@ public sealed class Cells
         _mat[si] = 0;
         _srcTile[si] = 0;
         ClearKinetics(si);
-        _next.Add(di);
+        Enqueue(di);
         WakeNeighbors(sCx, sCy);
         WakeNeighbors(dCx, dCy);
         return true;
@@ -502,7 +502,7 @@ public sealed class Cells
         _travel[i] += _velR[i] * dt;
         var steps = Math.Min((int)_travel[i], MaxStepsPerTick);
         _travel[i] = MathF.Min(_travel[i] - steps, 1f);
-        if (steps == 0) { _next.Add(i); return; } // still gaining speed — stay awake
+        if (steps == 0) { Enqueue(i); return; } // still gaining speed — stay awake
 
         for (var s = 0; s < steps && cy > 0; s++)
         {
@@ -658,7 +658,7 @@ public sealed class Cells
             _travel[i] += _velR[i] * dt;
             var steps = Math.Min((int)_travel[i], MaxStepsPerTick);
             _travel[i] = MathF.Min(_travel[i] - steps, 1f);
-            if (steps == 0) { _next.Add(i); return; }
+            if (steps == 0) { Enqueue(i); return; }
 
             for (var s = 0; s < steps && cy > 0; s++)
             {
@@ -674,7 +674,7 @@ public sealed class Cells
                 _travel[i] = 0f;
                 break;
             }
-            if (impact == 0f) { _next.Add(Idx(cx, cy)); return; } // still airborne
+            if (impact == 0f) { Enqueue(Idx(cx, cy)); return; } // still airborne
         }
         else
         {
@@ -732,7 +732,7 @@ public sealed class Cells
             dir = -dir;
         }
         _flow[Idx(cx, cy)] = (sbyte)dir;
-        _next.Add(Idx(cx, cy)); // liquids stay awake, as before
+        Enqueue(Idx(cx, cy)); // liquids stay awake, as before
     }
 
     private void TickLava(int cx, int cy, float dt)
@@ -748,7 +748,7 @@ public sealed class Cells
             for (var i = 0; i < oc; i++) TryMelt(OuterCell(cx, cy, i));
         }
 
-        if (_rng.Next(2) == 0) { _next.Add(Idx(cx, cy)); return; }
+        if (_rng.Next(2) == 0) { Enqueue(Idx(cx, cy)); return; }
         TickLiquid(cx, cy, dt);
     }
 
@@ -760,12 +760,12 @@ public sealed class Cells
     {
         var wi = FindNeighbour(cx, cy, Material.Water);
         if (wi < 0) return false;
-        if (_rng.Next(3) != 0) { _next.Add(Idx(cx, cy)); return true; } // stay awake, react soon
+        if (_rng.Next(3) != 0) { Enqueue(Idx(cx, cy)); return true; } // stay awake, react soon
 
         _mat[wi] = (byte)Material.Smoke;
         _srcTile[wi] = 0;
         ClearKinetics(wi);
-        _next.Add(wi);
+        Enqueue(wi);
         var (wcx, wcy) = UnIdx(wi);
         WakeNeighbors(wcx, wcy);
 
@@ -773,7 +773,7 @@ public sealed class Cells
         _mat[i] = (byte)Material.Gravel;
         _srcTile[i] = 0;
         ClearKinetics(i);
-        _next.Add(i);
+        Enqueue(i);
         WakeNeighbors(cx, cy);
         return true;
     }
@@ -840,7 +840,7 @@ public sealed class Cells
             for (var i = 0; i < oc; i++) TryCorrode(OuterCell(cx, cy, i));
         }
 
-        if (_rng.Next(2) == 0) { _next.Add(Idx(cx, cy)); return; }
+        if (_rng.Next(2) == 0) { Enqueue(Idx(cx, cy)); return; }
         TickLiquid(cx, cy, dt);
     }
 
@@ -887,7 +887,7 @@ public sealed class Cells
             var bi = Idx(cx, cy);
             _mat[bi] = (byte)Material.Smoke;
             ClearKinetics(bi);
-            _next.Add(bi);
+            Enqueue(bi);
             WakeNeighbors(cx, cy);
             return;
         }
@@ -913,7 +913,7 @@ public sealed class Cells
             ClearKinetics(i);
             WakeNeighbors(cx, cy);
         }
-        else _next.Add(Idx(cx, cy));
+        else Enqueue(Idx(cx, cy));
     }
 
     /// <summary>Tile kind under the given cell (Sky when off-grid).</summary>
@@ -957,7 +957,7 @@ public sealed class Cells
             ClearKinetics(i);
             WakeNeighbors(cx, cy);
         }
-        else _next.Add(Idx(cx, cy));
+        else Enqueue(Idx(cx, cy));
     }
 
     private void Shuffle(int[] arr)
@@ -1091,7 +1091,7 @@ public sealed class Cells
                 if (Vector2.DistanceSquared(CellToWorld(cx, cy), worldPos) > rSq) continue;
                 _mat[idx] = (byte)Material.Smoke;
                 ClearKinetics(idx);
-                _next.Add(idx);
+                Enqueue(idx);
                 WakeNeighbors(cx, cy);
             }
         }
