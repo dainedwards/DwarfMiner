@@ -344,6 +344,8 @@ public static class SimTest
             run.Sentries.Add(new Sentry(new Vector2(2100, 2100)) { Health = 17f });
 
             RunSave.Write(run);
+            if (Environment.GetEnvironmentVariable("DM_SAVEDEBUG") is { Length: > 0 })
+                Console.WriteLine($"[savetest] after write: exists={RunSave.Exists}");
             var loaded = RunSave.TryRead();
             Check("save: round-trip loads", loaded is not null);
             if (loaded is null) return;
