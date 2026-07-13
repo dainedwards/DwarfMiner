@@ -1243,6 +1243,7 @@ public static class TitanRenderer
         TitanKind.Slattern    => Color.Lerp(new Color(255, 190, 80), new Color(255, 100, 40), anger),
         TitanKind.Pyrodactyl  => Color.Lerp(new Color(255, 170, 70), new Color(255, 90, 30), anger),
         TitanKind.Vitriodactyl => Color.Lerp(new Color(190, 255, 90), new Color(240, 255, 130), anger),
+        TitanKind.CosmicOctopus => Color.Lerp(new Color(200, 160, 255), new Color(255, 255, 255), anger),
         _                     => Color.Lerp(new Color(255, 220, 100), new Color(255, 70, 40), anger),
     };
 
