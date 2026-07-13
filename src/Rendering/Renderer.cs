@@ -649,6 +649,30 @@ public sealed class Renderer
     /// the source exactly once — the pattern flows across tile boundaries and terrain reads
     /// as continuous mass. Procedural kinds have four unrelated patterns; parity would tile
     /// them with an obvious 2-tile period, so they keep the hash pick.</summary>
+    /// <summary>The rock a gem tile appears embedded in: the most common of its solid,
+    /// non-gem cardinal neighbours. A gem surrounded only by other gems (cluster interior)
+    /// or open air falls back to Stone.</summary>
+    private static TileKind HostRockFor(TileKind gem, TileKind outerK, TileKind innerK,
+        TileKind leftK, TileKind rightK)
+    {
+        Span<TileKind> hosts = stackalloc TileKind[4];
+        var n = 0;
+        Span<TileKind> candidates = stackalloc[] { innerK, outerK, leftK, rightK };
+        foreach (var c in candidates)
+            if (c != TileKind.Sky && !Tiles.IsGem(c)) hosts[n++] = c;
+        if (n == 0) return TileKind.Stone;
+        // Majority of ≤4, first-listed wins ties (inner neighbour first — the bed it sits on).
+        var best = hosts[0];
+        var bestCount = 0;
+        for (var i = 0; i < n; i++)
+        {
+            var count = 0;
+            for (var j = 0; j < n; j++) if (hosts[j] == hosts[i]) count++;
+            if (count > bestCount) { bestCount = count; best = hosts[i]; }
+        }
+        return best;
+    }
+
     private static int VariantFor(TileKind k, int r, int t, int hash) =>
         TileAtlas.HasExternal(k) ? (t & 1) | ((r & 1) << 1) : (hash >> 6) & 3;
 
