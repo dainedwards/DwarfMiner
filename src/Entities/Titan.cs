@@ -1175,12 +1175,13 @@ public sealed class Titan
                 if (Tiles.IsAnchored(k) || floor)
                 {
                     // Wrecking bite: city architecture is anchored (it never crumbles), but
-                    // a kaiju leaning on it batters it down over seconds — Mine damage on a
-                    // slow cadence, so a tower resists visibly before a wall finally caves.
+                    // a kaiju leaning on it batters it down FAST — a wall lasts moments, a
+                    // tower a march-through. (Explosions and creature jaws stay feeble
+                    // against alloy; a kaiju is the one thing a city can't shrug off.)
                     if (_wreckTimer <= 0f
                         && k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
                     {
-                        if (planet.Mine(x, y, 5) is { } smashed)
+                        if (planet.Mine(x, y, 16) is { } smashed)
                         {
                             physics.MarkDirty(x, y);
                             cells.SpawnDustInTile(x, y, smashed);
