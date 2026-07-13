@@ -361,27 +361,45 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   headless tooltip screenshots (plain `DM_SURVEY=1` still just opens the map). New SimTest:
   corona contact burns the hull.
 
-- **The Hollow — belt mega-asteroid (DONE 2026-07-13):** a landable asteroid the size of a
-  planet, riding the new **outer asteroid belt** (`SpaceSim.BeltOrbitRadius` 11500, between
-  the last ordinary orbit and the Rift; the live rock field thickens and streams prograde
-  along the annulus near it, and both the space view and the star map draw the dust band).
-  Appended to every campaign chain like the debug rig (`PlanetDefs.HollowWorld`, id
-  `hollow`, biome `belt`). **Airless**: entry is gated on the new foundry line **Vac Suit**
-  (`vacsuit`, 1 Mecha soul + 4 pure iron + 2 sapphire) — without it the rock bounces the
-  ship like the locked Rift, with toast/approach/label/tooltip feedback. **Half gravity**
-  (`PlanetDef.GravityScale` → `Player.Gravity` + `Planet.GravityScale` for every creature),
-  worst air in the game (drain 2.6 → constant meteors), **no lava/water/acid/gas anywhere**,
-  8 dry impact **craters** (`PlanetDef.Craters`), and the **Great Geode**
-  (`WorldGen.CarveGreatGeode`): one vast crystal-lined cavern at 55-70 legacy tiles down,
-  its shell studded with embedded voidstone/diamond/emerald. Richest rare-metal chart in
-  the system: platinum signature (nav core 5), gold AND silver veins, and voidstone outside
-  the Rift. **No core shard** (excluded from WarpShardsNeeded; the hoard is the prize).
-  Three weird belt natives own ~45% of cave spawns: **Moonlet** (floating boulder that
-  falls into orbit around the dwarf, then slingshots itself ballistically), **VacLeech**
-  (pounce lamprey that siphons the AIR TANK on contact, 14/s), **Glimmermaw** (near-
-  invisible drifting maw whose gem-bright lure twinkles exactly like a dropped diamond —
-  lure light rides `Creature.AddLight(planet)`). No herds, no sky life — airless. 13 new
-  SimTest checks (`TestHollow`, runs last because Activate's append is one-way).
+- **The Hollow — belt mega-asteroid (DONE 2026-07-13, deepened same day):** a landable
+  asteroid the size of a planet, riding the new **outer asteroid belt**
+  (`SpaceSim.BeltOrbitRadius` 11500, between the last ordinary orbit and the Rift; the live
+  rock field thickens and streams prograde along the annulus near it, and both the space
+  view and the star map draw the dust band). Appended to every campaign chain like the
+  debug rig (`PlanetDefs.HollowWorld`, id `hollow`, biome `belt`). **Truly airless**: entry
+  gated on the foundry **Vac Suit** (`vacsuit`, 1 Mecha soul + 4 pure iron + 2 sapphire) —
+  without it the rock bounces the ship like the locked Rift; **no atmosphere at all** —
+  no halo in the space view, no dusk band or haze shell in-run (`Planet.Airless` →
+  Renderer: space-black sky with the starfield at full strength FROM THE SURFACE), and no
+  air to breathe: `OxygenRules` airless mode has **no free-breathing grace band** (tank
+  pays from the first tile underground) and the surface only refills at ¼ rate (the suit's
+  starlight recycler) — so def drain scale is a moderate 1.5. **Quarter gravity**
+  (`PlanetDef.GravityScale` 0.25 → `Player.Gravity` + `Planet.GravityScale` for every
+  creature). **No dirt anywhere** (asteroids grow no soil — the shallow band and buried
+  seams are regolith gravel on the belt biome), no lava/water/acid/gas, 8 dry impact
+  **craters** (`PlanetDef.Craters`), and the **Great Geode** (`WorldGen.CarveGreatGeode`):
+  one vast crystal-lined cavern at 55-70 legacy tiles down, shell studded with embedded
+  voidstone/diamond/emerald. Richest rare-metal chart in the system: platinum signature
+  (nav core 5), gold AND silver veins, voidstone outside the Rift. **No core shard**
+  (excluded from WarpShardsNeeded; the hoard is the prize).
+  **The roster is CLOSED — nothing ordinary lives here** (SpawnDirector belt overrides: no
+  generic cave roll, no tunneller fallback, no herds): five vacuum-native belt creatures
+  (Metroid / Dead Space / Half-Life school): **Moonlet** (floating boulder that falls into
+  orbit around the dwarf, then slingshots itself ballistically), **VacLeech** (pounce
+  lamprey that siphons the AIR TANK on contact, 14/s), **Glimmermaw** (near-invisible
+  drifting maw whose gem-bright lure twinkles exactly like a dropped diamond), **StarJelly**
+  (translucent vacuum medusa drifting over the regolith — the belt's "sky" fauna, stings on
+  contact), **VoidBarnacle** (Half-Life-barnacle ambusher: settles onto rock, cements
+  there, and REELS prey in on a shimmering gravity tongue — stationary-ambusher budget).
+  **The titan is the Starspawn** (`TitanKind.CosmicOctopus`): a weightless cosmic octopus —
+  violet star-flecked mantle, eight sine-curled tentacles — whose **egg is buried near the
+  core** (ctor places it at RingMin+34; `Game1.CarveTitanNest` opens its chamber). Hatched,
+  it swims through solid rock (worm-throttled plow, no gravity, radial depth-matching +
+  tangent chase), alternating **void-bolt volleys** (`TitanShotKind.Void`, small wall-pierce
+  budget) with a **gravity well** (`Titan.PendingGravityWell` → Game1 drags the dwarf toward
+  the maw for 2.4s, pull ramping 160→620 px/s² toward the centre). `DM_BOSSCAM` surfaces it
+  hatched beside the dwarf (the buried egg is unreachable for screenshot rigs). 21 SimTest
+  checks (`TestHollow`, runs last because Activate's append is one-way).
 
 **Open design questions:** does death on a planet cost more than the current visit (e.g. the
 rover)? Do souls/upgrades persist across completed runs (prestige reset vs. permanent)?
