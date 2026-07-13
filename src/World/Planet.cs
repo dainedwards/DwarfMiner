@@ -161,10 +161,18 @@ public sealed class Planet
         _wall = new TileKind[_totalTiles];
     }
 
+    /// <summary>Total tile count across all rings — sizes per-tile scratch arrays (Physics
+    /// flood stamps) without callers re-deriving the ring geometry.</summary>
+    public int TileCount => _totalTiles;
+
     public int Index(int x, int y)
     {
+        // Fast path: callers overwhelmingly pass an already-wrapped angle, and this is the
+        // innermost op of tile reads, flood fills and the draw loops — skip the two divisions.
         var n = TilesAt(x);
-        var w = ((y % n) + n) % n;
+        if ((uint)y < (uint)n) return _ringOffsets[x] + y;
+        var w = y % n;
+        if (w < 0) w += n;
         return _ringOffsets[x] + w;
     }
 
