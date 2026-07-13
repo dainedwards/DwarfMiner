@@ -793,14 +793,15 @@ public sealed class Cells
         }
     }
 
-    /// <summary>Flat display colour of one grain, for composition tint blending.</summary>
-    private static Color GrainColor(Material m, TileKind src) => m switch
+    /// <summary>Tile kind a compacted grain votes for. Tagged dust re-forms its source tile
+    /// (grass beds down to plain dirt underground); loose dirt/gravel keep their kind; sand
+    /// and untagged dust read as coarse grit — Gravel is the nearest granular rock.</summary>
+    private static TileKind MajorityKind(Material m, TileKind src) => m switch
     {
-        Material.Sand => new Color(190, 158, 92),
-        Material.Dirt => new Color(115, 75, 42),
-        Material.Gravel => new Color(125, 120, 110),
-        Material.Dust when src != TileKind.Sky => Tiles.BaseColor(src),
-        _ => new Color(190, 158, 92),
+        Material.Dust when src == TileKind.Grass => TileKind.Dirt,
+        Material.Dust when src != TileKind.Sky && src != TileKind.Conglomerate => src,
+        Material.Dirt => TileKind.Dirt,
+        _ => TileKind.Gravel,   // Sand, Gravel, untagged/legacy dust
     };
 
     private void TickLiquid(int cx, int cy, float dt)
