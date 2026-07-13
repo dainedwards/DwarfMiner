@@ -879,8 +879,11 @@ public sealed partial class DwarfMinerGame
             var p = _space.Planets[i];
             var name = p.Def.Name.ToUpperInvariant();
             var warpLocked = p.Def.Id == "rift" && _meta.CoreShards.Count < PlanetDefs.WarpShardsNeeded;
+            var suitLocked = p.Def.Airless && _space.VacSuitLocked;
             if (warpLocked) name += " [WARP LOCKED]";
-            var col = warpLocked ? new Color(255, 110, 90) : Color.White;
+            if (suitLocked) name += " [VAC SUIT REQUIRED]";
+            var col = warpLocked ? new Color(255, 110, 90)
+                : suitLocked ? new Color(255, 190, 90) : Color.White;
             var range = MathF.Max(0f, (p.Pos - _space.ShipPos).Length() - p.BodyRadius);
             var rangeLabel = $"{range / 10f:0} KM";
 
