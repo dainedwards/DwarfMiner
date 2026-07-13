@@ -1188,22 +1188,24 @@ public static class SimTest
             civ.Update(1f / 60f, city, cPhysics, cCells, farPlayer);
         Check("city: civilian not embedded after 8s", !EmbeddedInRock(city, civ.Position));
 
-        // Campaigns: exactly one metropolis, at least one warren world, and never both
-        // civilisations on the same planet — across several seeds.
+        // Campaigns: exactly one metropolis, at least one warren world, warrens only under
+        // acid/lava biomes, and never both civilisations on the same planet — several seeds.
         for (var seed = 1234; seed < 1237; seed++)
         {
             var chain = PlanetGen.Campaign(seed);
             var cities = 0;
             var warrens = 0;
             var mixed = 0;
+            var misplaced = 0;
             foreach (var d in chain)
             {
                 if (d.Biome == "city") cities++;
                 if (d.LizardCities > 0) warrens++;
                 if (d.CityLots > 0 && d.LizardCities > 0) mixed++;
+                if (d.LizardCities > 0 && d.Biome != "acid" && d.Biome != "ember") misplaced++;
             }
-            Check($"campaign {seed}: 1 metropolis, {warrens} warren worlds, never mixed",
-                cities == 1 && warrens >= 1 && mixed == 0);
+            Check($"campaign {seed}: 1 metropolis, {warrens} warren worlds (acid/lava only), never mixed",
+                cities == 1 && warrens >= 1 && mixed == 0 && misplaced == 0);
         }
     }
 
