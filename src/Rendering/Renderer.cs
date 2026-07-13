@@ -568,36 +568,44 @@ public sealed class Renderer
 
                 // (Ore veins and sparkles are baked into the atlas patterns.)
 
-                // Progressive cracks: thin white hairlines spider out from the impact
-                // point in four stages as damage accumulates — the block visibly weakens
-                // rather than darkening. A hash bit mirrors the pattern so neighbours
-                // don't crack identically.
+                // Progressive cracks, Terraria-style: a few tiny white flecks that spread
+                // and multiply as damage accumulates — the block visibly weakens rather
+                // than darkening. Hash bits mirror the pattern both ways and nudge it a
+                // sub-pixel amount so no two tiles fracture along the same lines.
                 var dmg = planet.Damage(r, t);
                 if (dmg > 0)
                 {
-                    var flip = (hash & 0x100) != 0;
-                    var cc = Color.White * MathHelper.Min(0.45f + dmg / 400f, 0.85f);
+                    var flipX = (hash & 0x100) != 0;
+                    var flipY = (hash & 0x200) != 0;
+                    var jx = ((hash >> 10) & 3) * 0.2f - 0.3f;
+                    var jy = ((hash >> 12) & 3) * 0.2f - 0.3f;
+                    var cc = Color.White * MathHelper.Min(0.4f + dmg / 500f, 0.75f);
                     void Crack(float lx, float ly, float lw, float lh)
-                        => DrawDeco(centre, right, up, rotation, chord,
-                            flip ? Planet.TileSize - lx - lw : lx, ly, lw, lh, cc);
+                    {
+                        if (flipX) lx = Planet.TileSize - lx - lw;
+                        if (flipY) ly = Planet.TileSize - ly - lh;
+                        lx = MathHelper.Clamp(lx + jx, 0f, Planet.TileSize - lw);
+                        ly = MathHelper.Clamp(ly + jy, 0f, Planet.TileSize - lh);
+                        DrawDeco(centre, right, up, rotation, chord, lx, ly, lw, lh, cc);
+                    }
                     // Stage 1: a nick at the impact point.
-                    Crack(1.8f, 1.4f, 0.4f, 0.8f);
+                    Crack(1.9f, 1.5f, 0.3f, 0.7f);
                     if (dmg > 70)
                     {   // Stage 2: the crack runs diagonally across the face.
-                        Crack(1.4f, 0.8f, 0.4f, 0.6f);
-                        Crack(2.2f, 2.2f, 0.4f, 0.6f);
+                        Crack(1.5f, 0.9f, 0.3f, 0.5f);
+                        Crack(2.3f, 2.3f, 0.3f, 0.5f);
                     }
                     if (dmg > 140)
                     {   // Stage 3: branches split off toward the sides.
-                        Crack(0.8f, 1.8f, 0.6f, 0.4f);
-                        Crack(2.6f, 1.2f, 0.6f, 0.4f);
+                        Crack(1.0f, 1.9f, 0.5f, 0.3f);
+                        Crack(2.7f, 1.3f, 0.5f, 0.3f);
                     }
                     if (dmg > 200)
                     {   // Stage 4: fractures reach the edges; the tile is about to give.
-                        Crack(0.2f, 0.6f, 0.5f, 0.4f);
-                        Crack(2.8f, 0.2f, 0.4f, 0.5f);
-                        Crack(3.2f, 2.6f, 0.4f, 0.5f);
-                        Crack(0.6f, 3.0f, 0.5f, 0.4f);
+                        Crack(0.3f, 0.7f, 0.3f, 0.5f);
+                        Crack(2.9f, 0.3f, 0.3f, 0.5f);
+                        Crack(3.2f, 2.7f, 0.3f, 0.4f);
+                        Crack(0.7f, 3.1f, 0.4f, 0.3f);
                     }
                 }
             }
