@@ -232,6 +232,10 @@ public sealed class Creature
     /// <summary>Peacekeeper bolt cooldown, ticked and consumed by Game1's militia pass.</summary>
     public float GuardFireCd;
 
+    /// <summary>Called by Game1 the frame a peacekeeper bolt leaves — briefly lights the
+    /// muzzle-flash in the sprite (rides the shared _swing animation timer).</summary>
+    public void GuardMuzzleFlash() => _swing = 0.2f;
+
     public bool IsSkyKind => Kind is CreatureKind.SkyMoth or CreatureKind.SkyStinger
         or CreatureKind.NullMoth;
     public bool IsSurfaceKind => Kind is CreatureKind.Grazer or CreatureKind.Hopper
