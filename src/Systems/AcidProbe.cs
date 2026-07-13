@@ -38,6 +38,28 @@ public static class AcidProbe
             }
             Console.WriteLine($"  (poolSeeds={poolSeeds} volcSeeds={volcSeeds} ACID_ONLY={Environment.GetEnvironmentVariable("ACID_ONLY")})");
 
+            // Dump a vertical column through the shallowest surface acid pool (gen-time, before
+            // pouring) to see whether its floor/walls are actually obsidian.
+            if (seed == 1)
+            {
+                (int r, int t) shallow = (-1, -1);
+                var bestDepth = 999;
+                foreach (var (ax, ay) in planet.AcidSeeds)
+                {
+                    var dd = planet.SurfaceRing - ax;
+                    if (dd >= 1 && dd < bestDepth) { bestDepth = dd; shallow = (ax, ay); }
+                }
+                if (shallow.r >= 0)
+                {
+                    Console.WriteLine($"  column at pool seed r={shallow.r} t={shallow.t} (depth {bestDepth}):");
+                    for (var rr = planet.SurfaceRing + 2; rr >= planet.SurfaceRing - 16; rr--)
+                    {
+                        var tt = (int)((double)shallow.t / planet.TilesAt(shallow.r) * planet.TilesAt(rr));
+                        Console.WriteLine($"    r={rr} depth={planet.SurfaceRing - rr,3} {planet.Get(rr, tt)}");
+                    }
+                }
+            }
+
             var solidStart = CountSolid(planet);
 
             // Pre-settle (the run start does 120 ticks).
