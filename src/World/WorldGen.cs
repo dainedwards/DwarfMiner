@@ -438,9 +438,11 @@ public static class WorldGen
             if (visited.Add(Key(r, t))) frontier.Enqueue((r, t, 0));
 
         var neighbours = new List<(int x, int y)>(6);
+        var lined = 0; var processed = 0;
         while (frontier.Count > 0)
         {
             var (r, t, d) = frontier.Dequeue();
+            processed++;
             neighbours.Clear();
             var n = planet.TilesAt(r);
             neighbours.Add((r, ((t - 1) % n + n) % n));
@@ -459,6 +461,7 @@ public static class WorldGen
                     {
                         planet.Set(nr, nt, TileKind.Obsidian);
                         planet.SetWall(nr, nt, TileKind.Obsidian);
+                        lined++;
                     }
                     continue;
                 }
