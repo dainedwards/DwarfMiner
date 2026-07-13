@@ -227,6 +227,7 @@ public sealed class Physics
                     _planet.Set(x, y, TileKind.Sky);
                     _cells.SpawnDustInTile(x, y, k);
                     CollapsesThisTick++;
+                    DbgLooseCrumbles++;
                     MarkDirty(x, y);
                 }
                 continue;
