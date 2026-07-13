@@ -34,7 +34,8 @@ public static class SimTest
                                      CreatureKind.CaveSlime, CreatureKind.Slimelet, CreatureKind.AcidSpitter,
                                      CreatureKind.BomberBeetle, CreatureKind.SnapperVine, CreatureKind.RockMimic,
                                      CreatureKind.Moonlet, CreatureKind.VacLeech, CreatureKind.Glimmermaw,
-                                     CreatureKind.StarJelly, CreatureKind.VoidBarnacle })
+                                     CreatureKind.StarJelly, CreatureKind.VoidBarnacle,
+                                     CreatureKind.Selenite, CreatureKind.DustDevil })
         {
             for (var i = 0; i < 25; i++)
             {
