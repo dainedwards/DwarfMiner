@@ -17,7 +17,7 @@ namespace DwarfMiner.World;
 /// </summary>
 public static class PlanetGen
 {
-    private enum Biome { Verdant, Frost, Ember, Slag, Ocean, Acid, Crystal }
+    private enum Biome { Verdant, Frost, Ember, Slag, Ocean, Acid, Crystal, City }
 
     public static PlanetDef[] Campaign(int seed)
     {
