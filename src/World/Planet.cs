@@ -158,6 +158,28 @@ public sealed class Planet
         _tiles = new TileKind[_totalTiles];
         _damage = new byte[_totalTiles];
         _wall = new TileKind[_totalTiles];
+        _gem = new TileKind[_totalTiles];
+    }
+
+    /// <summary>The gem embedded in the tile at (x,y), or Sky for none.</summary>
+    public TileKind GemAt(int x, int y) =>
+        InBounds(x, y) ? _gem[Index(x, y)] : TileKind.Sky;
+
+    /// <summary>Seat a gem inside the tile at (x,y) (world gen).</summary>
+    public void SetGem(int x, int y, TileKind gem)
+    {
+        if (InBounds(x, y)) _gem[Index(x, y)] = gem;
+    }
+
+    /// <summary>Remove and return the embedded gem at (x,y), or Sky if none. Shatter paths
+    /// call this to pop the pickup; acid/melt call it and discard (the gem dissolves too).</summary>
+    public TileKind TakeGem(int x, int y)
+    {
+        if (!InBounds(x, y)) return TileKind.Sky;
+        var i = Index(x, y);
+        var g = _gem[i];
+        _gem[i] = TileKind.Sky;
+        return g;
     }
 
     /// <summary>Total tile count across all rings — sizes per-tile scratch arrays (Physics
