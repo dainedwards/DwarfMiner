@@ -1109,9 +1109,11 @@ public sealed partial class DwarfMinerGame
         _toastTimer = 2.5f;
     }
 
-    /// <summary>Ores whose deposits read as RARE FINDS in the survey tooltip.</summary>
+    /// <summary>Ores whose deposits read as RARE FINDS in the survey tooltip. Gold and
+    /// silver belong here now — their veins only exist on worlds whose def charts them, so
+    /// this line is the prospecting map for where to mine them.</summary>
     private static readonly HashSet<string> RareOres = new()
-        { "CRYSTAL", "RUBY", "SAPPHIRE", "EMERALD", "DIAMOND", "VOIDSTONE" };
+        { "CRYSTAL", "RUBY", "SAPPHIRE", "EMERALD", "DIAMOND", "VOIDSTONE", "GOLD", "SILVER" };
 
     /// <summary>The hazard manifest for a world, read off the same PlanetDef knobs that arm
     /// each danger in worldgen and the ambient director.</summary>
