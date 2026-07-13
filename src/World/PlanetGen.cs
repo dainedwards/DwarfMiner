@@ -92,7 +92,8 @@ public static class PlanetGen
                 MathHelper.Lerp(0.7f, 1.8f, difficulty) + ((float)rng.NextDouble() - 0.5f) * 0.12f,
                 0.7f, 1.8f);
             chain[i] = Stamp(rng, biomes[i], i, difficulty, size, titans[i],
-                shipOre[i], shipOreCount[i], NewName(rng, usedNames));
+                shipOre[i], shipOreCount[i], NewName(rng, usedNames),
+                goldVein[i], silverVein[i]);
         }
 
         // The finale is constant: the warp-locked Rift, exactly as hand-tuned.
