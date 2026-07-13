@@ -307,6 +307,27 @@ public sealed partial class DwarfMinerGame : Game
             var (ldr, ldt) = _run.Planet.LizardDens[0];
             surfacePos = _run.Planet.TileToWorld(ldr, ldt);
         }
+        // DM_SWIM=1 drops the dwarf into the first lake found, so tooling can screenshot
+        // swimming, the breath meter, and the aquatic fauna without hiking to water.
+        if (Environment.GetEnvironmentVariable("DM_SWIM") is { Length: > 0 })
+        {
+            for (var a = 0f; a < MathHelper.TwoPi; a += 0.05f)
+            {
+                var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+                var hit = false;
+                for (var d = _run.Planet.Radius + 40; d > 20 && !hit; d--)
+                {
+                    var pos = _run.Planet.Center + dir * (d * Planet.TileSize);
+                    if (_run.Planet.IsSolidAt(pos)) break;
+                    if (_run.Cells.CountWaterNear(pos, 3f) >= 3)
+                    {
+                        surfacePos = pos - dir * 8f;
+                        hit = true;
+                    }
+                }
+                if (hit) break;
+            }
+        }
         _run.Player = new Player(surfacePos)
         {
             // Survival by default; DM_GOD=1 starts runs in god mode for testing, and G
@@ -391,7 +412,8 @@ public sealed partial class DwarfMinerGame : Game
                                 CreatureKind.CaveSlime, CreatureKind.AcidSpitter, CreatureKind.BomberBeetle,
                                 CreatureKind.SnapperVine, CreatureKind.RockMimic,
                                 CreatureKind.Civilian, CreatureKind.Lizardman,
-                                CreatureKind.Peacekeeper, CreatureKind.Saucer };
+                                CreatureKind.Peacekeeper, CreatureKind.Saucer,
+                                CreatureKind.AlienWhale, CreatureKind.AlienCrab };
             for (var i = 0; i < kinds.Length; i++)
                 _run.Creatures.Add(new Creature(
                     _run.Player.Position + fRight * (26f + i * 22f) + fUp * 8f, kinds[i]));

@@ -21,7 +21,8 @@ public sealed class Meteor
     /// <summary>Ground point the meteor is aimed at — Game1 draws a warning reticle here while
     /// it falls so the player can scramble clear.</summary>
     public readonly Vector2 Target;
-    private float _life = 8f;   // safety timeout so a stray meteor never lingers forever
+    private float _life = 16f;  // safety timeout so a stray meteor never lingers forever
+                                // (generous — a slow meteor takes several seconds to arrive)
 
     public Meteor(Vector2 pos, Vector2 vel, Vector2 target)
     {
