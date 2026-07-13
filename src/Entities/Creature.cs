@@ -1745,6 +1745,76 @@ public sealed class Creature
                 r.DrawCircle(Position + up * 0.6f, 0.6f, new Color(190, 140, 255));
                 break;
             }
+            case CreatureKind.Civilian:
+            {
+                // A timid alien citizen: bulbous head over a slim robed body, all-black
+                // eyes, a single antenna. Robes come in a few dyes (hashed off _phase) so a
+                // street crowd doesn't read as clones; arms fly up when it bolts.
+                var dye = (int)(_phase * 10f) % 3;
+                var robe = Tinted(dye == 0 ? new Color(90, 130, 150)
+                    : dye == 1 ? new Color(140, 105, 160) : new Color(160, 130, 80));
+                var skin = Tinted(new Color(180, 195, 175));
+                var moving = MathF.Abs(Vector2.Dot(Velocity, right)) > 4f;
+                var fleeing = MathF.Abs(Vector2.Dot(Velocity, right)) > 45f;
+                for (var i = -1; i <= 1; i += 2)
+                {
+                    var a = moving ? MathF.Sin(t * 11f + _phase + i * 1.6f) * 0.45f : 0f;
+                    r.DrawRect(Position - up * 1.6f + right * (i * 1.0f), new Vector2(0.9f, 3.0f), robe, rot + a);
+                }
+                r.DrawRect(Position + up * 1.4f, new Vector2(3.8f, 4.6f), robe, rot);
+                // Arms: folded at rest, thrown up in panic.
+                var armA = fleeing ? 2.4f : 0.5f;
+                r.DrawRect(Position + up * (fleeing ? 3.2f : 1.8f) + right * 1.9f, new Vector2(0.8f, 2.6f), skin, rot + armA);
+                r.DrawRect(Position + up * (fleeing ? 3.2f : 1.8f) - right * 1.9f, new Vector2(0.8f, 2.6f), skin, rot - armA);
+                var head = Position + up * 4.8f;
+                r.DrawCircle(head, 2.6f, skin);
+                r.DrawCircle(head + right * (facing * 1.1f) + up * 0.3f, 0.9f, Color.Black);
+                r.DrawCircle(head - right * (facing * 0.4f) + up * 0.3f, 0.8f, Color.Black);
+                // Antenna with a soft mood-light tip.
+                r.DrawRect(head + up * 2.6f, new Vector2(0.4f, 2.2f), skin, rot + 0.15f);
+                r.DrawCircle(head + up * 3.8f + right * 0.4f, 0.6f,
+                    fleeing ? new Color(255, 120, 90) : new Color(130, 220, 210));
+                break;
+            }
+            case CreatureKind.Lizardman:
+            {
+                // Evil warren-guard: green scaled biped with a swaying tail, pale belly,
+                // toothy snout, bone crest — and a bone spear that cocks back and whips
+                // forward on the cast. Eyes smoulder red while it hunts.
+                var scale = Tinted(new Color(70, 118, 62));
+                var belly = Tinted(new Color(140, 160, 100));
+                var bone = Tinted(new Color(222, 212, 184));
+                // Tail: two sagging segments trailing the facing.
+                var sway = MathF.Sin(t * 3f + _phase) * 0.25f;
+                r.DrawRect(Position - right * (facing * 3.6f) - up * 0.6f, new Vector2(4.2f, 1.4f), scale, rot + sway * facing);
+                r.DrawRect(Position - right * (facing * 6.2f) - up * 1.4f, new Vector2(3.0f, 1.0f), scale, rot + (sway + 0.35f) * facing);
+                // Digitigrade legs, striding with actual tangent speed.
+                var stride = MathF.Min(MathF.Abs(Vector2.Dot(Velocity, right)) / 40f, 1f);
+                for (var i = -1; i <= 1; i += 2)
+                {
+                    var a = MathF.Sin(t * 12f + _phase + i * 1.6f) * 0.5f * stride;
+                    r.DrawRect(Position - up * 1.4f + right * (i * 1.3f), new Vector2(1.1f, 3.4f), scale, rot + a - 0.15f * i);
+                }
+                r.DrawRect(Position + up * 1.6f, new Vector2(4.2f, 5.0f), scale, rot);
+                r.DrawRect(Position + up * 1.2f + right * (facing * 0.8f), new Vector2(2.0f, 3.4f), belly, rot);
+                // Head: snout forward, bone crest raking back.
+                var head = Position + up * 5.0f + right * (facing * 0.8f);
+                r.DrawCircle(head, 2.0f, scale);
+                r.DrawRect(head + right * (facing * 2.0f) - up * 0.2f, new Vector2(2.6f, 1.3f), scale, rot);
+                r.DrawRect(head + right * (facing * 2.6f) - up * 0.9f, new Vector2(1.4f, 0.6f), bone, rot); // teeth
+                r.DrawRect(head - right * (facing * 1.2f) + up * 1.6f, new Vector2(0.9f, 2.4f), bone, rot - facing * 0.7f);
+                var eye = _aggroT > 0f ? new Color(255, 70, 40) : new Color(230, 200, 70);
+                r.DrawCircle(head + right * (facing * 1.2f) + up * 0.6f, 0.7f, eye);
+                // Bone spear: shouldered on patrol, cocked back and whipped through the
+                // cast while _swing runs.
+                var castA = _swing > 0f ? MathF.Sin(_swing * 18f) * 1.1f : MathF.Sin(t * 1.7f + _phase) * 0.1f;
+                var spearDir = Rotate(right * facing, facing * (0.35f - castA));
+                var grip = Position + right * (facing * 2.6f) + up * 2.4f;
+                var sAng = MathF.Atan2(spearDir.Y, spearDir.X);
+                r.DrawRect(grip + spearDir * 1.5f, new Vector2(8.0f, 0.8f), Tinted(new Color(150, 120, 80)), sAng);
+                r.DrawRect(grip + spearDir * 5.8f, new Vector2(2.2f, 1.2f), bone, sAng);
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
