@@ -57,17 +57,28 @@ public static class PerfTest
         Console.WriteLine($"[perf] meteor storm: {broken} tiles broken");
         RunTicks("meteor aftermath", 600, () => { cells.Update(Dt); physics.Update(Dt); });
 
-        // --- Scenario 2: earthquakes. Three quakes around the planet, then the settle wave.
+        // --- Scenario 2: earthquakes. Six wide quakes around the planet — each re-checks
+        // every solid tile in a 600-px disc, so this is the flood-fill worst case.
         sw.Restart();
-        for (var q = 0; q < 3; q++)
+        for (var q = 0; q < 6; q++)
         {
-            var ang = q * MathHelper.TwoPi / 3f;
+            var ang = q * MathHelper.TwoPi / 6f;
             var epi = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
                 * planet.Radius * Planet.TileSize * 0.55f;
-            physics.Earthquake(epi, 200f, 2);
+            physics.Earthquake(epi, 600f, 3);
         }
-        Console.WriteLine($"[perf] 3x earthquake (sync part): {sw.ElapsedMilliseconds}ms");
+        Console.WriteLine($"[perf] 6x earthquake r600 (sync part): {sw.ElapsedMilliseconds}ms");
         RunTicks("quake aftermath", 600, () => { cells.Update(Dt); physics.Update(Dt); });
+
+        // --- Scenario 3: particle storm. The burst-die-off pattern disasters produce:
+        // tens of thousands of chips spawned across a few frames, all expiring together.
+        var particles = new Rendering.Particles();
+        var surface = planet.TileToWorld(planet.SurfaceRing, 0);
+        for (var i = 0; i < 4000; i++)
+            particles.EmitChips(surface + new Vector2(rng.Next(-200, 200), rng.Next(-200, 200)),
+                TileKind.Stone);
+        Console.WriteLine($"[perf] particle storm: {particles.Count} spawned");
+        RunTicks("particle die-off", 120, () => particles.Update(Dt, planet));
 
         Console.WriteLine($"[perf] total {total.ElapsedMilliseconds}ms");
     }
