@@ -568,45 +568,49 @@ public sealed class Renderer
 
                 // (Ore veins and sparkles are baked into the atlas patterns.)
 
-                // Progressive cracks, Terraria-style: a few tiny white flecks that spread
-                // and multiply as damage accumulates — the block visibly weakens rather
-                // than darkening. Hash bits mirror the pattern both ways and nudge it a
-                // sub-pixel amount so no two tiles fracture along the same lines.
+                // Progressive cracks: one connected, jagged fracture line that lengthens
+                // from the impact point as damage accumulates, with a branch splitting off
+                // past half damage — a pixel staircase like Terraria's crack overlay, not
+                // scattered flecks. Start point, heading and wobble all come off the tile
+                // hash so no two blocks fracture along the same lines.
                 var dmg = planet.Damage(r, t);
                 if (dmg > 0)
                 {
-                    var flipX = (hash & 0x100) != 0;
-                    var flipY = (hash & 0x200) != 0;
-                    var jx = ((hash >> 10) & 3) * 0.2f - 0.3f;
-                    var jy = ((hash >> 12) & 3) * 0.2f - 0.3f;
                     var cc = Color.White * MathHelper.Min(0.4f + dmg / 500f, 0.75f);
-                    void Crack(float lx, float ly, float lw, float lh)
+                    (float x, float y) Walk(int seed, float x, float y, int dirX, int dirY, int steps)
                     {
-                        if (flipX) lx = Planet.TileSize - lx - lw;
-                        if (flipY) ly = Planet.TileSize - ly - lh;
-                        lx = MathHelper.Clamp(lx + jx, 0f, Planet.TileSize - lw);
-                        ly = MathHelper.Clamp(ly + jy, 0f, Planet.TileSize - lh);
-                        DrawDeco(centre, right, up, rotation, chord, lx, ly, lw, lh, cc);
+                        for (var s = 0; s < steps; s++)
+                        {
+                            var bits = seed >> (s & 15);
+                            var len = 0.4f + (bits & 3) * 0.15f;
+                            if (((s + ((bits >> 2) & 1)) & 1) == 0)
+                            {
+                                var nx = x + dirX * len;
+                                if (nx < 0.1f || nx > Planet.TileSize - 0.4f) { dirX = -dirX; nx = x + dirX * len; }
+                                DrawDeco(centre, right, up, rotation, chord,
+                                    MathF.Min(x, nx), y, MathF.Abs(nx - x), 0.3f, cc);
+                                x = nx;
+                            }
+                            else
+                            {
+                                var ny = y + dirY * len;
+                                if (ny < 0.1f || ny > Planet.TileSize - 0.4f) { dirY = -dirY; ny = y + dirY * len; }
+                                DrawDeco(centre, right, up, rotation, chord,
+                                    x, MathF.Min(y, ny), 0.3f, MathF.Abs(ny - y), cc);
+                                y = ny;
+                            }
+                        }
+                        return (x, y);
                     }
-                    // Stage 1: a nick at the impact point.
-                    Crack(1.9f, 1.5f, 0.3f, 0.7f);
-                    if (dmg > 70)
-                    {   // Stage 2: the crack runs diagonally across the face.
-                        Crack(1.5f, 0.9f, 0.3f, 0.5f);
-                        Crack(2.3f, 2.3f, 0.3f, 0.5f);
-                    }
-                    if (dmg > 140)
-                    {   // Stage 3: branches split off toward the sides.
-                        Crack(1.0f, 1.9f, 0.5f, 0.3f);
-                        Crack(2.7f, 1.3f, 0.5f, 0.3f);
-                    }
-                    if (dmg > 200)
-                    {   // Stage 4: fractures reach the edges; the tile is about to give.
-                        Crack(0.3f, 0.7f, 0.3f, 0.5f);
-                        Crack(2.9f, 0.3f, 0.3f, 0.5f);
-                        Crack(3.2f, 2.7f, 0.3f, 0.4f);
-                        Crack(0.7f, 3.1f, 0.4f, 0.3f);
-                    }
+                    var sx = 1.4f + ((hash >> 2) & 3) * 0.3f;
+                    var sy = 1.4f + ((hash >> 4) & 3) * 0.3f;
+                    var dx = ((hash >> 6) & 1) != 0 ? 1 : -1;
+                    var dy = ((hash >> 7) & 1) != 0 ? 1 : -1;
+                    // Main fracture: a nick on the first hit, edge to edge near breaking.
+                    var (ex, ey) = Walk(hash, sx, sy, dx, dy, 2 + dmg / 32);
+                    // A branch forks from the fracture's midpoint, veering off sideways.
+                    if (dmg > 128)
+                        Walk(hash * 31, (sx + ex) * 0.5f, (sy + ey) * 0.5f, -dx, dy, 1 + (dmg - 128) / 32);
                 }
             }
         }
