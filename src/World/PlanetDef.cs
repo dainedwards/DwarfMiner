@@ -192,8 +192,10 @@ public static class PlanetDefs
         "Mega-asteroid in the outer belt - no air, no gravity to speak of, absurdly rich",
         new Color(138, 132, 122), new Color(212, 202, 182),
         TileKind.Gravel,
-        LakeMin: 0, LakeExtra: 0, MountainMin: 7, MountainExtra: 3,
-        MountainHeightScale: 0.55f, LavaFillFrac: 0f, HasWater: false,
+        // Small crags only — the Lumpiness lobes ARE this world's topography, and the two
+        // must share the fixed sky headroom (lump crest + peak may not clear the grid top).
+        LakeMin: 0, LakeExtra: 0, MountainMin: 5, MountainExtra: 3,
+        MountainHeightScale: 0.35f, LavaFillFrac: 0f, HasWater: false,
         OreBias: new[]
         {
             (TileKind.PlatinumOre, 0.035f), (TileKind.GoldOre, 0.13f), (TileKind.SilverOre, 0.13f),
