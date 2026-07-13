@@ -325,7 +325,8 @@ public static class SpawnDirector
                 }
             }
             var beltC = new Creature(pos2, native);
-            ClearSpawnSpace(run, pos2, beltC.Radius);
+            // Barnacles WANT to touch the rock they cement to — no spawn-space carve.
+            if (native != CreatureKind.VoidBarnacle) ClearSpawnSpace(run, pos2, beltC.Radius);
             run.Creatures.Add(beltC);
             return;
         }
