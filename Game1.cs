@@ -338,6 +338,9 @@ public sealed partial class DwarfMinerGame : Game
             // Apply meta-progress: a player who has previously escaped starts with a
             // higher-tier pickaxe so subsequent runs are slightly easier.
             PickaxeTier = Math.Max(1, _meta.StartingPickaxePower),
+            // Low-gravity worlds (the Hollow asteroid): everything falls gently and the
+            // same jump impulse carries more than twice as high.
+            Gravity = 320f * def.GravityScale,
         };
         _run.HasCannon = _meta.StartWithCannon;
         // God mode carries the full armoury — load every weapon onto the belt from frame
