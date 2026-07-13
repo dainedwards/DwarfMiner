@@ -2428,6 +2428,80 @@ public sealed class Creature
                 r.DrawCircle(Position + up * (Radius + 1.8f) - right * 0.8f, 0.6f, Color.Black);
                 break;
             }
+            case CreatureKind.Moonlet:
+            {
+                // A boulder that shouldn't float: cratered grey rock with its own ring of
+                // orbiting dust motes — the tell that this one isn't scenery. The core
+                // smoulders brighter as the slingshot winds up.
+                var rock = Tinted(new Color(112, 106, 100));
+                var pock = Tinted(new Color(86, 80, 76));
+                r.DrawCircle(Position, Radius, rock);
+                r.DrawCircle(Position + new Vector2(MathF.Cos(_phase), MathF.Sin(_phase)) * Radius * 0.45f,
+                    Radius * 0.32f, pock);
+                r.DrawCircle(Position - new Vector2(MathF.Sin(_phase), MathF.Cos(_phase)) * Radius * 0.4f,
+                    Radius * 0.22f, pock);
+                var windup = MathHelper.Clamp(1f - _cd / 1.2f, 0f, 1f);
+                if (windup > 0f || _swing > 0f)
+                    r.DrawCircle(Position, 1.3f + windup,
+                        Color.Lerp(new Color(140, 120, 110), new Color(255, 150, 70), MathF.Max(windup, _swing > 0f ? 1f : 0f)));
+                for (var i = 0; i < 3; i++)
+                {
+                    var a = t * 2.6f * _orbitSign + _phase + i * (MathF.Tau / 3f);
+                    var mote = Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * (Radius + 2.6f);
+                    r.DrawRect(mote, new Vector2(1f, 1f), new Color(180, 172, 160) * 0.8f);
+                }
+                break;
+            }
+            case CreatureKind.VacLeech:
+            {
+                // Pale vacuum lamprey: a bloodless segmented tube ending in a dark sucker
+                // disc that always faces its meal. The swollen tail sac shows the stolen
+                // air — it bulges as it feeds (rides the hit-flash-free body tint).
+                var hide = Tinted(new Color(214, 208, 196));
+                var dark = Tinted(new Color(150, 142, 132));
+                var toP = player.Position - Position;
+                var mDir = toP.LengthSquared() > 1f ? Vector2.Normalize(toP) : right * facing;
+                var wrig = MathF.Sin(t * 11f + _phase) * 0.8f;
+                r.DrawCircle(Position - mDir * 2.6f + up * (wrig * 0.4f), Radius * 0.95f, dark);
+                r.DrawCircle(Position - mDir * 4.6f - up * (wrig * 0.4f), Radius * 0.8f, hide);
+                r.DrawCircle(Position, Radius, hide);
+                // Sucker disc + tooth ring.
+                r.DrawCircle(Position + mDir * (Radius * 0.7f), Radius * 0.7f, Tinted(new Color(70, 58, 62)));
+                for (var i = -1; i <= 1; i++)
+                    r.DrawRect(Position + mDir * (Radius + 0.6f) + new Vector2(-mDir.Y, mDir.X) * (i * 1.1f),
+                        new Vector2(0.6f, 1.2f), Color.White, MathF.Atan2(mDir.Y, mDir.X));
+                break;
+            }
+            case CreatureKind.Glimmermaw:
+            {
+                // The body barely exists — a translucent void-dark smudge — because the
+                // LURE is the creature: a gem-bright glint on a stalk, twinkling exactly
+                // like a dropped diamond. By the time the jaws read, it's usually too late.
+                var body = new Color(18, 16, 26) * 0.75f;
+                r.DrawCircle(Position, Radius, HitFlash > 0 ? new Color(90, 85, 110) : body);
+                var lure = LurePos(planet);
+                r.DrawRect((Position + lure) / 2f, new Vector2(0.6f, Radius + 4f),
+                    new Color(40, 38, 52) * 0.8f, rot);
+                var glint = MathF.Sin(t * 3.1f + _phase) * 0.5f + 0.5f;
+                r.DrawRect(lure, new Vector2(2.2f, 4.2f), Tinted(new Color(180, 220, 230)), t * 1.4f);
+                r.DrawRect(lure, new Vector2(1.1f, 2.2f), Color.White, t * 1.4f);
+                if (((int)(t * 2.5f + _phase) & 3) == 0)
+                    r.DrawRect(lure + new Vector2(1.2f, -1.2f), new Vector2(1f, 1f), Color.White);
+                // Jaws: two pale crescents that only show while lunging (or point-blank).
+                var open = _swing > 0f ? 1f : MathHelper.Clamp(1f - (player.Position - Position).Length() / 60f, 0f, 0.4f);
+                if (open > 0.05f)
+                {
+                    var toP2 = player.Position - Position;
+                    var jDir = toP2.LengthSquared() > 1f ? Vector2.Normalize(toP2) : right * facing;
+                    var jAng = MathF.Atan2(jDir.Y, jDir.X);
+                    var teeth = Tinted(new Color(226, 222, 210));
+                    r.DrawRect(Position + jDir * Radius + Rotate(jDir, 0.7f * open) * 2f,
+                        new Vector2(4.4f, 1.1f), teeth, jAng + 0.7f * open);
+                    r.DrawRect(Position + jDir * Radius + Rotate(jDir, -0.7f * open) * 2f,
+                        new Vector2(4.4f, 1.1f), teeth, jAng - 0.7f * open);
+                }
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
