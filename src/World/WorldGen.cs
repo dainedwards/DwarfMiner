@@ -585,10 +585,10 @@ public static class WorldGen
         var placed = new List<(float ang, float w)>();
 
         // District centres: bearings clear of mountains, basins, volcanoes, the rover
-        // drop, and each other. All the towers get dealt around these. With city coverage
-        // at ~a third of the surface, rows run wide — the mutual spacing keeps adjacent
-        // districts from merging into one unbroken wall.
-        var districtCount = Math.Clamp(2 + def.CityLots / 8, 3, 6);
+        // drop, and each other. Layout is ONE CAPITAL plus one or two satellite towns —
+        // most of the skyline concentrates in a single sprawling metropolis, with the
+        // wide mutual spacing keeping the towns from merging into its edges.
+        var districtCount = def.CityLots >= 24 ? 2 + rng.Next(2) : 2;
         var centres = new List<float>();
         for (var d = 0; d < districtCount; d++)
         {
@@ -602,13 +602,23 @@ public static class WorldGen
                 for (var i = 0; ok && i < avoid.Count; i++)
                     ok = AngDist(cAng, avoid[i].ang) > avoid[i].w + 0.14f;
                 for (var i = 0; ok && i < centres.Count; i++)
-                    ok = AngDist(cAng, centres[i]) > 0.72f;
+                    ok = AngDist(cAng, centres[i]) > 0.95f;
             }
             if (ok) centres.Add(cAng);
         }
         if (centres.Count == 0) return;
+        // The capital takes ~60% of every lot; the towns split the remainder.
         var lotsOf = new int[centres.Count];
-        for (var i = 0; i < def.CityLots; i++) lotsOf[i % centres.Count]++;
+        if (centres.Count == 1)
+        {
+            lotsOf[0] = def.CityLots;
+        }
+        else
+        {
+            lotsOf[0] = (int)(def.CityLots * 0.6f);
+            var rest = def.CityLots - lotsOf[0];
+            for (var i = 0; i < rest; i++) lotsOf[1 + i % (centres.Count - 1)]++;
+        }
 
         for (var d = 0; d < centres.Count; d++)
         {
