@@ -215,6 +215,17 @@ public static class SpawnDirector
         run.Creatures.Add(c);
     }
 
+    /// <summary>True when <paramref name="pos"/> sits within <paramref name="range"/> px of a
+    /// lizard-city chamber heart. Dens number a handful per planet, so a linear scan is free.</summary>
+    private static bool NearLizardDen(Planet planet, Vector2 pos, float range)
+    {
+        var rSq = range * range;
+        foreach (var (dr, dt) in planet.LizardDens)
+            if ((planet.TileToWorld(dr, dt) - pos).LengthSquared() < rSq)
+                return true;
+        return false;
+    }
+
     // Scratch collections for the reachability flood — single-threaded reuse, zero per-tick GC.
     private static readonly List<(int r, int t)> _spotScratch = new();
     private static readonly Queue<(int r, int t)> _bfsQueue = new();
