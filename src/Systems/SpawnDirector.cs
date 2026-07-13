@@ -570,7 +570,13 @@ public static class SpawnDirector
             : run.Def.Biome == "debug" && Random.Shared.Next(3) == 0
                 ? CreatureKind.NullMoth
                 : Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth : CreatureKind.SkyStinger;
+        SpawnSkyAt(run, kind);
+    }
 
+    /// <summary>Place one airborne creature in the altitude band over the player's
+    /// neighbourhood (60-200 px above local terrain, off-screen, out of city districts).</summary>
+    private static void SpawnSkyAt(Session run, CreatureKind kind)
+    {
         var angle = NearbySurfaceAngle(run, 220f, 550f);
         var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
         var ground = FindSurfaceSpawn(run.Planet, angle, run.Planet.Radius);
