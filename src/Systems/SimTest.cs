@@ -2587,12 +2587,20 @@ public static class SimTest
         }
         Check($"hollow: ordinary worlds stay round (verdant swings {rHi - rLo:0} rings)",
             rHi - rLo < 10f);
-        // The local terrain line is what depth reads against: a lobe crest and a lobe
-        // valley on the same world must disagree about where "the surface" is.
-        Check("hollow: SurfaceRadiusAt follows the lumps",
-            MathF.Abs(world.SurfaceRadiusAt(world.Center + new Vector2(2000f, 0f))
-                    - world.SurfaceRadiusAt(world.Center + new Vector2(0f, 2000f))) > 3f
-            || profHi - profLo <= 40f);
+        // The local terrain line is what depth reads against: sampling SurfaceRadiusAt
+        // around the asteroid must reproduce the lobes (crests and valleys disagree about
+        // where "the surface" is — that's what keeps a valley floor from draining air).
+        float sLo = float.MaxValue, sHi = float.MinValue;
+        for (var i = 0; i < 16; i++)
+        {
+            var a = i / 16f * MathHelper.TwoPi;
+            var sr = world.SurfaceRadiusAt(
+                world.Center + new Vector2(MathF.Cos(a), MathF.Sin(a)) * 2000f);
+            sLo = MathF.Min(sLo, sr);
+            sHi = MathF.Max(sHi, sr);
+        }
+        Check($"hollow: SurfaceRadiusAt follows the lumps (spread {sHi - sLo:0} rings)",
+            sHi - sLo > 25f);
 
         // The Great Geode: the same seed without the flag must have far fewer open tiles in
         // the geode's depth band (55-70 legacy tiles down, ±2 for the carve radius).
