@@ -573,12 +573,20 @@ public sealed class Cells
         // Covered the full distance without obstruction — TryMoveTo kept the cell awake.
     }
 
-    /// <summary>Note the owning planet tile of a grain that just came to rest.</summary>
+    /// <summary>Note the owning planet tile of a grain that just came to rest — and the
+    /// tile below it, whose burial pressure this grain's weight may have just tipped past
+    /// the compaction threshold (nothing else would ever re-nominate a tile whose own
+    /// grains went to sleep long ago).</summary>
     private void RecordRest(int cx, int cy)
     {
         var tx = cy / Density;
         var ty = WrapX(cx, _cellsAt[cy]) / Density;
         RecordRestTile(Planet.Index(tx, ty));
+        if (tx > 0)
+        {
+            var (ix, iy) = Planet.InnerNeighbour(tx, ty);
+            RecordRestTile(Planet.Index(ix, iy));
+        }
     }
 
     private void RecordRestTile(int idx)
