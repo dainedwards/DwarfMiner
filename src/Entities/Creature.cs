@@ -360,6 +360,24 @@ public sealed class Creature
             case CreatureKind.Lizardman:  TickLizardman(dt, planet, up, right, toPlayer, dist, speedMul, shots); break;
             case CreatureKind.Peacekeeper: TickPeacekeeper(dt, planet, up, right, speedMul); break;
             case CreatureKind.Saucer:     TickSaucer(dt, planet, up, right, speedMul); break;
+            case CreatureKind.AlienWhale: TickWhale(dt, planet, cells, up, right, speedMul); break;
+            // The crab is a lakebed walker on the grub brain with a short territorial fuse —
+            // it scuttles the bottom rather than swimming, so no special water physics.
+            case CreatureKind.AlienCrab:  TickCrab(dt, planet, up, right, toPlayer, dist, speedMul); break;
+        }
+
+        // Land swimmers: submerged, buoyancy replaces the plummet the tick just applied —
+        // hunters paddle toward their prey's level, the rest stroke gently up toward air.
+        // (The whale runs its own full water model in its tick; the crab sinks on purpose.)
+        if (Swims && Kind != CreatureKind.AlienWhale
+            && cells.CountWaterNear(Position, Radius + 1f) >= 3)
+        {
+            var swimT = Vector2.Dot(Velocity, right);
+            var wantN = Hostile && dist < 260f && dist > 0.01f
+                ? MathHelper.Clamp(Vector2.Dot(toPlayer, up) * 0.5f, -45f, 45f)
+                : 26f;
+            var swimN = MoveToward(Vector2.Dot(Velocity, up), wantN, 300f * dt);
+            Velocity = right * (swimT * MathF.Exp(-1.1f * dt)) + up * swimN;
         }
 
         // Substepped integration: each step moves at most ~60% of the body radius so a fast
