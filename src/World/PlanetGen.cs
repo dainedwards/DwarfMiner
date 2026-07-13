@@ -176,7 +176,9 @@ public static class PlanetGen
                 ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy * 0.95f,
                 Titan: titan, CrystalPockets: rng.Next(2), FungalPockets: rng.Next(2),
                 SizeScale: size,
-                CityLots: 13 + rng.Next(5),
+                // Enough lots that the districts (towers + streets) span roughly a third of
+                // the surface — scaled with planet size so giants get proportional sprawl.
+                CityLots: (int)(32 * size) + rng.Next(5),
                 Biome: "city", Difficulty: difficulty),
 
             Biome.Ocean => new(id, name,
