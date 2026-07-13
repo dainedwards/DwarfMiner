@@ -55,7 +55,8 @@ public static class PerfTest
                     broken++;
                 }
         }
-        Console.WriteLine($"[perf] meteor storm: {broken} tiles broken");
+        Console.WriteLine($"[perf] meteor storm: {broken} tiles broken " +
+                          $"(break loop {sw.Elapsed.TotalMilliseconds:F1}ms)");
 
         // First ticks split by system — in-game the break loop and the first sim tick share
         // one frame, so this is where the hitch actually lives.
