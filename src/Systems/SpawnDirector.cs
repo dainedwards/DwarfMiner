@@ -483,33 +483,10 @@ public static class SpawnDirector
     {
         if (SurfaceFaunaFor(run.Def) is not { } kind) return;
 
-        // Citizens prefer their own addresses: when a skyscraper doorway or apartment floor
-        // (Planet.CitySpawns) sits in the spawn band, place the civilian there so the towers
-        // read inhabited — street/wilderness spawns are the fallback, not the rule.
-        // Peacekeepers post at the same addresses (tower doors are their beat).
-        if (kind is CreatureKind.Civilian or CreatureKind.Peacekeeper
-            && run.Planet.CitySpawns.Count > 0)
-        {
-            var sites = new List<Vector2>();
-            foreach (var (sr, st) in run.Planet.CitySpawns)
-            {
-                var world = run.Planet.TileToWorld(sr, st);
-                var d = (world - run.Player.Position).Length();
-                if (d is > 200f and < 650f) sites.Add(world);
-            }
-            if (sites.Count > 0 && Random.Shared.NextDouble() < 0.7)
-            {
-                var home = sites[Random.Shared.Next(sites.Count)];
-                var cc = new Creature(home, kind);
-                ClearSpawnSpace(run, home, cc.Radius);
-                run.Creatures.Add(cc);
-                return;
-            }
-        }
-
         var angle = NearbySurfaceAngle(run, 220f, 550f);
         var pos = FindSurfaceSpawn(run.Planet, angle, run.Planet.Radius);
         if ((pos - run.Player.Position).Length() < 160f) return; // don't pop in on-screen
+        if (InCityDistrict(run.Planet, pos)) return;             // city life never pops in
         var c = new Creature(pos, kind);
         ClearSpawnSpace(run, pos, c.Radius);
         run.Creatures.Add(c);
