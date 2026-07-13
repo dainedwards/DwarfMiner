@@ -1136,6 +1136,8 @@ public sealed partial class DwarfMinerGame
     private static List<string> HazardsOf(PlanetDef def)
     {
         var list = new List<string>();
+        if (def.Airless) list.Add("NO ATMOSPHERE - VAC SUIT ONLY");
+        if (def.GravityScale < 0.8f) list.Add("LOW GRAVITY");
         if (def.LavaFillFrac >= 0.5f) list.Add("MAGMA SURGES");
         if (def.Volcanoes > 0) list.Add(def.VolcanoAcid ? "ACID VOLCANOES" : "VOLCANOES");
         if (def.SeedsGas) list.Add("TOXIC GAS");
