@@ -883,8 +883,9 @@ public static class SimTest
             buried.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
     }
 
-    /// <summary>Compaction: buried, undisturbed grains press into a Conglomerate tile whose
-    /// stored cells spill back out when it shatters — dust value round-trips exactly.</summary>
+    /// <summary>Compaction: buried, undisturbed grains press into a solid tile of whatever
+    /// kind the majority of them came from — stone dust re-forms stone, sand beds into
+    /// gravel — while crests stay loose. (Composition-backed Conglomerate is legacy-only.)</summary>
     private static void TestCompaction()
     {
         var planet = WorldGen.Generate(11);
