@@ -65,6 +65,9 @@ public enum CreatureKind : byte
     Lizardman,    // warren guard — evil lizardman warrior: patrols, hurls bone spears, lunges
     Peacekeeper,  // city militia — armed alien: neutral to the dwarf, guns down hostile invaders
     Saucer,       // city air patrol — disc-craft cruising over the towers, guns down invaders
+    // Aquatic-only fauna (spawned into the lakes; see SpawnDirector's water spawner):
+    AlienWhale,   // gentle glowing leviathan cruising the deep basins — never leaves the water
+    AlienCrab,    // armoured lakebed scuttler — territorial, pinches anything that wades close
 }
 
 public sealed class Creature
