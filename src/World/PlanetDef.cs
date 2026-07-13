@@ -199,7 +199,7 @@ public static class PlanetDefs
             MountainHeightScale: 0.7f, LavaFillFrac: 0.35f, HasWater: false,
             OreBias: new[] { (TileKind.PlatinumOre, 0.030f), (TileKind.GoldOre, 0.125f), (TileKind.IronOre, 0.025f) },
             QuakeScale: 0.45f, CaveSpawnCap: 20,
-            ShipOre: "platinum", ShipOreCount: 5, OxygenDrainScale: 1.7f, SeedsAcid: true, Titan: TitanKind.Mecha,
+            ShipOre: "platinum", ShipOreCount: 5, OxygenDrainScale: 1.7f, AcidPools: 3, Titan: TitanKind.Mecha,
             CrystalPockets: 3, Biome: "slag", Difficulty: 0.6f),
 
         // The alien metropolis: flat, mild ground under a downtown of clustered alloy
