@@ -1195,6 +1195,65 @@ public static class WorldGen
     /// worth a detour. <b>Fungal groves</b> — shallow caves walled in moss with glowshrooms
     /// sprouting from the floor, natural light wells on the living worlds. Counts come from
     /// the planet def.</summary>
+    /// <summary>The Hollow's namesake: one vast cavern buried at mid-depth — a geode the
+    /// size of a town square, its shell lined with crystal and studded with embedded gem
+    /// overlays (voidstone, diamond, emerald). A scaled-up cousin of SeedBiomePockets'
+    /// crystal caverns; glowshrooms sprout from the floor shell so breaking in reads as
+    /// stepping into a lit cathedral rather than another dark pocket.</summary>
+    private static void CarveGreatGeode(Planet planet, Random rng)
+    {
+        var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+        // 55-70 legacy tiles down: below the mid-crust ore band, above the deepest gem band,
+        // and comfortably clear of the core on the 1.5× asteroid.
+        var depth = (int)((55 + rng.Next(16)) * S);
+        var cr = planet.SurfaceRing - depth;
+        var radius = (int)((13 + rng.Next(5)) * S);
+        var n = planet.TilesAt(cr);
+        var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+        var centre = planet.TileToWorld(cr, ct);
+
+        var lineR = (radius + 2) * Planet.TileSize;
+        for (var dr = -radius - 2; dr <= radius + 2; dr++)
+        {
+            var r = cr + dr;
+            if (r < 2 || r >= planet.Rings) continue;
+            var rn = planet.TilesAt(r);
+            var rt0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * rn);
+            var span = radius + 3;
+            for (var dt = -span; dt <= span; dt++)
+            {
+                var t = ((rt0 + dt) % rn + rn) % rn;
+                var pos = planet.TileToWorld(r, t);
+                var dist = (pos - centre).Length();
+                if (dist > lineR) continue;
+                var k = planet.Get(r, t);
+                if (Tiles.IsAnchored(k)) continue;
+                if (dist <= radius * Planet.TileSize)
+                {
+                    planet.Set(r, t, TileKind.Sky);
+                }
+                else if (dist <= (radius + 1) * Planet.TileSize)
+                {
+                    // Inner shell: crystal facing, glowshrooms sprouting from the floor side.
+                    planet.Set(r, t, dr < 0 && rng.Next(4) == 0
+                        ? TileKind.Glowshroom : TileKind.Crystal);
+                }
+                else if (k != TileKind.Sky)
+                {
+                    // Outer shell: the host rock stays, studded with embedded rare gems —
+                    // the geode's treasure crust, paid out one whole pickup per gem.
+                    if (rng.Next(4) == 0)
+                        planet.SetGem(r, t, rng.Next(5) switch
+                        {
+                            0 => TileKind.Voidstone,
+                            1 or 2 => TileKind.Diamond,
+                            _ => TileKind.Emerald,
+                        });
+                }
+            }
+        }
+    }
+
     private static void SeedBiomePockets(Planet planet, PlanetDef def, Random rng)
     {
         void Carve(int count, bool crystal)
