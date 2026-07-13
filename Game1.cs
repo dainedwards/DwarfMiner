@@ -2875,15 +2875,35 @@ public sealed partial class DwarfMinerGame : Game
                 Color.Lerp(col, Color.White, 0.18f), crot);
         }
 
-        // Gem pickups — a slowly spinning long diamond (elongated lozenge + bright core)
-        // with a periodic white glint so a dropped gem catches the eye across a dark cave.
+        // Gem pickups — sit upright along the local surface normal (no spin), with a periodic
+        // white glint so a dropped gem catches the eye across a dark cave. Crystals read as a
+        // hexagonal prism (long body with tapered caps); gems as a teardrop (round belly
+        // narrowing to a point above).
         foreach (var g in _run.Pickups)
         {
-            var spin = g.Age * 1.4f;
-            _renderer.DrawRect(g.Position, new Vector2(2.6f, 5.2f), Tiles.BaseColor(g.Kind), spin);
-            _renderer.DrawRect(g.Position, new Vector2(1.3f, 2.8f), Tiles.OreSpeckle(g.Kind), spin);
+            var gup = _run.Planet.UpAt(g.Position);
+            var grot = MathF.Atan2(gup.X, -gup.Y);
+            var body = Tiles.BaseColor(g.Kind);
+            var core = Tiles.OreSpeckle(g.Kind);
+            if (g.Kind == TileKind.Crystal)
+            {
+                // Hexagonal prism: rectangular column plus narrower caps past each end.
+                _renderer.DrawRect(g.Position, new Vector2(3.0f, 4.2f), body, grot);
+                _renderer.DrawRect(g.Position + gup * 2.6f, new Vector2(1.6f, 1.4f), body, grot);
+                _renderer.DrawRect(g.Position - gup * 2.6f, new Vector2(1.6f, 1.4f), body, grot);
+                _renderer.DrawRect(g.Position, new Vector2(1.4f, 2.6f), core, grot);
+            }
+            else
+            {
+                // Teardrop: round belly with a taper narrowing to a point above it.
+                _renderer.DrawCircle(g.Position, 2.0f, body);
+                _renderer.DrawRect(g.Position + gup * 1.8f, new Vector2(2.2f, 1.6f), body, grot);
+                _renderer.DrawRect(g.Position + gup * 3.0f, new Vector2(1.0f, 1.4f), body, grot);
+                _renderer.DrawCircle(g.Position, 1.0f, core);
+            }
             if (((int)(g.Age * 2.5f) & 3) == 0)
-                _renderer.DrawRect(g.Position + new Vector2(1.2f, -1.2f), new Vector2(1f, 1f), Color.White);
+                _renderer.DrawRect(g.Position + gup * 1.2f + new Vector2(-gup.Y, gup.X) * 1.2f,
+                    new Vector2(1f, 1f), Color.White);
         }
 
         // Creatures — each kind draws its own procedural sprite, including the burn/freeze
