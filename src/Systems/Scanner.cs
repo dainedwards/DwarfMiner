@@ -50,7 +50,9 @@ public static class Scanner
             for (var dt = -span; dt <= span; dt++)
             {
                 var t = ((t0 + dt) % n + n) % n;
-                if (planet.Get(r, t) != kind) continue;
+                // Gems ride host tiles as overlays now, so a gem hunt checks the overlay
+                // layer; ordinary ores are still the tile itself.
+                if (planet.Get(r, t) != kind && planet.GemAt(r, t) != kind) continue;
                 var pos = planet.TileToWorld(r, t);
                 var d2 = (pos - from).LengthSquared();
                 if (d2 >= bestD2) continue;
