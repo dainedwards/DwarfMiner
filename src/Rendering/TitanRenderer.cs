@@ -36,6 +36,7 @@ public static class TitanRenderer
             case TitanKind.Slattern:    DrawSlattern(r, t, planet, playerPos, f, time); break;
             case TitanKind.Pyrodactyl:
             case TitanKind.Vitriodactyl: DrawPterodactyl(r, t, planet, playerPos, f, time); break;
+            case TitanKind.CosmicOctopus: DrawStarspawn(r, t, planet, playerPos, f, time); break;
         }
     }
 
