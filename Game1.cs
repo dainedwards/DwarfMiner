@@ -1430,6 +1430,37 @@ public sealed partial class DwarfMinerGame : Game
                 _toastTimer = 2.5f;
             }
         }
+        // The Starspawn's gravity well: arm the pull window, then drag the dwarf toward the
+        // maw every frame it runs — inside the radius the floor stops being safety, and the
+        // only counter is thrust (jetpack / sprinting away) or breaking line of pull with
+        // distance. Mirrors the pending hand-off pattern above.
+        if (_run.Titan.PendingGravityWell is { } well)
+        {
+            _run.Titan.PendingGravityWell = null;
+            _gravityWell = well.pos;
+            _gravityWellTimer = well.seconds;
+            _gravityWellRadius = well.radius;
+            PlayAt("shoot_beam", well.pos, 1f, pitch: -0.6f);
+            if ((_run.Player.Position - well.pos).Length() < well.radius)
+            {
+                _toast = "GRAVITY WELL - IT IS PULLING YOU IN";
+                _toastTimer = 2f;
+            }
+        }
+        if (_gravityWellTimer > 0f)
+        {
+            _gravityWellTimer -= dt;
+            var toWell = _gravityWell - _run.Player.Position;
+            var wd = toWell.Length();
+            if (wd < _gravityWellRadius && wd > 1f)
+            {
+                // Stronger the closer you are — escape at the rim is possible, at the maw it isn't.
+                var pull = MathHelper.Lerp(620f, 160f, wd / _gravityWellRadius);
+                _run.Player.Velocity += toWell / wd * pull * dt;
+                if (Random.Shared.NextDouble() < dt * 20f)
+                    _particles.EmitDust(_run.Player.Position - toWell / wd * 8f, 2f);
+            }
+        }
         // Slaying the titan no longer ends the visit — the rocket is the only way off-world.
         // The kill banks a titan soul (foundry currency aboard the mothership) exactly once,
         // on the frame health crosses zero; resumed saves of an already-dead titan can't
