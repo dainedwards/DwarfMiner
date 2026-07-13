@@ -1152,15 +1152,21 @@ public sealed class Cells
             var halfAng = MathF.Min(MathF.PI, viewRadius / MathF.Max(ringRadius, 1f));
             var cx0 = (int)(camAng / MathHelper.TwoPi * n);
             var range = Math.Min(n / 2, (int)(halfAng / MathHelper.TwoPi * n) + 2);
+            var angStep = MathHelper.TwoPi / n;
             for (var d = -range; d <= range; d += stride)
             {
                 var cx = cx0 + d;
                 var idx = Idx(cx, cy);
                 var m = (Material)_mat[idx];
                 if (m == Material.Empty) continue;
-                var centre = CellToWorld(cx, cy);
-                var up = Planet.UpAt(centre);
-                var rotation = MathF.Atan2(up.X, -up.Y);
+                // Analytic polar transform — one cos+sin per drawn cell instead of
+                // CellToWorld's wrap+trig plus UpAt's normalize plus an Atan2: the cell
+                // angle is already fixed by the loop index (cos/sin ignore the wrap), and
+                // a radial quad's rotation is just that angle + 90°.
+                var cellAng = (cx + 0.5f) * angStep;
+                var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
+                var centre = Planet.Center + up * ringRadius;
+                var rotation = cellAng + MathHelper.PiOver2;
                 // Sub-cell offset: _travel is progress toward the next inward row, so falling
                 // cells glide smoothly between rows instead of ticking a whole cell at a time.
                 var frac = MathF.Min(_travel[idx], 1f);
