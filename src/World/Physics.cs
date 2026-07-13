@@ -155,7 +155,7 @@ public sealed class Physics
         if (_dirty.Count == 0) return;
         foreach (var i in _dirty) _processQueue.Enqueue(i);
         _dirty.Clear();
-        _anchoredCache.Clear();
+        _anchorGen++;
 
         while (_processQueue.Count > 0)
         {
