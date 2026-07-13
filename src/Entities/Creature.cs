@@ -1517,7 +1517,7 @@ public sealed class Creature
         var vT = Vector2.Dot(Velocity, right);
         var vN = Vector2.Dot(Velocity, up);
         vT = MoveToward(vT, moveAxis * MoveSpeed * speedMul, 400f * dt);
-        vN = MathF.Max(vN - 320f * dt, -260f); // terminal velocity — keeps substeps bounded
+        vN = MathF.Max(vN - Grav(planet) * dt, -260f); // terminal velocity — keeps substeps bounded
         if (MathF.Abs(moveAxis) > 0.1f && IsGrounded(planet, up)
             && planet.IsSolidAt(Position + right * (MathF.Sign(moveAxis) * (Radius + 3f))))
         {
