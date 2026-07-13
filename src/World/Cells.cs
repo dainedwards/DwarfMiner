@@ -443,7 +443,7 @@ public sealed class Cells
         _srcTile[si] = 0;
         ClearKinetics(si);
         Enqueue(di);
-        WakeNeighbors(sCx, sCy);
+        if (wakeSource) WakeNeighbors(sCx, sCy);
         // Vacating always wakes (neighbours may now move into the hole), but *arriving* only
         // matters when the arriver can trigger a reaction in a sleeping neighbour: water must
         // wake hemmed lava it lands on (quench is lava-side — the sleep clause documents
