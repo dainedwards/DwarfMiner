@@ -100,16 +100,15 @@ public static class PlanetGen
         }
 
         // Warren guarantee: every campaign hides lizardmen SOMEWHERE. If none of the
-        // per-world rolls landed one, bury a warren under a random non-city mid-to-late
-        // world (never the metropolis — one civilisation per planet).
+        // per-world rolls landed one, bury a warren under the first acid or lava world —
+        // the acid guarantee above means one always exists.
         var anyWarren = false;
         foreach (var d in chain[..7]) anyWarren |= d is { LizardCities: > 0 };
         if (!anyWarren)
         {
-            for (var tries = 0; tries < 16; tries++)
+            for (var slot = 0; slot < 7; slot++)
             {
-                var slot = 2 + rng.Next(5);
-                if (chain[slot].CityLots > 0) continue;
+                if (chain[slot].Biome is not ("acid" or "ember")) continue;
                 chain[slot] = chain[slot] with { LizardCities = 1 };
                 break;
             }
