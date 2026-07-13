@@ -1090,21 +1090,26 @@ public sealed class Creature
         {
             var toThreat = threat - Position;
             var tDist = Vector2.Dot(toThreat, right);
-            // Close to firing range, but hold a standoff band — militia don't melee.
+            // Close to firing range, but hold a standoff band — militia don't melee. A
+            // tall wall in the way turns the advance into a hold (they're ranged; posting
+            // at the wall beats hopping against it).
             var moveAxis = 0f;
             if (MathF.Abs(tDist) > 130f) moveAxis = MathF.Sign(tDist);
             else if (MathF.Abs(tDist) < 45f) moveAxis = -MathF.Sign(tDist) * 0.7f;
-            GroundMove(dt, planet, up, right, moveAxis, speedMul);
+            GroundMove(dt, planet, up, right,
+                NavAxis(planet, up, right, moveAxis, avoidCliffs: false), speedMul);
             return;
         }
-        // Quiet street: walk the beat (grazer amble, no flee — this one doesn't spook).
+        // Quiet street: walk the beat (grazer amble, no flee — this one doesn't spook),
+        // turning at building hulls and roof edges like any sensible pedestrian.
         Wander -= dt;
         if (Wander <= 0)
         {
             Wander = 2f + (float)Random.Shared.NextDouble() * 3f;
             _amble = Random.Shared.Next(3) - 1;
         }
-        GroundMove(dt, planet, up, right, _amble * 0.5f, speedMul);
+        GroundMove(dt, planet, up, right,
+            NavAxis(planet, up, right, _amble * 0.5f, avoidCliffs: true), speedMul);
     }
 
     /// <summary>Saucer: the city's air patrol. On quiet watch it cruises an altitude band
