@@ -1120,6 +1120,9 @@ public sealed class Creature
                 NavAxis(planet, up, right, moveAxis, avoidCliffs: false), speedMul);
             return;
         }
+        // No invader to fight, but a disaster overhead: post is abandoned for shelter like
+        // everyone else (a live GuardTarget above already took priority — duty outranks cover).
+        if (TakeCover && TickTakeCover(dt, planet, up, right, speedMul)) return;
         // Quiet street: walk the beat (grazer amble, no flee — this one doesn't spook),
         // turning at building hulls and roof edges like any sensible pedestrian.
         Wander -= dt;
