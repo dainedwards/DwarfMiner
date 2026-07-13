@@ -119,15 +119,27 @@ public sealed class Renderer
         var caveBg = new Color(7, 9, 15);
         var duskBg = new Color(34, 48, 82);
         var spaceBg = new Color(9, 11, 20);
-        var backdrop = elev switch
-        {
-            < 0.60f => caveBg,
-            < 0.70f => Color.Lerp(caveBg, duskBg, (elev - 0.60f) / 0.10f),
-            < 0.80f => duskBg,
-            < 0.95f => Color.Lerp(duskBg, spaceBg, (elev - 0.80f) / 0.15f),
-            _ => spaceBg,
-        };
-        var starAlpha = MathHelper.Clamp((elev - 0.82f) / 0.14f, 0f, 1f);
+        // Airless worlds (the Hollow) have no dusk band at all: step out of the caves and
+        // the sky is space, with the starfield burning at full strength from the surface —
+        // standing on the ground already IS standing in space.
+        var backdrop = planet.Airless
+            ? elev switch
+            {
+                < 0.60f => caveBg,
+                < 0.70f => Color.Lerp(caveBg, spaceBg, (elev - 0.60f) / 0.10f),
+                _ => spaceBg,
+            }
+            : elev switch
+            {
+                < 0.60f => caveBg,
+                < 0.70f => Color.Lerp(caveBg, duskBg, (elev - 0.60f) / 0.10f),
+                < 0.80f => duskBg,
+                < 0.95f => Color.Lerp(duskBg, spaceBg, (elev - 0.80f) / 0.15f),
+                _ => spaceBg,
+            };
+        var starAlpha = planet.Airless
+            ? MathHelper.Clamp((elev - 0.62f) / 0.08f, 0f, 1f)
+            : MathHelper.Clamp((elev - 0.82f) / 0.14f, 0f, 1f);
 
         _gd.Clear(backdrop);
 
