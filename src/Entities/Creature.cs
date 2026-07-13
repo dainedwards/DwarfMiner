@@ -1045,7 +1045,9 @@ public sealed class Creature
         {
             var tDist = Vector2.Dot(toPlayer, right);
             var moveAxis = MathF.Abs(tDist) > 8f ? MathF.Sign(tDist) : 0f;
-            GroundMove(dt, planet, up, right, moveAxis, speedMul);
+            // A tall wall stops the charge (no endless hopping) — the spear arm takes over.
+            GroundMove(dt, planet, up, right,
+                NavAxis(planet, up, right, moveAxis, avoidCliffs: false), speedMul);
 
             // Bone spear: mid-range, sighted, off cooldown. Slight loft so the cast drops
             // onto the target rather than undershooting.
