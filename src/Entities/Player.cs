@@ -855,7 +855,7 @@ public sealed class Player
 public enum MiningTool { Pickaxe, Drill, Hammer, MiningLaser }
 
 /// <summary>
-/// 13-slot equipment belt. Crafted equipment auto-equips into the first empty slot via
+/// 24-slot equipment belt. Crafted equipment auto-equips into the first empty slot via
 /// <see cref="AutoEquip"/>. Slots store inventory ids ("pickaxe", "drill", "ladder",
 /// "ammo_diamond", …) — Game1 dispatches the slot's primary action by id when the player
 /// LMBs. Drag-and-drop UI in Game1 calls <see cref="Swap"/> / <see cref="SetSlot"/>.
