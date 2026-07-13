@@ -83,6 +83,10 @@ public sealed class Corpse
         CreatureKind.AcidStrider  => new[] { ("meat", 1), ("chitin", 1) },
         CreatureKind.PrismSnail   => new[] { ("meat", 1), ("crystal", 1) },
         CreatureKind.NullMoth     => new[] { ("hide", 1) },
+        // A citizen leaves nothing worth taking — that kill was on you.
+        CreatureKind.Civilian     => System.Array.Empty<(string, int)>(),
+        // Warren guards carry their kit: scaled hide, and the odd looted nugget.
+        CreatureKind.Lizardman    => new[] { ("hide", 1), ("gold", 1) },
         _                         => new[] { ("meat", 1) },
     };
 
