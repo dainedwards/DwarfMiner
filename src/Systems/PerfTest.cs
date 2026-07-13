@@ -55,6 +55,19 @@ public static class PerfTest
                 }
         }
         Console.WriteLine($"[perf] meteor storm: {broken} tiles broken");
+
+        // First ticks split by system — in-game the break loop and the first sim tick share
+        // one frame, so this is where the hitch actually lives.
+        for (var i = 0; i < 6; i++)
+        {
+            sw.Restart();
+            cells.Update(Dt);
+            var cellsMs = sw.Elapsed.TotalMilliseconds;
+            sw.Restart();
+            physics.Update(Dt);
+            var physMs = sw.Elapsed.TotalMilliseconds;
+            Console.WriteLine($"[perf]   tick {i}: cells {cellsMs:F2}ms, physics {physMs:F2}ms");
+        }
         RunTicks("meteor aftermath", 600, () => { cells.Update(Dt); physics.Update(Dt); });
 
         // --- Scenario 2: earthquakes. Six wide quakes around the planet — each re-checks
