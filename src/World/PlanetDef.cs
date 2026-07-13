@@ -91,7 +91,19 @@ public sealed record PlanetDef(
     // Where this world sits on the campaign ramp, 0 (gentlest) .. 1 (hardest). PlanetGen
     // stamps it from the slot index; the Classic chain hand-sets it. Drives the shared
     // disaster clock's spacing (AmbientDirector: ~7 min at 0 down to ~2 min at 1).
-    float Difficulty = 0f);
+    float Difficulty = 0f,
+    // ── Outer-belt asteroid knobs (the Hollow) ─────────────────────────────────
+    // GravityScale multiplies surface gravity for the dwarf AND every creature (0.45 on
+    // the mega-asteroid: huge floaty jumps, slow falls). Airless worlds have no atmosphere
+    // at all — the mothership cannot make entry until the Vac Suit foundry upgrade is
+    // installed (SpaceSim bounces the ship off, same as the locked Rift's storm wall).
+    // Craters pock the surface with that many dry impact bowls (no rim, no fill — the
+    // meteor-blasted look). GreatGeode buries one vast crystal-lined hollow at mid-depth
+    // (WorldGen.CarveGreatGeode): the marquee cavern, studded with gem overlays.
+    float GravityScale = 1f,
+    bool Airless = false,
+    int Craters = 0,
+    bool GreatGeode = false);
 
 /// <summary>The overworld chain, in unlock order. Escaping planet i unlocks planet i+1.
 /// <see cref="All"/> is the ACTIVE chain: at boot Game1 swaps in a procedurally generated
