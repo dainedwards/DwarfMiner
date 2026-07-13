@@ -75,6 +75,10 @@ public enum CreatureKind : byte
     Glimmermaw,   // near-invisible drifting maw dangling a gem-bright lure — the sparkle in the dark is teeth
     StarJelly,    // vacuum medusa — drifts over the airless surface trailing stinging filaments; touching it burns
     VoidBarnacle, // cave-wall ambusher — anchors to rock and REELS prey in on an invisible gravity tongue
+    // The cratered moon's own natives (biome "moon" — shares Moonlet/VacLeech/StarJelly
+    // with the belt, plus these two):
+    Selenite,     // crystalline moon-spider — glassy shard-legged pouncer that haunts the crater caves
+    DustDevil,    // charged regolith vortex — a spinning column of moon dust that hounds anything grounded
 }
 
 public sealed class Creature
