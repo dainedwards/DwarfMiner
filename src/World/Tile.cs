@@ -69,6 +69,13 @@ public static class Tiles
     /// and W/S directly drive vertical motion.</summary>
     public static bool IsClimbable(TileKind k) => k == TileKind.Ladder;
 
+    /// <summary>Gem-class minerals: shattering one pops a physical <c>Pickup</c> the player
+    /// grabs by touch, instead of crumbling to vacuumable dust like ordinary tiles — and the
+    /// renderer draws them as a bright gem embedded in whatever rock they sit in.</summary>
+    public static bool IsGem(TileKind k) =>
+        k is TileKind.Ruby or TileKind.Sapphire or TileKind.Diamond
+          or TileKind.Emerald or TileKind.Crystal or TileKind.Voidstone;
+
     public static bool IsOre(TileKind k) =>
         k is TileKind.CoalOre or TileKind.IronOre or TileKind.GoldOre or TileKind.Crystal
           or TileKind.SilverOre or TileKind.PlatinumOre
