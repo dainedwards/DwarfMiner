@@ -300,6 +300,12 @@ public static class PlanetGen
         return def;
     }
 
+    /// <summary>True for titans that walk the surface on legs — the kinds that can stomp
+    /// through a skyline. The legless Sandworm slithers under it and the two dactyl flyers
+    /// never land, so the city-slot swap in <see cref="Campaign"/> trades those away.</summary>
+    private static bool Walks(TitanKind kind) => kind is not
+        (TitanKind.Sandworm or TitanKind.Pyrodactyl or TitanKind.Vitriodactyl);
+
     /// <summary>Syllable-mash planet names, unique within a campaign. Sticks to A-Z so the
     /// pixel font renders every glyph.</summary>
     private static string NewName(Random rng, HashSet<string> used)
