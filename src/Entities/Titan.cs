@@ -651,7 +651,7 @@ public sealed class Titan
         }
 
         SpecialCooldown -= dt;
-        UpdateSpecial(dt, planet, physics, playerPos, shots);
+        UpdateSpecial(dt, planet, physics, cells, playerPos, shots);
 
         if (HitFlash > 0) HitFlash -= dt;
     }
