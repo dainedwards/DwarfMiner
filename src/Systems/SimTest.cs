@@ -2540,6 +2540,99 @@ public static class SimTest
             (sim8.ShipPos - parked.Pos).Length() - parked.BodyRadius > parkSurf - 1f);
     }
 
+    /// <summary>The Hollow — the landable mega-asteroid in the outer belt: def shape, the
+    /// airless/low-gravity/geode worldgen promises, the vac-suit space gate, and the belt
+    /// natives' signature behaviours (the moonlet's orbit, the vac leech's air siphon).</summary>
+    private static void TestHollow()
+    {
+        var def = World.PlanetDefs.HollowWorld;
+        Check("hollow: def is airless, low-g, dead rock",
+            def.Airless && def.GravityScale < 0.6f && def.LavaFillFrac == 0f && !def.HasWater);
+        Check("hollow: id resolves without an Activated chain",
+            World.PlanetDefs.ById("hollow").Id == "hollow");
+        Check("hollow: vac suit line exists in the foundry",
+            Array.Exists(Space.Upgrades.All, u => u.Id == "vacsuit"));
+
+        var world = WorldGen.Generate(1234, def);
+        Check("hollow: gravity scale stamped on the planet",
+            MathF.Abs(world.GravityScale - def.GravityScale) < 0.001f);
+        Check("hollow: dead rock seeds no lava/water/acid/gas",
+            world.LavaSeeds.Count == 0 && world.WaterSeeds.Count == 0
+            && world.AcidSeeds.Count == 0 && world.GasSeeds.Count == 0);
+
+        // The Great Geode: the same seed without the flag must have far fewer open tiles in
+        // the geode's depth band (55-70 legacy tiles down, ±2 for the carve radius).
+        int OpenInBand(Planet p)
+        {
+            var lo = Math.Max(0, p.SurfaceRing - (int)(74 * Planet.LegacyTileScale));
+            var hi = p.SurfaceRing - (int)(51 * Planet.LegacyTileScale);
+            var n = 0;
+            for (var r = lo; r < hi; r++)
+                for (var t = 0; t < p.TilesAt(r); t++)
+                    if (p.Get(r, t) == TileKind.Sky) n++;
+            return n;
+        }
+        var flat = WorldGen.Generate(1234, def with { GreatGeode = false });
+        var opened = OpenInBand(world) - OpenInBand(flat);
+        Check($"hollow: the Great Geode opens a vast cavern (+{opened} open tiles in band)",
+            opened > 600);
+
+        // The prospecting promise: voidstone exists outside the Rift here (embedded gems).
+        var voidstone = 0;
+        foreach (var (x, y) in world.AllTiles())
+            if (world.GemAt(x, y) == TileKind.Voidstone) voidstone++;
+        Check($"hollow: voidstone findable outside the Rift ({voidstone} gems)", voidstone > 0);
+
+        // Vac-suit gating in space. Activate appends the Hollow to the chain (this test
+        // runs last — see the Run dispatch — because the append can't be undone).
+        World.PlanetDefs.Activate(World.PlanetDefs.Classic);
+        var sim = new Space.SpaceSim { AsteroidTarget = 0 };
+        var hp = sim.Planets.Find(p => p.Def.Id == "hollow");
+        Check("hollow: rides the outer belt orbit", hp is not null
+            && MathF.Abs(hp.OrbitRadius - Space.SpaceSim.BeltOrbitRadius) < 1f);
+        if (hp is not null)
+        {
+            var outward = Vector2.Normalize(hp.Pos);
+            sim.VacSuitLocked = true;
+            sim.ShipPos = hp.Pos + outward * (hp.BodyRadius + 30f);
+            Check("hollow: no atmosphere contact without the vac suit",
+                sim.AtmosphereContact() is null);
+            sim.ShipPos = hp.Pos + outward * (hp.BodyRadius + 4f);
+            sim.ShipVel = -outward * 120f;
+            sim.Update(1f / 60f, 0f, thrust: false, brake: false);
+            Check("hollow: airless rock bounces the suitless ship",
+                (sim.ShipPos - hp.Pos).Length() - hp.BodyRadius > 14f);
+            sim.VacSuitLocked = false;
+            sim.ShipPos = hp.Pos + Vector2.Normalize(sim.ShipPos - hp.Pos) * (hp.BodyRadius + 30f);
+            Check("hollow: suit aboard = atmosphere contact clears",
+                sim.AtmosphereContact()?.Def.Id == "hollow");
+        }
+
+        // Belt natives. The moonlet falls into orbit around the dwarf in open sky and stays
+        // on the leash; the vac leech siphons the air tank on contact.
+        var cells = new Cells(world);
+        var physics = new Physics(world, cells);
+        var surface = SpawnDirector.FindSurfaceSpawn(world, -MathF.PI / 2f, world.Radius);
+        var skyUp = world.UpAt(surface);
+        var dwarf = new Player(surface + skyUp * 140f);
+        var moonlet = new Creature(dwarf.Position + skyUp * 60f, CreatureKind.Moonlet);
+        for (var i = 0; i < 60 * 5; i++)
+            moonlet.Update(1f / 60f, world, physics, cells, dwarf);
+        var leash = (moonlet.Position - dwarf.Position).Length();
+        Check($"hollow: moonlet holds orbit around the dwarf ({leash:0} px)",
+            leash > 20f && leash < 260f);
+
+        var victim = new Player(surface) { Oxygen = 100f };
+        var leech = new Creature(surface, CreatureKind.VacLeech);
+        for (var i = 0; i < 60; i++)
+        {
+            leech.Position = victim.Position;   // stay clamped on for the whole second
+            leech.Update(1f / 60f, world, physics, cells, victim);
+        }
+        Check($"hollow: vac leech siphons the air tank ({victim.Oxygen:0.0} left)",
+            victim.Oxygen < 92f);
+    }
+
     private static void Check(string name, bool ok, string detail = "")
     {
         if (!ok) _failed = true;
