@@ -567,15 +567,23 @@ public sealed class Titan
         }
         else if (Flyer)
         {
-            // Winged flight: hold a cruising band above the terrain, bobbing on the wing
-            // beat. A bombing run sinks to strafing height so the rain lands tight; the
-            // gravity applied above is cancelled by the band-holding spring, so the flyer
-            // never touches down (and terrain rising underneath just lifts the band).
-            var surface = SurfacePoint(planet, up);
+            // Winged flight: hold a FIXED cruising height above the base ground line, rising
+            // only enough to crest whatever solid terrain (a mountain, a spire) actually juts
+            // up under the flight path, then easing back down to the band once it's past. The
+            // reference is the terrain profile (SurfaceRadiusAt — the baseline+lumps line, which
+            // excludes mountains), anchored to the planet rather than a downward ray-march off
+            // the body: a body-relative probe loses the ground once the flyer drifts high and
+            // then reads "surface right below me", which fed a runaway climb ever upward. The
+            // gravity applied above is cancelled by the band-holding spring, so the flyer never
+            // touches down. A bombing run sinks to strafing height so the rain lands tight.
+            var curR = (Position - planet.Center).Length();
+            var baseR = planet.SurfaceRadiusAt(Position) * Planet.TileSize;
             var bob = MathF.Sin(Pulse * 0.9f) * 24f;
-            var cruise = (Bombing ? 130f : 200f) + bob;
-            var targetH = Vector2.Dot(surface + up * cruise - Position, up);
-            vNormal = MathHelper.Clamp(targetH * 2.6f, -230f, 230f);
+            var cruise = Bombing ? 130f : 200f;                       // fixed height over base ground
+            var clearance = Bombing ? 70f : 90f;                      // minimum gap when cresting a peak
+            var peakR = FlyerTerrainCeiling(planet, right);           // top of any mountain under/ahead
+            var targetR = MathF.Max(baseR + cruise, peakR + clearance) + bob;
+            vNormal = MathHelper.Clamp((targetR - curR) * 2.6f, -230f, 230f);
         }
         else
         {
