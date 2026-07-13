@@ -295,6 +295,7 @@ public static class SimTest
         TestCompaction();
         TestGemDrops();
         TestVolcanoes();
+        TestCities();
         TestSpaceSim();
 
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
