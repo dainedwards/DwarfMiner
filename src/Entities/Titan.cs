@@ -1363,6 +1363,34 @@ public sealed class Titan
         return Position - up * 40f;
     }
 
+    /// <summary>Radius (world px from the planet centre) of the tallest solid terrain jutting up
+    /// under the flyer and just ahead of its travel — a mountain, spire, or building it must clear.
+    /// Each sample column marches DOWN from a ceiling well above any peak to the first solid tile,
+    /// so a peak reads as a high radius; the look-ahead column lets the boss start climbing before
+    /// it reaches the wall. Anchored to the terrain profile (not the body), so a high-drifting
+    /// flyer still reads true ground. Returns the base surface radius when nothing rises above it.</summary>
+    private float FlyerTerrainCeiling(Planet planet, Vector2 right)
+    {
+        var baseR = planet.SurfaceRadiusAt(Position) * Planet.TileSize;
+        var ceiling = baseR + 820f;   // above the tallest generated massif
+        var best = baseR;
+        // Body column plus two ahead of travel, so the climb anticipates an approaching ridge.
+        for (var s = 0; s <= 2; s++)
+        {
+            var col = Position + right * (Facing * s * 96f);
+            var dir = Vector2.Normalize(col - planet.Center);
+            for (var d = ceiling; d >= baseR; d -= 8f)
+            {
+                if (planet.IsSolidAt(planet.Center + dir * d))
+                {
+                    if (d > best) best = d;
+                    break;
+                }
+            }
+        }
+        return best;
+    }
+
     private static bool ProbeSolid(Planet planet, Vector2 worldPoint)
     {
         var (x, y) = planet.WorldToTile(worldPoint);
