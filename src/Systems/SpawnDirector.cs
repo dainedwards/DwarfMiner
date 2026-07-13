@@ -32,10 +32,10 @@ public static class SpawnDirector
         if (run.FaunaTimer <= 0)
         {
             run.FaunaTimer = 6f + (float)Random.Shared.NextDouble() * 4f;
-            var surfaceCap = run.Def.Biome == "city" ? 14 : 7;
-            var skyCap = run.Def.Biome == "city" ? 8 : 6;
-            if (CountKindsNear(run, 700f, surface: true) < surfaceCap) TrySpawnSurfaceAnimal(run);
-            if (CountKindsNear(run, 700f, sky: true) < skyCap) TrySpawnSkyAnimal(run);
+            // Plain wildlife caps — city populations are pre-seeded residents, not topped
+            // up here, and standing downtown the resident crowd saturates these anyway.
+            if (CountKindsNear(run, 700f, surface: true) < 7) TrySpawnSurfaceAnimal(run);
+            if (CountKindsNear(run, 700f, sky: true) < 6) TrySpawnSkyAnimal(run);
             // Lakes get their own small population of aquatic-only life.
             if (run.Def.HasWater && CountKindsNear(run, 700f, water: true) < 4)
                 TrySpawnAquatic(run);
