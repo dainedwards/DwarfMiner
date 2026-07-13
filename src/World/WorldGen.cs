@@ -584,9 +584,11 @@ public static class WorldGen
         var surfRadiusPx = (Planet.RingMin + surfaceR) * Planet.TileSize;
         var placed = new List<(float ang, float w)>();
 
-        // District centres: 2-4 bearings clear of mountains, basins, volcanoes, the rover
-        // drop, and each other. All the towers get dealt around these.
-        var districtCount = Math.Clamp(1 + def.CityLots / 5, 2, 4);
+        // District centres: bearings clear of mountains, basins, volcanoes, the rover
+        // drop, and each other. All the towers get dealt around these. With city coverage
+        // at ~a third of the surface, rows run wide — the mutual spacing keeps adjacent
+        // districts from merging into one unbroken wall.
+        var districtCount = Math.Clamp(2 + def.CityLots / 8, 3, 6);
         var centres = new List<float>();
         for (var d = 0; d < districtCount; d++)
         {
@@ -596,11 +598,11 @@ public static class WorldGen
             {
                 cAng = (float)(rng.NextDouble() * MathHelper.TwoPi);
                 ok = !NearMountain(mountains, cAng, 0.16f)
-                     && AngDist(cAng, MathF.PI * 1.5f) > 0.28f;
+                     && AngDist(cAng, MathF.PI * 1.5f) > 0.3f;
                 for (var i = 0; ok && i < avoid.Count; i++)
                     ok = AngDist(cAng, avoid[i].ang) > avoid[i].w + 0.14f;
                 for (var i = 0; ok && i < centres.Count; i++)
-                    ok = AngDist(cAng, centres[i]) > 0.55f;
+                    ok = AngDist(cAng, centres[i]) > 0.72f;
             }
             if (ok) centres.Add(cAng);
         }
