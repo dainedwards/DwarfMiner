@@ -308,6 +308,19 @@ public sealed class Player
             vNormal = MoveToward(vNormal, verticalAxis * climbSpeed, 480f * dt);
         }
 
+        // Swimming: submerged (and off ladders), the movement model flips — gravity gives
+        // way to a gentle idle sink, W/S (or holding jump) stroke straight up and down, and
+        // the walk axis becomes a swim stroke: slower than legs on land unless fins are
+        // fitted, which make water the fast lane.
+        if (InWater && !onLadder)
+        {
+            var strokeN = verticalAxis != 0 ? verticalAxis * SwimSpeed
+                : jumpHeld ? SwimSpeed * 0.9f
+                : -20f;
+            vNormal = MoveToward(vNormal, strokeN, 500f * dt);
+            vTangent = MoveToward(vTangent, moveAxis * SwimSpeed, 500f * dt);
+        }
+
         if (EmpTimer > 0f) EmpTimer -= dt;
 
         // Jetpack: holding jump while airborne thrusts toward a steady rise until the charge
