@@ -964,6 +964,8 @@ public sealed class Titan
         var up = _planet.UpAt(Position);
         var right = new Vector2(-up.Y, up.X);
         if (Flyer) return Position + up * 8f + right * (Facing * 84f);   // beak tip
+        if (Kind == TitanKind.CosmicOctopus)
+            return Position - up * 26f + right * (Facing * 30f);         // under-mantle beak
         return Kind == TitanKind.Mecha
             ? Position + up * 90f + right * (Facing * 78f)
             : Position + up * 106f + right * (Facing * 92f);
