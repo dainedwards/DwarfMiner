@@ -259,23 +259,23 @@ public sealed class SpaceSim
             }
         }
 
-        // Planets are open sky now — flying into one is how you enter its atmosphere. The
-        // exception is the shard-locked Rift, whose storm wall shoves the ship back out.
-        if (RiftLocked)
+        // Planets are open sky now — flying into one is how you enter its atmosphere. Two
+        // exceptions stay solid: the shard-locked Rift, whose storm wall shoves the ship
+        // back out, and airless rock (the Hollow) until the Vac Suit is installed — no
+        // atmosphere means no entry, just hull against regolith.
+        foreach (var p in Planets)
         {
-            foreach (var p in Planets)
+            var sealedOff = (p.Def.Id == "rift" && RiftLocked) || (p.Def.Airless && VacSuitLocked);
+            if (!sealedOff) continue;
+            var d = ShipPos - p.Pos;
+            var dist = d.Length();
+            var min = p.BodyRadius + 16f;
+            if (dist < min && dist > 0.5f)
             {
-                if (p.Def.Id != "rift") continue;
-                var d = ShipPos - p.Pos;
-                var dist = d.Length();
-                var min = p.BodyRadius + 16f;
-                if (dist < min && dist > 0.5f)
-                {
-                    var outward = d / dist;
-                    ShipPos = p.Pos + outward * min;
-                    var radial = Vector2.Dot(ShipVel, outward);
-                    if (radial < 0f) ShipVel -= outward * (radial * 1.4f);
-                }
+                var outward = d / dist;
+                ShipPos = p.Pos + outward * min;
+                var radial = Vector2.Dot(ShipVel, outward);
+                if (radial < 0f) ShipVel -= outward * (radial * 1.4f);
             }
         }
     }
