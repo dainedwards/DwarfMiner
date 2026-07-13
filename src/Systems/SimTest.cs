@@ -1049,22 +1049,24 @@ public static class SimTest
             acidVent && acidWorld.LavaSeeds.Count == 0 && acidWorld.AcidSeeds.Count > 0);
     }
 
-    /// <summary>City world + lizard warrens: towers rise with civilian addresses recorded,
-    /// warrens carve brick halls above the lava line with dens recorded, and both survive
-    /// generation without stranding their spawn sites inside rock.</summary>
+    /// <summary>City worlds and lizard warrens, and the wall between them: towers rise in
+    /// clustered districts with civilian addresses recorded and NO warren underneath; warren
+    /// worlds (slag here) carve brick halls above the lava line with dens recorded; and
+    /// campaigns always roll exactly one metropolis plus at least one warren world, never
+    /// both civilisations on the same def.</summary>
     private static void TestCities()
     {
         var city = WorldGen.Generate(11, PlanetDefs.ById("city"));
-        int alloy = 0, glass = 0, brick = 0;
+        int alloy = 0, glass = 0, cityBrick = 0;
         foreach (var (x, y) in city.AllTiles())
         {
             var k = city.Get(x, y);
             if (k == TileKind.AlienAlloy) alloy++;
             else if (k == TileKind.CityGlass) glass++;
-            else if (k == TileKind.LizardBrick) brick++;
+            else if (k == TileKind.LizardBrick) cityBrick++;
         }
-        Check($"city: skyscrapers stand (alloy {alloy}, glass {glass})", alloy > 400 && glass > 40);
-        Check($"city: civilian addresses recorded ({city.CitySpawns.Count})", city.CitySpawns.Count >= 5);
+        Check($"city: skyscrapers stand (alloy {alloy}, glass {glass})", alloy > 800 && glass > 80);
+        Check($"city: civilian addresses recorded ({city.CitySpawns.Count})", city.CitySpawns.Count >= 8);
         var openHomes = 0;
         foreach (var (r, t) in city.CitySpawns)
             if (!Tiles.BlocksPlayer(city.Get(r, t))) openHomes++;
@@ -1075,60 +1077,104 @@ public static class SimTest
             if (x > city.SurfaceRing + 20 && city.Get(x, y) == TileKind.AlienAlloy)
             { towersAboveSurface = true; break; }
         Check("city: towers rise well above the surface", towersAboveSurface);
+        Check($"city: NO lizard warren under the metropolis (brick {cityBrick}, dens {city.LizardDens.Count})",
+            cityBrick == 0 && city.LizardDens.Count == 0);
 
-        Check($"warren: lizard city carved (brick {brick})", brick > 200);
-        Check($"warren: dens recorded ({city.LizardDens.Count})", city.LizardDens.Count >= 4);
-        var openDens = 0;
-        var lavaTop = (int)(city.Radius * PlanetDefs.ById("city").LavaFillFrac) - Planet.RingMin;
-        var allAboveLava = true;
-        foreach (var (r, t) in city.LizardDens)
+        // Clustering: gather distinct tower bearings from the spawn addresses; most towers
+        // must have a district neighbour within ~0.14 rad (a lone spire has none).
         {
-            if (!Tiles.BlocksPlayer(city.Get(r, t))) openDens++;
+            var bearings = new List<float>();
+            foreach (var (r, t) in city.CitySpawns)
+            {
+                var rel = city.TileToWorld(r, t) - city.Center;
+                var a = MathF.Atan2(rel.Y, rel.X);
+                var known = false;
+                foreach (var b in bearings)
+                    if (MathF.Abs(MathHelper.WrapAngle(a - b)) < 0.02f) { known = true; break; }
+                if (!known) bearings.Add(a);
+            }
+            var clustered = 0;
+            foreach (var a in bearings)
+            {
+                foreach (var b in bearings)
+                {
+                    if (a == b) continue;
+                    if (MathF.Abs(MathHelper.WrapAngle(a - b)) < 0.14f) { clustered++; break; }
+                }
+            }
+            Check($"city: towers stand in districts ({clustered}/{bearings.Count} have a close neighbour)",
+                bearings.Count >= 8 && clustered >= bearings.Count * 7 / 10);
+        }
+
+        // Warren world: slag carries the buried lizard city now (one civilisation each).
+        var slagDef = PlanetDefs.ById("slag");
+        var warren = WorldGen.Generate(12, slagDef);
+        var brick = 0;
+        foreach (var (x, y) in warren.AllTiles())
+            if (warren.Get(x, y) == TileKind.LizardBrick) brick++;
+        Check($"warren: lizard city carved on the warren world (brick {brick})", brick > 200);
+        Check($"warren: dens recorded ({warren.LizardDens.Count})", warren.LizardDens.Count >= 4);
+        Check("warren: no alien towers on the warren world",
+            warren.CitySpawns.Count == 0 && slagDef.CityLots == 0);
+        var openDens = 0;
+        var lavaTop = (int)(warren.Radius * slagDef.LavaFillFrac) - Planet.RingMin;
+        var allAboveLava = true;
+        foreach (var (r, t) in warren.LizardDens)
+        {
+            if (!Tiles.BlocksPlayer(warren.Get(r, t))) openDens++;
             allAboveLava &= r > lavaTop;
         }
-        Check($"warren: den hearts are open hall air ({openDens}/{city.LizardDens.Count})",
-            openDens == city.LizardDens.Count);
+        Check($"warren: den hearts are open hall air ({openDens}/{warren.LizardDens.Count})",
+            openDens == warren.LizardDens.Count);
         Check("warren: every hall sits above the lava flood line", allAboveLava);
         var gold = 0;
-        foreach (var (x, y) in city.AllTiles())
-            if (city.Get(x, y) == TileKind.GoldOre) gold++;
+        foreach (var (x, y) in warren.AllTiles())
+            if (warren.Get(x, y) == TileKind.GoldOre) gold++;
         Check($"warren: vault hoard seeded ({gold} gold tiles)", gold > 0);
 
         // Lizardman guard: drop one in a warren hall with the dwarf beside it; it must fight
         // (spear casts and/or contact pressure) without ending the fight embedded in a wall.
-        var (dr, dt) = city.LizardDens[0];
-        var denPos = city.TileToWorld(dr, dt);
-        var cells = new Cells(city);
-        var physics = new Physics(city, cells);
+        var (dr, dt) = warren.LizardDens[0];
+        var denPos = warren.TileToWorld(dr, dt);
+        var wCells = new Cells(warren);
+        var wPhysics = new Physics(warren, wCells);
         var prey = new Player(denPos + new Vector2(30f, 0f));
         var guard = new Creature(denPos, CreatureKind.Lizardman);
         var shots = new List<TitanProjectile>();
         for (var step = 0; step < 60 * 8; step++)
-            guard.Update(1f / 60f, city, physics, cells, prey, shots);
-        Check("warren: guard is not embedded after 8s of combat", !EmbeddedInRock(city, guard.Position));
+            guard.Update(1f / 60f, warren, wPhysics, wCells, prey, shots);
+        Check("warren: guard is not embedded after 8s of combat", !EmbeddedInRock(warren, guard.Position));
         Check($"warren: guard fought back ({shots.Count} spears, prey hp {prey.Health:0})",
             shots.Count > 0 || prey.Health < 100f);
 
         // Civilian: ambles the city surface without ending up inside a tower wall.
         var home = city.CitySpawns[0];
         var civPos = city.TileToWorld(home.x, home.y);
+        var cCells = new Cells(city);
+        var cPhysics = new Physics(city, cCells);
         var civ = new Creature(civPos, CreatureKind.Civilian);
         var farPlayer = new Player(civPos + new Vector2(500f, 0f));
         for (var step = 0; step < 60 * 8; step++)
-            civ.Update(1f / 60f, city, physics, cells, farPlayer);
+            civ.Update(1f / 60f, city, cPhysics, cCells, farPlayer);
         Check("city: civilian not embedded after 8s", !EmbeddedInRock(city, civ.Position));
 
-        // Generated campaigns always include exactly one metropolis (plus the fixed finale).
-        var chain = PlanetGen.Campaign(1234);
-        var cities = 0;
-        var warrens = 0;
-        foreach (var d in chain)
+        // Campaigns: exactly one metropolis, at least one warren world, and never both
+        // civilisations on the same planet — across several seeds.
+        for (var seed = 1234; seed < 1237; seed++)
         {
-            if (d.Biome == "city") cities++;
-            if (d.LizardCities > 0) warrens++;
+            var chain = PlanetGen.Campaign(seed);
+            var cities = 0;
+            var warrens = 0;
+            var mixed = 0;
+            foreach (var d in chain)
+            {
+                if (d.Biome == "city") cities++;
+                if (d.LizardCities > 0) warrens++;
+                if (d.CityLots > 0 && d.LizardCities > 0) mixed++;
+            }
+            Check($"campaign {seed}: 1 metropolis, {warrens} warren worlds, never mixed",
+                cities == 1 && warrens >= 1 && mixed == 0);
         }
-        Check($"campaign: one metropolis and some warrens roll ({cities} city, {warrens} warrens)",
-            cities == 1 && warrens >= 1);
     }
 
     /// <summary>The city's defences and resistances: architecture shrugs off explosions and
