@@ -218,8 +218,19 @@ public sealed class Creature
                 Radius = 4f; Health = 30f; MoveSpeed = 58f; ContactDamage = 12f;
                 _cd = 0.8f + (float)Random.Shared.NextDouble(); // first spear is never instant
                 break;
+            case CreatureKind.Peacekeeper:
+                Radius = 3.8f; Health = 26f; MoveSpeed = 48f; ContactDamage = 0f; Hostile = false;
+                break;
         }
     }
+
+    /// <summary>Peacekeeper targeting, set each frame by Game1's militia pass: the nearest
+    /// hostile invader (or the rampaging titan) in guard range, or null when the street is
+    /// quiet. The tick moves to engage it; Game1 fires the actual bolts.</summary>
+    public Vector2? GuardTarget;
+
+    /// <summary>Peacekeeper bolt cooldown, ticked and consumed by Game1's militia pass.</summary>
+    public float GuardFireCd;
 
     public bool IsSkyKind => Kind is CreatureKind.SkyMoth or CreatureKind.SkyStinger
         or CreatureKind.NullMoth;
