@@ -2646,10 +2646,11 @@ public static class SimTest
         Check($"hollow: vac leech siphons the air tank ({victim.Oxygen:0.0} left)",
             victim.Oxygen < 92f);
 
-        // The void barnacle: rooted, and reels exposed prey toward its shell.
-        var barnacle = new Creature(surface + skyUp * 100f, CreatureKind.VoidBarnacle);
-        var reeled = new Player(surface + skyUp * 160f);
-        for (var i = 0; i < 30; i++)
+        // The void barnacle: settles onto the rock, cements there, and reels exposed prey
+        // toward its shell (the settle-then-root is why it gets a beat before the pull).
+        var barnacle = new Creature(surface, CreatureKind.VoidBarnacle);
+        var reeled = new Player(surface + skyUp * 70f);
+        for (var i = 0; i < 90; i++)
             barnacle.Update(1f / 60f, world, physics, cells, reeled);
         Check($"hollow: void barnacle reels prey in (pull {Vector2.Dot(reeled.Velocity, -skyUp):0} px/s)",
             Vector2.Dot(reeled.Velocity, -skyUp) > 20f);
