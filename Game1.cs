@@ -1982,7 +1982,7 @@ public sealed partial class DwarfMinerGame : Game
         // warp-drive material (one per world, straight into meta: shards are too important
         // to lose to a death on the climb back out). All five shards let the mothership warp
         // to the Rift.
-        if (_run.Def.Id is not ("rift" or "debug" or "hollow") && !_meta.CoreShards.Contains(_run.Def.Id))
+        if (_run.Def.Id is not ("rift" or "debug" or "hollow" or "moon") && !_meta.CoreShards.Contains(_run.Def.Id))
         {
             _meta.CoreShards.Add(_run.Def.Id);
             _meta.Save();
@@ -1994,6 +1994,7 @@ public sealed partial class DwarfMinerGame : Game
             {
                 "rift" => "THE RIFT'S CORE YIELDS NOTHING - SLAY ITS TITAN AND ESCAPE",
                 "hollow" => "THE HOLLOW HAS NO CORE SHARD - ITS RICHES ARE THE PRIZE",
+                "moon" => "A DEAD MOON HAS NO CORE SHARD - THE SILVER IS THE PRIZE",
                 "debug" => "THE DEBUG CORE YIELDS NOTHING - THIS WORLD IS A TEST RIG",
                 _ => "CORE ALREADY PIERCED - THE SHARD IS ABOARD",
             };
