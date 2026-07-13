@@ -31,7 +31,10 @@ public static class WorldGen
     {
         // Planet size scales with the def (0.7× dwarf worlds up to 1.8× giants). The sky
         // headroom stays fixed, so the baseline surface (planet.SurfaceRing) scales with it.
-        var planet = new Planet(new Vector2(2400, 2400), Planet.RingsFor(def.SizeScale));
+        var planet = new Planet(new Vector2(2400, 2400), Planet.RingsFor(def.SizeScale))
+        {
+            GravityScale = def.GravityScale,
+        };
         var rng = new Random(seed);
 
         // Subtle surface elevation noise — kept very low so the planet reads as a smooth
