@@ -1966,6 +1966,7 @@ public sealed partial class DwarfMinerGame : Game
         new("Slattern    (spike barrage)",() => SpawnDebugTitan(TitanKind.Slattern)),
         new("Pyrodactyl  (lava rain)",    () => SpawnDebugTitan(TitanKind.Pyrodactyl)),
         new("Vitriodactyl (acid rain)",   () => SpawnDebugTitan(TitanKind.Vitriodactyl)),
+        new("Starspawn   (void volley/gravity well)", () => SpawnDebugTitan(TitanKind.CosmicOctopus)),
         new("Rocket — fuelled, launch-ready", () => SpawnDebugShip(fuelled: true)),
         new("Rocket — dry (mine fuel first)", () => SpawnDebugShip(fuelled: false)),
         new("Disaster — solar flare",   () => TriggerDebugDisaster(DisasterKind.Flare)),
