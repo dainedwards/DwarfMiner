@@ -552,6 +552,19 @@ public sealed class Titan
             var targetH = Vector2.Dot(surface + up * weave - Position, up);
             vNormal = MathHelper.Clamp(targetH * 1.5f, -90f, 90f);
         }
+        else if (Kind == TitanKind.CosmicOctopus)
+        {
+            // Weightless abyss-swimmer: no gravity, no suspension, no surface line — it
+            // moves through the asteroid itself (the plow below opens the way, worm-slow).
+            // Aggro: match the prey's depth directly while the tangent chase closes the
+            // angle, so it corkscrews through rock straight at them from any direction.
+            // Calm: sink home to the nest band just off the core and slowly circle it.
+            var myR = (Position - planet.Center).Length();
+            var targetR = IsAggro
+                ? (playerPos - planet.Center).Length()
+                : (Planet.RingMin + 34f) * Planet.TileSize;
+            vNormal = MathHelper.Clamp((targetR - myR) * 1.4f, -75f, 75f);
+        }
         else if (Flyer)
         {
             // Winged flight: hold a cruising band above the terrain, bobbing on the wing
