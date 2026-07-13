@@ -975,6 +975,7 @@ public sealed class Cells
         var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
         var k = Planet.Get(tx, ty);
         if (!IsMeltable(k)) return;
+        Planet.TakeGem(tx, ty);   // an embedded gem melts with its host — no pop
         Planet.Set(tx, ty, TileKind.Sky);
         SpawnInTile(tx, ty, Material.Smoke, Density); // scaled so a melt puff reads the same at any grain size
         if (_rng.Next(3) == 0) SpawnInTile(tx, ty, Material.Lava, Density / 4);
