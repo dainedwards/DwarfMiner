@@ -1341,6 +1341,10 @@ public sealed partial class DwarfMinerGame
             (def.Tagline.ToUpperInvariant(), grey, 1),
             ($"RANGE {MathF.Max(0f, (p.Pos - _space.ShipPos).Length() - p.BodyRadius) / 10f:0} KM", grey, 1),
         };
+        if (def.MoonOf is { } hostId)
+            lines.Add(($"MOON OF {PlanetDefs.ById(hostId).Name.ToUpperInvariant()}"
+                + (def.Airless ? "  -  AIRLESS" : "  -  HOLDS AN ATMOSPHERE"),
+                new Color(200, 205, 220), 1));
 
         // Titan census: pooled worlds roll a fresh kaiju per visit, so no name ahead of time.
         if (def.TitanPool is { Length: > 0 })
