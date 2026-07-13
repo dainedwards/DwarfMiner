@@ -156,7 +156,7 @@ public sealed class Cells
     {
         if (_queued[i]) return;
         _queued[i] = true;
-        Enqueue(i);
+        _next.Add(i);
     }
 
     private void ClearKinetics(int i)
