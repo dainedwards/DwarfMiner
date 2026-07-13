@@ -194,7 +194,21 @@ public static class PlanetDefs
             OreBias: new[] { (TileKind.PlatinumOre, 0.030f), (TileKind.GoldOre, 0.125f), (TileKind.IronOre, 0.025f) },
             QuakeScale: 0.45f, CaveSpawnCap: 20,
             ShipOre: "platinum", ShipOreCount: 5, OxygenDrainScale: 1.7f, SeedsAcid: true, Titan: TitanKind.Mecha,
-            CrystalPockets: 3, Biome: "slag", Difficulty: 0.6f),
+            CrystalPockets: 3, LizardCities: 1, Biome: "slag", Difficulty: 0.6f),
+
+        // The alien metropolis: flat, mild ground under a skyline of alloy towers, their
+        // window bands lit and their streets ambled by harmless civilians. The danger is
+        // what the citizens built OVER — the lizardman warrens still riddle the crust.
+        new("city", "Neonspire", "Alien metropolis, glowing towers, timid citizens",
+            new Color(70, 110, 150), new Color(150, 230, 240),
+            TileKind.Gravel,
+            LakeMin: 1, LakeExtra: 1, MountainMin: 3, MountainExtra: 2,
+            MountainHeightScale: 0.8f, LavaFillFrac: 0.40f, HasWater: true,
+            OreBias: new[] { (TileKind.IronOre, 0.030f), (TileKind.CoalOre, 0.020f), (TileKind.GoldOre, 0.015f) },
+            QuakeScale: 1.0f, CaveSpawnCap: 16,
+            ShipOre: "gold", ShipOreCount: 4, OxygenDrainScale: 1.05f, Titan: TitanKind.Mecha,
+            CrystalPockets: 1, FungalPockets: 1,
+            CityLots: 7, LizardCities: 1, Biome: "city", Difficulty: 0.4f),
 
         new("core", "Coreheart", "The finale, diamond-rich, swarming, lava at the door",
             new Color(120, 70, 160), new Color(220, 150, 255),
