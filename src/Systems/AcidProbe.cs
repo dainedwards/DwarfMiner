@@ -61,6 +61,17 @@ public static class AcidProbe
                 }
             }
 
+            // Gen-time seal check: how many acid seeds still border corrodible rock?
+            var leakySeeds = 0;
+            foreach (var (r, t) in planet.AcidSeeds)
+                foreach (var (nr, nt) in Neighbours(planet, r, t))
+                {
+                    var k = planet.Get(nr, nt);
+                    if (Tiles.IsSolid(k) && !Tiles.IsAnchored(k) && k != TileKind.Obsidian)
+                    { leakySeeds++; break; }
+                }
+            Console.WriteLine($"  gen-time leaky seeds (border corrodible rock): {leakySeeds}");
+
             var solidStart = CountSolid(planet);
 
             // Pre-settle (the run start does 120 ticks).
