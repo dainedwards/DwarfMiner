@@ -1026,11 +1026,17 @@ public sealed class Titan
         if (ang < 0) ang += MathHelper.TwoPi;
         var span = (int)MathF.Ceiling(BodyRadius / Planet.TileSize) + 1;
         // Full power shatters surface rock (dirt/stone/granite) fast; calm roamers only nudge
-        // soft ground loose, so a stroll leaves the landscape standing.
+        // soft ground loose, so a stroll leaves the landscape standing. The Sandworm chews at
+        // a fraction of that AND only on its bite cadence — it bores slowly through the
+        // planet instead of vaporising everything its long body sweeps.
         var plowPow = (IsAggro ? 26 : 12) + (int)(Anger / 16f);
+        var worm = Kind == TitanKind.Sandworm;
+        if (worm) plowPow = Math.Max(4, plowPow / 3);
+        var canMine = !worm || _biteTimer <= 0f;
         var rSq = BodyRadius * BodyRadius;
         var up = planet.UpAt(Position);
-        var keepFloor = Kind != TitanKind.Sandworm;
+        var keepFloor = !worm;
+        var wrecked = false;
 
         for (var dx = -span; dx <= span; dx++)
         {
@@ -1052,6 +1058,19 @@ public sealed class Titan
                 var floor = keepFloor && Vector2.Dot(centre - Position, up) < -BodyRadius * 0.35f;
                 if (Tiles.IsAnchored(k) || floor)
                 {
+                    // Wrecking bite: city architecture is anchored (it never crumbles), but
+                    // a kaiju leaning on it batters it down over seconds — Mine damage on a
+                    // slow cadence, so a tower resists visibly before a wall finally caves.
+                    if (_wreckTimer <= 0f
+                        && k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
+                    {
+                        if (planet.Mine(x, y, 5) is { } smashed)
+                        {
+                            physics.MarkDirty(x, y);
+                            cells.SpawnDustInTile(x, y, smashed);
+                        }
+                        wrecked = true;
+                    }
                     var diff = Position - centre;
                     var dist = diff.Length();
                     if (dist > 0.001f && dist < BodyRadius)
@@ -1064,6 +1083,7 @@ public sealed class Titan
                     continue;
                 }
 
+                if (!canMine) continue;
                 var broken = planet.Mine(x, y, plowPow);
                 if (broken.HasValue)
                 {
@@ -1072,6 +1092,29 @@ public sealed class Titan
                 }
             }
         }
+
+        if (worm && canMine) _biteTimer = 0.18f;
+        if (wrecked) _wreckTimer = 0.3f;
+    }
+
+    /// <summary>Tangent sign (-1/0/+1) pointing the roam at the nearest city tower by
+    /// angular distance; 0 when the body already stands in the district (loiter + wreck).</summary>
+    private int RoamSignTowardCity()
+    {
+        var rel = Position - _planet.Center;
+        var myAng = MathF.Atan2(rel.Y, rel.X);
+        var best = float.MaxValue;
+        var bestDiff = 0f;
+        foreach (var (r, t) in _planet.CitySpawns)
+        {
+            var p = _planet.TileToWorld(r, t) - _planet.Center;
+            var d = MathF.Atan2(p.Y, p.X) - myAng;
+            while (d > MathF.PI) d -= MathF.Tau;
+            while (d < -MathF.PI) d += MathF.Tau;
+            var abs = MathF.Abs(d);
+            if (abs < best) { best = abs; bestDiff = d; }
+        }
+        return best < 0.03f ? 0 : bestDiff >= 0f ? 1 : -1;
     }
 
     /// <summary>Terrain surface directly along the head's radial: march down from well above the
