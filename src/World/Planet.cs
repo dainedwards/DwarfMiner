@@ -251,6 +251,7 @@ public sealed class Planet
         var dmg = _damage[i] + Math.Max(1, power * 32 / hardness);
         if (dmg >= 255)
         {
+            TrackKindChange(k, TileKind.Sky);
             _tiles[i] = TileKind.Sky;
             _damage[i] = 0;
             return k;
