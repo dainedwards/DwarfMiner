@@ -66,9 +66,13 @@ public static class PerfTest
             cells.Update(Dt);
             var cellsMs = sw.Elapsed.TotalMilliseconds;
             sw.Restart();
+            Physics.DbgFloodMs = 0; Physics.DbgFloods = 0;
+            Physics.DbgFloodVisits = 0; Physics.DbgLooseCrumbles = 0;
             physics.Update(Dt);
             var physMs = sw.Elapsed.TotalMilliseconds;
-            Console.WriteLine($"[perf]   tick {i}: cells {cellsMs:F2}ms, physics {physMs:F2}ms");
+            Console.WriteLine($"[perf]   tick {i}: cells {cellsMs:F2}ms, physics {physMs:F2}ms " +
+                $"(floods {Physics.DbgFloods} = {Physics.DbgFloodMs:F2}ms / {Physics.DbgFloodVisits} visits, " +
+                $"loose crumbles {Physics.DbgLooseCrumbles})");
         }
         RunTicks("meteor aftermath", 600, () => { cells.Update(Dt); physics.Update(Dt); });
 
