@@ -161,7 +161,9 @@ public static class PlanetDefs
             TileKind.Grass,
             LakeMin: 3, LakeExtra: 1, MountainMin: 6, MountainExtra: 3,
             MountainHeightScale: 1.0f, LavaFillFrac: 0.45f, HasWater: true,
-            OreBias: new[] { (TileKind.IronOre, 0.015f), (TileKind.CoalOre, 0.015f), (TileKind.Emerald, 0.020f) },
+            // Gold vein bias: the nav core here demands gold, and gold only spawns where
+            // charted now (base threshold unreachable).
+            OreBias: new[] { (TileKind.GoldOre, 0.13f), (TileKind.IronOre, 0.015f), (TileKind.CoalOre, 0.015f), (TileKind.Emerald, 0.020f) },
             QuakeScale: 1.0f, CaveSpawnCap: 14,
             ShipOre: "gold", ShipOreCount: 3, Titan: TitanKind.Kong,
             CrystalPockets: 1, FungalPockets: 4, Difficulty: 0f),
