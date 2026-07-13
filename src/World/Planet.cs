@@ -476,5 +476,11 @@ public sealed class Planet
                 parts[p] = (r.ReadByte(), r.ReadByte(), r.ReadByte());
             _composition[idx] = new TileComposition(tint, parts);
         }
+        // Gem overlays — section absent in pre-gem saves, so a short read means "none"
+        // (those saves still carry gem TILES, which keep working via the legacy paths).
+        Array.Clear(_gem, 0, _totalTiles);
+        var gemBytes = r.ReadBytes(_totalTiles);
+        if (gemBytes.Length == _totalTiles)
+            for (var i = 0; i < _totalTiles; i++) _gem[i] = (TileKind)gemBytes[i];
     }
 }
