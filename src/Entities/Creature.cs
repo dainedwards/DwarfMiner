@@ -234,6 +234,12 @@ public sealed class Creature
             case CreatureKind.Saucer:
                 Radius = 6f; Health = 44f; MoveSpeed = 55f; ContactDamage = 0f; Hostile = false;
                 break;
+            case CreatureKind.AlienWhale:
+                Radius = 11f; Health = 90f; MoveSpeed = 26f; ContactDamage = 0f; Hostile = false;
+                break;
+            case CreatureKind.AlienCrab:
+                Radius = 4.5f; Health = 34f; MoveSpeed = 26f; ContactDamage = 10f;
+                break;
         }
     }
 
