@@ -329,8 +329,10 @@ public sealed class Player
         // off ladders so climbing doesn't fight the thrust, and dead while EMP'd.
         if (HasJetpack && EmpTimer <= 0f)
         {
+            // No burning underwater — holding jump already swims up, and a jet that works
+            // submerged would make the whole aquatics line pointless.
             if (Grounded) JetCharge = JetChargeCap;
-            else if (jumpHeld && !jumpEdge && !onLadder && JetCharge > 0f)
+            else if (jumpHeld && !jumpEdge && !onLadder && !InWater && JetCharge > 0f)
             {
                 vNormal = MoveToward(vNormal, JetRiseSpeed, JetAccel * dt);
                 JetCharge -= dt;
