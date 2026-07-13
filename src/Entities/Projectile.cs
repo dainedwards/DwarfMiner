@@ -115,6 +115,11 @@ public sealed class Projectile
     /// Uses <see cref="Planet.Mine"/>, so hardness scaling and anchor immunity apply.</summary>
     public int MinePower;
 
+    /// <summary>Militia rounds: never hit non-hostile creatures (Combat skips them), and a
+    /// titan struck by one doesn't re-aggro onto the player — the city's fight stays the
+    /// city's fight.</summary>
+    public bool FriendlyToNeutrals;
+
     public Projectile(Vector2 pos, Vector2 vel, float damage, float life, ProjectileKind kind = ProjectileKind.Bullet)
     {
         Position = pos;
