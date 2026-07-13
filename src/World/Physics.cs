@@ -110,12 +110,18 @@ public sealed class Physics
     public void MarkDirty(int x, int y)
     {
         if (!_planet.InBounds(x, y)) return;
-        _dirty.Add(_planet.Index(x, y));
         // Wake up neighbors too — when the player digs out a tile, surrounding tiles become candidates.
         for (var dy = -1; dy <= 1; dy++)
             for (var dx = -1; dx <= 1; dx++)
                 if (_planet.InBounds(x + dx, y + dy))
-                    _dirty.Add(_planet.Index(x + dx, y + dy));
+                    MarkDirtyIdx(_planet.Index(x + dx, y + dy));
+    }
+
+    private void MarkDirtyIdx(int idx)
+    {
+        if (_dirtyStamp[idx] == _dirtyGen) return;
+        _dirtyStamp[idx] = _dirtyGen;
+        _dirtyList.Add(idx);
     }
 
     public void Update(float dt)
