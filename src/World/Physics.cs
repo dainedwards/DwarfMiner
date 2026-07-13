@@ -146,6 +146,7 @@ public sealed class Physics
     /// one ring at a time from the innermost (bottom) up, so cave-ins sweep upward.</summary>
     private void TickPendingCollapses(float dt)
     {
+        var crumbled = 0;
         for (var i = _pendingCollapses.Count - 1; i >= 0; i--)
         {
             var p = _pendingCollapses[i];
@@ -154,7 +155,13 @@ public sealed class Physics
             {
                 var ring = _planet.UnIndex(p.Tiles[p.Next]).x;
                 while (p.Next < p.Tiles.Count && _planet.UnIndex(p.Tiles[p.Next]).x == ring)
+                {
                     Crumble(p.Tiles[p.Next++]);
+                    // Budget spent: stop mid-ring; Timer is still ≤ 0, so the very next
+                    // Update resumes exactly here — the ring completes over a few ticks
+                    // instead of dumping all its dust into one frame.
+                    if (++crumbled >= CrumbleBudget) return;
+                }
                 p.Timer += CrumbleRingInterval;
             }
             if (p.Next >= p.Tiles.Count) _pendingCollapses.RemoveAt(i);
