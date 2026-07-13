@@ -251,6 +251,18 @@ public sealed class Creature
             case CreatureKind.AlienCrab:
                 Radius = 4.5f; Health = 34f; MoveSpeed = 26f; ContactDamage = 10f;
                 break;
+            case CreatureKind.Moonlet:
+                Radius = 4f; Health = 26f; MoveSpeed = 40f; ContactDamage = 11f;
+                _cd = 2f + (float)Random.Shared.NextDouble() * 1.5f; // first slingshot is never instant
+                break;
+            case CreatureKind.VacLeech:
+                // Feeble bite — the real theft is the air siphon in the contact block below.
+                Radius = 2.4f; Health = 8f; MoveSpeed = 92f; ContactDamage = 2f;
+                break;
+            case CreatureKind.Glimmermaw:
+                Radius = 4.2f; Health = 24f; MoveSpeed = 24f; ContactDamage = 13f;
+                _cd = 1f + (float)Random.Shared.NextDouble();
+                break;
         }
     }
 
