@@ -30,12 +30,15 @@ public static class PlanetGen
         var biomes = new Biome[7];
         biomes[0] = rng.Next(2) == 0 ? Biome.Verdant : Biome.Ocean;
         var easy = new[] { Biome.Verdant, Biome.Frost, Biome.Ocean };
-        var mid = new[] { Biome.Frost, Biome.Ember, Biome.Slag, Biome.Ocean };
+        var mid = new[] { Biome.Frost, Biome.Ember, Biome.Slag, Biome.Ocean, Biome.City };
         var hard = new[] { Biome.Ember, Biome.Slag, Biome.Acid, Biome.Crystal };
         for (var i = 1; i < 7; i++)
             biomes[i] = (i <= 2 ? easy : i <= 4 ? mid : hard)[rng.Next(i <= 2 ? easy.Length : i <= 4 ? mid.Length : hard.Length)];
         if (Array.IndexOf(biomes, Biome.Ocean) < 0) biomes[1 + rng.Next(2)] = Biome.Ocean;
         if (Array.IndexOf(biomes, Biome.Acid) < 0) biomes[4 + rng.Next(3)] = Biome.Acid;
+        // One alien metropolis per campaign. Slot 3 is the only mid slot the ocean (1-2)
+        // and acid (4-6) guarantees can never claim, so the city can't stomp either.
+        if (Array.IndexOf(biomes, Biome.City) < 0) biomes[3] = Biome.City;
 
         // Titans: the four classic soul kinds land on four random slots (farming stays
         // possible every campaign); the rest roll the kaiju wave + flyers. The acid world
