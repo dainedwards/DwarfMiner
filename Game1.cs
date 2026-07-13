@@ -298,6 +298,14 @@ public sealed partial class DwarfMinerGame : Game
             spawnAngle = MathF.Atan2(vRel.Y, vRel.X) + 0.09f;   // offset onto the flank
         }
         var surfacePos = SpawnDirector.FindSurfaceSpawn(_run.Planet, spawnAngle, _run.Planet.Radius);
+        // DM_WARREN=1 drops the dwarf straight into the first lizard-city hall so tooling
+        // can screenshot the warren without spelunking to it (pairs with DM_AUTOSTART=city).
+        if (Environment.GetEnvironmentVariable("DM_WARREN") is { Length: > 0 }
+            && _run.Planet.LizardDens.Count > 0)
+        {
+            var (ldr, ldt) = _run.Planet.LizardDens[0];
+            surfacePos = _run.Planet.TileToWorld(ldr, ldt);
+        }
         _run.Player = new Player(surfacePos)
         {
             // Survival by default; DM_GOD=1 starts runs in god mode for testing, and G
