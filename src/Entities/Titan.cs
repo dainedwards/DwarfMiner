@@ -1743,7 +1743,9 @@ public sealed class TitanProjectile
             TitanShotKind.Void  => 15f,
             _                   => 28f,   // Laser
         };
-        _drill = kind == TitanShotKind.Laser ? 6 : 0;
+        // Void bolts get a small pierce budget too: the Starspawn fights in caves, so its
+        // volley must chew through a thin partition instead of dying on the first wall.
+        _drill = kind switch { TitanShotKind.Laser => 6, TitanShotKind.Void => 3, _ => 0 };
     }
 
     /// <summary>Acid and Lava globs are the ballistic shots — they loft, arc, and rain down,
