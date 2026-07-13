@@ -6,14 +6,20 @@ using Microsoft.Xna.Framework;
 namespace DwarfMiner.Space;
 
 /// <summary>One world on the system map: a PlanetDef placed on a slow circular orbit around
-/// the sun (which sits at the origin of space coordinates).</summary>
+/// the sun (which sits at the origin of space coordinates) — or, for a moon, a tight fast
+/// orbit around its <see cref="Parent"/> planet. OrbitRadius/AngularVel are mutable because
+/// moon orbits resolve in a second pass (a moon's parent can sit later in the def chain).</summary>
 public sealed class SpacePlanet
 {
     public readonly PlanetDef Def;
-    public readonly float OrbitRadius;
+    public float OrbitRadius;
     public readonly float BodyRadius;
-    public readonly float AngularVel;
+    public float AngularVel;
     public float Angle;
+
+    /// <summary>The planet this body orbits, or null for a sun-orbiter. Set by SpaceSim's
+    /// moon-binding pass from <see cref="PlanetDef.MoonOf"/>.</summary>
+    public SpacePlanet? Parent;
 
     public SpacePlanet(PlanetDef def, float orbitRadius, float bodyRadius, float angle, float angularVel)
     {
@@ -21,7 +27,11 @@ public sealed class SpacePlanet
         Angle = angle; AngularVel = angularVel;
     }
 
-    public Vector2 Pos => new(MathF.Cos(Angle) * OrbitRadius, MathF.Sin(Angle) * OrbitRadius);
+    /// <summary>Orbit centre: the sun, or the parent planet's LIVE position for a moon —
+    /// so a moon rides along as its host sweeps its own solar orbit.</summary>
+    public Vector2 OrbitCentre => Parent?.Pos ?? Vector2.Zero;
+
+    public Vector2 Pos => OrbitCentre + new Vector2(MathF.Cos(Angle) * OrbitRadius, MathF.Sin(Angle) * OrbitRadius);
 }
 
 /// <summary>A drifting rock the mothership must dodge or shoot. Big ones split when killed.</summary>
