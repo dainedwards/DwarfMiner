@@ -2628,6 +2628,7 @@ public static class SimTest
         {
             leech.Position = victim.Position;   // stay clamped on for the whole second
             leech.Update(1f / 60f, world, physics, cells, victim);
+            if (i == 0) Console.WriteLine($"  [dbg] leech hostile={leech.Hostile} dmg={leech.ContactDamage} dist={(leech.Position - victim.Position).Length():0.00} o2={victim.Oxygen:0.00} hp={victim.Health:0.00}");
         }
         Check($"hollow: vac leech siphons the air tank ({victim.Oxygen:0.0} left)",
             victim.Oxygen < 92f);
