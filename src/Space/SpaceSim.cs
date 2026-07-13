@@ -206,11 +206,13 @@ public sealed class SpaceSim
     /// <summary>Park the ship just off a planet's outward (sun-away) side, nose pointing out —
     /// where you appear after launching off that world, dying on it, or booting the game.
     /// The distance must clear <see cref="EntryRange"/> with margin, or parking would
-    /// immediately re-enter the atmosphere.</summary>
+    /// immediately re-enter the atmosphere. Moons park HOST-away instead: their sun-away
+    /// side can face straight into the parent planet's disc.</summary>
     public void PlaceShipAt(int planetIndex, float exitSpeed = 0f)
     {
         var p = Planets[Math.Clamp(planetIndex, 0, Planets.Count - 1)];
-        var outward = p.Pos.LengthSquared() > 1f ? Vector2.Normalize(p.Pos) : new Vector2(0f, -1f);
+        var from = p.Pos - p.OrbitCentre;
+        var outward = from.LengthSquared() > 1f ? Vector2.Normalize(from) : new Vector2(0f, -1f);
         ShipPos = p.Pos + outward * (p.BodyRadius + EntryRange + 80f);
         ShipVel = outward * exitSpeed;
         ShipHeading = MathF.Atan2(outward.Y, outward.X);
