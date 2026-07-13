@@ -37,6 +37,7 @@ public static class PerfTest
         // cells all around the surface, then 10 sim-seconds of cells+physics catching up.
         var surfaceR = planet.SurfaceRing - 6;
         var broken = 0;
+        sw.Restart();
         for (var m = 0; m < 30; m++)
         {
             var ty0 = rng.Next(planet.TilesAt(surfaceR));
