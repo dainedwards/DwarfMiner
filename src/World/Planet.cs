@@ -608,5 +608,10 @@ public sealed class Planet
         var gemBytes = r.ReadBytes(_totalTiles);
         if (gemBytes.Length == _totalTiles)
             for (var i = 0; i < _totalTiles; i++) _gem[i] = (TileKind)gemBytes[i];
+        // Surface profile — the count guards flat worlds (0) and the RunSave version bump
+        // guards saves from before the section existed.
+        var profLen = r.ReadInt32();
+        SurfaceProfile = profLen > 0 ? new float[profLen] : null;
+        for (var i = 0; i < profLen; i++) SurfaceProfile![i] = r.ReadSingle();
     }
 }
