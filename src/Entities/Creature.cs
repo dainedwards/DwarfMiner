@@ -429,6 +429,11 @@ public sealed class Creature
             // The jelly rides the moth's drift brain — a vacuum needs no wings.
             case CreatureKind.StarJelly:  TickFlyer(dt, planet, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.VoidBarnacle: TickBarnacle(dt, planet, toPlayer, dist, player); break;
+            // Moon natives on proven brains: the selenite pounces like a skitterer, the
+            // dust devil hounds along the surface on the grub chase — their identity is
+            // in the crystal shards and the spinning regolith column.
+            case CreatureKind.Selenite:   TickSkitterer(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.DustDevil:  TickGrub(dt, planet, up, right, toPlayer, dist, speedMul); break;
         }
 
         // Land swimmers: submerged, buoyancy replaces the plummet the tick just applied —
