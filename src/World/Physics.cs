@@ -249,7 +249,7 @@ public sealed class Physics
     /// <summary>
     /// Flood-fill the connected non-anchored solid region starting at (sx,sy). Returns true if
     /// the region reaches an anchored tile, the world edge, or another known-anchored cell —
-    /// in which case the visited tiles are added to <see cref="_anchoredCache"/>. Returns false
+    /// in which case the visited tiles are stamped anchored for this settle pass. Returns false
     /// (with the region in <see cref="_floodRegion"/>) if it is fully unsupported and small
     /// enough to evaluate; treats too-large regions as anchored as a safety valve.
     /// </summary>
