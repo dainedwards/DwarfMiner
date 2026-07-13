@@ -2641,6 +2641,66 @@ public static class SimTest
         }
         Check($"hollow: vac leech siphons the air tank ({victim.Oxygen:0.0} left)",
             victim.Oxygen < 92f);
+
+        // The void barnacle: rooted, and reels exposed prey toward its shell.
+        var barnacle = new Creature(surface + skyUp * 100f, CreatureKind.VoidBarnacle);
+        var reeled = new Player(surface + skyUp * 160f);
+        for (var i = 0; i < 30; i++)
+            barnacle.Update(1f / 60f, world, physics, cells, reeled);
+        Check($"hollow: void barnacle reels prey in (pull {Vector2.Dot(reeled.Velocity, -skyUp):0} px/s)",
+            Vector2.Dot(reeled.Velocity, -skyUp) > 20f);
+
+        // The roster is CLOSED: seed the whole world's fauna and run the spawner hard —
+        // every creature that appears must be a belt native. No grubs. No slimes. Nothing
+        // that breathes.
+        var beltRun = new Session(def)
+        {
+            Planet = world, Cells = cells, Physics = physics,
+            Player = new Player(surface),
+        };
+        SpawnDirector.SpawnInitialFauna(beltRun);
+        for (var i = 0; i < 40; i++)
+        {
+            beltRun.SpawnTimer = 0f;
+            beltRun.FaunaTimer = 0f;
+            SpawnDirector.Update(0.05f, beltRun);
+        }
+        var natives = 0;
+        var outsiders = 0;
+        foreach (var c in beltRun.Creatures)
+        {
+            if (c.Kind is CreatureKind.Moonlet or CreatureKind.VacLeech or CreatureKind.Glimmermaw
+                or CreatureKind.StarJelly or CreatureKind.VoidBarnacle) natives++;
+            else outsiders++;
+        }
+        Check($"hollow: only belt natives spawn ({natives} natives, {outsiders} outsiders)",
+            natives > 0 && outsiders == 0);
+
+        // The Starspawn: its egg is buried near the core, and once hatched it swims through
+        // solid rock toward prey, spitting void volleys and arming the gravity well.
+        var octo = new Entities.Titan(world, 1.3f, TitanKind.CosmicOctopus);
+        Check($"hollow: starspawn egg buried near the core "
+            + $"({(octo.Position - world.Center).Length() / Planet.TileSize:0} tiles out)",
+            (octo.Position - world.Center).Length() < (Planet.RingMin + 60) * Planet.TileSize);
+        octo.Hatch();
+        var preyDir = new Vector2(MathF.Cos(1.3f), MathF.Sin(1.3f));
+        var prey = world.Center + preyDir * ((Planet.RingMin + 140) * Planet.TileSize);
+        var startDist = (octo.Position - prey).Length();
+        var octoShots = new List<Entities.TitanProjectile>();
+        var octoBoulders = new List<Entities.FallingBoulder>();
+        var sawWell = false;
+        for (var i = 0; i < 60 * 12; i++)
+        {
+            octo.OnDamage();   // hold aggro for the whole window
+            octo.Update(1f / 60f, world, physics, cells, prey, octoBoulders, octoShots);
+            if (octo.PendingGravityWell is not null) { sawWell = true; octo.PendingGravityWell = null; }
+        }
+        var endDist = (octo.Position - prey).Length();
+        Check($"hollow: starspawn swims through rock toward prey ({startDist:0} → {endDist:0} px)",
+            endDist < startDist - 100f);
+        Check("hollow: starspawn spits void volleys",
+            octoShots.Exists(s => s.Kind == Entities.TitanShotKind.Void));
+        Check("hollow: starspawn arms its gravity well", sawWell);
     }
 
     private static void Check(string name, bool ok, string detail = "")
