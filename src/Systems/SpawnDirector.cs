@@ -298,6 +298,37 @@ public static class SpawnDirector
         var depth = (planet.SurfaceRing - (fromCenter - Planet.RingMin)) / Planet.LegacyTileScale; // legacy 8-px tiles below the baseline surface
         var roll = Random.Shared.NextDouble();
         CreatureKind kind;
+
+        // The Hollow's roster is CLOSED: only the belt natives spawn in its caves — no
+        // grubs, slimes, diggers, mimics or any other ordinary planet life. Nothing here
+        // ever breathed. (Unconnected pockets already returned in TrySpawnCreature.)
+        if (run.Def.Biome == "belt")
+        {
+            var native = roll < 0.26 ? CreatureKind.Moonlet
+                       : roll < 0.52 ? CreatureKind.VacLeech
+                       : roll < 0.74 ? CreatureKind.Glimmermaw
+                       : CreatureKind.VoidBarnacle;
+            // Barnacles ride the stationary-ambusher allowance, same as vines/mimics.
+            if (native == CreatureKind.VoidBarnacle
+                && CountKindsNear(run, 550f, stationary: true) >= 3)
+                native = CreatureKind.VacLeech;
+            var pos2 = pos;
+            if (native == CreatureKind.VoidBarnacle)
+            {
+                // Cement the barnacle against the cave floor instead of mid-air.
+                var bUp = planet.UpAt(pos);
+                for (var d = 4f; d <= 20f; d += 4f)
+                {
+                    if (!planet.IsSolidAt(pos - bUp * d)) continue;
+                    pos2 = pos - bUp * (d - 5f);
+                    break;
+                }
+            }
+            var beltC = new Creature(pos2, native);
+            ClearSpawnSpace(run, pos2, beltC.Radius);
+            run.Creatures.Add(beltC);
+            return;
+        }
         if (!connected)
         {
             // Sealed pocket: tunnellers only — the one habitat class that can open its own
