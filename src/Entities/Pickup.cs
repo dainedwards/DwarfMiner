@@ -5,16 +5,13 @@ using Microsoft.Xna.Framework;
 namespace DwarfMiner.Entities;
 
 /// <summary>
-/// A physical gem lying in the world — popped out when a gem-class tile (see
-/// <see cref="Tiles.IsGem"/>) shatters, instead of the vacuumable dust ordinary tiles crumble
-/// into. Falls and settles like a corpse, then a short-range magnet draws it to the dwarf and
-/// walking over it banks the drop. No decay: a dropped diamond waits where it fell.
+/// A physical gem lying in the world — popped out of its host tile when the rock it was
+/// embedded in shatters (see <see cref="Planet.TakeGem"/>). Falls and settles like a corpse;
+/// the player picks it up by walking over it — no magnet, the gem stays where it landed.
+/// No decay: a dropped diamond waits where it fell.
 /// </summary>
 public sealed class Pickup
 {
-    /// <summary>Distance at which the gem starts sliding toward the dwarf.</summary>
-    public const float MagnetRadius = 30f;
-
     public Vector2 Position;
     public Vector2 Velocity;
     public readonly TileKind Kind;
