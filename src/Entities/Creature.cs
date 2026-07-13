@@ -650,7 +650,8 @@ public sealed class Creature
         Vector2 up, Vector2 right, Vector2 toPlayer, float dist, float speedMul)
     {
         _retarget -= dt;
-        if (dist < 200f && dist > 0.01f)
+        // Same provocation gate as the borer: it meanders until hit or crowded.
+        if ((_provokedT > 0f || dist < 45f) && dist > 0.01f)
         {
             _digDir = toPlayer / dist;
         }
