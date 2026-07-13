@@ -312,7 +312,7 @@ public sealed class Planet
         var nIn = TilesAt(x);
         var nOut = TilesAt(x + 1);
         if (nIn == nOut) return 1;
-        var w = ((y % nIn) + nIn) % nIn;
+        var w = (uint)y < (uint)nIn ? y : ((y % nIn) + nIn) % nIn;
         var first = (int)Math.Floor((double)w * nOut / nIn);
         var lastExcl = (int)Math.Ceiling((double)(w + 1) * nOut / nIn);
         return Math.Max(1, lastExcl - first);
