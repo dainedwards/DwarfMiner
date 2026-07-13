@@ -193,23 +193,21 @@ public sealed class Physics
     private void Settle()
     {
         if (_dirtyList.Count == 0) return;
-        foreach (var i in _dirtyList) _processQueue.Enqueue(i);
-        _dirtyList.Clear();
+        (_dirtyWork, _dirtyList) = (_dirtyList, _dirtyWork);
         _dirtyGen++;
         _anchorGen++;
 
-        var budget = SettleBudget;
-        while (_processQueue.Count > 0)
+        for (var qi = 0; qi < _dirtyWork.Count; qi++)
         {
-            if (budget-- <= 0)
+            if (qi >= SettleBudget)
             {
                 // Out of budget: roll the remainder into the next settle tick's dirty list
                 // (the fresh generation) so a mass break spreads detection over a few 50ms
                 // ticks instead of spiking one frame.
-                while (_processQueue.Count > 0) MarkDirtyIdx(_processQueue.Dequeue());
-                return;
+                for (; qi < _dirtyWork.Count; qi++) MarkDirtyIdx(_dirtyWork[qi]);
+                break;
             }
-            var idx = _processQueue.Dequeue();
+            var idx = _dirtyWork[qi];
             var (x, y) = _planet.UnIndex(idx);
             var k = _planet.Get(x, y);
             if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
