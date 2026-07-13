@@ -569,8 +569,9 @@ public static class WorldGen
     }
 
     /// <summary>City worlds: raise <c>def.CityLots</c> alien skyscrapers on the surface,
-    /// clustered into 2-4 downtown DISTRICTS — rows of towers standing shoulder to shoulder
-    /// with narrow street gaps, not lone spires scattered around the globe. Each tower is an
+    /// grouped as ONE CAPITAL METROPOLIS (~60% of the lots) plus one or two satellite
+    /// towns — rows of towers standing shoulder to shoulder with narrow street gaps, not
+    /// lone spires scattered around the globe. Each tower is an
     /// anchored alloy hull (buildings don't cave in) with straight px-width sides, storeys of
     /// floor slabs with an alternating stair gap, glowing window bands in the skin, a
     /// street-level doorway, an alloy piling footing, and per-class rooftop furniture.
