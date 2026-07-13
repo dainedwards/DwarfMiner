@@ -375,9 +375,17 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   pays from the first tile underground) and the surface only refills at ¼ rate (the suit's
   starlight recycler) — so def drain scale is a moderate 1.5. **Quarter gravity**
   (`PlanetDef.GravityScale` 0.25 → `Player.Gravity` + `Planet.GravityScale` for every
-  creature). **No dirt anywhere** (asteroids grow no soil — the shallow band and buried
-  seams are regolith gravel on the belt biome), no lava/water/acid/gas, 8 dry impact
-  **craters** (`PlanetDef.Craters`), and the **Great Geode** (`WorldGen.CarveGreatGeode`):
+  creature). **Lumpy asteroid silhouette** (`PlanetDef.Lumpiness` 40, hollow-only): two
+  low-frequency lobe/dent noise channels swing the terrain line ±tens of rings (~70-ring
+  spread, downward-biased so deep scalloped valleys carry the potato shape under the fixed
+  sky headroom; RNG-gated so ordinary worlds' gen streams stay bit-identical). The carved
+  terrain line is stamped into **`Planet.SurfaceProfile`** (persisted — RunSave v12) and
+  `Planet.SurfaceRadiusAt` feeds `DepthBelowSurface` + the space-view disc preview, so a
+  lobe-valley floor under open sky counts as SURFACE for oxygen/exposure and the disc's
+  limb shows the real irregular outline. **No dirt anywhere** (asteroids grow no soil — the
+  shallow band and buried seams are regolith gravel on the belt biome), no
+  lava/water/acid/gas, 8 dry impact **craters** (`PlanetDef.Craters`), and the **Great
+  Geode** (`WorldGen.CarveGreatGeode`):
   one vast crystal-lined cavern at 55-70 legacy tiles down, shell studded with embedded
   voidstone/diamond/emerald. Richest rare-metal chart in the system: platinum signature
   (nav core 5), gold AND silver veins, voidstone outside the Rift. **No core shard**
