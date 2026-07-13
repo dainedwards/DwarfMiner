@@ -924,11 +924,11 @@ public static class SimTest
             for (var dx = 0; dx < Cells.Density; dx++)
                 cells.Place(t2 * Cells.Density + dx, r2 * Cells.Density + dy, Material.Dust, TileKind.Stone);
 
-        for (var i = 0; i < 60 * 100 && planet.Get(r2 + 1, t2) != TileKind.Conglomerate; i++)
+        for (var i = 0; i < 60 * 100 && planet.Get(r2 + 1, t2) != TileKind.Stone; i++)
             cells.Update(dt);
         Check("compaction: stacked pile keeps converting layer by layer",
-            planet.Get(r2, t2) == TileKind.Conglomerate
-            && planet.Get(r2 + 1, t2) == TileKind.Conglomerate);
+            planet.Get(r2, t2) == TileKind.Stone
+            && planet.Get(r2 + 1, t2) == TileKind.Stone);
 
         // A naturally-settled-style column in a stone shaft: the bottom tile has craggy
         // voids (12/16) and the crest is a loose dusting (6/16). The pressed rules must
