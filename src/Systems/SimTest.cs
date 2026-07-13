@@ -893,7 +893,7 @@ public static class SimTest
 
         // A sealed one-tile pocket deep in stone, packed full of stone dust: solid floor
         // below, solid roof above (buried), nothing moving — the compaction sweep's second
-        // look ~10s later presses it into a Conglomerate.
+        // look ~45s later presses it into a Conglomerate.
         var r = planet.SurfaceRing - 60;
         const int t = 33;
         for (var dr = -1; dr <= 1; dr++)
@@ -904,10 +904,30 @@ public static class SimTest
             for (var dx = 0; dx < Cells.Density; dx++)
                 cells.Place(t * Cells.Density + dx, r * Cells.Density + dy, Material.Dust, TileKind.Stone);
 
-        for (var i = 0; i < 60 * 14 && planet.Get(r, t) != TileKind.Conglomerate; i++)
+        for (var i = 0; i < 60 * 50 && planet.Get(r, t) != TileKind.Conglomerate; i++)
             cells.Update(dt);
         Check("compaction: buried undisturbed dust re-forms into conglomerate",
             planet.Get(r, t) == TileKind.Conglomerate);
+
+        // A sealed two-tile-tall pocket: only the bottom tile rests on solid at first, so
+        // it converts alone; converting must re-nominate the tile above so the pile keeps
+        // forming blocks layer by layer instead of stopping at the bottom row.
+        var r2 = planet.SurfaceRing - 70;
+        const int t2 = 55;
+        for (var dr = -1; dr <= 2; dr++)
+            for (var da = -1; da <= 1; da++)
+                planet.Set(r2 + dr, t2 + da, TileKind.Stone);
+        planet.Set(r2, t2, TileKind.Sky);
+        planet.Set(r2 + 1, t2, TileKind.Sky);
+        for (var dy = 0; dy < Cells.Density * 2; dy++)
+            for (var dx = 0; dx < Cells.Density; dx++)
+                cells.Place(t2 * Cells.Density + dx, r2 * Cells.Density + dy, Material.Dust, TileKind.Stone);
+
+        for (var i = 0; i < 60 * 100 && planet.Get(r2 + 1, t2) != TileKind.Conglomerate; i++)
+            cells.Update(dt);
+        Check("compaction: stacked pile keeps converting layer by layer",
+            planet.Get(r2, t2) == TileKind.Conglomerate
+            && planet.Get(r2 + 1, t2) == TileKind.Conglomerate);
 
         var comp = planet.GetComposition(r, t);
         var stored = 0;
