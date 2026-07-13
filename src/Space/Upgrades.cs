@@ -102,10 +102,6 @@ public static class Upgrades
             "Deflector shield recharges twice as fast",
             Souls: 2, Mats: new[] { ("pure_platinum", 2), ("crystal", 2) }, SoulKind: "Mecha", Requires: "shield"),
 
-        new("magnet2", "Ore Magnet II",
-            "Loose ore leaps to your pack from across the room",
-            Souls: 1, Mats: new[] { ("pure_gold", 3) }, SoulKind: "Kong", Requires: "magnet"),
-
         new("o22", "O2 Reserves II",
             "Air supply doubled (stacks with the air tank)",
             Souls: 1, Mats: new[] { ("sapphire", 3), ("diamond", 1) }, SoulKind: "Godzilla", Requires: "o2"),
