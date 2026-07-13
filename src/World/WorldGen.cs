@@ -964,7 +964,7 @@ public static class WorldGen
                     planet.Set(fr - 1, ft, i == 0 ? TileKind.Ruby : TileKind.GoldOre);
             }
         }
-        else if (halfWpx > 40f && interiorFloor.Count > 8)
+        else if (halfWpx > 52f && interiorFloor.Count > 8)
         {
             // A brick hut leaning on the hall floor: hollow box, one open doorway.
             var hutHalfW = 3;
