@@ -558,11 +558,11 @@ public sealed class Cells
         for (var s = 0; s < steps && cy > 0; s++)
         {
             (icx, icy) = InnerCell(cx, cy);
-            if (TryMoveTo(cx, cy, icx, icy)) { cx = icx; cy = icy; continue; }
+            if (TryMoveTo(cx, cy, icx, icy, s == 0)) { cx = icx; cy = icy; continue; }
             // Blocked mid-flight: deflect diagonally, bleeding off speed on the impact.
             var d = _rng.Next(2) == 0 ? 1 : -1;
-            if (TryMoveTo(cx, cy, icx + d, icy)) { _velR[Idx(icx + d, icy)] *= ImpactDamping; return; }
-            if (TryMoveTo(cx, cy, icx - d, icy)) { _velR[Idx(icx - d, icy)] *= ImpactDamping; return; }
+            if (TryMoveTo(cx, cy, icx + d, icy, s == 0)) { _velR[Idx(icx + d, icy)] *= ImpactDamping; return; }
+            if (TryMoveTo(cx, cy, icx - d, icy, s == 0)) { _velR[Idx(icx - d, icy)] *= ImpactDamping; return; }
             // Landed hard: kill velocity so the cell can sleep.
             i = Idx(cx, cy);
             _velR[i] = 0f;
