@@ -237,7 +237,7 @@ public sealed class Creature
     public bool IsSurfaceKind => Kind is CreatureKind.Grazer or CreatureKind.Hopper
         or CreatureKind.SnowLoper or CreatureKind.CinderSkink or CreatureKind.RustBack
         or CreatureKind.TidePuddler or CreatureKind.AcidStrider or CreatureKind.PrismSnail
-        or CreatureKind.Civilian;
+        or CreatureKind.Civilian or CreatureKind.Peacekeeper;
     public bool IsCaveKind => !IsSkyKind && !IsSurfaceKind;
 
     /// <summary><paramref name="shots"/> is the shared enemy-shot list (the Titan's): ranged
