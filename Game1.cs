@@ -385,7 +385,8 @@ public sealed partial class DwarfMinerGame : Game
             var kinds = new[] { CreatureKind.SporeBat, CreatureKind.CrystalCrawler, CreatureKind.VoidWraith,
                                 CreatureKind.CaveSlime, CreatureKind.AcidSpitter, CreatureKind.BomberBeetle,
                                 CreatureKind.SnapperVine, CreatureKind.RockMimic,
-                                CreatureKind.Civilian, CreatureKind.Lizardman };
+                                CreatureKind.Civilian, CreatureKind.Lizardman,
+                                CreatureKind.Peacekeeper };
             for (var i = 0; i < kinds.Length; i++)
                 _run.Creatures.Add(new Creature(
                     _run.Player.Position + fRight * (26f + i * 22f) + fUp * 8f, kinds[i]));
