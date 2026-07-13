@@ -297,7 +297,7 @@ public sealed class Player
         // also gating it on !Grounded is correct.
         var grav = Gravity;
         if (vNormal > 0f && !jumpHeld && !Grounded) grav = Gravity * JumpReleaseGravityMul;
-        if (!Grounded && !onLadder) vNormal -= grav * dt;
+        if (!Grounded && !onLadder && !InWater) vNormal -= grav * dt;
         // On a ladder: vertical input (W/up = +1, S/down = -1) directly drives motion at a
         // climb rate; gravity is fully suppressed so the player stays put when no input is
         // given. Velocity *along* the surface (vTangent) still works, so you can climb +
