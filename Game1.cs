@@ -1114,7 +1114,6 @@ public sealed partial class DwarfMinerGame : Game
         // collection's WakeNeighbors calls land in `_next`, which the upcoming Update swaps into
         // `_active` and processes immediately — dust above a collected cell falls the same frame
         // instead of one frame later.
-        // The Ore Magnet tiers stretch the sweep the dwarf hoovers loose material from.
         var picked = _run.Cells.CollectInRadius(_run.Player.Position,
             _run.Player.Radius + _run.Player.PickupReach);
         if (picked is not null)
