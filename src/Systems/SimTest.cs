@@ -1106,18 +1106,48 @@ public static class SimTest
                 bearings.Count >= 8 && clustered >= bearings.Count * 7 / 10);
         }
 
-        // Warren world: slag carries the buried lizard city now (one civilisation each).
-        var slagDef = PlanetDefs.ById("slag");
-        var warren = WorldGen.Generate(12, slagDef);
+        // City coverage: at one ring above the streets, the alloy-backed footprint (towers,
+        // door gaps included via the wall layer) plus the narrow streets between them must
+        // span roughly a third of the planet's circumference.
+        {
+            var r6 = city.SurfaceRing + 6;
+            var n = city.TilesAt(r6);
+            var covered = 0;
+            var angles = new List<float>();
+            for (var t = 0; t < n; t++)
+            {
+                if (city.GetWall(r6, t) != TileKind.AlienAlloy) continue;
+                covered++;
+                angles.Add((t + 0.5f) / n * MathHelper.TwoPi);
+            }
+            var builtFrac = covered / (float)n;
+            // District span = built tiles plus street gaps under ~0.05 rad between them.
+            angles.Sort();
+            var span = 0f;
+            for (var i = 0; i < angles.Count; i++)
+            {
+                var gap = angles[(i + 1) % angles.Count] - angles[i];
+                if (gap < 0) gap += MathHelper.TwoPi;
+                span += MathF.Min(gap, 0.05f);
+            }
+            var spanFrac = span / MathHelper.TwoPi;
+            Check($"city: districts span about a third of the surface (built {builtFrac:P0}, with streets {spanFrac:P0})",
+                builtFrac > 0.15f && spanFrac > 0.25f);
+        }
+
+        // Warren world: ember (the lava homeland) carries the buried lizard city now — the
+        // warrens live only under acid and lava worlds.
+        var emberDef = PlanetDefs.ById("ember");
+        var warren = WorldGen.Generate(12, emberDef);
         var brick = 0;
         foreach (var (x, y) in warren.AllTiles())
             if (warren.Get(x, y) == TileKind.LizardBrick) brick++;
-        Check($"warren: lizard city carved on the warren world (brick {brick})", brick > 200);
+        Check($"warren: lizard city carved on the lava world (brick {brick})", brick > 260);
         Check($"warren: dens recorded ({warren.LizardDens.Count})", warren.LizardDens.Count >= 4);
         Check("warren: no alien towers on the warren world",
-            warren.CitySpawns.Count == 0 && slagDef.CityLots == 0);
+            warren.CitySpawns.Count == 0 && emberDef.CityLots == 0);
         var openDens = 0;
-        var lavaTop = (int)(warren.Radius * slagDef.LavaFillFrac) - Planet.RingMin;
+        var lavaTop = (int)(warren.Radius * emberDef.LavaFillFrac) - Planet.RingMin;
         var allAboveLava = true;
         foreach (var (r, t) in warren.LizardDens)
         {
