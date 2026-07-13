@@ -620,25 +620,26 @@ public static class WorldGen
             {
                 // Proportions are authored in pixels and converted to per-ring angles below,
                 // so tower sides stay straight instead of flaring with radius like a
-                // constant-angle wedge would. Three building classes mix the skyline: squat
-                // low-rises, mid-rise blocks, and thin spires that carry the silhouette.
+                // constant-angle wedge would. The mix is mostly skyscrapers: a few small
+                // shopfront buildings, then mid-rise blocks and spires across a wide height
+                // spread so no two neighbours match.
                 var classRoll = rng.NextDouble();
                 float halfWidthPx;
                 int height;
-                if (classRoll < 0.30)         // low-rise: wide and squat
+                if (classRoll < 0.18)         // small building: a squat shopfront
                 {
-                    halfWidthPx = 26f + (float)rng.NextDouble() * 12f;
-                    height = (int)((10f + (float)rng.NextDouble() * 8f) * S);
+                    halfWidthPx = 22f + (float)rng.NextDouble() * 10f;
+                    height = (int)((6f + (float)rng.NextDouble() * 6f) * S);
                 }
-                else if (classRoll < 0.75)    // mid-rise block
+                else if (classRoll < 0.60)    // mid-rise block
                 {
                     halfWidthPx = 20f + (float)rng.NextDouble() * 12f;
-                    height = (int)((20f + (float)rng.NextDouble() * 14f) * S);
+                    height = (int)((18f + (float)rng.NextDouble() * 16f) * S);
                 }
                 else                          // spire: thin and tall
                 {
                     halfWidthPx = 15f + (float)rng.NextDouble() * 9f;
-                    height = (int)((34f + (float)rng.NextDouble() * 18f) * S);
+                    height = (int)((30f + (float)rng.NextDouble() * 26f) * S);
                 }
                 height = Math.Min(height, (int)(Planet.SkyHeadroom - 16 * S));
                 var gapPx = 12f + (float)rng.NextDouble() * 12f;   // a narrow street between hulls
