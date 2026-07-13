@@ -2627,6 +2627,18 @@ public sealed class Creature
                     new Color(170, 225, 245));
                 break;
             }
+            case CreatureKind.StarJelly:
+            {
+                // The bell glows like a drowned constellation drifting over the regolith.
+                var pulse = MathF.Sin(r.Time * 2.2f + _phase) * 4f;
+                r.AddLight(Position, 14f + pulse, new Color(140, 200, 240));
+                break;
+            }
+            case CreatureKind.VoidBarnacle:
+                // Only the gullet betrays it — a dim violet ember in the cave wall,
+                // flaring while the tongue reels something in.
+                r.AddLight(Position, Pulling ? 16f : 7f, new Color(160, 110, 230));
+                break;
             case CreatureKind.MagmaSlug:
             {
                 var flick = MathF.Sin(r.Time * 7f + _phase) * 4f;
