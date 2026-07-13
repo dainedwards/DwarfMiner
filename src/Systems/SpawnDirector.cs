@@ -51,6 +51,8 @@ public static class SpawnDirector
         for (var i = 0; i < surface; i++) TrySpawnSurfaceAnimal(run);
         for (var i = 0; i < 6; i++) TrySpawnSkyAnimal(run);
         for (var i = 0; i < 12; i++) TrySpawnCreature(run);
+        if (run.Def.HasWater)
+            for (var i = 0; i < 4; i++) TrySpawnAquatic(run);
     }
 
     /// <summary>Walk down from far above the given angle until the first solid tile, then
