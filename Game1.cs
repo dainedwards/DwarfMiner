@@ -3028,6 +3028,7 @@ public sealed partial class DwarfMinerGame : Game
                 ProjectileKind.Harpoon        => (new Color(255, 200, 130), 14f),
                 ProjectileKind.Pistol         => (new Color(255, 235, 160), 8f),
                 ProjectileKind.MachineGun     => (new Color(255, 210, 120), 6f),
+                ProjectileKind.CivicBolt      => (new Color(130, 220, 255), 7f),
                 ProjectileKind.Laser          => (new Color(255, 90, 90),   14f),
                 ProjectileKind.LaserCannon    => (new Color(120, 225, 255), 22f),
                 ProjectileKind.Rocket         => (new Color(255, 160, 70),  16f),
