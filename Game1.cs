@@ -2765,9 +2765,11 @@ public sealed partial class DwarfMinerGame : Game
         }
 
         // Creatures — each kind draws its own procedural sprite, including the burn/freeze
-        // status tinting and the burning-ember flicker.
+        // status tinting and the burning-ember flicker. The planet-wide resident census
+        // makes the list long; anything far outside the view skips its sprite entirely.
         foreach (var c in _run.Creatures)
         {
+            if ((c.Position - _run.Player.Position).LengthSquared() > 1400f * 1400f) continue;
             c.Draw(_renderer, _run.Planet, _run.Player);
         }
 
