@@ -128,6 +128,33 @@ public static class AcidProbe
         if (found == 0) Console.WriteLine("    no acid-vs-corrodible contacts found");
     }
 
+    /// <summary>After a few settle ticks, find the SHALLOWEST tile where acid touches
+    /// corrodible rock (the first escape point) and dump its exact neighbourhood.</summary>
+    private static void DumpShallowestLeak(Planet planet, Cells cells)
+    {
+        for (var r = planet.Rings - 1; r >= 0; r--)
+        {
+            var n = planet.TilesAt(r);
+            for (var t = 0; t < n; t++)
+            {
+                if (Tiles.IsSolid(planet.Get(r, t)) || !TileHasAcid(planet, cells, r, t)) continue;
+                var bad = false;
+                foreach (var (nr, nt) in Neighbours(planet, r, t))
+                {
+                    var k = planet.Get(nr, nt);
+                    if (Tiles.IsSolid(k) && !Tiles.IsAnchored(k) && k != TileKind.Obsidian) bad = true;
+                }
+                if (!bad) continue;
+                Console.WriteLine($"  FIRST-ESCAPE @ r={r} depth={planet.SurfaceRing - r} t={t}:");
+                foreach (var (nr, nt) in Neighbours(planet, r, t))
+                    Console.WriteLine($"      nb r={nr} depth={planet.SurfaceRing - nr} "
+                        + $"{planet.Get(nr, nt)} wall={planet.GetWall(nr, nt)} "
+                        + $"acid={TileHasAcid(planet, cells, nr, nt)}");
+                return;
+            }
+        }
+    }
+
     private static bool TileHasAcid(Planet planet, Cells cells, int r, int t)
     {
         var cx0 = t * Cells.Density;
