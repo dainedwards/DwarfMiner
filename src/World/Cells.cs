@@ -95,8 +95,15 @@ public sealed class Cells
     private readonly float[] _travel;
     /// <summary>Persistent lateral flow direction for liquids (-1/+1, 0 = unset).</summary>
     private readonly sbyte[] _flow;
-    private HashSet<int> _active = new();
-    private HashSet<int> _next = new();
+    // Active set as flat lists + a dedup flag array rather than HashSets: enqueueing a cell
+    // is one array test and one list append (no hashing), and the tick iterates the list in
+    // place instead of snapshotting into a fresh array. This path runs ~20 times per moving
+    // grain per tick (self re-adds + neighbour wakes), so it dominates heavy scenes —
+    // explosions and disasters wake tens of thousands of cells at once.
+    private List<int> _active = new();
+    private List<int> _next = new();
+    /// <summary>True while the cell index is already queued in <see cref="_next"/>.</summary>
+    private readonly bool[] _queued;
     private readonly Random _rng = new();
     private readonly Dictionary<string, float> _dustAccum = new();
     private float _time;
