@@ -147,6 +147,10 @@ public sealed class Cells
     /// <summary>Player position, refreshed by Game1 each frame; null in headless contexts.</summary>
     public Vector2? CompactionExclusion;
 
+    /// <summary>Shattered gem-tile sites awaiting their physical drop (see the gem gate in
+    /// <see cref="SpawnDustInTile"/>). Game1 drains this into Session.Pickups.</summary>
+    public readonly List<(Vector2 pos, TileKind kind)> PendingGemDrops = new();
+
     public Cells(Planet planet)
     {
         Planet = planet;
