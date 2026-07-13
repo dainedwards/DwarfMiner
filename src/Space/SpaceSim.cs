@@ -394,8 +394,19 @@ public sealed class SpaceSim
 
         // Keep the field stocked: new rocks appear in a donut around the ship — outside the
         // screen at system zoom, close enough to matter soon — drifting loosely shipward.
-        while (Asteroids.Count < AsteroidTarget)
+        // Near the outer belt the field thickens (higher target) and most spawns land ON the
+        // belt annulus, streaming prograde along it — the ring reads as a real river of rock
+        // the ship has to thread to reach the Hollow.
+        var shipSunR = ShipPos.Length();
+        var nearBelt = AsteroidTarget > 0 && MathF.Abs(shipSunR - BeltOrbitRadius) < 2700f;
+        var target = nearBelt ? AsteroidTarget + 14 : AsteroidTarget;
+        while (Asteroids.Count < target)
         {
+            if (nearBelt && Random.Shared.NextDouble() < 0.7)
+            {
+                SpawnBeltRock();
+                continue;
+            }
             var ang = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
             var distOut = 1500f + (float)Random.Shared.NextDouble() * 1200f;
             var pos = ShipPos + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * distOut;
@@ -405,6 +416,27 @@ public sealed class SpaceSim
                       - new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * 25f;
             SpawnAsteroid(pos, vel, 16f + (float)Random.Shared.NextDouble() * 26f);
         }
+    }
+
+    /// <summary>One belt rock: seated on the belt annulus a little way along the ring from
+    /// the ship (off-screen, soon to matter), drifting prograde along the belt with a touch
+    /// of radial wobble. Belt rocks run bigger than the strays — the ring is old and fat.</summary>
+    private void SpawnBeltRock()
+    {
+        var shipAng = MathF.Atan2(ShipPos.Y, ShipPos.X);
+        var along = (900f + (float)Random.Shared.NextDouble() * 1700f)
+                    * (Random.Shared.Next(2) == 0 ? 1f : -1f);
+        // Two rolls average toward the centre line, so the belt is dense in the middle
+        // and ragged at the edges.
+        var radOff = ((float)Random.Shared.NextDouble() + (float)Random.Shared.NextDouble() - 1f)
+                     * BeltHalfWidth;
+        var a = shipAng + along / BeltOrbitRadius;
+        var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+        var pos = dir * (BeltOrbitRadius + radOff);
+        var tangent = new Vector2(-dir.Y, dir.X);
+        var vel = tangent * (22f + (float)Random.Shared.NextDouble() * 34f)
+                  + dir * (((float)Random.Shared.NextDouble() - 0.5f) * 14f);
+        SpawnAsteroid(pos, vel, 18f + (float)Random.Shared.NextDouble() * 34f);
     }
 
     /// <summary>The closest planet and the ship's distance to its disc surface (negative =
