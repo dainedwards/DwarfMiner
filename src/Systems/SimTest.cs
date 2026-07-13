@@ -1131,6 +1131,164 @@ public static class SimTest
             cities == 1 && warrens >= 1);
     }
 
+    /// <summary>The city's defences and resistances: architecture shrugs off explosions and
+    /// creature jaws, diggers only hunt when provoked, militia bolts spare neutrals and don't
+    /// aggro the titan, and a titan's wrecking bite fells a wall slowly rather than instantly.</summary>
+    private static void TestCityDefense()
+    {
+        const float dt = 1f / 60f;
+        var planet = WorldGen.Generate(77);
+        var cells = new Cells(planet);
+        var physics = new Physics(planet, cells);
+
+        // Stamp a free-standing alloy block on the surface at a bearing clear of the spawn.
+        void StampBlock(float ang, TileKind kind, int wide, int tall, out List<(int r, int t)> tiles)
+        {
+            tiles = new List<(int r, int t)>();
+            for (var dr = 0; dr < tall; dr++)
+            {
+                var r = planet.SurfaceRing + 1 + dr;
+                var n = planet.TilesAt(r);
+                var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                for (var dtc = -wide; dtc <= wide; dtc++)
+                {
+                    var t = ((t0 + dtc) % n + n) % n;
+                    planet.Set(r, t, kind);
+                    planet.SetWall(r, t, kind);
+                    tiles.Add((r, t));
+                }
+            }
+        }
+
+        // --- 1. Explosions chip city architecture instead of levelling it ---
+        {
+            StampBlock(0.6f, TileKind.AlienAlloy, wide: 4, tall: 10, out var wall);
+            var at = planet.TileToWorld(planet.SurfaceRing + 4, wall[0].t);
+            var tnt = new Projectile(at, Vector2.Zero, 120f, 0.01f, ProjectileKind.Tnt);
+            tnt.Explode(planet, physics, cells);
+            int standing = 0, chipped = 0;
+            foreach (var (r, t) in wall)
+            {
+                if (planet.Get(r, t) == TileKind.AlienAlloy) standing++;
+                if (planet.Damage(r, t) > 0) chipped++;
+            }
+            Check($"defense: TNT leaves the alloy wall standing ({standing}/{wall.Count})",
+                standing == wall.Count);
+            Check($"defense: but the blast visibly chips it ({chipped} tiles damaged)", chipped > 0);
+        }
+
+        // --- 2. Creature jaws barely dent architecture (a stone box falls in seconds) ---
+        {
+            StampBlock(1.1f, TileKind.AlienAlloy, wide: 3, tall: 6, out var alloyBox);
+            var inAlloy = planet.TileToWorld(planet.SurfaceRing + 3, alloyBox[0].t);
+            var farPlayer = new Player(planet.Center + new Vector2(0, -(planet.Radius + 20) * Planet.TileSize));
+            var borer = new Creature(inAlloy, CreatureKind.Borer);
+            for (var i = 0; i < 60 * 8; i++) borer.Update(dt, planet, physics, cells, farPlayer);
+            var alloyLeft = 0;
+            foreach (var (r, t) in alloyBox) if (planet.Get(r, t) == TileKind.AlienAlloy) alloyLeft++;
+            Check($"defense: 8s of borer jaws leaves alloy mostly intact ({alloyLeft}/{alloyBox.Count})",
+                alloyLeft > alloyBox.Count / 2);
+        }
+
+        // --- 3. Diggers hunt only when provoked ---
+        {
+            var pos = FindCavePos(planet, seedOffset: 4321);
+            if (pos is { } cavePos)
+            {
+                var up = planet.UpAt(cavePos);
+                var right = new Vector2(-up.Y, up.X);
+                var prey = new Player(cavePos + right * 150f);
+
+                var calm = new Creature(cavePos, CreatureKind.Borer);
+                for (var i = 0; i < 60 * 8; i++) calm.Update(dt, planet, physics, cells, prey);
+                var calmDist = (calm.Position - prey.Position).Length();
+                Check($"defense: unprovoked borer ignores the dwarf ({calmDist:0}px away)",
+                    calmDist > 55f);
+
+                var angry = new Creature(cavePos, CreatureKind.Borer);
+                for (var i = 0; i < 60 * 14; i++)
+                {
+                    if (i % 60 == 0) angry.HitFlash = 0.2f;   // keep the grudge fresh
+                    angry.Update(dt, planet, physics, cells, prey);
+                }
+                var angryDist = (angry.Position - prey.Position).Length();
+                Check($"defense: provoked borer digs to the prey ({angryDist:0}px away)",
+                    angryDist < 80f);
+            }
+            else
+            {
+                Check("defense: provocation test cave found", false);
+            }
+        }
+
+        // --- 4. Militia bolts pass through neutrals, sting hostiles, don't aggro the titan ---
+        {
+            var muzzle = planet.Center + new Vector2(0, -(planet.Radius + 30) * Planet.TileSize);
+            var lane = new Vector2(1, 0);
+            var civ = new Creature(muzzle + lane * 14f, CreatureKind.Civilian);
+            var grub = new Creature(muzzle + lane * 30f, CreatureKind.Grub);
+            var crowd = new List<Creature> { civ, grub };
+            var civHp = civ.Health;
+            var grubHp = grub.Health;
+            var bolt = new Projectile(muzzle, lane * 260f, 3f, 1.1f, ProjectileKind.CivicBolt);
+            for (var i = 0; i < 30 && !bolt.Dead; i++)
+            {
+                bolt.Update(dt, planet, physics, cells);
+                Combat.ResolveHits(bolt, crowd, null, planet, physics, cells);
+            }
+            Check("defense: civic bolt spares the civilian", civ.Health == civHp);
+            Check($"defense: civic bolt stings the invader ({grubHp} -> {grub.Health})",
+                grub.Health < grubHp);
+
+            var titan = new Titan(planet, 2.2f, TitanKind.Kong);
+            titan.Hatch();
+            var tHp = titan.Health;
+            var tb = new Projectile(titan.Position - lane * 20f, lane * 260f, 3f, 1.1f,
+                ProjectileKind.CivicBolt);
+            for (var i = 0; i < 30 && !tb.Dead; i++)
+            {
+                tb.Update(dt, planet, physics, cells);
+                Combat.ResolveHits(tb, new List<Creature>(), titan, planet, physics, cells);
+            }
+            Check($"defense: civic bolt wounds the titan a little ({tHp - titan.Health:0.#} dmg)",
+                titan.Health < tHp && tHp - titan.Health < 10f);
+            Check("defense: civic bolt does NOT aggro the titan onto the player", !titan.IsAggro);
+        }
+
+        // --- 5. A titan wrecks a tower wall slowly, not instantly ---
+        {
+            StampBlock(1.8f, TileKind.AlienAlloy, wide: 2, tall: 14, out var tower);
+            var n0 = planet.TilesAt(planet.SurfaceRing + 5);
+            var tt = (int)((1.8f / MathHelper.TwoPi + 1f) % 1f * n0);
+            var lean = planet.TileToWorld(planet.SurfaceRing + 5, tt);
+            var kaiju = new Titan(planet, 1.8f, TitanKind.Kong);
+            kaiju.Hatch();
+            var boulders = new List<FallingBoulder>();
+            var shots = new List<TitanProjectile>();
+            int BrokenTiles()
+            {
+                var broken = 0;
+                foreach (var (r, t) in tower) if (planet.Get(r, t) != TileKind.AlienAlloy) broken++;
+                return broken;
+            }
+            void Lean(int frames)
+            {
+                for (var i = 0; i < frames; i++)
+                {
+                    kaiju.Position = lean;   // pin the body against the wall — no wandering off
+                    kaiju.Velocity = Vector2.Zero;
+                    kaiju.Update(dt, planet, physics, cells, kaiju.Position + new Vector2(900f, 0), boulders, shots);
+                }
+            }
+            Lean(30);   // half a second of leaning
+            Check($"defense: half a second of titan contact barely marks the wall ({BrokenTiles()} broken)",
+                BrokenTiles() <= 2);
+            Lean(60 * 12);
+            Check($"defense: twelve seconds of titan wrecking breaches it ({BrokenTiles()} broken)",
+                BrokenTiles() > 4);
+        }
+    }
+
     /// <summary>True if the position sits inside a tile that actually blocks bodies —
     /// creature collision uses Tiles.BlocksPlayer, so passable tiles (glowshrooms in a
     /// fungal grove, ladders) don't count as "embedded in rock".</summary>
