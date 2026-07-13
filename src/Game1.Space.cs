@@ -1370,7 +1370,7 @@ public sealed partial class DwarfMinerGame
             hazards.Count > 0 ? hazards : new List<string> { "NONE CHARTED" },
             hazards.Count > 0 ? new Color(255, 140, 110) : new Color(140, 220, 140), maxW);
 
-        if (def.Id is not ("rift" or "debug" or "hollow"))
+        if (def.Id is not ("rift" or "debug" or "hollow" or "moon"))
             lines.Add((_meta.CoreShards.Contains(def.Id) ? "CORE SHARD SECURED" : "CORE SHARD IN CORE",
                 _meta.CoreShards.Contains(def.Id) ? new Color(150, 230, 255) : grey, 1));
         if (def.Id == "hollow")
