@@ -43,7 +43,8 @@ public static class SpawnDirector
     /// place relative to the player, so this stocks the starting neighbourhood.</summary>
     public static void SpawnInitialFauna(Session run)
     {
-        for (var i = 0; i < 7; i++) TrySpawnSurfaceAnimal(run);
+        var surface = run.Def.Biome == "city" ? 14 : 7;
+        for (var i = 0; i < surface; i++) TrySpawnSurfaceAnimal(run);
         for (var i = 0; i < 6; i++) TrySpawnSkyAnimal(run);
         for (var i = 0; i < 12; i++) TrySpawnCreature(run);
     }
