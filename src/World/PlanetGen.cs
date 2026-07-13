@@ -161,7 +161,7 @@ public static class PlanetGen
                 ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy * 0.95f,
                 Titan: titan, CrystalPockets: rng.Next(2), FungalPockets: rng.Next(2),
                 SizeScale: size,
-                CityLots: 9 + rng.Next(5), LizardCities: 1,
+                CityLots: 13 + rng.Next(5),
                 Biome: "city", Difficulty: difficulty),
 
             Biome.Ocean => new(id, name,
