@@ -396,13 +396,7 @@ public static class SpawnDirector
         if (connected)
         {
             var special = Random.Shared.NextDouble();
-            // The belt natives own the Hollow's caves — nearly half of every spawn roll goes
-            // to the weird locals, so the asteroid never plays like a re-skinned cave world.
-            if (run.Def.Biome == "belt" && special < 0.45)
-                kind = special < 0.16 ? CreatureKind.Moonlet
-                     : special < 0.32 ? CreatureKind.VacLeech
-                     : CreatureKind.Glimmermaw;
-            else if (run.Def.Id == "rift" && special < 0.25)
+            if (run.Def.Id == "rift" && special < 0.25)
                 kind = CreatureKind.VoidWraith;
             else if (run.Def.CrystalPockets > 0 && depth > 40f && special < 0.18)
                 kind = CreatureKind.CrystalCrawler;
