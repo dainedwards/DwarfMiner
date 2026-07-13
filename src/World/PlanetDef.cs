@@ -150,7 +150,9 @@ public static class PlanetDefs
         SizeScale: 1.8f, LakeScale: 1.4f,
         AcidPools: 3, AcidRain: true,
         Volcanoes: 3, VolcanoScale: 1.1f,
-        CityLots: 3, LizardCities: 1,
+        // One civilisation per planet holds on the QA rig too: it keeps the tower district
+        // (city QA), and warren QA runs on slag/core via DM_AUTOSTART + DM_WARREN.
+        CityLots: 4,
         SurfaceBands: new[] { TileKind.Grass, TileKind.Snow, TileKind.Gravel, TileKind.Dirt, TileKind.Basalt },
         Biome: "debug", Difficulty: 1f);
 
