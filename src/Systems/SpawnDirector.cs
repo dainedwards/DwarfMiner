@@ -323,6 +323,7 @@ public static class SpawnDirector
         "ocean"   => CreatureKind.TidePuddler,
         "acid"    => CreatureKind.AcidStrider,
         "crystal" => CreatureKind.PrismSnail,
+        "city"    => CreatureKind.Civilian,
         "rift"    => null,
         "debug"   => AllSurfaceFauna[Random.Shared.Next(AllSurfaceFauna.Length)],
         _         => Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper,
