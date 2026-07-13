@@ -1154,16 +1154,16 @@ public sealed partial class DwarfMinerGame : Game
                 _run.Corpses.RemoveAt(i);
         }
 
-        // Gem drops: drain the cell sim's shatter queue into physical pickups. Each broken
-        // gem tile banks ¼ drop (four fine tiles = one legacy tile); a whole unit pops a
-        // Pickup with a celebratory hop. See Session.GemDropAccum for the economy note.
+        // Gem drops: drain the cell sim's shatter queue into physical pickups. An embedded
+        // gem popping out of its host is a whole drop; a legacy gem *tile* banks ¼ (four
+        // fine tiles made up one legacy tile) and pops when a unit accrues.
         if (_run.Cells.PendingGemDrops.Count > 0)
         {
-            foreach (var (gpos, gkind) in _run.Cells.PendingGemDrops)
+            foreach (var (gpos, gkind, whole) in _run.Cells.PendingGemDrops)
             {
                 if (Tiles.Drop(gkind) is not { } gd) continue;
                 _run.GemDropAccum.TryGetValue(gd.id, out var acc);
-                acc += gd.count / 4f;
+                acc += whole ? gd.count : gd.count / 4f;
                 while (acc >= 1f)
                 {
                     acc -= 1f;
@@ -1177,12 +1177,13 @@ public sealed partial class DwarfMinerGame : Game
             _run.Cells.PendingGemDrops.Clear();
         }
 
-        // Pickups — settle, magnet toward the dwarf, collect by touch. No decay and no
-        // distance cull: a dropped gem is exactly the thing the player came down here for.
+        // Pickups — settle where they fell and collect by walk-over (no magnet: the player
+        // goes to the gem). No decay and no distance cull: a dropped gem is exactly the
+        // thing the player came down here for.
         for (var i = _run.Pickups.Count - 1; i >= 0; i--)
         {
             var g = _run.Pickups[i];
-            g.Update(dt, _run.Planet, _run.Player);
+            g.Update(dt, _run.Planet);
             var reach = _run.Player.Radius + 3.5f;
             if ((g.Position - _run.Player.Position).LengthSquared() < reach * reach)
             {
