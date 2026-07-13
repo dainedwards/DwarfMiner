@@ -2568,6 +2568,32 @@ public static class SimTest
             if (world.Get(x, y) == TileKind.Dirt) dirtTiles++;
         Check($"hollow: no dirt anywhere ({dirtTiles} tiles)", dirtTiles == 0);
 
+        // Asteroid silhouette: the terrain line must swing by whole lobes — a potato, not a
+        // lathed circle — while a classic world's profile stays essentially flat.
+        float profLo = float.MaxValue, profHi = float.MinValue;
+        foreach (var s in world.SurfaceProfile!)
+        {
+            profLo = MathF.Min(profLo, s);
+            profHi = MathF.Max(profHi, s);
+        }
+        Check($"hollow: lumpy asteroid silhouette (terrain line swings {profHi - profLo:0} rings)",
+            profHi - profLo > 40f);
+        var roundWorld = WorldGen.Generate(1234, World.PlanetDefs.ById("verdant"));
+        float rLo = float.MaxValue, rHi = float.MinValue;
+        foreach (var s in roundWorld.SurfaceProfile!)
+        {
+            rLo = MathF.Min(rLo, s);
+            rHi = MathF.Max(rHi, s);
+        }
+        Check($"hollow: ordinary worlds stay round (verdant swings {rHi - rLo:0} rings)",
+            rHi - rLo < 10f);
+        // The local terrain line is what depth reads against: a lobe crest and a lobe
+        // valley on the same world must disagree about where "the surface" is.
+        Check("hollow: SurfaceRadiusAt follows the lumps",
+            MathF.Abs(world.SurfaceRadiusAt(world.Center + new Vector2(2000f, 0f))
+                    - world.SurfaceRadiusAt(world.Center + new Vector2(0f, 2000f))) > 3f
+            || profHi - profLo <= 40f);
+
         // The Great Geode: the same seed without the flag must have far fewer open tiles in
         // the geode's depth band (55-70 legacy tiles down, ±2 for the carve radius).
         int OpenInBand(Planet p)
