@@ -1041,6 +1041,35 @@ public sealed class Creature
         }
     }
 
+    /// <summary>Peacekeeper: the city militia. Off duty it walks a beat like any citizen.
+    /// When Game1's militia pass hands it a target (the nearest hostile invader, or the
+    /// titan), it advances to firing range and holds there, facing the threat — the actual
+    /// bolts are fired by Game1, which owns both the creature list and the projectile
+    /// list. It never targets the dwarf: the player is a fellow neutral to the city.</summary>
+    private void TickPeacekeeper(float dt, Planet planet, Vector2 up, Vector2 right, float speedMul)
+    {
+        if (_swing > 0f) _swing -= dt;
+        if (GuardTarget is { } threat)
+        {
+            var toThreat = threat - Position;
+            var tDist = Vector2.Dot(toThreat, right);
+            // Close to firing range, but hold a standoff band — militia don't melee.
+            var moveAxis = 0f;
+            if (MathF.Abs(tDist) > 130f) moveAxis = MathF.Sign(tDist);
+            else if (MathF.Abs(tDist) < 45f) moveAxis = -MathF.Sign(tDist) * 0.7f;
+            GroundMove(dt, planet, up, right, moveAxis, speedMul);
+            return;
+        }
+        // Quiet street: walk the beat (grazer amble, no flee — this one doesn't spook).
+        Wander -= dt;
+        if (Wander <= 0)
+        {
+            Wander = 2f + (float)Random.Shared.NextDouble() * 3f;
+            _amble = Random.Shared.Next(3) - 1;
+        }
+        GroundMove(dt, planet, up, right, _amble * 0.5f, speedMul);
+    }
+
     // ---------------------------------------------------------------- sky fauna
 
     private void TickFlyer(float dt, Planet planet, Vector2 up, Vector2 right,
