@@ -195,11 +195,11 @@ public static class PlanetDefs
         QuakeScale: 1.0f, CaveSpawnCap: 18,
         ShipOre: "platinum", ShipOreCount: 5,
         OxygenDrainScale: 2.6f,
-        Titan: TitanKind.Mecha,
+        Titan: TitanKind.CosmicOctopus,
         CrystalPockets: 3,
         SizeScale: 1.5f,
         Biome: "belt", Difficulty: 0.85f,
-        GravityScale: 0.45f, Airless: true, Craters: 8, GreatGeode: true);
+        GravityScale: 0.25f, Airless: true, Craters: 8, GreatGeode: true);
 
     public static readonly PlanetDef[] Classic =
     {
