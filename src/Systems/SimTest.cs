@@ -2547,19 +2547,26 @@ public static class SimTest
     private static void TestHollow()
     {
         var def = World.PlanetDefs.HollowWorld;
-        Check("hollow: def is airless, low-g, dead rock",
-            def.Airless && def.GravityScale < 0.6f && def.LavaFillFrac == 0f && !def.HasWater);
+        Check("hollow: def is airless, quarter-g, dead rock, starspawn-guarded",
+            def.Airless && def.GravityScale <= 0.25f && def.LavaFillFrac == 0f && !def.HasWater
+            && def.Titan == TitanKind.CosmicOctopus);
         Check("hollow: id resolves without an Activated chain",
             World.PlanetDefs.ById("hollow").Id == "hollow");
         Check("hollow: vac suit line exists in the foundry",
             Array.Exists(Space.Upgrades.All, u => u.Id == "vacsuit"));
 
         var world = WorldGen.Generate(1234, def);
-        Check("hollow: gravity scale stamped on the planet",
-            MathF.Abs(world.GravityScale - def.GravityScale) < 0.001f);
+        Check("hollow: gravity scale + airless flag stamped on the planet",
+            MathF.Abs(world.GravityScale - def.GravityScale) < 0.001f && world.Airless);
         Check("hollow: dead rock seeds no lava/water/acid/gas",
             world.LavaSeeds.Count == 0 && world.WaterSeeds.Count == 0
             && world.AcidSeeds.Count == 0 && world.GasSeeds.Count == 0);
+
+        // Asteroids grow no soil: the whole world must be dirt-free (regolith gravel instead).
+        var dirtTiles = 0;
+        foreach (var (x, y) in world.AllTiles())
+            if (world.Get(x, y) == TileKind.Dirt) dirtTiles++;
+        Check($"hollow: no dirt anywhere ({dirtTiles} tiles)", dirtTiles == 0);
 
         // The Great Geode: the same seed without the flag must have far fewer open tiles in
         // the geode's depth band (55-70 legacy tiles down, ±2 for the carve radius).
