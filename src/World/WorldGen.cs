@@ -548,8 +548,13 @@ public static class WorldGen
                         continue;
                     }
                     var k = TileKind.Basalt;
-                    if (f < craterFrac + 0.1f)
-                        k = rng.Next(3) == 0 ? TileKind.Obsidian : TileKind.Basalt;
+                    // Acid craters get an all-obsidian bowl + rim: vitriol pooled (or slopped
+                    // above the fill line) in the mouth can't corrode its way out through the
+                    // cone the way it eats basalt. Lava craters keep the basalt/obsidian mix
+                    // (lava can't melt basalt anyway).
+                    if (f < craterFrac + 0.15f)
+                        k = def.VolcanoAcid ? TileKind.Obsidian
+                            : rng.Next(3) == 0 ? TileKind.Obsidian : TileKind.Basalt;
                     else if (f > 0.55f && above > h - 1.5f * S)
                         k = TileKind.Gravel;                       // ash skirt
                     planet.SetWall(r, t, TileKind.Basalt);
