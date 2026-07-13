@@ -699,27 +699,51 @@ public sealed class Cells
 
     /// <summary>Press the tile's grains into a Conglomerate: record the exact cell makeup
     /// (so breaking it spills the same cells back out), blend a display tint, clear the
-    /// cells, and stamp the solid tile.</summary>
+    /// cells, and stamp the solid tile. Voids are filled by pulling grains down from the
+    /// column above (compression — the pile visibly settles), never invented.</summary>
     private void Compact(int tx, int ty)
     {
         var c0y = tx * Density;
         var c0x = ty * Density;
         var counts = new Dictionary<(byte mat, byte src), byte>();
         int rSum = 0, gSum = 0, bSum = 0, n = 0;
+        void Absorb(int i)
+        {
+            var m = (Material)_mat[i];
+            var key = ((byte)m, _srcTile[i]);
+            counts.TryGetValue(key, out var c);
+            counts[key] = (byte)(c + 1);
+            var col = GrainColor(m, (TileKind)_srcTile[i]);
+            rSum += col.R; gSum += col.G; bSum += col.B; n++;
+            _mat[i] = 0;
+            _srcTile[i] = 0;
+            ClearKinetics(i);
+        }
         for (var dy = 0; dy < Density; dy++)
             for (var dx = 0; dx < Density; dx++)
             {
                 var i = Idx(c0x + dx, c0y + dy);
-                var m = (Material)_mat[i];
-                if (m == Material.Empty) continue;
-                var key = ((byte)m, _srcTile[i]);
-                counts.TryGetValue(key, out var c);
-                counts[key] = (byte)(c + 1);
-                var col = GrainColor(m, (TileKind)_srcTile[i]);
-                rSum += col.R; gSum += col.G; bSum += col.B; n++;
-                _mat[i] = 0;
-                _srcTile[i] = 0;
-                ClearKinetics(i);
+                if ((Material)_mat[i] != Material.Empty) { Absorb(i); continue; }
+                // Void: press a grain down out of the column above this cell. Grains can
+                // arc over interior gaps, so empties along the way are skipped; anything
+                // non-grain seals the column and the void just stays a void.
+                var cx = c0x + dx;
+                var cy = c0y + Density - 1;
+                for (var k = 0; k < Density * CompactPressureCap; k++)
+                {
+                    (cx, cy) = OuterCell(cx, cy);
+                    if (cy >= Height || IsBlocked(cx, cy) && _mat[Idx(cx, cy)] == 0) break;
+                    var gi = Idx(cx, cy);
+                    var gm = (Material)_mat[gi];
+                    if (gm == Material.Empty) continue;
+                    if (!Materials.IsCompactable(gm)) break;
+                    Absorb(gi);
+                    // The theft leaves a hole mid-pile: wake the neighbourhood so grains
+                    // above sift down, and let the donor tile earn a fresh window.
+                    WakeNeighbors(cx, cy);
+                    RecordRest(cx, cy);
+                    break;
+                }
             }
         if (n == 0) return;
 
