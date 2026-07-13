@@ -383,10 +383,13 @@ public static class SpawnDirector
         alt = MathF.Min(alt, (run.Planet.Radius - 12) * Planet.TileSize);
         var pos = run.Planet.Center + dir * alt;
         if ((pos - run.Player.Position).Length() < 160f) return;
-        // The Rift's sky belongs to null moths — its one neutral species. Everywhere else
-        // flies the moth/stinger mix (the debug rig throws null moths into the pot too).
+        // The Rift's sky belongs to null moths — its one neutral species. City skies are
+        // patrolled by guard saucers (with the odd wild moth drifting through); everywhere
+        // else flies the moth/stinger mix (the debug rig throws null moths into the pot too).
         var kind = run.Def.Biome == "rift"
             ? CreatureKind.NullMoth
+            : run.Def.Biome == "city" && Random.Shared.NextDouble() < 0.7
+                ? CreatureKind.Saucer
             : run.Def.Biome == "debug" && Random.Shared.Next(3) == 0
                 ? CreatureKind.NullMoth
                 : Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth : CreatureKind.SkyStinger;
