@@ -3090,6 +3090,18 @@ public sealed partial class DwarfMinerGame : Game
                         new Vector2(6f, 2f), Color.White, sAng);
                     break;
                 }
+                case TitanShotKind.Void:
+                {
+                    // Null-energy orb: a black core wrapped in a violet corona, trailing a
+                    // twinkle — reads as a little collapsed star drifting at you.
+                    var wob = (float)Random.Shared.NextDouble() * 1.2f;
+                    _renderer.DrawCircle(shot.Position, shot.Radius + 2f + wob, new Color(150, 90, 230));
+                    _renderer.DrawCircle(shot.Position, shot.Radius, new Color(18, 10, 30));
+                    if (Random.Shared.Next(3) == 0)
+                        _renderer.DrawRect(shot.Position - Vector2.Normalize(shot.Velocity) * (shot.Radius + 3f),
+                            new Vector2(1.6f, 1.6f), Color.White);
+                    break;
+                }
                 default:   // Laser
                 {
                     var ang = MathF.Atan2(shot.Velocity.Y, shot.Velocity.X);
