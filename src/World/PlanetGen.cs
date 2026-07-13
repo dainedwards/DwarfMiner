@@ -317,6 +317,10 @@ public static class PlanetGen
         return $"World{used.Count}";
     }
 
+    /// <summary>Legged kinds — everything except the slithering Sandworm and the two flyers.</summary>
+    private static bool Walks(TitanKind k)
+        => k is not (TitanKind.Sandworm or TitanKind.Pyrodactyl or TitanKind.Vitriodactyl);
+
     private static void Shuffle<T>(Random rng, IList<T> list)
     {
         for (var i = list.Count - 1; i > 0; i--)
