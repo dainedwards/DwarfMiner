@@ -17,7 +17,7 @@ public static class RunSave
 {
     // Bump when the format or the planet/cell geometry changes — old saves are discarded.
     // v8: 4-px tiles (doubled ring geometry) + Conglomerate composition table.
-    private const int Version = 8;
+    private const int Version = 9;   // 9: planet gem-overlay section
     private const uint Magic = 0x444D5253; // "DMRS"
 
     private static string SavePath
