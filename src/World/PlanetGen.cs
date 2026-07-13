@@ -68,6 +68,20 @@ public static class PlanetGen
         var shipOre = new[] { "gold", "gold", "sapphire", "ruby", "platinum", "diamond", "diamond" };
         var shipOreCount = new[] { 3, 4, 4, 4, 5, 5, 6 };
 
+        // Rare-metal chart: gold and silver only exist on worlds that carry a vein bias
+        // (WorldGen's base thresholds for them are unreachable, like voidstone's). The two
+        // gold-signature starts always have gold; beyond that each world rolls its own
+        // chart, with at least one silver world guaranteed per campaign, and the frosty and
+        // metal-rich biomes favouring silver and gold respectively (rolled in Stamp).
+        var goldVein = new bool[7];
+        var silverVein = new bool[7];
+        for (var i = 0; i < 7; i++)
+        {
+            goldVein[i] = shipOre[i] == "gold" || rng.Next(4) == 0;
+            silverVein[i] = rng.Next(3) == 0;
+        }
+        silverVein[rng.Next(7)] = true;
+
         var usedNames = new HashSet<string>();
         for (var i = 0; i < 7; i++)
         {
