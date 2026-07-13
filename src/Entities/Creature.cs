@@ -281,7 +281,17 @@ public sealed class Creature
         or CreatureKind.SnowLoper or CreatureKind.CinderSkink or CreatureKind.RustBack
         or CreatureKind.TidePuddler or CreatureKind.AcidStrider or CreatureKind.PrismSnail
         or CreatureKind.Civilian or CreatureKind.Peacekeeper;
-    public bool IsCaveKind => !IsSkyKind && !IsSurfaceKind;
+    /// <summary>Aquatic-only kinds — spawned into water by the director's lake spawner and
+    /// budgeted separately from every land habitat.</summary>
+    public bool IsWaterKind => Kind is CreatureKind.AlienWhale or CreatureKind.AlienCrab;
+    public bool IsCaveKind => !IsSkyKind && !IsSurfaceKind && !IsWaterKind;
+
+    /// <summary>Land kinds that can also swim: submerged, buoyancy replaces the plummet
+    /// (see the swim block in <see cref="Update"/>). Amphibians paddle by nature; lizardmen
+    /// swim like the reptiles they are — a lake is no moat against the warren; grubs are
+    /// sealed, buoyant sacks. Everything else sinks and walks the bottom.</summary>
+    public bool Swims => Kind is CreatureKind.TidePuddler or CreatureKind.Lizardman
+        or CreatureKind.Grub or CreatureKind.AlienWhale;
 
     /// <summary><paramref name="shots"/> is the shared enemy-shot list (the Titan's): ranged
     /// creatures (acid spitters, crystal crawlers) add their projectiles to it and the existing
