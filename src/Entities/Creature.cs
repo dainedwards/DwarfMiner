@@ -1232,6 +1232,60 @@ public sealed class Creature
         Velocity = Vector2.Lerp(Velocity, desired, MathF.Min(1f, 3.5f * dt));
     }
 
+    // ---------------------------------------------------------------- aquatic fauna
+
+    /// <summary>Alien whale: a slow leviathan lapping its basin. It cruises tangentially,
+    /// turning when the shore (or the water's edge) looms; a lazy sine bob keeps it moving
+    /// through the column, diving when its back breaks the surface and lifting off the
+    /// floor. Out of water (a drained lake, a breach carried too far) it beaches — heavy,
+    /// helpless, flopping under gravity until water finds it again.</summary>
+    private void TickWhale(float dt, Planet planet, Cells cells, Vector2 up, Vector2 right,
+        float speedMul)
+    {
+        if (cells.CountWaterNear(Position, Radius) < 4)
+        {
+            var vT0 = MoveToward(Vector2.Dot(Velocity, right), 0f, 200f * dt);
+            var vN0 = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -200f);
+            Velocity = right * vT0 + up * vN0;
+            return;
+        }
+
+        Wander += dt;
+        // Lap the basin: shore or dry water ahead turns the cruise around.
+        var ahead = Position + right * (_orbitSign * (Radius + 14f));
+        if (planet.IsSolidAt(ahead) || cells.CountWaterNear(ahead, 4f) < 3)
+            _orbitSign = -_orbitSign;
+
+        // Depth-keeping: bob through the column, dive off the surface, lift off the floor.
+        var wantN = MathF.Sin(Wander * 0.6f + _phase) * 9f;
+        if (cells.CountWaterNear(Position + up * (Radius + 3f), 3f) < 2) wantN = -16f;
+        else if (planet.IsSolidAt(Position - up * (Radius + 5f))) wantN = 14f;
+
+        var vT = MoveToward(Vector2.Dot(Velocity, right), _orbitSign * MoveSpeed * speedMul, 60f * dt);
+        var vN = MoveToward(Vector2.Dot(Velocity, up), wantN, 120f * dt);
+        Velocity = right * vT + up * vN;
+    }
+
+    /// <summary>Alien crab: an armoured scuttler that walks the lakebed. Placid at range,
+    /// but anything that wades inside its patch gets rushed and pinched — a short fuse and
+    /// a short memory, so backing out of the territory ends the fight.</summary>
+    private void TickCrab(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul)
+    {
+        float moveAxis;
+        if (dist < 110f)
+        {
+            moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right)) * 1.3f;   // territorial rush
+        }
+        else
+        {
+            Wander -= dt;
+            if (Wander <= 0) Wander = 2f + (float)Random.Shared.NextDouble() * 3f;
+            moveAxis = MathF.Sin(Wander * 2.2f) * 0.4f;                   // sideways shuffle
+        }
+        GroundMove(dt, planet, up, right, moveAxis, speedMul);
+    }
+
     // ---------------------------------------------------------------- sky fauna
 
     private void TickFlyer(float dt, Planet planet, Vector2 up, Vector2 right,
