@@ -277,6 +277,12 @@ public sealed class Creature
             case CreatureKind.VoidBarnacle:
                 Radius = 4.5f; Health = 40f; MoveSpeed = 0f; ContactDamage = 15f;
                 break;
+            case CreatureKind.Selenite:
+                Radius = 3.2f; Health = 14f; MoveSpeed = 78f; ContactDamage = 9f;
+                break;
+            case CreatureKind.DustDevil:
+                Radius = 4f; Health = 16f; MoveSpeed = 62f; ContactDamage = 7f;
+                break;
         }
     }
 
