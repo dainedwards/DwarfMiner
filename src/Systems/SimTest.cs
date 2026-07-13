@@ -1413,12 +1413,14 @@ public static class SimTest
                     kaiju.Update(dt, planet, physics, cells, kaiju.Position + new Vector2(900f, 0), boulders, shots);
                 }
             }
-            Lean(30);   // half a second of leaning
-            Check($"defense: half a second of titan contact barely marks the wall ({BrokenTiles()} broken)",
+            // The wrecking bite hits HARD now (a kaiju is the one thing a city can't shrug
+            // off): the first instants only crack the wall, but a few seconds level it.
+            Lean(9);    // 0.15s — one bite: cracked, not breached
+            Check($"defense: an instant of titan contact only cracks the wall ({BrokenTiles()} broken)",
                 BrokenTiles() <= 2);
-            Lean(60 * 12);
-            Check($"defense: twelve seconds of titan wrecking breaches it ({BrokenTiles()} broken)",
-                BrokenTiles() > 4);
+            Lean(60 * 4);
+            Check($"defense: four seconds of titan wrecking tears it open ({BrokenTiles()} broken)",
+                BrokenTiles() > 8);
         }
 
         // --- 6. Warren war-cry: the first sighting raises the backup flag, and a rallied
