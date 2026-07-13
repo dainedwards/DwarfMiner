@@ -320,6 +320,7 @@ public sealed partial class DwarfMinerGame
         _space.HasShield = Upgrades.Owned(_meta, "shield");
         _space.ShieldTier = Upgrades.Owned(_meta, "shield2") ? 2 : 1;
         _space.FreeThrust = Upgrades.Owned(_meta, "voidcore");
+        _space.VacSuitLocked = !Upgrades.Owned(_meta, "vacsuit");
     }
 
     /// <summary>Boot-time restore of the persisted mothership: park where you left it (with
