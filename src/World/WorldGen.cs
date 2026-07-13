@@ -55,8 +55,11 @@ public static class WorldGen
             lumpLobes = MakeAngularNoise(rng, 6);
             lumpDents = MakeAngularNoise(rng, 16);
         }
+        // Downward-biased on purpose: crests share the fixed sky headroom with mountains,
+        // but valleys have the whole crust below them — so the potato shape comes mostly
+        // from deep scalloped dips, with modest rises between them.
         float LumpAt(float a) => lumpLobes is null ? 0f
-            : (AngularSample(lumpLobes, a) * 1.5f + AngularSample(lumpDents!, a) * 0.5f)
+            : (AngularSample(lumpLobes, a) * 1.5f + AngularSample(lumpDents!, a) * 0.5f - 0.3f)
               * def.Lumpiness * S;
 
         // Explicit mountain placements — each roll is a massif: a main peak flanked by 1-3
