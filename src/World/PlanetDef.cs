@@ -168,6 +168,36 @@ public static class PlanetDefs
         SurfaceBands: new[] { TileKind.Grass, TileKind.Snow, TileKind.Gravel, TileKind.Dirt, TileKind.Basalt },
         Biome: "debug", Difficulty: 1f);
 
+    /// <summary>The Hollow: a mega-asteroid on the belt at the edge of the system, big
+    /// enough to land on and mine like a planet — but airless, so the mothership can't make
+    /// entry until the Vac Suit is installed (see Upgrades "vacsuit" + SpaceSim's bounce).
+    /// Half gravity, a meteor-pocked surface (thin-air cadence keeps the strikes coming),
+    /// no lava and no water anywhere — just cold rock, the richest rare-metal chart in the
+    /// system (platinum signature, gold AND silver veins, voidstone outside the Rift), and
+    /// the Great Geode: a vast crystal-lined hollow at its heart. It holds no core shard —
+    /// the hoard is the prize — and its caves belong to the weird belt natives (Moonlet,
+    /// VacLeech, Glimmermaw). A dead Mecha-Titan egg still guards the rock.</summary>
+    public static readonly PlanetDef HollowWorld = new("hollow", "The Hollow",
+        "Mega-asteroid in the outer belt - airless, half gravity, absurdly rich",
+        new Color(138, 132, 122), new Color(212, 202, 182),
+        TileKind.Gravel,
+        LakeMin: 0, LakeExtra: 0, MountainMin: 7, MountainExtra: 3,
+        MountainHeightScale: 0.55f, LavaFillFrac: 0f, HasWater: false,
+        OreBias: new[]
+        {
+            (TileKind.PlatinumOre, 0.035f), (TileKind.GoldOre, 0.13f), (TileKind.SilverOre, 0.13f),
+            (TileKind.IronOre, 0.03f), (TileKind.Diamond, 0.02f), (TileKind.Emerald, 0.018f),
+            (TileKind.Voidstone, 0.105f),
+        },
+        QuakeScale: 1.0f, CaveSpawnCap: 18,
+        ShipOre: "platinum", ShipOreCount: 5,
+        OxygenDrainScale: 2.6f,
+        Titan: TitanKind.Mecha,
+        CrystalPockets: 3,
+        SizeScale: 1.5f,
+        Biome: "belt", Difficulty: 0.85f,
+        GravityScale: 0.45f, Airless: true, Craters: 8, GreatGeode: true);
+
     public static readonly PlanetDef[] Classic =
     {
         new("verdant", "Verdant", "Gentle green start, lakes, moss, iron",
