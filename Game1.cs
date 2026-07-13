@@ -410,6 +410,10 @@ public sealed partial class DwarfMinerGame : Game
         _scanTimer = 0f;
         _scanFuel = null;
         _scanOre = null;
+        _gravityWellTimer = 0f;
+        // The Starspawn's egg is buried near the core — carve its nest cavern so the shell
+        // rests in a real chamber the player breaks INTO, not a ghost drawn inside rock.
+        if (_run.Titan.Kind == TitanKind.CosmicOctopus) CarveTitanNest();
         SpawnDirector.SpawnInitialFauna(_run);
         // DM_FAUNA=1 parades the biome fauna beside the spawn so tooling can screenshot
         // creature art without hunting for natural spawns.
