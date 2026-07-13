@@ -482,6 +482,40 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
+    /// <summary>Open the Starspawn's nest: a spherical cavern around the buried egg (plus a
+    /// little headroom above it), so the deep boss sits in a chamber the player mines into
+    /// rather than a sprite entombed in solid rock. Anchored tiles (the core itself) stay.</summary>
+    private void CarveTitanNest()
+    {
+        var planet = _run.Planet;
+        var egg = _run.Titan.Position;
+        var up = planet.UpAt(egg);
+        const float radius = 64f;
+        var centre = egg + up * 18f;   // bias the dome upward so the egg rests on the floor
+        var (er, _) = planet.WorldToTile(centre);
+        var span = (int)(radius / Planet.TileSize) + 2;
+        var rel = centre - planet.Center;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
+        for (var dr = -span; dr <= span; dr++)
+        {
+            var r = er + dr;
+            if (r < 1 || r >= planet.Rings) continue;
+            var n = planet.TilesAt(r);
+            var t0 = (int)(ang / MathHelper.TwoPi * n);
+            for (var dt2 = -span * 3; dt2 <= span * 3; dt2++)
+            {
+                var t = ((t0 + dt2) % n + n) % n;
+                var pos = planet.TileToWorld(r, t);
+                if ((pos - centre).Length() > radius) continue;
+                var k = planet.Get(r, t);
+                if (k == TileKind.Sky || Tiles.IsAnchored(k)) continue;
+                planet.Set(r, t, TileKind.Sky);
+                _run.Physics.MarkDirty(r, t);
+            }
+        }
+    }
+
     /// <summary>First active-chain planet matching the probe (DM_AUTOSTART biome aliases).</summary>
     private static PlanetDef FirstDef(Func<PlanetDef, bool> probe)
     {
