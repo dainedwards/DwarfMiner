@@ -302,6 +302,7 @@ public static class SimTest
         TestVolcanoes();
         TestCities();
         TestCityDefense();
+        TestAquatics();
         TestSpaceSim();
 
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
