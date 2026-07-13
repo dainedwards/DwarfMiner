@@ -1096,6 +1096,12 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
+        // City disaster response: while any disaster is live, the citizens and their militia
+        // take cover in the towers (set per-creature below). The buildings shrug the disaster
+        // off (anchored, non-meltable, non-corrodible tiles) and the saucers keep patrolling —
+        // only the on-foot aliens run for shelter.
+        var cityCover = _run.Def.Biome == "city" && AmbientDirector.DisasterActive(_run);
+
         // Update entities. Creatures that have drifted far outside the player's neighbourhood
         // are recycled — they'd never be met again, they eat sim time, and every recycled
         // body frees local-population budget so the spawner keeps the area around the player
@@ -1103,6 +1109,7 @@ public sealed partial class DwarfMinerGame : Game
         for (var i = _run.Creatures.Count - 1; i >= 0; i--)
         {
             var c = _run.Creatures[i];
+            c.TakeCover = cityCover && c.Kind is CreatureKind.Civilian or CreatureKind.Peacekeeper;
             c.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player, _run.TitanShots);
             if (c.Health <= 0)
             {
