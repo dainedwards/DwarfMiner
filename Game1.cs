@@ -710,6 +710,8 @@ public sealed partial class DwarfMinerGame : Game
         run.Player.HasGills = Upgrades.Owned(_meta, "gills");
         run.Player.Breath = run.Player.EffectiveMaxBreath;
         if (Upgrades.Owned(_meta, "vitality")) run.Player.MaxHealth = 140f;
+        // Gravity isn't in the run save — it's def-derived, like the foundry gear above.
+        run.Player.Gravity = 320f * run.Def.GravityScale;
         // Loading woke every cell; burn the resettle here like world gen's pre-settle pass.
         for (var i = 0; i < 45; i++) _run.Cells.Update(1f / 60f);
         // Creatures aren't saved — re-seed the planet-wide resident census (cities staffed,
