@@ -172,14 +172,17 @@ public static class PlanetDefs
         Biome: "debug", Difficulty: 1f);
 
     /// <summary>The Hollow: a mega-asteroid on the belt at the edge of the system, big
-    /// enough to land on and mine like a planet — but airless, so the mothership can't make
-    /// entry until the Vac Suit is installed (see Upgrades "vacsuit" + SpaceSim's bounce).
-    /// Half gravity, a meteor-pocked surface (thin-air cadence keeps the strikes coming),
-    /// no lava and no water anywhere — just cold rock, the richest rare-metal chart in the
-    /// system (platinum signature, gold AND silver veins, voidstone outside the Rift), and
-    /// the Great Geode: a vast crystal-lined hollow at its heart. It holds no core shard —
-    /// the hoard is the prize — and its caves belong to the weird belt natives (Moonlet,
-    /// VacLeech, Glimmermaw). A dead Mecha-Titan egg still guards the rock.</summary>
+    /// enough to land on and mine like a planet — but truly airless: no atmosphere in the
+    /// sky (space-black from the ground, stars at noon), no air to breathe anywhere (the
+    /// suit recycler only tops up slowly under the open sky), and no entry at all until the
+    /// Vac Suit is installed (see Upgrades "vacsuit" + SpaceSim's bounce). Quarter gravity,
+    /// a meteor-pocked cratered surface, no dirt/lava/water — just cold regolith over rock,
+    /// the richest rare-metal chart in the system (platinum signature, gold AND silver
+    /// veins, voidstone outside the Rift), and the Great Geode: a vast crystal-lined hollow
+    /// at its heart. It holds no core shard — the hoard is the prize — and NOTHING ordinary
+    /// lives here: the caves and vacuum sky belong only to the belt natives (Moonlet,
+    /// VacLeech, Glimmermaw, VoidBarnacle, StarJelly). The Starspawn — a cosmic octopus —
+    /// incubates in an egg buried near the core, guarding the deepest riches.</summary>
     public static readonly PlanetDef HollowWorld = new("hollow", "The Hollow",
         "Mega-asteroid in the outer belt - airless, half gravity, absurdly rich",
         new Color(138, 132, 122), new Color(212, 202, 182),
