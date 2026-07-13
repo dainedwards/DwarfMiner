@@ -318,7 +318,7 @@ public static class WorldGen
                         if (def.SeedsGas && depth > 34f
                             && SampleNoise(pocketNoise, wx * 0.06f + 21f, wy * 0.06f + 21f) > 0.80f)
                             planet.GasSeeds.Add((r, t));
-                        else if (def.SeedsAcid && depth > 18f && depth < 78f
+                        else if (false && def.SeedsAcid && depth > 18f && depth < 78f
                             && SampleNoise(oreNoise, wx * 0.06f + 31f, wy * 0.06f + 31f) > 0.82f)
                             planet.AcidSeeds.Add((r, t));
                     }
