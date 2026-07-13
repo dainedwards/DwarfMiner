@@ -749,7 +749,7 @@ public static class WorldGen
             // Rooftop furniture, by class: spires carry the beacon-tipped antenna mast,
             // low-rises a stepped crown or a glass conservatory dome, mid-rises any of the
             // three — so the skyline tops read varied instead of stamped.
-            var roofStyle = classRoll >= 0.75 ? 0 : classRoll < 0.30 ? 1 + rng.Next(2) : rng.Next(3);
+            var roofStyle = classRoll >= 0.60 ? 0 : classRoll < 0.18 ? 1 + rng.Next(2) : rng.Next(3);
             if (roofStyle == 0)
             {
                 // Antenna mast: a thin anchored spike off the roof with a glowing beacon tip.
