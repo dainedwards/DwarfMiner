@@ -36,6 +36,13 @@ public enum TileKind : byte
     /// lives in Planet's composition side table and spills back out when the tile breaks, so
     /// dust value is conserved through compaction. See Cells' compaction sweep.</summary>
     Conglomerate = 30,
+    // City-world architecture: alien skyscraper hull plating and its glowing window glass.
+    // Both are anchored (engineered structures don't cave in) but mineable, so a dwarf can
+    // break into an apartment the hard way. Values append so RunSave's byte cast stays valid.
+    AlienAlloy = 31,
+    CityGlass = 32,
+    // Carved masonry of the underground lizardmen cities — scaled sandstone brick.
+    LizardBrick = 33,
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
