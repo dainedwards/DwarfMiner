@@ -2224,7 +2224,7 @@ public static class SimTest
         Check("scanner: ore ids map to ore tiles",
             Scanner.OreTileFor("ruby") == TileKind.Ruby && Scanner.OreTileFor("platinum") == TileKind.PlatinumOre);
 
-        // Tier-III effects: jetpack charge/climb curve, magnet reach, O2 ceiling, hull 9,
+        // Tier-III effects: jetpack charge/climb curve, O2 ceiling, hull 9,
         // and the Aegis shield recharge.
         var tiers = new Player(Vector2.Zero) { HasJetpack = true };
         var cap1 = tiers.JetChargeCap;
