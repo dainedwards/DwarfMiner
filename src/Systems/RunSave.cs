@@ -146,6 +146,7 @@ public static class RunSave
             run.Planet = new Planet(new Vector2(2400, 2400), Planet.RingsFor(def.SizeScale))
             {
                 GravityScale = def.GravityScale,   // def-derived, not in the save
+                Airless = def.Airless,
             };
             run.Planet.ReadState(r);
             run.Cells = new Cells(run.Planet);
