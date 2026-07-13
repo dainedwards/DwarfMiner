@@ -30,8 +30,16 @@ public sealed class Physics
     private readonly Cells _cells;
     private readonly HashSet<int> _dirty = new();
     private readonly Queue<int> _processQueue = new();
-    private readonly HashSet<int> _anchoredCache = new();
-    private readonly HashSet<int> _floodVisited = new();
+    // Flood-fill visited/anchored sets as generation-stamped arrays instead of HashSets:
+    // membership is one array compare, "clear" is bumping the generation. The flood is the
+    // innermost loop of cave-in detection and earthquakes re-flood thousands of tiles per
+    // settle pass, so hashing here dominated disaster frames. _floodVisitList keeps the
+    // current flood's tiles enumerable for promotion into the anchored stamp.
+    private readonly int[] _anchorStamp;
+    private readonly int[] _floodStamp;
+    private int _anchorGen = 1;
+    private int _floodGen = 1;
+    private readonly List<int> _floodVisitList = new();
     private readonly Stack<int> _floodStack = new();
     private readonly List<int> _floodRegion = new();
     private float _settleAccum;
