@@ -1210,7 +1210,7 @@ public sealed class Titan
         }
 
         if (worm && canMine) _biteTimer = 0.18f;
-        if (wrecked) _wreckTimer = 0.3f;
+        if (wrecked) _wreckTimer = 0.2f;   // was 0.3 — titans batter architecture 50% faster
     }
 
     /// <summary>Tangent sign (-1/0/+1) pointing the roam at the nearest city tower by
