@@ -211,7 +211,7 @@ public static class PlanetDefs
         CrystalPockets: 3,
         SizeScale: 1.5f,
         Biome: "belt", Difficulty: 0.85f,
-        GravityScale: 0.25f, Airless: true, Craters: 8, GreatGeode: true, Lumpiness: 20f);
+        GravityScale: 0.25f, Airless: true, Craters: 8, GreatGeode: true, Lumpiness: 30f);
 
     public static readonly PlanetDef[] Classic =
     {
