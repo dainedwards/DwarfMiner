@@ -217,14 +217,19 @@ public sealed class Renderer
                 var t = ((ti % tpr) + tpr) % tpr;
                 var k = planet.Get(r, t);
 
-                var centre = planet.TileToWorld(r, t);
+                // Analytic polar transform: the loop index fixes the tile's angle, so centre,
+                // up and rotation all come from one cos+sin — no TileToWorld re-wrap, no UpAt
+                // normalize, no Atan2 per visible tile (rotation of a radial quad is just the
+                // tile angle + 90°).
+                var angle = (t + 0.5f) / tpr * MathHelper.TwoPi;
+                var up = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+                var centre = planet.Center + up * ringRadius;
                 // Cull tiles whose centre is too far from the viewport rect (cheap secondary check).
                 if (centre.X < minX - chord || centre.X > maxX + chord ||
                     centre.Y < minY - chord || centre.Y > maxY + chord)
                     continue;
 
-                var up = planet.UpAt(centre);
-                var rotation = MathF.Atan2(up.X, -up.Y);
+                var rotation = angle + MathHelper.PiOver2;
                 var right = new Vector2(-up.Y, up.X);
                 var size = new Vector2(chord + 1f, Planet.TileSize + 1f); // +1 px overlap kills sub-pixel seams between neighbours
                 var hash = (r * 73856093) ^ (t * 19349663);
