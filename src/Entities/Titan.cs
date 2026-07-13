@@ -1697,8 +1697,9 @@ public sealed class TitanLeg
 /// Laser is a fast bolt from the Mecha's mouth; Acid is a lofted glob that arcs under
 /// gravity and bursts into live acid cells (Otachi's spit, the Vitriodactyl's rain); Spike
 /// is a straight bolt from Slattern's tail fan; Lava is the Pyrodactyl's ballistic gout
-/// that bursts into live lava cells where it lands.</summary>
-public enum TitanShotKind { Flame, Laser, Acid, Spike, Lava }
+/// that bursts into live lava cells where it lands; Void is the Starspawn's slow fat
+/// null-energy orb — it doesn't splash or drill, it just hurts.</summary>
+public enum TitanShotKind { Flame, Laser, Acid, Spike, Lava, Void }
 
 public sealed class TitanProjectile
 {
