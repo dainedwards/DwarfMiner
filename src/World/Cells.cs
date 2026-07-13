@@ -822,7 +822,7 @@ public sealed class Cells
         var bounced = false;
         for (var s = 0; s < spread; s++)
         {
-            if (TryMoveTo(cx, cy, cx + dir, cy))
+            if (TryMoveTo(cx, cy, cx + dir, cy, s == 0))
             {
                 cx = WrapX(cx + dir, CellsAt(cy));
                 // Found an edge to pour over — let gravity take it next tick.
