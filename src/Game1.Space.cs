@@ -1312,9 +1312,14 @@ public sealed partial class DwarfMinerGame
             hazards.Count > 0 ? hazards : new List<string> { "NONE CHARTED" },
             hazards.Count > 0 ? new Color(255, 140, 110) : new Color(140, 220, 140), maxW);
 
-        if (def.Id != "rift" && def.Id != "debug")
+        if (def.Id is not ("rift" or "debug" or "hollow"))
             lines.Add((_meta.CoreShards.Contains(def.Id) ? "CORE SHARD SECURED" : "CORE SHARD IN CORE",
                 _meta.CoreShards.Contains(def.Id) ? new Color(150, 230, 255) : grey, 1));
+        if (def.Id == "hollow")
+            lines.Add((def.Airless && _space.VacSuitLocked
+                    ? "VAC SUIT REQUIRED - SEE THE FOUNDRY (U)"
+                    : "VAC SUIT ABOARD - LANDING CLEARED",
+                def.Airless && _space.VacSuitLocked ? new Color(255, 190, 90) : new Color(140, 220, 140), 1));
         if (_meta.PlanetsEscaped.Contains(def.Id))
             lines.Add(("ESCAPED", new Color(140, 220, 140), 1));
         if (PlanetDefs.DebugMode)
