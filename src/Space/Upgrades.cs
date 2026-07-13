@@ -72,10 +72,6 @@ public static class Upgrades
             "Absorbs one impact, recharges in 8 seconds",
             Souls: 2, Mats: new[] { ("diamond", 3) }, SoulKind: "Mecha"),
 
-        new("magnet", "Ore Magnet",
-            "Loose ore leaps to your pack from four times the reach",
-            Souls: 1, Mats: new[] { ("pure_gold", 2), ("crystal", 2) }, SoulKind: "Kong"),
-
         new("dampeners", "Pod Dampeners",
             "Emergency drop pods land soft - no more suit damage",
             Souls: 1, Mats: new[] { ("pure_silver", 2), ("sapphire", 2) }, SoulKind: "Sandworm"),
