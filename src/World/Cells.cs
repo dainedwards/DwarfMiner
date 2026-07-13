@@ -420,13 +420,15 @@ public sealed class Cells
         _next.Clear();
         if (_active.Count == 0) return;
 
-        var snapshot = new int[_active.Count];
-        _active.CopyTo(snapshot);
+        // Clear the queued flags up front (so any cell can re-enqueue itself or be woken
+        // again during this tick), then process in shuffled order — a fixed visit order
+        // would bias flows sideways.
+        var snapshot = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_active);
+        foreach (var idx in snapshot) _queued[idx] = false;
         Shuffle(snapshot);
 
         foreach (var idx in snapshot)
         {
-            if ((uint)idx >= (uint)_mat.Length) continue;
             var m = (Material)_mat[idx];
             if (m == Material.Empty) continue;
             var (cx, cy) = UnIdx(idx);
