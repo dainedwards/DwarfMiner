@@ -47,6 +47,10 @@ public enum ProjectileKind
     /// <summary>Heavy satchel charge: barely throwable (strong gravity, short lob), long
     /// fuse, and the biggest non-nuke blast in the game.</summary>
     Tnt,
+    /// <summary>Peacekeeper sidearm round: a weak cyan stun-bolt fired by the city militia at
+    /// hostile creatures (and, feebly, at a rampaging titan). Flagged friendly-to-neutrals so
+    /// a street crowd never eats a stray round, and it never aggros the titan onto the player.</summary>
+    CivicBolt,
 }
 
 public sealed class Projectile
