@@ -982,6 +982,33 @@ public sealed class Creature
         return Position + up * (Radius + 5.5f) + new Vector2(-up.Y, up.X) * sway;
     }
 
+    /// <summary>VoidBarnacle: the Half-Life-barnacle of the belt. It cements itself to the
+    /// rock where it spawned and never moves again; anything that drifts inside its reach
+    /// (with a clear line) is REELED IN — a steady velocity pull toward the shell, fought by
+    /// walking/jetting away — until the beak's contact damage does the rest. Shooting it is
+    /// the reliable out. <see cref="Pulling"/> is read by the sprite to draw the tongue.</summary>
+    private void TickBarnacle(float dt, Planet planet, Vector2 toPlayer, float dist, Player player)
+    {
+        if (!_rooted)
+        {
+            _rooted = true;
+            _root = Position;
+        }
+        Position = _root;
+        Velocity = Vector2.Zero;
+        Pulling = dist < 140f && dist > 6f && HasLineOfSight(planet, toPlayer, dist);
+        if (Pulling)
+        {
+            // Constant reel plus a bite of extra grip up close — escapable at the rim with
+            // a determined walk, a real fight inside half range.
+            var grip = MathHelper.Lerp(330f, 160f, dist / 140f);
+            player.Velocity -= toPlayer / dist * grip * dt;
+        }
+    }
+
+    /// <summary>Set each tick a void barnacle has prey on the tongue — drawn by its sprite.</summary>
+    public bool Pulling;
+
     // ---------------------------------------------------------------- ambushers & artillery
 
     /// <summary>VoidWraith: patrols like a cave eye, but every few seconds it *blinks* — a
