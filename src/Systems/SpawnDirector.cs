@@ -263,7 +263,10 @@ public static class SpawnDirector
 
         // Fallback (no connected caves in range — fresh surface landing, or the player has
         // sealed themselves in): pick any cave tile in the donut and spawn a tunneller —
-        // the one class that can open its own way out of a sealed pocket.
+        // the one class that can open its own way out of a sealed pocket. The belt has no
+        // tunneller natives (and NOTHING ordinary lives there), so the Hollow simply skips
+        // unconnected spawns — its population is what can reach you.
+        if (run.Def.Biome == "belt") return;
         for (var attempt = 0; attempt < 40; attempt++)
         {
             var a = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
