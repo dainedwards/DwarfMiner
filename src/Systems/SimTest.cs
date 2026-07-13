@@ -1507,6 +1507,84 @@ public static class SimTest
             var drop = (roof - planet.Center).Length() - (stroller.Position - planet.Center).Length();
             Check($"defense: citizen keeps off the roof edge (dropped {drop:0}px)", drop < 10f);
         }
+
+        // --- 10. City architecture shrugs off the disasters that dissolve ordinary ground ---
+        {
+            // Corrosion, cave-ins/quakes, meteor and blast craters all gate on the anchored
+            // flag: every built tile carries it, so acid rain, earthquakes and meteor strikes
+            // can't eat the city the way they chew open terrain.
+            Check("defense: city architecture is anchored (acid-rain / quake / meteor proof)",
+                Tiles.IsAnchored(TileKind.AlienAlloy) && Tiles.IsAnchored(TileKind.CityGlass)
+                && Tiles.IsAnchored(TileKind.LizardBrick));
+
+            // Melt is a separate rule: a lava flow (eruption / magma surge) pools on a glass
+            // roof without melting it, though the same soak eats a dirt control to nothing.
+            StampBlock(2.6f, TileKind.CityGlass, wide: 2, tall: 3, out var glass);
+            StampBlock(3.4f, TileKind.Dirt, wide: 2, tall: 3, out var control);
+            void PourLavaOn(List<(int r, int t)> b)
+            {
+                var top = 0;
+                foreach (var (r, _) in b) top = Math.Max(top, r);
+                foreach (var (r, t) in b) if (r == top) cells.FillTile(r + 1, t, Material.Lava);
+            }
+            for (var s = 0; s < 60 * 8; s++)
+            {
+                if (s % 30 == 0) { PourLavaOn(glass); PourLavaOn(control); }   // keep the flow fed
+                cells.Update(dt);
+            }
+            var glassLeft = 0;
+            foreach (var (r, t) in glass) if (planet.Get(r, t) == TileKind.CityGlass) glassLeft++;
+            var controlLeft = 0;
+            foreach (var (r, t) in control) if (planet.Get(r, t) == TileKind.Dirt) controlLeft++;
+            Check($"defense: lava can't melt the glass roof ({glassLeft}/{glass.Count} intact)",
+                glassLeft == glass.Count);
+            Check($"defense: the same lava melts the dirt control ({control.Count - controlLeft}/{control.Count} gone)",
+                controlLeft < control.Count);
+        }
+
+        // --- 11. Citizens take cover when a disaster strikes: flagged to shelter, a civilian
+        // out on the street sprints to the nearest doorway and huddles instead of ambling ---
+        {
+            // Find a flat stretch of street so the run isn't blocked by a mountain flank.
+            var cAng = 0.9f;
+            var flat = false;
+            var baseline = (Planet.RingMin + planet.SurfaceRing) * Planet.TileSize;
+            for (var a = 0.9f; a < 0.9f + MathHelper.TwoPi; a += 0.13f)
+            {
+                var ok = true;
+                for (var off = 0f; off <= 0.06f && ok; off += 0.02f)
+                {
+                    var p = SpawnDirector.FindSurfaceSpawn(planet, a + off, planet.Radius);
+                    ok = MathF.Abs((p - planet.Center).Length() - baseline) < 12f;
+                }
+                if (ok) { cAng = a; flat = true; break; }
+            }
+            Check("defense: flat street for the cover drill found", flat);
+
+            var ground = SpawnDirector.FindSurfaceSpawn(planet, cAng, planet.Radius);
+            var up = planet.UpAt(ground);
+            var right = new Vector2(-up.Y, up.X);
+            // A doorway ~150px along the street, registered as a city-spawn shelter site.
+            var shelter = SpawnDirector.FindSurfaceSpawn(
+                planet, cAng + 150f / (ground - planet.Center).Length(), planet.Radius);
+            var (dr, dtl) = planet.WorldToTile(shelter);
+            var spawnsBefore = planet.CitySpawns.Count;
+            planet.CitySpawns.Add((dr, dtl));
+
+            var civ = new Creature(ground + up * 4f, CreatureKind.Civilian);
+            var startGap = MathF.Abs(Vector2.Dot(shelter - civ.Position, right));
+            var nobody = new Player(ground + up * 800f);
+            for (var i = 0; i < 60 * 6; i++)
+            {
+                civ.TakeCover = true;   // Game1 sets this each frame a disaster is live
+                civ.Update(dt, planet, physics, cells, nobody);
+            }
+            var endGap = MathF.Abs(Vector2.Dot(shelter - civ.Position, right));
+            // Don't leak the test doorway into later suites sharing this planet.
+            planet.CitySpawns.RemoveRange(spawnsBefore, planet.CitySpawns.Count - spawnsBefore);
+            Check($"defense: a citizen runs to shelter in a disaster (gap {startGap:0} -> {endGap:0}px)",
+                endGap < 15f && endGap < startGap * 0.4f);
+        }
     }
 
     /// <summary>True if the position sits inside a tile that actually blocks bodies —
