@@ -133,7 +133,76 @@ public static class PlanetGen
 
         // The finale is constant: the warp-locked Rift, exactly as hand-tuned.
         chain[7] = PlanetDefs.Classic[^1];
+
+        // ── Moons ────────────────────────────────────────────────────────────
+        // Two kinds fly this system: moons WITH an atmosphere and moons WITHOUT.
+        //
+        // (1) Ocean moon (atmospheric): when the seed rolled a second water world, the
+        // smaller of the two stops pretending to be a planet — it becomes a moon of the
+        // biggest world in the chain, seas, air, shard and all. Slot 0 is exempt (the
+        // campaign's first landing shouldn't orbit something scarier than itself).
+        var oceanCount = 0;
+        foreach (var d in chain[..7]) if (d.Biome == "ocean") oceanCount++;
+        if (oceanCount >= 2)
+        {
+            var moonSlot = -1;
+            for (var i = 1; i < 7; i++)
+                if (chain[i].Biome == "ocean"
+                    && (moonSlot < 0 || chain[i].SizeScale < chain[moonSlot].SizeScale))
+                    moonSlot = i;
+            if (moonSlot > 0)
+            {
+                var host = 0;
+                for (var i = 0; i < 7; i++)
+                    if (i != moonSlot && chain[i].SizeScale > chain[host].SizeScale) host = i;
+                if (host == moonSlot) host = moonSlot == 0 ? 1 : 0;
+                chain[moonSlot] = chain[moonSlot] with
+                {
+                    MoonOf = chain[host].Id,
+                    SizeScale = MathF.Min(chain[moonSlot].SizeScale, 0.8f),
+                    Tagline = $"Ocean moon of {chain[host].Name} - all sea, and it holds its air",
+                };
+            }
+        }
+
+        // (2) The cratered moon (airless): every system hangs one dead, meteor-hammered
+        // moon on a mid-chain planet — vac-suit gated like the Hollow, low gravity, silver
+        // in the rock, and only vacuum-native creatures in its caves. No core shard: like
+        // the Hollow it's a bonus destination, not a campaign gate.
+        var hostSlot = 1 + rng.Next(5);
+        if (chain[hostSlot].MoonOf is not null) hostSlot = hostSlot == 1 ? 2 : 1;
+        chain[8] = CraterMoon(rng, chain[hostSlot], NewName(rng, usedNames));
         return chain;
+    }
+
+    /// <summary>The airless cratered moon: a small dead satellite pocked by the meteors its
+    /// missing atmosphere never burned up. Belt-school world: vac-suit gated, low gravity,
+    /// dirtless regolith, space-black sky — and a closed roster of vacuum natives (biome
+    /// "moon": moonlets and vac leeches from the belt, plus its own selenites and dust
+    /// devils). Silver-signature so the trip pays even without a shard.</summary>
+    private static PlanetDef CraterMoon(Random rng, PlanetDef host, string name)
+    {
+        float J(float lo, float hi) => lo + (float)rng.NextDouble() * (hi - lo);
+        return new PlanetDef("moon", name,
+            $"Cratered moon of {host.Name} - dead, airless, hammered by meteors",
+            new Color(196, 194, 200), new Color(240, 238, 244),
+            TileKind.Gravel,
+            LakeMin: 0, LakeExtra: 0, MountainMin: 4, MountainExtra: 2,
+            MountainHeightScale: 0.5f, LavaFillFrac: 0f, HasWater: false,
+            OreBias: new[]
+            {
+                (TileKind.SilverOre, 0.14f), (TileKind.IronOre, 0.03f),
+                (TileKind.CoalOre, 0.02f), (TileKind.Crystal, 0.02f),
+            },
+            QuakeScale: 1.0f, CaveSpawnCap: 14,
+            ShipOre: "silver", ShipOreCount: 4,
+            OxygenDrainScale: 1.3f,   // airless = no grace band; the scale stays gentle
+            Titan: TitanKind.Raiju,   // a dash kaiju on a quarter-g moon: blink and it's on you
+            CrystalPockets: 2,
+            SizeScale: J(0.65f, 0.75f),
+            Biome: "moon", Difficulty: 0.5f,
+            GravityScale: 0.4f, Airless: true, Craters: 12, Lumpiness: 8f,
+            MoonOf: host.Id);
     }
 
     /// <summary>Build one planet from its biome archetype + ramp inputs.</summary>
