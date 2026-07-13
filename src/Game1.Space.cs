@@ -722,16 +722,18 @@ public sealed partial class DwarfMinerGame
         // World pass — everything in space coordinates under the camera transform.
         sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view);
 
-        // Orbit rings: dotted circles.
+        // Orbit rings: dotted circles — sun-centred for planets, parent-centred for moons
+        // (a moon's ring rides along with its host).
         for (var i = 0; i < _space.Planets.Count; i++)
         {
             var p = _space.Planets[i];
             var col = new Color(70, 76, 100);
-            var dots = (int)(p.OrbitRadius / 28f);
+            var centre = p.OrbitCentre;
+            var dots = Math.Max(20, (int)(p.OrbitRadius / 28f));
             for (var d = 0; d < dots; d++)
             {
                 var a = d * MathHelper.TwoPi / dots;
-                var pos = new Vector2(MathF.Cos(a), MathF.Sin(a)) * p.OrbitRadius;
+                var pos = centre + new Vector2(MathF.Cos(a), MathF.Sin(a)) * p.OrbitRadius;
                 sb.Draw(_renderer.Pixel, new Rectangle((int)pos.X - 2, (int)pos.Y - 2, 4, 4), col);
             }
         }
