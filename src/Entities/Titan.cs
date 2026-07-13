@@ -926,12 +926,13 @@ public sealed class Titan
                 if (aim.LengthSquared() > 0.01f)
                 {
                     aim.Normalize();
-                    aim = LevelAim(aim);   // never hose the ground under its own feet
                     for (var i = 0; i < 2; i++)
                     {
                         var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.7f;
                         var c = MathF.Cos(spread); var s = MathF.Sin(spread);
-                        var d = new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c);
+                        // Clamped AFTER the spread so no grain of the cone ever hoses the
+                        // ground under its own feet.
+                        var d = LevelAim(new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c));
                         var speed = 150f + (float)Random.Shared.NextDouble() * 170f;
                         shots.Add(new TitanProjectile(mouth + d * 12f, d * speed, TitanShotKind.Flame));
                     }
