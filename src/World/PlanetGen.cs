@@ -148,8 +148,22 @@ public static class PlanetGen
         var strayVolcano = rng.Next(4) == 0 ? 1 : 0;
         var strayScale = J(0.5f, 0.7f);
 
-        return biome switch
+        var def = biome switch
         {
+            Biome.City => new PlanetDef(id, name,
+                "Alien metropolis - glowing towers above, old warrens below",
+                Jit(new Color(70, 110, 150), 16), Jit(new Color(150, 230, 240), 16),
+                TileKind.Gravel,
+                LakeMin: 1, LakeExtra: 1, MountainMin: 3, MountainExtra: 2,
+                MountainHeightScale: J(0.7f, 0.95f), LavaFillFrac: 0.40f, HasWater: true,
+                OreBias: WithRare((oreKind, sigBias), (TileKind.IronOre, 0.03f), (TileKind.CoalOre, 0.02f)),
+                QuakeScale: quake, CaveSpawnCap: caveCap,
+                ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy * 0.95f,
+                Titan: titan, CrystalPockets: rng.Next(2), FungalPockets: rng.Next(2),
+                SizeScale: size,
+                CityLots: 5 + rng.Next(4), LizardCities: 1,
+                Biome: "city", Difficulty: difficulty),
+
             Biome.Ocean => new(id, name,
                 "Ocean world - the land is the exception, pack for the crossings",
                 Jit(new Color(52, 96, 150), 18), Jit(new Color(120, 190, 230), 18),
