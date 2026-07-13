@@ -3213,7 +3213,12 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.AddLight(m.Position, 26f, new Color(255, 150, 60));
 
         // Glowing creatures — magma slugs read as drifting coals, cave eyes as a faint gleam.
-        foreach (var c in _run.Creatures) c.AddLight(_renderer);
+        foreach (var c in _run.Creatures)
+        {
+            // Same far-gate as the sprite pass — no lighting math for the frozen census.
+            if ((c.Position - _run.Player.Position).LengthSquared() > 1400f * 1400f) continue;
+            c.AddLight(_renderer);
+        }
 
         // Glowing particles (ore flecks, projectile sparks, explosion embers) feed back into
         // the lightmap so they actually illuminate the cave wall behind them.
