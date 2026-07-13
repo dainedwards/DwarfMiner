@@ -1372,7 +1372,7 @@ public sealed class Creature
         if (cells.CountWaterNear(Position, Radius) < 4)
         {
             var vT0 = MoveToward(Vector2.Dot(Velocity, right), 0f, 200f * dt);
-            var vN0 = MathF.Max(Vector2.Dot(Velocity, up) - 320f * dt, -200f);
+            var vN0 = MathF.Max(Vector2.Dot(Velocity, up) - Grav(planet) * dt, -200f);
             Velocity = right * vT0 + up * vN0;
             return;
         }
