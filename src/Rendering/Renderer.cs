@@ -335,7 +335,7 @@ public sealed class Renderer
                     // top with a bright glint.
                     var atlasKind = k;
                     if (Tiles.IsGem(k))
-                        atlasKind = HostRockFor(k, outerK, innerK, leftK, rightK);
+                        atlasKind = HostRockFor(outerK, innerK, leftK, rightK);
                     _sb.Draw(_tileAtlas, centre,
                         TileAtlas.Source(atlasKind, VariantFor(atlasKind, r, t, hash), exposeMask),
                         drawCol, rotation,
