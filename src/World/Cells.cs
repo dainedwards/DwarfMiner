@@ -463,16 +463,15 @@ public sealed class Cells
         }
     }
 
-    /// <summary>Decompose a flat cell index back to (cx, cy) by binary search through row offsets.</summary>
+    /// <summary>Decompose a flat cell index back to (cx, cy): coarse block lookup, then a
+    /// short forward walk. Runs once per active cell per tick, so the storm ticks after a
+    /// mass break call it tens of thousands of times — the block table turns the old 12-step
+    /// binary search into ≤5 sequential, predictable steps (rows are ≥ ~1000 cells wide, so
+    /// one 4096-cell block spans at most a handful of rows).</summary>
     private (int cx, int cy) UnIdx(int idx)
     {
-        int lo = 0, hi = Height;
-        while (lo < hi)
-        {
-            var mid = (lo + hi) / 2;
-            if (_rowOffsets[mid + 1] <= idx) lo = mid + 1;
-            else hi = mid;
-        }
+        var lo = _rowOfBlock[idx >> RowBlockShift];
+        while (_rowOffsets[lo + 1] <= idx) lo++;
         return (idx - _rowOffsets[lo], lo);
     }
 
