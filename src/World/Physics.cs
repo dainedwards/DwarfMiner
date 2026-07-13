@@ -274,7 +274,7 @@ public sealed class Physics
             var (x, y) = _planet.UnIndex(idx);
 
             // Cache hit — region is anchored. Promote everything we've seen.
-            if (_anchoredCache.Contains(idx))
+            if (_anchorStamp[idx] == _anchorGen)
             {
                 foreach (var v in _floodVisitList) _anchorStamp[v] = _anchorGen;
                 return true;
