@@ -19,7 +19,7 @@ public static class PerfTest
     {
         var total = Stopwatch.StartNew();
         var sw = Stopwatch.StartNew();
-        var planet = WorldGen.Generate(42, sizeScale: 1.8f);   // giant world = worst case
+        var planet = WorldGen.Generate(42, PlanetDefs.DebugWorld);   // 1.8x giant = worst case
         Console.WriteLine($"[perf] worldgen 1.8x: {sw.ElapsedMilliseconds}ms " +
                           $"({planet.Rings} rings, {planet.TileCount} tiles)");
 
