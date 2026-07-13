@@ -319,6 +319,10 @@ public static class Tiles
         TileKind.Diamond => ("diamond", 1),
         TileKind.Crystal => ("crystal", 1),
         TileKind.FuelOre => ("fuel", 1),
+        // City salvage: alloy plating strips down to iron; lizard masonry breaks to stone.
+        // Glass just shatters (no drop).
+        TileKind.AlienAlloy => ("iron", 1),
+        TileKind.LizardBrick => ("stone", 1),
         // Player-built tiles drop their craft input back when mined — lets you reposition
         // a misplaced ladder / torch without losing the resource.
         TileKind.Ladder => ("ladder", 1),
