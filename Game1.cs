@@ -486,7 +486,7 @@ public sealed partial class DwarfMinerGame : Game
         var lat = (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left) ? -1f : 0f)
                 + (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right) ? 1f : 0f);
         var orbitRadius = _run.Planet.Radius * Planet.TileSize + Session.OrbitAltitude;
-        _run.MothershipAngle += lat * (340f / orbitRadius) * dt;
+        _run.MothershipAngle += lat * (680f / orbitRadius) * dt;
 
         var station = _run.StationPos;
         _run.Player.Position = station;
