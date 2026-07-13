@@ -198,9 +198,10 @@ public static class PlanetDefs
             ShipOre: "platinum", ShipOreCount: 5, OxygenDrainScale: 1.7f, SeedsAcid: true, Titan: TitanKind.Mecha,
             CrystalPockets: 3, LizardCities: 1, Biome: "slag", Difficulty: 0.6f),
 
-        // The alien metropolis: flat, mild ground under a skyline of alloy towers, their
-        // window bands lit and their streets ambled by harmless civilians. The danger is
-        // what the citizens built OVER — the lizardman warrens still riddle the crust.
+        // The alien metropolis: flat, mild ground under a downtown of clustered alloy
+        // towers, their window bands lit and their streets ambled by harmless civilians
+        // and peacekeeper patrols. One civilisation per world: the citizens cleared their
+        // planet's warrens long ago, so no lizardmen here (and no towers on warren worlds).
         new("city", "Neonspire", "Alien metropolis, glowing towers, timid citizens",
             new Color(70, 110, 150), new Color(150, 230, 240),
             TileKind.Gravel,
