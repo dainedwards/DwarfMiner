@@ -233,7 +233,8 @@ public sealed class SpaceSim
     {
         var p = Planets[Math.Clamp(planetIndex, 0, Planets.Count - 1)];
         var angle = p.Angle - (p.BodyRadius + BootParkDistance) / p.OrbitRadius;
-        ShipPos = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * p.OrbitRadius;
+        // Moons trail on their orbit ring around the PARENT, not around the sun.
+        ShipPos = p.OrbitCentre + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * p.OrbitRadius;
         ShipVel = Vector2.Zero;
         ShipHeading = MathF.Atan2(p.Pos.Y - ShipPos.Y, p.Pos.X - ShipPos.X);
     }
