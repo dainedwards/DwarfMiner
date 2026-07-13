@@ -266,6 +266,13 @@ public sealed class Creature
                 Radius = 4.2f; Health = 24f; MoveSpeed = 24f; ContactDamage = 13f;
                 _cd = 1f + (float)Random.Shared.NextDouble();
                 break;
+            case CreatureKind.StarJelly:
+                // Not a hunter — a drifting hazard. It never chases; you drift into IT.
+                Radius = 4.5f; Health = 12f; MoveSpeed = 18f; ContactDamage = 7f;
+                break;
+            case CreatureKind.VoidBarnacle:
+                Radius = 4.5f; Health = 40f; MoveSpeed = 0f; ContactDamage = 15f;
+                break;
         }
     }
 
