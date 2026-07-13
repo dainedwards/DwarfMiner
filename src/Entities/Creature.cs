@@ -1252,6 +1252,53 @@ public sealed class Creature
 
     // ---------------------------------------------------------------- shared movement
 
+    /// <summary>Disaster response for city aliens (see <see cref="TakeCover"/>): sprint to the
+    /// nearest building doorway and huddle against it until the sky clears. The shelter fix is
+    /// cached and refreshed on a timer so a crowd of citizens isn't scanning every doorway every
+    /// frame. Returns true once the creature is handling cover, so the caller skips its normal
+    /// amble/beat. With no doorway in reach it just hunkers where it stands.</summary>
+    private bool TickTakeCover(float dt, Planet planet, Vector2 up, Vector2 right, float speedMul)
+    {
+        _shelterCd -= dt;
+        if (_shelter is null || _shelterCd <= 0f)
+        {
+            _shelterCd = 1.5f;
+            _shelter = NearestShelter(planet);
+        }
+        if (_shelter is not { } s)
+        {
+            GroundMove(dt, planet, up, right, 0f, speedMul);   // nowhere to run — freeze in place
+            return true;
+        }
+        // Close enough: press into the doorway and hold (crouched, out of the weather).
+        var along = Vector2.Dot(s - Position, right);
+        if (MathF.Abs(along) < Radius + 4f)
+        {
+            GroundMove(dt, planet, up, right, 0f, speedMul);
+            return true;
+        }
+        // Panic sprint toward it — bypasses the cliff-caution of the normal amble, a citizen
+        // scrambling for a door will take the drop to get inside.
+        GroundMove(dt, planet, up, right, MathF.Sign(along) * 1.5f, speedMul);
+        return true;
+    }
+
+    /// <summary>Nearest city doorway/floor site (Planet.CitySpawns) to this creature within a
+    /// few hundred px — the shelter a citizen bolts to when a disaster hits. Null when none is
+    /// close (a citizen out past the city edge just hunkers where it is).</summary>
+    private Vector2? NearestShelter(Planet planet)
+    {
+        Vector2? best = null;
+        var bestSq = 500f * 500f;
+        foreach (var (sr, st) in planet.CitySpawns)
+        {
+            var w = planet.TileToWorld(sr, st);
+            var dSq = (w - Position).LengthSquared();
+            if (dSq < bestSq) { bestSq = dSq; best = w; }
+        }
+        return best;
+    }
+
     /// <summary>Walker integrator: tangent drive + core-ward gravity + a reflexive hop when
     /// walking into a wall while grounded, so cave dwellers climb tunnel lips instead of
     /// grinding against them.</summary>
