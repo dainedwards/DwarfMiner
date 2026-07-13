@@ -455,6 +455,10 @@ public sealed class Creature
             if (diff.Length() < Radius + player.Radius)
             {
                 player.TakeDamage(ContactDamage * dt);
+                // The vac leech's real theft: clamped on, it siphons the suit's air tank —
+                // on the airless Hollow that meter IS the dive clock.
+                if (Kind == CreatureKind.VacLeech)
+                    player.Oxygen = MathF.Max(0f, player.Oxygen - 14f * dt);
                 if (diff.LengthSquared() > 0.0001f)
                 {
                     var n = Vector2.Normalize(diff);
