@@ -31,9 +31,10 @@ public static class AcidProbe
             foreach (var (ax, ay) in planet.AcidSeeds)
             {
                 var d = planet.SurfaceRing - ax;
-                if (d < 25) poolSeeds++; else volcSeeds++;
-                if (Environment.GetEnvironmentVariable("ACID_ONLY") is "pool" && d >= 25) continue;
-                if (Environment.GetEnvironmentVariable("ACID_ONLY") is "volc" && d < 25) continue;
+                var isPool = d >= 0 && d <= 20;       // surface pools; volcano = above surface or deep
+                if (isPool) poolSeeds++; else volcSeeds++;
+                if (Environment.GetEnvironmentVariable("ACID_ONLY") is "pool" && !isPool) continue;
+                if (Environment.GetEnvironmentVariable("ACID_ONLY") is "volc" && isPool) continue;
                 cells.FillTile(ax, ay, Material.Acid);
             }
             Console.WriteLine($"  (poolSeeds={poolSeeds} volcSeeds={volcSeeds} ACID_ONLY={Environment.GetEnvironmentVariable("ACID_ONLY")})");
