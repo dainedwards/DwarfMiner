@@ -200,7 +200,7 @@ public static class PlanetDefs
             OreBias: new[] { (TileKind.PlatinumOre, 0.030f), (TileKind.GoldOre, 0.125f), (TileKind.IronOre, 0.025f) },
             QuakeScale: 0.45f, CaveSpawnCap: 20,
             ShipOre: "platinum", ShipOreCount: 5, OxygenDrainScale: 1.7f, SeedsAcid: true, Titan: TitanKind.Mecha,
-            CrystalPockets: 3, LizardCities: 1, Biome: "slag", Difficulty: 0.6f),
+            CrystalPockets: 3, Biome: "slag", Difficulty: 0.6f),
 
         // The alien metropolis: flat, mild ground under a downtown of clustered alloy
         // towers, their window bands lit and their streets ambled by harmless civilians
