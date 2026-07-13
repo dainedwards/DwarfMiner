@@ -399,7 +399,8 @@ public sealed class Cells
         var di = Idx(dCx, dCy);
         if (_mat[di] != 0) return false;
         var si = Idx(sCx, sCy);
-        _mat[di] = _mat[si];
+        var m = _mat[si];
+        _mat[di] = m;
         _srcTile[di] = _srcTile[si];
         _velR[di] = _velR[si];
         _travel[di] = _travel[si];
@@ -409,7 +410,13 @@ public sealed class Cells
         ClearKinetics(si);
         Enqueue(di);
         WakeNeighbors(sCx, sCy);
-        WakeNeighbors(dCx, dCy);
+        // Vacating always wakes (neighbours may now move into the hole), but *arriving* only
+        // matters when the arriver can trigger a reaction in a sleeping neighbour: water must
+        // wake hemmed lava it lands on (quench is lava-side — the sleep clause documents
+        // relying on exactly this wake). Lava kept out of caution for bulk flows. Inert grains
+        // — the entire mass-break dust case — skip it, halving the wake fan-out per move.
+        if (m == (byte)Material.Water || m == (byte)Material.Lava)
+            WakeNeighbors(dCx, dCy);
         return true;
     }
 
