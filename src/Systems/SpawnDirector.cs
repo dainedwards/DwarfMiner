@@ -202,6 +202,12 @@ public static class SpawnDirector
                 kind = CreatureKind.CrystalCrawler;
             else if (run.Def.FungalPockets > 0 && depth < 30f && special < 0.22)
                 kind = CreatureKind.SporeBat;
+
+            // Warren territory trumps everything: a cave spawn near a lizard-city den is
+            // most likely a guard on patrol, so the halls stay garrisoned however often
+            // the player clears them.
+            if (NearLizardDen(run.Planet, pos, 300f) && Random.Shared.NextDouble() < 0.6)
+                kind = CreatureKind.Lizardman;
         }
 
         var c = new Creature(pos, kind);
