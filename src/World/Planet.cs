@@ -324,7 +324,7 @@ public sealed class Planet
         if (x >= Rings - 1) return (Rings, 0);
         var nIn = TilesAt(x);
         var nOut = TilesAt(x + 1);
-        var w = ((y % nIn) + nIn) % nIn;
+        var w = (uint)y < (uint)nIn ? y : ((y % nIn) + nIn) % nIn;
         if (nIn == nOut) return (x + 1, w);
         var first = (int)Math.Floor((double)w * nOut / nIn);
         return (x + 1, (first + which) % nOut);
