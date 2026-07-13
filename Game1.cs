@@ -416,7 +416,8 @@ public sealed partial class DwarfMinerGame : Game
                                 CreatureKind.SnapperVine, CreatureKind.RockMimic,
                                 CreatureKind.Civilian, CreatureKind.Lizardman,
                                 CreatureKind.Peacekeeper, CreatureKind.Saucer,
-                                CreatureKind.AlienWhale, CreatureKind.AlienCrab };
+                                CreatureKind.AlienWhale, CreatureKind.AlienCrab,
+                                CreatureKind.Moonlet, CreatureKind.VacLeech, CreatureKind.Glimmermaw };
             for (var i = 0; i < kinds.Length; i++)
                 _run.Creatures.Add(new Creature(
                     _run.Player.Position + fRight * (26f + i * 22f) + fUp * 8f, kinds[i]));
