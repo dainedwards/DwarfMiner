@@ -2093,6 +2093,11 @@ public sealed class Creature
                 r.AddLight(Position, 10f, GuardTarget is not null
                     ? new Color(255, 150, 80) : new Color(90, 190, 230));
                 break;
+            case CreatureKind.Saucer:
+                // The belly lamp sweeps the streets below — a moving pool of patrol light.
+                r.AddLight(Position, GuardTarget is not null ? 26f : 18f,
+                    GuardTarget is not null ? new Color(255, 160, 80) : new Color(110, 200, 230));
+                break;
         }
     }
 
