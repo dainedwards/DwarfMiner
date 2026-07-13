@@ -409,6 +409,27 @@ to farther worlds; both, plus the **engines**, are upgradeable.
   hatched beside the dwarf (the buried egg is unreachable for screenshot rigs). 21 SimTest
   checks (`TestHollow`, runs last because Activate's append is one-way).
 
+- **Moons (DONE 2026-07-13):** the system has satellites now, in two kinds — **with an
+  atmosphere and without**. `PlanetDef.MoonOf` names a host planet; `SpacePlanet.Parent`
+  chains positions so a moon rides a tight fast orbit (parent.BodyRadius + 330, angular
+  vel 0.12) around its host's LIVE position — moons don't consume a solar orbit band, and
+  parking (`PlaceShipAt` host-away, `ParkShipTrailing` parent-centred) is satellite-aware.
+  Live view draws parent-centred orbit rings; the star map gives moons a dotted halo
+  around the parent's marker and a "MOON OF <HOST> — AIRLESS / HOLDS AN ATMOSPHERE"
+  tooltip line. **The cratered moon** (`PlanetGen.CraterMoon`, id `moon`, biome `moon`):
+  every campaign hangs one on a random mid-chain planet — small (0.65-0.75), dead,
+  **airless** (vac-suit gated, space-black sky, no-grace oxygen), 12 craters, slight
+  lumpiness, 0.4 gravity, dirtless regolith, silver-signature (nav core 4), Raiju titan,
+  **no core shard** (bonus destination like the Hollow — excluded everywhere the Hollow
+  is). Its roster is CLOSED vacuum natives: **Moonlet + VacLeech + StarJelly reused from
+  the belt**, plus two new kinds — **Selenite** (crystalline moon-spider, skitterer
+  pounce brain, cold crystal gleam) and **DustDevil** (charged regolith vortex that
+  hounds along the surface on the grub chase; the moon's "herd" via the surface spawner,
+  IsSurfaceKind). **The ocean moon** (atmospheric): when a campaign rolls a second ocean
+  world, the smaller one (slots 1-6) becomes a moon of the biggest world in the chain —
+  seas, air, and core shard intact (still counts toward WarpShardsNeeded). 10 new SimTest
+  checks (`TestMoons`, runs just before TestHollow — both Activate).
+
 **Open design questions:** does death on a planet cost more than the current visit (e.g. the
 rover)? Do souls/upgrades persist across completed runs (prestige reset vs. permanent)?
 Should the warp world end the game or open a second system?
