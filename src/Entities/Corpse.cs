@@ -122,6 +122,8 @@ public sealed class Corpse
         CreatureKind.AcidStrider  => new Color(100, 112, 58),
         CreatureKind.PrismSnail   => new Color(120, 100, 140),
         CreatureKind.NullMoth     => new Color(40, 32, 56),
+        CreatureKind.Civilian     => new Color(140, 150, 138),
+        CreatureKind.Lizardman    => new Color(58, 92, 52),
         _                         => new Color(110, 90, 90),
     };
 }
