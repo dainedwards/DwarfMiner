@@ -25,8 +25,18 @@ public static class AcidProbe
             var cells = new Cells(planet);
             var _ = new Physics(planet, cells);
 
-            // Pour acid exactly like Game1.BuildSessionWorld.
-            foreach (var (ax, ay) in planet.AcidSeeds) cells.FillTile(ax, ay, Material.Acid);
+            // Pour acid exactly like Game1.BuildSessionWorld. (Temporary split: shallow seeds
+            // are surface pools, deep ones are the volcano plumbing — pour only one to isolate.)
+            var poolSeeds = 0; var volcSeeds = 0;
+            foreach (var (ax, ay) in planet.AcidSeeds)
+            {
+                var d = planet.SurfaceRing - ax;
+                if (d < 25) poolSeeds++; else volcSeeds++;
+                if (Environment.GetEnvironmentVariable("ACID_ONLY") is "pool" && d >= 25) continue;
+                if (Environment.GetEnvironmentVariable("ACID_ONLY") is "volc" && d < 25) continue;
+                cells.FillTile(ax, ay, Material.Acid);
+            }
+            Console.WriteLine($"  (poolSeeds={poolSeeds} volcSeeds={volcSeeds} ACID_ONLY={Environment.GetEnvironmentVariable("ACID_ONLY")})");
 
             var solidStart = CountSolid(planet);
 
