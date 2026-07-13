@@ -403,15 +403,36 @@ public static class TitanRenderer
             r.DrawRect(chest + f.Right * (s * 44f) + f.Up * 6f, new Vector2(34f, 22f), stone, f.Rot + s * 0.2f);
         r.DrawRect(chest - f.Right * (f.Face * 40f) + f.Up * 4f, new Vector2(30f, 40f), stone, f.Rot);
 
-        // Massive arms: raised overhead mid-leap, planted like columns otherwise.
+        // Massive arms: raised overhead mid-leap, hammering during a hand smash, planted
+        // like columns otherwise.
         for (var s = -1; s <= 1; s += 2)
         {
             var shoulder = chest + f.Right * (s * 54f) + f.Up * 10f;
+            var stance = shoulder + f.Right * (s * 10f) - f.Up * (66f + MathF.Sin(f.Pulse + s) * 5f);  // knuckle stance
             Vector2 fist;
-            if (t.Leaping)
+            if (t.SmashTimer > 0f && s == t.SmashHand)
+            {
+                // The committed arm: rear the fist high, hammer it onto the smash target so
+                // it arrives exactly at the impact moment, then leave it buried in the rubble
+                // for the follow-through.
+                var elapsed = Titan.SmashDuration - t.SmashTimer;
+                var raised = shoulder + f.Up * 74f + f.Right * (f.Face * 26f);
+                const float raiseEnd = 0.35f;
+                const float hammerEnd = Titan.SmashDuration - Titan.SmashImpactAt;
+                if (elapsed < raiseEnd)
+                    fist = Vector2.Lerp(stance, raised, elapsed / raiseEnd);
+                else if (elapsed < hammerEnd)
+                {
+                    var q = (elapsed - raiseEnd) / (hammerEnd - raiseEnd);
+                    fist = Vector2.Lerp(raised, t.SmashTarget, q * q);   // accelerating swing
+                }
+                else
+                    fist = t.SmashTarget;
+            }
+            else if (t.Leaping)
                 fist = shoulder + f.Up * 60f + f.Right * (f.Face * 18f);          // reaching to slam
             else
-                fist = shoulder + f.Right * (s * 10f) - f.Up * (66f + MathF.Sin(f.Pulse + s) * 5f);  // knuckle stance
+                fist = stance;
             var elbow = Vector2.Lerp(shoulder, fist, 0.5f) + f.Right * (s * 16f);
             Seg(r, shoulder, elbow, 26f, furDark);
             Seg(r, elbow, fist, 22f, fur);
