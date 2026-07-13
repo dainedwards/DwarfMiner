@@ -1375,6 +1375,54 @@ public static class SimTest
             Check($"defense: twelve seconds of titan wrecking breaches it ({BrokenTiles()} broken)",
                 BrokenTiles() > 4);
         }
+
+        // --- 6. Warren war-cry: the first sighting raises the backup flag, and a rallied
+        // guard far beyond sight range picks up the hunt.
+        {
+            var dAng = 2.6f;
+            var post = SpawnDirector.FindSurfaceSpawn(planet, dAng, planet.Radius);
+            var sentry = new Creature(post, CreatureKind.Lizardman);
+            var closePrey = new Player(post + planet.UpAt(post) * 20f);
+            sentry.Update(dt, planet, physics, cells, closePrey);
+            Check("defense: sighting guard raises the war-cry flag", sentry.CallingBackup);
+
+            var aAng = 3.4f;
+            var allyPos = SpawnDirector.FindSurfaceSpawn(planet, aAng, planet.Radius);
+            var upA = planet.UpAt(allyPos);
+            var rightA = new Vector2(-upA.Y, upA.X);
+            var farPrey = new Player(allyPos + rightA * 420f);   // well past the 240px sight range
+            var ally = new Creature(allyPos, CreatureKind.Lizardman);
+            for (var i = 0; i < 60 * 3; i++) ally.Update(dt, planet, physics, cells, farPrey);
+            var calmDist = (ally.Position - farPrey.Position).Length();
+            Check($"defense: unrallied distant guard stays on post ({calmDist:0}px)", calmDist > 280f);
+            ally.RallyToWar();
+            for (var i = 0; i < 60 * 3; i++) ally.Update(dt, planet, physics, cells, farPrey);
+            var ralliedDist = (ally.Position - farPrey.Position).Length();
+            Check($"defense: rallied guard closes on distant prey ({calmDist:0} -> {ralliedDist:0}px)",
+                ralliedDist < calmDist - 60f);
+        }
+
+        // --- 7. Saucer patrol: cruises without embedding, then slides over a handed target.
+        {
+            var sAng = 4.4f;
+            var ground = SpawnDirector.FindSurfaceSpawn(planet, sAng, planet.Radius);
+            var upS = planet.UpAt(ground);
+            var saucer = new Creature(ground + upS * 120f, CreatureKind.Saucer);
+            var idlePilot = new Player(ground + upS * 800f);
+            for (var i = 0; i < 60 * 6; i++) saucer.Update(dt, planet, physics, cells, idlePilot);
+            Check("defense: saucer patrols without embedding", !EmbeddedInRock(planet, saucer.Position));
+            var threat = ground + upS * 10f;
+            saucer.GuardTarget = threat;
+            for (var i = 0; i < 60 * 5; i++) saucer.Update(dt, planet, physics, cells, idlePilot);
+            var station = threat + planet.UpAt(threat) * 90f;
+            Check($"defense: saucer holds station over the threat ({(saucer.Position - station).Length():0}px off)",
+                (saucer.Position - station).Length() < 70f);
+        }
+
+        // --- 8. Doubled alien constitutions.
+        Check("defense: aliens toughened (civilian 24hp, peacekeeper 52hp)",
+            new Creature(Vector2.Zero, CreatureKind.Civilian).Health == 24f
+            && new Creature(Vector2.Zero, CreatureKind.Peacekeeper).Health == 52f);
     }
 
     /// <summary>True if the position sits inside a tile that actually blocks bodies —
