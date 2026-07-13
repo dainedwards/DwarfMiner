@@ -332,7 +332,21 @@ public sealed class Projectile
                 var distSq = (world - Position).LengthSquared();
                 if (distSq > maxDistSq) continue;
                 var k = planet.Get(r, t);
-                if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
+                if (!Tiles.IsSolid(k)) continue;
+                if (Tiles.IsAnchored(k))
+                {
+                    // City architecture is blast-RESISTANT, not blast-proof: a detonation
+                    // chips it (Planet.Mine accumulates damage), so repeated charges will
+                    // eventually breach a wall, but one stick never levels an apartment.
+                    // Other anchored tiles (core, supports, placeables) stay untouched.
+                    if (k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick
+                        && planet.Mine(r, t, 2) is { } cracked)
+                    {
+                        physics.MarkDirty(r, t);
+                        cells.SpawnDustInTile(r, t, cracked);
+                    }
+                    continue;
+                }
                 planet.Set(r, t, TileKind.Sky);
                 // Outer ~45% of the radius crumbles to dust; inside that, vaporised.
                 if (dust && distSq > maxDistSq * 0.3f) cells.SpawnDustInTile(r, t, k);
