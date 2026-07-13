@@ -2484,7 +2484,7 @@ public sealed class Creature
                     new Color(40, 38, 52) * 0.8f, rot);
                 var glint = MathF.Sin(t * 3.1f + _phase) * 0.5f + 0.5f;
                 r.DrawRect(lure, new Vector2(2.2f, 4.2f), Tinted(new Color(180, 220, 230)), t * 1.4f);
-                r.DrawRect(lure, new Vector2(1.1f, 2.2f), Color.White, t * 1.4f);
+                r.DrawRect(lure, new Vector2(1.1f + glint * 0.6f, 2.2f + glint), Color.White, t * 1.4f);
                 if (((int)(t * 2.5f + _phase) & 3) == 0)
                     r.DrawRect(lure + new Vector2(1.2f, -1.2f), new Vector2(1f, 1f), Color.White);
                 // Jaws: two pale crescents that only show while lunging (or point-blank).
