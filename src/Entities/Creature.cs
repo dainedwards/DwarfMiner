@@ -246,6 +246,12 @@ public sealed class Creature
     /// muzzle-flash in the sprite (rides the shared _swing animation timer).</summary>
     public void GuardMuzzleFlash() => _swing = 0.2f;
 
+    /// <summary>City-alien disaster response, set each frame by Game1 while a planet disaster
+    /// is live (see AmbientDirector.DisasterActive): civilians and peacekeepers break off their
+    /// routine and run for the nearest building doorway to shelter until the sky clears. Never
+    /// set on saucers — the air patrol is disaster-proof and keeps flying overhead.</summary>
+    public bool TakeCover;
+
     /// <summary>Set the frame a lizardman FIRST sights prey (calm → aggro edge). Game1's
     /// war-cry pass consumes it: every lizardman in a wide radius gets
     /// <see cref="RallyToWar"/>, so aggroing one guard brings the warren.</summary>
