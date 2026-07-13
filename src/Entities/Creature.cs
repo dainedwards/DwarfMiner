@@ -2236,6 +2236,71 @@ public sealed class Creature
                 r.DrawCircle(c - up * 2.6f, _swing > 0f ? 2.2f : 1.4f, lampCol);
                 break;
             }
+            case CreatureKind.AlienWhale:
+            {
+                // A glowing leviathan: long tapered body of overlapping discs, a raked tail
+                // fluke sweeping with the swim, a small dorsal fin, one placid eye, and a
+                // line of bioluminescent spots pulsing down the flank.
+                var hide = Tinted(new Color(56, 82, 118));
+                var bellyC = Tinted(new Color(110, 140, 165));
+                var dir = right * facing;
+                for (var s = 0; s < 5; s++)
+                {
+                    var f = s / 4f;
+                    var seg = Position - dir * (f * Radius * 1.7f)
+                              + up * MathF.Sin(t * 1.6f + _phase + f * 1.8f) * 1.2f;
+                    r.DrawCircle(seg, Radius * (1f - f * 0.55f), hide);
+                }
+                r.DrawCircle(Position + dir * (Radius * 0.55f) - up * (Radius * 0.3f),
+                    Radius * 0.55f, bellyC);
+                // Tail fluke, sweeping.
+                var tailBase = Position - dir * (Radius * 1.9f);
+                var sweep = MathF.Sin(t * 1.6f + _phase) * 0.5f;
+                var tAng = MathF.Atan2(dir.Y, dir.X);
+                r.DrawRect(tailBase - dir * 2f, new Vector2(5.5f, 1.6f), hide, tAng + sweep + 0.9f);
+                r.DrawRect(tailBase - dir * 2f, new Vector2(5.5f, 1.6f), hide, tAng - sweep - 0.9f);
+                // Dorsal fin + eye.
+                r.DrawRect(Position + up * (Radius * 0.9f), new Vector2(1.6f, 3.4f), hide, rot + facing * 0.5f);
+                r.DrawCircle(Position + dir * (Radius * 0.8f) + up * (Radius * 0.25f), 1.1f, Color.Black);
+                // Bioluminescent flank spots, pulsing in sequence.
+                for (var i = 0; i < 4; i++)
+                {
+                    var glow = MathF.Sin(t * 2.4f + _phase + i * 1.5f) * 0.5f + 0.5f;
+                    r.DrawCircle(Position - dir * (i * Radius * 0.45f) + up * (Radius * 0.1f),
+                        0.9f + glow * 0.5f,
+                        Color.Lerp(new Color(60, 120, 150), new Color(140, 240, 255), glow));
+                }
+                break;
+            }
+            case CreatureKind.AlienCrab:
+            {
+                // Lakebed scuttler: a wide domed shell over scissoring leg pairs, stalked
+                // eyes, and two front claws that spread wide when something wades too close.
+                var shell = Tinted(new Color(150, 82, 70));
+                var shellHi = Tinted(new Color(190, 116, 92));
+                var legCol = Tinted(new Color(110, 60, 52));
+                var scur = MathF.Min(MathF.Abs(Vector2.Dot(Velocity, right)) / 25f, 1f);
+                for (var i = -1; i <= 1; i++)
+                {
+                    var a = MathF.Sin(t * 14f + _phase + i * 2.1f) * 0.5f * scur;
+                    r.DrawRect(Position - up * 1.4f + right * (i * 2.6f), new Vector2(1.0f, 3.0f), legCol, rot + a + i * 0.3f);
+                }
+                r.DrawCircle(Position + up * 0.6f, Radius, shell);
+                r.DrawRect(Position + up * 1.8f, new Vector2(Radius * 1.5f, 1.4f), shellHi, rot);
+                // Claws: folded at rest, thrown wide in the territorial rush.
+                var angry = Velocity.LengthSquared() > 500f;
+                var clawA = angry ? 0.9f + MathF.Sin(t * 10f) * 0.25f : 0.35f;
+                r.DrawRect(Position + right * (facing * (Radius + 1.2f)) + up * 0.4f,
+                    new Vector2(2.8f, 1.6f), shellHi, rot + facing * clawA);
+                r.DrawRect(Position - right * (facing * (Radius + 1.2f)) + up * 0.4f,
+                    new Vector2(2.4f, 1.4f), shellHi, rot - facing * clawA);
+                // Eye stalks.
+                r.DrawRect(Position + up * (Radius + 0.8f) + right * 1.0f, new Vector2(0.5f, 1.8f), legCol, rot + 0.2f);
+                r.DrawRect(Position + up * (Radius + 0.8f) - right * 1.0f, new Vector2(0.5f, 1.8f), legCol, rot - 0.2f);
+                r.DrawCircle(Position + up * (Radius + 1.8f) + right * 1.2f, 0.6f, Color.Black);
+                r.DrawCircle(Position + up * (Radius + 1.8f) - right * 0.8f, 0.6f, Color.Black);
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
