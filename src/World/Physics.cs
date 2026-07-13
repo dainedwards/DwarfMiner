@@ -33,8 +33,11 @@ public sealed class Physics
     // the settle drain part of the break-frame hitch. Stamp == _dirtyGen means already listed.
     private readonly int[] _dirtyStamp;
     private int _dirtyGen = 1;
-    private readonly List<int> _dirtyList = new();
-    private readonly Queue<int> _processQueue = new();
+    private List<int> _dirtyList = new();
+    /// <summary>Swap partner for <see cref="_dirtyList"/> — the pass processes one list by
+    /// cursor while marks accumulate in the other. No Queue round-trip: spilling an
+    /// over-budget tail is a sequential re-stamp of the list remainder.</summary>
+    private List<int> _dirtyWork = new();
     /// <summary>Max tiles one settle pass may dequeue; the remainder rolls to the next settle
     /// tick (50ms later). Bounds the frame spike after a mass break — condemned regions get
     /// a 0.35s tremble anyway, so a tick or two of extra detection latency is invisible.
