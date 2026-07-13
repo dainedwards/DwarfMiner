@@ -1131,6 +1131,12 @@ public sealed partial class DwarfMinerGame : Game
         for (var i = _run.Creatures.Count - 1; i >= 0; i--)
         {
             var c = _run.Creatures[i];
+            // Far residents FREEZE instead of culling: the planet-wide census (city crowds,
+            // warren garrisons, lake fauna) exists before the player arrives anywhere, but
+            // it costs nothing until they walk into range and it wakes.
+            if (c.Resident
+                && (c.Position - _run.Player.Position).LengthSquared() > 900f * 900f)
+                continue;
             c.TakeCover = cityCover && c.Kind is CreatureKind.Civilian or CreatureKind.Peacekeeper;
             c.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player, _run.TitanShots);
             if (c.Health <= 0)
