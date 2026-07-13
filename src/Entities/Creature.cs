@@ -416,6 +416,9 @@ public sealed class Creature
             case CreatureKind.Moonlet:    TickMoonlet(dt, toPlayer, dist, speedMul); break;
             case CreatureKind.VacLeech:   TickSkitterer(dt, planet, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.Glimmermaw: TickGlimmermaw(dt, planet, toPlayer, dist, speedMul); break;
+            // The jelly rides the moth's drift brain — a vacuum needs no wings.
+            case CreatureKind.StarJelly:  TickFlyer(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.VoidBarnacle: TickBarnacle(dt, planet, toPlayer, dist, player); break;
         }
 
         // Land swimmers: submerged, buoyancy replaces the plummet the tick just applied —
