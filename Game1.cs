@@ -3226,7 +3226,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             // Same far-gate as the sprite pass — no lighting math for the frozen census.
             if ((c.Position - _run.Player.Position).LengthSquared() > 1400f * 1400f) continue;
-            c.AddLight(_renderer);
+            c.AddLight(_renderer, _run.Planet);
         }
 
         // Glowing particles (ore flecks, projectile sparks, explosion embers) feed back into
