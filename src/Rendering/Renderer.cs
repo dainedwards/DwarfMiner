@@ -328,11 +328,8 @@ public sealed class Renderer
                             (int)Math.Clamp(shade * tintF.X, 0f, 255f),
                             (int)Math.Clamp(shade * tintF.Y, 0f, 255f),
                             (int)Math.Clamp(shade * tintF.Z, 0f, 255f));
-                    // Gem tiles draw as the surrounding rock with the gem embedded in it: the
-                    // face samples the atlas of whatever material the majority of its solid
-                    // neighbours are (a ruby beside stone sits *in* stone, one in a dirt seam
-                    // sits in dirt), then a faceted lozenge of the gem's own colour goes on
-                    // top with a bright glint.
+                    // Legacy gem *tiles* (old worlds — gems are overlays now) draw as the
+                    // rock their solid neighbours are made of, so they read as embedded too.
                     var atlasKind = k;
                     if (Tiles.IsGem(k))
                         atlasKind = HostRockFor(outerK, innerK, leftK, rightK);
@@ -342,19 +339,12 @@ public sealed class Renderer
                         new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
                         new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
                         SpriteEffects.None, 0f);
-                    if (Tiles.IsGem(k))
-                    {
-                        var gem = Tiles.BaseColor(k);
-                        var edge = new Color(gem.R / 2, gem.G / 2, gem.B / 2);
-                        // Lozenge: pointed top/bottom rows around a wide middle band, with a
-                        // darker rim row so the facet reads at 4 px, plus a glint pixel.
-                        DrawDeco(centre, right, up, rotation, chord, 3, 1, 2, 1, edge);
-                        DrawDeco(centre, right, up, rotation, chord, 2, 2, 4, 1, gem);
-                        DrawDeco(centre, right, up, rotation, chord, 2, 3, 4, 2, gem);
-                        DrawDeco(centre, right, up, rotation, chord, 2, 5, 4, 1, edge);
-                        DrawDeco(centre, right, up, rotation, chord, 3, 6, 2, 1, edge);
-                        DrawDeco(centre, right, up, rotation, chord, 3, 2, 1, 1, Tiles.OreSpeckle(k));
-                    }
+                    // An embedded gem draws on top of whatever host it sits in.
+                    var overlayGem = planet.GemAt(r, t);
+                    if (overlayGem != TileKind.Sky)
+                        DrawGemLozenge(centre, right, up, rotation, chord, overlayGem);
+                    else if (Tiles.IsGem(k))
+                        DrawGemLozenge(centre, right, up, rotation, chord, k);
                 }
 
                 // Grass hugs exposed edges, Terraria-style: the green wraps down exposed
