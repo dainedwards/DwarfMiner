@@ -83,16 +83,20 @@ public static class AcidProbe
             var solidAfterSettle = CountSolid(planet);
             var awakeAfterSettle = cells.ActiveCellCount;
 
-            // Long run: 30 sim-seconds of steady state.
-            for (var i = 0; i < 60 * 30; i++) cells.Update(1f / 60f);
+            // Long run: 90 sim-seconds, timing the steady-state tick, to see whether the
+            // wake-set plateaus (normal open-pool sloshing) or keeps climbing (a leak).
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            for (var i = 0; i < 60 * 90; i++) cells.Update(1f / 60f);
+            sw.Stop();
             var solidEnd = CountSolid(planet);
             var awakeEnd = cells.ActiveCellCount;
 
             Console.WriteLine(
                 $"acid seed {seed} ({acid.Id}): seeds={planet.AcidSeeds.Count} "
                 + $"corroded(settle)={solidStart - solidAfterSettle} "
-                + $"corroded(30s more)={solidAfterSettle - solidEnd} "
-                + $"awake(settle)={awakeAfterSettle} awake(end)={awakeEnd}");
+                + $"corroded(90s more)={solidAfterSettle - solidEnd} "
+                + $"awake(settle)={awakeAfterSettle} awake(end)={awakeEnd} "
+                + $"tick={sw.Elapsed.TotalMilliseconds / (60 * 90):0.00}ms");
 
             // Where is the acid touching corrodible rock after settling? Sample a few.
             ReportLeaks(planet, cells);
