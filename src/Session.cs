@@ -24,6 +24,14 @@ public sealed class Session
 
     public readonly List<Creature> Creatures = new();
     public readonly List<Corpse> Corpses = new();
+    /// <summary>Physical gem drops lying in the world (see Entities.Pickup). Fed from
+    /// Cells.PendingGemDrops through <see cref="GemDropAccum"/>, collected by touch.</summary>
+    public readonly List<Pickup> Pickups = new();
+    /// <summary>Fractional gem-drop bank per resource id. Tiles are fine 4-px quads — four
+    /// broken tiles equal one legacy tile's drop — so each shattered gem tile deposits ¼ of
+    /// its drop here and a physical Pickup pops whenever a whole unit accrues. Keeps the
+    /// payout identical to the old dust economy.</summary>
+    public readonly Dictionary<string, float> GemDropAccum = new();
     public readonly List<Projectile> Projectiles = new();
     public readonly List<FallingBoulder> Boulders = new();
     public readonly List<TitanProjectile> TitanShots = new();
