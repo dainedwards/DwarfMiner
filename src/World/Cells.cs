@@ -684,7 +684,7 @@ public sealed class Cells
         for (var w = 0; w < Planet.OuterNeighbourCount(tx, ty); w++)
         {
             var (ox, oy) = Planet.OuterNeighbour(tx, ty, w);
-            _restTiles.Add(Planet.Index(ox, oy));
+            RecordRestTile(Planet.Index(ox, oy));
         }
     }
 
