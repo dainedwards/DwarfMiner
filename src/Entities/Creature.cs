@@ -2385,6 +2385,13 @@ public sealed class Creature
                 r.AddLight(Position, GuardTarget is not null ? 26f : 18f,
                     GuardTarget is not null ? new Color(255, 160, 80) : new Color(110, 200, 230));
                 break;
+            case CreatureKind.AlienWhale:
+            {
+                // The flank spots wash the basin in slow-breathing blue — a moving reef light.
+                var pulse = MathF.Sin(r.Time * 2.4f + _phase) * 6f;
+                r.AddLight(Position, 30f + pulse, new Color(90, 180, 220));
+                break;
+            }
         }
     }
 
