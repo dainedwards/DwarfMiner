@@ -636,9 +636,7 @@ public sealed class Cells
     ///   steal pass fills the voids from that same column.</summary>
     private int CompactableFill(int tx, int ty)
     {
-        if (Planet.Get(tx, ty) != TileKind.Sky) return -1;
-        if (tx <= 0 || !Tiles.IsSolid(Planet.Get(Planet.InnerNeighbour(tx, ty).x, Planet.InnerNeighbour(tx, ty).y)))
-            return -1;
+        if (tx <= 0 || Planet.Get(tx, ty) != TileKind.Sky) return -1;
         if (CompactionExclusion is { } avoid
             && Vector2.DistanceSquared(Planet.TileToWorld(tx, ty), avoid)
                < CompactExclusionRadius * CompactExclusionRadius)
@@ -656,7 +654,12 @@ public sealed class Cells
                 fill++;
             }
         if (fill < CompactPressedMinFill) return -1;
+        // Pressed tiles skip the solid-floor test: piles arch over hollows, and a column
+        // that bridges one would otherwise strand every layer above it. If a pressed
+        // block is later undercut it's Conglomerate — IsLoose — and crumbles back out.
         if (PressureAbove(tx, ty) >= CompactPressureMin) return fill;
+        if (!Tiles.IsSolid(Planet.Get(Planet.InnerNeighbour(tx, ty).x, Planet.InnerNeighbour(tx, ty).y)))
+            return -1;
         if (fill < CompactMinFill) return -1;
 
         // Sealed: every cell along the tile's outer edge has something (cell or solid tile)
