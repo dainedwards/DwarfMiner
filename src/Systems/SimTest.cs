@@ -2577,7 +2577,7 @@ public static class SimTest
             profHi = MathF.Max(profHi, s);
         }
         Check($"hollow: lumpy asteroid silhouette (terrain line swings {profHi - profLo:0} rings)",
-            profHi - profLo > 40f);
+            profHi - profLo > 45f);
         var roundWorld = WorldGen.Generate(1234, World.PlanetDefs.ById("verdant"));
         float rLo = float.MaxValue, rHi = float.MinValue;
         foreach (var s in roundWorld.SurfaceProfile!)
