@@ -437,6 +437,10 @@ public sealed class Planet
             w.Write(y);
             w.Write(acid);
         }
+        w.Write(CitySpawns.Count);
+        foreach (var (x, y) in CitySpawns) { w.Write(x); w.Write(y); }
+        w.Write(LizardDens.Count);
+        foreach (var (x, y) in LizardDens) { w.Write(x); w.Write(y); }
         w.Write(_composition.Count);
         foreach (var (idx, comp) in _composition)
         {
