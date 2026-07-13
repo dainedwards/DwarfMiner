@@ -148,6 +148,15 @@ public sealed class Cells
         _velR = new float[_rowOffsets[Height]];
         _travel = new float[_rowOffsets[Height]];
         _flow = new sbyte[_rowOffsets[Height]];
+        _queued = new bool[_rowOffsets[Height]];
+    }
+
+    /// <summary>Queue the cell for the next tick (deduplicated).</summary>
+    private void Enqueue(int i)
+    {
+        if (_queued[i]) return;
+        _queued[i] = true;
+        _next.Add(i);
     }
 
     private void ClearKinetics(int i)
