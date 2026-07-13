@@ -446,6 +446,13 @@ public sealed class Titan
             speedMul = Charging ? 4.4f : 0f;
         }
 
+        // Kong plants while a hand smash swings — the fist hammers a stationary target.
+        if (Kind == TitanKind.Kong && SmashTimer > 0f)
+        {
+            moveAxis = 0;
+            speedMul = 0f;
+        }
+
         // Close the generic hunt-jump's airtime window (Kong's special manages its own
         // Leaping; the timer is only ever armed for the other kinds).
         if (_jumpTimer > 0f)
