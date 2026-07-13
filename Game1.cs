@@ -2122,6 +2122,30 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
+    /// <summary>Advance the breath meter: drains while the head is underwater (unless the
+    /// gill graft breathes water for you), refills fast in air, and drowns the dwarf at
+    /// zero — HP bleed that bypasses armor, like suffocation. God mode stays topped up.</summary>
+    private void TickBreath(float dt)
+    {
+        var p = _run.Player;
+        var max = p.EffectiveMaxBreath;
+        if (p.FlyMode || p.HasGills || !p.HeadInWater)
+        {
+            // Surfacing (or gills): a few seconds tops the meter back up.
+            p.Breath = MathF.Min(max, p.Breath + max / 2.5f * dt);
+            return;
+        }
+        p.Breath = MathF.Max(0f, p.Breath - dt);
+        if (p.Breath <= 0f)
+        {
+            p.Health -= DrownDps * dt;
+            // Bubble gasps so the cause of death reads on-screen.
+            if (Random.Shared.NextDouble() < dt * 4f) _particles.EmitDust(p.Position, 3f);
+        }
+    }
+
+    private const float DrownDps = 9f;
+
     // Hazard-contact tuning (per second while the dwarf's body overlaps the cells).
     private const float LavaBurnDps = 42f;   // ~2.4s from full — a lava bath is near-instant death
     private const float AcidBurnDps = 20f;   // corrosive but survivable if you scramble out
