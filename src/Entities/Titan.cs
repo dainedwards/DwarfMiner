@@ -73,6 +73,29 @@ public sealed class Titan
     /// <summary>Sandworm: erupted out of the ground and arcing mouth-first through the air
     /// (the classic Dune breach). Renderer opens the maw skyward while this is set.</summary>
     public bool Breaching;
+
+    // ─── Kong hand smash ──────────────────────────────────────────────────────
+    /// <summary>Kong's primary close-range attack: it plants, rears one stone-knuckled fist
+    /// high, and hammers it down on whatever is in arm's reach — the player when aggroed, or
+    /// the nearest city wall in any mood (the ape wrecks skylines with its hands, not its
+    /// shoulder). Counts down from <see cref="SmashDuration"/> while a swing runs; the impact
+    /// fires once when it crosses <see cref="SmashImpactAt"/> — building tiles under the fist
+    /// take heavy wrecking damage and a short shockwave clobbers anything fleshy (Game1
+    /// consumes <see cref="PendingShockwave"/> for the player and nearby creatures).</summary>
+    public float SmashTimer;
+    /// <summary>Which arm swings (-1 left / +1 right) — alternates each smash.</summary>
+    public int SmashHand = 1;
+    /// <summary>World point the fist hammers; the renderer drives the committed arm to it.</summary>
+    public Vector2 SmashTarget;
+    public const float SmashDuration = 0.85f;
+    /// <summary>Remaining-timer threshold at which the fist lands (raise + hammer take the
+    /// front of the swing; what's left after impact is follow-through with the fist buried).</summary>
+    public const float SmashImpactAt = 0.3f;
+    /// <summary>How far from the body center a fist can land — inside this the ape smashes
+    /// rather than leaping.</summary>
+    public const float SmashReach = 190f;
+    private bool _smashLanded;
+    private float _smashCooldown;
     /// <summary>Melee AoE pending from a Kong slam or Sandworm eruption — Game1 consumes it to
     /// damage/knock-back the player and spew debris, since the Titan has no Player reference.</summary>
     public (Vector2 pos, float radius, float damage)? PendingShockwave;
