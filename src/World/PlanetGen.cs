@@ -275,10 +275,10 @@ public static class PlanetGen
                 SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Difficulty: difficulty),
         };
 
-        // Lizardman warrens riddle the mid-to-late worlds: past the opening slots, roughly
-        // every third world hides one. Never on city worlds — one civilisation per planet
-        // (Campaign guarantees at least one warren world somewhere in the chain).
-        if (biome != Biome.City && slot >= 2 && rng.Next(3) == 0)
+        // Lizardman warrens are creatures of heat and vitriol: only the acid and lava
+        // (ember) worlds hide them — never anywhere else, and never a city world (one
+        // civilisation per planet). Campaign guarantees at least one warren per chain.
+        if (biome is Biome.Acid or Biome.Ember && rng.Next(2) == 0)
             def = def with { LizardCities = 1 };
         return def;
     }
