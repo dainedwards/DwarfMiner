@@ -142,6 +142,7 @@ public static class SpawnDirector
             if (InCityDistrict(planet, pos)) continue;
             if (SurfaceFaunaFor(run.Def) is not { } kind) continue;
             var c = new Creature(pos, kind) { Resident = true };
+            if (HazardRejectsSpawn(run, pos, c)) continue;   // not into a surface acid/lava pond
             ClearSpawnSpace(run, pos, c.Radius);
             run.Creatures.Add(c);
         }
