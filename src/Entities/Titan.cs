@@ -715,7 +715,51 @@ public sealed class Titan
             case TitanKind.Slattern:    TickSlattern(dt, physics, playerPos, shots); break;
             case TitanKind.Pyrodactyl:
             case TitanKind.Vitriodactyl: TickBombingRun(dt, playerPos, shots); break;
+            case TitanKind.CosmicOctopus: TickStarspawn(dt, playerPos, shots); break;
         }
+    }
+
+    /// <summary>The Starspawn alternates two specials, each behind a swirling windup the
+    /// renderer telegraphs: a gravity-well pulse that drags the dwarf toward the maw
+    /// (<see cref="PendingGravityWell"/> — Game1 applies the pull), and a fanned volley of
+    /// void bolts spat from the beak. Underground both matter: the well yanks prey off
+    /// ledges and out of side-tunnels, the bolts punish standing still in a gallery.</summary>
+    private void TickStarspawn(float dt, Vector2 playerPos, List<TitanProjectile> shots)
+    {
+        if (SpecialState > 0f)
+        {
+            SpecialState -= dt;
+            if (SpecialState <= 0f)
+            {
+                if (OctoPulseNext)
+                {
+                    PendingGravityWell = (Position, 460f, 2.4f);
+                }
+                else
+                {
+                    var mouth = Mouth();
+                    var aim = playerPos - mouth;
+                    if (aim.LengthSquared() > 0.01f)
+                    {
+                        aim.Normalize();
+                        const int bolts = 7;
+                        for (var i = 0; i < bolts; i++)
+                        {
+                            var spread = (i / (float)(bolts - 1) - 0.5f) * 0.9f;
+                            var c = MathF.Cos(spread); var s = MathF.Sin(spread);
+                            var d = new Vector2(aim.X * c - aim.Y * s, aim.X * s + aim.Y * c);
+                            shots.Add(new TitanProjectile(mouth + d * 14f, d * 300f, TitanShotKind.Void));
+                        }
+                    }
+                }
+                SpecialCooldown = 5f;
+            }
+            return;
+        }
+        if (!IsAggro || SpecialCooldown > 0f) return;
+        if ((playerPos - Position).Length() > 700f) return;
+        OctoPulseNext = !OctoPulseNext;
+        SpecialState = GravityWellWindup;
     }
 
     /// <summary>The flyers' signature: a bombing run. The wing kaiju sinks to strafing
