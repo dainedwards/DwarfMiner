@@ -150,6 +150,7 @@ public static class PlanetDefs
         SizeScale: 1.8f, LakeScale: 1.4f,
         AcidPools: 3, AcidRain: true,
         Volcanoes: 3, VolcanoScale: 1.1f,
+        CityLots: 3, LizardCities: 1,
         SurfaceBands: new[] { TileKind.Grass, TileKind.Snow, TileKind.Gravel, TileKind.Dirt, TileKind.Basalt },
         Biome: "debug", Difficulty: 1f);
 
