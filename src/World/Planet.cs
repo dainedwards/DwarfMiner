@@ -128,6 +128,7 @@ public sealed class Planet
     {
         if (!InBounds(x, y)) return;
         var i = Index(x, y);
+        TrackKindChange(_tiles[i], TileKind.Conglomerate);
         _tiles[i] = TileKind.Conglomerate;
         _damage[i] = 0;
         _composition[i] = comp;
