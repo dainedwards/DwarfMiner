@@ -60,7 +60,9 @@ public sealed class Physics
     private int _anchorGen = 1;
     private int _floodGen = 1;
     private readonly List<int> _floodVisitList = new();
-    private readonly Stack<int> _floodStack = new();
+    // The stack carries (x, y) alongside the flat index so a pop doesn't pay an UnIndex
+    // binary search — the visitor that pushed it already had the coordinates.
+    private readonly Stack<(int idx, int x, int y)> _floodStack = new();
     private readonly List<int> _floodRegion = new();
     private float _settleAccum;
     public const float SettleInterval = 0.05f; // seconds between settle ticks
