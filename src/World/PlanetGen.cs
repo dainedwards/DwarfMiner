@@ -258,6 +258,12 @@ public static class PlanetGen
                 Titan: titan, CrystalPockets: 1, FungalPockets: 3 + rng.Next(3),
                 SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Difficulty: difficulty),
         };
+
+        // Lizardman warrens riddle the mid-to-late worlds: past the opening slots, roughly
+        // every third non-city world hides one (city worlds always carry theirs).
+        if (biome != Biome.City && slot >= 2 && rng.Next(3) == 0)
+            def = def with { LizardCities = 1 };
+        return def;
     }
 
     /// <summary>Syllable-mash planet names, unique within a campaign. Sticks to A-Z so the
