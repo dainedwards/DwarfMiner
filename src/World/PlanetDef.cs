@@ -224,7 +224,7 @@ public static class PlanetDefs
             // The breach world: a fresh kaiju rolls out of the pool on every visit, so no two
             // Coreheart dives face the same monster. Titan above stays as the fallback label.
             TitanPool: new[] { TitanKind.Knifehead, TitanKind.Otachi, TitanKind.Leatherback, TitanKind.Raiju },
-            Biome: "crystal", Difficulty: 0.8f),
+            LizardCities: 1, Biome: "crystal", Difficulty: 0.8f),
 
         // The warp world — out of normal flight range, reachable only with all five core
         // shards. Everything is turned up: swarming caves, toxins, near-vacuum air, lava at
