@@ -489,10 +489,13 @@ public sealed class Titan
         var hasPlanted = false;
         if (Kind == TitanKind.Sandworm)
         {
+            // A shallow, slow weave: the worm tracks the surface line in a near-straight
+            // run, cresting only slightly. (The old ±78px fast sine had it porpoising —
+            // bouncing in and out of the ground instead of boring a clean line.)
             var surface = SurfacePoint(planet, up);
-            var weave = MathF.Sin(Pulse * 1.1f) * 78f;      // crest over / dive under the surface line
+            var weave = MathF.Sin(Pulse * 0.45f) * 22f;
             var targetH = Vector2.Dot(surface + up * weave - Position, up);
-            vNormal = MathHelper.Clamp(targetH * 3.2f, -170f, 170f);
+            vNormal = MathHelper.Clamp(targetH * 1.5f, -90f, 90f);
         }
         else if (Flyer)
         {
