@@ -388,11 +388,15 @@ public static class WorldGen
         SeedBiomePockets(planet, def, rng);
 
         // Volcanoes stamp last so their plumbing (throat lining, chamber shell) wins over
-        // any cave or pocket it crosses. Keep them off the lake/pool basins.
-        var wet = new List<(float ang, float w)>();
-        foreach (var l in lakes) wet.Add((l.ang, l.w));
-        foreach (var a in acidPools) wet.Add((a.ang, a.w));
-        CarveVolcanoes(planet, def, rng, mountains, wet);
+        // any cave or pocket it crosses. Keep them off the lake/pool basins. Each stamping
+        // pass appends its own footprints to the shared avoid list, so towers keep off the
+        // volcano flanks and lizard-city shafts keep off both.
+        var blocked = new List<(float ang, float w)>();
+        foreach (var l in lakes) blocked.Add((l.ang, l.w));
+        foreach (var a in acidPools) blocked.Add((a.ang, a.w));
+        CarveVolcanoes(planet, def, rng, mountains, blocked);
+        RaiseCity(planet, def, rng, mountains, blocked);
+        CarveLizardCities(planet, def, rng, mountains, blocked);
 
         return planet;
     }
