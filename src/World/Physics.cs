@@ -276,7 +276,7 @@ public sealed class Physics
             // Cache hit — region is anchored. Promote everything we've seen.
             if (_anchoredCache.Contains(idx))
             {
-                foreach (var v in _floodVisited) _anchoredCache.Add(v);
+                foreach (var v in _floodVisitList) _anchorStamp[v] = _anchorGen;
                 return true;
             }
 
@@ -284,7 +284,7 @@ public sealed class Physics
             if (!Tiles.IsSolid(k)) continue;
             if (Tiles.IsAnchored(k))
             {
-                foreach (var v in _floodVisited) _anchoredCache.Add(v);
+                foreach (var v in _floodVisitList) _anchorStamp[v] = _anchorGen;
                 return true;
             }
             // ReinforcedSupport halo: any tile within a 1-tile orthogonal+diagonal radius of
@@ -293,7 +293,7 @@ public sealed class Physics
             // including unsupported diagonal stone, which a plain Support can't.
             if (HasReinforcedNeighbor(x, y))
             {
-                foreach (var v in _floodVisited) _anchoredCache.Add(v);
+                foreach (var v in _floodVisitList) _anchorStamp[v] = _anchorGen;
                 return true;
             }
             _floodRegion.Add(idx);
@@ -310,7 +310,7 @@ public sealed class Physics
                 && (_regionTouchesCrust || _floodRegion.Count > SkyRegionCap))
             {
                 // Region too big for its material strength — treat as supported.
-                foreach (var v in _floodVisited) _anchoredCache.Add(v);
+                foreach (var v in _floodVisitList) _anchorStamp[v] = _anchorGen;
                 return true;
             }
 
@@ -321,7 +321,7 @@ public sealed class Physics
             if (innerR < 0)
             {
                 // Reached the Core boundary — anchor.
-                foreach (var v in _floodVisited) _anchoredCache.Add(v);
+                foreach (var v in _floodVisitList) _anchorStamp[v] = _anchorGen;
                 return true;
             }
             VisitFloodNeighbour(innerR, innerT);
