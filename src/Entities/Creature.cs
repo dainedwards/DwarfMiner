@@ -2542,6 +2542,63 @@ public sealed class Creature
                 }
                 break;
             }
+            case CreatureKind.StarJelly:
+            {
+                // Vacuum medusa: a translucent pulsing bell full of faint star-motes,
+                // trailing four stinging filaments that ripple behind the drift.
+                var pulse = MathF.Sin(t * 2.2f + _phase) * 0.5f + 0.5f;
+                var bell = Tinted(new Color(120, 180, 220)) * 0.55f;
+                var bellRim = Tinted(new Color(180, 230, 255)) * 0.8f;
+                var c = Position + up * (pulse * 1.2f);
+                r.DrawCircle(c, Radius + pulse * 1.2f, bell);
+                r.DrawCircle(c + up * 1f, (Radius + pulse * 1.2f) * 0.7f, bellRim * 0.5f);
+                // Star-motes inside the bell.
+                for (var i = 0; i < 3; i++)
+                {
+                    var ma = _phase + i * 2.1f + t * 0.8f;
+                    r.DrawRect(c + new Vector2(MathF.Cos(ma), MathF.Sin(ma)) * Radius * 0.45f,
+                        new Vector2(1f, 1f), Color.White * (0.5f + pulse * 0.5f));
+                }
+                // Trailing filaments — hang against the drift so they stream behind.
+                var drift = Velocity.LengthSquared() > 4f ? Vector2.Normalize(Velocity) : up;
+                for (var i = -1; i <= 2; i++)
+                {
+                    var fBase = c - up * (Radius * 0.6f) + right * (i * 1.8f - 0.9f);
+                    var ripple = MathF.Sin(t * 4f + _phase + i * 1.3f) * 2.2f;
+                    var tip = fBase - drift * (7f + i % 2 * 3f) + right * ripple - up * 4f;
+                    r.DrawRect((fBase + tip) / 2f, new Vector2(0.7f, (tip - fBase).Length()),
+                        bellRim * 0.6f, MathF.Atan2(tip.Y - fBase.Y, tip.X - fBase.X) + MathF.PI / 2f);
+                }
+                break;
+            }
+            case CreatureKind.VoidBarnacle:
+            {
+                // A calcified cone cemented to the rock, mouth-plates parted around a dark
+                // gullet — and, while prey is hooked, the near-invisible gravity tongue: a
+                // faint shimmer line running all the way to the player.
+                var shell = Tinted(new Color(150, 140, 128));
+                var shellDark = Tinted(new Color(110, 102, 94));
+                r.DrawRect(Position - up * 1f, new Vector2(10f, 6f), shellDark, rot);
+                r.DrawRect(Position + up * 2f, new Vector2(7.5f, 5f), shell, rot);
+                r.DrawRect(Position + up * 4.5f, new Vector2(5f, 3f), shellDark, rot);
+                // Mouth plates — gape wider while pulling.
+                var gape = Pulling ? 1.6f + MathF.Sin(t * 8f) * 0.4f : 0.7f;
+                r.DrawRect(Position + up * 6f - right * gape, new Vector2(1.6f, 3f), shell, rot + 0.3f);
+                r.DrawRect(Position + up * 6f + right * gape, new Vector2(1.6f, 3f), shell, rot - 0.3f);
+                r.DrawCircle(Position + up * 5.5f, 1.6f, new Color(20, 12, 26));
+                if (Pulling)
+                {
+                    var toP = player.Position - (Position + up * 6f);
+                    var steps = 7;
+                    for (var s = 1; s < steps; s++)
+                    {
+                        var pp = Position + up * 6f + toP * (s / (float)steps);
+                        var shimmer = MathF.Sin(t * 14f - s * 1.2f) * 0.5f + 0.5f;
+                        r.DrawCircle(pp, 1f + shimmer * 0.8f, new Color(170, 130, 240) * (0.25f + shimmer * 0.3f));
+                    }
+                }
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
