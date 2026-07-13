@@ -623,10 +623,15 @@ public sealed class Cells
     }
 
     /// <summary>Occupied-cell count if the tile at (tx,ty) is eligible to compact, else -1.
-    /// Eligible: open (Sky) tile, resting on a solid tile, at least <see cref="CompactMinFill"/>
-    /// cells all holding compactable grain (any liquid/gas/void beyond the tolerance disqualifies),
-    /// fully roofed by blocked cells (buried — surface piles stay loose and pourable), and not
-    /// within <see cref="CompactExclusionRadius"/> of the player.</summary>
+    /// Always required: open (Sky) tile, resting on a solid tile, only compactable grain
+    /// (any liquid/gas disqualifies), and not within <see cref="CompactExclusionRadius"/>
+    /// of the player. Then one of two burial proofs:
+    /// - sealed: near-full (<see cref="CompactMinFill"/>) with every outer-edge cell roofed —
+    ///   the original rule, still what lets a dust-packed stone pocket re-form; or
+    /// - pressed: at least <see cref="CompactPressureMin"/> tiles of loose grains stacked
+    ///   above. Naturally settled piles interlock with voids and craggy tops, so they never
+    ///   pass the sealed rule — pressure is the proof of burial instead, and Compact's
+    ///   steal pass fills the voids from that same column.</summary>
     private int CompactableFill(int tx, int ty)
     {
         if (Planet.Get(tx, ty) != TileKind.Sky) return -1;
@@ -648,9 +653,12 @@ public sealed class Cells
                 if (!Materials.IsCompactable(m)) return -1;
                 fill++;
             }
+        if (fill < CompactPressedMinFill) return -1;
+        if (fill >= CompactPressedMinFill && PressureAbove(tx, ty) >= CompactPressureMin)
+            return fill;
         if (fill < CompactMinFill) return -1;
 
-        // Buried: every cell along the tile's outer edge has something (cell or solid tile)
+        // Sealed: every cell along the tile's outer edge has something (cell or solid tile)
         // directly above it, so this is pile interior — never the loose, visible crest.
         var topRow = c0y + Density - 1;
         for (var dx = 0; dx < Density; dx++)
@@ -659,6 +667,33 @@ public sealed class Cells
             if (!IsBlocked(ocx, ocy)) return -1;
         }
         return fill;
+    }
+
+    /// <summary>Loose compactable grains stacked directly above the tile, in tiles' worth
+    /// (16 cells = 1.0), capped at <see cref="CompactPressureCap"/>. Each of the tile's cell
+    /// columns is walked outward until it leaves the grain column — deliberately counting
+    /// only real grains, not solid roofs, so a sealed stone pocket keeps the stricter
+    /// near-full rule and a half-empty one stays dust ("not enough sand stays sand").</summary>
+    private float PressureAbove(int tx, int ty)
+    {
+        var c0y = tx * Density;
+        var c0x = ty * Density;
+        var topRow = c0y + Density - 1;
+        var total = 0;
+        const int maxRise = Density * CompactPressureCap;
+        for (var dx = 0; dx < Density; dx++)
+        {
+            var cx = c0x + dx;
+            var cy = topRow;
+            for (var k = 0; k < maxRise; k++)
+            {
+                (cx, cy) = OuterCell(cx, cy);
+                if (cy >= Height) break;
+                if (!Materials.IsCompactable((Material)_mat[Idx(cx, cy)])) break;
+                total++;
+            }
+        }
+        return total / (float)(Density * Density);
     }
 
     /// <summary>Press the tile's grains into a Conglomerate: record the exact cell makeup
