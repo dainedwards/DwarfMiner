@@ -311,14 +311,16 @@ public static class PlanetDefs
 
     static PlanetDefs() => All = Classic;
 
-    /// <summary>Core shards needed to warp — one from every world except the Rift itself,
-    /// the shard-less Hollow (its geode heart holds riches, not a shard), and the debug rig.</summary>
+    /// <summary>Core shards needed to warp — one from every world except the Rift itself
+    /// and the bonus destinations: the shard-less Hollow, the cratered moon, and the debug
+    /// rig. (The ocean moon still counts — it's a campaign world that happens to orbit
+    /// a planet, shard and all.)</summary>
     public static int WarpShardsNeeded
     {
         get
         {
             var n = 0;
-            foreach (var d in All) if (d.Id is not ("rift" or "debug" or "hollow")) n++;
+            foreach (var d in All) if (d.Id is not ("rift" or "debug" or "hollow" or "moon")) n++;
             return n;
         }
     }
