@@ -171,7 +171,7 @@ public static class PlanetDefs
             TileKind.Snow,
             LakeMin: 4, LakeExtra: 2, MountainMin: 8, MountainExtra: 3,
             MountainHeightScale: 1.25f, LavaFillFrac: 0.30f, HasWater: true,
-            OreBias: new[] { (TileKind.Sapphire, 0.030f), (TileKind.SilverOre, 0.020f), (TileKind.Emerald, 0.015f) },
+            OreBias: new[] { (TileKind.Sapphire, 0.030f), (TileKind.SilverOre, 0.135f), (TileKind.Emerald, 0.015f) },
             QuakeScale: 1.2f, CaveSpawnCap: 16,
             ShipOre: "sapphire", ShipOreCount: 4, OxygenDrainScale: 1.1f, Titan: TitanKind.Sandworm,
             CrystalPockets: 3, FungalPockets: 2, Biome: "frost", Difficulty: 0.2f),
