@@ -166,6 +166,17 @@ public sealed class Titan
     /// dips low during a bombing run), and the wing-flap render skeleton.</summary>
     public bool Flyer => Kind is TitanKind.Pyrodactyl or TitanKind.Vitriodactyl;
 
+    /// <summary>Gravity-well yank pending from the Starspawn's pulse — Game1 consumes it and
+    /// drags the player toward <c>pos</c> for <c>seconds</c> (velocity pull inside the
+    /// radius). Mirrors the PendingShockwave/PendingEmp hand-off pattern.</summary>
+    public (Vector2 pos, float radius, float seconds)? PendingGravityWell;
+    /// <summary>Starspawn windup length, exposed so the renderer can swirl the telegraph.</summary>
+    public const float GravityWellWindup = 1.2f;
+    /// <summary>Which special the Starspawn fires when its current windup completes — true =
+    /// the gravity well, false = the void-bolt volley. Public so the renderer can colour the
+    /// telegraph correctly (swirl vs muzzle glow).</summary>
+    public bool OctoPulseNext;
+
     /// <summary>Flyer mid-bombing-run: the renderer folds the wings into the dive and the
     /// locomotion sinks to strafing height while it rains.</summary>
     public bool Bombing;
