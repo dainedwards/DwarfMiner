@@ -1145,6 +1145,46 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
+        // City militia: each peacekeeper picks the nearest hostile invader in guard range —
+        // or the rampaging titan when the streets are otherwise clear — and peppers it with
+        // low-damage civic bolts. Targeting and firing live here because Game1 owns both the
+        // creature and projectile lists; the creature tick just walks to engage. The bolts
+        // are friendly-to-neutrals (Combat skips civilians, and a bolt-stung titan doesn't
+        // re-aggro onto the player), so the city defends itself without ever drafting the
+        // dwarf into its crossfire.
+        foreach (var pk in _run.Creatures)
+        {
+            if (pk.Kind != CreatureKind.Peacekeeper || pk.Health <= 0) continue;
+            pk.GuardFireCd -= dt;
+            Vector2? threat = null;
+            var bestSq = 240f * 240f;
+            foreach (var other in _run.Creatures)
+            {
+                if (!other.Hostile || other.Health <= 0) continue;
+                var dSq = (other.Position - pk.Position).LengthSquared();
+                if (dSq < bestSq) { bestSq = dSq; threat = other.Position; }
+            }
+            if (threat is null && _run.Titan.Hatched && _run.Titan.Health > 0
+                && (_run.Titan.Position - pk.Position).LengthSquared() < 320f * 320f)
+                threat = _run.Titan.Position;
+            pk.GuardTarget = threat;
+            if (threat is { } tp && pk.GuardFireCd <= 0f)
+            {
+                var diff = tp - pk.Position;
+                var d = diff.Length();
+                if (d is > 10f and < 230f)
+                {
+                    var dir = diff / d;
+                    _run.Projectiles.Add(new Projectile(
+                        pk.Position + dir * (pk.Radius + 3f), dir * 260f, 3f, 1.1f,
+                        ProjectileKind.CivicBolt));
+                    pk.GuardFireCd = 1.1f + (float)Random.Shared.NextDouble() * 0.5f;
+                    pk.GuardMuzzleFlash();
+                    PlayAt("shoot", pk.Position, 0.35f, pitch: 0.45f, minGap: 0.1f);
+                }
+            }
+        }
+
         // Corpses — settle under gravity, decay on a timer, and are harvested for materials
         // by walking over them (same sweep-up feel as dust collection).
         for (var i = _run.Corpses.Count - 1; i >= 0; i--)
