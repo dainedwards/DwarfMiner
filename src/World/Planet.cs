@@ -123,16 +123,9 @@ public sealed class Planet
 
     private readonly Dictionary<int, TileComposition> _composition = new();
 
-    /// <summary>Stamp a compacted Conglomerate tile with its cell composition.</summary>
-    public void SetConglomerate(int x, int y, TileComposition comp)
-    {
-        if (!InBounds(x, y)) return;
-        var i = Index(x, y);
-        TrackKindChange(_tiles[i], TileKind.Conglomerate);
-        _tiles[i] = TileKind.Conglomerate;
-        _damage[i] = 0;
-        _composition[i] = comp;
-    }
+    // (Compaction now stamps a plain majority-kind tile via Set — see Cells.Compact. The
+    // composition table below only serves legacy Conglomerate tiles restored from old saves:
+    // the renderer still tints them and shattering still spills their stored cells.)
 
     /// <summary>Composition of the Conglomerate tile at (x,y), or null. Read-only peek (renderer tint).</summary>
     public TileComposition? GetComposition(int x, int y) =>
