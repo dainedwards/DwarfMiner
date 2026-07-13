@@ -99,6 +99,22 @@ public static class PlanetGen
                 goldVein[i], silverVein[i]);
         }
 
+        // Warren guarantee: every campaign hides lizardmen SOMEWHERE. If none of the
+        // per-world rolls landed one, bury a warren under a random non-city mid-to-late
+        // world (never the metropolis — one civilisation per planet).
+        var anyWarren = false;
+        foreach (var d in chain[..7]) anyWarren |= d is { LizardCities: > 0 };
+        if (!anyWarren)
+        {
+            for (var tries = 0; tries < 16; tries++)
+            {
+                var slot = 2 + rng.Next(5);
+                if (chain[slot].CityLots > 0) continue;
+                chain[slot] = chain[slot] with { LizardCities = 1 };
+                break;
+            }
+        }
+
         // The finale is constant: the warp-locked Rift, exactly as hand-tuned.
         chain[7] = PlanetDefs.Classic[^1];
         return chain;
