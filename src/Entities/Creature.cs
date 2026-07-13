@@ -257,7 +257,7 @@ public sealed class Creature
     }
 
     public bool IsSkyKind => Kind is CreatureKind.SkyMoth or CreatureKind.SkyStinger
-        or CreatureKind.NullMoth;
+        or CreatureKind.NullMoth or CreatureKind.Saucer;
     public bool IsSurfaceKind => Kind is CreatureKind.Grazer or CreatureKind.Hopper
         or CreatureKind.SnowLoper or CreatureKind.CinderSkink or CreatureKind.RustBack
         or CreatureKind.TidePuddler or CreatureKind.AcidStrider or CreatureKind.PrismSnail
