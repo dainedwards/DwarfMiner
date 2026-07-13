@@ -63,6 +63,10 @@ public static class Survey
             for (var y = 0; y < n; y++)
             {
                 var k = planet.Get(r, y);
+                // Gems are embedded objects riding host tiles now, so the census reads the
+                // overlay layer too — each overlay is one whole recoverable gem.
+                var g = planet.GemAt(r, y);
+                if (g != TileKind.Sky) k = g;
                 for (var i = 0; i < OreKinds.Length; i++)
                     if (OreKinds[i].kind == k) { counts[i]++; break; }
             }
