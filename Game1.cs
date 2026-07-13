@@ -2591,6 +2591,17 @@ public sealed partial class DwarfMinerGame : Game
                 Color.Lerp(col, Color.White, 0.18f), crot);
         }
 
+        // Gem pickups — a slowly spinning faceted lozenge (rotated square + bright core)
+        // with a periodic white glint so a dropped gem catches the eye across a dark cave.
+        foreach (var g in _run.Pickups)
+        {
+            var spin = g.Age * 1.8f;
+            _renderer.DrawRect(g.Position, new Vector2(3.6f, 3.6f), Tiles.BaseColor(g.Kind), spin);
+            _renderer.DrawRect(g.Position, new Vector2(1.8f, 1.8f), Tiles.OreSpeckle(g.Kind), spin + 0.5f);
+            if (((int)(g.Age * 2.5f) & 3) == 0)
+                _renderer.DrawRect(g.Position + new Vector2(1.2f, -1.2f), new Vector2(1f, 1f), Color.White);
+        }
+
         // Creatures — each kind draws its own procedural sprite, including the burn/freeze
         // status tinting and the burning-ember flicker.
         foreach (var c in _run.Creatures)
