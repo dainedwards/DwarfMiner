@@ -2524,6 +2524,10 @@ public sealed class Creature
 
     // ---------------------------------------------------------------- small math helpers
 
+    /// <summary>Downward acceleration on this world — the classic 320 px/s² scaled by the
+    /// planet's gravity (0.45 on the Hollow asteroid, where everything falls like a feather).</summary>
+    private static float Grav(Planet planet) => 320f * planet.GravityScale;
+
     private static float MoveToward(float v, float target, float maxDelta)
     {
         var d = target - v;
