@@ -265,7 +265,8 @@ public sealed class Physics
 
         var startIdx = _planet.Index(sx, sy);
         _floodStack.Push(startIdx);
-        _floodVisited.Add(startIdx);
+        _floodStamp[startIdx] = _floodGen;
+        _floodVisitList.Add(startIdx);
 
         while (_floodStack.Count > 0)
         {
