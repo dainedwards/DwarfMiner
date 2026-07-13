@@ -112,9 +112,12 @@ public sealed class InventoryUi
     public void DrawToolbelt(Renderer renderer, Player player, int viewportWidth, int viewportHeight)
     {
         var sb = renderer.Batch;
-        const int slotSize = 36;
         const int slotGap = 4;
-        const int rowH = slotSize + 18;   // includes label tag above
+        // Slots are 36 px by default but shrink to keep the whole strip inside the viewport
+        // (with a 20-px margin each side) once the count grows past what fits at full size —
+        // so bumping SlotCount for future items never runs the belt off-screen.
+        var slotSize = Math.Min(36, (viewportWidth - 40) / Toolbelt.SlotCount - slotGap);
+        var rowH = slotSize + 18;   // includes label tag above
         var totalW = Toolbelt.SlotCount * slotSize + (Toolbelt.SlotCount - 1) * slotGap;
         var x0 = (viewportWidth - totalW) / 2;
         var y0 = viewportHeight - rowH - 8;
