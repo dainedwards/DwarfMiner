@@ -1386,11 +1386,27 @@ public static class SimTest
             sentry.Update(dt, planet, physics, cells, closePrey);
             Check("defense: sighting guard raises the war-cry flag", sentry.CallingBackup);
 
-            var aAng = 3.4f;
+            // The march test needs runnable ground: scan for a flat stretch (no mountain
+            // flank or lake pit between guard and prey) so a wedge can't fake a failure.
+            var aAng = 0.2f;
+            var flatFound = false;
+            for (var a = 0.2f; a < MathHelper.TwoPi && !flatFound; a += 0.13f)
+            {
+                var p0 = SpawnDirector.FindSurfaceSpawn(planet, a, planet.Radius);
+                var r0 = (p0 - planet.Center).Length();
+                var flat = true;
+                for (var off = 0.05f; off <= 0.4f && flat; off += 0.05f)
+                {
+                    var p = SpawnDirector.FindSurfaceSpawn(planet, a + off, planet.Radius);
+                    flat = MathF.Abs((p - planet.Center).Length() - r0) < 10f;
+                }
+                if (flat) { aAng = a; flatFound = true; }
+            }
+            Check("defense: flat rally runway found", flatFound);
             var allyPos = SpawnDirector.FindSurfaceSpawn(planet, aAng, planet.Radius);
-            var upA = planet.UpAt(allyPos);
-            var rightA = new Vector2(-upA.Y, upA.X);
-            var farPrey = new Player(allyPos + rightA * 420f);   // well past the 240px sight range
+            var runR = (allyPos - planet.Center).Length();
+            var farPrey = new Player(SpawnDirector.FindSurfaceSpawn(
+                planet, aAng + 420f / runR, planet.Radius));   // ~420px along the surface
             var ally = new Creature(allyPos, CreatureKind.Lizardman);
             for (var i = 0; i < 60 * 3; i++) ally.Update(dt, planet, physics, cells, farPrey);
             var calmDist = (ally.Position - farPrey.Position).Length();
