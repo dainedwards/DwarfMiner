@@ -137,7 +137,9 @@ public sealed class SpaceSim
             // Body radius tracks the def's SizeScale so the system view honestly previews
             // how big each world is - the far giants loom, the near dwarfs look like moons.
             Planets.Add(new SpacePlanet(def,
-                orbitRadius: rift ? 9800f : debug ? 950f : 1500f + i * 1050f,
+                // The rift stays >1.5× beyond the outermost ordinary orbit even as the def
+                // chain grows (the city def's arrival pushed the old 9800 inside that margin).
+                orbitRadius: rift ? 14000f : debug ? 950f : 1500f + i * 1050f,
                 bodyRadius: rift ? 210f : 130f * def.SizeScale,
                 angle: i * 2.23f + 0.6f,
                 angularVel: rift ? 0.004f : debug ? 0.014f : 0.012f / MathF.Sqrt(1f + i * 0.7f)));
