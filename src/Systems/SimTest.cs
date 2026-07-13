@@ -1502,13 +1502,30 @@ public static class SimTest
             }
             return total;
         }
+        // Gems are embedded overlays riding host tiles now, so gem censuses read GemAt.
+        int CountGem(Planet w, TileKind kind)
+        {
+            var total = 0;
+            for (var r = 0; r < w.Rings; r++)
+            {
+                var n = w.TilesAt(r);
+                for (var t = 0; t < n; t++)
+                    if (w.GemAt(r, t) == kind) total++;
+            }
+            return total;
+        }
         var verdantWorld = Space.Survey.WorldFor(World.PlanetDefs.ById("verdant"));
         var riftWorld = Space.Survey.WorldFor(World.PlanetDefs.ById("rift"));
-        Check("content: emerald seams on verdant", CountKind(verdantWorld, TileKind.Emerald) > 0,
-            $"{CountKind(verdantWorld, TileKind.Emerald)} tiles");
+        Check("content: emerald seams on verdant", CountGem(verdantWorld, TileKind.Emerald) > 0,
+            $"{CountGem(verdantWorld, TileKind.Emerald)} gems");
         Check("content: voidstone only in the rift",
-            CountKind(riftWorld, TileKind.Voidstone) > 0 && CountKind(verdantWorld, TileKind.Voidstone) == 0,
-            $"rift {CountKind(riftWorld, TileKind.Voidstone)}");
+            CountGem(riftWorld, TileKind.Voidstone) > 0 && CountGem(verdantWorld, TileKind.Voidstone) == 0,
+            $"rift {CountGem(riftWorld, TileKind.Voidstone)}");
+        Check("content: gems never generate as their own tiles",
+            CountKind(verdantWorld, TileKind.Emerald) == 0 && CountKind(riftWorld, TileKind.Voidstone) == 0);
+        Check("content: gold charted on verdant (nav core demands it), absent from the rift",
+            CountKind(verdantWorld, TileKind.GoldOre) > 0 && CountKind(riftWorld, TileKind.GoldOre) == 0,
+            $"verdant {CountKind(verdantWorld, TileKind.GoldOre)}");
         Check("content: fungal groves sprout wild glowshrooms",
             CountKind(verdantWorld, TileKind.Glowshroom) > 0,
             $"{CountKind(verdantWorld, TileKind.Glowshroom)} shrooms");
