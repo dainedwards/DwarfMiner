@@ -564,63 +564,108 @@ public static class WorldGen
         avoid.AddRange(placed);
     }
 
-    /// <summary>City worlds: raise <c>def.CityLots</c> alien skyscrapers on the surface.
-    /// Each tower is an anchored alloy hull (buildings don't cave in) with straight px-width
-    /// sides, storeys of floor slabs with an alternating stair gap, glowing window bands in
-    /// the skin, a street-level doorway, an alloy plinth footing, and a beacon-tipped antenna
-    /// mast. Doorway and apartment-floor tiles are recorded in <see cref="Planet.CitySpawns"/>
+    /// <summary>City worlds: raise <c>def.CityLots</c> alien skyscrapers on the surface,
+    /// clustered into 2-4 downtown DISTRICTS — rows of towers standing shoulder to shoulder
+    /// with narrow street gaps, not lone spires scattered around the globe. Each tower is an
+    /// anchored alloy hull (buildings don't cave in) with straight px-width sides, storeys of
+    /// floor slabs with an alternating stair gap, glowing window bands in the skin, a
+    /// street-level doorway, an alloy piling footing, and per-class rooftop furniture.
+    /// Doorway and apartment-floor tiles are recorded in <see cref="Planet.CitySpawns"/>
     /// so the spawn director can stock the towers with civilians.</summary>
     private static void RaiseCity(Planet planet, PlanetDef def, Random rng,
         (float ang, float h, float w)[] mountains, List<(float ang, float w)> avoid)
     {
+        if (def.CityLots <= 0) return;
         var surfaceR = planet.SurfaceRing;
+        var surfRadiusPx = (Planet.RingMin + surfaceR) * Planet.TileSize;
         var placed = new List<(float ang, float w)>();
 
-        for (var lot = 0; lot < def.CityLots; lot++)
+        // District centres: 2-4 bearings clear of mountains, basins, volcanoes, the rover
+        // drop, and each other. All the towers get dealt around these.
+        var districtCount = Math.Clamp(1 + def.CityLots / 5, 2, 4);
+        var centres = new List<float>();
+        for (var d = 0; d < districtCount; d++)
         {
-            // Proportions are authored in pixels and converted to per-ring angles below, so
-            // tower sides stay straight instead of flaring with radius like a constant-angle
-            // wedge would. Three building classes mix the skyline: squat low-rises, mid-rise
-            // blocks, and thin spires that carry the silhouette.
-            var classRoll = rng.NextDouble();
-            float halfWidthPx;
-            int height;
-            if (classRoll < 0.30)         // low-rise: wide and squat
-            {
-                halfWidthPx = 26f + (float)rng.NextDouble() * 12f;
-                height = (int)((10f + (float)rng.NextDouble() * 8f) * S);
-            }
-            else if (classRoll < 0.75)    // mid-rise block
-            {
-                halfWidthPx = 20f + (float)rng.NextDouble() * 12f;
-                height = (int)((20f + (float)rng.NextDouble() * 14f) * S);
-            }
-            else                          // spire: thin and tall
-            {
-                halfWidthPx = 15f + (float)rng.NextDouble() * 9f;
-                height = (int)((34f + (float)rng.NextDouble() * 18f) * S);
-            }
-            height = Math.Min(height, (int)(Planet.SkyHeadroom - 16 * S));
-            var footAng = halfWidthPx / ((Planet.RingMin + surfaceR) * Planet.TileSize);
-
-            // Placement: off the mountains, basins, volcanoes and the rover drop bearing.
-            // Towers pack close together (small mutual margin) so the skyline reads as a
-            // city district rather than lone spires.
-            var ang = 0f;
+            var cAng = 0f;
             var ok = false;
             for (var tries = 0; tries < 90 && !ok; tries++)
             {
-                ang = (float)(rng.NextDouble() * MathHelper.TwoPi);
-                ok = !NearMountain(mountains, ang, footAng + 0.03f)
-                     && AngDist(ang, MathF.PI * 1.5f) > footAng + 0.12f;
+                cAng = (float)(rng.NextDouble() * MathHelper.TwoPi);
+                ok = !NearMountain(mountains, cAng, 0.16f)
+                     && AngDist(cAng, MathF.PI * 1.5f) > 0.28f;
                 for (var i = 0; ok && i < avoid.Count; i++)
-                    ok = AngDist(ang, avoid[i].ang) > footAng + avoid[i].w + 0.03f;
-                for (var i = 0; ok && i < placed.Count; i++)
-                    ok = AngDist(ang, placed[i].ang) > footAng + placed[i].w + 0.035f;
+                    ok = AngDist(cAng, avoid[i].ang) > avoid[i].w + 0.14f;
+                for (var i = 0; ok && i < centres.Count; i++)
+                    ok = AngDist(cAng, centres[i]) > 0.55f;
             }
-            if (!ok) continue;
-            placed.Add((ang, footAng));
+            if (ok) centres.Add(cAng);
+        }
+        if (centres.Count == 0) return;
+        var lotsOf = new int[centres.Count];
+        for (var i = 0; i < def.CityLots; i++) lotsOf[i % centres.Count]++;
 
+        for (var d = 0; d < centres.Count; d++)
+        {
+            // Roll the whole district's towers first so the row can be centred on the
+            // district bearing, then walk a cursor west-to-east: tower, street gap, tower…
+            var specs = new List<(double classRoll, float halfWidthPx, int height, float gapPx)>();
+            var rowPx = 0f;
+            for (var i = 0; i < lotsOf[d]; i++)
+            {
+                // Proportions are authored in pixels and converted to per-ring angles below,
+                // so tower sides stay straight instead of flaring with radius like a
+                // constant-angle wedge would. Three building classes mix the skyline: squat
+                // low-rises, mid-rise blocks, and thin spires that carry the silhouette.
+                var classRoll = rng.NextDouble();
+                float halfWidthPx;
+                int height;
+                if (classRoll < 0.30)         // low-rise: wide and squat
+                {
+                    halfWidthPx = 26f + (float)rng.NextDouble() * 12f;
+                    height = (int)((10f + (float)rng.NextDouble() * 8f) * S);
+                }
+                else if (classRoll < 0.75)    // mid-rise block
+                {
+                    halfWidthPx = 20f + (float)rng.NextDouble() * 12f;
+                    height = (int)((20f + (float)rng.NextDouble() * 14f) * S);
+                }
+                else                          // spire: thin and tall
+                {
+                    halfWidthPx = 15f + (float)rng.NextDouble() * 9f;
+                    height = (int)((34f + (float)rng.NextDouble() * 18f) * S);
+                }
+                height = Math.Min(height, (int)(Planet.SkyHeadroom - 16 * S));
+                var gapPx = 12f + (float)rng.NextDouble() * 12f;   // a narrow street between hulls
+                specs.Add((classRoll, halfWidthPx, height, gapPx));
+                rowPx += halfWidthPx * 2f + gapPx;
+            }
+
+            var cursor = centres[d] - rowPx / surfRadiusPx * 0.5f;
+            foreach (var (classRoll, halfWidthPx, height, gapPx) in specs)
+            {
+                var footAng = halfWidthPx / surfRadiusPx;
+                var ang = cursor + footAng;
+                cursor += footAng * 2f + gapPx / surfRadiusPx;
+
+                // Row edges can still run into a mountain flank, a basin, or the drop
+                // bearing — skip that lot rather than clip the hazard.
+                if (NearMountain(mountains, ang, footAng + 0.02f)) continue;
+                if (AngDist(ang, MathF.PI * 1.5f) < footAng + 0.1f) continue;
+                var clear = true;
+                for (var i = 0; clear && i < avoid.Count; i++)
+                    clear = AngDist(ang, avoid[i].ang) > footAng + avoid[i].w + 0.02f;
+                if (!clear) continue;
+                placed.Add((ang, footAng));
+
+                BuildTower(ang, classRoll, halfWidthPx, height);
+            }
+        }
+
+        avoid.AddRange(placed);
+        return;
+
+        void BuildTower(float ang, double classRoll, float halfWidthPx, int height)
+        {
             var baseR = surfaceR + 1;
             var topR = Math.Min(planet.Rings - 2, baseR + height);
             var floorEvery = (int)(4 * S);            // one storey per 4 legacy tiles (32 px)
