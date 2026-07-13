@@ -189,6 +189,23 @@ public static class WorldGen
                 // units so every threshold below keeps its original world-space meaning.
                 var depth = (surfaceR - r) / S;
 
+                // How deep the acid pool centred nearest this bearing reaches here (0 = none).
+                // Hoisted out of the basin carve so the cave pass below can leave a solid buffer
+                // under and around every pool — an acid pond that connects to the cave network
+                // floods the whole crust (acid is non-depleting), so pools must stay sealed bowls.
+                var acidDepth = 0f;
+                foreach (var a in acidPools)
+                {
+                    var ad = MathF.Abs(ang - a.ang);
+                    if (ad > MathF.PI) ad = MathHelper.TwoPi - ad;
+                    if (ad < a.w)
+                    {
+                        var f = ad / a.w;
+                        var d = (1f - f * f) * a.depth;
+                        if (d > acidDepth) acidDepth = d;
+                    }
+                }
+
                 // Lake basin: carve the bowl out of the surface and seed it with water. The
                 // top course (depth < 1) stays air so the waterline sits just below the shore.
                 if (mountainHeight <= 0.5f)
@@ -214,18 +231,6 @@ public static class WorldGen
                     }
 
                     // Acid pool basin — same carve, corrosive fill.
-                    var acidDepth = 0f;
-                    foreach (var a in acidPools)
-                    {
-                        var angDiff = MathF.Abs(ang - a.ang);
-                        if (angDiff > MathF.PI) angDiff = MathHelper.TwoPi - angDiff;
-                        if (angDiff < a.w)
-                        {
-                            var f = angDiff / a.w;
-                            var d = (1f - f * f) * a.depth;
-                            if (d > acidDepth) acidDepth = d;
-                        }
-                    }
                     if (acidDepth > 0.5f && depth < acidDepth)
                     {
                         planet.SetWall(r, t, TileKind.Stone);
@@ -234,6 +239,12 @@ public static class WorldGen
                         continue;
                     }
                 }
+
+                // Solid buffer wrapping every acid pool: no cave may open under or beside a pool
+                // (a shallow bowl needs only a few tiles of rock beneath it), so the acid can
+                // never find a cave to pour down into. LineAcidReservoirs skins this buffer in
+                // obsidian afterwards.
+                var acidBuffer = acidDepth > 0.5f && depth < acidDepth + 12f;
 
                 var pos = planet.TileToWorld(r, t);
                 var wx = (pos.X - planet.Center.X) / (Planet.TileSize * S);
