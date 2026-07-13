@@ -2628,6 +2628,56 @@ public sealed class Creature
                 }
                 break;
             }
+            case CreatureKind.Selenite:
+            {
+                // Crystalline moon-spider: a faceted selenite shard for a body on six
+                // glassy needle legs, refracting a cold gleam as it scuttles.
+                var glass = Tinted(new Color(210, 224, 240));
+                var glassDim = Tinted(new Color(150, 168, 195));
+                var scur = MathF.Min(MathF.Abs(Vector2.Dot(Velocity, right)) / 40f, 1f);
+                for (var i = -1; i <= 1; i++)
+                {
+                    var a = MathF.Sin(t * 15f + _phase + i * 2.1f) * 0.5f * scur;
+                    r.DrawRect(Position - up * 1f + right * (i * 1.9f), new Vector2(0.7f, 3.8f),
+                        glassDim, rot + a + i * 0.25f);
+                }
+                // Body: two crossed shard rects read as a faceted crystal cluster.
+                r.DrawRect(Position + up * 1.2f, new Vector2(3.2f, 5.4f), glassDim, rot + 0.5f);
+                r.DrawRect(Position + up * 1.6f, new Vector2(2.4f, 4.6f), glass, rot - 0.35f);
+                r.DrawRect(Position + up * 2.2f, new Vector2(1.2f, 2.6f), Color.White, rot + 0.1f);
+                // The refracted gleam — a moving glint along the facets.
+                var glint = MathF.Sin(t * 4f + _phase) * 2f;
+                r.DrawRect(Position + up * (1.5f + glint * 0.4f) + right * glint,
+                    new Vector2(1f, 1f), Color.White);
+                break;
+            }
+            case CreatureKind.DustDevil:
+            {
+                // Charged regolith vortex: stacked counter-swaying dust bands widening
+                // upward, static sparks crackling through the column. No face — the
+                // menace is that a pile of moon dust is CHASING you.
+                var dust = Tinted(new Color(150, 146, 138));
+                var dustDark = Tinted(new Color(112, 108, 102));
+                for (var s = 0; s < 5; s++)
+                {
+                    var sway = MathF.Sin(t * 13f + _phase + s * 1.9f) * (1.2f + s * 0.4f);
+                    var w = 3.5f + s * 1.6f;
+                    r.DrawRect(Position + up * (s * 2.2f - 1f) + right * sway,
+                        new Vector2(w, 2.2f), (s & 1) == 0 ? dust : dustDark, rot + sway * 0.06f);
+                }
+                // Orbiting grit and the occasional static spark.
+                for (var i = 0; i < 3; i++)
+                {
+                    var a = t * (5f + i) + _phase + i * 2.1f;
+                    var grit = Position + up * (2f + i * 2.5f)
+                             + right * (MathF.Cos(a) * (4f + i * 1.5f));
+                    r.DrawRect(grit, new Vector2(1f, 1f), dustDark);
+                }
+                if (((int)(t * 7f + _phase) & 3) == 0)
+                    r.DrawRect(Position + up * (2f + MathF.Sin(t * 31f) * 4f),
+                        new Vector2(1.2f, 3.4f), new Color(190, 220, 255), rot + 0.4f);
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
