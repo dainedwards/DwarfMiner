@@ -820,10 +820,12 @@ public sealed class Cells
         if (dir == 0) dir = _rng.Next(2) == 0 ? 1 : -1;
         var spread = LiquidDispersion + (int)(impact * SplashScale);
         var bounced = false;
+        var movedYet = false;   // a bounce advances s without moving, so s==0 can't stand in for "still at the departure cell"
         for (var s = 0; s < spread; s++)
         {
-            if (TryMoveTo(cx, cy, cx + dir, cy, s == 0))
+            if (TryMoveTo(cx, cy, cx + dir, cy, !movedYet))
             {
+                movedYet = true;
                 cx = WrapX(cx + dir, CellsAt(cy));
                 // Found an edge to pour over — let gravity take it next tick.
                 var (icx, icy) = InnerCell(cx, cy);
