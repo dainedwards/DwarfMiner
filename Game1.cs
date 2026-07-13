@@ -2196,8 +2196,10 @@ public sealed partial class DwarfMinerGame : Game
     private float DepthBelowSurface()
     {
         var ringsFromCenter = (_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize;
-        var surfaceRings = Planet.RingMin + _run.Planet.SurfaceRing;
-        return surfaceRings - ringsFromCenter;
+        // Measured against the LOCAL terrain line (Planet.SurfaceProfile), not the flat
+        // baseline — on the lumpy asteroid a lobe-valley floor under open sky is the
+        // surface, not a 20-tile-deep mine. Round worlds' profiles barely deviate.
+        return _run.Planet.SurfaceRadiusAt(_run.Player.Position) - ringsFromCenter;
     }
 
     /// <summary>Advance the air supply: refill near the surface, drain with depth (see
