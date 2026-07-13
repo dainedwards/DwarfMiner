@@ -299,8 +299,8 @@ public sealed partial class DwarfMinerGame : Game
         }
         var surfacePos = SpawnDirector.FindSurfaceSpawn(_run.Planet, spawnAngle, _run.Planet.Radius);
         // DM_WARREN=1 drops the dwarf straight into the first lizard-city hall so tooling
-        // can screenshot the warren without spelunking to it (pairs with a warren world,
-        // e.g. DM_AUTOSTART=slag or core — city worlds have no warrens).
+        // can screenshot the warren without spelunking to it (pairs with a warren world:
+        // acid/lava biomes only, e.g. DM_AUTOSTART=ember — city worlds have no warrens).
         if (Environment.GetEnvironmentVariable("DM_WARREN") is { Length: > 0 }
             && _run.Planet.LizardDens.Count > 0)
         {
