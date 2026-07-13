@@ -1519,13 +1519,18 @@ public sealed partial class DwarfMinerGame : Game
         base.Update(gameTime);
     }
 
-    /// <summary>Weapon ids god mode loans out, in belt-fill order — the complete armoury.
-    /// Ten entries — exactly the free slots left beside the three intrinsic tools.</summary>
-    private static readonly string[] GodWeaponIds =
+    /// <summary>Weapon ids god mode loans out, in belt-fill order — derived straight from the
+    /// item registry so every <c>Weapon</c> row is loaned automatically. Adding a new weapon is
+    /// now just its <see cref="ItemDef"/>; there's no armoury list to keep in sync. "bullets" is
+    /// intrinsic (always on the belt from spawn) so it's skipped here.</summary>
+    private IEnumerable<string> GodWeaponIds
     {
-        "pistol", "machine_gun", "laser", "laser_cannon", "rocket_launcher",
-        "cannon", "dynamite", "tnt", "harpoon", "nuke",
-    };
+        get
+        {
+            foreach (var (id, def) in _items)
+                if (def.Weapon && id != "bullets") yield return id;
+        }
+    }
 
     /// <summary>Step the belt selection to the next/previous slot holding a weapon, wrapping
     /// around and skipping tools/placeables. No-op if no weapon is on the belt.</summary>
