@@ -424,7 +424,10 @@ public sealed class Physics
         }
         if (p is null) return;
         // Innermost ring first = "bottom" in polar gravity, so the crumble sweeps upward.
-        p.Tiles.Sort((a, b) => _planet.UnIndex(a).x.CompareTo(_planet.UnIndex(b).x));
+        // Plain int sort: ring offsets are monotonic, so flat indices already order by ring
+        // (the old comparator paid two UnIndex binary searches per comparison for the same
+        // grouping — a real cost when a quake condemns thousands of tiles at once).
+        p.Tiles.Sort();
         _pendingCollapses.Add(p);
     }
 
