@@ -639,6 +639,25 @@ public sealed class Renderer
     /// the source exactly once — the pattern flows across tile boundaries and terrain reads
     /// as continuous mass. Procedural kinds have four unrelated patterns; parity would tile
     /// them with an obvious 2-tile period, so they keep the hash pick.</summary>
+    /// <summary>The embedded-gem marker: a long vertical diamond in the gem's colour —
+    /// dark-rimmed points tapering to a wide bright waist, a paler inner facet, and a glint
+    /// pixel. Drawn over the host tile's atlas art (8×8 reference coords). The soft light it
+    /// sheds comes from the lighting pass (Game1's ore scan), not here.</summary>
+    private void DrawGemLozenge(Vector2 centre, Vector2 right, Vector2 up, float rotation,
+        float chord, TileKind gem)
+    {
+        var body = Tiles.BaseColor(gem);
+        var edge = new Color(body.R / 2, body.G / 2, body.B / 2);
+        var facet = Tiles.OreSpeckle(gem);
+        DrawDeco(centre, right, up, rotation, chord, 3.5f, 0.5f, 1, 1, edge);    // top point
+        DrawDeco(centre, right, up, rotation, chord, 3, 1.5f, 2, 1.5f, body);    // shoulders
+        DrawDeco(centre, right, up, rotation, chord, 2.5f, 3, 3, 1.5f, body);    // waist (widest)
+        DrawDeco(centre, right, up, rotation, chord, 3, 4.5f, 2, 1.5f, body);    // hips
+        DrawDeco(centre, right, up, rotation, chord, 3.5f, 6f, 1, 1.5f, edge);   // bottom point
+        DrawDeco(centre, right, up, rotation, chord, 3.5f, 2f, 1, 2f, facet);    // inner facet
+        DrawDeco(centre, right, up, rotation, chord, 3f, 2f, 0.7f, 0.7f, Color.White); // glint
+    }
+
     /// <summary>The rock a gem tile appears embedded in: the most common of its solid,
     /// non-gem cardinal neighbours. A gem surrounded only by other gems (cluster interior)
     /// or open air falls back to Stone.</summary>
