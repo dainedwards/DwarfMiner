@@ -2622,13 +2622,14 @@ public static class SimTest
         Check($"hollow: moonlet holds orbit around the dwarf ({leash:0} px)",
             leash > 20f && leash < 260f);
 
-        var victim = new Player(surface) { Oxygen = 100f };
-        var leech = new Creature(surface, CreatureKind.VacLeech);
+        // Open air (like the moonlet above): surface spawn points can wedge a small body
+        // against slope tiles and the escape push throws off the clamp below.
+        var victim = new Player(surface + skyUp * 120f) { Oxygen = 100f };
+        var leech = new Creature(victim.Position, CreatureKind.VacLeech);
         for (var i = 0; i < 60; i++)
         {
             leech.Position = victim.Position;   // stay clamped on for the whole second
             leech.Update(1f / 60f, world, physics, cells, victim);
-            if (i == 0) Console.WriteLine($"  [dbg] leech hostile={leech.Hostile} dmg={leech.ContactDamage} dist={(leech.Position - victim.Position).Length():0.00} o2={victim.Oxygen:0.00} hp={victim.Health:0.00}");
         }
         Check($"hollow: vac leech siphons the air tank ({victim.Oxygen:0.0} left)",
             victim.Oxygen < 92f);
