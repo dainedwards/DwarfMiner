@@ -217,6 +217,7 @@ public sealed partial class DwarfMinerGame
     private void EnsurePrefetch(PlanetDef def)
     {
         if (def.Id == "rift" && _space.RiftLocked) return;
+        if (def.Airless && _space.VacSuitLocked) return;
         if (_prefetch.ContainsKey(def.Id)) return;
         if (_prefetch.Count >= PrefetchCap)
         {
