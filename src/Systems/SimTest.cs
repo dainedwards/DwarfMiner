@@ -250,11 +250,16 @@ public static class SimTest
         {
             foreach (CreatureKind kind in Enum.GetValues<CreatureKind>())
             {
+                // Civilians are the deliberate exception: gunning down a citizen pays
+                // nothing — that kill was on you.
+                if (kind == CreatureKind.Civilian) continue;
                 var drops = Corpse.DropsFor(kind);
                 var total = 0;
                 foreach (var (_, count) in drops) total += count;
                 Check($"corpse: {kind} yields materials", drops.Length > 0 && total > 0);
             }
+            Check("corpse: civilian deliberately yields nothing",
+                Corpse.DropsFor(CreatureKind.Civilian).Length == 0);
 
             var cPlanet = WorldGen.Generate(23);
             if (FindCavePos(cPlanet, seedOffset: 77) is { } drop)
