@@ -300,15 +300,21 @@ public static class SpawnDirector
         var roll = Random.Shared.NextDouble();
         CreatureKind kind;
 
-        // The Hollow's roster is CLOSED: only the belt natives spawn in its caves — no
-        // grubs, slimes, diggers, mimics or any other ordinary planet life. Nothing here
-        // ever breathed. (Unconnected pockets already returned in TrySpawnCreature.)
-        if (run.Def.Biome == "belt")
+        // The airless rosters are CLOSED: only vacuum natives spawn in the Hollow's and the
+        // cratered moon's caves — no grubs, slimes, diggers, mimics or any other ordinary
+        // planet life. Nothing here ever breathed. The moon shares the belt's moonlets and
+        // vac leeches but swaps the ambushers for its own crystal selenites.
+        // (Unconnected pockets already returned in TrySpawnCreature.)
+        if (run.Def.Biome is "belt" or "moon")
         {
-            var native = roll < 0.26 ? CreatureKind.Moonlet
-                       : roll < 0.52 ? CreatureKind.VacLeech
-                       : roll < 0.74 ? CreatureKind.Glimmermaw
-                       : CreatureKind.VoidBarnacle;
+            var native = run.Def.Biome == "moon"
+                ? roll < 0.40 ? CreatureKind.Selenite
+                    : roll < 0.70 ? CreatureKind.VacLeech
+                    : CreatureKind.Moonlet
+                : roll < 0.26 ? CreatureKind.Moonlet
+                    : roll < 0.52 ? CreatureKind.VacLeech
+                    : roll < 0.74 ? CreatureKind.Glimmermaw
+                    : CreatureKind.VoidBarnacle;
             // Barnacles ride the stationary-ambusher allowance, same as vines/mimics.
             if (native == CreatureKind.VoidBarnacle
                 && CountKindsNear(run, 550f, stationary: true) >= 3)
