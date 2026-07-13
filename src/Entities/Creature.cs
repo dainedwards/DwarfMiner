@@ -593,7 +593,10 @@ public sealed class Creature
         Vector2 up, Vector2 right, Vector2 toPlayer, float dist, float speedMul)
     {
         if (_swing > 0f) _swing -= dt;
-        if (dist < 220f) _aggroT = 6f; else _aggroT -= dt;
+        // Provocation-gated like the other diggers: a delver on its rounds ignores a dwarf
+        // it merely notices — it hunts (and mines toward) prey that hit it or walked into
+        // its face. Once triggered, the old 220px memory band keeps the chase sticky.
+        if (dist < 220f && (_provokedT > 0f || dist < 70f)) _aggroT = 6f; else _aggroT -= dt;
 
         if (_aggroT > 0f)
         {
