@@ -374,6 +374,7 @@ public static class SpawnDirector
         }
 
         var c = new Creature(pos, kind);
+        if (HazardRejectsSpawn(run, pos, c)) return;   // don't hatch it inside lava/acid/water
         ClearSpawnSpace(run, pos, c.Radius);
         run.Creatures.Add(c);
     }
