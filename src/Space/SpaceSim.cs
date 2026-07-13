@@ -482,12 +482,14 @@ public sealed class SpaceSim
     }
 
     /// <summary>The planet whose upper atmosphere the ship has just flown into, or null.
-    /// The locked Rift never returns — its storm wall keeps the ship outside this range.</summary>
+    /// The locked Rift never returns — its storm wall keeps the ship outside this range —
+    /// and neither does airless rock until the Vac Suit is aboard (no atmosphere to enter).</summary>
     public SpacePlanet? AtmosphereContact()
     {
         var (p, d) = NearestPlanet();
         if (p is null || d > EntryRange) return null;
         if (p.Def.Id == "rift" && RiftLocked) return null;
+        if (p.Def.Airless && VacSuitLocked) return null;
         return p;
     }
 }
