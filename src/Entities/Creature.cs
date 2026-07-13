@@ -100,6 +100,8 @@ public sealed class Creature
     private int _orbitSign = 1;    // flyers: orbit direction around the planet
     private float _patrolAng = float.NaN; // Saucer: bearing of the city it guards (radians)
     private float _patrolHalf;    // Saucer: half-width of the patrol band around _patrolAng
+    private Vector2? _shelter;    // Civilian/Peacekeeper: cached nearest doorway while taking cover
+    private float _shelterCd;     // take-cover: countdown to re-find the nearest shelter
     private readonly float _phase; // per-creature animation phase offset
     private float _aggroT;         // HornedDelver: seconds of aggro memory remaining
     private float _swing;          // HornedDelver: pickaxe swing / spit-maw / blink-shimmer timer
