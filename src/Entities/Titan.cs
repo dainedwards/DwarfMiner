@@ -1796,7 +1796,7 @@ public sealed class TitanProjectile
                 Splash(planet, cells);
                 return;
             }
-            if (Kind == TitanShotKind.Laser && _drill > 0)
+            if (Kind is TitanShotKind.Laser or TitanShotKind.Void && _drill > 0)
             {
                 // Drill the wall: vaporise the tile and keep going until the pierce budget runs
                 // out, boring a glowing tunnel through terrain (and player cover).
