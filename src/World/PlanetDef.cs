@@ -197,7 +197,9 @@ public static class PlanetDefs
         },
         QuakeScale: 1.0f, CaveSpawnCap: 18,
         ShipOre: "platinum", ShipOreCount: 5,
-        OxygenDrainScale: 2.6f,
+        // Airless drains have NO surface grace band (see OxygenRules), so the scale itself
+        // stays moderate — the vacuum is the hazard, not a doubled multiplier on top of it.
+        OxygenDrainScale: 1.5f,
         Titan: TitanKind.CosmicOctopus,
         CrystalPockets: 3,
         SizeScale: 1.5f,
