@@ -974,10 +974,26 @@ public sealed class Titan
         SpecialCooldown = 3.5f;
     }
 
-    /// <summary>Kong: leap toward the player, then slam down with a heavy quake + shockwave on
-    /// landing. The leap suppresses the leg-spring (via <see cref="Leaping"/>) so it launches.</summary>
-    private void TickKong(float dt, Physics physics, Vector2 playerPos)
+    /// <summary>Kong fights with its hands. In arm's reach it hammers a fist down — on the
+    /// player when aggroed, on the nearest city wall in any mood — wrecking building tiles
+    /// under the knuckles and shocking anything fleshy nearby. Prey beyond the fists gets the
+    /// leap+slam: a low hop toward the player with a heavy quake + shockwave on landing (the
+    /// leap suppresses the leg-spring via <see cref="Leaping"/> so it launches).</summary>
+    private void TickKong(float dt, Physics physics, Cells cells, Vector2 playerPos)
     {
+        // ── Hand smash in flight ─────────────────────────────────────────────
+        if (SmashTimer > 0f)
+        {
+            SmashTimer -= dt;
+            if (!_smashLanded && SmashTimer <= SmashImpactAt)
+            {
+                _smashLanded = true;
+                SmashImpact(physics, cells);
+            }
+            if (SmashTimer <= 0f) _smashCooldown = 1.4f;
+            return;   // a swinging Kong doesn't start a leap
+        }
+
         if (Leaping)
         {
             SpecialState -= dt;
@@ -994,14 +1010,81 @@ public sealed class Titan
             }
             return;
         }
+
+        // ── Start a smash ────────────────────────────────────────────────────
+        if (_smashCooldown <= 0f && Grounded && !Digging && Standing())
+        {
+            Vector2? target = null;
+            if (IsAggro && (playerPos - Position).Length() < SmashReach) target = playerPos;
+            else target = FindBuildingInReach();
+            if (target is { } tgt)
+            {
+                SmashTarget = tgt;
+                SmashHand = -SmashHand;
+                SmashTimer = SmashDuration;
+                _smashLanded = false;
+                return;
+            }
+        }
+
+        // ── Leap — only for prey beyond the fists ────────────────────────────
         if (!IsAggro || SpecialCooldown > 0f || !Standing()) return;
-        if ((playerPos - Position).Length() > 700f) return;
+        var dist = (playerPos - Position).Length();
+        if (dist > 700f || dist < SmashReach) return;
         var u = _planet.UpAt(Position);
         var right = new Vector2(-u.Y, u.X);
         var dirSign = MathF.Sign(Vector2.Dot(playerPos - Position, right));
-        Velocity += u * 520f + right * (dirSign * 240f);
+        Velocity += u * 360f + right * (dirSign * 240f);   // a low bounding hop, not a moon-leap
         Leaping = true;
         SpecialState = 2.0f;
+    }
+
+    /// <summary>The fist lands: heavy Mine damage across the fist's footprint plus a quake and
+    /// a short shockwave (<see cref="PendingShockwave"/> — Game1 hurts/knocks back the player
+    /// and creatures inside it). Building tiles are anchored but not fist-proof — Mine's own
+    /// hardness gate (≥99) is what protects true anchor-class tiles (core, supports), so city
+    /// glass shatters in one blow and alien alloy caves over a few.</summary>
+    private void SmashImpact(Physics physics, Cells cells)
+    {
+        var (fx, fy) = _planet.WorldToTile(SmashTarget);
+        const int r = 2;
+        for (var dy = -r; dy <= r; dy++)
+        {
+            for (var dx = -r; dx <= r; dx++)
+            {
+                if (dx * dx + dy * dy > r * r) continue;
+                var x = fx + dx; var y = fy + dy;
+                if (!Tiles.IsSolid(_planet.Get(x, y))) continue;
+                if (_planet.Mine(x, y, 12) is { } broken)
+                {
+                    physics.MarkDirty(x, y);
+                    cells.SpawnDustInTile(x, y, broken);
+                }
+            }
+        }
+        physics.Earthquake(SmashTarget, 110f, 2);
+        PendingShockwave = (SmashTarget, 110f, 24f);
+    }
+
+    /// <summary>Nearest city-architecture tile within the fist's reach ahead of the body — the
+    /// demolition target for Kong's hand smash while it loiters in a district. Samples a short
+    /// fan of points in the facing direction across torso heights.</summary>
+    private Vector2? FindBuildingInReach()
+    {
+        var up = _planet.UpAt(Position);
+        var right = new Vector2(-up.Y, up.X);
+        var face = Facing >= 0f ? 1f : -1f;
+        for (var d = 70f; d <= SmashReach; d += 24f)
+        {
+            for (var h = -70f; h <= 70f; h += 35f)
+            {
+                var p = Position + right * (face * d) + up * h;
+                var (x, y) = _planet.WorldToTile(p);
+                if (_planet.Get(x, y) is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
+                    return _planet.TileToWorld(x, y);
+            }
+        }
+        return null;
     }
 
     /// <summary>True if this planted foot can actually bear weight: it rests on solid ground
