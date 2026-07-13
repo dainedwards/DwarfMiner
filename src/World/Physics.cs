@@ -39,7 +39,14 @@ public sealed class Physics
     /// tick (50ms later). Bounds the frame spike after a mass break — condemned regions get
     /// a 0.35s tremble anyway, so a tick or two of extra detection latency is invisible.
     /// Normal play never comes close (a whole meteor marks ~3k entries).</summary>
-    public const int SettleBudget = 4000;
+    public const int SettleBudget = 10000;
+
+    /// <summary>Max tiles crumbled per Update across all pending collapses. A giant condemned
+    /// region's innermost ring can run 1000+ tiles; shattering them all in one tick spawns
+    /// their dust (8 cells + a wake each) in one frame. Capped, the ring finishes over 2-3
+    /// ticks — visually still one sweep, since rings already pace at 30ms. A meteor crater
+    /// ring is ~60 tiles, so ordinary cave-ins never notice the cap.</summary>
+    public const int CrumbleBudget = 400;
     // Flood-fill visited/anchored sets as generation-stamped arrays instead of HashSets:
     // membership is one array compare, "clear" is bumping the generation. The flood is the
     // innermost loop of cave-in detection and earthquakes re-flood thousands of tiles per
