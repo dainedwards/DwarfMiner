@@ -1463,6 +1463,30 @@ public static class SimTest
         Check("defense: aliens toughened (civilian 24hp, peacekeeper 52hp)",
             new Creature(Vector2.Zero, CreatureKind.Civilian).Health == 24f
             && new Creature(Vector2.Zero, CreatureKind.Peacekeeper).Health == 52f);
+
+        // --- 9. Terrain sense: a citizen ambling on a raised rooftop platform turns at the
+        // edges instead of walking off — 15 seconds of strolling never leaves the roof.
+        {
+            // Site the platform on flat baseline ground so no mountain flank pokes above it.
+            var pAng = 5.4f;
+            var baseline = (Planet.RingMin + planet.SurfaceRing) * Planet.TileSize;
+            for (var a = 5.4f; a < 5.4f + MathHelper.TwoPi; a += 0.17f)
+            {
+                var srf = SpawnDirector.FindSurfaceSpawn(planet, a, planet.Radius);
+                if (MathF.Abs((srf - planet.Center).Length() - baseline) < 14f) { pAng = a; break; }
+            }
+            StampBlock(pAng, TileKind.AlienAlloy, wide: 10, tall: 16, out _);
+            var nT = planet.TilesAt(planet.SurfaceRing + 17);
+            var tT = (int)((pAng % MathHelper.TwoPi / MathHelper.TwoPi + 1f) % 1f * nT);
+            var roof = planet.TileToWorld(planet.SurfaceRing + 17, tT);
+            var roofUp = planet.UpAt(roof);
+            var stroller = new Creature(roof + roofUp * 5f, CreatureKind.Civilian);
+            var nobody = new Player(roof + roofUp * 700f);
+            for (var i = 0; i < 60 * 15; i++)
+                stroller.Update(dt, planet, physics, cells, nobody);
+            var drop = (roof - planet.Center).Length() - (stroller.Position - planet.Center).Length();
+            Check($"defense: citizen keeps off the roof edge (dropped {drop:0}px)", drop < 10f);
+        }
     }
 
     /// <summary>True if the position sits inside a tile that actually blocks bodies —
