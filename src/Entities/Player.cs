@@ -90,8 +90,8 @@ public sealed class Player
     private float JetRiseSpeed => JetTier3 ? 190f : JetTier2 ? 150f : 110f;
     private const float JetAccel = 420f;
 
-    /// <summary>How far loose material leaps to the pack — foundry magnet tiers.</summary>
-    public float PickupReach => MagnetTier2 ? 30f : HasMagnet ? 16f : 4f;
+    /// <summary>How far loose material sweeps into the pack — touch range only, no magnet.</summary>
+    public float PickupReach => 4f;
 
     /// <summary>Seconds of Leatherback EMP remaining. While positive the dwarf's tech is
     /// fried: the jetpack won't burn and energy weapons (laser / laser cannon / mining
