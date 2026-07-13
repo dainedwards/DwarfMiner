@@ -1986,6 +1986,34 @@ public sealed class Creature
                     r.DrawCircle(gripP + aimDir * 4.4f, 1.4f, new Color(160, 235, 255));
                 break;
             }
+            case CreatureKind.Saucer:
+            {
+                // Classic disc-craft: a wide banked hull with a glass canopy dome, running
+                // lights chasing around the rim, and a belly lamp that burns amber when the
+                // patrol is on a target. A gentle hover-tilt follows its drift.
+                var hull = Tinted(new Color(126, 138, 158));
+                var hullDark = Tinted(new Color(88, 98, 116));
+                var tilt = MathHelper.Clamp(Vector2.Dot(Velocity, right) * 0.004f, -0.3f, 0.3f);
+                var bob = MathF.Sin(t * 2.2f + _phase) * 0.8f;
+                var c = Position + up * bob;
+                r.DrawRect(c, new Vector2(Radius * 2.4f, 3.2f), hull, rot + tilt);
+                r.DrawRect(c - up * 1.4f, new Vector2(Radius * 1.5f, 2.0f), hullDark, rot + tilt);
+                // Canopy dome with a silhouetted pilot blob.
+                r.DrawCircle(c + up * 2.4f, 3.0f, Tinted(new Color(150, 210, 220)) * 0.9f);
+                r.DrawCircle(c + up * 2.2f, 1.3f, Tinted(new Color(70, 80, 90)));
+                // Rim running lights, chasing in sequence.
+                for (var i = -1; i <= 1; i++)
+                {
+                    var blink = MathF.Sin(t * 6f + _phase + i * 2.1f) * 0.5f + 0.5f;
+                    r.DrawCircle(c + right * (i * Radius * 0.95f) - up * 0.2f, 0.8f,
+                        Color.Lerp(new Color(70, 90, 110), new Color(160, 240, 255), blink));
+                }
+                // Belly lamp: cool idle glow, hot amber on the hunt (plus bolt flash).
+                var lampCol = GuardTarget is not null
+                    ? new Color(255, 170, 90) : new Color(120, 210, 230);
+                r.DrawCircle(c - up * 2.6f, _swing > 0f ? 2.2f : 1.4f, lampCol);
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
