@@ -618,7 +618,7 @@ public sealed partial class DwarfMinerGame
     private void GrantCoreShards()
     {
         foreach (var def in PlanetDefs.All)
-            if (def.Id != "rift" && def.Id != "debug" && !_meta.CoreShards.Contains(def.Id))
+            if (def.Id is not ("rift" or "debug" or "hollow") && !_meta.CoreShards.Contains(def.Id))
                 _meta.CoreShards.Add(def.Id);
         _meta.Save();
         _toast = $"ALL CORE SHARDS SECURED ({_meta.CoreShards.Count}/{PlanetDefs.WarpShardsNeeded}) - WARP READY";
