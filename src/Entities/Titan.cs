@@ -763,6 +763,7 @@ public sealed class Titan
                 if (aim.LengthSquared() > 0.01f)
                 {
                     aim.Normalize();
+                    aim = LevelAim(aim);   // spray across the ground, not into it
                     var up = _planet.UpAt(Position);
                     var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.5f;
                     var c = MathF.Cos(spread); var s = MathF.Sin(spread);
