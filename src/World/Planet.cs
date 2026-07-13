@@ -436,6 +436,11 @@ public sealed class Planet
                 w.Write(mat); w.Write(src); w.Write(count);
             }
         }
+        // Gem overlays, appended after the original layout so old saves stay readable
+        // (ReadState treats a missing section as "no gems").
+        var gems = new byte[_totalTiles];
+        for (var i = 0; i < _totalTiles; i++) gems[i] = (byte)_gem[i];
+        w.Write(gems);
     }
 
     /// <summary>Restore state written by <see cref="WriteState"/>. Throws on a geometry
