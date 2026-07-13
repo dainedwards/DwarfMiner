@@ -195,7 +195,7 @@ public static class SpawnDirector
     /// eat the cave-population budget — a cap full of vines and disguised mimics plays as an
     /// empty planet. They get their own small allowance instead (see TrySpawnCreature).</summary>
     private static bool IsStationary(CreatureKind k) =>
-        k is CreatureKind.SnapperVine or CreatureKind.RockMimic;
+        k is CreatureKind.SnapperVine or CreatureKind.RockMimic or CreatureKind.VoidBarnacle;
 
     /// <summary>Population count within a radius of the player, filtered by habitat kind.
     /// Stationary ambushers are excluded from the cave count — see <see cref="IsStationary"/>.</summary>
