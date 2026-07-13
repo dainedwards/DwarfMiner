@@ -1242,6 +1242,7 @@ public static class SimTest
 
             var titan = new Titan(planet, 2.2f, TitanKind.Kong);
             titan.Hatch();
+            titan.AggroTimer = 0f;   // hatching starts it angry — calm it for the gate test
             var tHp = titan.Health;
             var tb = new Projectile(titan.Position - lane * 20f, lane * 260f, 3f, 1.1f,
                 ProjectileKind.CivicBolt);
@@ -1253,6 +1254,15 @@ public static class SimTest
             Check($"defense: civic bolt wounds the titan a little ({tHp - titan.Health:0.#} dmg)",
                 titan.Health < tHp && tHp - titan.Health < 10f);
             Check("defense: civic bolt does NOT aggro the titan onto the player", !titan.IsAggro);
+            // Contrast: the player's own round through the same gate DOES wake it.
+            var pb = new Projectile(titan.Position - lane * 20f, lane * 480f, 14f, 1.5f,
+                ProjectileKind.Pistol);
+            for (var i = 0; i < 30 && !pb.Dead; i++)
+            {
+                pb.Update(dt, planet, physics, cells);
+                Combat.ResolveHits(pb, new List<Creature>(), titan, planet, physics, cells);
+            }
+            Check("defense: a player round still aggros it", titan.IsAggro);
         }
 
         // --- 5. A titan wrecks a tower wall slowly, not instantly ---
