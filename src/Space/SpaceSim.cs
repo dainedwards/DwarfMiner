@@ -146,7 +146,9 @@ public sealed class SpaceSim
     {
         // Orbit spacing wide enough that each gap is a short flight (~2s at cruise), body radii
         // growing outward so the finale world looms. Initial angles fan the planets around the
-        // sun rather than lining them up.
+        // sun rather than lining them up. Moons don't consume a solar band — they hang off
+        // their parent in the binding pass below — so the ordinary orbits stay contiguous.
+        var solarSlot = 0;
         for (var i = 0; i < PlanetDefs.All.Length; i++)
         {
             var def = PlanetDefs.All[i];
@@ -158,15 +160,43 @@ public sealed class SpaceSim
             // The Hollow rides the outer asteroid belt's centre line, past every ordinary
             // orbit — reaching it means crossing (and then threading) the dense rock field.
             var hollow = def.Id == "hollow";
+            var moon = def.MoonOf is not null;
             // Body radius tracks the def's SizeScale so the system view honestly previews
             // how big each world is - the far giants loom, the near dwarfs look like moons.
             Planets.Add(new SpacePlanet(def,
                 // The rift stays >1.5× beyond the outermost ordinary orbit even as the def
                 // chain grows (the city def's arrival pushed the old 9800 inside that margin).
-                orbitRadius: rift ? 14000f : hollow ? BeltOrbitRadius : debug ? 950f : 1500f + i * 1050f,
+                // Moon orbits are placeholders here; the binding pass sizes them.
+                orbitRadius: rift ? 14000f : hollow ? BeltOrbitRadius : debug ? 950f
+                    : moon ? 0f : 1500f + solarSlot * 1050f,
                 bodyRadius: rift ? 210f : hollow ? 165f : 130f * def.SizeScale,
                 angle: i * 2.23f + 0.6f,
-                angularVel: rift ? 0.004f : hollow ? 0.0035f : debug ? 0.014f : 0.012f / MathF.Sqrt(1f + i * 0.7f)));
+                angularVel: rift ? 0.004f : hollow ? 0.0035f : debug ? 0.014f
+                    : moon ? 0.12f : 0.012f / MathF.Sqrt(1f + solarSlot * 0.7f)));
+            if (!rift && !debug && !hollow && !moon) solarSlot++;
+        }
+
+        // Moon binding: hang each moon on its parent (which may sit later in the chain, so
+        // this can't happen inline above). Stacked spacing keeps two moons of one host from
+        // sharing a lane; a missing parent id (shouldn't happen) degrades to a sun orbit.
+        foreach (var p in Planets)
+        {
+            if (p.Def.MoonOf is not { } hostId) continue;
+            var parent = Planets.Find(q => q.Def.Id == hostId);
+            if (parent is null || parent.Def.MoonOf is not null)
+            {
+                p.OrbitRadius = 1500f + solarSlot++ * 1050f;
+                p.AngularVel = 0.01f;
+                continue;
+            }
+            var lane = 0;
+            foreach (var q in Planets)
+            {
+                if (q == p) break;
+                if (q.Parent == parent) lane++;
+            }
+            p.Parent = parent;
+            p.OrbitRadius = parent.BodyRadius + 330f + lane * 180f;
         }
         PlaceShipAt(0);
     }
