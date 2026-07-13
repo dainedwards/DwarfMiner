@@ -68,6 +68,10 @@ public enum CreatureKind : byte
     // Aquatic-only fauna (spawned into the lakes; see SpawnDirector's water spawner):
     AlienWhale,   // gentle glowing leviathan cruising the deep basins — never leaves the water
     AlienCrab,    // armoured lakebed scuttler — territorial, pinches anything that wades close
+    // The belt natives (the Hollow asteroid, biome "belt") — three genuinely weird things:
+    Moonlet,      // floating boulder-parasite — falls into orbit around the dwarf, then slingshots itself at them
+    VacLeech,     // pale vacuum lamprey — pounces, clamps onto the suit, and siphons the AIR TANK, not blood
+    Glimmermaw,   // near-invisible drifting maw dangling a gem-bright lure — the sparkle in the dark is teeth
 }
 
 public sealed class Creature
