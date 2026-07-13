@@ -397,7 +397,7 @@ public static class SpawnDirector
             var chosen = run.Planet.CityDistricts[0];
             foreach (var dct in run.Planet.CityDistricts)
             {
-                var d = MathF.Abs(WrapPi(pAng - dct.ang));
+                var d = MathF.Abs(MathHelper.WrapAngle(pAng - dct.ang));
                 if (d < best) { best = d; chosen = dct; }
             }
             angle = chosen.ang + ((float)Random.Shared.NextDouble() * 2f - 1f) * chosen.halfWidth;
