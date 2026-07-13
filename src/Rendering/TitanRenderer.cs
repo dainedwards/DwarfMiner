@@ -130,6 +130,15 @@ public static class TitanRenderer
                 if (t.SpecialState > 0f)
                     r.AddLight(mouth, 30f, glow);
                 break;
+            case TitanKind.CosmicOctopus:
+                // The galaxy in the mantle lights its own abyss — the boss is the lantern
+                // of its deep arena. Windups flare it hard so both specials telegraph even
+                // with the body half-buried in rock.
+                r.AddLight(f.Tp + f.Up * 30f, 55f + 20f * f.Anger
+                    + (t.SpecialState > 0f ? 40f * (1f - t.SpecialState / Titan.GravityWellWindup) : 0f), glow);
+                if (t.SpecialState > 0f && !t.OctoPulseNext)
+                    r.AddLight(mouth, 26f, glow);
+                break;
         }
 
         // Beam-tip / hurl glow already handled by shots elsewhere.
