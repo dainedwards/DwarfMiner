@@ -340,11 +340,12 @@ public static class WorldGen
                     k = TileKind.Stone;
                 }
 
-                // Buried dirt seams + gravel pockets in the mid-stone band.
+                // Buried dirt seams + gravel pockets in the mid-stone band (all-gravel on
+                // the dirtless belt asteroid).
                 if (k == TileKind.Stone && depth > 8f && depth < 30f)
                 {
                     var pN = SampleNoise(pocketNoise, wx * 0.13f, wy * 0.13f);
-                    if (pN > 0.84f) k = TileKind.Dirt;
+                    if (pN > 0.84f) k = def.Biome == "belt" ? TileKind.Gravel : TileKind.Dirt;
                     else if (pN > 0.78f) k = TileKind.Gravel;
                 }
 
