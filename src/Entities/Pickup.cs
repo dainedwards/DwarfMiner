@@ -25,13 +25,15 @@ public sealed class Pickup
         Velocity = vel;
     }
 
-    public void Update(float dt, Planet planet)
+    public void Update(float dt, Planet planet, Cells cells)
     {
         Age += dt;
         Velocity += planet.GravityAt(Position) * 300f * dt;
         Velocity *= MathF.Max(0f, 1f - 2.2f * dt);
         var next = Position + Velocity * dt;
-        if (planet.IsSolidAt(next))
+        // Powder cells (sand/dirt/gravel/dust) count as ground too, so a gem rests on or
+        // just inside a loose pile instead of sifting through it to the tile floor below.
+        if (planet.IsSolidAt(next) || cells.PowderAtWorld(next))
         {
             // Light bounce-then-rest off the local surface, like settled debris.
             var n = planet.UpAt(Position);
