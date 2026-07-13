@@ -515,9 +515,10 @@ public static class SimTest
             var chainA = PlanetGen.Campaign(1234);
             var chainB = PlanetGen.Campaign(1234);
             var chainC = PlanetGen.Campaign(99);
-            Check("plangen: campaign = 7 worlds + the Rift", chainA.Length == 8 && chainA[7].Id == "rift");
+            Check("plangen: campaign = 7 worlds + the Rift + the cratered moon",
+                chainA.Length == 9 && chainA[7].Id == "rift" && chainA[8].Id == "moon");
             var same = true;
-            for (var i = 0; i < 8; i++) same &= chainA[i].Id == chainB[i].Id && chainA[i].Titan == chainB[i].Titan;
+            for (var i = 0; i < 9; i++) same &= chainA[i].Id == chainB[i].Id && chainA[i].Titan == chainB[i].Titan;
             Check("plangen: same seed = same system", same);
             var diff = false;
             for (var i = 0; i < 7; i++) diff |= chainA[i].Id != chainC[i].Id;
