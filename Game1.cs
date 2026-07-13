@@ -758,8 +758,6 @@ public sealed partial class DwarfMinerGame : Game
         run.Player.JetTier3 = Upgrades.Owned(_meta, "jetpack3");
         run.Player.HasO2Recycler = Upgrades.Owned(_meta, "o2");
         run.Player.O2Tier2 = Upgrades.Owned(_meta, "o22");
-        run.Player.HasMagnet = Upgrades.Owned(_meta, "magnet");
-        run.Player.MagnetTier2 = Upgrades.Owned(_meta, "magnet2");
         run.Player.HasPlating = Upgrades.Owned(_meta, "plating");
         run.Player.HasFins = Upgrades.Owned(_meta, "fins");
         run.Player.LungTier = Upgrades.Owned(_meta, "lungs2") ? 2 : Upgrades.Owned(_meta, "lungs") ? 1 : 0;
