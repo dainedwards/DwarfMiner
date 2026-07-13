@@ -563,9 +563,10 @@ public static class SpawnDirector
 
     private static void TrySpawnSkyAnimal(Session run)
     {
-        // No atmosphere, no wings — but the belt's sky isn't empty: star jellies need no
-        // air at all, and drift over the regolith like drowned constellations.
-        if (run.Def.Biome == "belt")
+        // No atmosphere, no wings — but the airless skies aren't empty: star jellies need
+        // no air at all, and drift over the regolith like drowned constellations (the belt
+        // asteroid and the cratered moon both).
+        if (run.Def.Biome is "belt" or "moon")
         {
             SpawnSkyAt(run, CreatureKind.StarJelly);
             return;
