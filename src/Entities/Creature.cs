@@ -565,7 +565,16 @@ public sealed class Creature
                 if (!Tiles.IsSolid(k)) continue;
                 if ((planet.TileToWorld(x, y) - centre).LengthSquared() > biteR * biteR) continue;
                 if (Tiles.Hardness(k) >= 90) { blocked = true; continue; } // core / support beam
-                if (planet.Mine(x, y, power) is { } broken)
+                // Jaws vs engineering: city architecture chews at power 1 (a borer takes
+                // ~10s per alloy tile instead of ~2), and the deep hard layers (basalt,
+                // obsidian, dense ores) resist at a third power — creatures rummage the
+                // soft crust freely but grind slowly through anything built or deep.
+                var bitePow = power;
+                if (k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
+                    bitePow = 1;
+                else if (Tiles.Hardness(k) >= 4)
+                    bitePow = Math.Max(1, power / 3);
+                if (planet.Mine(x, y, bitePow) is { } broken)
                 {
                     physics.MarkDirty(x, y);
                     cells.SpawnDustInTile(x, y, broken);
