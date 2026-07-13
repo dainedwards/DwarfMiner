@@ -1242,7 +1242,7 @@ public static class WorldGen
                 {
                     // Outer shell: the host rock stays, studded with embedded rare gems —
                     // the geode's treasure crust, paid out one whole pickup per gem.
-                    if (rng.Next(4) == 0)
+                    if (rng.Next(4) == 0 && IsOreHost(k))
                         planet.SetGem(r, t, rng.Next(5) switch
                         {
                             0 => TileKind.Voidstone,
