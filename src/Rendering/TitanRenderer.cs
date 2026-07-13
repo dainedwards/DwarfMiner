@@ -1227,6 +1227,7 @@ public static class TitanRenderer
         TitanKind.Mecha => f.Tp + f.Up * 90f + f.Right * (f.Face * 78f),
         TitanKind.Pyrodactyl or TitanKind.Vitriodactyl
                         => f.Tp + f.Up * 8f + f.Right * (f.Face * 84f),
+        TitanKind.CosmicOctopus => f.Tp - f.Up * 26f + f.Right * (f.Face * 30f),
         _               => f.Tp + f.Up * 106f + f.Right * (f.Face * 92f),
     };
 
