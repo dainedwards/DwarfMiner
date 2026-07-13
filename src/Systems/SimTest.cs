@@ -307,8 +307,9 @@ public static class SimTest
         TestAquatics();
         TestPopulateWorld();
         TestSpaceSim();
-        // Last on purpose: the vac-suit gating check Activates a chain (appending the
-        // Hollow + debug rig to PlanetDefs.All), and there is no way to un-append.
+        // These two run last on purpose: both Activate a chain (appending the Hollow +
+        // debug rig to PlanetDefs.All), and there is no way to un-append.
+        TestMoons();
         TestHollow();
 
         Console.WriteLine(_failed ? "SIMTEST: FAIL" : "SIMTEST: PASS");
