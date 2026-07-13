@@ -964,7 +964,7 @@ public sealed class Cells
         else Enqueue(Idx(cx, cy));
     }
 
-    private void Shuffle(int[] arr)
+    private void Shuffle(Span<int> arr)
     {
         for (var i = arr.Length - 1; i > 0; i--)
         {
