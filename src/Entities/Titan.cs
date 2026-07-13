@@ -377,6 +377,11 @@ public sealed class Titan
             // Hold the new direction for 4–10 seconds before re-rolling.
             var r = Random.Shared.NextDouble();
             _roamDir = r < 0.25 ? 0 : (r < 0.625 ? -1 : +1);
+            // Kaiju hate the skyline: on a world with a city, most roam re-rolls point at
+            // the nearest standing tower — arrival parks the body against it and the plow's
+            // slow wrecking bite (see Plow) does the demolition.
+            if (_planet.CitySpawns.Count > 0 && Random.Shared.NextDouble() < 0.75)
+                _roamDir = RoamSignTowardCity();
             _roamTimer = 4f + (float)Random.Shared.NextDouble() * 6f;
         }
 
