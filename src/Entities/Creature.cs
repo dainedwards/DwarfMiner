@@ -305,6 +305,7 @@ public sealed class Creature
             // Citizens amble and bolt on the grazer brain; the identity is in the sprite.
             case CreatureKind.Civilian:   TickGrazer(dt, planet, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.Lizardman:  TickLizardman(dt, planet, up, right, toPlayer, dist, speedMul, shots); break;
+            case CreatureKind.Peacekeeper: TickPeacekeeper(dt, planet, up, right, speedMul); break;
         }
 
         // Substepped integration: each step moves at most ~60% of the body radius so a fast
