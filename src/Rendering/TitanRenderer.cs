@@ -1264,6 +1264,8 @@ public static class TitanRenderer
         // over acid-lit membranes for its corrosive twin.
         TitanKind.Pyrodactyl  => (new Color(64, 46, 44), new Color(120, 52, 36), new Color(255, 140, 40), new Color(255, 190, 80)),
         TitanKind.Vitriodactyl => (new Color(56, 68, 44), new Color(94, 112, 40), new Color(150, 230, 60), new Color(210, 255, 110)),
+        // The Starspawn: void-violet nebula hide that pales as it rages; galaxy glow.
+        TitanKind.CosmicOctopus => (new Color(48, 34, 72), new Color(96, 44, 118), new Color(170, 110, 255), new Color(230, 180, 255)),
         _                     => (new Color(52, 62, 56), new Color(120, 60, 50), new Color(80, 150, 230), new Color(255, 90, 60)),
     };
 
