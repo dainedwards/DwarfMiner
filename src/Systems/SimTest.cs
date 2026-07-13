@@ -1707,9 +1707,8 @@ public static class SimTest
         slag.Cells.FillSkyTilesWithin(slag.Planet.Radius * slagDef.LavaFillFrac, Material.Lava);
         foreach (var (ax, ay) in slag.Planet.AcidSeeds) slag.Cells.FillTile(ax, ay, Material.Acid);
         for (var i = 0; i < 120; i++) slag.Cells.Update(1f / 60f);
-        SpawnDirector.PopulateWorld(slag);
-        for (var i = 0; i < 120; i++) SpawnDirector.TrySpawnCreature(slag);
-        for (var i = 0; i < 40; i++) SpawnDirector.TrySpawnSurfaceAnimal(slag);
+        // Many spawn passes (surface + cave) so the guard is genuinely exercised near the lava.
+        for (var i = 0; i < 10; i++) SpawnDirector.SpawnInitialFauna(slag);
         var trapped = 0;
         foreach (var c in slag.Creatures)
         {
