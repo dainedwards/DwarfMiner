@@ -1907,7 +1907,10 @@ public static class SimTest
     {
         const float dt = 1f / 60f;
 
-        var sim = new Space.SpaceSim();
+        // AsteroidTarget 0: this test is about the flight model, and a randomly drifting
+        // rock ramming the ship mid-brake (+260 px/s kick) flakes the velocity checks.
+        // Rock collisions get their own deterministic field in TestSpaceCombat.
+        var sim = new Space.SpaceSim { AsteroidTarget = 0 };
         Check("space: one planet per PlanetDef", sim.Planets.Count == World.PlanetDefs.All.Length);
         Check("space: ship parks near the start planet",
             sim.NearestPlanet().planet?.Def.Id == sim.Planets[0].Def.Id);
