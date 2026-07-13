@@ -45,6 +45,20 @@ public static class WorldGen
         var surfC = MakeAngularNoise(rng, 128);
         var ridge = MakeAngularNoise(rng, 512);
 
+        // Asteroid lumps: big low-frequency lobes plus a mid-frequency dent channel, so the
+        // silhouette reads as a battered potato rather than a lathed sphere. Gated on the
+        // def knob so ordinary worlds consume no extra RNG draws (their gen streams — and
+        // thus every downstream placement — stay bit-identical).
+        float[]? lumpLobes = null, lumpDents = null;
+        if (def.Lumpiness > 0f)
+        {
+            lumpLobes = MakeAngularNoise(rng, 6);
+            lumpDents = MakeAngularNoise(rng, 16);
+        }
+        float LumpAt(float a) => lumpLobes is null ? 0f
+            : (AngularSample(lumpLobes, a) * 1.5f + AngularSample(lumpDents!, a) * 0.5f)
+              * def.Lumpiness * S;
+
         // Explicit mountain placements — each roll is a massif: a main peak flanked by 1-3
         // shoulder peaks at offset angles and reduced heights, so ranges read as ridgelines
         // stepping down into foothills rather than isolated spikes. Peaks flatten into one
