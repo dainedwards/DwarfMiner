@@ -133,6 +133,8 @@ public sealed class Corpse
         CreatureKind.Lizardman    => new Color(58, 92, 52),
         CreatureKind.Peacekeeper  => new Color(52, 66, 90),
         CreatureKind.Saucer       => new Color(96, 106, 124),
+        CreatureKind.AlienWhale   => new Color(48, 68, 96),
+        CreatureKind.AlienCrab    => new Color(118, 66, 58),
         _                         => new Color(110, 90, 90),
     };
 }
