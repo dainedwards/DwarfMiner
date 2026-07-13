@@ -94,6 +94,31 @@ public sealed class Planet
     /// Stamped alongside <see cref="GravityScale"/>, not persisted.</summary>
     public bool Airless;
 
+    /// <summary>Terrain surface RING index per angle sample (mountains excluded): the
+    /// baseline plus the elevation/lump noise world gen actually carved. Flat worlds barely
+    /// deviate from <see cref="SurfaceRing"/>; the lumpy belt asteroid swings ±tens of
+    /// rings, and depth-below-surface (oxygen, exposure) must follow the local ground —
+    /// a valley floor under open sky is NOT underground. Null on legacy saves → callers
+    /// fall back to the flat baseline. Persisted with the tile state.</summary>
+    public float[]? SurfaceProfile;
+
+    /// <summary>Local terrain-surface radius, in global ring units (RingMin included), at
+    /// the bearing of <paramref name="worldPos"/> — interpolated from the profile, or the
+    /// flat baseline when no profile was stamped.</summary>
+    public float SurfaceRadiusAt(Vector2 worldPos)
+    {
+        if (SurfaceProfile is not { Length: > 0 } prof)
+            return RingMin + SurfaceRing;
+        var rel = worldPos - Center;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        var t = (ang / MathHelper.TwoPi + 1f) % 1f * prof.Length;
+        var i = (int)t;
+        var frac = t - i;
+        var a = prof[i % prof.Length];
+        var b = prof[(i + 1) % prof.Length];
+        return RingMin + a + (b - a) * frac;
+    }
+
     /// <summary>Tiles world gen wants filled with water cells (surface lakes + underground
     /// reservoirs). Water lives exclusively in the cell sim — never as solid tiles — so gen
     /// only records the sites here and Game1 pours the cells in once Cells exists.</summary>
