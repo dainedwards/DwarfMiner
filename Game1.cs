@@ -34,6 +34,12 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>Previous-frame titan health — the soul award fires on the >0 → ≤0 crossing,
     /// so a save resumed with an already-dead titan can never re-award.</summary>
     private float _prevTitanHealth;
+    /// <summary>Live gravity-well pull from the Starspawn's pulse (consumed off
+    /// Titan.PendingGravityWell): while the timer runs, the dwarf is dragged toward the
+    /// well point with force ramping up as they get closer.</summary>
+    private Vector2 _gravityWell;
+    private float _gravityWellTimer;
+    private float _gravityWellRadius;
 
     /// <summary>The current planet visit. Everything per-run lives here — swapped atomically
     /// when the player lands on a planet from space. Null only while flying in space before
