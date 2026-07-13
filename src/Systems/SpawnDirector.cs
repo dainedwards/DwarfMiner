@@ -525,6 +525,8 @@ public static class SpawnDirector
 
     private static void TrySpawnSkyAnimal(Session run)
     {
+        // No atmosphere, no wings: the Hollow's sky stays empty (meteor strikes fill it).
+        if (run.Def.Biome == "belt") return;
         // The Rift's sky belongs to null moths — its one neutral species. Everywhere else
         // flies the wild moth/stinger mix (the debug rig throws null moths into the pot too).
         // Saucers are NOT rolled here: the air patrol is seeded by PopulateWorld, on station
