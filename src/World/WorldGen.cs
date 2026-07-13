@@ -108,13 +108,11 @@ public static class WorldGen
         }
 
         // Surface acid pools (acid worlds): carved exactly like lakes but filled with acid
-        // cells — open corrosive ponds to bridge or detour around. These are the ONLY acid a
-        // world gets now: the old underground cave seeps were removed because acid, being
-        // non-depleting, poured out of an open cave and dissolved the whole crust (melting +
-        // frame-rate death). A SeedsAcid world that never authored explicit pools still gets a
-        // couple of small contained ones so its acid hazard survives in leak-proof form.
-        var poolCount = def.AcidPools > 0 ? def.AcidPools : def.SeedsAcid ? 2 : 0;
-        var acidPools = new (float ang, float depth, float w)[poolCount];
+        // cells — open corrosive ponds to bridge or detour around. These (plus acid volcanoes
+        // and acid-rain storms) are the ONLY acid a world gets now: the old underground cave
+        // seeps were removed because acid, being non-depleting, poured out of an open cave and
+        // dissolved the whole crust (melting + frame-rate death).
+        var acidPools = new (float ang, float depth, float w)[def.AcidPools];
         for (var i = 0; i < acidPools.Length; i++)
         {
             float ang;
