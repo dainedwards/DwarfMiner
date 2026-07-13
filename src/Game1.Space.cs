@@ -511,6 +511,13 @@ public sealed partial class DwarfMinerGame
             _toastTimer = 2.5f;
         }
 
+        // Hard-vacuum feedback when the ship grinds against an airless rock without the suit.
+        if (nearP is { Def.Airless: true } && _space.VacSuitLocked && surfDist < 60f && _toastTimer <= 0f)
+        {
+            _toast = "NO ATMOSPHERE TO ENTER - BUILD THE VAC SUIT AT THE FOUNDRY (U)";
+            _toastTimer = 2.5f;
+        }
+
         // Corona feedback while the sun chews the hull (the sim applies the burn itself).
         if (_space.ShipPos.Length() < SpaceSim.SunRadius + 100f && _toastTimer <= 0f)
         {
