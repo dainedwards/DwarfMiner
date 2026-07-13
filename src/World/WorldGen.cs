@@ -620,7 +620,9 @@ public static class WorldGen
                     planet.SetWall(r, t, TileKind.Basalt);
                     if (Math.Abs(dt) >= throatSpan - 1)
                     {
-                        planet.Set(r, t, TileKind.Basalt);
+                        // Acid throats are obsidian-sleeved so the rising column can't dissolve
+                        // its own channel walls and drain into the surrounding crust.
+                        planet.Set(r, t, def.VolcanoAcid ? TileKind.Obsidian : TileKind.Basalt);
                     }
                     else
                     {
