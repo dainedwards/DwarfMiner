@@ -102,6 +102,10 @@ public sealed class Cells
     // explosions and disasters wake tens of thousands of cells at once.
     private List<int> _active = new();
     private List<int> _next = new();
+    /// <summary>Cells the sim will tick next frame — the wake-set size. Steady-state should be
+    /// near zero once seeded liquids settle; a persistently high count means something (e.g.
+    /// acid still eating tiles) never goes to sleep. Diagnostics/perf only.</summary>
+    public int ActiveCellCount => _next.Count;
     /// <summary>True while the cell index is already queued in <see cref="_next"/>.</summary>
     private readonly bool[] _queued;
     private readonly Random _rng = new();
