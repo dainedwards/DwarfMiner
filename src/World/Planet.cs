@@ -104,6 +104,18 @@ public sealed class Planet
     /// keep erupting.</summary>
     public readonly List<(int x, int y, bool acid)> VolcanoVents = new();
 
+    /// <summary>Civilian spawn sites on city worlds — skyscraper doorways and apartment
+    /// floors (WorldGen.RaiseCity). SpawnDirector prefers these when restocking the city
+    /// biome's fauna so the towers actually read as inhabited. Persisted with the tile
+    /// state so resumed runs keep their citizens.</summary>
+    public readonly List<(int x, int y)> CitySpawns = new();
+
+    /// <summary>Lizardman den sites — the chamber hearts of each underground lizard city
+    /// (WorldGen.CarveLizardCities). SpawnDirector spawns warren guards near these, so the
+    /// warrens stay garrisoned however often the player clears them. Persisted with the
+    /// tile state so a resumed run's warrens aren't left abandoned.</summary>
+    public readonly List<(int x, int y)> LizardDens = new();
+
     /// <summary>Playable ring count for a planet of the given size scale — shared by world
     /// gen and the run-save loader so restored planets get matching geometry.</summary>
     public static int RingsFor(float sizeScale) =>
