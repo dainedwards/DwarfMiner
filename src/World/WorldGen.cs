@@ -646,9 +646,10 @@ public static class WorldGen
                         continue;
                     }
 
-                    // Interior: floor slab at the base of every storey, with a stair gap
-                    // hugging alternating walls so the shaft zig-zags up the tower.
-                    var slab = storey % floorEvery < 2 && storey > 0;
+                    // Interior: floor slab at the base of every storey above the ground
+                    // floor (the plinth is street level's floor), with a stair gap hugging
+                    // alternating walls so the shaft zig-zags up the tower.
+                    var slab = storey % floorEvery < 2 && storey >= floorEvery;
                     if (slab)
                     {
                         var gapSide = storey / floorEvery % 2 == 0 ? 1 : -1;
