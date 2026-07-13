@@ -262,6 +262,26 @@ public static class WorldGen
                         if (depth >= 1f) planet.AcidSeeds.Add((r, t));
                         continue;
                     }
+
+                    // Impact crater — same carve again, but a dry bowl: nothing pours in.
+                    var craterDepth = 0f;
+                    foreach (var c in craters)
+                    {
+                        var cd = MathF.Abs(ang - c.ang);
+                        if (cd > MathF.PI) cd = MathHelper.TwoPi - cd;
+                        if (cd < c.w)
+                        {
+                            var f = cd / c.w;
+                            var d = (1f - f * f) * c.depth;
+                            if (d > craterDepth) craterDepth = d;
+                        }
+                    }
+                    if (craterDepth > 0.5f && depth < craterDepth)
+                    {
+                        planet.SetWall(r, t, TileKind.Stone);
+                        planet.Set(r, t, TileKind.Sky);
+                        continue;
+                    }
                 }
 
                 // Solid buffer wrapping every acid pool: no cave may open under or beside a pool
