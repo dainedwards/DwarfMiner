@@ -303,7 +303,7 @@ public sealed class Physics
         _floodVisitList.Add(ni);
         var nk = _planet.Get(x, y);
         if (!Tiles.IsSolid(nk)) return;
-        _floodStack.Push(ni);
+        _floodStack.Push((ni, x, y));
     }
 
     /// <summary>
