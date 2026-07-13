@@ -662,14 +662,14 @@ public sealed class Titan
     /// All are aggro-gated so a calm boss just roams. <see cref="SpecialCooldown"/> paces
     /// them; <see cref="SpecialState"/> runs the active window (breath duration, laser
     /// charge, burrow time, leap airtime, gore sprint, spray, dash chain).</summary>
-    private void UpdateSpecial(float dt, Planet planet, Physics physics, Vector2 playerPos, List<TitanProjectile> shots)
+    private void UpdateSpecial(float dt, Planet planet, Physics physics, Cells cells, Vector2 playerPos, List<TitanProjectile> shots)
     {
         switch (Kind)
         {
             case TitanKind.Godzilla:    TickFireBreath(dt, playerPos, shots); break;
             case TitanKind.Mecha:       TickMechaLaser(dt, playerPos, shots); break;
             case TitanKind.Sandworm:    TickSandworm(dt, planet, physics, playerPos); break;
-            case TitanKind.Kong:        TickKong(dt, physics, playerPos); break;
+            case TitanKind.Kong:        TickKong(dt, physics, cells, playerPos); break;
             case TitanKind.Knifehead:   TickKnifehead(dt, physics, playerPos); break;
             case TitanKind.Otachi:      TickAcidSpray(dt, playerPos, shots); break;
             case TitanKind.Leatherback: TickEmp(dt, physics, playerPos); break;
