@@ -306,7 +306,7 @@ public static class WorldGen
 
                 var bigN = SampleNoise(bigCave, wx * 0.05f, wy * 0.05f);
                 var smallN = SampleNoise(smallCave, wx * 0.18f, wy * 0.18f);
-                if (depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
+                if (!acidBuffer && depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
                 {
                     k = TileKind.Sky;
                     // Reservoirs: a slow water-noise channel floods whole cave pockets in the
@@ -319,20 +319,15 @@ public static class WorldGen
                         planet.WaterSeeds.Add((r, t));
                     }
 
-                    // Hazard pockets (planet-gated). Gas collects in the deeper, hotter caves
-                    // near the lava zone; acid pools in the mid-crust. Decorrelated noise
-                    // channels so a cave isn't both at once. Never overlaps a water reservoir.
+                    // Gas collects in the deeper, hotter caves near the lava zone. (Underground
+                    // acid pockets are gone: a seep in an open cave floods the whole crust
+                    // — acid is non-depleting — so acid worlds keep their acid to the sealed
+                    // surface pools, the acid volcano's plumbing, and acid-rain storms.)
                     var isReservoir = planet.WaterSeeds.Count > 0
                         && planet.WaterSeeds[^1] == (r, t);
-                    if (!isReservoir)
-                    {
-                        if (def.SeedsGas && depth > 34f
-                            && SampleNoise(pocketNoise, wx * 0.06f + 21f, wy * 0.06f + 21f) > 0.80f)
-                            planet.GasSeeds.Add((r, t));
-                        else if (false && def.SeedsAcid && depth > 18f && depth < 78f
-                            && SampleNoise(oreNoise, wx * 0.06f + 31f, wy * 0.06f + 31f) > 0.82f)
-                            planet.AcidSeeds.Add((r, t));
-                    }
+                    if (!isReservoir && def.SeedsGas && depth > 34f
+                        && SampleNoise(pocketNoise, wx * 0.06f + 21f, wy * 0.06f + 21f) > 0.80f)
+                        planet.GasSeeds.Add((r, t));
                 }
 
                 if (k == TileKind.Stone && depth > 12f)
