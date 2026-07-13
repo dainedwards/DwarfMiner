@@ -1487,7 +1487,39 @@ public static class SimTest
             new Creature(Vector2.Zero, CreatureKind.Civilian).Health == 24f
             && new Creature(Vector2.Zero, CreatureKind.Peacekeeper).Health == 52f);
 
-        // --- 9. Terrain sense: a citizen ambling on a raised rooftop platform turns at the
+        // --- 9. Flame/acid walkers hose level, never into their own footing: park the prey
+        // straight under the titan's chin and every grain of the breath still leaves within
+        // ~15 degrees of the horizon.
+        {
+            var breather = new Titan(planet, 3.0f, TitanKind.Godzilla);
+            breather.Hatch();
+            var boulders2 = new List<FallingBoulder>();
+            var flames = new List<TitanProjectile>();
+            for (var i = 0; i < 180; i++)   // settle onto its feet
+                breather.Update(dt, planet, physics, cells, breather.Position, boulders2, flames);
+            flames.Clear();
+            var prey = breather.Position - planet.UpAt(breather.Position) * 90f; // right below
+            for (var i = 0; i < 60 * 6; i++)
+            {
+                breather.OnDamage();
+                breather.Update(dt, planet, physics, cells, prey, boulders2, flames);
+            }
+            var flameCount = 0;
+            var worstDip = 0f;
+            var upB = planet.UpAt(breather.Position);
+            foreach (var shot in flames)
+            {
+                if (shot.Kind != TitanShotKind.Flame) continue;
+                flameCount++;
+                var v = shot.Velocity;
+                if (v.LengthSquared() < 1f) continue;
+                worstDip = MathF.Min(worstDip, Vector2.Dot(Vector2.Normalize(v), upB));
+            }
+            Check($"defense: fire breath stays level over prey underfoot ({flameCount} grains, worst dip {worstDip:0.00})",
+                flameCount > 10 && worstDip >= -0.32f);
+        }
+
+        // --- 10. Terrain sense: a citizen ambling on a raised rooftop platform turns at the
         // edges instead of walking off — 15 seconds of strolling never leaves the roof.
         {
             // Site the platform on flat baseline ground so no mountain flank pokes above it.
