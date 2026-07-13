@@ -95,7 +95,9 @@ public static class Combat
                 if (p.FreezeSeconds > 0f) c.FreezeSeconds = MathF.Max(c.FreezeSeconds, p.FreezeSeconds);
                 break;
             case Titan t:
-                t.OnDamage();   // wakes the kaiju up and resets its 10s aggro timer
+                // Militia pea-shooters sting the titan but don't re-aggro it onto the
+                // player — the city's fight stays the city's fight.
+                if (!p.FriendlyToNeutrals) t.OnDamage();   // wakes the kaiju up and resets its 10s aggro timer
                 // Before hatching, hits chip the egg (and can crack it open early); after,
                 // they wound the boss.
                 if (!t.Hatched) t.DamageEgg(p.Damage);
