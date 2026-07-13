@@ -260,7 +260,8 @@ public static class PlanetGen
         };
 
         // Lizardman warrens riddle the mid-to-late worlds: past the opening slots, roughly
-        // every third non-city world hides one (city worlds always carry theirs).
+        // every third world hides one. Never on city worlds — one civilisation per planet
+        // (Campaign guarantees at least one warren world somewhere in the chain).
         if (biome != Biome.City && slot >= 2 && rng.Next(3) == 0)
             def = def with { LizardCities = 1 };
         return def;
