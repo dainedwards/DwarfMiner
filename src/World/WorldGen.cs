@@ -429,7 +429,7 @@ public static class WorldGen
     private static void LineAcidReservoirs(Planet planet)
     {
         if (planet.AcidSeeds.Count == 0) return;
-        const int maxDepth = 10;                 // air tiles to flood out from any acid seed
+        const int maxDepth = 40;                 // air tiles to flood out from any acid seed
         var visited = new HashSet<long>();
         long Key(int r, int t) => (long)r * 4_000_000L + (uint)t;
 
