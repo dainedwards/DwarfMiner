@@ -242,6 +242,20 @@ public sealed class Creature
     /// muzzle-flash in the sprite (rides the shared _swing animation timer).</summary>
     public void GuardMuzzleFlash() => _swing = 0.2f;
 
+    /// <summary>Set the frame a lizardman FIRST sights prey (calm → aggro edge). Game1's
+    /// war-cry pass consumes it: every lizardman in a wide radius gets
+    /// <see cref="RallyToWar"/>, so aggroing one guard brings the warren.</summary>
+    public bool CallingBackup;
+
+    /// <summary>Answer a warren war-cry: pick up the hunt as if the prey were in sight.
+    /// Deliberately does NOT set <see cref="CallingBackup"/> — rallied guards don't chain
+    /// fresh cries, one shriek per sighting.</summary>
+    public void RallyToWar()
+    {
+        _aggroT = MathF.Max(_aggroT, 7f);
+        _provokedT = MathF.Max(_provokedT, 8f);
+    }
+
     public bool IsSkyKind => Kind is CreatureKind.SkyMoth or CreatureKind.SkyStinger
         or CreatureKind.NullMoth;
     public bool IsSurfaceKind => Kind is CreatureKind.Grazer or CreatureKind.Hopper
