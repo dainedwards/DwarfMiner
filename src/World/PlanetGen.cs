@@ -66,6 +66,22 @@ public static class PlanetGen
             titans[slot] = pick;
         }
 
+        // The metropolis always gets a walking titan: a kaiju stomping through a skyline is
+        // the set piece, and a worm slithering under the streets (or a flyer that never
+        // lands) wastes it. If a city slot rolled a legless kind, swap with a walker from a
+        // non-city slot — the worm/flyer just menaces that world instead. Three of the four
+        // always-placed classics walk, so a swap partner is guaranteed.
+        for (var slot = 0; slot < 7; slot++)
+        {
+            if (biomes[slot] != Biome.City || Walks(titans[slot])) continue;
+            for (var j = 0; j < 7; j++)
+            {
+                if (biomes[j] == Biome.City || !Walks(titans[j])) continue;
+                (titans[slot], titans[j]) = (titans[j], titans[slot]);
+                break;
+            }
+        }
+
         // Ore demand ramps with the slot — and gates each ore's spawn depth, which the
         // size ramp guarantees exists (deep gems only appear on the big far worlds).
         var shipOre = new[] { "gold", "gold", "sapphire", "ruby", "platinum", "diamond", "diamond" };
