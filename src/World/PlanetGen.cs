@@ -22,7 +22,8 @@ public static class PlanetGen
     public static PlanetDef[] Campaign(int seed)
     {
         var rng = new Random(seed);
-        var chain = new PlanetDef[8];
+        // 7 rolled worlds + the fixed Rift + the cratered moon (hung on a mid-chain host).
+        var chain = new PlanetDef[9];
 
         // Biome per slot: a gentle start, then one guaranteed ocean world in the early-mid
         // band and one guaranteed acid world in the mid-late band (the two new biomes are
