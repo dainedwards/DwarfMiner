@@ -654,13 +654,16 @@ public static class WorldGen
                 var ang = cursor + footAng;
                 cursor += footAng * 2f + gapPx / surfRadiusPx;
 
-                // Row edges can still run into a mountain flank, a basin, or the drop
-                // bearing — skip that lot rather than clip the hazard.
+                // Row edges can still run into a mountain flank, a basin, the drop
+                // bearing — or, with rows this wide, a neighbouring district's edge.
+                // Skip that lot rather than clip anything.
                 if (NearMountain(mountains, ang, footAng + 0.02f)) continue;
                 if (AngDist(ang, MathF.PI * 1.5f) < footAng + 0.1f) continue;
                 var clear = true;
                 for (var i = 0; clear && i < avoid.Count; i++)
                     clear = AngDist(ang, avoid[i].ang) > footAng + avoid[i].w + 0.02f;
+                for (var i = 0; clear && i < placed.Count; i++)
+                    clear = AngDist(ang, placed[i].ang) > footAng + placed[i].w + 0.004f;
                 if (!clear) continue;
                 placed.Add((ang, footAng));
 
