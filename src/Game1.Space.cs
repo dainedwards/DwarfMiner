@@ -733,6 +733,22 @@ public sealed partial class DwarfMinerGame
             }
         }
 
+        // The outer asteroid belt: a hashed scatter of dim rock-flecks along the Hollow's
+        // annulus, drifting slowly prograde. Pure dressing — the real (collidable) belt
+        // rocks are maintained by the sim's spawner — but it makes the ring readable from
+        // clear across the system, so the "edge of the map" has a visible landmark.
+        for (var i = 0; i < 900; i++)
+        {
+            var h = (uint)(i * 2246822519u + 3266489917u);
+            var a = (h & 0xffff) / 65535f * MathHelper.TwoPi + _totalTime * 0.0035f;
+            var radJit = (((h >> 16) & 0xff) / 255f + ((h >> 24) & 0xff) / 255f - 1f)
+                         * SpaceSim.BeltHalfWidth;
+            var pos = new Vector2(MathF.Cos(a), MathF.Sin(a)) * (SpaceSim.BeltOrbitRadius + radJit);
+            var s = 2 + (int)(h % 3);
+            sb.Draw(_renderer.Pixel, new Rectangle((int)pos.X - s / 2, (int)pos.Y - s / 2, s, s),
+                new Color(120, 112, 102) * (0.35f + (h & 7) * 0.05f));
+        }
+
         // The sun: layered corona with a slow breathing flicker, rotating flare rays, then
         // the body with a hot core.
         var flick = 1f + MathF.Sin(_totalTime * 1.7f) * 0.04f;
