@@ -471,8 +471,9 @@ public sealed class Titan
         var vTangent = Vector2.Dot(Velocity, right);
         var vNormal = Vector2.Dot(Velocity, up);
 
-        // The worm slithers, it doesn't charge — hold its forward pace down to a slow crawl.
-        var paceMul = Kind == TitanKind.Sandworm ? 0.55f : 1f;
+        // The worm slithers, it doesn't charge — hold its forward pace down to a slow crawl
+        // (slow enough that its throttled bite cadence keeps the bore ahead of the body).
+        var paceMul = Kind == TitanKind.Sandworm ? 0.42f : 1f;
         var targetTangent = moveAxis * MoveSpeed * speedMul * paceMul * (1f + Anger / 80f);
         var accel = Charging ? 900f : Grounded ? 260f : 100f;
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
