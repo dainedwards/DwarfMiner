@@ -654,8 +654,7 @@ public sealed class Cells
                 fill++;
             }
         if (fill < CompactPressedMinFill) return -1;
-        if (fill >= CompactPressedMinFill && PressureAbove(tx, ty) >= CompactPressureMin)
-            return fill;
+        if (PressureAbove(tx, ty) >= CompactPressureMin) return fill;
         if (fill < CompactMinFill) return -1;
 
         // Sealed: every cell along the tile's outer edge has something (cell or solid tile)
