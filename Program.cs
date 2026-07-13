@@ -23,5 +23,12 @@ if (args.Length > 0 && args[0] == "--spawnprobe")
     return;
 }
 
+// Temporary diagnostic: `--acidprobe` measures acid corrosion + wake-set on an acid world.
+if (args.Length > 0 && args[0] == "--acidprobe")
+{
+    DwarfMiner.Systems.AcidProbe.Run();
+    return;
+}
+
 using var game = new DwarfMinerGame();
 game.Run();
