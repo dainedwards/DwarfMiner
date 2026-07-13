@@ -74,11 +74,13 @@ public static class AcidProbe
     /// corrodible rock — the active leak sites — and print a small sample with context.</summary>
     private static void ReportLeaks(Planet planet, Cells cells)
     {
-        var leaks = new List<(int r, int t, TileKind k)>();
-        for (var r = 0; r < planet.Rings && leaks.Count < 12; r++)
+        var found = 0;
+        // Scan from the surface DOWN (high ring first) so the shallowest leak — the escape
+        // point where acid first meets corrodible rock — shows up first.
+        for (var r = planet.Rings - 1; r >= 0 && found < 10; r--)
         {
             var n = planet.TilesAt(r);
-            for (var t = 0; t < n && leaks.Count < 12; t++)
+            for (var t = 0; t < n && found < 10; t++)
             {
                 if (Tiles.IsSolid(planet.Get(r, t))) continue;
                 if (!TileHasAcid(planet, cells, r, t)) continue;
@@ -87,15 +89,16 @@ public static class AcidProbe
                     var k = planet.Get(nr, nt);
                     if (Tiles.IsSolid(k) && !Tiles.IsAnchored(k) && k != TileKind.Obsidian)
                     {
-                        var depth = (planet.SurfaceRing - r);
-                        leaks.Add((r, t, k));
-                        Console.WriteLine($"    LEAK acid at r={r} (depth {depth}) touches {k}");
+                        var depth = planet.SurfaceRing - r;
+                        var below = planet.Get(planet.InnerNeighbour(r, t).x, planet.InnerNeighbour(r, t).y);
+                        Console.WriteLine($"    LEAK acid r={r} depth={depth} touches {k}; tile-below={below}");
+                        found++;
                         break;
                     }
                 }
             }
         }
-        if (leaks.Count == 0) Console.WriteLine("    no acid-vs-corrodible contacts found");
+        if (found == 0) Console.WriteLine("    no acid-vs-corrodible contacts found");
     }
 
     private static bool TileHasAcid(Planet planet, Cells cells, int r, int t)
