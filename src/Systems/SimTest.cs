@@ -540,6 +540,31 @@ public static class SimTest
             var acidGen = WorldGen.Generate(8, acidWorld);
             Check($"plangen: acid world carves surface acid pools ({acidGen.AcidSeeds.Count} seeds)",
                 acidGen.AcidSeeds.Count > 0);
+            // Every acid reservoir is skinned in obsidian: no acid seed borders a corrodible
+            // tile, so the pools can't eat outward through the crust — and the hemmed-in acid
+            // settles and sleeps instead of melting the whole world (the acid-world lag fix).
+            var leaky = 0;
+            foreach (var (r, t) in acidGen.AcidSeeds)
+            {
+                var n = acidGen.TilesAt(r);
+                var nb = new List<(int x, int y)>
+                {
+                    (r, ((t - 1) % n + n) % n), (r, (t + 1) % n), acidGen.InnerNeighbour(r, t),
+                };
+                for (var i = 0; i < acidGen.OuterNeighbourCount(r, t); i++)
+                    nb.Add(acidGen.OuterNeighbour(r, t, i));
+                foreach (var (nr, nt) in nb)
+                {
+                    var k = acidGen.Get(nr, nt);
+                    if (Tiles.IsSolid(k) && !Tiles.IsAnchored(k) && k != TileKind.Obsidian)
+                    {
+                        leaky++;
+                        break;
+                    }
+                }
+            }
+            Check($"plangen: acid pools are obsidian-lined ({leaky}/{acidGen.AcidSeeds.Count} seeds touch corrodible rock)",
+                leaky == 0);
             // Size actually changes the tile grid.
             Check($"plangen: SizeScale drives real ring counts ({oceanWorld.Rings} vs {plainWorld.Rings})",
                 WorldGen.Generate(9, chainA[6]).Rings > WorldGen.Generate(9, chainA[0]).Rings);
