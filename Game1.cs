@@ -2086,6 +2086,7 @@ public sealed partial class DwarfMinerGame : Game
         TitanKind.Slattern     => "Slattern",
         TitanKind.Pyrodactyl   => "Pyrodactyl",
         TitanKind.Vitriodactyl => "Vitriodactyl",
+        TitanKind.CosmicOctopus => "Starspawn",
         _                  => "Titan",
     };
 
