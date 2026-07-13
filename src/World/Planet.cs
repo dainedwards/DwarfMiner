@@ -199,10 +199,22 @@ public sealed class Planet
         return _tiles[Index(x, y)];
     }
 
+    /// <summary>Live count of ReinforcedSupport tiles. They're rare and player-placed, so
+    /// Physics skips the per-flood-tile anchor-halo probe entirely while this is zero —
+    /// that probe is ~10 neighbour reads on every tile of every cave-in flood.</summary>
+    public int ReinforcedCount { get; private set; }
+
+    private void TrackKindChange(TileKind from, TileKind to)
+    {
+        if (from == TileKind.ReinforcedSupport) ReinforcedCount--;
+        if (to == TileKind.ReinforcedSupport) ReinforcedCount++;
+    }
+
     public void Set(int x, int y, TileKind k)
     {
         if (!InBounds(x, y)) return;
         var i = Index(x, y);
+        TrackKindChange(_tiles[i], k);
         _tiles[i] = k;
         _damage[i] = 0;
     }
