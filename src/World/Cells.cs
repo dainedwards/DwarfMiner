@@ -611,10 +611,15 @@ public sealed class Cells
                 var fill = _compacting[idx].fill;
                 _compacting.Remove(idx);
                 var (tx, ty) = Planet.UnIndex(idx);
-                // Convert only if the fill is exactly what it was CompactDelay ago — any
-                // grain that arrived or left since means the pile is still live, and the
-                // tile has to earn a fresh undisturbed window via the rest list.
-                if (CompactableFill(tx, ty) == fill) Compact(tx, ty);
+                // Convert only if the fill is exactly what it was a full delay ago — any
+                // grain that arrived or left since means the pile is still live. A tile
+                // that changed but is still eligible re-arms with its current fill rather
+                // than dropping out: the rest events that disturbed it were swallowed
+                // while it was a candidate, so nothing else would ever re-nominate it.
+                var now = CompactableFill(tx, ty);
+                if (now == fill) Compact(tx, ty);
+                else if (now > 0)
+                    _compacting[idx] = (now, _time + CompactDelay / (1f + PressureAbove(tx, ty)));
             }
         }
 
