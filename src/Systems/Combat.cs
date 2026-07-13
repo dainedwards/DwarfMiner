@@ -48,6 +48,9 @@ public static class Combat
         foreach (var c in creatures)
         {
             if (c.Health <= 0 || p.HitVictims.Contains(c)) continue;
+            // Militia rounds pass clean through civilians and other neutrals — the city
+            // guard never guns down its own crowd chasing an invader.
+            if (p.FriendlyToNeutrals && !c.Hostile) continue;
             if (SegmentHitT(p.PrevPosition, seg, segLenSq, c.Position, c.Radius + p.Radius) is { } t)
                 _hits.Add((t, c));
         }
