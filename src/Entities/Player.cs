@@ -33,6 +33,29 @@ public sealed class Player
     public float EffectiveMaxOxygen =>
         BaseMaxOxygen * (HasAirTank ? 2f : 1f) * (O2Tier2 ? 2f : HasO2Recycler ? 1.5f : 1f);
 
+    // ── Swimming ──────────────────────────────────────────────────────────────
+    /// <summary>Immersion state, set each frame by Game1 from the cell sim (Player.Update
+    /// has no Cells reference): body submerged flips the movement model to swimming; head
+    /// submerged drains the breath meter.</summary>
+    public bool InWater;
+    public bool HeadInWater;
+
+    /// <summary>Seconds of breath while the head is underwater. Refills fast in air; at zero
+    /// the dwarf drowns (HP bleed, bypasses armor — see Game1.TickBreath). Lung upgrades
+    /// raise the ceiling; the gill graft capstone stops the drain entirely.</summary>
+    public float Breath = BaseMaxBreath;
+    public const float BaseMaxBreath = 12f;
+
+    /// <summary>Foundry aquatics (meta gear, re-applied on every entry like the jetpack):
+    /// fins double swim speed; lung tiers 1/2 double/triple the breath ceiling; the gill
+    /// graft breathes water — the meter never drains.</summary>
+    public bool HasFins;
+    public int LungTier;
+    public bool HasGills;
+
+    public float EffectiveMaxBreath => BaseMaxBreath * (LungTier >= 2 ? 3f : LungTier == 1 ? 2f : 1f);
+    private float SwimSpeed => MoveSpeed * (HasFins ? 1.3f : 0.65f);
+
     /// <summary>Pickaxe tier 1..4. Drives base mining power and reach. Replaces the older
     /// <c>PickaxePower</c> int — kept as a tier so future augments can stack on top of a tier
     /// rather than being confused with raw power. Effective stats live in the
