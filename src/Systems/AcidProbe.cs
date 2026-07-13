@@ -64,7 +64,11 @@ public static class AcidProbe
             var solidStart = CountSolid(planet);
 
             // Pre-settle (the run start does 120 ticks).
-            for (var i = 0; i < 120; i++) cells.Update(1f / 60f);
+            for (var i = 0; i < 120; i++)
+            {
+                cells.Update(1f / 60f);
+                if (seed == 1 && i == 8) DumpShallowestLeak(planet, cells);
+            }
             var solidAfterSettle = CountSolid(planet);
             var awakeAfterSettle = cells.ActiveCellCount;
 
