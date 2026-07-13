@@ -2942,6 +2942,11 @@ public sealed partial class DwarfMinerGame : Game
                         // the tile core, the light, and the bloom all peak together.
                         r = 32f + MathF.Sin((float)gameTime.TotalGameTime.TotalSeconds * 3.0f + dx * 0.4f) * 5f;
                         break;
+                    case TileKind.CityGlass:
+                        // Lit apartment windows — the skyscraper bands glow warm from inside.
+                        glow = new Color(255, 214, 140);
+                        r = 11f;
+                        break;
                     default: continue;
                 }
                 var op = _run.Planet.TileToWorld(ptx + dx, pty + dy);
