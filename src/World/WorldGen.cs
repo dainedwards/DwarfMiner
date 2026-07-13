@@ -437,43 +437,52 @@ public static class WorldGen
         foreach (var (r, t) in planet.AcidSeeds)
             if (visited.Add(Key(r, t))) frontier.Enqueue((r, t, 0));
 
-        var neighbours = new List<(int x, int y)>(6);
-        var lined = 0; var processed = 0;
+        var lineSet = new List<(int x, int y)>(12);
         while (frontier.Count > 0)
         {
             var (r, t, d) = frontier.Dequeue();
-            processed++;
-            neighbours.Clear();
             var n = planet.TilesAt(r);
-            neighbours.Add((r, ((t - 1) % n + n) % n));
-            neighbours.Add((r, (t + 1) % n));
-            neighbours.Add(planet.InnerNeighbour(r, t));
-            var oc = planet.OuterNeighbourCount(r, t);
-            for (var i = 0; i < oc; i++) neighbours.Add(planet.OuterNeighbour(r, t, i));
+            var left = ((t - 1) % n + n) % n;
+            var right = (t + 1) % n;
 
-            foreach (var (nr, nt) in neighbours)
+            // Skin every solid tile this air tile — or its cells — can touch. Radial rings hold
+            // different tile counts, so an air tile's cells spill into the inner/outer tiles of
+            // its ANGULAR neighbours too; lining those as well closes the cell-straddle gaps
+            // that otherwise leave a pool floor tile bare at the reservoir's edge.
+            lineSet.Clear();
+            foreach (var at in stackalloc[] { left, t, right })
             {
-                if (nr < 0 || nr >= planet.Rings) continue;
-                var k = planet.Get(nr, nt);
-                if (Tiles.IsSolid(k))
+                lineSet.Add(planet.InnerNeighbour(r, at));
+                var oc = planet.OuterNeighbourCount(r, at);
+                for (var i = 0; i < oc; i++) lineSet.Add(planet.OuterNeighbour(r, at, i));
+            }
+            lineSet.Add((r, left));
+            lineSet.Add((r, right));
+            foreach (var (lr, lt) in lineSet)
+            {
+                if (lr < 0 || lr >= planet.Rings) continue;
+                var k = planet.Get(lr, lt);
+                if (Tiles.IsSolid(k) && !Tiles.IsAnchored(k) && k != TileKind.Obsidian)
                 {
-                    if (!Tiles.IsAnchored(k) && k != TileKind.Obsidian)
-                    {
-                        planet.Set(nr, nt, TileKind.Obsidian);
-                        planet.SetWall(nr, nt, TileKind.Obsidian);
-                        lined++;
-                    }
-                    continue;
+                    planet.Set(lr, lt, TileKind.Obsidian);
+                    planet.SetWall(lr, lt, TileKind.Obsidian);
                 }
-                // Air: keep flooding through enclosed air (a rock wall behind it); an open-sky
-                // background means we've reached the atmosphere, so stop before escaping.
-                if (planet.GetWall(nr, nt) == TileKind.Sky) continue;
-                if (d >= maxDepth) continue;
-                if (!visited.Add(Key(nr, nt))) continue;
-                frontier.Enqueue((nr, nt, d + 1));
+            }
+
+            // Flood on through enclosed air only (a rock wall behind it); an open-sky background
+            // means we've reached the atmosphere, so stop before escaping the reservoir.
+            if (d >= maxDepth) continue;
+            Span<(int x, int y)> air = stackalloc (int, int)[]
+                { (r, left), (r, right), planet.InnerNeighbour(r, t), planet.OuterNeighbour(r, t) };
+            foreach (var (ar, at) in air)
+            {
+                if (ar < 0 || ar >= planet.Rings) continue;
+                if (Tiles.IsSolid(planet.Get(ar, at))) continue;
+                if (planet.GetWall(ar, at) == TileKind.Sky) continue;
+                if (!visited.Add(Key(ar, at))) continue;
+                frontier.Enqueue((ar, at, d + 1));
             }
         }
-        System.Console.WriteLine($"  [LineAcid] seeds={planet.AcidSeeds.Count} processed={processed} lined={lined}");
     }
 
     /// <summary>Volcanoes: basalt cones raised on the surface, each holding an open crater
