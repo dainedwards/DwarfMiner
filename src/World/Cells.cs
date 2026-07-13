@@ -644,6 +644,16 @@ public sealed class Cells
         foreach (var ((mat, src), count) in counts) parts[p++] = (mat, src, count);
         Planet.SetConglomerate(tx, ty,
             new Planet.TileComposition(new Color(rSum / n, gSum / n, bSum / n), parts));
+
+        // The grains above now rest on a solid tile, but they're asleep and will never
+        // fire RecordRest again — re-nominate the outer neighbours so a buried pile keeps
+        // converting layer by layer instead of stopping at the bottom row. Partially
+        // filled tiles fail CompactableFill and simply stay loose sand.
+        for (var w = 0; w < Planet.OuterNeighbourCount(tx, ty); w++)
+        {
+            var (ox, oy) = Planet.OuterNeighbour(tx, ty, w);
+            _restTiles.Add(Planet.Index(ox, oy));
+        }
     }
 
     /// <summary>Flat display colour of one grain, for composition tint blending.</summary>
