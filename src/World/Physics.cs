@@ -255,7 +255,8 @@ public sealed class Physics
     /// </summary>
     private bool IsRegionAnchored(int sx, int sy)
     {
-        _floodVisited.Clear();
+        _floodGen++;
+        _floodVisitList.Clear();
         _floodStack.Clear();
         _floodRegion.Clear();
         _regionBudgetSum = 0;
