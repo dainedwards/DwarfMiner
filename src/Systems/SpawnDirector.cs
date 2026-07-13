@@ -175,6 +175,20 @@ public static class SpawnDirector
         return planet.Center + dir * ((radius + 24) * Planet.TileSize);
     }
 
+    /// <summary>True when this spot holds a body-contact hazard cell (lava/acid/water) the
+    /// creature can't survive — the spawner skips it, so a land animal is never dropped into a
+    /// lava lake or an acid pond, and a non-swimmer is never spawned underwater to drown. Immune
+    /// natives (magma slug in lava, acid strider in acid, swimmers in water) are allowed in.</summary>
+    private static bool HazardRejectsSpawn(Session run, Vector2 pos, Creature c)
+    {
+        var probe = c.Radius + 2f;
+        var (lava, acid, _) = run.Cells.SampleHazardsNear(pos, probe);
+        if (lava > 0 && !c.ImmuneTo(Material.Lava)) return true;
+        if (acid > 0 && !c.ImmuneTo(Material.Acid)) return true;
+        if (!c.ImmuneTo(Material.Water) && run.Cells.CountWaterNear(pos, probe) > 0) return true;
+        return false;
+    }
+
     /// <summary>Rooted / lying-in-wait kinds. They never seek the player, so they must not
     /// eat the cave-population budget — a cap full of vines and disguised mimics plays as an
     /// empty planet. They get their own small allowance instead (see TrySpawnCreature).</summary>
