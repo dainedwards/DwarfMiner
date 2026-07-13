@@ -26,12 +26,14 @@ public static class SpawnDirector
         }
 
         // Fauna upkeep: keep the surface grazed and the sky populated. Slow cadence — these
-        // are ambience, not a threat escalation.
+        // are ambience, not a threat escalation. City streets run at double the herd cap:
+        // a metropolis with six pedestrians reads abandoned.
         run.FaunaTimer -= dt;
         if (run.FaunaTimer <= 0)
         {
             run.FaunaTimer = 6f + (float)Random.Shared.NextDouble() * 4f;
-            if (CountKindsNear(run, 700f, surface: true) < 7) TrySpawnSurfaceAnimal(run);
+            var surfaceCap = run.Def.Biome == "city" ? 14 : 7;
+            if (CountKindsNear(run, 700f, surface: true) < surfaceCap) TrySpawnSurfaceAnimal(run);
             if (CountKindsNear(run, 700f, sky: true) < 6) TrySpawnSkyAnimal(run);
         }
     }
