@@ -104,6 +104,7 @@ public sealed class Physics
         _cells = cells;
         _anchorStamp = new int[planet.TileCount];
         _floodStamp = new int[planet.TileCount];
+        _dirtyStamp = new int[planet.TileCount];
     }
 
     public void MarkDirty(int x, int y)
