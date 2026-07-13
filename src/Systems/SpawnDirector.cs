@@ -471,9 +471,9 @@ public static class SpawnDirector
         "ocean"   => CreatureKind.TidePuddler,
         "acid"    => CreatureKind.AcidStrider,
         "crystal" => CreatureKind.PrismSnail,
-        // City streets: mostly citizens, with a peacekeeper patrol mixed in every few
-        // spawns — enough militia that an invading creature gets met with return fire.
-        "city"    => Random.Shared.Next(3) == 0 ? CreatureKind.Peacekeeper : CreatureKind.Civilian,
+        // City worlds: the citizens and militia are seeded once by PopulateWorld (nothing
+        // pops in downtown); the dynamic spawner only tops up the wild herds outside town.
+        "city"    => Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper,
         "rift"    => null,
         "debug"   => AllSurfaceFauna[Random.Shared.Next(AllSurfaceFauna.Length)],
         _         => Random.Shared.Next(2) == 0 ? CreatureKind.Grazer : CreatureKind.Hopper,
