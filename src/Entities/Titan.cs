@@ -124,6 +124,8 @@ public sealed class Titan
 
     private int _roamDir;             // -1 / 0 / +1 along the body's tangent while roaming
     private float _roamTimer;         // seconds until the next roam-direction reroll
+    private float _biteTimer;         // Sandworm: cadence between terrain bites (slow chewing)
+    private float _wreckTimer;        // cadence between wrecking bites on city architecture
     private int _flameTick;           // frame counter throttling fire-breath grain spawns
 
     /// <summary>Hover height — distance the body wants to maintain above the average planted-foot
