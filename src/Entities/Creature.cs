@@ -469,8 +469,10 @@ public sealed class Creature
             Wander = 2f + (float)Random.Shared.NextDouble() * 3f;
             _amble = Random.Shared.Next(3) - 1; // stroll left / graze in place / stroll right
         }
-        var moveAxis = _amble * 0.5f;
-        // Spooked: bolt directly away from the player, faster than the amble cap.
+        // Terrain-aware stroll: turn at tall walls (building hulls) and cliff edges.
+        var moveAxis = NavAxis(planet, up, right, _amble * 0.5f, avoidCliffs: true);
+        // Spooked: bolt directly away from the player, faster than the amble cap — panic
+        // overrides caution, so a fleeing animal WILL take the drop.
         if (dist < 70f) moveAxis = -MathF.Sign(Vector2.Dot(toPlayer, right)) * 1.6f;
         GroundMove(dt, planet, up, right, moveAxis, speedMul);
     }
