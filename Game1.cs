@@ -1895,6 +1895,7 @@ public sealed partial class DwarfMinerGame : Game
             _toast = _run.Def.Id switch
             {
                 "rift" => "THE RIFT'S CORE YIELDS NOTHING - SLAY ITS TITAN AND ESCAPE",
+                "hollow" => "THE HOLLOW HAS NO CORE SHARD - ITS RICHES ARE THE PRIZE",
                 "debug" => "THE DEBUG CORE YIELDS NOTHING - THIS WORLD IS A TEST RIG",
                 _ => "CORE ALREADY PIERCED - THE SHARD IS ABOARD",
             };
