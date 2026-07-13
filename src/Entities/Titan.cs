@@ -925,6 +925,7 @@ public sealed class Titan
                 if (aim.LengthSquared() > 0.01f)
                 {
                     aim.Normalize();
+                    aim = LevelAim(aim);   // never hose the ground under its own feet
                     for (var i = 0; i < 2; i++)
                     {
                         var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.7f;
