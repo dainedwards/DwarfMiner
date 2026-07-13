@@ -324,14 +324,13 @@ public sealed class Physics
         var crustRing = _planet.SurfaceRing + 4;   // covers the ±3-ring (±1.5 legacy tile) surface elev noise
 
         var startIdx = _planet.Index(sx, sy);
-        _floodStack.Push(startIdx);
+        _floodStack.Push((startIdx, sx, sy));
         _floodStamp[startIdx] = _floodGen;
         _floodVisitList.Add(startIdx);
 
         while (_floodStack.Count > 0)
         {
-            var idx = _floodStack.Pop();
-            var (x, y) = _planet.UnIndex(idx);
+            var (idx, x, y) = _floodStack.Pop();
 
             // Cache hit — region is anchored. Promote everything we've seen.
             if (_anchorStamp[idx] == _anchorGen)
