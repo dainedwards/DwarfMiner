@@ -1622,6 +1622,47 @@ public static class SimTest
         }
     }
 
+    /// <summary>The planet-wide resident census (PopulateWorld): cities staffed, saucers on
+    /// station, warrens garrisoned and lakes stocked BEFORE the player goes anywhere — and
+    /// all of it flagged Resident so the distance cull never erases it.</summary>
+    private static void TestPopulateWorld()
+    {
+        // City world: dwellers at the addresses, saucers over the districts.
+        var cityDef = PlanetDefs.ById("city");
+        var city = new Session(cityDef) { Planet = WorldGen.Generate(11, cityDef) };
+        city.Cells = new Cells(city.Planet);
+        city.Physics = new Physics(city.Planet, city.Cells);
+        city.Player = new Player(SpawnDirector.FindSurfaceSpawn(city.Planet, -MathF.PI / 2f, city.Planet.Radius));
+        SpawnDirector.PopulateWorld(city);
+        int civs = 0, keepers = 0, saucers = 0, farFromSpawn = 0, nonResident = 0;
+        foreach (var c in city.Creatures)
+        {
+            if (!c.Resident) { nonResident++; continue; }
+            if (c.Kind == CreatureKind.Civilian) civs++;
+            else if (c.Kind == CreatureKind.Peacekeeper) keepers++;
+            else if (c.Kind == CreatureKind.Saucer) saucers++;
+            if ((c.Position - city.Player.Position).Length() > 1000f) farFromSpawn++;
+        }
+        Check($"census: city fully staffed before arrival ({civs} civs, {keepers} militia, {saucers} saucers)",
+            civs >= 20 && keepers >= 4 && saucers >= 2);
+        Check($"census: population exists far beyond the spawn bubble ({farFromSpawn} beyond 1000px)",
+            farFromSpawn > 10);
+        Check("census: everything seeded is a resident", nonResident == 0);
+
+        // Warren world: a guard pair stationed in every hall from minute zero.
+        var emberDef = PlanetDefs.ById("ember");
+        var warren = new Session(emberDef) { Planet = WorldGen.Generate(12, emberDef) };
+        warren.Cells = new Cells(warren.Planet);
+        warren.Physics = new Physics(warren.Planet, warren.Cells);
+        warren.Player = new Player(SpawnDirector.FindSurfaceSpawn(warren.Planet, -MathF.PI / 2f, warren.Planet.Radius));
+        SpawnDirector.PopulateWorld(warren);
+        var guards = 0;
+        foreach (var c in warren.Creatures)
+            if (c is { Kind: CreatureKind.Lizardman, Resident: true }) guards++;
+        Check($"census: warrens garrisoned before arrival ({guards} guards / {warren.Planet.LizardDens.Count} dens)",
+            guards >= warren.Planet.LizardDens.Count * 2);
+    }
+
     /// <summary>The aquatics: player swimming (strokes rise, idle sinks gently, fins are
     /// faster), breath-ceiling tiers, land-swimmer buoyancy, and the two water-only species
     /// living in a carved test pool without embedding or beaching.</summary>
