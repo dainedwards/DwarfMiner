@@ -1,0 +1,92 @@
+using System;
+using System.Diagnostics;
+using DwarfMiner.World;
+using Microsoft.Xna.Framework;
+
+namespace DwarfMiner.Systems;
+
+/// <summary>
+/// Headless performance harness (run with <c>dotnet run -c Release -- --perf</c>). Builds a
+/// giant world and hammers the two systems disaster-heavy play leans on — the cell sim under
+/// mass tile breakage and the collapse physics under earthquakes — printing per-tick timings.
+/// Not a pass/fail test: it exists so perf work has before/after numbers instead of vibes.
+/// </summary>
+public static class PerfTest
+{
+    private const float Dt = 1f / 60f;
+
+    public static void Run()
+    {
+        var total = Stopwatch.StartNew();
+        var sw = Stopwatch.StartNew();
+        var planet = WorldGen.Generate(42, sizeScale: 1.8f);   // giant world = worst case
+        Console.WriteLine($"[perf] worldgen 1.8x: {sw.ElapsedMilliseconds}ms " +
+                          $"({planet.Rings} rings, {planet.TileCount} tiles)");
+
+        var cells = new Cells(planet);
+        var physics = new Physics(planet, cells);
+        var rng = new Random(7);
+
+        // Seed the world's water so the sim starts with realistic pool load, then settle.
+        foreach (var (x, y) in planet.WaterSeeds) cells.FillTile(x, y, Material.Water);
+        sw.Restart();
+        for (var i = 0; i < 120; i++) cells.Update(Dt);
+        Console.WriteLine($"[perf] water pre-settle 120 ticks: {sw.ElapsedMilliseconds}ms");
+
+        // --- Scenario 1: meteor storm. 30 crater discs (r=10 tiles) breaking rock into dust
+        // cells all around the surface, then 10 sim-seconds of cells+physics catching up.
+        var surfaceR = planet.SurfaceRing - 6;
+        var broken = 0;
+        for (var m = 0; m < 30; m++)
+        {
+            var ty0 = rng.Next(planet.TilesAt(surfaceR));
+            for (var dx = -10; dx <= 10; dx++)
+                for (var dy = -10; dy <= 10; dy++)
+                {
+                    if (dx * dx + dy * dy > 100) continue;
+                    var x = surfaceR + dx;
+                    var y = ty0 + dy;
+                    var k = planet.Get(x, y);
+                    if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
+                    planet.Set(x, y, TileKind.Sky);
+                    cells.SpawnDustInTile(x, y, k);
+                    physics.MarkDirty(x, y);
+                    broken++;
+                }
+        }
+        Console.WriteLine($"[perf] meteor storm: {broken} tiles broken");
+        RunTicks("meteor aftermath", 600, () => { cells.Update(Dt); physics.Update(Dt); });
+
+        // --- Scenario 2: earthquakes. Three quakes around the planet, then the settle wave.
+        sw.Restart();
+        for (var q = 0; q < 3; q++)
+        {
+            var ang = q * MathHelper.TwoPi / 3f;
+            var epi = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
+                * planet.Radius * Planet.TileSize * 0.55f;
+            physics.Earthquake(epi, 200f, 2);
+        }
+        Console.WriteLine($"[perf] 3x earthquake (sync part): {sw.ElapsedMilliseconds}ms");
+        RunTicks("quake aftermath", 600, () => { cells.Update(Dt); physics.Update(Dt); });
+
+        Console.WriteLine($"[perf] total {total.ElapsedMilliseconds}ms");
+    }
+
+    /// <summary>Tick <paramref name="body"/> n times and print total / mean / worst-tick —
+    /// worst matters most, it's the frame hitch the player feels.</summary>
+    private static void RunTicks(string label, int n, Action body)
+    {
+        var sw = new Stopwatch();
+        double worst = 0, sum = 0;
+        for (var i = 0; i < n; i++)
+        {
+            sw.Restart();
+            body();
+            var ms = sw.Elapsed.TotalMilliseconds;
+            sum += ms;
+            if (ms > worst) worst = ms;
+        }
+        Console.WriteLine($"[perf] {label}: {n} ticks, total {sum:F0}ms, " +
+                          $"mean {sum / n:F2}ms, worst {worst:F2}ms");
+    }
+}
