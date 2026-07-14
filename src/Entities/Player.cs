@@ -1134,10 +1134,14 @@ public sealed class Equipment
     };
 
     /// <summary>Summed damage reduction from worn armor: chest 40% (the old full-armor
-    /// value), helmet and leggings 10% each, boots 5% — a full set reaches 65%.</summary>
+    /// value), helmet and leggings 10% each, boots and gauntlets 5% — plus 10% from the
+    /// Aegis Pendant accessory. Full iron kit with the pendant reaches 80%, so the sum is
+    /// left uncapped short of that.</summary>
     public float ArmorReduction =>
         (Get(EquipSlot.Chest) is not null ? 0.40f : 0f) +
         (Get(EquipSlot.Head)  is not null ? 0.10f : 0f) +
         (Get(EquipSlot.Legs)  is not null ? 0.10f : 0f) +
-        (Get(EquipSlot.Feet)  is not null ? 0.05f : 0f);
+        (Get(EquipSlot.Feet)  is not null ? 0.05f : 0f) +
+        (Get(EquipSlot.Gloves) is not null ? 0.05f : 0f) +
+        (HasAccessory("aegis_pendant") ? 0.10f : 0f);
 }
