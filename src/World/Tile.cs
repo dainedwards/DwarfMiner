@@ -168,6 +168,12 @@ public static class Tiles
         TileKind.AlienPlant => 1,
         TileKind.HoverPod => 1,
         TileKind.OrbLamp => 1,
+        TileKind.Fernleaf => 1,
+        TileKind.Frostcap => 1,
+        TileKind.Emberbloom => 1,
+        TileKind.Rustbramble => 1,
+        TileKind.Vitrilily => 1,
+        TileKind.Geobloom => 1,
         _ => 0,
     };
 
