@@ -34,7 +34,7 @@ public sealed class Sfx
         // Per-weapon shot voices — each gun/thrown weapon picks one via ItemDef.ShotSound;
         // anything without one falls back to the generic "shoot" pew above.
         "shoot_pistol", "shoot_mg", "shoot_laser", "shoot_beam", "shoot_rocket", "shoot_cannon",
-        "throw", "harpoon",
+        "throw", "harpoon", "shoot_flame", "shoot_spew", "shoot_zap",
         // Mothership: the ion-engine rumble is a short loopable burst re-triggered while
         // thrusting (min-gap keeps it continuous without stacking).
         "thrust",
