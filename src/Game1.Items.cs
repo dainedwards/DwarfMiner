@@ -189,28 +189,38 @@ public sealed partial class DwarfMinerGame
                 Blocked = () => _run.Player.PickaxeTier < 3,
                 OnCraft = () => _run.Player.PickaxeTier = 4,
             },
-            // Carried-light ladder — steps sequentially like pickaxe tiers.
-            ["torch"] = new() { Owned = () => _run.Player.LightTier >= 1, OnCraft = () => _run.Player.LightTier = 1 },
+            // Carried-light ladder — steps sequentially like pickaxe tiers. Each light is a
+            // real item now: it lands in the backpack and the doll's torch slot, and only
+            // sheds light while equipped there (LightTier stays the crafted-rung gate).
+            ["torch"] = new() { Owned = () => _run.Player.LightTier >= 1, OnCraft = Wear("torch", EquipSlot.Torch, () => _run.Player.LightTier = 1) },
             ["lantern"] = new()
             {
                 Owned = () => _run.Player.LightTier >= 2,
                 Blocked = () => _run.Player.LightTier < 1,
-                OnCraft = () => _run.Player.LightTier = 2,
+                OnCraft = Wear("lantern", EquipSlot.Torch, () => _run.Player.LightTier = 2),
             },
             ["helm_lamp"] = new()
             {
                 Owned = () => _run.Player.LightTier >= 3,
                 Blocked = () => _run.Player.LightTier < 2,
-                OnCraft = () => _run.Player.LightTier = 3,
+                OnCraft = Wear("helm_lamp", EquipSlot.Torch, () => _run.Player.LightTier = 3),
             },
             ["sun_crystal"] = new()
             {
                 Owned = () => _run.Player.LightTier >= 4,
                 Blocked = () => _run.Player.LightTier < 3,
-                OnCraft = () => _run.Player.LightTier = 4,
+                OnCraft = Wear("sun_crystal", EquipSlot.Torch, () => _run.Player.LightTier = 4),
             },
-            ["armor"]        = new() { Owned = () => _run.Player.HasArmor,   OnCraft = () => _run.Player.HasArmor = true },
-            ["chitin_armor"] = new() { Owned = () => _run.Player.HasArmor,   OnCraft = () => _run.Player.HasArmor = true },
+            // Armor — one craft per piece, worn on the doll. Iron and chitin chest plates are
+            // separately ownable now that the character screen can swap between sets.
+            ["armor"]           = new() { Owned = () => _run.Player.Inventory.Count("armor") > 0,           OnCraft = Wear("armor", EquipSlot.Chest, () => _run.Player.HasArmor = true) },
+            ["chitin_armor"]    = new() { Owned = () => _run.Player.Inventory.Count("chitin_armor") > 0,    OnCraft = Wear("chitin_armor", EquipSlot.Chest, () => _run.Player.HasArmor = true) },
+            ["iron_helmet"]     = new() { Owned = () => _run.Player.Inventory.Count("iron_helmet") > 0,     OnCraft = Wear("iron_helmet", EquipSlot.Head) },
+            ["iron_leggings"]   = new() { Owned = () => _run.Player.Inventory.Count("iron_leggings") > 0,   OnCraft = Wear("iron_leggings", EquipSlot.Legs) },
+            ["iron_boots"]      = new() { Owned = () => _run.Player.Inventory.Count("iron_boots") > 0,      OnCraft = Wear("iron_boots", EquipSlot.Feet) },
+            ["chitin_helmet"]   = new() { Owned = () => _run.Player.Inventory.Count("chitin_helmet") > 0,   OnCraft = Wear("chitin_helmet", EquipSlot.Head) },
+            ["chitin_leggings"] = new() { Owned = () => _run.Player.Inventory.Count("chitin_leggings") > 0, OnCraft = Wear("chitin_leggings", EquipSlot.Legs) },
+            ["chitin_boots"]    = new() { Owned = () => _run.Player.Inventory.Count("chitin_boots") > 0,    OnCraft = Wear("chitin_boots", EquipSlot.Feet) },
             // Air tank tops the supply to the new (doubled) ceiling on craft, so it's an
             // immediate breather as well as a permanent capacity bump.
             ["air_tank"] = new()
