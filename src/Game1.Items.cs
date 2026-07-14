@@ -429,6 +429,17 @@ public sealed partial class DwarfMinerGame
     private bool IsOwned(string id) =>
         _items.TryGetValue(id, out var def) && (def.Owned?.Invoke() ?? false);
 
+    /// <summary>Crafting-menu affordability by recipe id: the player holds every ingredient
+    /// AND the recipe isn't gated shut (e.g. a tier that needs the prior tier first).</summary>
+    private bool CanAffordId(string id)
+    {
+        Recipe? recipe = null;
+        foreach (var r in Crafting.All) if (r.Id == id) { recipe = r; break; }
+        if (recipe is null) return false;
+        if (_items.TryGetValue(id, out var def) && (def.Blocked?.Invoke() ?? false)) return false;
+        return Crafting.CanAfford(recipe, _run.Player.Inventory);
+    }
+
     /// <summary>Belt ids the Q/E weapon-cycle steps through — anything that shoots or throws.</summary>
     private bool IsWeaponId(string id) =>
         _items.TryGetValue(id, out var def) && def.Weapon;
