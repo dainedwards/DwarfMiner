@@ -519,7 +519,7 @@ public sealed partial class DwarfMinerGame
     }
 
     /// <summary>Atmosphere-entry cinematic state: while set, the ship is committed to the
-    /// dive — a couple of seconds of heat-streak plunge that双 buys the background world
+    /// dive — a couple of seconds of heat-streak plunge that buys the background world
     /// build its head start, so orbit arrival never blocks the frame.</summary>
     private PlanetDef? _entryDef;
     private float _entryT;
