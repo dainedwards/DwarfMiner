@@ -3883,6 +3883,16 @@ public sealed partial class DwarfMinerGame : Game
         foreach (var g in _run.Pickups)
             _renderer.AddLight(g.Position, 9f, Tiles.OreSpeckle(g.Kind));
 
+        // Spawners glow so the player can spot (and learn) them: goo sickly green, homes
+        // warm; the lizard door stays dark — a warren mouth shouldn't advertise itself.
+        foreach (var sp in _run.Spawners)
+        {
+            if (sp.Kind == SpawnerKind.GooPile)
+                _renderer.AddLight(sp.Position, 24f, new Color(120, 220, 90));
+            else if (sp.Kind == SpawnerKind.AlienHome)
+                _renderer.AddLight(sp.Position, 20f, new Color(255, 210, 130));
+        }
+
         // Planted torches burn with a soft per-torch flicker; in-flight ones carry their
         // flame with them.
         foreach (var torch in _run.Torches)
