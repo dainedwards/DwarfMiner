@@ -331,6 +331,53 @@ public sealed partial class DwarfMinerGame
                 OnCraft = InstallShipStage,
             },
         };
+
+        // ─── Melee arsenal — generated rows: the weapon itself plus its "hone" upgrade
+        // (craftable three times, rungs II-IV; rung IV is the energy edge). ─────────────
+        foreach (var mid in Toolbelt.MeleeIds)
+        {
+            var id = mid;   // capture per iteration
+            items[id] = new ItemDef
+            {
+                Weapon = true, NeedsCooldown = true, ShotSound = "throw",
+                Owned = () => _run.Player.MeleeTiers.ContainsKey(id),
+                Use = c => MeleeAttack(id, c),
+                OnCraft = Own(id, () =>
+                    _run.Player.MeleeTiers[id] = Math.Max(1, _run.Player.MeleeTiers.GetValueOrDefault(id))),
+            };
+            items[$"{id}_up"] = new ItemDef
+            {
+                Owned = () => _run.Player.MeleeTiers.GetValueOrDefault(id) >= 4,
+                Blocked = () => !_run.Player.MeleeTiers.ContainsKey(id),
+                OnCraft = () => _run.Player.MeleeTiers[id] =
+                    Math.Min(4, _run.Player.MeleeTiers.GetValueOrDefault(id, 1) + 1),
+            };
+        }
+
+        // Jetpack tiers craftable in-run — permanent purchases banked to the meta save
+        // (identical effect to the mothership foundry route).
+        void JetTier(string craftId, string metaId, Action apply, Func<bool> owned, Func<bool> blocked)
+        {
+            items[craftId] = new ItemDef
+            {
+                Owned = owned,
+                Blocked = blocked,
+                OnCraft = () =>
+                {
+                    apply();
+                    if (!_meta.ShipUpgrades.Contains(metaId)) _meta.ShipUpgrades.Add(metaId);
+                    _meta.Save();
+                },
+            };
+        }
+        JetTier("jetpack_ii", "jetpack2", () => _run.Player.JetTier2 = true,
+            () => _run.Player.JetTier2, () => !_run.Player.HasJetpack);
+        JetTier("jetpack_iii", "jetpack3", () => _run.Player.JetTier3 = true,
+            () => _run.Player.JetTier3, () => !_run.Player.JetTier2);
+        JetTier("jetpack_iv", "jetpack4", () => _run.Player.JetTier4 = true,
+            () => _run.Player.JetTier4, () => !_run.Player.JetTier3);
+
+        return items;
     }
 
     /// <summary>Dispatch the currently-selected toolbelt slot to its in-world action, called
