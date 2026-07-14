@@ -5282,8 +5282,10 @@ public sealed partial class DwarfMinerGame : Game
         // Propagate the seeded grid, rasterize it into the lightmap, and cut the hero
         // lights' ray-cast shadow fans over it. Depth darkness is emergent now: rock
         // occludes, so anywhere the sun and the seeds can't reach is simply black.
-        // DM_NOLIGHT=1 skips the whole pass (perf isolation diagnostic).
-        var noLight = Environment.GetEnvironmentVariable("DM_NOLIGHT") is { Length: > 0 };
+        // DM_NOLIGHT=1 skips the whole pass (perf isolation diagnostic); the debug menu's
+        // fullbright toggle does the same interactively — the underground renders as if lit.
+        var noLight = _fullbright
+            || Environment.GetEnvironmentVariable("DM_NOLIGHT") is { Length: > 0 };
         if (!noLight)
         {
             _renderer.RenderLightGrid(_camera, _run.Planet);
