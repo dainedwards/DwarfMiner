@@ -146,6 +146,13 @@ public static class Crafting
             new Dictionary<string, int> { ["crystal"] = 4, ["diamond"] = 1, ["iron"] = 6 }),
         new("rocket_launcher", "Rocket launcher — fires crafted rockets",
             new Dictionary<string, int> { ["iron"] = 5, ["gold"] = 2, ["coal"] = 3 }),
+        // Elemental arms — fire and acid hose the cell sim itself; lightning chains bodies.
+        new("flamethrower", "Flamethrower — hose a cone of burning fuel",
+            new Dictionary<string, int> { ["iron"] = 4, ["coal"] = 8 }),
+        new("acid_spewer", "Acid spewer — sprays rock-melting acid",
+            new Dictionary<string, int> { ["iron"] = 4, ["emerald"] = 2 }),
+        new("lightning_gun", "Lightning gun — chain arcs between foes",
+            new Dictionary<string, int> { ["crystal"] = 3, ["platinum"] = 2, ["gold"] = 2 }),
         new("rocket", "Rocket (3×) — launcher ammo",
             new Dictionary<string, int> { ["iron"] = 1, ["coal"] = 2 }),
         new("cannon", "Cannon (right-click upgrade)",
