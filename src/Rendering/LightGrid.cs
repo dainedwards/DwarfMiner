@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using DwarfMiner.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -7,7 +8,7 @@ namespace DwarfMiner.Rendering;
 
 /// <summary>
 /// Terraria-style propagated lighting. A view-local cartesian grid at tile resolution:
-/// each cell holds an RGB light value and an attenuation factor (air passes most light,
+/// each cell holds an RGB light value and an attenuation class (air passes most light,
 /// solid rock eats it), sunlight seeds every open-to-sky cell, entity/cell lights seed
 /// their cells through Renderer.AddLight, and chamfer sweeps flood the light outward.
 /// The result is the defining underground look: caves are genuinely dark until lit,
@@ -19,6 +20,10 @@ namespace DwarfMiner.Rendering;
 /// field doesn't swim as the camera pans. Zoomed far out (orbit, descent) the cell size
 /// coarsens to keep the cell count bounded — coarse light is invisible at those scales
 /// because the sunlit surface dominates the frame.
+///
+/// Perf: the field recomputes every OTHER frame (30 Hz light, imperceptible) while the
+/// lightmap rasterizes from the kept texture every frame so camera motion stays smooth.
+/// On the off frames Seed() is a no-op, so the AddLight call sites stay unconditional.
 /// </summary>
 public sealed class LightGrid
 {
@@ -31,6 +36,8 @@ public sealed class LightGrid
     /// gentler than Terraria's per-16px-tile factor: 0.78 shades a rock face to black
     /// across ~12 cells (~48 px), a readable gradient instead of a hard silhouette.</summary>
     private const float AttSolid = 0.78f;
+    private static readonly float AttAirDiag = MathF.Pow(AttAir, 1.41421f);
+    private static readonly float AttSolidDiag = MathF.Pow(AttSolid, 1.41421f);
     /// <summary>Seed strength bounds. The cap limits how far a huge source reaches; the
     /// floor keeps small glints (bullets, gem speckles) from vanishing entirely.</summary>
     private const float SeedCap = 2.4f;
@@ -44,25 +51,55 @@ public sealed class LightGrid
     private float[] _r = Array.Empty<float>();
     private float[] _g = Array.Empty<float>();
     private float[] _b = Array.Empty<float>();
-    /// <summary>Straight-neighbour attenuation per cell, and the same raised to √2 for
-    /// the diagonal taps (precomputed — pow per tap is what would make sweeps slow).</summary>
-    private float[] _att = Array.Empty<float>();
-    private float[] _attDiag = Array.Empty<float>();
+    private bool[] _solid = Array.Empty<bool>();
     private Color[] _pix = Array.Empty<Color>();
     private int _side;
     private Vector2 _origin;
     private float _cell;
     private Texture2D? _tex;
+    /// <summary>False on the skipped frames of the 30 Hz cadence — Seed/Propagate/Upload
+    /// no-op and the previous texture keeps serving.</summary>
+    private bool _active;
+    private int _frame;
+
+    /// <summary>Surface-profile radius bounds (global ring units), cached per planet:
+    /// cells below the min can never see sky (skip the per-cell bearing lookup — that's
+    /// nearly every cell when underground), cells above the max always do.</summary>
+    private Planet? _profilePlanet;
+    private float _profMin, _profMax;
 
     public Vector2 Origin => _origin;
     public float CellSize => _cell;
-    public int Side => _side;
     public Texture2D? Texture => _tex;
 
     /// <summary>Rebuild the grid for this frame: size/position from the camera, occlusion
     /// and sunlight from the planet. Light seeds come afterwards via Seed().</summary>
     public void Begin(Planet planet, Camera cam)
     {
+        _active = ++_frame % 2 == 0 || _tex is null;
+        if (!_active) return;
+
+        if (!ReferenceEquals(_profilePlanet, planet))
+        {
+            _profilePlanet = planet;
+            if (planet.SurfaceProfile is { Length: > 0 } prof)
+            {
+                _profMin = float.MaxValue; _profMax = float.MinValue;
+                foreach (var p in prof)
+                {
+                    if (p < _profMin) _profMin = p;
+                    if (p > _profMax) _profMax = p;
+                }
+                var baseR = planet.SurfaceRadiusAt(planet.Center + Vector2.UnitX) -
+                            planet.SurfaceProfile[0];
+                _profMin += baseR; _profMax += baseR;
+            }
+            else
+            {
+                _profMin = _profMax = planet.SurfaceRadiusAt(planet.Center + Vector2.UnitX);
+            }
+        }
+
         var halfW = cam.ViewportSize.X / cam.Zoom * 0.5f;
         var halfH = cam.ViewportSize.Y / cam.Zoom * 0.5f;
         var halfDiag = MathF.Sqrt(halfW * halfW + halfH * halfH);
@@ -79,7 +116,7 @@ public sealed class LightGrid
             _side = needed;
             var n = _side * _side;
             _r = new float[n]; _g = new float[n]; _b = new float[n];
-            _att = new float[n]; _attDiag = new float[n];
+            _solid = new bool[n];
             _pix = new Color[n];
             _tex?.Dispose();
             _tex = null;   // recreated at Upload
@@ -91,26 +128,34 @@ public sealed class LightGrid
             MathF.Floor((cam.Target.X - _side * _cell * 0.5f) / _cell) * _cell,
             MathF.Floor((cam.Target.Y - _side * _cell * 0.5f) / _cell) * _cell);
 
+        var sunR = SunColor.R / 255f;
+        var sunG = SunColor.G / 255f;
+        var sunB = SunColor.B / 255f;
         for (var y = 0; y < _side; y++)
         {
+            var wy = _origin.Y + (y + 0.5f) * _cell;
             for (var x = 0; x < _side; x++)
             {
                 var i = y * _side + x;
-                var wp = new Vector2(_origin.X + (x + 0.5f) * _cell, _origin.Y + (y + 0.5f) * _cell);
+                var wp = new Vector2(_origin.X + (x + 0.5f) * _cell, wy);
+                var distTiles = (wp - planet.Center).Length() / Planet.TileSize;
+                // Beyond every possible mountain top: open space, full sun, no tile lookup.
+                if (distTiles >= _profMax)
+                {
+                    _solid[i] = false;
+                    _r[i] = sunR; _g[i] = sunG; _b[i] = sunB;
+                    continue;
+                }
                 var solid = planet.IsSolidAt(wp);
-                var a = solid ? AttSolid : AttAir;
-                _att[i] = a;
-                _attDiag[i] = MathF.Pow(a, 1.41421f);
-
+                _solid[i] = solid;
                 // Sunlight: an air cell at or above the local terrain surface is open sky.
                 // (No per-cell raycast — the surface profile is the authority, and the
                 // propagation itself carries daylight down into dips and cave mouths.)
-                if (!solid
-                    && (wp - planet.Center).Length() / Planet.TileSize >= planet.SurfaceRadiusAt(wp) - 0.5f)
+                // Cells below the profile's global minimum skip the bearing lookup.
+                if (!solid && distTiles >= _profMin - 0.5f
+                    && distTiles >= planet.SurfaceRadiusAt(wp) - 0.5f)
                 {
-                    _r[i] = SunColor.R / 255f;
-                    _g[i] = SunColor.G / 255f;
-                    _b[i] = SunColor.B / 255f;
+                    _r[i] = sunR; _g[i] = sunG; _b[i] = sunB;
                 }
                 else
                 {
@@ -125,6 +170,7 @@ public sealed class LightGrid
     /// at that distance in open air — so existing call sites read the same.</summary>
     public void Seed(Vector2 worldPos, float radius, Color color)
     {
+        if (!_active) return;
         var x = (int)((worldPos.X - _origin.X) / _cell);
         var y = (int)((worldPos.Y - _origin.Y) / _cell);
         if (x < 0 || y < 0 || x >= _side || y >= _side) return;
@@ -142,6 +188,7 @@ public sealed class LightGrid
     /// value and every already-visited neighbour times this cell's attenuation.</summary>
     public void Propagate()
     {
+        if (!_active) return;
         for (var round = 0; round < 2; round++)
         {
             // Forward sweep: left / up / up-left / up-right are already final-ish.
@@ -151,7 +198,9 @@ public sealed class LightGrid
                 for (var x = 0; x < _side; x++)
                 {
                     var i = row + x;
-                    var a = _att[i]; var d = _attDiag[i];
+                    float a, d;
+                    if (_solid[i]) { a = AttSolid; d = AttSolidDiag; }
+                    else { a = AttAir; d = AttAirDiag; }
                     if (x > 0) Take(i, i - 1, a);
                     if (y > 0)
                     {
@@ -168,7 +217,9 @@ public sealed class LightGrid
                 for (var x = _side - 1; x >= 0; x--)
                 {
                     var i = row + x;
-                    var a = _att[i]; var d = _attDiag[i];
+                    float a, d;
+                    if (_solid[i]) { a = AttSolid; d = AttSolidDiag; }
+                    else { a = AttAir; d = AttAirDiag; }
                     if (x < _side - 1) Take(i, i + 1, a);
                     if (y < _side - 1)
                     {
@@ -181,6 +232,7 @@ public sealed class LightGrid
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Take(int i, int from, float att)
     {
         var v = _r[from] * att; if (v > _r[i]) _r[i] = v;
@@ -192,6 +244,7 @@ public sealed class LightGrid
     /// the lightmap (linear-filtered — Terraria "smooth lighting").</summary>
     public void Upload(GraphicsDevice gd)
     {
+        if (!_active && _tex is not null) return;
         if (_tex is null || _tex.Width != _side)
             _tex = new Texture2D(gd, _side, _side, false, SurfaceFormat.Color);
         for (var i = 0; i < _pix.Length; i++)
