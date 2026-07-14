@@ -45,7 +45,7 @@ public sealed class LightGrid
     /// <summary>Grid side length cap — beyond this the cell size coarsens instead.</summary>
     private const int MaxSide = 200;
     /// <summary>Extra cells beyond the view diagonal so off-screen sources still cast in.</summary>
-    private const int MarginCells = 18;
+    private const int MarginCells = 12;
     private static readonly Color SunColor = new(255, 250, 238);
 
     private float[] _r = Array.Empty<float>();
