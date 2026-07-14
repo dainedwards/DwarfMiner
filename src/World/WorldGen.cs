@@ -508,11 +508,13 @@ public static class WorldGen
         // The prospector's jackpot: the odd RICH gold/silver vein — a solid ribbon of ore
         // far denser than the ambient scatter (which runs deliberately lean, gold most of
         // all). Isolated rng for the same stream-stability reason as the worms.
-        StampRichVeins(planet, new Random(seed ^ 0x60D5));
+        if (System.Environment.GetEnvironmentVariable("DM_NOVEIN") is null)
+            StampRichVeins(planet, new Random(seed ^ 0x60D5));
 
         // Biome flora: dot the surface with the world's signature plant (fire/acid-proof on
         // the hostile worlds). Isolated rng, same stream-stability reason.
-        ScatterBiomeFlora(planet, def, new Random(seed ^ 0xF10A));
+        if (System.Environment.GetEnvironmentVariable("DM_NOVEIN") is null)
+            ScatterBiomeFlora(planet, def, new Random(seed ^ 0xF10A));
 
         // Skin every acid reservoir (surface pools, volcano plumbing, and the scattered crust
         // seeps) in obsidian so the acid can't chew outward through the crust. Obsidian shrugs
