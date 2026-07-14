@@ -294,6 +294,7 @@ public static class SimTest
         TestRunSave();
         TestOxygen();
         TestHazards();
+        TestNoitaFeel();
         TestTitanVariants();
         TestDepotBank();
         TestSfx();
