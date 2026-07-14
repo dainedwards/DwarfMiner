@@ -39,6 +39,18 @@ public static class Survey
         lock (_lock) return _worlds.GetValueOrDefault(def.Id);
     }
 
+    /// <summary>Drop every cached survey world/census — REQUIRED when switching save
+    /// slots: campaigns roll different planets under colliding ids ("moon", generated
+    /// names), so stale worlds would rasterize the wrong discs.</summary>
+    public static void Reset()
+    {
+        lock (_lock)
+        {
+            _worlds.Clear();
+            _cache.Clear();
+        }
+    }
+
     // True minable deposits only — bulk terrain like obsidian would drown the list.
     private static readonly (TileKind kind, string label)[] OreKinds =
     {
