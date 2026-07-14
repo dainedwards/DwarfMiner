@@ -155,6 +155,90 @@ public static class SpawnDirector
             ClearSpawnSpace(run, pos, c.Radius);
             run.Creatures.Add(c);
         }
+
+        // Cave dwellers: the whole underground population rolled once, planet-wide — random
+        // cave spots with the usual depth-banded rosters, all frozen Residents until the
+        // player digs into their neighbourhood. (This replaces the old near-player trickle
+        // spawner entirely.)
+        var caveBudget = 55;
+        for (var attempt = 0; attempt < 1100 && caveBudget > 0; attempt++)
+        {
+            if (RollCaveSpot(run) is not { } spot) continue;
+            SpawnAt(run, spot, connected: true, resident: true);
+            caveBudget--;
+        }
+
+        // Sky fauna on station around the whole planet (they used to trickle in near the
+        // player; now the flock exists from the start).
+        if (run.Def.Biome is not "rift")
+        {
+            for (var a = 0.1f; a < MathHelper.TwoPi; a += 0.55f)
+            {
+                if (Random.Shared.Next(3) == 0) continue;
+                var ground = FindSurfaceSpawn(planet, a, planet.Radius);
+                var up2 = planet.UpAt(ground);
+                var kind = run.Def.Biome is "belt" or "moon" ? CreatureKind.StarJelly
+                    : Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth
+                    : CreatureKind.SkyStinger;
+                run.Creatures.Add(new Creature(
+                    ground + up2 * (50f + (float)Random.Shared.NextDouble() * 90f), kind)
+                { Resident = true });
+            }
+        }
+
+        // ── Physical spawners — the only post-load source of new creatures. ──────────
+        run.Spawners.Clear();
+        // Goo piles: slime mounds settled on cave floors.
+        var goo = 0;
+        for (var attempt = 0; attempt < 500 && goo < 10; attempt++)
+        {
+            if (RollCaveSpot(run) is not { } spot) continue;
+            // Settle the pile onto the cave floor below the spot.
+            var up2 = planet.UpAt(spot);
+            var floor = spot;
+            var found = false;
+            for (var d = 4f; d <= 48f; d += 4f)
+            {
+                if (!planet.IsSolidAt(spot - up2 * d)) continue;
+                floor = spot - up2 * (d - 4f);
+                found = true;
+                break;
+            }
+            if (!found) continue;
+            run.Spawners.Add(new Spawner(floor, SpawnerKind.GooPile));
+            goo++;
+        }
+        // Lizard doors: one brick doorway per warren hall — the warren's slow trickle.
+        foreach (var (dr2, dt2) in planet.LizardDens)
+        {
+            var den = planet.TileToWorld(dr2, dt2);
+            run.Spawners.Add(new Spawner(den, SpawnerKind.LizardDoor));
+        }
+        // Alien homes: every sixth city address is a marked household that keeps sending
+        // its people into the street.
+        var addr = 0;
+        foreach (var (hr, ht) in planet.CitySpawns)
+            if (addr++ % 6 == 0)
+                run.Spawners.Add(new Spawner(planet.TileToWorld(hr, ht), SpawnerKind.AlienHome));
+    }
+
+    /// <summary>One random underground cave position: open foreground with a natural rock
+    /// wall behind (not open sky, not a building or warren interior). Null on a miss —
+    /// callers loop attempts.</summary>
+    private static Vector2? RollCaveSpot(Session run)
+    {
+        var planet = run.Planet;
+        var a = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
+        var frac = 0.42f + (float)Random.Shared.NextDouble() * 0.52f;
+        var pos = planet.Center + new Vector2(MathF.Cos(a), MathF.Sin(a))
+            * planet.Radius * frac * Planet.TileSize;
+        var (r, t) = planet.WorldToTile(pos);
+        if (r < 1 || r >= planet.Rings) return null;
+        if (planet.Get(r, t) != TileKind.Sky) return null;
+        var wall = planet.GetWall(r, t);
+        if (wall is TileKind.Sky or TileKind.AlienAlloy or TileKind.CityGlass
+            or TileKind.LizardBrick) return null;
+        return pos;
     }
 
     /// <summary>True when the bearing of <paramref name="pos"/> falls inside a city district
