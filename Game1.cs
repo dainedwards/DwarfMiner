@@ -2563,6 +2563,21 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>One melee swing: damages and knocks back every creature in the aim arc
     /// (the titan too), and at rung 4 the energy edge carves soft terrain along the arc.
     /// The swing animation is driven by _meleeAnim in the held-weapon draw.</summary>
+    /// <summary>Stoke the city's anger at the dwarf. Crossing the tipping point announces
+    /// the turn once (the toast) — below it the city just remembers quietly.</summary>
+    private void AddCityWrath(float amount)
+    {
+        if (_run.Planet.CityDistricts.Count == 0) return;
+        var before = _run.CityWrath;
+        _run.CityWrath = MathF.Min(100f, _run.CityWrath + amount);
+        if (before < 50f && _run.CityWrath >= 50f)
+        {
+            _toast = "! THE CITY HAS TURNED ON YOU !";
+            _toastTimer = 5f;
+            _sfx.Play("creak", 0.9f, pitch: -0.3f);
+        }
+    }
+
     /// <summary>E on/near a door pops it open or shut. Checks the cursor tile first, then a
     /// small ring around the player, so standing in a doorway and mashing E always works.
     /// Both leaves of a two-tall door toggle together (doors place/generate as vertical
