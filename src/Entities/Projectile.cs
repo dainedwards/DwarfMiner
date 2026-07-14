@@ -243,24 +243,53 @@ public sealed class Projectile
 
     public void Update(float dt, Planet planet, Physics physics, Cells cells, Particles? particles = null)
     {
-        // Thrown explosives arc — gravity pulls them down so the throw feels weighty. TNT is
-        // a heavy satchel, so it drops harder than a dynamite stick. Other projectiles travel
-        // ballistic for their lifetime so aim is direct.
-        if (Kind == ProjectileKind.Dynamite)
-            Velocity += planet.GravityAt(Position) * 240f * dt;
-        else if (Kind == ProjectileKind.Tnt && !_resting)
-            Velocity += planet.GravityAt(Position) * 380f * dt;
-        else if (Kind == ProjectileKind.TntPack && !_stuck)
-            Velocity += planet.GravityAt(Position) * 380f * dt;
-
-        // A settled TNT satchel / cemented pack just burns its fuse where it is.
-        if (_resting || _stuck)
+        // Thrown TIMED explosives (dynamite / dynamite pack / TNT) are fuse bombs, never
+        // contact bombs: they arc under gravity, thud off terrain with a damped bounce, and
+        // blow ONLY when the 3-second fuse burns out. The TNT pack instead cements to the
+        // first wall it touches and burns its fuse there.
+        var timed = Kind is ProjectileKind.Dynamite or ProjectileKind.DynamitePack
+                        or ProjectileKind.Tnt or ProjectileKind.TntPack;
+        if (timed)
         {
+            // Sticks drop lighter, satchels heavier — the throw weight reads in the arc.
+            var grav = Kind is ProjectileKind.Tnt or ProjectileKind.TntPack ? 380f : 260f;
+            if (!_stuck) Velocity += planet.GravityAt(Position) * grav * dt;
+
+            // The fuse always ticks, whether it's mid-air, bouncing, or cemented.
             Life -= dt;
-            if (Life <= 0)
+            if (Life <= 0f)
             {
                 Dead = true;
                 CarveCrater(planet, physics, cells, CraterTiles, particles);
+                return;
+            }
+            if (_stuck) return;
+
+            // Substepped move; on terrain contact bounce (or, for the pack, cement) — but
+            // keep counting down and never detonate on the hit itself.
+            var mv = Velocity * dt;
+            var st = Math.Max(1, (int)MathF.Ceiling(mv.Length() / (Planet.TileSize * 0.5f)));
+            var stp = mv / st;
+            for (var i = 0; i < st; i++)
+            {
+                if (planet.IsSolidAt(Position + stp))
+                {
+                    if (Kind == ProjectileKind.TntPack)
+                    {
+                        Velocity = Vector2.Zero;
+                        _stuck = true;
+                        return;
+                    }
+                    // Reflect off the local surface normal, bleeding energy so it tumbles
+                    // into ever-smaller hops and keeps bouncing until the fuse ends.
+                    var n = planet.UpAt(Position);
+                    var vn = Vector2.Dot(Velocity, n);
+                    var vt = Velocity - n * vn;
+                    Velocity = vt * 0.6f + n * MathF.Abs(vn) * 0.42f;
+                    _bounces++;
+                    break;   // don't push into the wall this frame
+                }
+                Position += stp;
             }
             return;
         }
