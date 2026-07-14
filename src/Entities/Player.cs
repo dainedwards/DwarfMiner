@@ -1030,7 +1030,7 @@ public sealed class Player
         }
         if (placedKind == TileKind.Beacon)
             BeaconWorld = planet.TileToWorld(stamp[0].x, stamp[0].y);
-        MineCooldown = 0.10f;
+        BuildCooldown = BlockPlaceCooldown;
         return placedKind;
     }
 
