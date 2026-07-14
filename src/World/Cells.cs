@@ -1048,6 +1048,22 @@ public sealed class Cells
             _travel[i] = 0f;
         }
 
+        // Splash: a hard landing sometimes flings the cell straight back out as a ballistic
+        // droplet — waterfalls fizz at the plunge pool, poured lava spits glowing beads.
+        // Needs open air above (a droplet can't jump inside a filled pool interior).
+        if (impact > SplashMinImpact && _rng.Next(3) == 0
+            && _flying.Count < MaxFlying && cy < Height - 1)
+        {
+            var (ucx, ucy) = OuterCell(cx, cy);
+            if (!IsBlocked(ucx, ucy))
+            {
+                var (up, tan) = AxesAt(cx, cy);
+                var v = up * (impact * PxPerCell * (0.35f + (float)_rng.NextDouble() * 0.3f))
+                      + tan * (((float)_rng.NextDouble() - 0.5f) * impact * PxPerCell * 0.8f);
+                if (LaunchCell(cx, cy, v)) return;
+            }
+        }
+
         // Supported: diagonal-down slip first, as before.
         if (cy > 0)
         {
