@@ -1181,6 +1181,15 @@ public sealed partial class DwarfMinerGame : Game
             p.HeadInWater = p.InWater
                 && _run.Cells.CountWaterNear(p.Position + pUp * (p.Radius + 1f), 2f) >= 2;
         }
+        // Shield guard: raised (halving damage) while a shield is the selected belt item.
+        _run.Player.GuardMul = _run.Player.Toolbelt.Current switch
+        {
+            "shield" => 0.55f,
+            "tower_shield" => 0.40f,
+            _ => 1f,
+        };
+        _meleeAnim = MathF.Max(0f, _meleeAnim - dt);
+
         _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, verticalAxis);
 
         // Jetpack exhaust: a tier-coloured jet stream from the worn pack's nozzles — red
