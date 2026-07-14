@@ -183,6 +183,10 @@ public static class Tiles
         TileKind.Rustbramble => 1,
         TileKind.Vitrilily => 1,
         TileKind.Geobloom => 1,
+        TileKind.Brick => 2,
+        TileKind.Plating => 4,
+        TileKind.GlassBlock => 1,
+        TileKind.Platform => 1,
         _ => 0,
     };
 
