@@ -3881,28 +3881,49 @@ public sealed partial class DwarfMinerGame : Game
         // eruption plumes in DrawTitleVista anchor there.
         void Volcano(int cx, int summitY, int baseY, int halfW, Color rock, Color dark)
         {
+            // A painted mountain, not a triangle: concave volcanic flanks (steep at the
+            // crater, flaring into a skirt), hash-wobbled edges, occasional shoulder
+            // ledges, a sun-side lit flank, and a faint warm crater rim. Colours arrive
+            // pre-hazed toward the horizon so the cone melts into the ridge stack.
+            var height = baseY - summitY;
+            var lit = Color.Lerp(rock, skyAtHorizon, 0.28f);
+            var rim = Color.Lerp(new Color(150, 84, 52), rock, 0.45f);
             for (var y = summitY; y < baseY; y++)
             {
-                var f = (y - summitY) / (float)(baseY - summitY);
-                var hw = Math.Max(2, (int)(halfW * f));
+                var f = (y - summitY) / (float)height;
+                var hwF = 2f + halfW * MathF.Pow(f, 1.5f);
+                var rowHash = (y * 668265263) >> 3;
+                hwF += ((rowHash & 3) - 1.5f) * 0.8f;                 // ragged edge wobble
+                if ((rowHash & 15) == 0) hwF += 2.2f;                 // a shoulder ledge
+                var hw = Math.Max(2, (int)hwF);
+                // The crater is a real bowl: a V-notch three rows deep.
+                var notch = y - summitY < 3 ? 2 + (y - summitY) : 0;
                 for (var x = cx - hw; x <= cx + hw; x++)
                 {
                     if (x < 0 || x >= w) continue;
-                    if (y < summitY + 2 && Math.Abs(x - cx) < 2) continue;   // crater notch
-                    var edge = Math.Abs(x - cx) > hw - 2;
-                    var hash = ((x * 73856093) ^ (y * 19349663)) & 7;
-                    px[y * w + x] = edge || hash == 0 ? dark : rock;
+                    if (notch > 0 && Math.Abs(x - cx) < notch - 1) continue;
+                    var hash = ((x * 73856093) ^ (y * 19349663)) & 15;
+                    Color c;
+                    if (notch > 0 && Math.Abs(x - cx) == notch - 1) c = rim;   // crater lip ember
+                    else if (Math.Abs(x - cx) > hw - 2) c = dark;              // silhouette edge
+                    else if (x < cx - hw / 3) c = hash < 3 ? rock : lit;       // sunset-lit west flank
+                    else c = hash == 0 ? dark : rock;
+                    px[y * w + x] = c;
                 }
             }
         }
-        Volcano(100, 158, 226, 30,
-            Color.Lerp(new Color(48, 34, 58), skyAtHorizon, 0.3f),
-            Color.Lerp(new Color(36, 26, 46), skyAtHorizon, 0.25f));
-        _titleVolcanoA = new Point(100, 158);
+        // Volcano A: modest cone on the left, hazed hard so it sits WITH the far ridges.
+        Volcano(100, 176, 226, 22,
+            Color.Lerp(new Color(48, 34, 58), skyAtHorizon, 0.45f),
+            Color.Lerp(new Color(36, 26, 46), skyAtHorizon, 0.38f));
+        _titleVolcanoA = new Point(100, 176);
         Ridge(238, 18, Color.Lerp(new Color(44, 30, 56), skyAtHorizon, 0.22f),
             Color.Lerp(new Color(56, 36, 58), skyAtHorizon, 0.3f), 7);
-        Volcano(146, 176, 252, 34, new Color(40, 28, 48), new Color(28, 20, 36));
-        _titleVolcanoB = new Point(146, 176);
+        // Volcano B: smaller still, off toward the RIGHT of the screen, one ridge nearer.
+        Volcano(505, 204, 252, 16,
+            Color.Lerp(new Color(40, 28, 48), skyAtHorizon, 0.32f),
+            Color.Lerp(new Color(28, 20, 36), skyAtHorizon, 0.26f));
+        _titleVolcanoB = new Point(505, 204);
         Ridge(262, 16, new Color(34, 24, 44), new Color(46, 30, 48), 6);
         Ridge(282, 12, new Color(20, 15, 26), new Color(30, 20, 32), 6);
 
