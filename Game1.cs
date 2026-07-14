@@ -3890,7 +3890,7 @@ public sealed partial class DwarfMinerGame : Game
         // cycle). Land is drawn after, so the set happens BEHIND the mountains.
         var setP = 0.5f + 0.5f * MathF.Sin(time * MathHelper.TwoPi / 150f - MathHelper.PiOver2);
         var sunY = MathHelper.Lerp(140f, 310f, setP);
-        var sunX = 208f + MathF.Sin(time * MathHelper.TwoPi / 150f) * 26f;
+        var sunX = 70f + MathF.Sin(time * MathHelper.TwoPi / 150f) * 22f;   // clear of the slot cards
         sb.Draw(_titleSunTex, new Rectangle((int)(sunX - 22) * 2, (int)(sunY - 22) * 2, 88, 88),
             Color.White);
         // Low sun floods the horizon warm.
