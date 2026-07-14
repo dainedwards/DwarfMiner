@@ -89,6 +89,40 @@ public sealed class Cells
     private const float SplashScale = 1f / 48f;
     /// <summary>Fall speed kept when a falling cell deflects diagonally off an obstacle.</summary>
     private const float ImpactDamping = 0.5f;
+    /// <summary>World px per cell edge — converts cell-sim speeds into world-space speeds.</summary>
+    private const float PxPerCell = (float)Planet.TileSize / Density;
+    /// <summary>Landing speed (cells/s) above which a liquid may bounce back out as a
+    /// ballistic droplet instead of spreading — the splash. Half of terminal, so gentle
+    /// pooling never fizzes but a waterfall's plunge pool always does.</summary>
+    private const float SplashMinImpact = TerminalCells * 0.5f;
+
+    // --- Flying cells: material mid-flight between grid sites (Noita's "particle" state).
+    // A grid cell can be launched with a full 2D world-space velocity — explosion ejecta,
+    // splash droplets, dig spray, quench sparks — and it arcs under planet gravity until it
+    // hits something, where it re-enters the grid via Place. Mass-conserving for launched
+    // cells (LaunchCell removes the grid cell first); fire embers are emitted freely because
+    // flame isn't matter. Transient like the kinetics arrays: dropped by WriteState.
+    private struct Flying
+    {
+        public Vector2 Pos;
+        public Vector2 Vel;
+        public byte Mat;
+        public byte Src;
+        public float Age;
+    }
+
+    private readonly List<Flying> _flying = new(512);
+    /// <summary>Hard cap so a cataclysm can't flood the list — launches past it are simply
+    /// skipped and the material stays grid-bound (still correct, just less showy).</summary>
+    private const int MaxFlying = 4000;
+    /// <summary>Same pull as the grid integrator (GravityCells, converted to world px/s²),
+    /// so an ejected grain falls exactly like a grid grain.</summary>
+    private const float FlyGravity = GravityCells * PxPerCell;
+    private const float FlyMaxSpeed = 520f;
+    /// <summary>Safety net: a cell that somehow never lands banks itself after this long.</summary>
+    private const float FlyMaxAge = 6f;
+    /// <summary>Flying cells currently airborne — diagnostics/perf only.</summary>
+    public int FlyingCellCount => _flying.Count;
     public readonly int Height;        // total cell rows = RingCount × Density
     public readonly Planet Planet;
 
