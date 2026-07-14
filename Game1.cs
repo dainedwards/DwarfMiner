@@ -1223,6 +1223,20 @@ public sealed partial class DwarfMinerGame : Game
                 pitch: MathHelper.Clamp(0.4f - _run.Player.ShootCooldown, -0.3f, 0.4f), minGap: 0.03f);
         }
 
+        // DM_AUTOFIRE=<belt id>: tooling hook — equips that weapon and holds fire along the
+        // local tangent every frame, so headless runs can screenshot firing effects
+        // (flame cones, lightning arcs, muzzle strobes) without input access. Pair with
+        // DM_GOD=1 so ownership/ammo gates don't block the shot.
+        if (Environment.GetEnvironmentVariable("DM_AUTOFIRE") is { Length: > 0 } autoFire)
+        {
+            _run.Player.Toolbelt.AutoEquip(autoFire);
+            for (var i = 0; i < Toolbelt.SlotCount; i++)
+                if (_run.Player.Toolbelt.Slots[i] == autoFire) { _run.Player.Toolbelt.Selected = i; break; }
+            var afUp = _run.Planet.UpAt(_run.Player.Position);
+            var afRight = new Vector2(-afUp.Y, afUp.X);
+            UseSelectedSlot(_run.Player.Position + afRight * 55f + afUp * 6f);
+        }
+
         // T recalls to the last placed Beacon — kept as a key because recall is a unique
         // verb that doesn't fit the "use selected slot" pattern (the beacon slot already
         // does *placement*; recall is a different action on the same data).
