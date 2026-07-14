@@ -3926,10 +3926,16 @@ public sealed partial class DwarfMinerGame : Game
             sb.Draw(_renderer.Pixel, new Rectangle(0, 440, VirtualWidth, 160),
                 new Color(255, 140, 70) * lowGlow);
 
-        // Rotating gas giant: each disc row samples a scrolling window of the cylinder
-        // map (period 320), so the bands and the storm drift across the face; the static
-        // shade overlay keeps the terminator and limb pinned to the light.
+        // Rotating gas giant, tilted 45°: each disc row samples a scrolling window of the
+        // cylinder map (period 320) — bands and storm drift across the face — and every
+        // row is drawn rotated about the planet's centre (origin trick), so the whole
+        // assembly leans without losing the row-scroll rotation. Its ring system splits
+        // around it: far half behind the disc, near half in front.
         const int pcx = 504, pcy = 84, pr = 54;
+        const float tilt = MathF.PI / 4f;
+        var planetCentre = new Vector2(pcx * 2, pcy * 2);
+        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 0, 170, 24), Color.White,
+            tilt, new Vector2(85f, 24f), 2f, SpriteEffects.None, 0f);
         var scroll = time * 5f;
         for (var row = 0; row < pr * 2; row++)
         {
@@ -3939,12 +3945,14 @@ public sealed partial class DwarfMinerGame : Game
             var half = MathF.Sqrt(halfSq);
             var rowW = Math.Max(1, (int)(half * 2f));
             var srcX = (int)(scroll % 320);
-            sb.Draw(_titlePlanetMap,
-                new Rectangle((int)(pcx - half) * 2, (pcy - pr + row) * 2, rowW * 2, 2),
-                new Rectangle(srcX, row, rowW, 1), Color.White);
+            sb.Draw(_titlePlanetMap, planetCentre,
+                new Rectangle(srcX, row, rowW, 1), Color.White,
+                tilt, new Vector2(rowW / 2f, pr - row), 2f, SpriteEffects.None, 0f);
         }
-        sb.Draw(_titlePlanetShade,
-            new Rectangle((pcx - pr) * 2, (pcy - pr) * 2, pr * 4, pr * 4), Color.White);
+        sb.Draw(_titlePlanetShade, planetCentre, null, Color.White,
+            tilt, new Vector2(54f, 54f), 2f, SpriteEffects.None, 0f);
+        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 24, 170, 24), Color.White,
+            tilt, new Vector2(85f, 0f), 2f, SpriteEffects.None, 0f);
 
         // Land over the sky/sun/planet.
         sb.Draw(_titleLandTex, new Rectangle(0, 0, VirtualWidth, VirtualHeight), Color.White);
