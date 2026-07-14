@@ -934,9 +934,10 @@ public sealed class Particles
     }
 
     /// <summary>Flamethrower tongue: a fat cone of white→orange→ember blobs riding the aim,
-    /// each shedding real light. Called every puff, so held fire reads as one continuous
-    /// roaring jet. (The burning FUEL is real Fire cells launched by Game1 — these are the
-    /// glow around it.)</summary>
+    /// each shedding real light, plus a hero-lit throat flicker so the hose cuts hard
+    /// shadows while it roars. Called every puff, so held fire reads as one continuous
+    /// jet. (The burning FUEL is real Fire cells launched by Game1 — these are the glow
+    /// around it.)</summary>
     public void EmitFlameJet(Vector2 pos, Vector2 dir)
     {
         for (var i = 0; i < 5; i++)
@@ -957,8 +958,54 @@ public sealed class Particles
                 Size = hot ? 2.2f : 3.2f,
                 GravityScale = -0.12f,   // heat rises
                 Drag = 2.8f,
-                LightRadius = hot ? 26f : 14f,
+                LightRadius = hot ? 70f : 36f,
                 LightColor = new Color(255, 170, 70),
+            });
+        }
+        // Hero flicker riding a third of the way down the tongue: the shadow-casting part
+        // of the fire, jittered per puff so the whole cave breathes with the hose.
+        _list.Add(new Particle
+        {
+            Position = pos + dir * (12f + (float)_rng.NextDouble() * 10f),
+            Velocity = dir * 80f,
+            Life = 0.07f,
+            MaxLife = 0.07f,
+            Color = Color.Transparent,   // pure light carrier
+            FadeColor = Color.Transparent,
+            Size = 0f,
+            Drag = 0f,
+            LightRadius = 40f + (float)_rng.NextDouble() * 16f,
+            LightColor = new Color(255, 170, 80),
+            HeroLight = true,
+        });
+        // The hose sheds the odd tumbling cinder that keeps burning where it lands.
+        if (_rng.Next(4) == 0) EmitCinders(pos + dir * 10f, dir * 120f, 1);
+    }
+
+    /// <summary>Lasting cinders: glowing embers that arc out, bounce, and keep shedding
+    /// warm light for a couple of seconds while they cool — the afterglow that makes fire
+    /// linger instead of strobing off the instant the flash dies. Shared by explosions,
+    /// the flamethrower, and anything else that burns.</summary>
+    public void EmitCinders(Vector2 pos, Vector2 baseVel, int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            var hot = _rng.Next(3) != 0;
+            _list.Add(new Particle
+            {
+                Position = pos + Jitter(3f),
+                Velocity = baseVel * (0.4f + (float)_rng.NextDouble() * 0.8f) + Jitter(60f),
+                Life = 1.3f + (float)_rng.NextDouble() * 1.4f,
+                MaxLife = 2.7f,
+                Color = hot ? new Color(255, 200, 90) : new Color(255, 140, 50),
+                FadeColor = new Color(90, 25, 10),   // cools to a dull coal
+                Size = 1.3f,
+                GravityScale = 0.55f,
+                Drag = 0.9f,
+                CollideTiles = true,
+                // AddLights scales by remaining life, so the ember's glow dims as it cools.
+                LightRadius = 55f,
+                LightColor = new Color(255, 160, 70),
             });
         }
     }
