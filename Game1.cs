@@ -358,6 +358,62 @@ public sealed partial class DwarfMinerGame : Game
         _camera?.SnapTo(_space.ShipPos, 0f);
     }
 
+    /// <summary>Title-screen input: pick a slot (arrows / 1-3), Enter commits (new game on
+    /// an empty slot, continue otherwise). Esc here quits — the title IS the quit screen.</summary>
+    private void UpdateTitle(KeyboardState keys)
+    {
+        if (Pressed(keys, _prevKeys, Keys.Escape)) Exit();
+        if (Pressed(keys, _prevKeys, Keys.Up) || Pressed(keys, _prevKeys, Keys.W))
+            _titleCursor = (_titleCursor - 1 + SaveSlots.Count) % SaveSlots.Count;
+        if (Pressed(keys, _prevKeys, Keys.Down) || Pressed(keys, _prevKeys, Keys.S))
+            _titleCursor = (_titleCursor + 1) % SaveSlots.Count;
+        if (Pressed(keys, _prevKeys, Keys.D1)) _titleCursor = 0;
+        if (Pressed(keys, _prevKeys, Keys.D2)) _titleCursor = 1;
+        if (Pressed(keys, _prevKeys, Keys.D3)) _titleCursor = 2;
+        if (Pressed(keys, _prevKeys, Keys.Enter))
+        {
+            _sfx.Play("ui", 0.7f);
+            SelectSlot(_titleCursor + 1);
+        }
+    }
+
+    /// <summary>Pause-menu input: resume / return to the title (saving first) / quit.</summary>
+    private void UpdatePauseMenu(KeyboardState keys)
+    {
+        if (Pressed(keys, _prevKeys, Keys.Escape)) { _pauseOpen = false; return; }
+        if (Pressed(keys, _prevKeys, Keys.Up) || Pressed(keys, _prevKeys, Keys.W))
+            _pauseCursor = (_pauseCursor + 2) % 3;
+        if (Pressed(keys, _prevKeys, Keys.Down) || Pressed(keys, _prevKeys, Keys.S))
+            _pauseCursor = (_pauseCursor + 1) % 3;
+        if (!Pressed(keys, _prevKeys, Keys.Enter)) return;
+        _sfx.Play("ui", 0.7f);
+        switch (_pauseCursor)
+        {
+            case 0:
+                _pauseOpen = false;
+                break;
+            case 1:
+                SaveAndReturnToTitle();
+                break;
+            default:
+                Exit();   // the Exiting handler suspend-saves on the way out
+                break;
+        }
+    }
+
+    /// <summary>Bank everything and go back to the title's slot menu — same saves the quit
+    /// path writes, so switching profiles never loses progress.</summary>
+    private void SaveAndReturnToTitle()
+    {
+        if (_screen == GameScreen.Playing && !_orbiting && _run is not null) RunSave.Write(_run);
+        if (_screen == GameScreen.Space) CaptureShipState();
+        _meta?.Save();
+        _pauseOpen = false;
+        _entryDef = null;
+        RefreshSlotSummaries();
+        _screen = GameScreen.Title;
+    }
+
     /// <summary>Apply the display mode: borderless fullscreen at the desktop resolution, or
     /// a plain window back at the virtual size. The scene itself always renders at 1280×720
     /// and scales, so no other system notices the change.</summary>
