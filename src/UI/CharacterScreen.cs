@@ -52,7 +52,7 @@ public sealed class CharacterScreen
 
     /// <summary>Label order matches the EquipSlot enum.</summary>
     private static readonly string[] SlotLabels =
-        { "TORCH", "HEAD", "CHEST", "LEGS", "FEET", "WEAPON 1", "WEAPON 2", "TOOL", "GLOVES", "ACC 1", "ACC 2" };
+        { "TORCH", "HEAD", "CHEST", "LEGS", "FEET", "WEAPON 1", "WEAPON 2", "TOOL", "GLOVES", "ACC 1", "ACC 2", "BACK" };
 
     /// <summary>Representative item drawn as a dim ghost in each empty slot, Terraria-style,
     /// so the slot's role reads at a glance.</summary>
