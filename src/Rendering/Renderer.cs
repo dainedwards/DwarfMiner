@@ -53,6 +53,10 @@ public sealed class Renderer
     /// renderer to drive sub-tile animation (waving grass, hanging vines).</summary>
     public float Time { get; set; }
 
+    /// <summary>Where the lighting passes rebind after their own RT work — the virtual
+    /// scene target the whole frame renders into. See Lighting.SceneTarget.</summary>
+    public RenderTarget2D? SceneTarget { set => _lighting.SceneTarget = value; }
+
     public void BeginLighting(Camera cam, Color ambient) => _lighting.Begin(cam, ambient);
     public void AddLight(Vector2 worldPos, float radius, Color color) => _lighting.AddPoint(worldPos, radius, color);
     public void EndLighting() => _lighting.End();
