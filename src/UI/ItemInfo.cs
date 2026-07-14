@@ -58,7 +58,7 @@ public static class ItemInfo
             return ItemCategory.Tools;
 
         // Building: everything placeable, plus the base/ship construction chain.
-        if (id is "blocks" or "ladder" or "rail" or "support" or "reinforced_support"
+        if (id is "blocks" or "ladder" or "door" or "rail" or "support" or "reinforced_support"
             or "glowshroom" or "beacon" or "storage_depot" or "launch_pad"
             or "ship_hull" or "ship_engine" or "ship_nav")
             return ItemCategory.Building;
