@@ -433,6 +433,10 @@ public sealed class Particles
             case ProjectileKind.Dynamite:
                 EmitExplosion(pos, strength: 20f, sparkCount: 26, smokeCount: 18, sparkColor: new Color(255, 170, 60));
                 break;
+            case ProjectileKind.DynamitePack:
+                EmitExplosion(pos, strength: 34f, sparkCount: 44, smokeCount: 30, sparkColor: new Color(255, 165, 55));
+                EmitEmbers(pos, count: 16);
+                break;
             case ProjectileKind.Laser:
             case ProjectileKind.LaserCannon:
                 // Energy scorch — a hot flash of ionised flecks in the beam's colour.
