@@ -266,6 +266,11 @@ public sealed class Player
         var jumpEdge = jumpHeld && !_jumpHeldPrev;
         _jumpHeldPrev = jumpHeld;
 
+        // A build under construction survives only while placement attempts keep arriving
+        // (TryPlace/TryPlaceBuildId set the flag every held frame) — letting go abandons it.
+        if (!_buildHeld) { BuildProgress = 0f; _buildSite = null; }
+        _buildHeld = false;
+
         // Snapshot grounded state for the walk-off-an-edge check at the end of Update (it
         // seeds the fall so leaving a ledge drops immediately instead of hovering).
         var wasGrounded = Grounded;
