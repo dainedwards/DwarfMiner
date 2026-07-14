@@ -225,8 +225,10 @@ public static class Crafting
             new Dictionary<string, int> { ["meat"] = 4, ["coal"] = 1 }),
         new("dynamite", "Dynamite (press Z to throw)",
             new Dictionary<string, int> { ["coal"] = 3, ["gravel"] = 4 }),
-        new("tnt", "TNT satchel — short toss, huge blast",
+        new("tnt", "TNT satchel — bounces, then the fuse blows",
             new Dictionary<string, int> { ["coal"] = 6, ["gravel"] = 6, ["iron"] = 2 }),
+        new("tnt_pack", "TNT pack — sticks to walls, same fuse",
+            new Dictionary<string, int> { ["coal"] = 6, ["gravel"] = 4, ["iron"] = 2, ["hide"] = 1 }),
 
         // ─── Late-game ────────────────────────────────────────────────────────
         new("nuke", "Titan-killing nuke",
