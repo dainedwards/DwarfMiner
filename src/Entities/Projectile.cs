@@ -350,7 +350,30 @@ public sealed class Projectile
                 }
                 planet.Set(r, t, TileKind.Sky);
                 // Outer ~45% of the radius crumbles to dust; inside that, vaporised.
-                if (dust && distSq > maxDistSq * 0.3f) cells.SpawnDustInTile(r, t, k);
+                if (dust && distSq > maxDistSq * 0.3f)
+                {
+                    cells.SpawnDustInTile(r, t, k);
+                    // Blast ejecta: some of that fresh dust doesn't just crumble — it's
+                    // *thrown*, arcing out of the crater and raining back as real material.
+                    // Inner debris flies hardest; the rim mostly slumps.
+                    if (ejectaBudget > 0)
+                    {
+                        var outward = world - Position;
+                        if (outward.LengthSquared() > 0.01f)
+                        {
+                            var frac = MathF.Sqrt(distSq / maxDistSq);
+                            ejectaBudget -= cells.EjectFromTile(r, t,
+                                Vector2.Normalize(outward), 260f - 160f * frac, 3);
+                        }
+                    }
+                }
+                else if (dust && Random.Shared.Next(2) == 0)
+                {
+                    // Vaporised core: seed a few flame cells in the flash — they torch any
+                    // gas pocket or oil sump the blast just breached, then gutter out on
+                    // bare rock in a fraction of a second.
+                    cells.SpawnInTile(r, t, Material.Fire, 2);
+                }
                 physics.MarkDirty(r, t);
                 if (particles is not null && chipBudget > 0)
                 {
