@@ -100,7 +100,10 @@ public static class Tiles
           // Open doors are doorways; furniture is stepped over/through (but still mineable
           // and smashable because it stays "solid" to everything but the walk check).
           or TileKind.DoorOpen
-          or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp;
+          or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp
+          // Surface flora is walked through, like tall grass.
+          or TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
+          or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom;
 
     /// <summary>Tiles that should block-place but allow the player's collision body to pass —
     /// equivalent to "non-solid" for player physics, while staying solid for rendering and
