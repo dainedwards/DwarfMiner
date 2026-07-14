@@ -718,7 +718,7 @@ public sealed class Player
             planet.Set(fx, fy, placed);
             physics.MarkDirty(fx, fy);
         }
-        MineCooldown = 0.14f;   // painting rhythm while LMB is held
+        BuildCooldown = BlockPlaceCooldown;   // deliberate painting rhythm — no frame spam
         return placed;
     }
 
