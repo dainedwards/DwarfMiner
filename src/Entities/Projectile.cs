@@ -307,31 +307,6 @@ public sealed class Projectile
             Position += step;
             if (planet.IsSolidAt(Position))
             {
-                // TNT is a TIMER bomb, not a contact bomb: it thuds off terrain with a dead
-                // bounce — a few hops, then it sits and burns its fuse down. The pack
-                // variant cements to the wall it touches instead and burns there.
-                if (Kind == ProjectileKind.Tnt)
-                {
-                    Position -= step;
-                    var n = planet.UpAt(Position);
-                    var vn = Vector2.Dot(Velocity, n);
-                    var vt = Velocity - n * vn;
-                    Velocity = vt * 0.5f + (vn < 0f ? n * (-vn * 0.42f) : Vector2.Zero);
-                    _bounces++;
-                    if (_bounces >= 4 || Velocity.LengthSquared() < 400f)
-                    {
-                        Velocity = Vector2.Zero;
-                        _resting = true;
-                    }
-                    return;
-                }
-                if (Kind == ProjectileKind.TntPack)
-                {
-                    Position -= step;   // sit at the contact face, not inside the rock
-                    Velocity = Vector2.Zero;
-                    _stuck = true;
-                    return;
-                }
                 if (!_inWall)
                 {
                     // Out of pierce charges → die at the face of this wall, crater and all.
