@@ -73,7 +73,7 @@ public sealed class LightGrid
 
     public Vector2 Origin => _origin;
     public float CellSize => _cell;
-    public Texture2D? Texture => _tex;
+    public Texture2D? Texture => _tex[_front];
 
     /// <summary>Rebuild the grid for this frame: size/position from the camera, occlusion
     /// and sunlight from the planet. Light seeds come afterwards via Seed().</summary>
