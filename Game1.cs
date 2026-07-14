@@ -2699,6 +2699,7 @@ public sealed partial class DwarfMinerGame : Game
                         _run.Cells.SpawnDustInTile(mx, my, cut);
                         _run.Physics.MarkDirty(mx, my);
                         if (chips-- > 0) _particles.EmitChips(_run.Planet.TileToWorld(mx, my), cut);
+                        if (cut is TileKind.AlienAlloy or TileKind.CityGlass) AddCityWrath(2.5f);
                     }
                     break; // first solid tile along the ray — hit or bounce, the swing stops here
                 }
