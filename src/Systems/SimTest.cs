@@ -2463,8 +2463,8 @@ public static class SimTest
         tiers.JetTier3 = true;
         var cap3 = tiers.JetChargeCap;
         tiers.JetTier4 = true;
-        Check("tiers: jetpack burn 1/2/3/5",
-            MathF.Abs(cap1 - 1f) < 0.01f && MathF.Abs(cap2 - 2f) < 0.01f
+        Check("tiers: jetpack burn 0.75/2/3/5",
+            MathF.Abs(cap1 - 0.75f) < 0.01f && MathF.Abs(cap2 - 2f) < 0.01f
             && MathF.Abs(cap3 - 3f) < 0.01f && MathF.Abs(tiers.JetChargeCap - 5f) < 0.01f);
         Check("tiers: pickup reach stays touch-range (no magnet)", tiers.PickupReach == 4f);
         tiers.HasO2Recycler = true;
