@@ -2630,7 +2630,7 @@ public sealed partial class DwarfMinerGame : Game
                     _run.Planet.Set(nx, ny, to);
                 }
             }
-            PlayAt("place", at, 0.5f, pitch: to == TileKind.DoorOpen ? 0.3f : -0.2f);
+            PlayAt("creak", at, 0.5f, pitch: to == TileKind.DoorOpen ? 0.3f : -0.2f);
             return true;
         }
 
