@@ -243,11 +243,21 @@ public sealed partial class DwarfMinerGame : Game
         _space = new SpaceSim();
         RestoreShipState();
         _sfx.Master = VolumeSteps[Math.Clamp(_meta.VolumeStep, 0, VolumeSteps.Length - 1)];
+        // The saved display mode (F11) applies before the first frame.
+        if (_meta.Fullscreen) SetFullscreen(true);
         // Warm the survey-world cache in the background so the system view can rasterize
         // real terrain discs (and the M survey opens instantly) without a frame hitch.
-        System.Threading.Tasks.Task.Run(() =>
+        // The load screen holds on this task: generating a full world per planet used to
+        // run underneath the space screen and stutter the first seconds of play.
+        _warmTotal = PlanetDefs.All.Length;
+        _warmTask = System.Threading.Tasks.Task.Run(() =>
         {
-            foreach (var def in PlanetDefs.All) Space.Survey.WorldFor(def);
+            foreach (var def in PlanetDefs.All)
+            {
+                _warmName = def.Name;
+                Space.Survey.WorldFor(def);
+                System.Threading.Interlocked.Increment(ref _warmDone);
+            }
         });
         // DM_AUTOSTART=<planet-id|resume> skips the space screen and jumps straight into a run
         // (or resumes the suspend save) — keeps DM_AUTOSHOT-driven gameplay verification
