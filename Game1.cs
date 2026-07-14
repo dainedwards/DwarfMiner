@@ -1675,7 +1675,8 @@ public sealed partial class DwarfMinerGame : Game
             if (c.Resident
                 && (c.Position - _run.Player.Position).LengthSquared() > 900f * 900f)
                 continue;
-            c.TakeCover = cityCover && c.Kind is CreatureKind.Civilian or CreatureKind.Peacekeeper;
+            c.TakeCover = (cityCover || cityWrathful)
+                && c.Kind is CreatureKind.Civilian or CreatureKind.Peacekeeper;
             c.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player, _run.TitanShots);
             if (c.Health <= 0)
             {
