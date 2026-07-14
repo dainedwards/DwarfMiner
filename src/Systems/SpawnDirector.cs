@@ -184,7 +184,7 @@ public static class SpawnDirector
     private static bool HazardRejectsSpawn(Session run, Vector2 pos, Creature c)
     {
         var probe = c.Radius + 2f;
-        var (lava, acid, _) = run.Cells.SampleHazardsNear(pos, probe);
+        var (lava, acid, _, _) = run.Cells.SampleHazardsNear(pos, probe);
         if (lava > 0 && !c.ImmuneTo(Material.Lava)) return true;
         if (acid > 0 && !c.ImmuneTo(Material.Acid)) return true;
         if (!c.ImmuneTo(Material.Water) && run.Cells.CountWaterNear(pos, probe) > 0) return true;
