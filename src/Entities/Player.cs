@@ -1058,7 +1058,7 @@ public enum EquipSlot
 /// </summary>
 public sealed class Equipment
 {
-    public const int SlotCount = 8;
+    public const int SlotCount = 11;
     public readonly string?[] Slots = new string?[SlotCount];
 
     public string? Get(EquipSlot s) => Slots[(int)s];
@@ -1072,9 +1072,29 @@ public sealed class Equipment
         EquipSlot.Chest      => id is "armor" or "chitin_armor",
         EquipSlot.Legs       => id is "iron_leggings" or "chitin_leggings",
         EquipSlot.Feet       => id is "iron_boots" or "chitin_boots",
+        EquipSlot.Gloves     => id is "leather_gloves" or "iron_gauntlets",
         EquipSlot.Weapon1 or EquipSlot.Weapon2 => IsWeapon(id),
         EquipSlot.MiningTool => id is "pickaxe" or "drill" or "hammer" or "mining_laser",
+        EquipSlot.Accessory1 or EquipSlot.Accessory2 => IsAccessory(id),
         _ => false,
+    };
+
+    /// <summary>Trinkets the two accessory slots accept — each carries a passive effect
+    /// wired into the Player getters (regen tick, magnet pull, +1 mining power, −10% damage).</summary>
+    public static bool IsAccessory(string id) => id is
+        "band_regen" or "magnet_ring" or "miners_charm" or "aegis_pendant";
+
+    /// <summary>True while the id sits in either accessory slot.</summary>
+    public bool HasAccessory(string id) =>
+        Get(EquipSlot.Accessory1) == id || Get(EquipSlot.Accessory2) == id;
+
+    /// <summary>Mining-cooldown multiplier from worn gloves — leather 15% faster swings,
+    /// iron gauntlets 30%.</summary>
+    public float MineSpeedMul => Get(EquipSlot.Gloves) switch
+    {
+        "leather_gloves" => 0.85f,
+        "iron_gauntlets" => 0.70f,
+        _ => 1f,
     };
 
     /// <summary>Firearms the weapon slots accept. Throwables/ammo stay toolbelt-only — the
