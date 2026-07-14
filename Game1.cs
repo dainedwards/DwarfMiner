@@ -3152,16 +3152,20 @@ public sealed partial class DwarfMinerGame : Game
         var airless = _run.Def.Airless;
         if (!airless)
         {
+            // Refill everywhere — but keep the suffocation check below live, so a gas
+            // pocket (whose choke drain outpaces this refill) still drowns the tank.
             p.Oxygen = MathF.Min(max, p.Oxygen + OxygenRules.RefillRate * dt);
-            return;
         }
-        var depth = DepthBelowSurface();
-        if (OxygenRules.AtSurfaceAir(depth, airless))
-            p.Oxygen = MathF.Min(max, p.Oxygen
-                + OxygenRules.RefillRate * OxygenRules.AirlessRefillFrac * dt);
         else
-            p.Oxygen = MathF.Max(0f, p.Oxygen
-                - OxygenRules.DrainPerSecond(depth, _run.Def.OxygenDrainScale, airless) * dt);
+        {
+            var depth = DepthBelowSurface();
+            if (OxygenRules.AtSurfaceAir(depth, airless))
+                p.Oxygen = MathF.Min(max, p.Oxygen
+                    + OxygenRules.RefillRate * OxygenRules.AirlessRefillFrac * dt);
+            else
+                p.Oxygen = MathF.Max(0f, p.Oxygen
+                    - OxygenRules.DrainPerSecond(depth, _run.Def.OxygenDrainScale, airless) * dt);
+        }
 
         if (p.Oxygen <= 0f)
         {
