@@ -803,35 +803,32 @@ public static class SimTest
         var cells = new Cells(planet);
         const float dt = 1f / 60f;
 
-        // Hand-carved pockets need every ring they span to share one tile count — across a
-        // band-halving boundary a constant tile index skews in angle and the "walls" leak.
-        int AlignedRing(int start, int span)
-        {
-            var r = start;
-            while (planet.TilesAt(r - 1) != planet.TilesAt(r + span)) r++;
-            return r;
-        }
+        // Tile counts vary per ring (chord ≈ TileSize), so a constant tile index skews in
+        // angle as rings stack and hand-carved "walls" leak. Pockets are carved by ANGLE:
+        // Ti recomputes the column's tile index on every ring, keeping walls truly radial.
+        int Ti(int r, float angFrac, int da) => (int)(angFrac * planet.TilesAt(r)) + da;
 
         // --- Flying cells: ejected sand arcs out and every grain lands back in the grid ---
         {
-            int r = AlignedRing(110, 4), t = 40;
+            const int r = 110;
+            const float af = 0.11f;
             // Sealed box: solid floor, 3 tiles of headroom, walls both sides.
             for (var dr = -1; dr <= 3; dr++)
                 for (var da = -2; da <= 2; da++)
-                    planet.Set(r + dr, t + da,
+                    planet.Set(r + dr, Ti(r + dr, af, da),
                         dr is -1 or 3 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
-            cells.FillTile(r, t, Material.Sand);
+            cells.FillTile(r, Ti(r, af, 0), Material.Sand);
             int CountSand()
             {
                 var n = 0;
                 for (var dr = 0; dr < 3; dr++)
                     for (var da = -1; da <= 1; da++)
-                        n += CountMatInTile(cells, r + dr, t + da, Material.Sand);
+                        n += CountMatInTile(cells, r + dr, Ti(r + dr, af, da), Material.Sand);
                 return n;
             }
             var before = CountSand();
-            var up = Vector2.Normalize(planet.TileToWorld(r + 1, t) - planet.Center);
-            var launched = cells.EjectFromTile(r, t, up, 60f, 8);
+            var up = Vector2.Normalize(planet.TileToWorld(r + 1, Ti(r + 1, af, 0)) - planet.Center);
+            var launched = cells.EjectFromTile(r, Ti(r, af, 0), up, 60f, 8);
             Check($"flying: EjectFromTile launches grains ({launched})", launched > 0);
             for (var i = 0; i < 240; i++) cells.Update(dt);
             Check($"flying: ejected sand is conserved back into the grid " +
@@ -841,41 +838,43 @@ public static class SimTest
 
         // --- Buoyancy: water poured over oil sinks through it; the oil ends up on top ---
         {
-            int r = AlignedRing(130, 3), t = 60;
+            const int r = 130;
+            const float af = 0.27f;
             for (var dr = -1; dr <= 2; dr++)
                 for (var da = -2; da <= 2; da++)
-                    planet.Set(r + dr, t + da,
+                    planet.Set(r + dr, Ti(r + dr, af, da),
                         dr is -1 or 2 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
-            cells.FillTile(r, t, Material.Oil);        // oil at the bottom (unstable)
-            cells.FillTile(r + 1, t, Material.Water);  // water on top
+            cells.FillTile(r, Ti(r, af, 0), Material.Oil);        // oil at the bottom (unstable)
+            cells.FillTile(r + 1, Ti(r + 1, af, 0), Material.Water);  // water on top
             for (var i = 0; i < 600; i++) cells.Update(dt);
-            var waterBelow = CountMatInTile(cells, r, t, Material.Water);
-            var oilAbove = CountMatInTile(cells, r + 1, t, Material.Oil);
+            var waterBelow = CountMatInTile(cells, r, Ti(r, af, 0), Material.Water);
+            var oilAbove = CountMatInTile(cells, r + 1, Ti(r + 1, af, 0), Material.Oil);
             Check($"oil: water sinks through it and it floats up ({waterBelow} water below, {oilAbove} oil above)",
                 waterBelow > 12 && oilAbove > 12);
         }
 
         // --- Fire: a flame dropped on an oil pool burns it away, then dies out itself ---
         {
-            int r = AlignedRing(150, 4), t = 100;
+            const int r = 150;
+            const float af = 0.44f;
             // Sealed single-column pocket so the pool can't spread away from the flames:
             // a full tile of oil with two tiles of air above it, roofed.
             for (var dr = -1; dr <= 3; dr++)
                 for (var da = -2; da <= 2; da++)
-                    planet.Set(r + dr, t + da,
+                    planet.Set(r + dr, Ti(r + dr, af, da),
                         dr is -1 or 3 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
-            cells.FillTile(r, t, Material.Oil);
+            cells.FillTile(r, Ti(r, af, 0), Material.Oil);
             int CountColumn(Material m)
             {
                 var n = 0;
                 for (var dr = 0; dr < 3; dr++)
-                    n += CountMatInTile(cells, r + dr, t, m);
+                    n += CountMatInTile(cells, r + dr, Ti(r + dr, af, 0), m);
                 return n;
             }
             var before = CountColumn(Material.Oil);
             // Flames along the row directly above the full oil tile.
             for (var dx = 0; dx < Cells.Density; dx++)
-                cells.Place(t * Cells.Density + dx, (r + 1) * Cells.Density, Material.Fire);
+                cells.Place(Ti(r + 1, af, 0) * Cells.Density + dx, (r + 1) * Cells.Density, Material.Fire);
             for (var i = 0; i < 1800; i++) cells.Update(dt);
             var after = CountColumn(Material.Oil);
             Check($"fire: an oil pool burns away under open flame ({before} → {after})",
@@ -886,17 +885,18 @@ public static class SimTest
 
         // --- Splash: a waterfall droplet actually leaves the grid mid-fall ---
         {
-            int r = AlignedRing(170, 10), t = 140;
+            const int r = 170;
+            const float af = 0.62f;
             // Tall open shaft with a solid floor: drop water from the top, watch for a
             // ballistic droplet at any point after the first landing.
             for (var dr = -1; dr <= 9; dr++)
                 for (var da = -2; da <= 2; da++)
-                    planet.Set(r + dr, t + da,
+                    planet.Set(r + dr, Ti(r + dr, af, da),
                         dr is -1 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
             var sawDroplet = false;
             for (var i = 0; i < 600; i++)
             {
-                if (i % 30 == 0) cells.FillTile(r + 8, t, Material.Water);
+                if (i % 30 == 0) cells.FillTile(r + 8, Ti(r + 8, af, 0), Material.Water);
                 cells.Update(dt);
                 if (cells.FlyingCellCount > 0) sawDroplet = true;
             }
