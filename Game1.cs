@@ -1050,13 +1050,28 @@ public sealed partial class DwarfMinerGame : Game
         _totalTime += dt;
         _transitionFlash = MathF.Max(0f, _transitionFlash - dt * 1.6f);
 
-        // Esc quits — except while the crafting menu is open, where the menu's own handler
-        // consumes the same press edge to close itself (previously Esc quit the whole game
-        // out from under the menu). Edge-triggered so the close-press doesn't also quit.
+        // Esc never quits the game directly any more: open menus consume their own Esc
+        // edge to close (crafting, character screen, loadout, foundry, survey, debug);
+        // with nothing open, Esc toggles the PAUSE menu — quitting lives there.
+        var pauseToggled = false;
         if (Pressed(keys, _prevKeys, Keys.Escape)
-            && !(_screen == GameScreen.Playing && (_craftingMenu.Open || _debugMenu.Open || _loadoutOpen))
+            && _screen is GameScreen.Playing or GameScreen.Space or GameScreen.GameOver
+            && !(_screen == GameScreen.Playing
+                 && (_craftingMenu.Open || _debugMenu.Open || _loadoutOpen || _charScreen.Open))
             && !(_screen == GameScreen.Space && (_upgradesOpen || _surveyOpen || _debugMenu.Open)))
-            Exit();
+        {
+            _pauseOpen = !_pauseOpen;
+            _pauseCursor = 0;
+            pauseToggled = true;
+        }
+        if (_pauseOpen)
+        {
+            // True pause: nothing below runs — the whole sim freezes under the overlay.
+            if (!pauseToggled) UpdatePauseMenu(keys);
+            _prevKeys = keys; _prevMouse = mouse;
+            base.Update(gameTime);
+            return;
+        }
 
         // F12 → defer one-shot screenshot until end of next Draw, where the backbuffer
         // holds the fully composited frame (post lighting/bloom/vignette).
