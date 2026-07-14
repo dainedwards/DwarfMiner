@@ -72,10 +72,19 @@ public sealed class Renderer
     public void RenderLightGrid(Camera cam)
     {
         if (Grid is null) return;
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         Grid.Propagate();
+        var tProp = sw.Elapsed.TotalMilliseconds;
         Grid.Upload(_gd);
+        var tUp = sw.Elapsed.TotalMilliseconds - tProp;
         _lighting.RenderGrid(cam, Grid);
+        var tRas = sw.Elapsed.TotalMilliseconds - tUp - tProp;
+        if (Environment.GetEnvironmentVariable("DM_LIGHTPERF") is { Length: > 0 } && ++_lightPerfN % 60 == 0)
+            Console.WriteLine($"[lightperf] begin {LightGridBeginMs:0.00} prop {tProp:0.00} upload {tUp:0.00} raster {tRas:0.00}");
     }
+    private int _lightPerfN;
+    /// <summary>Set by Game1 around LightGrid.Begin — DM_LIGHTPERF diagnostic only.</summary>
+    public double LightGridBeginMs;
 
     public void CompositeLighting(Point screenSize) => _lighting.Composite(_sb, screenSize);
     public void BloomLighting(Point screenSize, Color tint) => _lighting.Bloom(_sb, screenSize, tint);
