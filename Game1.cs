@@ -3008,7 +3008,12 @@ public sealed partial class DwarfMinerGame : Game
         new("Disaster — eruption",      () => TriggerDebugDisaster(DisasterKind.Eruption)),
         new("Disaster — earthquake",    () => TriggerDebugDisaster(DisasterKind.Earthquake)),
         new("Meteor strike (ambient)",  () => AmbientDirector.SpawnMeteor(_run)),
+        new("Toggle fullbright (light up the underground)", () => _fullbright = !_fullbright),
     };
+
+    /// <summary>Debug: render with no lighting pass at all — the whole underground reads
+    /// as fully lit. Toggled from the debug menu.</summary>
+    private bool _fullbright;
 
     /// <summary>Feedback for AmbientDirector results — toasts, shake, and sound for whatever
     /// began this tick. Shared by the normal update and the debug-menu disaster trigger.</summary>
