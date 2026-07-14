@@ -4811,34 +4811,48 @@ public sealed partial class DwarfMinerGame : Game
                 Color.Lerp(col, Color.White, 0.18f), crot);
         }
 
-        // Gem pickups — sit upright along the local surface normal (no spin), with a periodic
-        // white glint so a dropped gem catches the eye across a dark cave. Crystals read as a
-        // hexagonal prism (long body with tapered caps); gems as a teardrop (round belly
-        // narrowing to a point above).
+        // Gem pickups — sit upright along the local surface normal (no spin). A loose gem
+        // reads as its own material (body colour + a brighter inner facet), cut with a
+        // faceted silhouette, and carries a slight travelling shine highlight so a freshly
+        // mined stone gleams. Crystals cut as a DIAMOND rhombus; the true gems as a jewel.
         foreach (var g in _run.Pickups)
         {
             var gup = _run.Planet.UpAt(g.Position);
+            var gright = new Vector2(-gup.Y, gup.X);
             var grot = MathF.Atan2(gup.X, -gup.Y);
             var body = Tiles.BaseColor(g.Kind);
-            var core = Tiles.OreSpeckle(g.Kind);
+            var facet = Tiles.OreSpeckle(g.Kind);
+            // Dark rim slightly larger than the body, so the cut edges read.
+            var edge = new Color(body.R / 2, body.G / 2, body.B / 2);
             if (g.Kind == TileKind.Crystal)
             {
-                // Hexagonal prism: rectangular column plus narrower caps past each end.
-                _renderer.DrawRect(g.Position, new Vector2(3.0f, 4.2f), body, grot);
-                _renderer.DrawRect(g.Position + gup * 2.6f, new Vector2(1.6f, 1.4f), body, grot);
-                _renderer.DrawRect(g.Position - gup * 2.6f, new Vector2(1.6f, 1.4f), body, grot);
-                _renderer.DrawRect(g.Position, new Vector2(1.4f, 2.6f), core, grot);
+                // Diamond rhombus: a tall four-point kite (two stacked triangles), point up
+                // and down, with a bright central facet — sharper and gemmier than the old
+                // stubby prism.
+                _renderer.DrawRect(g.Position, new Vector2(3.6f, 3.6f), edge, grot + MathF.PI / 4f);
+                _renderer.DrawRect(g.Position, new Vector2(2.6f, 2.6f), body, grot + MathF.PI / 4f);
+                _renderer.DrawRect(g.Position + gup * 3.0f, new Vector2(1.1f, 1.6f), body, grot);
+                _renderer.DrawRect(g.Position - gup * 3.0f, new Vector2(1.1f, 1.6f), body, grot);
+                _renderer.DrawRect(g.Position, new Vector2(1.3f, 1.3f), facet, grot + MathF.PI / 4f);
             }
             else
             {
-                // Teardrop: round belly with a taper narrowing to a point above it.
-                _renderer.DrawCircle(g.Position, 2.0f, body);
-                _renderer.DrawRect(g.Position + gup * 1.8f, new Vector2(2.2f, 1.6f), body, grot);
-                _renderer.DrawRect(g.Position + gup * 3.0f, new Vector2(1.0f, 1.4f), body, grot);
-                _renderer.DrawCircle(g.Position, 1.0f, core);
+                // Cut jewel: a faceted diamond body with a crown facet up top and a bright
+                // table in the middle — the loose stone's own colour, not a generic blob.
+                _renderer.DrawRect(g.Position, new Vector2(3.2f, 3.2f), edge, grot + MathF.PI / 4f);
+                _renderer.DrawRect(g.Position, new Vector2(2.4f, 2.4f), body, grot + MathF.PI / 4f);
+                _renderer.DrawRect(g.Position + gup * 1.9f, new Vector2(3.0f, 1.2f), body, grot);
+                _renderer.DrawRect(g.Position + gup * 2.6f, new Vector2(1.6f, 1.0f), edge, grot);
+                _renderer.DrawRect(g.Position - gup * 0.2f, new Vector2(1.3f, 1.3f), facet, grot + MathF.PI / 4f);
             }
-            if (((int)(g.Age * 2.5f) & 3) == 0)
-                _renderer.DrawRect(g.Position + gup * 1.2f + new Vector2(-gup.Y, gup.X) * 1.2f,
+            // Slight travelling shine: a small highlight that sweeps across the stone, plus
+            // an occasional bright sparkle at a corner — the "just mined, still glinting"
+            // read the user asked for.
+            var shineT = (g.Age * 0.8f) % 1f;
+            var shinePos = g.Position + gright * ((shineT * 2f - 1f) * 1.8f) + gup * 0.6f;
+            _renderer.DrawRect(shinePos, new Vector2(0.9f, 0.9f), new Color(255, 255, 255, 200), grot);
+            if (((int)(g.Age * 2.5f) & 7) == 0)
+                _renderer.DrawRect(g.Position + gup * 1.6f + gright * 1.4f,
                     new Vector2(1f, 1f), Color.White);
         }
 
