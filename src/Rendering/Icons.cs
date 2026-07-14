@@ -1305,6 +1305,35 @@ public static class Icons
         ['y'] = new Color(255, 160, 50),
     });
 
+    private static Texture2D BuildDynamitePack(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        ".......YY.......",
+        "......Yy........",
+        ".....RRRRRRR....",
+        ".....RrrRrrR....",
+        ".....RrwRrwR....",
+        ".....RrwRrwR....",
+        ".....RrrRrrR....",
+        ".....RRRRRRR....",
+        ".....RrrRrrR....",
+        ".....RrwRrwR....",
+        ".....RrrRrrR....",
+        ".....RRRRRRR....",
+        "....sssssssss...",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['R'] = new Color(185, 52, 60),
+        ['r'] = new Color(120, 30, 40),
+        ['w'] = new Color(220, 220, 220),
+        ['s'] = new Color(150, 120, 80),   // binding strap around the bundle
+        ['Y'] = new Color(255, 220, 90),
+        ['y'] = new Color(255, 160, 50),
+    });
+
     private static Texture2D BuildPoultice(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
     {
         "................",
