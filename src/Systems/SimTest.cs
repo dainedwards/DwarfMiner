@@ -928,6 +928,37 @@ public static class SimTest
             Check("splash: hard-landing water throws ballistic droplets", sawDroplet);
         }
 
+        // --- Environmental damage: lava sears a grub, the magma slug wades it unharmed ---
+        {
+            const int r = 190;
+            const float af = 0.80f;
+            for (var dr = -1; dr <= 2; dr++)
+                for (var da = -2; da <= 2; da++)
+                    planet.Set(r + dr, Ti(r + dr, af, da),
+                        dr is -1 or 2 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
+            for (var da = -1; da <= 1; da++)
+                cells.FillTile(r, Ti(r, af, da), Material.Lava);
+            for (var i = 0; i < 30; i++) cells.Update(dt);
+            var physics = new Physics(planet, cells);
+            var player = new Player(planet.Center
+                + new Vector2(0, -(planet.SurfaceRing + Planet.RingMin) * Planet.TileSize));
+            var pool = planet.TileToWorld(r, Ti(r, af, 0));
+            var grub = new Creature(pool, CreatureKind.Grub);
+            var slug = new Creature(pool, CreatureKind.MagmaSlug);
+            var grubHp = grub.Health;
+            var slugHp = slug.Health;
+            for (var i = 0; i < 120; i++)
+            {
+                grub.Update(dt, planet, physics, cells, player);
+                slug.Update(dt, planet, physics, cells, player);
+                cells.Update(dt);
+            }
+            Check($"env: lava sears a grub ({grubHp} → {grub.Health:0.0})",
+                grub.Health < grubHp - 5f);
+            Check($"env: magma slug wades lava unburned ({slug.Health:0.0}/{slugHp})",
+                slug.Health >= slugHp - 0.01f);
+        }
+
         // --- Worldgen gating: oil worlds bury sumps, dry biomes stay dry ---
         Check("oil: slag world seeds oil sumps",
             WorldGen.Generate(5, PlanetDefs.ById("slag")).OilSeeds.Count > 0);
