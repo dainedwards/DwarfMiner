@@ -155,7 +155,7 @@ public sealed class Lighting
         SeparableBlur(_bloomA!, _bloomB!, horizontal: true);
         SeparableBlur(_bloomB!, _bloomA!, horizontal: false);
 
-        _gd.SetRenderTarget(null);
+        _gd.SetRenderTarget(SceneTarget);
 
         // Composite blurred bloom additively at full screen, tinted slightly cool so the
         // overall mood stays a touch blue rather than washing the scene yellow.
