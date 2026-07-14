@@ -529,7 +529,10 @@ public static class WorldGen
     private static void CarveWormTunnels(Planet planet, Random rng)
     {
         var worms = 20 + rng.Next(9);
-        var minFrac = 0.42f;
+        // Stay above the deep lava zone (lava fills of up to ~0.45×radius flood every sky
+        // tile they cover — tunnels crossing that line become permanent lava plumbing and
+        // wreck the steady-state cell budget) and below the dirt band.
+        const float minFrac = 0.54f;
         var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
         for (var i = 0; i < worms; i++)
         {
@@ -546,7 +549,7 @@ public static class WorldGen
     private static void CarveWorm(Planet planet, Random rng, Vector2 pos, float heading,
         int length, int branchBudget)
     {
-        var minRad = planet.Radius * 0.40f * Planet.TileSize;
+        var minRad = planet.Radius * 0.52f * Planet.TileSize;
         var maxRad = (Planet.RingMin + planet.SurfaceRing - 14f * Planet.LegacyTileScale)
                      * Planet.TileSize;
         for (var s = 0; s < length; s++)
@@ -564,7 +567,11 @@ public static class WorldGen
                 heading += MathHelper.WrapAngle(desired - heading) * 0.18f;
             }
             pos += new Vector2(MathF.Cos(heading), MathF.Sin(heading)) * Planet.TileSize;
-            CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 11f : 8f);
+            // Hand-built places keep their architecture: no worm bites inside a warren
+            // hall's halo or under a city district — the worm keeps walking and leaves a
+            // natural plug where it crossed.
+            if (!NearDenOrCity(planet, pos))
+                CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 11f : 8f);
             if (branchBudget > 0 && s > length / 3 && rng.Next(90) == 0)
             {
                 branchBudget--;
@@ -573,6 +580,22 @@ public static class WorldGen
                     length / 2, 0);
             }
         }
+    }
+
+    /// <summary>True near a lizard-warren hall or under a city district's bearing span —
+    /// the two kinds of architecture a worm must not undermine.</summary>
+    private static bool NearDenOrCity(Planet planet, Vector2 pos)
+    {
+        foreach (var (dr, dtIdx) in planet.LizardDens)
+            if ((planet.TileToWorld(dr, dtIdx) - pos).LengthSquared() < 90f * 90f) return true;
+        if (planet.CityDistricts.Count > 0)
+        {
+            var rel = pos - planet.Center;
+            var a = MathF.Atan2(rel.Y, rel.X);
+            foreach (var (ang, half) in planet.CityDistricts)
+                if (MathF.Abs(MathHelper.WrapAngle(a - ang)) < half + 0.03f) return true;
+        }
+        return false;
     }
 
     /// <summary>One worm step's bite: a small disk of soft tiles → Sky. Anchored tiles and
