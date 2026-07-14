@@ -364,6 +364,7 @@ public static class Tiles
         "ammo_diamond"       => "DIAMOND SHELL",
         "machine_gun"        => "MACHINE GUN",
         "tnt_pack"           => "TNT PACK",
+        "dynamite_pack"      => "DYNAMITE PACK",
         "rocket_launcher"    => "ROCKET LAUNCHER",
         "chitin_armor"       => "CHITIN ARMOR",
         "armor"              => "IRON PLATE ARMOR",
