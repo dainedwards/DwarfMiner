@@ -1720,7 +1720,7 @@ public static class SimTest
         var trapped = 0;
         foreach (var c in slag.Creatures)
         {
-            var (lava, acid, _) = slag.Cells.SampleHazardsNear(c.Position, c.Radius + 2f);
+            var (lava, acid, _, _) = slag.Cells.SampleHazardsNear(c.Position, c.Radius + 2f);
             if ((lava > 0 && !c.ImmuneTo(Material.Lava))
                 || (acid > 0 && !c.ImmuneTo(Material.Acid))
                 || (!c.ImmuneTo(Material.Water) && slag.Cells.CountWaterNear(c.Position, c.Radius + 2f) > 0))
