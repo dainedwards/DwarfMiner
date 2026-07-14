@@ -1589,7 +1589,7 @@ public sealed class Cells
         var rel = worldPos - Planet.Center;
         var ang = MathF.Atan2(rel.Y, rel.X);
         if (ang < 0) ang += MathHelper.TwoPi;
-        int lava = 0, acid = 0, gas = 0;
+        int lava = 0, acid = 0, gas = 0, fire = 0;
         for (var dy = -rRows; dy <= rRows; dy++)
         {
             var cy = cy0 + dy;
