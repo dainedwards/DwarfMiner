@@ -630,8 +630,10 @@ public sealed class CharacterScreen
         {
             var slots = new List<string>();
             for (var s = 0; s < Equipment.SlotCount; s++)
-                if (Equipment.Fits(id, (EquipSlot)s)) slots.Add(SlotLabels[s]);
-            lines.Add(($"EQUIPS TO: {string.Join(" / ", slots)}", Gold));
+                if (!HiddenSlot((EquipSlot)s) && Equipment.Fits(id, (EquipSlot)s))
+                    slots.Add(SlotLabels[s]);
+            if (Toolbelt.IsWeaponSlotId(id) || Toolbelt.IsMiningToolId(id)) slots.Add("HOTBAR");
+            if (slots.Count > 0) lines.Add(($"EQUIPS TO: {string.Join(" / ", slots)}", Gold));
             if (player.Equipment.IsEquipped(id)) lines.Add(("CURRENTLY WORN", new Color(160, 235, 160)));
             else lines.Add(("DRAG TO THE LIT SLOT (OR RMB)", TextDim));
         }
