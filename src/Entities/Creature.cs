@@ -1222,6 +1222,135 @@ public sealed class Creature
         }
     }
 
+    /// <summary>Marauder: a cave bandit with a slug pistol — the budget version of the
+    /// dwarf's own sidearm. It walks to hold a mid firing band (backing off when crowded,
+    /// ambling closer when the mark drifts out of range) and pops off aimed rounds with a
+    /// touch of scatter. No gland tricks, no burrowing: it fights exactly like the player's
+    /// early game, which is what makes it readable.</summary>
+    private void TickMarauder(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul, List<TitanProjectile>? shots)
+    {
+        if (_swing > 0f) _swing -= dt;
+        _cd -= dt;
+
+        float moveAxis;
+        if (dist < 70f) moveAxis = -MathF.Sign(Vector2.Dot(toPlayer, right));
+        else if (dist < 200f) moveAxis = 0f; // in the band — plant feet and shoot
+        else if (dist < 340f) moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right));
+        else
+        {
+            Wander -= dt;
+            if (Wander <= 0) Wander = 2f + (float)Random.Shared.NextDouble() * 3f;
+            moveAxis = MathF.Sin(Wander * 1.6f) * 0.5f;
+        }
+        moveAxis = NavAxis(planet, up, right, moveAxis, avoidCliffs: false);
+        GroundMove(dt, planet, up, right, moveAxis, speedMul);
+
+        if (dist < 220f && dist > 0.01f && _cd <= 0f && shots is not null
+            && HasLineOfSight(planet, toPlayer, dist))
+        {
+            var scatter = ((float)Random.Shared.NextDouble() - 0.5f) * 0.12f;
+            var dir = Rotate(toPlayer / dist, scatter);
+            _gunAim = dir;
+            shots.Add(new TitanProjectile(Position + dir * (Radius + 3f), dir * 300f,
+                TitanShotKind.Slug, damage: 6f));
+            _cd = 1.5f + (float)Random.Shared.NextDouble() * 0.7f;
+            _swing = 0.15f; // muzzle flash
+        }
+        else if (dist > 0.01f) _gunAim = toPlayer / dist;
+    }
+
+    /// <summary>Raider: a bandit strapped to a sputtering jetpack with a machine-pistol —
+    /// the flying, spraying cousin of the marauder. It hovers a bobbing station diagonal-up
+    /// from its mark (jetpacks fight from where legs can't) and rakes three-round bursts
+    /// with real spread. The pack physics are simple hover-seek, but the exhaust flame in
+    /// the sprite sells it.</summary>
+    private void TickRaider(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul, List<TitanProjectile>? shots)
+    {
+        if (_swing > 0f) _swing -= dt;
+        _cd -= dt;
+
+        // Hover station: off to a side and above the player, drifting with a slow figure
+        // sway so it never sits still enough to line up on easily.
+        var side = MathF.Sin(_phase) >= 0f ? 1f : -1f;
+        var sway = MathF.Sin(Wander * 1.3f + _phase) * 18f;
+        Wander += dt;
+        var station = -toPlayer + right * (side * 70f + sway) + up * 55f;
+        if (dist > 260f) station = -toPlayer * 0.4f; // far away: just close the gap
+        var seek = station.LengthSquared() > 1f ? Vector2.Normalize(station) : Vector2.Zero;
+        Velocity = MoveTowardV(Velocity, seek * MoveSpeed * speedMul * 1.4f, 260f * dt);
+        // The pack fights gravity imperfectly — a visible sag it keeps correcting.
+        Velocity += up * (MathF.Sin(Wander * 6f + _phase) * 14f - 6f) * dt;
+
+        if (dist < 240f && dist > 0.01f && shots is not null
+            && HasLineOfSight(planet, toPlayer, dist))
+        {
+            _gunAim = toPlayer / dist;
+            if (_cd <= 0f && _burst <= 0) { _burst = 3; _cd = 2.2f + (float)Random.Shared.NextDouble(); }
+            _burstT -= dt;
+            if (_burst > 0 && _burstT <= 0f)
+            {
+                _burst--;
+                _burstT = 0.13f;
+                var scatter = ((float)Random.Shared.NextDouble() - 0.5f) * 0.2f;
+                var dir = Rotate(toPlayer / dist, scatter);
+                shots.Add(new TitanProjectile(Position + dir * (Radius + 3f), dir * 280f,
+                    TitanShotKind.Slug, damage: 4f));
+                _swing = 0.1f;
+            }
+        }
+        else _burst = 0;
+    }
+
+    /// <summary>Pyro: a heavy in a scorched pressure suit lugging a tank flamethrower — the
+    /// weaker sibling of the dwarf's own hose. It stomps into close range and gouts REAL
+    /// fire cells at its mark (immune to its own flame); everything else about the fire —
+    /// ignition, light, the burn — is the cell sim's problem, exactly like the player's
+    /// weapon. Kill it at range or wear the burn.</summary>
+    private void TickPyro(float dt, Planet planet, Cells cells, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul)
+    {
+        if (_swing > 0f) _swing -= dt;
+        _cd -= dt;
+
+        float moveAxis;
+        if (dist < 45f) moveAxis = -MathF.Sign(Vector2.Dot(toPlayer, right)) * 0.5f;
+        else if (dist < 260f) moveAxis = MathF.Sign(Vector2.Dot(toPlayer, right));
+        else
+        {
+            Wander -= dt;
+            if (Wander <= 0) Wander = 3f + (float)Random.Shared.NextDouble() * 3f;
+            moveAxis = MathF.Sin(Wander * 1.4f) * 0.4f;
+        }
+        moveAxis = NavAxis(planet, up, right, moveAxis, avoidCliffs: false);
+        GroundMove(dt, planet, up, right, moveAxis, speedMul);
+
+        if (dist < 95f && dist > 0.01f && _cd <= 0f
+            && HasLineOfSight(planet, toPlayer, dist))
+        {
+            var dir = toPlayer / dist;
+            _gunAim = dir;
+            for (var i = 0; i < 3; i++)
+            {
+                var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.4f;
+                cells.LaunchAtWorld(Position + dir * (Radius + 3f),
+                    Rotate(dir, spread) * (150f + (float)Random.Shared.NextDouble() * 60f),
+                    Material.Fire);
+            }
+            _cd = 0.35f;
+            _swing = 0.35f;
+        }
+        else if (dist > 0.01f) _gunAim = toPlayer / dist;
+    }
+
+    private static Vector2 MoveTowardV(Vector2 v, Vector2 target, float maxDelta)
+    {
+        var d = target - v;
+        var len = d.Length();
+        return len <= maxDelta ? target : v + d / len * maxDelta;
+    }
+
     /// <summary>BomberBeetle: a fast scuttler with a volatile abdomen. It sprints at the
     /// dwarf; at arm's length it stops, arms (rapid flashing), and detonates. Any death —
     /// fuse-out or gunned down mid-charge — explodes it (see the death handler in Game1),
