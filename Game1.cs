@@ -3731,6 +3731,8 @@ public sealed partial class DwarfMinerGame : Game
         DrawHoverDebugLabel();
         DrawBuildProgress();
 
+        if (_charScreen.Open)
+            _charScreen.Draw(_renderer, _run.Player, VirtualWidth, VirtualHeight);
         if (_craftingMenu.Open)
             _craftingMenu.Draw(_renderer, _run.Player.Inventory, IsOwned, VirtualWidth, VirtualHeight);
         if (_debugMenu.Open)
