@@ -182,13 +182,17 @@ public sealed class InventoryUi
             var sy = y0 + 14;
             var id = player.Toolbelt.Slots[i];
 
-            // Slot number above each cell.
-            var numStr = (i + 1).ToString();
-            sb.End();   // brief flip so DrawDebugLabel can begin its own
-            renderer.DrawDebugLabel(numStr,
-                new Vector2(sx + 4, sy - 12),
-                i == player.Toolbelt.Selected ? Color.White : new Color(150, 150, 160));
-            sb.Begin(samplerState: SamplerState.PointClamp);
+            // Slot number above each cell: 1-9 then 0 for the tenth (the number-row keys);
+            // overflow slots past the tenth carry no number (wheel/click only).
+            var numStr = i < 9 ? (i + 1).ToString() : i == 9 ? "0" : null;
+            if (numStr is not null)
+            {
+                sb.End();   // brief flip so DrawDebugLabel can begin its own
+                renderer.DrawDebugLabel(numStr,
+                    new Vector2(sx + 4, sy - 12),
+                    i == player.Toolbelt.Selected ? Color.White : new Color(150, 150, 160));
+                sb.Begin(samplerState: SamplerState.PointClamp);
+            }
 
             if (id is null) continue;
 
