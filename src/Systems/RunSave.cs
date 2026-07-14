@@ -28,19 +28,14 @@ public static class RunSave
                                      // 15: gloves + 2 accessory slots (equipment block 8 → 11)
     private const uint Magic = 0x444D5253; // "DMRS"
 
-    private static string SavePath
-    {
-        get
-        {
-            var dir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "DwarfMiner");
-            Directory.CreateDirectory(dir);
-            return Path.Combine(dir, "run.sav");
-        }
-    }
+    private static string SavePath => Path.Combine(SaveSlots.Dir(SaveSlots.Active), "run.sav");
 
     public static bool Exists => File.Exists(SavePath);
+
+    /// <summary>Whether a given slot holds a suspended run — the title screen's
+    /// "RUN IN PROGRESS" tag, without switching slots.</summary>
+    public static bool ExistsIn(int slot) =>
+        File.Exists(Path.Combine(SaveSlots.Dir(slot), "run.sav"));
 
     public static void Delete()
     {
