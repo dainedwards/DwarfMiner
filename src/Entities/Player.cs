@@ -573,8 +573,10 @@ public sealed class Player
         return stamp;
     }
 
-    /// <summary>Place a block from inventory into the sky tiles under the cursor. Stone first, then dirt.</summary>
-    public TileKind? TryPlace(Planet planet, Physics physics, Vector2 worldCursor)
+    /// <summary>Place a block from inventory into the sky tiles under the cursor. Stone first,
+    /// then dirt. Placement is held construction: the aim must stay on the target for
+    /// <see cref="BuildTime"/> before the block appears (see <see cref="TickBuild"/>).</summary>
+    public TileKind? TryPlace(Planet planet, Physics physics, Vector2 worldCursor, float dt)
     {
         if (MineCooldown > 0) return null;
         var d = worldCursor - Position;
@@ -584,15 +586,19 @@ public sealed class Player
         // Priority: plain stone (most abundant) → richer stone variants (granite/basalt/etc) →
         // dirt. Each variant places its own tile kind so a granite stockpile builds granite
         // walls, not generic stone — preserves the resource's identity through placement.
+        // Peek-only here: material is spent when the build completes, not while it's held.
         TileKind placed;
-        if      (Inventory.TryConsume("stone", 1))      placed = TileKind.Stone;
-        else if (Inventory.TryConsume("granite", 1))    placed = TileKind.Granite;
-        else if (Inventory.TryConsume("basalt", 1))     placed = TileKind.Basalt;
-        else if (Inventory.TryConsume("moss_stone", 1)) placed = TileKind.MossStone;
-        else if (Inventory.TryConsume("obsidian", 1))   placed = TileKind.Obsidian;
-        else if (Inventory.TryConsume("gravel", 1))     placed = TileKind.Gravel;
-        else if (Inventory.TryConsume("dirt", 1))       placed = TileKind.Dirt;
+        if      (Inventory.Count("stone") > 0)      placed = TileKind.Stone;
+        else if (Inventory.Count("granite") > 0)    placed = TileKind.Granite;
+        else if (Inventory.Count("basalt") > 0)     placed = TileKind.Basalt;
+        else if (Inventory.Count("moss_stone") > 0) placed = TileKind.MossStone;
+        else if (Inventory.Count("obsidian") > 0)   placed = TileKind.Obsidian;
+        else if (Inventory.Count("gravel") > 0)     placed = TileKind.Gravel;
+        else if (Inventory.Count("dirt") > 0)       placed = TileKind.Dirt;
         else return null;
+
+        if (!TickBuild(planet, worldCursor, dt)) return null;
+        if (!Inventory.TryConsume(Tiles.Drop(placed)?.id ?? "stone", 1)) return null;
 
         foreach (var (fx, fy) in stamp)
         {
@@ -601,6 +607,26 @@ public sealed class Player
         }
         MineCooldown = 0.10f;
         return placed;
+    }
+
+    /// <summary>Advance the held-construction timer toward the stamp anchored at the cursor
+    /// tile. Returns true the frame the build completes (and resets for the next one). A new
+    /// target tile restarts the clock; fly mode builds instantly (dev tool).</summary>
+    private bool TickBuild(Planet planet, Vector2 worldCursor, float dt)
+    {
+        _buildHeld = true;
+        if (FlyMode) return true;
+        var site = planet.WorldToTile(worldCursor);
+        if (_buildSite != site)
+        {
+            _buildSite = site;
+            BuildProgress = 0f;
+        }
+        BuildProgress += dt;
+        if (BuildProgress < BuildTime) return false;
+        BuildProgress = 0f;
+        _buildSite = null;
+        return true;
     }
 
     /// <summary>Where the current tool's strike actually lands. The pick and hammer are swung
