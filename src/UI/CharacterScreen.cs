@@ -244,9 +244,9 @@ public sealed class CharacterScreen
         var py = (viewportHeight - panelH) / 2;
 
         sb.Begin(samplerState: SamplerState.PointClamp);
-        // Semi-transparent: the frozen world stays readable through the panel body.
-        sb.Draw(renderer.Pixel, new Rectangle(0, 0, viewportWidth, viewportHeight), new Color(0, 0, 0, 110));
-        // Double-edged panel: dark outer line, light inner line, translucent blue body.
+        // Dim the frozen world behind the menu; the panel body itself is opaque.
+        sb.Draw(renderer.Pixel, new Rectangle(0, 0, viewportWidth, viewportHeight), new Color(0, 0, 0, 170));
+        // Double-edged panel: dark outer line, light inner line, opaque blue body.
         sb.Draw(renderer.Pixel, new Rectangle(px - 2, py - 2, panelW + 4, panelH + 4), PanelEdgeOut);
         sb.Draw(renderer.Pixel, new Rectangle(px - 1, py - 1, panelW + 2, panelH + 2), PanelEdgeIn);
         sb.Draw(renderer.Pixel, new Rectangle(px, py, panelW, panelH), PanelBg);
