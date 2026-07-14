@@ -1287,10 +1287,7 @@ public sealed class Titan
 
                 // Ground under a walker is footing, not demolition fodder.
                 var floor = keepFloor && Vector2.Dot(centre - Position, up) < -BodyRadius * 0.35f;
-                // Surface flora is anchored (so hazards leave it alone) but a kaiju just
-                // tramples it — it must NOT read as an immovable obstruction, or a patch of
-                // plants at the dig site walls the boss out of its own shaft.
-                if ((Tiles.IsAnchored(k) && !Tiles.IsFlora(k)) || floor)
+                if (Tiles.IsAnchored(k) || floor)
                 {
                     // Wrecking bite: city architecture is anchored (it never crumbles), but
                     // a kaiju leaning on it batters it down FAST — a wall lasts moments, a
