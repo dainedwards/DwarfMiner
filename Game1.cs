@@ -1657,6 +1657,10 @@ public sealed partial class DwarfMinerGame : Game
         // off (anchored, non-meltable, non-corrodible tiles) and the saucers keep patrolling —
         // only the on-foot aliens run for shelter.
         var cityCover = _run.Def.Biome == "city" && AmbientDirector.DisasterActive(_run);
+        // The city's grudge cools slowly on its own; a wrathful city keeps its civilians
+        // indoors the same way a disaster does.
+        _run.CityWrath = MathF.Max(0f, _run.CityWrath - 1.2f * dt);
+        var cityWrathful = _run.CityWrath >= 50f;
 
         // Update entities. Creatures that have drifted far outside the player's neighbourhood
         // are recycled — they'd never be met again, they eat sim time, and every recycled
