@@ -88,7 +88,9 @@ public static class Tiles
           // which corrodes any non-anchored tile).
           or TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick
           or TileKind.DoorClosed or TileKind.DoorOpen
-          or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp;
+          or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp
+          // A placed platform is a fixed ledge — it never caves in.
+          or TileKind.Platform;
 
     /// <summary>Biome flora — decorative surface plants. NOT anchored (so a walking titan
     /// tramples them and settling terrain drops them naturally), but hazard-immune via the
