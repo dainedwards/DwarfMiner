@@ -32,6 +32,9 @@ public sealed class Session
     public readonly List<TitanProjectile> TitanShots = new();
     public readonly List<Meteor> Meteors = new();
     public readonly List<Sentry> Sentries = new();
+    /// <summary>Thrown torches — in flight and planted. Stuck ones persist in the run save
+    /// (a lit-up shaft should stay lit across a suspend).</summary>
+    public readonly List<ThrownTorch> Torches = new();
 
     /// <summary>Meteor-strike cadence — the frequent ambient dodge hazard, outside the
     /// disaster clock. See AmbientDirector.</summary>
