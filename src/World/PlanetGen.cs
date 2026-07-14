@@ -331,7 +331,8 @@ public static class PlanetGen
                 OreBias: WithRare((oreKind, sigBias), (TileKind.IronOre, 0.025f), (TileKind.PlatinumOre, 0.012f)),
                 QuakeScale: quake, CaveSpawnCap: caveCap + 2,
                 ShipOre: shipOre, ShipOreCount: shipOreCount,
-                OxygenDrainScale: oxy * 1.35f, SeedsAcid: rng.Next(2) == 0, Titan: titan,
+                OxygenDrainScale: oxy * 1.35f, SeedsAcid: rng.Next(2) == 0, SeedsOil: true,
+                Titan: titan,
                 SizeScale: size, Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "slag",
                 Difficulty: difficulty),
 
