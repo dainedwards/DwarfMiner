@@ -481,6 +481,10 @@ public static class WorldGen
 
         SeedBiomePockets(planet, def, rng);
         if (def.GreatGeode) CarveGreatGeode(planet, rng);
+        // Noita-style connectivity: winding worm tunnels stitch the noise caves into one
+        // traversable network. Carved before the volcano/city stamps so their plumbing and
+        // foundations always win over a stray tunnel.
+        CarveWormTunnels(planet, rng);
 
         // Volcanoes stamp last so their plumbing (throat lining, chamber shell) wins over
         // any cave or pocket it crosses. Keep them off the lake/pool basins. Each stamping
