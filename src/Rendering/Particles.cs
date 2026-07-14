@@ -575,6 +575,9 @@ public sealed class Particles
             LightColor = Color.Lerp(sparkColor, Color.White, 0.5f),
             HeroLight = true,
         });
+        // Lasting cinders: after the flash dies, a handful of thrown coals keep the crater
+        // and its surroundings lit for a couple of seconds while they cool.
+        EmitCinders(pos, Vector2.Zero, Math.Clamp((int)(strength / 3f), 4, 10), scatter: strength * 4f);
         // Fireball — a cluster of fat white-yellow→orange→red blobs boiling out of the
         // centre. Tinted slightly toward the shell's colour so elemental blasts keep their
         // identity, but the body of every explosion reads as fire.
