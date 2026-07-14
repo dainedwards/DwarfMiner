@@ -3855,6 +3855,28 @@ public sealed partial class DwarfMinerGame : Game
         _titlePlanetShade = new Texture2D(gd, 108, 108);
         _titlePlanetShade.SetData(shade);
 
+        // Ring system: a flat ellipse annulus (two bands split by a dark gap, dithered for
+        // grain). Drawn in two halves around the tilted planet — far side behind, near side
+        // in front.
+        const int ringW = 170, ringH = 48;
+        var ring = new Color[ringW * ringH];
+        for (var y = 0; y < ringH; y++)
+            for (var x = 0; x < ringW; x++)
+            {
+                var nx = (x - ringW / 2f) / 80f;
+                var ny = (y - ringH / 2f) / 21f;
+                var rr = MathF.Sqrt(nx * nx + ny * ny);
+                if (rr is < 0.64f or > 1f) continue;
+                if (rr is > 0.82f and < 0.86f) continue;             // the dark division
+                if (((x + y) & 1) == 0 && rr > 0.95f) continue;      // dithered outer edge
+                var bright = rr < 0.82f ? 0.9f : 0.65f;
+                if (((x * 7 + y * 13) & 7) == 0) bright *= 0.75f;    // grain
+                ring[y * ringW + x] = new Color(
+                    (int)(214 * bright), (int)(188 * bright), (int)(148 * bright), 235);
+            }
+        _titleRingTex = new Texture2D(gd, ringW, ringH);
+        _titleRingTex.SetData(ring);
+
         // Sun sprite: white-hot core through orange to a soft halo.
         const int sunR = 22;
         var sun = new Color[sunR * 2 * sunR * 2];
