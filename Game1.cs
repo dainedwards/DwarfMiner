@@ -3688,13 +3688,30 @@ public sealed partial class DwarfMinerGame : Game
     private void DrawTitle()
     {
         GraphicsDevice.Clear(new Color(7, 9, 18));
+        var sb = _renderer.Batch;
+
+        // The pixel vista at 4×, with a handful of live-twinkling stars over it.
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(_titleBgTex, new Rectangle(0, 0, VirtualWidth, VirtualHeight), Color.White);
+        for (var i = 0; i < 10; i++)
+        {
+            var hsh = (uint)(i * 2654435761);
+            var tx = (int)(hsh % 320) * 4;
+            var ty = (int)((hsh >> 10) % 110) * 4;
+            var tw = 0.5f + 0.5f * MathF.Sin(_renderer.Time * (1.2f + i * 0.37f) + i * 2.1f);
+            sb.Draw(_renderer.Pixel, new Rectangle(tx, ty, 4, 4), Color.White * (0.25f + 0.55f * tw));
+        }
+        sb.End();
 
         const string title = "DWARF MINER";
+        // Drop shadow keeps the wordmark crisp over the vista.
+        _renderer.DrawText(title,
+            new Vector2((VirtualWidth - _renderer.MeasureText(title, 5)) / 2f + 4, 114),
+            new Color(20, 12, 8), 5);
         _renderer.DrawText(title,
             new Vector2((VirtualWidth - _renderer.MeasureText(title, 5)) / 2f, 110),
             new Color(235, 205, 120), 5);
 
-        var sb = _renderer.Batch;
         const int cardW = 460, cardH = 64, gap = 14;
         var x0 = (VirtualWidth - cardW) / 2;
         var y0 = 250;
@@ -3702,6 +3719,7 @@ public sealed partial class DwarfMinerGame : Game
         for (var i = 0; i < SaveSlots.Count; i++)
         {
             var y = y0 + i * (cardH + gap);
+            _titleCardRects[i] = new Rectangle(x0, y, cardW, cardH);
             var hot = i == _titleCursor;
             sb.Draw(_renderer.Pixel, new Rectangle(x0, y, cardW, cardH),
                 hot ? new Color(45, 52, 76, 240) : new Color(20, 23, 34, 220));
