@@ -3521,25 +3521,40 @@ public sealed partial class DwarfMinerGame : Game
         // rotated to the aim and flipped when facing left so it's never upside-down.
         // Pickaxe and hammer are swung tools instead — drawn along the swing arc.
         if (!_landing && !_ascending && !_orbiting
-            && _run.Player.Toolbelt.Slots[_run.Player.Toolbelt.Selected] is { } heldId
-            && _weaponTex.TryGetValue(heldId, out var heldTex))
+            && _run.Player.Toolbelt.Slots[_run.Player.Toolbelt.Selected] is { } heldId)
         {
-            var aim = worldCursor - _run.Player.Position;
-            if (aim.LengthSquared() > 0.01f) aim.Normalize(); else aim = new Vector2(1f, 0f);
-            if (heldId is "pickaxe" or "hammer")
+            // Melee weapons store one texture per upgrade rung ("sword_t3") — the look
+            // escalates with each craft, up to the rung-4 energy edge.
+            var isMelee = Array.IndexOf(Toolbelt.MeleeIds, heldId) >= 0;
+            var texKey = isMelee
+                ? $"{heldId}_t{Math.Clamp(_run.Player.MeleeTiers.GetValueOrDefault(heldId, 1), 1, 4)}"
+                : heldId;
+            if (_weaponTex.TryGetValue(texKey, out var heldTex))
             {
-                DrawSwungTool(heldTex, aim);
-            }
-            else
-            {
-                var wrot = MathF.Atan2(aim.Y, aim.X);
-                _renderer.Batch.Draw(heldTex, _run.Player.Position + aim * 3.2f, null, Color.White,
-                    wrot, new Vector2(1.5f, heldTex.Height / 2f), 0.55f,
-                    aim.X < 0f ? SpriteEffects.FlipVertically : SpriteEffects.None, 0f);
-                // The dwarf's fist wrapped around the grip — a small skin-tone knuckle over
-                // the stock, so the weapon reads as held rather than floating at his hip.
-                _renderer.DrawRect(_run.Player.Position + aim * 3.4f, new Vector2(1.7f, 1.7f),
-                    new Color(230, 180, 140), wrot);
+                var aim = worldCursor - _run.Player.Position;
+                if (aim.LengthSquared() > 0.01f) aim.Normalize(); else aim = new Vector2(1f, 0f);
+                if (heldId is "pickaxe" or "hammer")
+                {
+                    DrawSwungTool(heldTex, aim);
+                }
+                else
+                {
+                    var wrot = MathF.Atan2(aim.Y, aim.X);
+                    // Mid-swing, melee sweeps through an arc around the aim.
+                    if (isMelee && _meleeAnim > 0f)
+                    {
+                        var swing = MathHelper.Lerp(-1.5f, 1.1f, 1f - _meleeAnim / _meleeAnimDur);
+                        wrot += aim.X < 0f ? -swing : swing;
+                    }
+                    var scale = isMelee ? 0.7f : 0.55f;
+                    _renderer.Batch.Draw(heldTex, _run.Player.Position + aim * 3.2f, null, Color.White,
+                        wrot, new Vector2(1.5f, heldTex.Height / 2f), scale,
+                        aim.X < 0f ? SpriteEffects.FlipVertically : SpriteEffects.None, 0f);
+                    // The dwarf's fist wrapped around the grip — a small skin-tone knuckle over
+                    // the stock, so the weapon reads as held rather than floating at his hip.
+                    _renderer.DrawRect(_run.Player.Position + aim * 3.4f, new Vector2(1.7f, 1.7f),
+                        new Color(230, 180, 140), wrot);
+                }
             }
         }
 
