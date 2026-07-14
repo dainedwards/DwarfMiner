@@ -3274,6 +3274,17 @@ public sealed partial class DwarfMinerGame : Game
         // visual feet with the collision bottom.
         var up = _run.Planet.UpAt(_run.Player.Position);
         var rot = MathF.Atan2(up.X, -up.Y);
+        // Worn jetpack: drawn first (behind the body), offset to the trailing side so it
+        // reads as strapped to the back, upright with the dwarf. The exhaust stream in
+        // UpdateFrame emits from this same pack position.
+        if (_run.Player.Equipment.Get(EquipSlot.Back) == "jetpack")
+        {
+            var packRight = new Vector2(-up.Y, up.X);
+            _renderer.Batch.Draw(_jetpackTex,
+                _run.Player.Position - packRight * _playerFacing * 3.0f + up * 0.8f, null,
+                Color.White, rot, new Vector2(_jetpackTex.Width * 0.5f, _jetpackTex.Height * 0.5f),
+                0.85f, SpriteEffects.None, 0f);
+        }
         if (_playerSprite is { } ps)
         {
             // Animated pack sprite: pick a frame from grounded/tangent/radial motion, flip
