@@ -97,7 +97,7 @@ public sealed class Player
     public bool JetTier3;
     public bool JetTier4;
     public float JetCharge = JetChargeMax;
-    public const float JetChargeMax = 5f;     // seconds of burn (tier I)
+    public const float JetChargeMax = 3f;     // seconds of burn (tier I)
     public float JetChargeCap =>
         JetChargeMax * (JetTier4 ? 2.197f : JetTier3 ? 1.69f : JetTier2 ? 1.3f : 1f);
     /// <summary>1-4 while owned (drives the exhaust flame colour: red→orange→yellow→blue),
