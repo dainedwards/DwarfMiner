@@ -326,18 +326,119 @@ public sealed partial class DwarfMinerGame
     /// dwarf is actually down on (or dropping to) the planet.</summary>
     private void DrawScannerArrows()
     {
-        if (_orbiting || !Upgrades.Owned(_meta, "scanner")) return;
+        if (_orbiting) return;
         string Range(Vector2 target) =>
             $"{(target - _run.Player.Position).Length() / Planet.TileSize:0}M";
-        if (_scanFuel is { } fuel)
-            DrawEdgeArrow(fuel, new Color(255, 170, 60), $"FUEL {Range(fuel)}");
-        if (_scanOre is { } ore)
-            DrawEdgeArrow(ore, Tiles.ResourceColor(_run.Def.ShipOre),
-                $"{Tiles.ResourceLabel(_run.Def.ShipOre)} {Range(ore)}");
+        if (Upgrades.Owned(_meta, "scanner"))
+        {
+            if (_scanFuel is { } fuel)
+                DrawEdgeArrow(fuel, new Color(255, 170, 60), $"FUEL {Range(fuel)}");
+            if (_scanOre is { } ore)
+                DrawEdgeArrow(ore, Tiles.ResourceColor(_run.Def.ShipOre),
+                    $"{Tiles.ResourceLabel(_run.Def.ShipOre)} {Range(ore)}");
+        }
         if (_run.Titan.Health > 0)
             DrawEdgeArrow(_run.Titan.Position, new Color(255, 110, 90),
                 $"TITAN {Range(_run.Titan.Position)}");
+
+        DrawGeoScannerArrows();
     }
+
+    /// <summary>Which tile kinds the crafted geo-scanner detects at a given rung — widening
+    /// from base ores to the super-rare. Ordered so the earlier (commoner) finds list first.</summary>
+    private static readonly (int tier, TileKind kind)[] GeoScanTargets =
+    {
+        (1, TileKind.IronOre), (1, TileKind.CoalOre), (1, TileKind.FuelOre),
+        (2, TileKind.SilverOre), (2, TileKind.GoldOre), (2, TileKind.PlatinumOre),
+        (3, TileKind.Ruby), (3, TileKind.Sapphire), (3, TileKind.Emerald),
+        (4, TileKind.Diamond), (4, TileKind.Crystal), (4, TileKind.Voidstone),
+    };
+
+    /// <summary>Re-fix the nearest deposit of every material the current scanner rung can
+    /// detect. Kept out of Draw so the sweep runs on its own timer.</summary>
+    private void RefreshGeoScan()
+    {
+        _geoScanHits.Clear();
+        var tier = _run.Player.ScannerTier;
+        foreach (var (need, kind) in GeoScanTargets)
+        {
+            if (need > tier) continue;
+            if (Scanner.FindNearest(_run.Planet, _run.Player.Position, kind, 520f) is { } pos)
+                _geoScanHits.Add((kind, pos));
+        }
+    }
+
+    /// <summary>Draw the crafted scanner's finds as arrows RADIATING from the player: each
+    /// sits on a ring around the dwarf, pointing toward its deposit, coloured by material,
+    /// with a tiny range tag. Overlapping bearings are fanned apart so two arrows in nearly
+    /// the same direction stay individually readable (the user's "don't overlap" ask).</summary>
+    private void DrawGeoScannerArrows()
+    {
+        if (_run.Player.ScannerTier <= 0 || _geoScanHits.Count == 0) return;
+
+        var centre = Vector2.Transform(_run.Player.Position, _camera.View);
+        // Build (angle, kind, dist) then de-collide the angles.
+        var items = new List<(float ang, TileKind kind, float dist)>();
+        foreach (var (kind, pos) in _geoScanHits)
+        {
+            var d = pos - _run.Player.Position;
+            if (d.LengthSquared() < 1f) continue;
+            items.Add((MathF.Atan2(d.Y, d.X), kind, d.Length()));
+        }
+        if (items.Count == 0) return;
+        items.Sort((a, b) => a.ang.CompareTo(b.ang));
+
+        // Minimum angular gap between neighbouring arrows on the ring; nudge crowded ones
+        // apart in a couple of relaxation passes so a cluster fans out into a readable arc.
+        var minGap = MathHelper.ToRadians(26f);
+        var angs = new float[items.Count];
+        for (var i = 0; i < items.Count; i++) angs[i] = items[i].ang;
+        for (var pass = 0; pass < 6 && items.Count > 1; pass++)
+            for (var i = 0; i < items.Count; i++)
+            {
+                var j = (i + 1) % items.Count;
+                var diff = MathHelper.WrapAngle(angs[j] - angs[i]);
+                if (diff >= minGap || diff <= 0f && i == items.Count - 1) continue;
+                var push = (minGap - MathF.Abs(diff)) * 0.5f;
+                angs[i] -= push;
+                angs[j] += push;
+            }
+
+        const float ring = 46f;
+        var sb = _renderer.Batch;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        for (var i = 0; i < items.Count; i++)
+        {
+            var (_, kind, dist) = items[i];
+            var a = angs[i];
+            var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+            var col = ScanColor(kind);
+            var pos = centre + dir * ring;
+            sb.Draw(_arrowTex, pos, null, col, a, new Vector2(7.5f, 7.5f),
+                new Vector2(0.55f, 1.0f), SpriteEffects.None, 0f);
+        }
+        sb.End();
+        // Range tags just past each arrowhead — drawn after the batch so text layers on top.
+        for (var i = 0; i < items.Count; i++)
+        {
+            var (_, kind, dist) = items[i];
+            var a = angs[i];
+            var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+            var tag = $"{dist / Planet.TileSize:0}M";
+            var tp = centre + dir * (ring + 12f);
+            _renderer.DrawText(tag, new Vector2(tp.X - _renderer.MeasureText(tag) / 2f, tp.Y - 4f),
+                ScanColor(kind));
+        }
+    }
+
+    /// <summary>The HUD colour for a scanned material — its bright speckle so a gold arrow
+    /// reads gold, a ruby arrow reads red, etc.</summary>
+    private static Color ScanColor(TileKind k) => k switch
+    {
+        TileKind.FuelOre => new Color(120, 255, 190),
+        TileKind.CoalOre => new Color(150, 150, 160),
+        _ => Tiles.OreSpeckle(k),
+    };
 
     /// <summary>Background world builds keyed by planet id. The aim predictor keeps the
     /// likely destination baking from the moment the ship points at it, and finished builds
