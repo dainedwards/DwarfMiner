@@ -271,13 +271,17 @@ public static class PlanetGen
                 "Ocean world - the land is the exception, pack for the crossings",
                 Jit(new Color(52, 96, 150), 18), Jit(new Color(120, 190, 230), 18),
                 TileKind.Grass,
-                LakeMin: 8, LakeExtra: 3, MountainMin: 3, MountainExtra: 2,
+                // Drowned world: even more sea than before — land is scarce, so what rock
+                // remains is packed with ore (the per-tile bias boosts keep total yield
+                // competitive despite far fewer ground tiles).
+                LakeMin: 11, LakeExtra: 4, MountainMin: 3, MountainExtra: 2,
                 MountainHeightScale: J(0.8f, 1.1f), LavaFillFrac: 0.35f, HasWater: true,
-                OreBias: WithRare((oreKind, sigBias), (TileKind.IronOre, 0.015f), (TileKind.Emerald, 0.018f)),
+                OreBias: WithRare((oreKind, sigBias), (TileKind.IronOre, 0.03f), (TileKind.Emerald, 0.032f),
+                    (TileKind.GoldOre, 0.014f), (TileKind.Sapphire, 0.022f)),
                 QuakeScale: quake, CaveSpawnCap: caveCap,
                 ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy * 0.95f,
                 Titan: titan, FungalPockets: 2 + rng.Next(3),
-                SizeScale: size, LakeScale: J(2.6f, 3.4f),
+                SizeScale: size, LakeScale: J(3.2f, 4.2f),
                 Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "ocean", Difficulty: difficulty),
 
             Biome.Acid => new(id, name,
