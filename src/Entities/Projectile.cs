@@ -84,6 +84,9 @@ public sealed class Projectile
     /// <summary>True while the projectile is inside solid rock spending a wall-pierce charge.
     /// Charges are burned per wall *entered* (air→solid transition), not per frame.</summary>
     private bool _inWall;
+    private int _bounces;      // Tnt: dead-thud hops taken so far
+    private bool _resting;     // Tnt: settled — fuse burns in place
+    private bool _stuck;       // TntPack: cemented to a wall — fuse burns in place
 
     /// <summary>How many more creature hits this projectile can take before it dies. -1 means
     /// "never dies on creature hit" (used by AoE explosions whose damage is dealt at impact).
