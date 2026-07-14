@@ -130,15 +130,13 @@ public sealed partial class DwarfMinerGame
             "SSSS.",
             ".DD..");
         // Worn jetpack — drawn on the dwarf's back (not the grip), upright with the body:
-        // twin riveted tanks over a strap bar, exhaust nozzles at the bottom where the
-        // tier-coloured jet stream comes out.
+        // one compact solid tank with the exhaust nozzle at its base.
         _jetpackTex = T(
-            "LL.LL",
-            "SS.SS",
-            "SSdSS",
-            "SS.SS",
-            "dd.dd",
-            ".n.n.");
+            "LLL",
+            "SSS",
+            "SSS",
+            "ddd",
+            ".n.");
         // Swung tools — handle along +X with the head at the far end, vertically symmetric
         // so the swing draw can rotate through the full arc without any flip bookkeeping.
         // The pick head is a thin ")" arc bowed away from the handle with twin tips curling
