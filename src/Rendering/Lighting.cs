@@ -210,23 +210,4 @@ public sealed class Lighting
         _vignette = new Texture2D(_gd, s, s);
         _vignette.SetData(data);
     }
-
-    private static Texture2D MakeRadialGradient(GraphicsDevice gd, int size)
-    {
-        var tex = new Texture2D(gd, size, size);
-        var data = new Color[size * size];
-        var r = size / 2f;
-        for (var y = 0; y < size; y++)
-        for (var x = 0; x < size; x++)
-        {
-            var dx = x - r + 0.5f; var dy = y - r + 0.5f;
-            var d = MathF.Sqrt(dx * dx + dy * dy) / r;
-            var t = Math.Clamp(1f - d, 0f, 1f);
-            t = t * t; // quadratic falloff — softer rim, hotter core
-            var b = (byte)(t * 255);
-            data[y * size + x] = new Color(b, b, b, b);
-        }
-        tex.SetData(data);
-        return tex;
-    }
 }
