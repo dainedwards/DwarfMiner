@@ -51,8 +51,9 @@ public sealed class Cells
     /// draw loops are view-culled and hemmed liquids sleep, which is what makes this
     /// resolution affordable.</summary>
     public const int Density = 4;
-    /// <summary>How many dust cells one broken tile spawns (checkerboard = Density²/2).</summary>
-    public const int DustCellsPerTile = Density * Density / 2;
+    /// <summary>How many dust cells one broken tile spawns — a full Density² fill, so the
+    /// loose debris occupies exactly the space the solid block did (mass conserves).</summary>
+    public const int DustCellsPerTile = Density * Density;
     /// <summary>Dust cells that add up to one whole drop unit. Four 4-px tiles occupy one
     /// legacy 8-px tile's area, so a *quad* of broken tiles — not a single tile — pays out
     /// drop.count. Keeps the resource economy identical to the old coarse grid (and makes
