@@ -3478,6 +3478,10 @@ public sealed partial class DwarfMinerGame : Game
             _ => 2.10f,   // sunstone charm
         };
         _renderer.AddLight(_run.Player.Position, 150f * lightMul, new Color(245, 215, 165));
+        // The carried lamp is also a ray-cast hero light: a direct beam that cuts hard
+        // Noita-style shadows behind pillars and creatures, layered over the soft grid
+        // spill. Kept dimmer than the grid seed so it accents rather than dominates.
+        _renderer.AddHeroLight(_run.Player.Position, 70f * lightMul, new Color(120, 100, 70));
         // Sunstone burns cold white at the core — reads as a different light source, not
         // just a bigger torch. Tier IV pickaxe (diamond) keeps its faint icy sheen.
         if (_run.Player.EffectiveLightTier >= 4)
