@@ -2884,10 +2884,21 @@ public sealed partial class DwarfMinerGame : Game
         _drawSw.Restart();
         // Everything renders into the fixed virtual-resolution scene target, then scales
         // to the real window in one letterboxed blit — resolution independence without a
-        // single UI coordinate changing.
-        GraphicsDevice.SetRenderTarget(_sceneRt);
-        DrawFrame(gameTime);
-        PresentScene();
+        // single UI coordinate changing. DM_NORT=1 draws straight to the backbuffer
+        // instead (frame-pacing diagnostic; breaks resize/fullscreen scaling).
+        var noRt = Environment.GetEnvironmentVariable("DM_NORT") is { Length: > 0 };
+        if (noRt)
+        {
+            GraphicsDevice.SetRenderTarget(null);
+            _renderer.SceneTarget = null;
+            DrawFrame(gameTime);
+        }
+        else
+        {
+            GraphicsDevice.SetRenderTarget(_sceneRt);
+            DrawFrame(gameTime);
+            PresentScene();
+        }
         _drawSw.Stop();
         _drawMs = _drawMs * 0.9f + (float)_drawSw.Elapsed.TotalMilliseconds * 0.1f;
 
