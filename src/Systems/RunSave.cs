@@ -239,6 +239,18 @@ public static class RunSave
                 run.Sentries.Add(new Sentry(sPos) { Health = r.ReadSingle() });
             }
 
+            var torchCount = r.ReadInt32();
+            for (var i = 0; i < torchCount; i++)
+            {
+                var tPos = new Vector2(r.ReadSingle(), r.ReadSingle());
+                run.Torches.Add(new ThrownTorch(tPos, Vector2.Zero)
+                {
+                    Stuck = true,
+                    BaseAngle = r.ReadSingle(),
+                });
+            }
+            run.Player.HeadlampTier = r.ReadInt32();
+
             // Timers restart at their run-start defaults — a beat of calm after resuming.
             run.DisasterTimer = AmbientDirector.NextInterval(def) * 0.5f;
             run.SpawnTimer = 6f;
