@@ -2597,6 +2597,104 @@ public sealed class Creature
                     r.DrawCircle(gripP + aimDir * 4.4f, 1.4f, new Color(160, 235, 255));
                 break;
             }
+            case CreatureKind.Marauder:
+            {
+                // Cave bandit: a scavenger in patched rust-leather with a rag mask and a
+                // scuffed slug pistol that tracks the dwarf. The player's own silhouette,
+                // gone feral.
+                var leather = Tinted(new Color(120, 82, 52));
+                var rag = Tinted(new Color(150, 60, 55));
+                var skin = Tinted(new Color(172, 150, 128));
+                var moving = MathF.Abs(Vector2.Dot(Velocity, right)) > 4f;
+                for (var i = -1; i <= 1; i += 2)
+                {
+                    var a = moving ? MathF.Sin(t * 11f + _phase + i * 1.6f) * 0.45f : 0f;
+                    r.DrawRect(Position - up * 1.6f + right * (i * 1.0f), new Vector2(1.0f, 3.0f), leather, rot + a);
+                }
+                r.DrawRect(Position + up * 1.4f, new Vector2(3.8f, 4.4f), leather, rot);
+                // Bandolier slung across the chest.
+                r.DrawRect(Position + up * 1.6f, new Vector2(4.2f, 0.9f), Tinted(new Color(70, 55, 40)), rot + 0.6f);
+                var head = Position + up * 4.6f;
+                r.DrawCircle(head, 2.3f, skin);
+                r.DrawRect(head - up * 0.4f, new Vector2(4.4f, 1.6f), rag, rot); // rag mask
+                r.DrawCircle(head + right * (facing * 1.0f) + up * 0.8f, 0.7f, Color.Black);
+                // Pistol arm follows the last aim.
+                var aim = _gunAim.LengthSquared() > 0.01f ? _gunAim : right * facing;
+                var pAng = MathF.Atan2(aim.Y, aim.X);
+                var grip = Position + right * (facing * 2.0f) + up * 1.8f;
+                r.DrawRect(grip + aim * 2.2f, new Vector2(3.4f, 1.1f), Tinted(new Color(90, 92, 100)), pAng);
+                if (_swing > 0f)
+                    r.DrawCircle(grip + aim * 4.6f, 1.3f, new Color(255, 220, 140));
+                break;
+            }
+            case CreatureKind.Raider:
+            {
+                // Jetpack bandit: the marauder frame slung under a soot-stained pack with a
+                // live sputtering flame, goggles up, machine-pistol raking bursts. Hangs in
+                // the air with a visible bob.
+                var leather = Tinted(new Color(105, 78, 60));
+                var packC = Tinted(new Color(95, 100, 112));
+                var skin = Tinted(new Color(172, 150, 128));
+                // Pack on the back (trailing side) with its exhaust flame flickering below.
+                var back = Position - right * (facing * 2.4f) + up * 1.8f;
+                r.DrawRect(back, new Vector2(2.2f, 3.6f), packC, rot);
+                r.DrawRect(back + up * 1.4f, new Vector2(1.6f, 0.9f), Tinted(new Color(140, 145, 158)), rot);
+                var flick = (float)Random.Shared.NextDouble();
+                r.DrawRect(back - up * (2.6f + flick * 1.4f), new Vector2(1.3f, 2.2f + flick * 1.6f),
+                    new Color(255, 170, 60), rot);
+                r.DrawRect(back - up * 2.2f, new Vector2(0.8f, 1.2f), new Color(255, 235, 160), rot);
+                // Dangling legs (no ground to stride on).
+                for (var i = -1; i <= 1; i += 2)
+                {
+                    var a = MathF.Sin(t * 5f + _phase + i * 2f) * 0.25f;
+                    r.DrawRect(Position - up * 1.8f + right * (i * 1.0f), new Vector2(0.9f, 2.8f), leather, rot + a + 0.2f * i);
+                }
+                r.DrawRect(Position + up * 1.2f, new Vector2(3.6f, 4.2f), leather, rot);
+                var head = Position + up * 4.4f;
+                r.DrawCircle(head, 2.2f, skin);
+                r.DrawRect(head + up * 1.0f, new Vector2(4.0f, 1.3f), packC, rot); // goggle band
+                r.DrawCircle(head + right * (facing * 1.0f) + up * 1.0f, 0.8f, Tinted(new Color(190, 220, 240)));
+                var aim = _gunAim.LengthSquared() > 0.01f ? _gunAim : right * facing;
+                var pAng = MathF.Atan2(aim.Y, aim.X);
+                var grip = Position + right * (facing * 2.0f) + up * 1.6f;
+                r.DrawRect(grip + aim * 2.4f, new Vector2(3.8f, 1.2f), Tinted(new Color(80, 82, 92)), pAng);
+                if (_swing > 0f)
+                    r.DrawCircle(grip + aim * 5.0f, 1.4f, new Color(255, 220, 140));
+                break;
+            }
+            case CreatureKind.Pyro:
+            {
+                // Flame heavy: a broad scorched pressure suit, riveted fuel tank on the
+                // back, hose to a wide nozzle. The visor glows like a furnace when the hose
+                // is open.
+                var suit = Tinted(new Color(96, 74, 58));
+                var scorch = Tinted(new Color(60, 48, 42));
+                var tank = Tinted(new Color(140, 60, 45));
+                var stride = MathF.Min(MathF.Abs(Vector2.Dot(Velocity, right)) / 30f, 1f);
+                for (var i = -1; i <= 1; i += 2)
+                {
+                    var a = MathF.Sin(t * 8f + _phase + i * 1.6f) * 0.4f * stride;
+                    r.DrawRect(Position - up * 1.8f + right * (i * 1.4f), new Vector2(1.4f, 3.2f), scorch, rot + a);
+                }
+                // Fuel tank on the trailing shoulder.
+                r.DrawRect(Position - right * (facing * 2.8f) + up * 2.2f, new Vector2(2.4f, 4.0f), tank, rot);
+                r.DrawRect(Position - right * (facing * 2.8f) + up * 4.2f, new Vector2(1.6f, 0.8f), Tinted(new Color(200, 190, 170)), rot);
+                r.DrawRect(Position + up * 1.6f, new Vector2(5.2f, 5.2f), suit, rot);
+                r.DrawRect(Position + up * 0.4f, new Vector2(5.2f, 1.0f), scorch, rot); // belt of soot
+                var head = Position + up * 5.2f + right * (facing * 0.4f);
+                r.DrawCircle(head, 2.4f, suit);
+                // Furnace visor: banked coals at rest, white-hot while hosing.
+                r.DrawRect(head + right * (facing * 0.8f) + up * 0.2f, new Vector2(2.6f, 1.1f),
+                    _swing > 0f ? new Color(255, 230, 150) : new Color(200, 90, 40), rot);
+                // Nozzle held two-handed, with a pilot flame (and gout while firing).
+                var aim = _gunAim.LengthSquared() > 0.01f ? _gunAim : right * facing;
+                var nAng = MathF.Atan2(aim.Y, aim.X);
+                var grip = Position + right * (facing * 2.6f) + up * 1.4f;
+                r.DrawRect(grip + aim * 2.6f, new Vector2(4.6f, 1.5f), scorch, nAng);
+                r.DrawCircle(grip + aim * 5.2f, _swing > 0f ? 1.8f : 0.8f,
+                    _swing > 0f ? new Color(255, 200, 90) : new Color(255, 140, 60));
+                break;
+            }
             case CreatureKind.Saucer:
             {
                 // Classic disc-craft: a wide banked hull with a glass canopy dome, running
