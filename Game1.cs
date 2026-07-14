@@ -3518,6 +3518,93 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.Batch.End();
     }
 
+    /// <summary>The title screen: game name over three save-slot cards — empty slots offer
+    /// NEW GAME, played ones summarise the campaign and flag a suspended run.</summary>
+    private void DrawTitle()
+    {
+        GraphicsDevice.Clear(new Color(7, 9, 18));
+
+        const string title = "DWARF MINER";
+        _renderer.DrawText(title,
+            new Vector2((VirtualWidth - _renderer.MeasureText(title, 5)) / 2f, 110),
+            new Color(235, 205, 120), 5);
+
+        var sb = _renderer.Batch;
+        const int cardW = 460, cardH = 64, gap = 14;
+        var x0 = (VirtualWidth - cardW) / 2;
+        var y0 = 250;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        for (var i = 0; i < SaveSlots.Count; i++)
+        {
+            var y = y0 + i * (cardH + gap);
+            var hot = i == _titleCursor;
+            sb.Draw(_renderer.Pixel, new Rectangle(x0, y, cardW, cardH),
+                hot ? new Color(45, 52, 76, 240) : new Color(20, 23, 34, 220));
+            var border = hot ? new Color(255, 220, 120) : new Color(95, 100, 118);
+            sb.Draw(_renderer.Pixel, new Rectangle(x0, y, cardW, 2), border);
+            sb.Draw(_renderer.Pixel, new Rectangle(x0, y + cardH - 2, cardW, 2), border);
+            sb.Draw(_renderer.Pixel, new Rectangle(x0, y, 2, cardH), border);
+            sb.Draw(_renderer.Pixel, new Rectangle(x0 + cardW - 2, y, 2, cardH), border);
+        }
+        sb.End();
+
+        for (var i = 0; i < SaveSlots.Count; i++)
+        {
+            var y = y0 + i * (cardH + gap);
+            var (meta, hasRun) = _slotInfo[i];
+            var hot = i == _titleCursor;
+            _renderer.DrawText($"SLOT {i + 1}", new Vector2(x0 + 16, y + 10),
+                hot ? Color.White : new Color(170, 175, 190), 2);
+            if (meta is null)
+            {
+                _renderer.DrawText("NEW GAME", new Vector2(x0 + 16, y + 38),
+                    new Color(140, 210, 150));
+            }
+            else
+            {
+                var line = $"CONTINUE - {meta.Escapes} ESCAPES, {meta.TitansDefeated} TITANS, {meta.TotalSouls()} SOULS";
+                _renderer.DrawText(line, new Vector2(x0 + 16, y + 38), new Color(190, 200, 220));
+                if (hasRun)
+                    _renderer.DrawText("RUN IN PROGRESS",
+                        new Vector2(x0 + cardW - 16 - _renderer.MeasureText("RUN IN PROGRESS"), y + 10),
+                        new Color(255, 220, 120));
+            }
+        }
+
+        var hint = "UP/DOWN OR 1-3 SELECT   ENTER START   ESC QUIT";
+        _renderer.DrawText(hint,
+            new Vector2((VirtualWidth - _renderer.MeasureText(hint)) / 2f, y0 + 3 * (cardH + gap) + 24),
+            new Color(150, 165, 200));
+    }
+
+    /// <summary>The pause overlay (Esc): dimmed frozen frame with resume / return to the
+    /// title / quit. Drawn atop both the space screen and live runs.</summary>
+    private void DrawPauseMenu()
+    {
+        if (!_pauseOpen) return;
+        var sb = _renderer.Batch;
+        const int boxW = 300, boxH = 150;
+        var bx = (VirtualWidth - boxW) / 2;
+        var by = (VirtualHeight - boxH) / 2;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(_renderer.Pixel, new Rectangle(0, 0, VirtualWidth, VirtualHeight), new Color(0, 0, 0, 150));
+        sb.Draw(_renderer.Pixel, new Rectangle(bx, by, boxW, boxH), new Color(18, 21, 32, 245));
+        sb.Draw(_renderer.Pixel, new Rectangle(bx, by, boxW, 2), new Color(255, 220, 120));
+        sb.Draw(_renderer.Pixel, new Rectangle(bx, by + boxH - 2, boxW, 2), new Color(255, 220, 120));
+        sb.End();
+        _renderer.DrawText("PAUSED", new Vector2((VirtualWidth - _renderer.MeasureText("PAUSED", 2)) / 2f, by + 14),
+            new Color(255, 220, 120), 2);
+        var options = new[] { "RESUME", "RETURN TO MENU", "QUIT GAME" };
+        for (var i = 0; i < options.Length; i++)
+        {
+            var hot = i == _pauseCursor;
+            var label = hot ? "> " + options[i] : options[i];
+            _renderer.DrawText(label,
+                new Vector2((VirtualWidth - _renderer.MeasureText(label)) / 2f, by + 52 + i * 26),
+                hot ? Color.White : new Color(170, 175, 190));
+        }
+    }
+
     /// <summary>The boot load screen: title, a progress bar fed by the survey warm-up, and
     /// the name of the world currently generating. Short by design — it exists to soak up
     /// the per-planet world generation that otherwise stutters the first seconds of play.</summary>
