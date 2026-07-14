@@ -163,7 +163,7 @@ public static class RunSave
                 Oxygen = r.ReadSingle(),
                 HasAirTank = r.ReadBoolean(),
                 PickaxeTier = r.ReadInt32(),
-                HasDrill = r.ReadBoolean(), HasHammer = r.ReadBoolean(), HasLantern = r.ReadBoolean(),
+                HasDrill = r.ReadBoolean(), HasHammer = r.ReadBoolean(), LightTier = r.ReadInt32(),
                 HasArmor = r.ReadBoolean(), HasCoreDrill = r.ReadBoolean(),
                 HasPistol = r.ReadBoolean(), HasMachineGun = r.ReadBoolean(), HasLaser = r.ReadBoolean(),
                 HasLaserCannon = r.ReadBoolean(), HasRocketLauncher = r.ReadBoolean(),
