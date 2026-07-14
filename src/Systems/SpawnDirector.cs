@@ -207,10 +207,18 @@ public static class SpawnDirector
             run.Spawners.Add(new Spawner(floor, SpawnerKind.GooPile));
             goo++;
         }
-        // Lizard doors: one brick doorway per warren hall — the warren's slow trickle.
+        // Lizard doors: one brick doorway per warren hall, settled onto the hall floor —
+        // the warren's slow trickle.
         foreach (var (dr2, dt2) in planet.LizardDens)
         {
             var den = planet.TileToWorld(dr2, dt2);
+            var denUp = planet.UpAt(den);
+            for (var d = 4f; d <= 60f; d += 4f)
+            {
+                if (!planet.IsSolidAt(den - denUp * d)) continue;
+                den -= denUp * (d - 4f);
+                break;
+            }
             run.Spawners.Add(new Spawner(den, SpawnerKind.LizardDoor));
         }
         // Alien homes: every sixth city address is a marked household that keeps sending
