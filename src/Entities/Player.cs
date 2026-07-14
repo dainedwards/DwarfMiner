@@ -110,7 +110,11 @@ public sealed class Player
     private float JetRiseSpeed => JetTier4 ? 110f : JetTier3 ? 95f : JetTier2 ? 82f : 70f;
     /// <summary>Net upward acceleration while thrusting (applied on top of cancelling
     /// gravity) — low enough that catching a fall takes a beat, the Noita float.</summary>
-    private const float JetLift = 150f;
+    private const float JetLift = 165f;
+    /// <summary>One-shot upward velocity kick applied the frame a burn first lights — the
+    /// "more initial thrust" pop, on top of the steady lift acceleration.</summary>
+    private const float JetInitialKick = 55f;
+    private bool _jetPrev;   // was the jet burning last frame (for the initial-kick edge)
     /// <summary>Seconds a grounded refill takes, whatever the tier's cap.</summary>
     private const float JetRefillTime = 2.4f;
     /// <summary>True on frames the jet actually burned — Game1 reads it to emit the
