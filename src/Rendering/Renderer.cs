@@ -358,9 +358,9 @@ public sealed class Renderer
                     // An embedded gem draws on top of whatever host it sits in.
                     var overlayGem = planet.GemAt(r, t);
                     if (overlayGem != TileKind.Sky)
-                        DrawGemLozenge(centre, right, up, rotation, chord, overlayGem);
+                        DrawGemCrystal(centre, hash, overlayGem);
                     else if (Tiles.IsGem(k))
-                        DrawGemLozenge(centre, right, up, rotation, chord, k);
+                        DrawGemCrystal(centre, hash, k);
                 }
 
                 // Grass hugs exposed edges, Terraria-style: the green wraps down exposed
