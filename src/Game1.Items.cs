@@ -152,6 +152,26 @@ public sealed partial class DwarfMinerGame
                 Owned = () => _run.Player.HasRocketLauncher, Use = FireRocket,
                 OnCraft = Own("rocket_launcher", () => _run.Player.HasRocketLauncher = true),
             },
+            // ─── Elemental arms — they fire the cell sim itself (fire/acid) or arc between
+            //     bodies (lightning), so they play by material rules, not ballistics. ──────
+            ["flamethrower"] = new()
+            {
+                Weapon = true, NeedsCooldown = true, ShotSound = "shoot_flame",
+                Owned = () => _run.Player.HasFlamethrower, Use = FireFlamethrower,
+                OnCraft = Own("flamethrower", () => _run.Player.HasFlamethrower = true),
+            },
+            ["acid_spewer"] = new()
+            {
+                Weapon = true, NeedsCooldown = true, ShotSound = "shoot_spew",
+                Owned = () => _run.Player.HasAcidSpewer, Use = FireAcidSpewer,
+                OnCraft = Own("acid_spewer", () => _run.Player.HasAcidSpewer = true),
+            },
+            ["lightning_gun"] = new()
+            {
+                Weapon = true, NeedsCooldown = true, ShotSound = "shoot_zap",
+                Owned = () => _run.Player.HasLightningGun, Use = FireLightningGun,
+                OnCraft = Own("lightning_gun", () => _run.Player.HasLightningGun = true),
+            },
             ["cannon"] = new()
             {
                 Weapon = true, NeedsCooldown = true, ShotSound = "shoot_cannon",
