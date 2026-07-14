@@ -1783,7 +1783,10 @@ public sealed class Creature
         if (MathF.Abs(moveAxis) > 0.1f && IsGrounded(planet, up)
             && planet.IsSolidAt(Position + right * (MathF.Sign(moveAxis) * (Radius + 3f))))
         {
-            vN = 120f;
+            // Door-users work the latch instead of hopping at the leaf.
+            var ahead = Position + right * (MathF.Sign(moveAxis) * (Radius + 3f));
+            if (!(CanUseDoors(Kind) && TryOpenDoorAt(planet, up, ahead)))
+                vN = 120f;
         }
         Velocity = right * vT + up * vN;
     }
