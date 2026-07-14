@@ -2864,6 +2864,40 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.Batch.End();
     }
 
+    /// <summary>The boot load screen: title, a progress bar fed by the survey warm-up, and
+    /// the name of the world currently generating. Short by design — it exists to soak up
+    /// the per-planet world generation that otherwise stutters the first seconds of play.</summary>
+    private void DrawLoading()
+    {
+        GraphicsDevice.Clear(new Color(7, 9, 18));
+
+        const string title = "DWARF MINER";
+        _renderer.DrawText(title,
+            new Vector2((VirtualWidth - _renderer.MeasureText(title, 5)) / 2f, VirtualHeight / 2f - 110),
+            new Color(235, 205, 120), 5);
+
+        var done = _warmDone;
+        var total = Math.Max(1, _warmTotal);
+        var frac = MathHelper.Clamp(done / (float)total, 0f, 1f);
+        const int barW = 420, barH = 10;
+        var bx = (VirtualWidth - barW) / 2;
+        var by = VirtualHeight / 2 + 14;
+        var sb = _renderer.Batch;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(_renderer.Pixel, new Rectangle(bx - 2, by - 2, barW + 4, barH + 4), new Color(58, 62, 88));
+        sb.Draw(_renderer.Pixel, new Rectangle(bx, by, barW, barH), new Color(14, 17, 28));
+        sb.Draw(_renderer.Pixel, new Rectangle(bx, by, (int)(barW * frac), barH), new Color(160, 205, 125));
+        sb.End();
+
+        var dots = new string('.', 1 + (int)(_totalTime * 2.5f) % 3);
+        var label = _warmName is { } nm && done < total
+            ? $"SURVEYING {nm.ToUpperInvariant()}{dots}"
+            : $"CHARTING SYSTEM{dots}";
+        _renderer.DrawText(label,
+            new Vector2((VirtualWidth - _renderer.MeasureText(label)) / 2f, by + 24),
+            new Color(150, 165, 200));
+    }
+
     /// <summary>Real rendered frame rate + smoothed CPU times, top-right on every screen.
     /// MonoGame drops Draws when a fixed-step frame overruns, so FPS here is the number
     /// that actually stutters; UPD/DRW attribute the blame.</summary>
