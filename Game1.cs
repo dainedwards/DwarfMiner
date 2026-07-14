@@ -3751,18 +3751,11 @@ public sealed partial class DwarfMinerGame : Game
         _lightGrid.Begin(_run.Planet, _camera);
         _renderer.LightGridBeginMs = _lightSw.Elapsed.TotalMilliseconds;
 
-        // Player light — reach scales with the carried-light tier (bare stub → torch →
-        // lantern → headlamp → sunstone), which is what makes the light ladder feel like
-        // real progression against the dark. No depth gating any more: on the surface the
-        // propagated sunlight simply out-brightens the aura (seeds combine by max).
-        var lightMul = _run.Player.EffectiveLightTier switch
-        {
-            0 => 0.30f,   // bare headlamp stub — see your own feet, not much else
-            1 => 0.65f,   // torch
-            2 => 1.00f,   // lantern
-            3 => 1.50f,   // miner's headlamp
-            _ => 2.10f,   // sunstone charm
-        };
+        // Player light — reach scales with the worn light-slot item (bare stub → torch →
+        // lantern → headlamp I-IV → sunstone), which is what makes the light ladder feel
+        // like real progression against the dark. No depth gating any more: on the surface
+        // the propagated sunlight simply out-brightens the aura (seeds combine by max).
+        var lightMul = _run.Player.LightMul;
         _renderer.AddLight(_run.Player.Position, 150f * lightMul, new Color(245, 215, 165));
         // The carried lamp is also a ray-cast hero light: a direct beam that cuts hard
         // Noita-style shadows behind pillars and creatures, layered over the soft grid
