@@ -2583,6 +2583,16 @@ public sealed partial class DwarfMinerGame : Game
     /// the current charge. Read by every Fire*/ThrowTorch method so they share one gauge.</summary>
     private float ThrowSpeed(float min, float max) => MathHelper.Lerp(min, max, _throwCharge);
 
+    /// <summary>True if the selected throwable can actually be thrown right now (ammo in
+    /// stock, or god mode) — so charging only starts when a throw would land.</summary>
+    private bool CanThrowSelected(string id)
+    {
+        if (_run.Player.FlyMode) return true;
+        if (_items.TryGetValue(id, out var def) && def.Ammo is { } ammo)
+            return _run.Player.Inventory.Count(ammo) > 0;
+        return true;
+    }
+
     /// <summary>TNT: a heavy satchel charge. Barely throwable — a short weighty lob with a
     /// long fuse — but the biggest non-nuke blast in the game. Placement tool, not artillery.</summary>
     private void FireTnt(Vector2 worldCursor)
