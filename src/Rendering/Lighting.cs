@@ -90,7 +90,9 @@ public sealed class Lighting
     public void Composite(SpriteBatch target, Point screenSize)
     {
         if (_rt is null) return;
-        target.Begin(blendState: Multiply, samplerState: SamplerState.PointClamp);
+        // Linear upscale — the propagated grid is already smooth; point sampling would
+        // re-pixelate the gradients at world-pixel steps.
+        target.Begin(blendState: Multiply, samplerState: SamplerState.LinearClamp);
         target.Draw(_rt, new Rectangle(0, 0, screenSize.X, screenSize.Y), Color.White);
         target.End();
     }
