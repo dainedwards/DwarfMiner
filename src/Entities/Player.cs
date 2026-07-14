@@ -209,6 +209,7 @@ public sealed class Player
     private const float JumpReleaseGravityMul = 2.4f;
 
     private bool _jumpHeldPrev;       // for edge detection inside Update
+    private float _jumpHoldTime;      // continuous hold duration (tap-vs-hold jet gate)
     private float _coyoteTimer;       // counts down from CoyoteTime after leaving ground
     private float _jumpBufferTimer;   // counts down from JumpBufferTime after a jump press
 
