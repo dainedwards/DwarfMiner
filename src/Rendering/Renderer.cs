@@ -410,6 +410,25 @@ public sealed class Renderer
                         DrawGemCrystal(centre, hash, overlayGem);
                     else if (Tiles.IsGem(k))
                         DrawGemCrystal(centre, hash, k);
+                    // Precious metals catch the light: gold/silver/platinum tiles carry a
+                    // slow travelling glint — each tile flashes a bright speck for a moment
+                    // on its own hash phase, so a vein twinkles as you pan past it.
+                    else if (k is TileKind.GoldOre or TileKind.SilverOre or TileKind.PlatinumOre)
+                    {
+                        var phase = (Time * 0.8f + (hash & 0xFF) / 255f) % 1f;
+                        if (phase < 0.16f)
+                        {
+                            var gx = (hash >> 8) & 7;
+                            var gy = (hash >> 11) & 7;
+                            var bright = phase < 0.08f ? Color.White : Tiles.OreSpeckle(k);
+                            DrawDeco(centre, right, up, rotation, chord, gx, gy, 1, 1, bright);
+                            if (phase is > 0.04f and < 0.12f) // cross-flare at the peak
+                            {
+                                DrawDeco(centre, right, up, rotation, chord, Math.Max(0, gx - 1), gy, 1, 1, bright * 0.6f);
+                                DrawDeco(centre, right, up, rotation, chord, Math.Min(7, gx + 1), gy, 1, 1, bright * 0.6f);
+                            }
+                        }
+                    }
                 }
 
                 // Grass hugs exposed edges, Terraria-style: the green wraps down exposed
