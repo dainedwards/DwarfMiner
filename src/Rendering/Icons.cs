@@ -153,22 +153,21 @@ public static class Icons
         {
             "................",
             "................",
-            "................",
-            "...SSSSSSSSSS...",
-            "...SSSSSSSSSS...",
-            "...SSSssssSSS...",
-            "...SSS....SSS...",
-            "...SSS....SSS...",
-            "...SSS....SSS...",
-            "...SSS....SSS...",
-            "...SSS....SSS...",
-            "...sss....sss...",
-            "................",
-            "................",
+            "..OOOOOOOOOOOO..",
+            ".OLLLLLLLMMMDDO.",
+            ".OLLLLLMMMMMDDO.",
+            ".OLLMMOOOOMMDDO.",
+            ".OLMMO....OMDDO.",
+            ".OLMMO....OMDDO.",
+            ".OLMDO....OMDDO.",
+            ".OLMDO....ODDDO.",
+            ".OLMDO....ODDDO.",
+            ".OOOOO....OOOOO.",
             "................",
             "................",
-        }, new Dictionary<char, Color>
-        { ['.'] = Color.Transparent, ['S'] = light, ['s'] = dark });
+            "................",
+            "................",
+        }, ArmorPalette(light, dark));
 
     private static Texture2D BuildBoots(GraphicsDevice gd, Color light, Color dark) =>
         Renderer.BuildSprite(gd, new[]
