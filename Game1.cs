@@ -1815,6 +1815,49 @@ public sealed partial class DwarfMinerGame : Game
     /// resource, every creature part, and every id any active recipe bills in (which sweeps
     /// in planet-specific ship ores automatically). Mirrors the mothership debug menu's
     /// "fill cargo hold" grant, planet-side.</summary>
+    /// <summary>Drop items out of the pack onto the ground (right-click context menu).
+    /// Gems fall as physical pickups you can grab back; raw materials scatter as real dust
+    /// cells (up to a visual cap — dumping a 9999 stack discards the rest); permanent
+    /// tools can't be dropped at all.</summary>
+    private void DropItem(string id, int count)
+    {
+        if (_items.TryGetValue(id, out var def) && def.Owned is not null)
+        {
+            _toast = "CAN'T DROP TOOLS OR WORN GEAR";
+            _toastTimer = 2f;
+            return;
+        }
+        count = Math.Min(count, _run.Player.Inventory.Count(id));
+        if (count <= 0 || !_run.Player.Inventory.TryConsume(id, count)) return;
+
+        var up = _run.Planet.UpAt(_run.Player.Position);
+        var right = new Vector2(-up.Y, up.X);
+        // Which tile kind does this id come from? (Reverse of Tiles.Drop.)
+        TileKind srcKind = TileKind.Sky;
+        foreach (var k in Enum.GetValues<TileKind>())
+            if (Tiles.Drop(k) == id) { srcKind = k; break; }
+
+        if (srcKind is TileKind.Ruby or TileKind.Sapphire or TileKind.Diamond
+            or TileKind.Emerald or TileKind.Voidstone or TileKind.Crystal)
+        {
+            // Gems drop whole — pickups that bounce and can be re-collected.
+            for (var i = 0; i < Math.Min(count, 20); i++)
+                _run.Pickups.Add(new Pickup(_run.Player.Position + up * 3f, srcKind,
+                    right * (((float)Random.Shared.NextDouble() - 0.5f) * 90f) + up * 70f));
+        }
+        else if (srcKind != TileKind.Sky)
+        {
+            for (var i = 0; i < Math.Min(count, 60); i++)
+                _run.Cells.LaunchAtWorld(_run.Player.Position + up * 2f,
+                    right * (((float)Random.Shared.NextDouble() - 0.5f) * 110f)
+                    + up * (50f + (float)Random.Shared.NextDouble() * 60f),
+                    Material.Sand, srcKind);
+        }
+        _particles.EmitDust(_run.Player.Position, 5f);
+        _toast = $"DROPPED {count} {Tiles.ResourceLabel(id)}";
+        _toastTimer = 2f;
+    }
+
     private void GrantGodmodeMaterials()
     {
         var inv = _run.Player.Inventory;
