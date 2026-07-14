@@ -491,6 +491,10 @@ public sealed partial class DwarfMinerGame : Game
         // framerate right as the player landed.
         SpawnDirector.SpawnInitialFauna(run);
         run.Populated = true;
+        // Digest the census's physics dirt UNCONDITIONALLY (not under the cancellable
+        // settle): a last-second atmosphere entry that cancels the settle must not dump
+        // planet-wide collapse checks into the first live frames.
+        for (var i = 0; i < 30; i++) run.Physics.Update(1f / 60f);
 
         // Pre-settle the seeded liquids during load: the first ~2s of cell ticks carry every
         // seeded cell awake (tens of ms per tick at Density 8). Burning them here turns a
