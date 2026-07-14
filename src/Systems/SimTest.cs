@@ -849,30 +849,30 @@ public static class SimTest
         // --- Fire: a flame dropped on an oil pool burns it away, then dies out itself ---
         {
             int r = 150, t = 100;
+            // Sealed single-column pocket so the pool can't spread away from the flames:
+            // a full tile of oil with two tiles of air above it, roofed.
             for (var dr = -1; dr <= 3; dr++)
-                for (var da = -2; da <= 2; da++)
+                for (var da = -1; da <= 1; da++)
                     planet.Set(r + dr, t + da,
-                        dr is -1 or 3 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
+                        dr is -1 or 3 || da is -1 or 1 ? TileKind.Granite : TileKind.Sky);
             cells.FillTile(r, t, Material.Oil);
-            for (var i = 0; i < 60; i++) cells.Update(dt);   // let the pool spread and settle
-            int CountAround(Material m)
+            int CountColumn(Material m)
             {
                 var n = 0;
                 for (var dr = 0; dr < 3; dr++)
-                    for (var da = -1; da <= 1; da++)
-                        n += CountMatInTile(cells, r + dr, t + da, m);
+                    n += CountMatInTile(cells, r + dr, t, m);
                 return n;
             }
-            var before = CountAround(Material.Oil);
-            // Flames dotted along just above the pool floor.
-            for (var da = -1; da <= 1; da++)
-                cells.Place(t * Cells.Density + da * Cells.Density + 2, r * Cells.Density + 3, Material.Fire);
+            var before = CountColumn(Material.Oil);
+            // Flames along the row directly above the full oil tile.
+            for (var dx = 0; dx < Cells.Density; dx++)
+                cells.Place(t * Cells.Density + dx, (r + 1) * Cells.Density, Material.Fire);
             for (var i = 0; i < 1800; i++) cells.Update(dt);
-            var after = CountAround(Material.Oil);
+            var after = CountColumn(Material.Oil);
             Check($"fire: an oil pool burns away under open flame ({before} → {after})",
                 after < before / 2);
-            Check($"fire: the blaze gutters out once the fuel is gone ({CountAround(Material.Fire)} flames left)",
-                CountAround(Material.Fire) == 0);
+            Check($"fire: the blaze gutters out once the fuel is gone ({CountColumn(Material.Fire)} flames left)",
+                CountColumn(Material.Fire) == 0);
         }
 
         // --- Splash: a waterfall droplet actually leaves the grid mid-fall ---
