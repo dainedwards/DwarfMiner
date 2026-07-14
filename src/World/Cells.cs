@@ -1795,8 +1795,11 @@ public sealed class Cells
                 // cells per world unit than the old 2-px grid, and each light is a lightmap blit.
                 if ((step++ % (Density / 2)) != 0) continue;
                 // Acid glows a dim toxic green; lava a hot orange; open flame bright and warm.
+                // Radii are real reach: under the propagated grid, seeds combine by MAX (the
+                // old additive blits summed), so a burning pool must carry its brightness in
+                // each seed — a fire that lights 15 tiles of cave needs to say so.
                 r.AddLight(CellToWorld(cx, cy),
-                    lm == Material.Acid ? 7f : lm == Material.Fire ? 9f : 10f,
+                    lm == Material.Acid ? 24f : lm == Material.Fire ? 60f : 50f,
                     lm == Material.Acid ? new Color(90, 190, 40)
                     : lm == Material.Fire ? new Color(255, 170, 70) : new Color(255, 130, 40));
             }
