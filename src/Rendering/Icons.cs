@@ -62,6 +62,11 @@ public static class Icons
         _icons["feast"]      = BuildFeast(gd);
         _icons["core_drill"] = BuildCoreDrill(gd);
         _icons["sentry"]     = BuildSentry(gd);
+        var scannerTex = BuildScanner(gd);
+        _icons["scanner"]     = scannerTex;
+        _icons["scanner_ii"]  = scannerTex;
+        _icons["scanner_iii"] = scannerTex;
+        _icons["scanner_iv"]  = scannerTex;
         _icons["beacon"]     = BuildBeacon(gd);
         _icons["glowshroom"] = BuildGlowshroom(gd);
         _icons["ladder"]     = BuildLadder(gd);
