@@ -3436,24 +3436,17 @@ public sealed partial class DwarfMinerGame : Game
 
         _renderer.EndEntities();
 
-        // === Lighting pass: build a low-res lightmap, then composite it multiplicatively
-        // over the scene. Bright ambient so the surface is uniformly daylight regardless of
-        // angle (no day/night). A subtractive darkness disk centred at the planet then dims
-        // the inner half of the planet so caves still feel dark. Player aura helps near the
-        // dwarf in the dim zone. ===
-        _renderer.BeginLighting(_camera, new Color(180, 175, 195));
+        // === Lighting pass: Terraria-style propagated light. The grid samples occlusion
+        // and sunlight from the planet (open sky = full daylight, bleeding a few tiles
+        // into cave mouths before rock eats it), every AddLight below seeds it, and the
+        // propagation floods light through air while walls block it. No ambient, no
+        // darkness disks: unlit underground is genuinely black now. ===
+        _lightGrid.Begin(_run.Planet, _camera);
 
-        // Player aura — four nested radials stacked together for a soft, wide glow, gated by
-        // depth: on the surface and through the dirt band (layer 1) the dwarf sheds NO light
-        // at all (daylight owns those layers), then the aura fades in across the next stretch
-        // of crust so there's no pop. Size scales with the carried-light tier (bare stub →
-        // torch → lantern → headlamp → sunstone), which is what makes the light ladder feel
-        // like real progression against the near-black deep.
-        var playerDepthTiles = _run.Planet.SurfaceRadiusAt(_run.Player.Position)
-                             - (_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize;
-        // Dirt band bottom ≈ 12 legacy tiles; gate from there to fully-on ~10 legacy tiles deeper.
-        var auraGate = MathHelper.Clamp(
-            (playerDepthTiles - 12f * Planet.LegacyTileScale) / (10f * Planet.LegacyTileScale), 0f, 1f);
+        // Player light — reach scales with the carried-light tier (bare stub → torch →
+        // lantern → headlamp → sunstone), which is what makes the light ladder feel like
+        // real progression against the dark. No depth gating any more: on the surface the
+        // propagated sunlight simply out-brightens the aura (seeds combine by max).
         var lightMul = _run.Player.EffectiveLightTier switch
         {
             0 => 0.30f,   // bare headlamp stub — see your own feet, not much else
@@ -3462,22 +3455,13 @@ public sealed partial class DwarfMinerGame : Game
             3 => 1.50f,   // miner's headlamp
             _ => 2.10f,   // sunstone charm
         };
-        if (auraGate > 0f)
-        {
-            _renderer.AddLight(_run.Player.Position, 200f * lightMul, new Color(85, 70, 50) * auraGate);
-            _renderer.AddLight(_run.Player.Position, 140f * lightMul, new Color(140, 115, 80) * auraGate);
-            _renderer.AddLight(_run.Player.Position, 90f * lightMul,  new Color(200, 170, 120) * auraGate);
-            _renderer.AddLight(_run.Player.Position, 50f * lightMul,  new Color(245, 215, 165) * auraGate);
-            // Sunstone burns cold white at the core — reads as a different light source, not
-            // just a bigger torch. Tier IV pickaxe (diamond) keeps its faint icy sheen.
-            if (_run.Player.EffectiveLightTier >= 4)
-                _renderer.AddLight(_run.Player.Position, 70f * lightMul, new Color(200, 215, 235) * auraGate);
-            if (_run.Player.PickaxeTier >= 4)
-                _renderer.AddLight(_run.Player.Position, 28f, new Color(180, 220, 255) * auraGate);
-        }
-
-        // Core: molten heart of the planet.
-        _renderer.AddLight(_run.Planet.Center, 90f, new Color(255, 90, 30));
+        _renderer.AddLight(_run.Player.Position, 150f * lightMul, new Color(245, 215, 165));
+        // Sunstone burns cold white at the core — reads as a different light source, not
+        // just a bigger torch. Tier IV pickaxe (diamond) keeps its faint icy sheen.
+        if (_run.Player.EffectiveLightTier >= 4)
+            _renderer.AddLight(_run.Player.Position, 70f * lightMul, new Color(200, 215, 235));
+        if (_run.Player.PickaxeTier >= 4)
+            _renderer.AddLight(_run.Player.Position, 28f, new Color(180, 220, 255));
 
         // Visible ores within a tile-radius of the player so we don't scan the whole map.
         // Same pass picks up player-placed lights (Glowshroom, Beacon) so a torch-lit room
