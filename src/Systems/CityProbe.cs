@@ -43,21 +43,34 @@ public static class CityProbe
         var ground = SpawnDirector.FindSurfaceSpawn(planet, ang + 0.5f, planet.Radius);
         var up = planet.UpAt(ground);
         var right = new Vector2(-up.Y, up.X);
-        var bandit = new Creature(ground + up * 5f, CreatureKind.Marauder);
-        var doorAt = ground + right * 14f + up * 3f;
-        var (dx1, dy1) = planet.WorldToTile(doorAt);
-        var (dx2, dy2) = planet.WorldToTile(doorAt + up * Planet.TileSize);
-        var (dx3, dy3) = planet.WorldToTile(doorAt + up * (Planet.TileSize * 2f));
-        planet.Set(dx1, dy1, TileKind.DoorClosed);
-        planet.Set(dx2, dy2, TileKind.DoorClosed);
-        planet.Set(dx3, dy3, TileKind.DoorClosed);
-        var player = new Player(ground + right * 260f + up * 6f);
+        // Hand-build a flat controlled site: a cleared corridor over a stone floor with a
+        // three-tall door leaf across it, so the walk is about the door and nothing else.
+        void Set(Vector2 at, TileKind k)
+        {
+            var (tx, ty) = planet.WorldToTile(at);
+            planet.Set(tx, ty, k);
+        }
+        for (var ox = -30f; ox <= 60f; ox += 2f)
+        {
+            for (var oy = 2f; oy <= 34f; oy += 2f) Set(ground + right * ox + up * oy, TileKind.Sky);
+            Set(ground + right * ox - up * 2f, TileKind.Stone);
+            Set(ground + right * ox + up * 0f, TileKind.Stone);
+        }
+        var doorTiles = new List<(int x, int y)>();
+        for (var oy = 4f; oy <= 12f; oy += 4f)
+        {
+            var (tx, ty) = planet.WorldToTile(ground + right * 20f + up * oy);
+            planet.Set(tx, ty, TileKind.DoorClosed);
+            doorTiles.Add((tx, ty));
+        }
+        var bandit = new Creature(ground + up * 9f, CreatureKind.Marauder);
+        var player = new Player(ground + right * 280f + up * 9f);
         var opened = false;
         for (var i = 0; i < 900 && !opened; i++)
         {
             bandit.Update(1f / 60f, planet, physics, cells, player, null);
-            opened = planet.Get(dx1, dy1) == TileKind.DoorOpen
-                  || planet.Get(dx2, dy2) == TileKind.DoorOpen;
+            foreach (var (tx, ty) in doorTiles)
+                opened |= planet.Get(tx, ty) == TileKind.DoorOpen;
         }
         Console.WriteLine($"  bandit opens a door on approach: {(opened ? "YES" : "NO")}");
         Console.WriteLine("CITYPROBE: DONE");
