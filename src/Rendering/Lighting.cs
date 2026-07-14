@@ -72,7 +72,10 @@ public sealed class Lighting
         if (_rt is null || _rtSize.X != w || _rtSize.Y != h)
         {
             _rt?.Dispose();
-            _rt = new RenderTarget2D(_gd, w, h, false, SurfaceFormat.Color, DepthFormat.None);
+            // PreserveContents: the hero-light pass rebinds this RT after the grid raster —
+            // the default DiscardContents would wipe the grid on that rebind.
+            _rt = new RenderTarget2D(_gd, w, h, false, SurfaceFormat.Color, DepthFormat.None,
+                0, RenderTargetUsage.PreserveContents);
             _rtSize = new Point(w, h);
         }
         _gd.SetRenderTarget(_rt);
