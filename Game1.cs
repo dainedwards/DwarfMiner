@@ -154,6 +154,7 @@ public sealed partial class DwarfMinerGame : Game
     /// src/UI. While the menu is open, mouse/movement input still drives the world but key
     /// events route to the menu.</summary>
     private readonly CraftingMenu _craftingMenu = new();
+    private readonly CharacterScreen _charScreen = new();
     private readonly InventoryUi _invUi = new();
     private readonly DebugMenu _debugMenu = new();
 
