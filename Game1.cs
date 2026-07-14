@@ -4943,6 +4943,16 @@ public sealed partial class DwarfMinerGame : Game
                             new Vector2(1.6f, 1.6f), Color.White);
                     break;
                 }
+                case TitanShotKind.Slug:
+                {
+                    // Bandit bullet: a short lead tracer — smaller and duller than the
+                    // player's own rounds, because it IS the budget version.
+                    var sAng = MathF.Atan2(shot.Velocity.Y, shot.Velocity.X);
+                    _renderer.DrawRect(shot.Position, new Vector2(7f, 2f), new Color(210, 200, 160), sAng);
+                    _renderer.DrawRect(shot.Position + Vector2.Normalize(shot.Velocity) * 2.5f,
+                        new Vector2(3f, 1.2f), Color.White, sAng);
+                    break;
+                }
                 default:   // Laser
                 {
                     var ang = MathF.Atan2(shot.Velocity.Y, shot.Velocity.X);
