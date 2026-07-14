@@ -272,6 +272,10 @@ public sealed partial class DwarfMinerGame : Game
             run.Cells.FillTile(gx, gy, Material.Gas);
         foreach (var (ax, ay) in run.Planet.AcidSeeds)
             run.Cells.FillTile(ax, ay, Material.Acid);
+        // Oil sumps: inert black pools in the mid-crust caves — dead weight until a stray
+        // flame, a lava tongue, or a careless explosion finds them.
+        foreach (var (ox, oy) in run.Planet.OilSeeds)
+            run.Cells.FillTile(ox, oy, Material.Oil);
 
         // Pre-settle the seeded liquids during load: the first ~2s of cell ticks carry every
         // seeded cell awake (tens of ms per tick at Density 8). Burning them here turns a
