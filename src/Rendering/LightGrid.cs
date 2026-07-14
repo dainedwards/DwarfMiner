@@ -65,11 +65,17 @@ public sealed class LightGrid
     private bool _active;
     private int _frame;
 
-    /// <summary>Surface-profile radius bounds (global ring units), cached per planet:
-    /// cells below the min can never see sky (skip the per-cell bearing lookup — that's
-    /// nearly every cell when underground), cells above the max always do.</summary>
+    /// <summary>Per-bearing "first open sky" radius (global ring units): a radial descent
+    /// from space down to the first solid tile, sampled once per planet and refreshed a few
+    /// bearings per frame so player digging updates it within a couple of seconds. Unlike
+    /// Planet.SurfaceProfile (the smooth terrain line), this sees carved lake basins,
+    /// craters, and city towers — a beach at the bottom of a bowl is still under open sky
+    /// and must be sunlit.</summary>
+    private float[]? _skyR;
+    private int _skyCursor;
+    private const int SkyBearings = 2048;
     private Planet? _profilePlanet;
-    private float _profMin, _profMax;
+    private float _skyMin, _skyMax;
 
     public Vector2 Origin => _origin;
     public float CellSize => _cell;
