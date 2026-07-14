@@ -107,6 +107,12 @@ public static class Icons
         // all ~60 icons share one consistent look without redrawing each by hand.
         foreach (var key in new List<string>(_icons.Keys))
             _icons[key] = Polish(gd, _icons[key]);
+
+        // Aliases (post-polish so they share the finished texture): the headlamp upgrade
+        // rungs show the lamp itself in the crafting list.
+        _icons["headlamp_ii"] = _icons["helm_lamp"];
+        _icons["headlamp_iii"] = _icons["helm_lamp"];
+        _icons["headlamp_iv"] = _icons["helm_lamp"];
     }
 
     /// <summary>The high-fidelity finish: (1) 1-px outline in a darkened tint of the
