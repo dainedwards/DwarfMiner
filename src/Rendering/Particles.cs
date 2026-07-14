@@ -1002,7 +1002,9 @@ public sealed class Particles
             3 => new Color(255, 225, 90),    // hot yellow
             _ => new Color(110, 185, 255),   // tier IV: full-blue jet
         };
-        var fade = tier >= 4 ? new Color(30, 50, 120) : new Color(110, 35, 15);
+        // Fade stays saturated (not sooty brown/near-black) so the whole length of the
+        // column reads as flame, not smoke.
+        var fade = tier >= 4 ? new Color(50, 90, 210) : new Color(215, 75, 25);
         for (var i = 0; i < 3; i++)
         {
             // Narrow, fast, fine: a rocket-nozzle jet stream, not a campfire — the tight
