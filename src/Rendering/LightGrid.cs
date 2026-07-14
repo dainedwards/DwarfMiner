@@ -91,22 +91,20 @@ public sealed class LightGrid
         if (!ReferenceEquals(_profilePlanet, planet))
         {
             _profilePlanet = planet;
-            if (planet.SurfaceProfile is { Length: > 0 } prof)
+            _skyR = new float[SkyBearings];
+            for (var b = 0; b < SkyBearings; b++) ScanSkyBearing(planet, b);
+            RecalcSkyBounds();
+        }
+        else if (_skyR is not null)
+        {
+            // Round-robin refresh: 24 bearings per recompute ≈ a full sweep every ~3s, so
+            // a pit dug into the surface starts catching daylight within moments.
+            for (var i = 0; i < 24; i++)
             {
-                _profMin = float.MaxValue; _profMax = float.MinValue;
-                foreach (var p in prof)
-                {
-                    if (p < _profMin) _profMin = p;
-                    if (p > _profMax) _profMax = p;
-                }
-                _profMin += Planet.RingMin;
-                _profMax += Planet.RingMin;
+                ScanSkyBearing(planet, _skyCursor);
+                _skyCursor = (_skyCursor + 1) % SkyBearings;
             }
-            else
-            {
-                // Legacy save without a stamped profile: flat baseline.
-                _profMin = _profMax = planet.SurfaceRadiusAt(planet.Center + Vector2.UnitX);
-            }
+            if (_skyCursor < 24) RecalcSkyBounds();
         }
 
         var halfW = cam.ViewportSize.X / cam.Zoom * 0.5f;
