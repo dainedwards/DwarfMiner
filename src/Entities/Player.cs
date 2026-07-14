@@ -282,6 +282,10 @@ public sealed class Player
         var up = Up(planet);
         var right = new Vector2(-up.Y, up.X);
 
+        // Band of Regeneration (accessory) — a slow trickle back to full health.
+        if (Health > 0f && Health < MaxHealth && Equipment.HasAccessory("band_regen"))
+            Health = MathF.Min(MaxHealth, Health + 1.2f * dt);
+
         // Edge-detect jump press from the held signal. Tracked across fly-mode frames too so
         // mode toggles don't accidentally trigger a buffered jump.
         var jumpEdge = jumpHeld && !_jumpHeldPrev;
