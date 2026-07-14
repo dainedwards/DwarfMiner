@@ -130,6 +130,14 @@ public static class RunSave
                 w.Write(t.BaseAngle);
             }
             w.Write(run.Player.HeadlampTier);
+
+            // v19: melee arsenal (id → upgrade rung).
+            w.Write(run.Player.MeleeTiers.Count);
+            foreach (var (mid, mtier) in run.Player.MeleeTiers)
+            {
+                w.Write(mid);
+                w.Write(mtier);
+            }
         }
         catch (Exception ex)
         {
