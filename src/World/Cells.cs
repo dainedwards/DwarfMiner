@@ -1814,7 +1814,9 @@ public sealed class Cells
             var fm = (Material)f.Mat;
             if (fm != Material.Lava && fm != Material.Fire) continue;
             if (Vector2.DistanceSquared(f.Pos, viewCentre) > flyDistSq) continue;
-            r.AddLight(f.Pos, 7f, new Color(255, 150, 60));
+            // Flying fire IS the flamethrower's burning fuel — it has to visibly carry
+            // its light along the arc, not just glow once it lands.
+            r.AddLight(f.Pos, 45f, new Color(255, 150, 60));
             if (++flyLights >= 48) break;
         }
     }
