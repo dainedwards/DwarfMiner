@@ -20,6 +20,12 @@ public sealed class Lighting
     private Point _rtSize;
     private Matrix _viewMatrix;
 
+    /// <summary>The scene render target the composited frame lives in. The lightmap/bloom
+    /// passes bind their own RTs mid-frame and must return to this (not the backbuffer)
+    /// when done — Game1 renders everything into a fixed virtual-resolution target and
+    /// scales it to the window at present time.</summary>
+    public RenderTarget2D? SceneTarget;
+
     // Bloom ping-pong RTs (half-res of the lightmap) for multi-tap separable Gaussian blur.
     private RenderTarget2D? _bloomA;
     private RenderTarget2D? _bloomB;
