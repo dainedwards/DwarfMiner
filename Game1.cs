@@ -857,6 +857,12 @@ public sealed partial class DwarfMinerGame : Game
     protected override void LoadContent()
     {
         _renderer = new Renderer(GraphicsDevice);
+        // PreserveContents: the lighting/bloom passes bind their own RTs mid-frame and the
+        // composited scene must survive the swap (same reason as the backbuffer setting in
+        // the constructor, which the scene target now stands in for).
+        _sceneRt = new RenderTarget2D(GraphicsDevice, VirtualWidth, VirtualHeight, false,
+            SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+        _renderer.SceneTarget = _sceneRt;
         _sfx.Build();
         Icons.Build(GraphicsDevice);
         _camera = new Camera
