@@ -139,8 +139,10 @@ public sealed class LightGrid
                 var i = y * _side + x;
                 var wp = new Vector2(_origin.X + (x + 0.5f) * _cell, wy);
                 var distTiles = (wp - planet.Center).Length() / Planet.TileSize;
-                // Beyond every possible mountain top: open space, full sun, no tile lookup.
-                if (distTiles >= _profMax)
+                // Beyond the tile grid entirely (planet.Radius, above even skyscrapers —
+                // NOT the terrain profile, which buildings overtop): open space, full sun,
+                // no tile lookup.
+                if (distTiles >= planet.Radius)
                 {
                     _solid[i] = false;
                     _r[i] = sunR; _g[i] = sunG; _b[i] = sunB;
