@@ -108,21 +108,25 @@ public sealed class InventoryUi
             return false;
         }
 
-        // Carrying — drop on a toolbelt slot, or cancel by clicking elsewhere.
+        // Carrying — drop on a toolbelt slot, or cancel by clicking elsewhere. Slots are
+        // typed (1 = mining tool, 2-4 = weapons, 5-9 = items): a drop on a slot that
+        // doesn't accept the id just cancels the drag.
         var carry = _carry.Value;
         for (var s = 0; s < Toolbelt.SlotCount; s++)
         {
             if (!_beltHitTest[s].Contains((int)screenPos.X, (int)screenPos.Y)) continue;
+            if (!Toolbelt.SlotAccepts(s, carry.Id))
+            {
+                _carry = null;
+                return true;
+            }
             var prev = player.Toolbelt.Slots[s];
             player.Toolbelt.Slots[s] = carry.Id;
-            // If the destination held a permanent tool, push it to the first empty slot so
-            // the player doesn't lose it. Stackable displacement is fine — it lives in the
-            // inventory regardless of belt presence.
+            // If the destination held a permanent tool, re-home it in a slot that accepts
+            // it so the player doesn't lose it. Stackable displacement is fine — it lives
+            // in the inventory regardless of belt presence.
             if (prev is not null && Toolbelt.IsPermanent(prev))
-            {
-                var empty = player.Toolbelt.FirstEmpty();
-                if (empty >= 0) player.Toolbelt.Slots[empty] = prev;
-            }
+                player.Toolbelt.AutoEquip(prev);
             player.Toolbelt.Selected = s;
             _carry = null;
             return true;
