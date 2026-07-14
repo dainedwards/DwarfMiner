@@ -269,16 +269,7 @@ public sealed partial class DwarfMinerGame : Game
         // real terrain discs (and the M survey opens instantly) without a frame hitch.
         // The load screen holds on this task: generating a full world per planet used to
         // run underneath the space screen and stutter the first seconds of play.
-        _warmTotal = PlanetDefs.All.Length;
-        _warmTask = System.Threading.Tasks.Task.Run(() =>
-        {
-            foreach (var def in PlanetDefs.All)
-            {
-                _warmName = def.Name;
-                Space.Survey.WorldFor(def);
-                System.Threading.Interlocked.Increment(ref _warmDone);
-            }
-        });
+        StartSurveyWarm();
         // DM_AUTOSTART=<planet-id|resume> skips the space screen and jumps straight into a run
         // (or resumes the suspend save) — keeps DM_AUTOSHOT-driven gameplay verification
         // working without menu input.
