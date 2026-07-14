@@ -528,6 +528,51 @@ public static class WorldGen
     /// into acid-proof (and lava-proof) obsidian. Anchored tiles and existing obsidian are left
     /// alone. The shallow depth budget keeps it hugging the reservoir instead of glassing entire
     /// cave systems that merely touch an acid seep.</summary>
+    /// <summary>Rich metal veins: every world has a coin-flip shot at ONE concentrated
+    /// gold or silver ribbon (and a slim shot at a second) buried in the deep crust — a
+    /// wandering walk that converts plain rock to solid ore in a narrow band. This is the
+    /// jackpot that makes prospecting pay: the ambient charted scatter stays lean (gold
+    /// especially), but striking a rich vein sets you up for a whole flight home. Never
+    /// overwrites anchored tiles, ores, gems, or obsidian — only common rock.</summary>
+    private static void StampRichVeins(Planet planet, Random rng)
+    {
+        var veins = rng.Next(2) + (rng.Next(5) == 0 ? 1 : 0);   // 0-1 usual, rarely 2
+        for (var v = 0; v < veins; v++)
+        {
+            var ore = rng.Next(2) == 0 ? TileKind.GoldOre : TileKind.SilverOre;
+            var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+            // Deep band: below the casual dig, above the core furniture.
+            var frac = 0.55f + (float)rng.NextDouble() * 0.25f;
+            var pos = planet.Center
+                + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * planet.Radius * frac * Planet.TileSize;
+            var heading = (float)rng.NextDouble() * MathHelper.TwoPi;
+            var length = 26 + rng.Next(18);
+            for (var s = 0; s < length; s++)
+            {
+                heading += ((float)rng.NextDouble() - 0.5f) * 0.5f;
+                pos += new Vector2(MathF.Cos(heading), MathF.Sin(heading)) * Planet.TileSize;
+                var rad = 4f + (float)rng.NextDouble() * 3f;
+                var (cr, ct) = planet.WorldToTile(pos);
+                var span = (int)(rad / Planet.TileSize) + 1;
+                for (var dr = -span; dr <= span; dr++)
+                {
+                    var rr = cr + dr;
+                    if (rr < 2 || rr >= planet.Rings - 1) continue;
+                    var n = planet.TilesAt(rr);
+                    var tt0 = (int)((float)ct / planet.TilesAt(Math.Clamp(cr, 0, planet.Rings - 1)) * n);
+                    for (var dt2 = -span; dt2 <= span; dt2++)
+                    {
+                        var tt = ((tt0 + dt2) % n + n) % n;
+                        if ((planet.TileToWorld(rr, tt) - pos).LengthSquared() > rad * rad) continue;
+                        var k = planet.Get(rr, tt);
+                        if (!IsOreHost(k) || Tiles.IsOre(k)) continue;
+                        planet.Set(rr, tt, ore);
+                    }
+                }
+            }
+        }
+    }
+
     /// <summary>Noita-style interconnecting tunnels: a couple dozen "perlin worms" wander
     /// the crust carving narrow winding corridors, each with a chance to fork once. The
     /// noise caves give chambers; the worms give the paths BETWEEN them — the difference
