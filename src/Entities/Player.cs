@@ -881,8 +881,11 @@ public sealed class Player
     public const float SwingArc = 1.9f;
     /// <summary>Gap between the dwarf's centre and the tool's grip end.</summary>
     public const float SwingHandOffset = 1.5f;
-    /// <summary>Drawn length of the swung tool. Tier III's longer platinum haft shows.</summary>
-    public float SwingToolLen => (PickaxeTier >= 3 ? 1.2f : 1.0f) * 5.4f;
+    /// <summary>Drawn length of the swung tool. The starter pickaxe (tier I) is a big
+    /// clumsy thing — 25% larger than the refined tiers (which pairs with its slower swing);
+    /// tier III's longer platinum haft shows again.</summary>
+    public float SwingToolLen =>
+        (PickaxeTier == 1 ? 1.25f : PickaxeTier >= 3 ? 1.2f : 1.0f) * 5.4f;
     /// <summary>How far the swing's strike reaches from the body: hand offset + tool length
     /// + a little slop. Tied to the drawn sprite — the pick only mines what its head can
     /// visibly touch, not out to the old ray range.</summary>
