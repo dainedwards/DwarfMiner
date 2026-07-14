@@ -3552,6 +3552,14 @@ public sealed partial class DwarfMinerGame : Game
             return;
         var worldCursor = _camera.ScreenToWorld(screenPos);
 
+        // Named things first — creatures, gem pickups, embedded gems / crystal tiles get
+        // their proper name; only unnamed ground falls through to the material/tile readout.
+        if (HoverName(worldCursor) is { } name)
+        {
+            _renderer.DrawDebugLabel(name, screenPos + new Vector2(12, 12), new Color(255, 228, 150));
+            return;
+        }
+
         // Cell-grid material wins over the underlying tile, so hovering a sand pile shows
         // "SAND" rather than the dirt tile beneath it.
         string label;
