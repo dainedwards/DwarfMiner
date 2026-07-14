@@ -3399,12 +3399,17 @@ public sealed partial class DwarfMinerGame : Game
         _run.Cells.AddLights(_renderer, viewCentre, viewRadius,
             _camera.Zoom < 0.55f ? 6 : _camera.Zoom < 0.9f ? 3 : 1);
 
-        // Depth darkness: subtract a radial gradient centred at the planet so deep tiles
+        // Depth darkness: subtract radial gradients centred at the planet so deep tiles
         // dim toward black while the surface stays at full ambient. Radius = surfaceRadius
-        // means the gradient tapers to zero exactly at the surface; falloff is quadratic
-        // inward so most of the dimming concentrates near the inner half.
+        // means the outer gradient tapers to zero exactly at the surface; falloff is
+        // quadratic inward. Two stacked disks: the outer one now subtracts the FULL ambient
+        // (the old 170-strength disk left the core a readable grey), and an inner disk at
+        // ~70% radius steepens the curve so mid-depth is properly murky and everything past
+        // ~a quarter radius is pitch black without a carried light — the whole reason the
+        // torch → sunstone ladder exists.
         var surfaceRadius = _run.Planet.Radius * Planet.TileSize;
-        _renderer.Darken(_run.Planet.Center, surfaceRadius, new Color(170, 165, 185));
+        _renderer.Darken(_run.Planet.Center, surfaceRadius, new Color(180, 175, 195));
+        _renderer.Darken(_run.Planet.Center, surfaceRadius * 0.70f, new Color(150, 145, 165));
 
         _renderer.EndLighting();
         _renderer.CompositeLighting(new Point(VirtualWidth, VirtualHeight));
