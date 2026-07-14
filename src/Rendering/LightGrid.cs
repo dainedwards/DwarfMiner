@@ -222,6 +222,9 @@ public sealed class LightGrid
         var x = (int)((worldPos.X - _origin.X) / _cell);
         var y = (int)((worldPos.Y - _origin.Y) / _cell);
         if (x < 0 || y < 0 || x >= _side || y >= _side) return;
+        // Global underground brightness: every seeded source reaches 50% further than its
+        // nominal radius (sunlight isn't seeded, so daylight is untouched).
+        radius *= 1.5f;
         var s = Math.Clamp(0.05f * MathF.Pow(AttAir, -radius / _cell), SeedFloor, SeedCap);
         var i = y * _side + x;
         // Max, not add: overlapping seeds (stacked auras, lava neighbours) brighten to the
