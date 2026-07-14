@@ -61,6 +61,16 @@ public sealed partial class DwarfMinerGame
             setFlag();
             _run.Player.Inventory.Add(id, 1);
             _run.Player.Toolbelt.AutoEquip(id);
+            // Weapons/mining tools also land on the character doll if a fitting slot is free.
+            _run.Player.Equipment.AutoEquip(id);
+        };
+        // Worn gear (armor pieces, carried lights): stock 1 and put it straight on the doll,
+        // replacing whatever occupied that slot — the replaced piece stays in the backpack.
+        Action Wear(string id, EquipSlot slot, Action? setFlag = null) => () =>
+        {
+            setFlag?.Invoke();
+            _run.Player.Inventory.Add(id, 1);
+            _run.Player.Equipment.Set(slot, id);
         };
         // Multi-count stackables (the "5×" recipes) — stock N, then equip like the default.
         Action Stock(string id, int count) => () =>
