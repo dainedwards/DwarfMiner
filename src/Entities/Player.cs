@@ -1088,7 +1088,7 @@ public enum EquipSlot
 /// </summary>
 public sealed class Equipment
 {
-    public const int SlotCount = 11;
+    public const int SlotCount = 12;
     public readonly string?[] Slots = new string?[SlotCount];
 
     public string? Get(EquipSlot s) => Slots[(int)s];
