@@ -219,7 +219,20 @@ public sealed partial class DwarfMinerGame
             // Carried-light ladder — steps sequentially like pickaxe tiers. Each light is a
             // real item now: it lands in the backpack and the doll's torch slot, and only
             // sheds light while equipped there (LightTier stays the crafted-rung gate).
-            ["torch"] = new() { Owned = () => _run.Player.LightTier >= 1, OnCraft = Wear("torch", EquipSlot.Torch, () => _run.Player.LightTier = 1) },
+            // Torches are stackable AND throwable: LMB lobs one that sticks where it hits
+            // and burns there — the classic light-the-shaft-as-you-descend loop.
+            ["torch"] = new()
+            {
+                NeedsCooldown = true, Ammo = "torch", ShotSound = "throw", Use = ThrowTorch,
+                OnCraft = () =>
+                {
+                    _run.Player.Inventory.Add("torch", 1);
+                    if (_run.Player.LightTier < 1) _run.Player.LightTier = 1;
+                    if (_run.Player.Equipment.Get(EquipSlot.Torch) is null)
+                        _run.Player.Equipment.Set(EquipSlot.Torch, "torch");
+                    _run.Player.Toolbelt.AutoEquip("torch");
+                },
+            },
             ["lantern"] = new()
             {
                 Owned = () => _run.Player.LightTier >= 2,
