@@ -99,7 +99,7 @@ public static class Upgrades
             Souls: 2, Mats: new[] { ("ruby", 2), ("diamond", 2) }, SoulKind: "Kong", Requires: "jetpack2"),
 
         new("jetpack4", "Jetpack IV",
-            "The full-blue burner: longest burn, hardest climb",
+            "The full-blue burner: five whole seconds of burn, hardest climb",
             Souls: 3, Mats: new[] { ("diamond", 2), ("voidstone", 2) }, SoulKind: "Kong", Requires: "jetpack3"),
 
         new("shield2", "Aegis Capacitor",
