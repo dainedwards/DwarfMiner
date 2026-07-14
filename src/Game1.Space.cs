@@ -655,7 +655,7 @@ public sealed partial class DwarfMinerGame
         // system keeps drifting behind it, same as the other overlays.
         if (_debugMenu.Open)
         {
-            _debugMenu.Update(keys, _prevKeys);
+            _debugMenu.Update(keys, _prevKeys, mouse, _prevMouse);
             _space.Update(dt, 0f, thrust: false, brake: false);
             TickSpaceCameraAndBreach(dt);
             return;
