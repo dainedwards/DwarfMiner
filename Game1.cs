@@ -2324,6 +2324,7 @@ public sealed partial class DwarfMinerGame : Game
     private const float LavaBurnDps = 42f;   // ~2.4s from full — a lava bath is near-instant death
     private const float AcidBurnDps = 20f;   // corrosive but survivable if you scramble out
     private const float GasChokeOxygen = 26f; // air burned by breathing gas, on top of depth drain
+    private const float FireBurnDps = 14f;   // open flame — painful, but fire is patchy and brief
 
     /// <summary>Body-contact hazards from the cell sim: lava sears, acid corrodes (both bypass
     /// armor — no plate stops molten rock or acid), and gas chokes by burning air. God mode is
