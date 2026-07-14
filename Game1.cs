@@ -168,6 +168,10 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>Reentrancy guard for the ClientSizeChanged → ApplyChanges round-trip.</summary>
     private bool _resizing;
 
+    /// <summary>Terraria-style propagated light field — rebuilt every playing frame from
+    /// the view. See src/Rendering/LightGrid.cs.</summary>
+    private readonly LightGrid _lightGrid = new();
+
     /// <summary>Boot-time survey warm-up (one world generated per planet, for the system
     /// view's terrain discs and the M-key ore census). The load screen holds until it
     /// completes so the generation never contends with live play.</summary>
