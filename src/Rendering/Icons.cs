@@ -97,7 +97,161 @@ public static class Icons
         _icons["magnet_ring"]   = BuildMagnetRing(gd);
         _icons["miners_charm"]  = BuildMinersCharm(gd);
         _icons["aegis_pendant"] = BuildAegisPendant(gd);
+        _icons["flamethrower"]  = BuildFlamethrower(gd);
+        _icons["acid_spewer"]   = BuildAcidSpewer(gd);
+        _icons["lightning_gun"] = BuildLightningGun(gd);
+
+        // Terraria-style finish pass over the whole set: a dark contour outline hugging
+        // every sprite plus a top-lit rim and under-shadow. Applied programmatically so
+        // all ~60 icons share one consistent look without redrawing each by hand.
+        foreach (var key in new List<string>(_icons.Keys))
+            _icons[key] = Polish(gd, _icons[key]);
     }
+
+    /// <summary>The high-fidelity finish: (1) 1-px outline in a darkened tint of the
+    /// adjacent art wherever a transparent pixel borders an opaque one; (2) opaque pixels
+    /// open to the sky (transparent above in the source) get a subtle top-light; (3) pixels
+    /// with nothing below get a subtle under-shade. Together they give every icon the
+    /// contour + directional-light read of Terraria's item sprites.</summary>
+    private static Texture2D Polish(GraphicsDevice gd, Texture2D src)
+    {
+        var w = src.Width;
+        var h = src.Height;
+        var data = new Color[w * h];
+        src.GetData(data);
+        var outp = (Color[])data.Clone();
+
+        bool Opaque(int x, int y) => x >= 0 && y >= 0 && x < w && y < h && data[y * w + x].A > 40;
+
+        for (var y = 0; y < h; y++)
+        {
+            for (var x = 0; x < w; x++)
+            {
+                var i = y * w + x;
+                if (data[i].A > 40)
+                {
+                    // Directional rims read against the fresh outline.
+                    if (!Opaque(x, y - 1))
+                        outp[i] = Color.Lerp(data[i], Color.White, 0.22f);
+                    else if (!Opaque(x, y + 1))
+                        outp[i] = Color.Lerp(data[i], Color.Black, 0.18f);
+                    continue;
+                }
+                // Transparent pixel touching art → contour. Tinted from the neighbours so
+                // warm sprites get warm-dark outlines, not one flat black everywhere.
+                int rSum = 0, gSum = 0, bSum = 0, n = 0;
+                void Tap(int tx, int ty)
+                {
+                    if (!Opaque(tx, ty)) return;
+                    var c = data[ty * w + tx];
+                    rSum += c.R; gSum += c.G; bSum += c.B; n++;
+                }
+                Tap(x - 1, y); Tap(x + 1, y); Tap(x, y - 1); Tap(x, y + 1);
+                if (n > 0)
+                    outp[i] = new Color(rSum / n / 4, gSum / n / 4, bSum / n / 4, 255);
+            }
+        }
+        var tex = new Texture2D(gd, w, h);
+        tex.SetData(outp);
+        src.Dispose();
+        return tex;
+    }
+
+    private static Texture2D BuildFlamethrower(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "..........yY....",
+        "..sSSSSSSSSy....",
+        "..SsssssssSSF...",
+        "..SsssssssSFF...",
+        "..sSSSSSSSS.....",
+        "...RRRR.GGg.....",
+        "...RrrR.GGg.....",
+        "...RrrR.Gg......",
+        "...RRRR.G.......",
+        "....hh..........",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['S'] = new Color(150, 148, 140),   // burner barrel
+        ['s'] = new Color(95, 92, 85),
+        ['R'] = new Color(190, 60, 45),     // fuel tank
+        ['r'] = new Color(125, 35, 28),
+        ['h'] = new Color(80, 78, 72),      // tank hose
+        ['G'] = new Color(105, 75, 50),     // grip
+        ['g'] = new Color(70, 48, 30),
+        ['F'] = new Color(255, 150, 50),    // pilot flame
+        ['y'] = new Color(255, 220, 110),
+        ['Y'] = new Color(255, 245, 180),
+    });
+
+    private static Texture2D BuildAcidSpewer(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "................",
+        "...gGGGGg.......",
+        "..gGLLLGGgSSS...",
+        "..gGLAAAGgsssA..",
+        "..gGAAAAGgSSS...",
+        "...gGAAGg....a..",
+        "....gGGg.....A..",
+        ".....DDd........",
+        ".....DDd........",
+        "....DDd.........",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['G'] = new Color(90, 150, 70),     // reservoir shell
+        ['g'] = new Color(55, 95, 45),
+        ['L'] = new Color(200, 255, 130),   // glass highlight
+        ['A'] = new Color(140, 230, 60),    // acid
+        ['a'] = new Color(95, 170, 40),     // drip
+        ['S'] = new Color(150, 155, 145),   // spout
+        ['s'] = new Color(95, 100, 92),
+        ['D'] = new Color(105, 75, 50),     // grip
+        ['d'] = new Color(70, 48, 30),
+    });
+
+    private static Texture2D BuildLightningGun(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "............w...",
+        "..CC.CC.CC.w....",
+        ".SSSSSSSSSSw.w..",
+        ".SsssssssssWw...",
+        ".SSSSSSSSSSw.w..",
+        "..CC.CC.CC..w...",
+        "....GGg.....v...",
+        "....GGg.........",
+        "...GGg..........",
+        "...GG...........",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['S'] = new Color(120, 130, 160),   // coil housing
+        ['s'] = new Color(75, 82, 108),
+        ['C'] = new Color(140, 170, 255),   // capacitor rings
+        ['W'] = new Color(255, 255, 255),   // arc core
+        ['w'] = new Color(190, 180, 255),   // crackling fork
+        ['v'] = new Color(120, 100, 220),
+        ['G'] = new Color(105, 75, 50),
+        ['g'] = new Color(70, 48, 30),
+    });
 
     private static Texture2D BuildGloves(GraphicsDevice gd, Color light, Color dark) =>
         Renderer.BuildSprite(gd, new[]
