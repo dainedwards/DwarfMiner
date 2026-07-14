@@ -1574,9 +1574,32 @@ public sealed partial class DwarfMinerGame : Game
         // Held LMB activates the selected slot's action. UseSelectedSlot is the single place
         // that maps id → in-world action (mine / shoot / place / throw / heal / …).
         var shootCdBefore = _run.Player.ShootCooldown;
-        if (mouse.LeftButton == ButtonState.Pressed && !clickConsumed && !_invUi.Carrying)
+        var selectedId = _run.Player.Toolbelt.Current;
+        var throwable = selectedId is not null && IsThrowable(selectedId) && !_invUi.Carrying;
+        if (throwable)
         {
-            UseSelectedSlot(worldCursor);
+            // Charge while held (only when a throw is actually available), throw on release.
+            if (mouse.LeftButton == ButtonState.Pressed && !clickConsumed)
+            {
+                if (CanThrowSelected(selectedId!))
+                {
+                    _throwCharging = true;
+                    _throwCharge = MathF.Min(1f, _throwCharge + dt / ThrowChargeTime);
+                }
+            }
+            else if (_throwCharging)
+            {
+                _throwCharging = false;
+                UseSelectedSlot(worldCursor);   // Fire*/ThrowTorch read _throwCharge
+                _throwCharge = 0f;
+            }
+        }
+        else
+        {
+            _throwCharging = false;
+            _throwCharge = 0f;
+            if (mouse.LeftButton == ButtonState.Pressed && !clickConsumed && !_invUi.Carrying)
+                UseSelectedSlot(worldCursor);
         }
         // A weapon fired iff the shoot cooldown jumped up this frame — one sound per shot,
         // covering every gun/thrown weapon without touching each fire method. Each weapon
