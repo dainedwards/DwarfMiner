@@ -2826,7 +2826,7 @@ public sealed partial class DwarfMinerGame : Game
         var dist = dir.Length();
         dir /= dist;
         var up = _run.Planet.UpAt(_run.Player.Position);
-        var speed = MathHelper.Clamp(120f + dist * 0.8f, 120f, 230f);
+        var speed = ThrowSpeed(120f, 260f);
         _run.Torches.Add(new ThrownTorch(_run.Player.Position + dir * 5f, dir * speed + up * 50f));
         // Threw the last one straight out of the light slot → the dwarf is empty-handed.
         if (_run.Player.Inventory.Count("torch") == 0
