@@ -1601,6 +1601,10 @@ public sealed partial class DwarfMinerGame : Game
             if (mouse.LeftButton == ButtonState.Pressed && !clickConsumed && !_invUi.Carrying)
                 UseSelectedSlot(worldCursor);
         }
+        // DM_THROWTEST=1: ramp the throw-charge gauge (no input needed) so tooling can
+        // screenshot the reticle gauge. Loops so the fill animates.
+        if (Environment.GetEnvironmentVariable("DM_THROWTEST") is { Length: > 0 })
+            _throwCharge = (_throwCharge + dt * 0.35f) % 1f;
         // A weapon fired iff the shoot cooldown jumped up this frame — one sound per shot,
         // covering every gun/thrown weapon without touching each fire method. Each weapon
         // picks its own voice via ItemDef.ShotSound (falling back to the generic pew).
