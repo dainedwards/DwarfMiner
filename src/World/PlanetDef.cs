@@ -51,6 +51,9 @@ public sealed record PlanetDef(
     float OxygenDrainScale = 1f,
     bool SeedsGas = false,
     bool SeedsAcid = false,
+    // Buries flammable oil sumps in the mid-crust caves (WorldGen) — inert pools that burn
+    // when fire, lava, or an explosion reaches them.
+    bool SeedsOil = false,
     TitanKind Titan = TitanKind.Godzilla,
     int CrystalPockets = 0,
     int FungalPockets = 0,
