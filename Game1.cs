@@ -2739,16 +2739,18 @@ public sealed partial class DwarfMinerGame : Game
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
         var muzzle = _run.Player.Position + dir * 8f;
-        for (var i = 0; i < 3; i++)
+        // Fatter caustic rope — more droplets per spurt, wider fan, slower spurts.
+        for (var i = 0; i < 6; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.24f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.36f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (260f + (float)Random.Shared.NextDouble() * 70f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (240f + (float)Random.Shared.NextDouble() * 90f),
                 Material.Acid);
         }
         _particles.EmitAcidJet(muzzle, dir);
+        _particles.EmitAcidJet(muzzle + dir * 4f, dir);
         foreach (var c in _run.Creatures)
         {
             var to = c.Position - _run.Player.Position;
