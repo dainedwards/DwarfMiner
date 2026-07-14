@@ -518,9 +518,62 @@ public sealed partial class DwarfMinerGame
         _meta.ShipHull = _space.Hull;
     }
 
+    /// <summary>Atmosphere-entry cinematic state: while set, the ship is committed to the
+    /// dive — a couple of seconds of heat-streak plunge that双 buys the background world
+    /// build its head start, so orbit arrival never blocks the frame.</summary>
+    private PlanetDef? _entryDef;
+    private float _entryT;
+    private float _entryBearing;
+    private const float EntryCinematicDur = 2.2f;
+
     private void UpdateSpace(KeyboardState keys, MouseState mouse, float dt)
     {
         _toastTimer -= dt;
+
+        // Committed atmosphere dive: the ship plunges, the camera closes in, the heat
+        // shield glows — and underneath it all the world finishes baking on its thread.
+        if (_entryDef is { } entering)
+        {
+            _entryT += dt;
+            var target = _space.Planets.Find(p => p.Def.Id == entering.Id);
+            if (target is not null)
+            {
+                var toP = target.Pos - _space.ShipPos;
+                if (toP.LengthSquared() > 1f)
+                    _space.ShipVel = Vector2.Lerp(_space.ShipVel,
+                        Vector2.Normalize(toP) * 130f, MathF.Min(1f, dt * 2.5f));
+                _space.ShipPos += _space.ShipVel * dt;
+            }
+            // Camera: press in on the diving ship with a re-entry rattle.
+            _spaceZoom = MathF.Min(2.6f, _spaceZoom + dt * 1.1f);
+            _camera.Zoom = MathHelper.Lerp(_camera.Zoom, _spaceZoom, MathHelper.Clamp(dt * 3f, 0f, 1f));
+            _camera.Rotation = 0f;
+            _camera.SmoothRotation = 0f;
+            var rattle = MathHelper.Clamp(_entryT / 0.8f, 0f, 1f) * 2.2f;
+            _camera.Target = Vector2.Lerp(_camera.Target, _space.ShipPos, MathHelper.Clamp(dt * 8f, 0f, 1f))
+                + new Vector2(((float)Random.Shared.NextDouble() - 0.5f) * rattle,
+                              ((float)Random.Shared.NextDouble() - 0.5f) * rattle);
+
+            // The settle keeps its head start during the show. Only when the cinematic has
+            // played out and the bake STILL isn't done do we cut the settle short — and
+            // the moment it lands, hand over to orbit.
+            var stillBaking = _prefetch.TryGetValue(entering.Id, out var bake) && !bake.Task.IsCompleted;
+            if (_entryT >= EntryCinematicDur)
+            {
+                if (stillBaking)
+                {
+                    bake.SettleCts.Cancel();
+                }
+                else
+                {
+                    _entryDef = null;
+                    CaptureShipState();
+                    _meta.Save();
+                    EnterOrbit(entering, _entryBearing);
+                }
+            }
+            return;
+        }
 
         // F9 — developer menu, space edition: godmode grants instead of boss spawns. The
         // system keeps drifting behind it, same as the other overlays.
