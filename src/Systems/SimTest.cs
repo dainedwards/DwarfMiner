@@ -841,11 +841,11 @@ public static class SimTest
 
         // --- Buoyancy: water poured over oil sinks through it; the oil ends up on top ---
         {
-            int r = 130, t = 60;
+            int r = AlignedRing(130, 3), t = 60;
             for (var dr = -1; dr <= 2; dr++)
-                for (var da = -1; da <= 1; da++)
+                for (var da = -2; da <= 2; da++)
                     planet.Set(r + dr, t + da,
-                        dr is -1 or 2 || da is -1 or 1 ? TileKind.Granite : TileKind.Sky);
+                        dr is -1 or 2 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
             cells.FillTile(r, t, Material.Oil);        // oil at the bottom (unstable)
             cells.FillTile(r + 1, t, Material.Water);  // water on top
             for (var i = 0; i < 600; i++) cells.Update(dt);
