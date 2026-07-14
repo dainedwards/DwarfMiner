@@ -1303,6 +1303,11 @@ public sealed partial class DwarfMinerGame : Game
         _run.Physics.Update(dt);
         _particles.Update(dt, _run.Planet);
 
+        // Thrown torches: fly, stick, and stay. A soft thunk marks the plant.
+        foreach (var torch in _run.Torches)
+            if (torch.Update(dt, _run.Planet))
+                PlayAt("dig", torch.Position, 0.3f, pitch: -0.25f, minGap: 0.08f);
+
         // Sweep dust within a body's reach into the inventory. Each cell carries a fractional
         // resource amount tied to its source TileKind; Cells handles the per-id accumulator and
         // hands back whole units once they cross 1. Done before the cells tick so the
