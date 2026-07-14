@@ -57,7 +57,7 @@ public sealed class CharacterScreen
     /// <summary>Representative item drawn as a dim ghost in each empty slot, Terraria-style,
     /// so the slot's role reads at a glance.</summary>
     private static readonly string[] GhostIds =
-        { "torch", "iron_helmet", "armor", "iron_leggings", "iron_boots", "pistol", "pistol", "pickaxe", "leather_gloves", "magnet_ring", "aegis_pendant" };
+        { "torch", "iron_helmet", "armor", "iron_leggings", "iron_boots", "pistol", "pistol", "pickaxe", "leather_gloves", "magnet_ring", "aegis_pendant", "jetpack" };
 
     public void Show() { Open = true; _carry = null; }
 
