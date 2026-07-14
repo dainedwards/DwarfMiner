@@ -115,6 +115,21 @@ public sealed class Player
     public float MineCooldown;
     public float ShootCooldown;
 
+    /// <summary>Seconds of held aim it takes to raise one placed block/build stamp —
+    /// placement is a short construction job, not an instant conjure, so cover can't be
+    /// spammed up mid-fight. Progress accrues while LMB is held on the same target tile
+    /// and abandons (resets) the frame the hold stops or the aim moves.</summary>
+    public const float BuildTime = 0.45f;
+    /// <summary>Seconds accrued toward the placement being built (HUD progress readout).</summary>
+    public float BuildProgress;
+    /// <summary>Fraction of the current build done, 0 when idle.</summary>
+    public float BuildFraction => BuildProgress <= 0f ? 0f : MathF.Min(1f, BuildProgress / BuildTime);
+    /// <summary>Anchor tile of the stamp under construction — a new aim target restarts.</summary>
+    private (int x, int y)? _buildSite;
+    /// <summary>Set by each frame's placement attempt; Update clears it — one frame without
+    /// an attempt (LMB released, slot switched) abandons the build in progress.</summary>
+    private bool _buildHeld;
+
     /// <summary>Last placed Beacon tile, in world coords. Pressing T teleports to it.</summary>
     public Vector2? BeaconWorld;
 
