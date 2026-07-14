@@ -850,10 +850,9 @@ public static class SimTest
             // ring seam can strand the odd straggler, and that's fine.
             for (var da = -1; da <= 1; da++)
             {
-                cells.FillTile(r, Ti(r, af, da), Material.Water);      // water below (unstable)
-                cells.FillTile(r + 1, Ti(r + 1, af, da), Material.Oil); // oil on top
+                cells.FillTile(r, Ti(r, af, da), Material.Oil);          // oil below —
+                cells.FillTile(r + 1, Ti(r + 1, af, da), Material.Water); // — water on top: unstable
             }
-            // Whole stack is already stable? No: swap the fill order so it's inverted.
             for (var i = 0; i < 900; i++) cells.Update(dt);
             (float mean, int n) MeanRow(Material m)
             {
