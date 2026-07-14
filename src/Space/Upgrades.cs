@@ -95,8 +95,12 @@ public static class Upgrades
         // ── Third-tier lines (phase 10) ──
 
         new("jetpack3", "Jetpack III",
-            "Triple charge and a screaming climb",
+            "Another 30 percent of burn and more lift - yellow flame",
             Souls: 2, Mats: new[] { ("ruby", 2), ("diamond", 2) }, SoulKind: "Kong", Requires: "jetpack2"),
+
+        new("jetpack4", "Jetpack IV",
+            "The full-blue burner: longest burn, hardest climb",
+            Souls: 3, Mats: new[] { ("diamond", 2), ("voidstone", 2) }, SoulKind: "Kong", Requires: "jetpack3"),
 
         new("shield2", "Aegis Capacitor",
             "Deflector shield recharges twice as fast",
