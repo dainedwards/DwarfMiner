@@ -97,11 +97,25 @@ public static class Crafting
             new Dictionary<string, int> { ["iron"] = 3 }),
 
         // ─── Combat ───────────────────────────────────────────────────────────
-        new("armor", "Iron plate armor (−40% damage taken)",
+        new("armor", "Iron plate armor — chest (−40% damage taken)",
             new Dictionary<string, int> { ["iron"] = 8 }),
         // Hunter's path to armour: same protection as iron plate, paid in creature parts.
-        new("chitin_armor", "Chitin armor (−40% damage taken) — hunted, not mined",
+        new("chitin_armor", "Chitin armor — chest (−40% damage taken) — hunted, not mined",
             new Dictionary<string, int> { ["chitin"] = 8, ["hide"] = 3 }),
+        // Armor pieces for the rest of the doll (character screen, I key) — helmet and
+        // leggings −10% each, boots −5%; a full set on top of a chest plate reaches −65%.
+        new("iron_helmet", "Iron helmet (−10% damage taken)",
+            new Dictionary<string, int> { ["iron"] = 3 }),
+        new("iron_leggings", "Iron leggings (−10% damage taken)",
+            new Dictionary<string, int> { ["iron"] = 5 }),
+        new("iron_boots", "Iron boots (−5% damage taken)",
+            new Dictionary<string, int> { ["iron"] = 2 }),
+        new("chitin_helmet", "Chitin helmet (−10% damage taken) — hunted",
+            new Dictionary<string, int> { ["chitin"] = 3, ["hide"] = 1 }),
+        new("chitin_leggings", "Chitin leggings (−10% damage taken) — hunted",
+            new Dictionary<string, int> { ["chitin"] = 4, ["hide"] = 2 }),
+        new("chitin_boots", "Chitin boots (−5% damage taken) — hunted",
+            new Dictionary<string, int> { ["chitin"] = 2, ["hide"] = 1 }),
         new("sentry", "Sentry turret (placeable, auto-fires)",
             new Dictionary<string, int> { ["iron"] = 4, ["coal"] = 3 }),
         // Firearm ladder — each weapon has its own resource profile: the pistol is cheap
