@@ -1781,6 +1781,7 @@ public sealed class TitanProjectile
             TitanShotKind.Lava  => 15f,
             TitanShotKind.Spike => 16f,
             TitanShotKind.Void  => 15f,
+            TitanShotKind.Slug  => 6f,
             _                   => 28f,   // Laser
         };
         // Void bolts get a small pierce budget too: the Starspawn fights in caves, so its
