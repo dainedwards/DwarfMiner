@@ -153,9 +153,8 @@ public sealed class Cells
     public Vector2? CompactionExclusion;
 
     /// <summary>Shattered gem sites awaiting their physical drop (see the gem handling in
-    /// <see cref="SpawnDustInTile"/>). Game1 drains this into Session.Pickups. <c>whole</c>
-    /// distinguishes an embedded-gem pop (one full drop) from a legacy gem *tile* shattering
-    /// (¼ drop — four fine tiles made up one legacy tile).</summary>
+    /// <see cref="SpawnDustInTile"/>). Game1 drains this into Session.Pickups. Every entry —
+    /// embedded-gem pop or shattered gem tile — is one whole drop at the shatter site.</summary>
     public readonly List<(Vector2 pos, TileKind kind, bool whole)> PendingGemDrops = new();
 
     public Cells(Planet planet)
