@@ -51,6 +51,15 @@ public enum TileKind : byte
     AlienPlant = 36,   // tentacled houseplant in a pot
     HoverPod = 37,     // levitating egg-chair
     OrbLamp = 38,      // glowing lamp orb on a squiggle stand
+    // Biome flora — surface plants unique to each world type, scattered by WorldGen. All
+    // are anchored (so acid never eats them) and fire-proof (so the ember bloom survives
+    // its own lava world). Decorative: passable, break to nothing.
+    Fernleaf = 39,     // verdant/living — lush green fronds
+    Frostcap = 40,     // frost — pale ice bloom
+    Emberbloom = 41,   // ember — charred stalk with glowing fire buds (fire/lava-proof)
+    Rustbramble = 42,  // slag — oxidised metal thorn bush
+    Vitrilily = 43,    // acid — bulbous acid-adapted pod (acid-proof)
+    Geobloom = 44,     // crystal — faceted crystalline flower
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
