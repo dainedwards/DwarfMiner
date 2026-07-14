@@ -1296,7 +1296,11 @@ public sealed class Titan
                     if (_wreckTimer <= 0f
                         && k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
                     {
-                        if (planet.Mine(x, y, 30) is { } smashed)
+                        // Power 22 = three bites to breach a wall tile; with the fast
+                        // wrecking cadence a leaning kaiju levels architecture roughly
+                        // twice as fast as before, but the FIRST instant still only cracks
+                        // it (SimTest pins that beat).
+                        if (planet.Mine(x, y, 22) is { } smashed)
                         {
                             physics.MarkDirty(x, y);
                             cells.SpawnDustInTile(x, y, smashed);
