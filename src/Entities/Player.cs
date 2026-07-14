@@ -169,6 +169,22 @@ public sealed class Player
     /// highest-crafted rung for recipe sequencing.</summary>
     public int EffectiveLightTier => Equipment.LightTierOf(Equipment.Get(EquipSlot.Torch));
 
+    /// <summary>Headlamp upgrade rung (1-4) — recipe-only crafts raise it; the lamp item
+    /// itself stays one "helm_lamp" in the light slot, shining harder per rung.</summary>
+    public int HeadlampTier = 1;
+
+    /// <summary>Carried-light brightness multiplier from the worn light-slot item. The
+    /// headlamp scales with its upgrade rung; the sunstone is the bottled-daylight top end.
+    /// The bare 0.30 stub is the see-your-own-feet fallback with nothing worn.</summary>
+    public float LightMul => Equipment.Get(EquipSlot.Torch) switch
+    {
+        "torch"       => 0.65f,
+        "lantern"     => 1.0f,
+        "helm_lamp"   => 1.5f + 0.45f * (Math.Clamp(HeadlampTier, 1, 4) - 1),
+        "sun_crystal" => 3.0f,
+        _             => 0.30f,
+    };
+
     /// <summary>Hard cap on downward speed. Prevents tunneling at terminal velocity (a tile is
     /// 8 px and the body radius is ~2.6 px — uncapped, a long fall could move >8 px per frame
     /// and pass clean through a tile without ever overlapping it). Also gives a controlled,
