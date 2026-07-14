@@ -294,7 +294,9 @@ public sealed class Renderer
 
                 var rotation = angle + MathHelper.PiOver2;
                 var right = new Vector2(-up.Y, up.X);
-                var size = new Vector2(chord + 1f, Planet.TileSize + 1f); // +1 px overlap kills sub-pixel seams between neighbours
+                // +1 px overlap kills sub-pixel seams; the stride widens the quad to cover
+                // its skipped neighbours.
+                var size = new Vector2(chord * tileStep + 1f, Planet.TileSize * tileStep + 1f);
                 var hash = (r * 73856093) ^ (t * 19349663);
 
                 // Sky tile: nothing to draw. Back-walls are gone — dug-out openings and the
