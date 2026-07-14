@@ -148,15 +148,21 @@ public sealed class MetaSave
         return true;
     }
 
-    private static string SavePath
+    private static string SavePath => Path.Combine(SaveSlots.Dir(SaveSlots.Active), "meta.json");
+
+    /// <summary>Read a slot's meta without switching to it — the title screen's summary
+    /// line. Null when the slot is empty (a fresh "NEW GAME" slot).</summary>
+    public static MetaSave? Peek(int slot)
     {
-        get
+        try
         {
-            var dir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "DwarfMiner");
-            Directory.CreateDirectory(dir);
-            return Path.Combine(dir, "meta.json");
+            var path = Path.Combine(SaveSlots.Dir(slot), "meta.json");
+            if (!File.Exists(path)) return null;
+            return System.Text.Json.JsonSerializer.Deserialize<MetaSave>(File.ReadAllText(path));
+        }
+        catch
+        {
+            return null;
         }
     }
 
