@@ -772,26 +772,31 @@ public static class SimTest
     /// spill can't chew an open tunnel all the way to the core.</summary>
     private static bool DissolveHardRockStays()
     {
-        var planet = WorldGen.Generate(101);
-        var cells = new Cells(planet);
-        int r = 118, t = 40;
-        planet.Set(r, t, TileKind.Granite);
-        planet.Set(r + 1, t, TileKind.Sky);
-        cells.FillTile(r + 1, t, Material.Acid);
-        var graniteMelted = false;
-        for (var i = 0; i < 3000 && !graniteMelted; i++)
+        // The pool sits in an obsidian-walled (acid-proof) pocket so it can't drain off
+        // into whatever the seed carved nearby — splash droplets made open-terrain
+        // drainage a coin flip, and this check is about corrosion chemistry, not luck.
+        // Carved by angle: tile counts vary per ring, so a constant index skews.
+        static bool FloorMelts(TileKind floor)
         {
-            cells.Update(1f / 60f);
-            if (planet.Get(r, t) != TileKind.Granite) graniteMelted = true;
+            var planet = WorldGen.Generate(101);
+            var cells = new Cells(planet);
+            const int r = 118;
+            var af = 40.5f / planet.TilesAt(r);
+            int Ti(int ring, int da) => (int)(af * planet.TilesAt(ring)) + da;
+            for (var dr = -1; dr <= 2; dr++)
+                for (var da = -2; da <= 2; da++)
+                    planet.Set(r + dr, Ti(r + dr, da),
+                        dr is -1 or 2 || da is -2 or 2 ? TileKind.Obsidian : TileKind.Sky);
+            planet.Set(r, Ti(r, 0), floor);   // the specimen, bathed from above
+            cells.FillTile(r + 1, Ti(r + 1, 0), Material.Acid);
+            for (var i = 0; i < 3000; i++)
+            {
+                cells.Update(1f / 60f);
+                if (planet.Get(r, Ti(r, 0)) != floor) return true;
+            }
+            return false;
         }
-
-        var planet2 = WorldGen.Generate(102);
-        var cells2 = new Cells(planet2);
-        planet2.Set(r, t, TileKind.Obsidian);
-        planet2.Set(r + 1, t, TileKind.Sky);
-        cells2.FillTile(r + 1, t, Material.Acid);
-        for (var i = 0; i < 1500; i++) cells2.Update(1f / 60f);
-        return graniteMelted && planet2.Get(r, t) == TileKind.Obsidian;
+        return FloorMelts(TileKind.Granite) && !FloorMelts(TileKind.Obsidian);
     }
 
     /// <summary>The Noita layer: flying cells conserve their material back into the grid,

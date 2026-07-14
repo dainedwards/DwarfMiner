@@ -2217,7 +2217,7 @@ public sealed partial class DwarfMinerGame : Game
         // Spawn at the mouse cursor's bearing around the planet (the constructor snaps the egg to
         // the surface / core at that angle), so the tester drops the boss exactly where they're
         // pointing. Falls back to just off the player if the cursor sits dead-on the planet centre.
-        var mouse = Mouse.GetState();
+        var mouse = Screen.Mouse();
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
         var rel = worldCursor - _run.Planet.Center;
         var ang = rel.LengthSquared() > 1f
@@ -3012,7 +3012,7 @@ public sealed partial class DwarfMinerGame : Game
         }
 
         // Reticle.
-        var mouse = Mouse.GetState();
+        var mouse = Screen.Mouse();
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
         _renderer.DrawCircle(worldCursor, 3f, new Color(255, 255, 255, 180));
 
@@ -3733,7 +3733,7 @@ public sealed partial class DwarfMinerGame : Game
 
     private void DrawHoverDebugLabel()
     {
-        var mouse = Mouse.GetState();
+        var mouse = Screen.Mouse();
         var screenPos = new Vector2(mouse.X, mouse.Y);
         if (screenPos.X < 0 || screenPos.Y < 0 || screenPos.X >= VirtualWidth || screenPos.Y >= VirtualHeight)
             return;
@@ -3818,7 +3818,7 @@ public sealed partial class DwarfMinerGame : Game
     {
         var f = _run.Player.BuildFraction;
         if (f <= 0f) return;
-        var mouse = Mouse.GetState();
+        var mouse = Screen.Mouse();
         var x = mouse.X - 12;
         var y = mouse.Y + 16;
         var sb = _renderer.Batch;
