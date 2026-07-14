@@ -82,7 +82,15 @@ public static class Tiles
           // which corrodes any non-anchored tile).
           or TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick
           or TileKind.DoorClosed or TileKind.DoorOpen
-          or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp;
+          or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp
+          or TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
+          or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom;
+
+    /// <summary>Biome flora — decorative surface plants. Grouped so hazard rules and the
+    /// renderer can treat them as one family.</summary>
+    public static bool IsFlora(TileKind k) =>
+        k is TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
+          or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom;
 
     /// <summary>Tiles the player walks through (climb / pass through) instead of colliding with.
     /// Ladders are passable so the dwarf can climb; small placed lights are passable too so the
