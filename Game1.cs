@@ -2349,6 +2349,11 @@ public sealed partial class DwarfMinerGame : Game
         }
         if (gas > 0)
             p.Oxygen = MathF.Max(0f, p.Oxygen - GasChokeOxygen * dt);
+        if (fire > 0)
+        {
+            p.Health -= FireBurnDps * dt;
+            if (Random.Shared.NextDouble() < dt * 8f) _particles.EmitImpact(p.Position, ProjectileKind.Bullet);
+        }
     }
 
     /// <summary>L at the finished pad: pour any mined fuel into the tanks, and once they're
