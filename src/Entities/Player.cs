@@ -139,6 +139,18 @@ public sealed class Player
     /// slots are full it stays in inventory and the player drags it onto a slot manually.</summary>
     public readonly Toolbelt Toolbelt = new();
 
+    /// <summary>Paper-doll equipment (character screen, I key). Slots hold inventory ids —
+    /// like the toolbelt they're pointers into the inventory, not a separate stash. Armor
+    /// slots drive <see cref="DamageTakenMultiplier"/>; the torch slot drives the carried
+    /// light via <see cref="EffectiveLightTier"/>.</summary>
+    public readonly Equipment Equipment = new();
+
+    /// <summary>Carried-light tier actually in effect: whatever light item sits in the torch
+    /// slot. Crafting a light auto-equips it, so this normally tracks <see cref="LightTier"/>;
+    /// unequipping the torch leaves the dwarf in the dark. LightTier itself stays the
+    /// highest-crafted rung for recipe sequencing.</summary>
+    public int EffectiveLightTier => Equipment.LightTierOf(Equipment.Get(EquipSlot.Torch));
+
     /// <summary>Hard cap on downward speed. Prevents tunneling at terminal velocity (a tile is
     /// 8 px and the body radius is ~2.6 px — uncapped, a long fall could move >8 px per frame
     /// and pass clean through a tile without ever overlapping it). Also gives a controlled,
