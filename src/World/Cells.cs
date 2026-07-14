@@ -1578,9 +1578,9 @@ public sealed class Cells
     }
 
     /// <summary>Hazardous cell counts within a world-space radius — the body-contact probe the
-    /// player/creatures use to take lava/acid burn and gas choke. Same polar row/col walk as
-    /// <see cref="CollectInRadius"/>, counting only the three hazard materials.</summary>
-    public (int lava, int acid, int gas) SampleHazardsNear(Vector2 worldPos, float radius)
+    /// player/creatures use to take lava/acid/fire burn and gas choke. Same polar row/col walk
+    /// as <see cref="CollectInRadius"/>, counting only the four hazard materials.</summary>
+    public (int lava, int acid, int gas, int fire) SampleHazardsNear(Vector2 worldPos, float radius)
     {
         var rSq = radius * radius;
         var (_, cy0) = WorldToCell(worldPos);
