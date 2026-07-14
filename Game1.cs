@@ -1118,6 +1118,21 @@ public sealed partial class DwarfMinerGame : Game
         Icons.Build(GraphicsDevice);
         // Slot icons for the melee arsenal escalate with the live run's upgrade rungs.
         Icons.MeleeTierOf = id => _run?.Player?.MeleeTiers.GetValueOrDefault(id, 1) ?? 1;
+        // Character-screen item context menu: upgrade probe + actions wired to the same
+        // crafting/apply/drop paths the rest of the game uses.
+        _charScreen.UpgradeInfo = id =>
+        {
+            if (UpgradeRecipeFor(id) is not { } recipe)
+                return HasUpgradePath(id) ? ("UPGRADE: MAXED", false) : ((string, bool)?)null;
+            var cost = string.Join(" ", System.Linq.Enumerable.Select(recipe.Cost,
+                kv => $"{kv.Value}x{Tiles.ResourceLabel(kv.Key)}"));
+            return ($"UPGRADE: {cost}", Crafting.CanAfford(recipe, _run.Player.Inventory));
+        };
+        _charScreen.DoUpgrade = id =>
+        {
+            if (UpgradeRecipeFor(id) is { } recipe) ApplyCraft(recipe);
+        };
+        _charScreen.DropAction = DropItem;
         BuildTitleBackdrop(GraphicsDevice);
         _camera = new Camera
         {
