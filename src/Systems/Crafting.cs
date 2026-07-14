@@ -63,6 +63,19 @@ public static class Crafting
         new("hammer", "Hammer — shatters bedrock",
             new Dictionary<string, int> { ["basalt"] = 4, ["granite"] = 4 }),
 
+        // ─── Geo-scanner ──────────────────────────────────────────────────────
+        // Craftable prospecting sense: HUD arrows point from you to the nearest deposits.
+        // Each rung widens the detection set (ores → metals → gems → super-rare) and steps
+        // sequentially like the pickaxe.
+        new("scanner", "Geo-scanner — arrows to the nearest ores",
+            new Dictionary<string, int> { ["iron"] = 4, ["coal"] = 4 }),
+        new("scanner_ii", "Geo-scanner II — adds gold / silver / platinum",
+            new Dictionary<string, int> { ["silver"] = 3, ["iron"] = 6 }),
+        new("scanner_iii", "Geo-scanner III — adds ruby / sapphire / emerald",
+            new Dictionary<string, int> { ["gold"] = 3, ["crystal"] = 2 }),
+        new("scanner_iv", "Geo-scanner IV — adds diamond / crystal / voidstone",
+            new Dictionary<string, int> { ["diamond"] = 2, ["platinum"] = 4 }),
+
         // ─── Light & utility ──────────────────────────────────────────────────
         // Carried-light ladder — the deep dark is near-total without one. Tiers step
         // sequentially like pickaxes; each bumps Player.LightTier. None of them help on the
