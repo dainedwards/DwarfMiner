@@ -503,7 +503,7 @@ public static class WorldGen
         // stream — and with it every seeded world layout — stays byte-identical whether or
         // not a future change re-tunes the worms. LineAcidReservoirs runs after, re-skinning
         // anything a worm grazed.
-        CarveWormTunnels(planet, new Random(seed ^ 0x5EED));
+        CarveWormTunnels(planet, def, new Random(seed ^ 0x5EED));
 
         // Skin every acid reservoir (surface pools, volcano plumbing, and the scattered crust
         // seeps) in obsidian so the acid can't chew outward through the crust. Obsidian shrugs
