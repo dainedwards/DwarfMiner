@@ -155,7 +155,7 @@ public sealed class Cells
     /// <summary>Shattered gem sites awaiting their physical drop (see the gem handling in
     /// <see cref="SpawnDustInTile"/>). Game1 drains this into Session.Pickups. Every entry —
     /// embedded-gem pop or shattered gem tile — is one whole drop at the shatter site.</summary>
-    public readonly List<(Vector2 pos, TileKind kind, bool whole)> PendingGemDrops = new();
+    public readonly List<(Vector2 pos, TileKind kind)> PendingGemDrops = new();
 
     public Cells(Planet planet)
     {
