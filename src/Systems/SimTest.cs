@@ -2409,7 +2409,7 @@ public static class SimTest
 
         // Tier-III effects: jetpack charge/climb curve, O2 ceiling, hull 9,
         // and the Aegis shield recharge.
-        // Hover burn: 3s at tier I, +30% per tier (3 / 3.9 / 5.07 / ~6.59).
+        // Hover burn: 1s at tier I, +1s per tier, +2s for the final rung (1/2/3/5).
         var tiers = new Player(Vector2.Zero) { HasJetpack = true };
         var cap1 = tiers.JetChargeCap;
         tiers.JetTier2 = true;
@@ -2417,9 +2417,9 @@ public static class SimTest
         tiers.JetTier3 = true;
         var cap3 = tiers.JetChargeCap;
         tiers.JetTier4 = true;
-        Check("tiers: jetpack burn 3s +30% per tier",
-            MathF.Abs(cap1 - 3f) < 0.01f && MathF.Abs(cap2 - 3.9f) < 0.01f
-            && MathF.Abs(cap3 - 5.07f) < 0.01f && MathF.Abs(tiers.JetChargeCap - 6.591f) < 0.01f);
+        Check("tiers: jetpack burn 1/2/3/5",
+            MathF.Abs(cap1 - 1f) < 0.01f && MathF.Abs(cap2 - 2f) < 0.01f
+            && MathF.Abs(cap3 - 3f) < 0.01f && MathF.Abs(tiers.JetChargeCap - 5f) < 0.01f);
         Check("tiers: pickup reach stays touch-range (no magnet)", tiers.PickupReach == 4f);
         tiers.HasO2Recycler = true;
         tiers.O2Tier2 = true;
