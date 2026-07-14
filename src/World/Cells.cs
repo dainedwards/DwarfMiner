@@ -1903,6 +1903,16 @@ public sealed class Cells
                 // than a tile facsimile. Sky source (= no tag) falls back to a generic sand tone.
                 var src = (TileKind)srcByte;
                 var b = src == TileKind.Sky ? new Color(190, 158, 92) : Tiles.BaseColor(src);
+                // Precious-metal dust GLITTERS: grains take the metal's bright speckle
+                // colour, and a time-cycling hash picks a few grains per moment to flash
+                // white — a pile of gold filings winks at you.
+                if (src is TileKind.GoldOre or TileKind.SilverOre or TileKind.PlatinumOre)
+                {
+                    var tick = (int)(_time * 5f);
+                    if ((((hash >> 6) ^ (tick * 2654435761)) & 15) == 0) return Color.White;
+                    var metal = Tiles.OreSpeckle(src);
+                    return Tint(Color.Lerp(b, metal, 0.55f), jitter / 4);
+                }
                 var lit = new Color(
                     Math.Min(255, b.R + 24),
                     Math.Min(255, b.G + 24),
