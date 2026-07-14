@@ -95,48 +95,110 @@ public sealed class CharacterScreen
         {
             Open = false;
             _carry = null;
+            _ctx = null;
             return;
         }
+
+        // Mouse wheel scrolls the backpack grid (clamped in draw against the row count).
+        var wheel = mouse.ScrollWheelValue - prevMouse.ScrollWheelValue;
+        if (wheel != 0)
+            _bagScroll = Math.Clamp(_bagScroll - Math.Sign(wheel), 0, Math.Max(0, _bagMaxScroll));
 
         var lmb = mouse.LeftButton == ButtonState.Pressed && prevMouse.LeftButton != ButtonState.Pressed;
         var rmb = mouse.RightButton == ButtonState.Pressed && prevMouse.RightButton != ButtonState.Pressed;
         if (!lmb && !rmb) return;
         var mx = mouse.X; var my = mouse.Y;
 
+        // An open context menu eats the next click: a button acts, anywhere else closes.
+        if (_ctx is { } ctx)
+        {
+            if (lmb)
+            {
+                foreach (var (action, rect, enabled) in _ctxRects)
+                {
+                    if (!enabled || !rect.Contains(mx, my)) continue;
+                    switch (action)
+                    {
+                        case "equip":
+                            if (!player.Equipment.AutoEquip(ctx.Id))
+                                for (var s = 0; s < Equipment.SlotCount; s++)
+                                    if (!HiddenSlot((EquipSlot)s) && Equipment.Fits(ctx.Id, (EquipSlot)s))
+                                    { player.Equipment.Slots[s] = ctx.Id; break; }
+                            break;
+                        case "upgrade": DoUpgrade?.Invoke(ctx.Id); break;
+                        case "drop1": DropAction?.Invoke(ctx.Id, 1); break;
+                        case "dropall": DropAction?.Invoke(ctx.Id, int.MaxValue); break;
+                    }
+                    break;
+                }
+            }
+            _ctx = null;
+            return;
+        }
+
         if (rmb)
         {
             for (var s = 0; s < Equipment.SlotCount; s++)
             {
-                if (!_slotRects[s].Contains(mx, my)) continue;
+                if (HiddenSlot((EquipSlot)s) || !_slotRects[s].Contains(mx, my)) continue;
                 if (player.Equipment.Slots[s] is { } worn && player.Inventory.Count(worn) > 0)
                     player.Equipment.Slots[s] = null;   // intrinsics (pickaxe) stay put
                 return;
             }
+            // RMB on a hotbar slot: unequip it back to just-inventory.
+            for (var s = 0; s < _hotbarRects.Length; s++)
+            {
+                if (!_hotbarRects[s].Contains(mx, my)) continue;
+                if (player.Toolbelt.Slots[s] is { } beltId && !Toolbelt.IsPermanent(beltId))
+                    player.Toolbelt.Slots[s] = null;
+                return;
+            }
+            // RMB on a backpack cell: the item context menu (equip / upgrade / drop).
             foreach (var (id, rect) in _bagRects)
             {
                 if (!rect.Contains(mx, my)) continue;
-                if (!Equipment.IsEquippable(id) || player.Equipment.IsEquipped(id)) return;
-                // First empty fitting slot, else displace the first fitting one.
-                if (!player.Equipment.AutoEquip(id))
-                    for (var s = 0; s < Equipment.SlotCount; s++)
-                        if (Equipment.Fits(id, (EquipSlot)s)) { player.Equipment.Slots[s] = id; break; }
+                _ctx = (id, new Point(mx, my));
                 return;
             }
             return;
         }
 
-        // LMB while carrying: drop. On a fitting slot → equip (displacing back to the pack);
-        // on a non-fitting slot or empty space → cancel, restoring items that only live on
-        // the doll (the intrinsic pickaxe has no backpack entry to fall back to).
+        // LMB on a filter tab.
+        foreach (var (cat, rect) in _tabRects)
+        {
+            if (!rect.Contains(mx, my)) continue;
+            _bagTab = cat;
+            _bagScroll = 0;
+            return;
+        }
+
+        // LMB while carrying: drop on a doll slot or a hotbar slot (both slot-type gated);
+        // anywhere else cancels, restoring items that only live on the doll.
         if (_carry is { } carry)
         {
             for (var s = 0; s < Equipment.SlotCount; s++)
             {
-                if (!_slotRects[s].Contains(mx, my)) continue;
+                if (HiddenSlot((EquipSlot)s) || !_slotRects[s].Contains(mx, my)) continue;
                 if (Equipment.Fits(carry.Id, (EquipSlot)s))
                     player.Equipment.Slots[s] = carry.Id;
                 else if (carry.FromSlot is { } src)
                     player.Equipment.Set(src, carry.Id);
+                _carry = null;
+                return;
+            }
+            for (var s = 0; s < _hotbarRects.Length; s++)
+            {
+                if (!_hotbarRects[s].Contains(mx, my)) continue;
+                if (Toolbelt.SlotAccepts(s, carry.Id))
+                {
+                    var prev = player.Toolbelt.SetSlot(s, carry.Id);
+                    if (prev is not null && Toolbelt.IsPermanent(prev))
+                        player.Toolbelt.AutoEquip(prev);
+                }
+                else if (carry.FromSlot is { } src2)
+                {
+                    player.Equipment.Set(src2, carry.Id);
+                }
                 _carry = null;
                 return;
             }
@@ -146,19 +208,27 @@ public sealed class CharacterScreen
             return;
         }
 
-        // LMB pick-up: off the doll (clearing the slot so the drag reads as "in hand"), or
-        // out of the backpack (non-destructive — the count stays, the drop installs a pointer).
+        // LMB pick-up: off the doll, off the hotbar, or out of the backpack (the backpack
+        // pickup is non-destructive — the count stays, the drop installs a pointer).
         for (var s = 0; s < Equipment.SlotCount; s++)
         {
+            if (HiddenSlot((EquipSlot)s)) continue;
             if (!_slotRects[s].Contains(mx, my) || player.Equipment.Slots[s] is not { } id) continue;
             _carry = (id, (EquipSlot)s);
             player.Equipment.Slots[s] = null;
             return;
         }
+        for (var s = 0; s < _hotbarRects.Length; s++)
+        {
+            if (!_hotbarRects[s].Contains(mx, my) || player.Toolbelt.Slots[s] is not { } beltId) continue;
+            _carry = (beltId, null);
+            player.Toolbelt.Slots[s] = null;
+            return;
+        }
         foreach (var (id, rect) in _bagRects)
         {
             if (!rect.Contains(mx, my)) continue;
-            if (Equipment.IsEquippable(id)) _carry = (id, null);
+            _carry = (id, null);
             return;
         }
     }
