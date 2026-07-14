@@ -2770,11 +2770,11 @@ public sealed partial class DwarfMinerGame : Game
             var dist = to.Length();
             if (dist is > 1f and < 120f && Vector2.Dot(to / dist, dir) > 0.7f)
             {
-                _run.Titan.Health -= 45f * _frameDt;
+                _run.Titan.Health -= 90f * _frameDt;
                 _run.Titan.HitFlash = 0.1f;
             }
         }
-        _run.Player.ShootCooldown = 0.06f;
+        _run.Player.ShootCooldown = 0.12f;
     }
 
     /// <summary>Lightning gun: instant chain arc. The bolt seeks the closest creature (or
