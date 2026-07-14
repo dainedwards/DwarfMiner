@@ -2273,7 +2273,7 @@ public sealed partial class DwarfMinerGame : Game
         // keeps instant cursor mining (dev tool).
         if (!_run.Player.FlyMode && tool is MiningTool.Pickaxe or MiningTool.Hammer)
         {
-            _run.Player.TryStartSwing(worldCursor, tool);
+            _run.Player.TryStartSwing(worldCursor, tool, _run.Planet.UpAt(_run.Player.Position));
             return;
         }
 
