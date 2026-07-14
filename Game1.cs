@@ -2622,9 +2622,10 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
-        // Rung 4: the energy edge shears terrain along the ACTUAL swing path — single
-        // tiles sampled along the blade's crescent, so the cut is an arc matching the
-        // sweep, not disconnected square bites punched through walls.
+        // Rung 4: the energy edge shears terrain along the swing path. Each sample angle
+        // raymarches OUT from the player and bites the FIRST solid tile it meets — the
+        // blade stops on the near wall instead of teleporting past it to carve at some
+        // fixed radius (which used to skip adjacent blocks while cutting distant ones).
         if (tier >= 4)
         {
             var power = id.StartsWith("great") ? 6 : 4;
@@ -2633,13 +2634,21 @@ public sealed partial class DwarfMinerGame : Game
             for (var i = 0; i <= 9; i++)
             {
                 var a = aimAng + MathHelper.Lerp(-1.0f, 0.75f, i / 9f);
-                var at = _run.Player.Position
-                    + new Vector2(MathF.Cos(a), MathF.Sin(a)) * reach * 0.85f;
-                var (mx, my) = _run.Planet.WorldToTile(at);
-                if (_run.Planet.Mine(mx, my, power) is not { } cut) continue;
-                _run.Cells.SpawnDustInTile(mx, my, cut);
-                _run.Physics.MarkDirty(mx, my);
-                if (chips-- > 0) _particles.EmitChips(_run.Planet.TileToWorld(mx, my), cut);
+                var ray = new Vector2(MathF.Cos(a), MathF.Sin(a));
+                for (var step = Planet.TileSize * 0.75f; step <= reach * 0.95f;
+                     step += Planet.TileSize * 0.5f)
+                {
+                    var at = _run.Player.Position + ray * step;
+                    var (mx, my) = _run.Planet.WorldToTile(at);
+                    if (!Tiles.IsSolid(_run.Planet.Get(mx, my))) continue;
+                    if (_run.Planet.Mine(mx, my, power) is { } cut)
+                    {
+                        _run.Cells.SpawnDustInTile(mx, my, cut);
+                        _run.Physics.MarkDirty(mx, my);
+                        if (chips-- > 0) _particles.EmitChips(_run.Planet.TileToWorld(mx, my), cut);
+                    }
+                    break; // first solid tile along the ray — hit or bounce, the swing stops here
+                }
             }
         }
 
