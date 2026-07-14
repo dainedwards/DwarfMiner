@@ -3983,6 +3983,16 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.AddLight(_run.Player.Position, 70f * lightMul, new Color(200, 215, 235));
         if (_run.Player.PickaxeTier >= 4)
             _renderer.AddLight(_run.Player.Position, 28f, new Color(180, 220, 255));
+        // Rung-4 melee: the energy edge glows like a lightsaber — real light off the blade
+        // whenever it's the held item.
+        if (_run.Player.Toolbelt.Current is { } meleeHeld
+            && Array.IndexOf(Toolbelt.MeleeIds, meleeHeld) >= 0
+            && _run.Player.MeleeTiers.GetValueOrDefault(meleeHeld, 1) >= 4)
+        {
+            var glow = MeleeGlow(meleeHeld);
+            _renderer.AddLight(_run.Player.Position, 60f, glow);
+            _renderer.AddHeroLight(_run.Player.Position, 26f, glow * 0.5f);
+        }
 
         // Visible ores within a tile-radius of the player so we don't scan the whole map.
         // Same pass picks up player-placed lights (Glowshroom, Beacon) so a torch-lit room
