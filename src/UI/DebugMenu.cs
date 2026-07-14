@@ -101,15 +101,17 @@ public sealed class DebugMenu
         sb.Draw(renderer.Pixel, new Rectangle(panelX, panelY, 1, panelH), new Color(200, 130, 90));
         sb.Draw(renderer.Pixel, new Rectangle(panelX + panelW - 1, panelY, 1, panelH), new Color(200, 130, 90));
 
+        if (_rowRects.Length != _entries.Length) _rowRects = new Rectangle[_entries.Length];
         for (var i = 0; i < _entries.Length; i++)
         {
             var rowY = panelY + 48 + i * rowH;
+            _rowRects[i] = new Rectangle(panelX + 4, rowY - 2, panelW - 8, rowH);
             if (i == _cursor)
-                sb.Draw(renderer.Pixel, new Rectangle(panelX + 4, rowY - 2, panelW - 8, rowH), new Color(70, 55, 40, 220));
+                sb.Draw(renderer.Pixel, _rowRects[i], new Color(70, 55, 40, 220));
         }
         sb.End();
 
-        renderer.DrawDebugLabel("DEBUG  (Up/Down, Enter, or number — F9/Esc to close)",
+        renderer.DrawDebugLabel("DEBUG  (click, Up/Down + Enter, or number — F9/Esc to close)",
             new Vector2(panelX + 12, panelY + 14), new Color(255, 200, 150));
 
         for (var i = 0; i < _entries.Length; i++)
