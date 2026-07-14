@@ -5138,6 +5138,12 @@ public sealed partial class DwarfMinerGame : Game
                         glow = new Color(255, 214, 140);
                         r = 11f;
                         break;
+                    case TileKind.OrbLamp:
+                        // Apartment lamp orb — a warm hearth-glow that breathes with the
+                        // renderer's pixel pulse.
+                        glow = new Color(255, 220, 150);
+                        r = 24f + MathF.Sin((float)gameTime.TotalGameTime.TotalSeconds * 1.4f + dx * 0.3f) * 3f;
+                        break;
                     default: continue;
                 }
                 var op = _run.Planet.TileToWorld(ptx + dx, pty + dy);
