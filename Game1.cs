@@ -1913,6 +1913,19 @@ public sealed partial class DwarfMinerGame : Game
                     _run.Shake = MathF.Max(_run.Shake, MathF.Min(1.5f, p.ExplosionRadius / 60f));
                     PlayAt("explode", p.Position, MathHelper.Clamp(p.ExplosionRadius / 60f, 0.4f, 1f),
                         pitch: MathHelper.Clamp(0.3f - p.ExplosionRadius / 200f, -0.4f, 0.3f), minGap: 0.05f);
+                    // Explosions do not care whose they are: the dwarf standing inside the
+                    // blast eats real damage with the same linear falloff creatures get.
+                    // Own bombs are lethal at arm's length now — take cover or take the hit.
+                    var pd = (_run.Player.Position - p.Position).Length();
+                    var blastR = p.ExplosionRadius + _run.Player.Radius;
+                    if (pd < blastR)
+                    {
+                        var falloff = 1f - 0.6f * MathHelper.Clamp(pd / p.ExplosionRadius, 0f, 1f);
+                        _run.Player.TakeDamage(p.Damage * falloff * 0.75f);
+                        if (pd > 0.5f)
+                            _run.Player.Velocity += (_run.Player.Position - p.Position) / pd
+                                * MathF.Min(220f, p.ExplosionRadius * 2.4f) * falloff;
+                    }
                 }
                 _run.Projectiles.RemoveAt(i);
             }
