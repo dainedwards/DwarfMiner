@@ -3637,7 +3637,8 @@ public sealed partial class DwarfMinerGame : Game
         }
         // Multi-tap separable Gaussian bloom — bright spots (lava, projectiles, headlamp core)
         // bleed a soft glow over the scene through real downsample + 9-tap blur passes.
-        _renderer.BloomLighting(new Point(VirtualWidth, VirtualHeight), new Color(70, 65, 85));
+        if (!noLight)
+            _renderer.BloomLighting(new Point(VirtualWidth, VirtualHeight), new Color(70, 65, 85));
         // Cinematic vignette + subtle cool grade — pushes shadows slightly blue, keeps the
         // surface readable but adds depth at the screen edges.
         _renderer.VignetteScene(new Point(VirtualWidth, VirtualHeight));
