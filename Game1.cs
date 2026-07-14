@@ -4838,13 +4838,23 @@ public sealed partial class DwarfMinerGame : Game
         }
 
         // Planted torches burn with a soft per-torch flicker; in-flight ones carry their
-        // flame with them.
+        // flame with them. The light lives at the FLAME (the swinging tip), not the hilt,
+        // and reaches far enough to genuinely light the player's way.
         foreach (var torch in _run.Torches)
         {
-            var flick = torch.Stuck
-                ? 62f + MathF.Sin(_renderer.Time * 6.5f + torch.Phase) * 7f
-                : 50f;
-            _renderer.AddLight(torch.Position, flick, new Color(255, 180, 90));
+            if (torch.Stuck)
+            {
+                var swingRot = torch.Swing(_renderer.Time);
+                var flameTip = torch.Position
+                    + new Vector2(MathF.Sin(swingRot), -MathF.Cos(swingRot)) * 4.6f;
+                _renderer.AddLight(flameTip,
+                    88f + MathF.Sin(_renderer.Time * 6.5f + torch.Phase) * 9f,
+                    new Color(255, 180, 90));
+            }
+            else
+            {
+                _renderer.AddLight(torch.Position, 60f, new Color(255, 180, 90));
+            }
         }
 
         // Sentry muzzle glow: a small pre-flash that ramps with cooldown — about-to-fire
