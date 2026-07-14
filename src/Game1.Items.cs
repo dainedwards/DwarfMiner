@@ -251,6 +251,26 @@ public sealed partial class DwarfMinerGame
                 Blocked = () => _run.Player.LightTier < 3,
                 OnCraft = Wear("sun_crystal", EquipSlot.Torch, () => _run.Player.LightTier = 4),
             },
+            // Headlamp upgrade rungs — recipe-only (the worn helm_lamp item itself doesn't
+            // change, it just shines harder per rung; see Player.LightMul).
+            ["headlamp_ii"] = new()
+            {
+                Owned = () => _run.Player.HeadlampTier >= 2,
+                Blocked = () => _run.Player.LightTier < 3,
+                OnCraft = () => _run.Player.HeadlampTier = 2,
+            },
+            ["headlamp_iii"] = new()
+            {
+                Owned = () => _run.Player.HeadlampTier >= 3,
+                Blocked = () => _run.Player.LightTier < 3 || _run.Player.HeadlampTier < 2,
+                OnCraft = () => _run.Player.HeadlampTier = 3,
+            },
+            ["headlamp_iv"] = new()
+            {
+                Owned = () => _run.Player.HeadlampTier >= 4,
+                Blocked = () => _run.Player.LightTier < 3 || _run.Player.HeadlampTier < 3,
+                OnCraft = () => _run.Player.HeadlampTier = 4,
+            },
             // Armor — one craft per piece, worn on the doll. Iron and chitin chest plates are
             // separately ownable now that the character screen can swap between sets.
             ["armor"]           = new() { Owned = () => _run.Player.Inventory.Count("armor") > 0,           OnCraft = Wear("armor", EquipSlot.Chest, () => _run.Player.HasArmor = true) },
