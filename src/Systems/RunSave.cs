@@ -119,6 +119,17 @@ public static class RunSave
                 w.Write(s.Position.X); w.Write(s.Position.Y);
                 w.Write(s.Health);
             }
+
+            // v18: planted torches (in-flight ones just drop — they were airborne for
+            // half a second at most) + the headlamp upgrade rung.
+            var stuck = run.Torches.FindAll(t => t.Stuck);
+            w.Write(stuck.Count);
+            foreach (var t in stuck)
+            {
+                w.Write(t.Position.X); w.Write(t.Position.Y);
+                w.Write(t.BaseAngle);
+            }
+            w.Write(run.Player.HeadlampTier);
         }
         catch (Exception ex)
         {
