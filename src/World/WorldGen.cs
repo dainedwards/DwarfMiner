@@ -513,7 +513,7 @@ public static class WorldGen
 
         // Biome flora: dot the surface with the world's signature plant (fire/acid-proof on
         // the hostile worlds). Isolated rng, same stream-stability reason.
-        if (System.Environment.GetEnvironmentVariable("DM_NOVEIN") is null)
+        if (System.Environment.GetEnvironmentVariable("DM_NOFLORA") is null)
             ScatterBiomeFlora(planet, def, new Random(seed ^ 0xF10A));
 
         // Skin every acid reservoir (surface pools, volcano plumbing, and the scattered crust
