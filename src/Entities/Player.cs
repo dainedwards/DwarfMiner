@@ -286,7 +286,8 @@ public sealed class Player
     /// helmet/leggings 10% each, boots 5% (full set 65%) — with foundry plating stacking
     /// multiplicatively on top. Crafting armor auto-equips it, so nothing is lost vs the old
     /// HasArmor flag; stripping the doll strips the protection.</summary>
-    public float DamageTakenMultiplier => (1f - Equipment.ArmorReduction) * (HasPlating ? 0.7f : 1.0f);
+    public float DamageTakenMultiplier =>
+        (1f - Equipment.ArmorReduction) * (HasPlating ? 0.7f : 1.0f) * GuardMul;
 
     /// <summary>Apply incoming damage with armor scaling. Centralised so all damage paths
     /// (creature contact, boulder, falling chunk, sentry friendly-fire, boss attacks) honour
