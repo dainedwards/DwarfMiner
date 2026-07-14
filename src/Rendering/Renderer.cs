@@ -724,6 +724,96 @@ public sealed class Renderer
                         DrawDeco(centre, right, up, rotation, chord, 3.2f, 1.6f, 1, 1, Color.White);
                         break;
                     }
+                    case TileKind.Fernleaf:
+                    {
+                        // Lush green fronds fanning up from a short stem, swaying on the clock.
+                        var stem = new Color(70, 110, 55);
+                        var leaf = new Color(84, 168, 74);
+                        var leafLt = new Color(130, 210, 110);
+                        var sway = MathF.Sin(Time * 1.6f + (hash & 63) * 0.1f) * 0.8f;
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 4, 1, 4, stem);
+                        for (var f = -1; f <= 1; f++)
+                        {
+                            var fx = 3.5f + f * 1.6f + sway * (f == 0 ? 0.3f : 1f);
+                            DrawDeco(centre, right, up, rotation, chord, fx, 2, 1, 3, leaf);
+                            DrawDeco(centre, right, up, rotation, chord, fx, 1, 1, 1, leafLt);
+                        }
+                        break;
+                    }
+                    case TileKind.Frostcap:
+                    {
+                        // Pale ice bloom: a frosted stalk topped with a crystalline cap that
+                        // glints. Cool blues, faint self-glow at the tip.
+                        var stalk = new Color(150, 190, 210);
+                        var petal = new Color(190, 220, 240);
+                        var glint = new Color(235, 250, 255);
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 4, 1, 4, stalk);
+                        DrawDeco(centre, right, up, rotation, chord, 2.5f, 2, 3, 2, petal);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 1, 2, 1, petal);
+                        var tw = MathF.Sin(Time * 3f + (hash & 31) * 0.2f) * 0.5f + 0.5f;
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 1.5f, 1, 1,
+                            Color.Lerp(petal, glint, tw));
+                        break;
+                    }
+                    case TileKind.Emberbloom:
+                    {
+                        // Fire-adapted bloom: a charred black stalk with glowing ember buds
+                        // that pulse like coals — it drinks the heat its lava world radiates.
+                        var char2 = new Color(46, 38, 40);
+                        var pulse = MathF.Sin(Time * 2.4f + (hash & 63) * 0.12f) * 0.5f + 0.5f;
+                        var ember = Color.Lerp(new Color(180, 60, 25), new Color(255, 170, 60), pulse);
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 3, 1, 5, char2);
+                        DrawDeco(centre, right, up, rotation, chord, 2.5f, 4, 3, 1, char2);
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 1.5f, 1, 1.6f, ember);
+                        DrawDeco(centre, right, up, rotation, chord, 2.3f, 2.6f, 1, 1, ember);
+                        DrawDeco(centre, right, up, rotation, chord, 4.6f, 2.6f, 1, 1, ember);
+                        break;
+                    }
+                    case TileKind.Rustbramble:
+                    {
+                        // Oxidised metal thorn bush: a tangle of rusty struts with sharp tips.
+                        var rust = new Color(150, 92, 56);
+                        var rustDk = new Color(104, 62, 40);
+                        var tip = new Color(190, 140, 100);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 5, 4, 1, rustDk);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 2, 1, 4, rust);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 3, 1, 3, rust);
+                        DrawDeco(centre, right, up, rotation, chord, 5, 3, 1, 3, rust);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 2, 1, 1, tip);
+                        DrawDeco(centre, right, up, rotation, chord, 5, 2, 1, 1, tip);
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 1, 1, 1, tip);
+                        break;
+                    }
+                    case TileKind.Vitrilily:
+                    {
+                        // Acid-adapted pod: a bulbous green sac on a thick stem, with a
+                        // slow toxic shimmer — it thrives in the vitriol that eats everything
+                        // else.
+                        var stem = new Color(90, 130, 55);
+                        var pod = new Color(140, 190, 70);
+                        var shimmer = MathF.Sin(Time * 2f + (hash & 63) * 0.1f) * 0.5f + 0.5f;
+                        var podLt = Color.Lerp(pod, new Color(200, 240, 120), shimmer);
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 4, 1, 4, stem);
+                        DrawDeco(centre, right, up, rotation, chord, 2.5f, 2, 3, 3, pod);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 2.5f, 2, 2, podLt);
+                        break;
+                    }
+                    case TileKind.Geobloom:
+                    {
+                        // Crystalline flower: faceted violet petals around a bright core, the
+                        // bloom the crystal world grows instead of grass.
+                        var petal = new Color(140, 100, 200);
+                        var petalLt = new Color(190, 160, 240);
+                        var core = new Color(235, 210, 255);
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 4, 1, 4, new Color(90, 70, 130));
+                        DrawDeco(centre, right, up, rotation, chord, 2.5f, 2, 1, 2, petal);
+                        DrawDeco(centre, right, up, rotation, chord, 5, 2, 1, 2, petal);
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 1, 1, 2, petalLt);
+                        var tw = MathF.Sin(Time * 2.6f + (hash & 31) * 0.2f) * 0.5f + 0.5f;
+                        DrawDeco(centre, right, up, rotation, chord, 3, 2.5f, 2, 2,
+                            Color.Lerp(petal, core, tw));
+                        break;
+                    }
                     case TileKind.Beacon:
                     {
                         // Crystal pillar on a dark plinth with a bright pulsing core. Pulse is
