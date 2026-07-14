@@ -183,6 +183,12 @@ public static class RunSave
                 p.Toolbelt.Slots[s] = id.Length == 0 ? null : id;
             }
 
+            for (var s = 0; s < Equipment.SlotCount; s++)
+            {
+                var id = r.ReadString();
+                p.Equipment.Slots[s] = id.Length == 0 ? null : id;
+            }
+
             var invCount = r.ReadInt32();
             for (var i = 0; i < invCount; i++)
             {
