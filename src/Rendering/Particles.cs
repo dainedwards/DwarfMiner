@@ -66,12 +66,15 @@ public sealed class Particles
             var next = p.Position + p.Velocity * dt;
             if (p.CollideTiles && planet.IsSolidAt(next))
             {
-                // Bounce-then-rest: reflect roughly along the local up, lose most energy. Once the
-                // particle is barely moving, shorten its life so settled debris vanishes quickly.
+                // Bounce-then-rest: reflect roughly along the local up, lose most energy. Once
+                // the particle is barely moving, shorten its life so settled debris vanishes
+                // quickly — EXCEPT glowing debris (cinders): a coal that lands should sit and
+                // shed its light while it cools, not wink out on touchdown.
                 var n = planet.UpAt(p.Position);
                 var dot = Vector2.Dot(p.Velocity, n);
                 p.Velocity = (p.Velocity - n * dot * 1.5f) * 0.4f;
-                if (p.Velocity.LengthSquared() < 4f) p.Life = MathF.Min(p.Life, 0.15f);
+                if (p.Velocity.LengthSquared() < 4f)
+                    p.Life = MathF.Min(p.Life, p.LightRadius > 0f ? 1.4f : 0.15f);
                 next = p.Position;
             }
             p.Position = next;
