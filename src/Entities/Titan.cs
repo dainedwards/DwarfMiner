@@ -1859,6 +1859,19 @@ public sealed class TitanProjectile
             }
             else
             {
+                // Titan ordnance hits city architecture like it means it: a special-attack
+                // impact takes a real bite out of alloy/glass/brick where it lands (bandit
+                // slugs excepted — a pistol round is not a kaiju fireball).
+                if (Kind != TitanShotKind.Slug)
+                {
+                    var (ix, iy) = planet.WorldToTile(Position);
+                    if (planet.Get(ix, iy) is TileKind.AlienAlloy or TileKind.CityGlass
+                        or TileKind.LizardBrick && planet.Mine(ix, iy, 14) is { } bit)
+                    {
+                        physics.MarkDirty(ix, iy);
+                        cells.SpawnDustInTile(ix, iy, bit);
+                    }
+                }
                 Dead = true;   // Flame splashes; a spent beam dies
                 return;
             }
