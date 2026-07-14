@@ -3378,6 +3378,42 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
+        // Physical spawners. Goo pile: a pulsing slime mound oozing on a cave floor.
+        // Lizard door: a brick arch with a dark doorway in a warren hall. Alien home: a
+        // warm-lit doorway plate on a city address.
+        foreach (var sp in _run.Spawners)
+        {
+            if ((sp.Position - _run.Player.Position).LengthSquared() > 1400f * 1400f) continue;
+            var sUp = _run.Planet.UpAt(sp.Position);
+            var sRot = MathF.Atan2(sUp.X, -sUp.Y);
+            switch (sp.Kind)
+            {
+                case SpawnerKind.GooPile:
+                {
+                    var pulse = 1f + MathF.Sin(_renderer.Time * 2.2f + sp.Phase) * 0.12f;
+                    _renderer.DrawCircle(sp.Position + sUp * 1.5f, 4.4f * pulse, new Color(52, 110, 45));
+                    _renderer.DrawCircle(sp.Position + sUp * 3.2f, 3.0f * pulse, new Color(85, 170, 70));
+                    _renderer.DrawCircle(sp.Position + sUp * 4.6f, 1.6f, new Color(150, 230, 110));
+                    // A slow drip crawling down the mound face sells "alive".
+                    var drip = (_renderer.Time * 0.5f + sp.Phase) % 1f;
+                    _renderer.DrawRect(sp.Position + sUp * (4.5f - drip * 3.5f)
+                        + new Vector2(-sUp.Y, sUp.X) * 2.4f, new Vector2(0.9f, 1.4f),
+                        new Color(120, 210, 90), sRot);
+                    break;
+                }
+                case SpawnerKind.LizardDoor:
+                    _renderer.DrawRect(sp.Position + sUp * 4f, new Vector2(9f, 10f), new Color(96, 66, 44), sRot);
+                    _renderer.DrawRect(sp.Position + sUp * 3.6f, new Vector2(6f, 8f), new Color(30, 22, 18), sRot);
+                    _renderer.DrawRect(sp.Position + sUp * 8.6f, new Vector2(10f, 1.6f), new Color(120, 84, 55), sRot);
+                    break;
+                default:   // AlienHome — a lit household doorway
+                    _renderer.DrawRect(sp.Position + sUp * 3.4f, new Vector2(5f, 7.5f), new Color(70, 76, 96), sRot);
+                    _renderer.DrawRect(sp.Position + sUp * 3.2f, new Vector2(3.4f, 6f),
+                        new Color(255, 214, 140), sRot);
+                    break;
+            }
+        }
+
         // Planted (and flying) torches: a short stick with a flame knob, swinging gently
         // around its planted pose — the dangle sells them as physical objects.
         foreach (var torch in _run.Torches)
