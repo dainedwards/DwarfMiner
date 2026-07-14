@@ -358,7 +358,7 @@ public sealed class Cells
         // mined crystals visibly vanish with nothing to pick up.)
         if (Tiles.IsGem(src))
         {
-            PendingGemDrops.Add((Planet.TileToWorld(tx, ty), src, true));
+            PendingGemDrops.Add((Planet.TileToWorld(tx, ty), src));
             return;
         }
         var c0y = tx * Density;
