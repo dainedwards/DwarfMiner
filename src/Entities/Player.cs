@@ -1045,6 +1045,7 @@ public enum EquipSlot
 {
     Torch = 0, Head = 1, Chest = 2, Legs = 3, Feet = 4,
     Weapon1 = 5, Weapon2 = 6, MiningTool = 7,
+    Gloves = 8, Accessory1 = 9, Accessory2 = 10,
 }
 
 /// <summary>
