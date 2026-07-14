@@ -1741,6 +1741,24 @@ public sealed class Cells
                     new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
             }
         }
+
+        // Flying cells: material mid-arc between grid sites, drawn as short streaks along
+        // their velocity so fast ejecta reads as motion even at grain size. Skipped at the
+        // zoomed-out LOD — sub-tile grains are invisible from orbit anyway.
+        if (stride == 1)
+        {
+            var maxDistSq = (viewRadius + 8f) * (viewRadius + 8f);
+            foreach (var f in _flying)
+            {
+                if (Vector2.DistanceSquared(f.Pos, viewCentre) > maxDistSq) continue;
+                var col = ColorFor((Material)f.Mat, (int)f.Pos.X, (int)f.Pos.Y, f.Src);
+                var speed = f.Vel.Length();
+                var len = MathHelper.Clamp(speed * 0.016f, PxPerCell, PxPerCell * 3f);
+                var rot = speed > 1f ? MathF.Atan2(f.Vel.Y, f.Vel.X) : 0f;
+                r.Batch.Draw(r.Pixel, f.Pos, null, col, rot,
+                    new Vector2(0.5f, 0.5f), new Vector2(len, PxPerCell), SpriteEffects.None, 0f);
+            }
+        }
     }
 
     /// <summary>Lava/acid glow emitters. Same LOD contract as <see cref="Draw"/> — the
