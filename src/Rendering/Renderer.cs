@@ -643,6 +643,85 @@ public sealed class Renderer
                         DrawDeco(centre, right, up, rotation, chord, 0, 4, 1, 1, capBright);
                         break;
                     }
+                    case TileKind.DoorClosed:
+                    {
+                        // Alloy door leaf: framed teal panel with a bright inset strip and a
+                        // little glowing latch stud — one tile of a taller leaf, so the art
+                        // tiles cleanly when doors stack.
+                        var frame = new Color(52, 70, 80);
+                        var panel = new Color(96, 132, 142);
+                        var inset = new Color(120, 162, 172);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, frame);
+                        DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, frame);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 6, 8, panel);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 0, 1, 8, inset);
+                        DrawDeco(centre, right, up, rotation, chord, 5, 0, 1, 8, inset);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 3, 2, 2, new Color(235, 210, 130));
+                        break;
+                    }
+                    case TileKind.DoorOpen:
+                    {
+                        // Open doorway: the leaf slid to one jamb — a dark passage with the
+                        // compressed panel hugging the edge and the latch light gone green.
+                        var frame = new Color(52, 70, 80);
+                        var panel = new Color(96, 132, 142);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, frame);
+                        DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, frame);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 6, 8, new Color(24, 30, 36));
+                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 2, 8, panel);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 3, 1, 2, new Color(140, 230, 160));
+                        break;
+                    }
+                    case TileKind.AlienPlant:
+                    {
+                        // Tentacled houseplant: a squat magenta pot with three teal tendrils
+                        // waving on the wall clock, each tipped with a little bulb — a plant
+                        // that clearly wants to pet you.
+                        var pot = new Color(150, 80, 140);
+                        var tendril = new Color(80, 170, 120);
+                        var bulb = new Color(200, 240, 150);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 6, 4, 2, pot);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 5, 2, 1, new Color(110, 60, 105));
+                        for (var tt = -1; tt <= 1; tt++)
+                        {
+                            var wave = MathF.Sin(Time * 2.2f + (hash & 63) * 0.1f + tt * 2f);
+                            var tipX = 3.5f + tt * 1.8f + wave * 0.8f;
+                            DrawDeco(centre, right, up, rotation, chord, 3.5f + tt * 1.2f, 3, 1, 3, tendril);
+                            DrawDeco(centre, right, up, rotation, chord, tipX, 1.4f, 1, 2, tendril);
+                            DrawDeco(centre, right, up, rotation, chord, tipX, 0.6f, 1, 1, bulb);
+                        }
+                        break;
+                    }
+                    case TileKind.HoverPod:
+                    {
+                        // Levitating egg-chair: a plum pod bobbing over its base plate on a
+                        // little repulsor shimmer. Furniture with no legs — obviously superior.
+                        var bob = MathF.Sin(Time * 1.8f + (hash & 63) * 0.12f) * 0.6f;
+                        var shell = new Color(172, 122, 192);
+                        var shellDk = new Color(120, 82, 140);
+                        var cushion = new Color(230, 190, 120);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 7, 4, 1, new Color(70, 76, 88));
+                        DrawDeco(centre, right, up, rotation, chord, 3, 6.2f, 2, 0.6f, new Color(140, 220, 255));
+                        DrawDeco(centre, right, up, rotation, chord, 2, 1.4f + bob, 4, 4.4f, shell);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 1.4f + bob, 1, 4.4f, shellDk);
+                        DrawDeco(centre, right, up, rotation, chord, 4, 2.4f + bob, 2, 2.6f, cushion);
+                        break;
+                    }
+                    case TileKind.OrbLamp:
+                    {
+                        // Lamp orb on a squiggle stand — the warm glow breathes slowly. The
+                        // bright pixels double as bloom seeds so it reads luminous.
+                        var stand = new Color(90, 96, 110);
+                        var pulse = MathF.Sin(Time * 1.4f + (hash & 63) * 0.1f) * 0.5f + 0.5f;
+                        var orb = Color.Lerp(new Color(230, 190, 110), new Color(255, 240, 190), pulse);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 7, 4, 1, stand);
+                        DrawDeco(centre, right, up, rotation, chord, 4, 6, 1, 1, stand);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 5, 1, 1, stand);
+                        DrawDeco(centre, right, up, rotation, chord, 4, 4, 1, 1, stand);
+                        DrawDeco(centre, right, up, rotation, chord, 2.6f, 1, 2.8f, 2.8f, orb);
+                        DrawDeco(centre, right, up, rotation, chord, 3.2f, 1.6f, 1, 1, Color.White);
+                        break;
+                    }
                     case TileKind.Beacon:
                     {
                         // Crystal pillar on a dark plinth with a bright pulsing core. Pulse is
