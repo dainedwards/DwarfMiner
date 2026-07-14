@@ -166,6 +166,30 @@ public sealed class Sfx
                     Tone(b, 180, 90, 0.4, Decay(24), Wave.Sine);
                     Noise(b, 0.2, Decay(70), lp: 0.3);
                 });
+            case "shoot_flame":
+                // Roaring gas jet — dark breathy noise swelling in, no percussive edge.
+                // Retriggered per puff; the min-gap throttle blurs it into a continuous hose.
+                return Render(0.14, b =>
+                {
+                    Noise(b, 0.5, Ar(0.03, 12), lp: 0.8);
+                    Tone(b, 120, 70, 0.2, Ar(0.03, 10), Wave.Saw);
+                });
+            case "shoot_spew":
+                // Wet gurgling spit — low-passed noise with a bubbling sine wobble.
+                return Render(0.13, b =>
+                {
+                    Noise(b, 0.4, Ar(0.02, 14), lp: 0.88);
+                    Tone(b, 220, 90, 0.25, Decay(18), Wave.Sine);
+                    Tone(b, 480, 300, 0.12, Decay(26), Wave.Sine);
+                });
+            case "shoot_zap":
+                // Arc discharge — a screaming square dive with a crackling noise burst.
+                return Render(0.16, b =>
+                {
+                    Tone(b, 2400, 180, 0.4, Decay(22), Wave.Square);
+                    Tone(b, 3100, 700, 0.18, Decay(30), Wave.Saw);
+                    Noise(b, 0.4, Decay(28), lp: 0.2);
+                });
             case "explode":
                 // Boom — long noise tail over a deep falling sine.
                 return Render(0.5, b =>
