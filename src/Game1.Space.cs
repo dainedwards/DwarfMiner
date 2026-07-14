@@ -40,6 +40,8 @@ public sealed partial class DwarfMinerGame
             ['C'] = new Color(120, 220, 255),  // energy cyan
             ['G'] = new Color(120, 255, 160),  // mining beam green
             ['R'] = new Color(190, 60, 50),    // warhead red
+            ['L'] = new Color(225, 230, 245),  // top-lit steel
+            ['n'] = new Color(55, 58, 70),     // exhaust nozzle
         };
         Texture2D T(params string[] rows) => Renderer.BuildSprite(GraphicsDevice, rows, pal);
 
