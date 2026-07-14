@@ -422,6 +422,7 @@ public sealed class CharacterScreen
 
         for (var s = 0; s < Equipment.SlotCount; s++)
         {
+            if (HiddenSlot((EquipSlot)s)) continue;
             var r = _slotRects[s];
             var label = SlotLabels[s];
             renderer.DrawText(label,
