@@ -194,6 +194,8 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>Pause menu (Esc during play/space). While open the whole sim freezes.</summary>
     private bool _pauseOpen;
     private int _pauseCursor;
+    /// <summary>Half-rate cell-sim toggle while parked in orbit.</summary>
+    private bool _orbitCellTick;
 
     public DwarfMinerGame()
     {
