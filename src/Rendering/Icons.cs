@@ -74,7 +74,215 @@ public static class Icons
         _icons["ammo_sapphire"] = BuildAmmo(gd, new Color(140, 180, 255), new Color(40, 70, 160));
         _icons["ammo_diamond"]  = BuildAmmo(gd, new Color(230, 245, 255), new Color(140, 200, 230));
         _icons["rocket_part"]   = BuildRocketPart(gd);
+
+        // Worn gear for the character screen — armor pieces in iron (steel-grey) and chitin
+        // (carapace-green) colourways, plus the carried-light ladder.
+        var ironL = new Color(195, 200, 215); var ironD = new Color(120, 125, 145);
+        var chitL = new Color(125, 150, 105); var chitD = new Color(70, 90, 60);
+        _icons["armor"]           = BuildChestplate(gd, ironL, ironD);
+        _icons["iron_helmet"]     = BuildHelmet(gd, ironL, ironD);
+        _icons["iron_leggings"]   = BuildLeggings(gd, ironL, ironD);
+        _icons["iron_boots"]      = BuildBoots(gd, ironL, ironD);
+        _icons["chitin_armor"]    = BuildChestplate(gd, chitL, chitD);
+        _icons["chitin_helmet"]   = BuildHelmet(gd, chitL, chitD);
+        _icons["chitin_leggings"] = BuildLeggings(gd, chitL, chitD);
+        _icons["chitin_boots"]    = BuildBoots(gd, chitL, chitD);
+        _icons["torch"]       = BuildTorch(gd);
+        _icons["lantern"]     = BuildLantern(gd);
+        _icons["helm_lamp"]   = BuildHelmLamp(gd);
+        _icons["sun_crystal"] = BuildSunCrystal(gd);
     }
+
+    // ───────── worn-gear builders (character screen) ─────────
+
+    private static Texture2D BuildHelmet(GraphicsDevice gd, Color light, Color dark) =>
+        Renderer.BuildSprite(gd, new[]
+        {
+            "................",
+            "................",
+            "................",
+            ".....SSSSSS.....",
+            "....SSSSSSSS....",
+            "...SSSSSSSSSS...",
+            "...SSSSSSSSSS...",
+            "...SSssssssSS...",
+            "...SS......SS...",
+            "...SS......SS...",
+            "...ss......ss...",
+            "................",
+            "................",
+            "................",
+            "................",
+            "................",
+        }, new Dictionary<char, Color>
+        { ['.'] = Color.Transparent, ['S'] = light, ['s'] = dark });
+
+    private static Texture2D BuildChestplate(GraphicsDevice gd, Color light, Color dark) =>
+        Renderer.BuildSprite(gd, new[]
+        {
+            "................",
+            "................",
+            "..ss........ss..",
+            ".sSSs......sSSs.",
+            ".sSSSSSSSSSSSSs.",
+            ".sSSSSSSSSSSSSs.",
+            "..sSSSssssSSSs..",
+            "..sSSSSSSSSSSs..",
+            "..sSSSSSSSSSSs..",
+            "..sSSSssssSSSs..",
+            "..sSSSSSSSSSSs..",
+            "...sSSSSSSSSs...",
+            "....ssssssss....",
+            "................",
+            "................",
+            "................",
+        }, new Dictionary<char, Color>
+        { ['.'] = Color.Transparent, ['S'] = light, ['s'] = dark });
+
+    private static Texture2D BuildLeggings(GraphicsDevice gd, Color light, Color dark) =>
+        Renderer.BuildSprite(gd, new[]
+        {
+            "................",
+            "................",
+            "................",
+            "...SSSSSSSSSS...",
+            "...SSSSSSSSSS...",
+            "...SSSssssSSS...",
+            "...SSS....SSS...",
+            "...SSS....SSS...",
+            "...SSS....SSS...",
+            "...SSS....SSS...",
+            "...SSS....SSS...",
+            "...sss....sss...",
+            "................",
+            "................",
+            "................",
+            "................",
+        }, new Dictionary<char, Color>
+        { ['.'] = Color.Transparent, ['S'] = light, ['s'] = dark });
+
+    private static Texture2D BuildBoots(GraphicsDevice gd, Color light, Color dark) =>
+        Renderer.BuildSprite(gd, new[]
+        {
+            "................",
+            "................",
+            "................",
+            "................",
+            "................",
+            "...SS.....SS....",
+            "...SS.....SS....",
+            "...SS.....SS....",
+            "...SS.....SS....",
+            "...SSs....SSs...",
+            "...SSSs...SSSs..",
+            "...ssss...ssss..",
+            "................",
+            "................",
+            "................",
+            "................",
+        }, new Dictionary<char, Color>
+        { ['.'] = Color.Transparent, ['S'] = light, ['s'] = dark });
+
+    private static Texture2D BuildTorch(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "......YY........",
+        ".....YFFY.......",
+        ".....FFOF.......",
+        ".....OFFO.......",
+        "......OO........",
+        "......GG........",
+        "......Gg........",
+        "......Gg........",
+        "......Gg........",
+        "......Gg........",
+        "......gg........",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['Y'] = new Color(255, 240, 150), ['F'] = new Color(255, 170, 60),
+        ['O'] = new Color(220, 110, 40),
+        ['G'] = new Color(120, 85, 50), ['g'] = new Color(80, 55, 32),
+    });
+
+    private static Texture2D BuildLantern(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "......ss........",
+        ".....s..s.......",
+        ".....ssss.......",
+        "....sSSSSs......",
+        "....SYYYYS......",
+        "....SYFFYS......",
+        "....SYFFYS......",
+        "....SYYYYS......",
+        "....sSSSSs......",
+        ".....ssss.......",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['S'] = new Color(150, 155, 170), ['s'] = new Color(95, 100, 115),
+        ['Y'] = new Color(255, 230, 140), ['F'] = new Color(255, 180, 80),
+    });
+
+    private static Texture2D BuildHelmLamp(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "................",
+        "....SSSSSS......",
+        "...SSSSSSSS.....",
+        "...SSSYYSSS..bb.",
+        "...SSSYYSSS.bbb.",
+        "...SSSSSSSS..bb.",
+        "...Sssssss......",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['S'] = new Color(200, 175, 90), ['s'] = new Color(130, 110, 60),
+        ['Y'] = new Color(255, 250, 200), ['b'] = new Color(255, 245, 170, 160),
+    });
+
+    private static Texture2D BuildSunCrystal(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "......ww........",
+        ".....wWWw.......",
+        "....wWWWWw......",
+        "...wWWYYWWw.....",
+        "...wWWYYWWw.....",
+        "....wWWWWw......",
+        ".....wWWw.......",
+        "......ww........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['W'] = new Color(255, 250, 215), ['w'] = new Color(235, 210, 140),
+        ['Y'] = new Color(255, 255, 255),
+    });
 
     // ───────── per-icon builders ─────────
 
