@@ -62,6 +62,10 @@ public sealed class Player
     /// <c>Effective…</c> getters below; never read this field for gameplay logic, always go
     /// through the getter so future augment modifiers slot in cleanly.</summary>
     public int PickaxeTier = 1;
+    /// <summary>Geo-scanner rung, 0 = none. Each rung widens what the HUD arrows point at:
+    /// 1 = base ores, 2 = precious metals, 3 = gems, 4 = the super-rare (diamond/crystal/
+    /// voidstone). Crafted, and saved with the run.</summary>
+    public int ScannerTier;
 
     /// <summary>Carried-light tier 0..4. The dwarf sheds no light on the surface or in the
     /// dirt band regardless of tier (daylight covers it); below that the aura fades in and
