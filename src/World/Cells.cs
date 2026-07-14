@@ -1779,7 +1779,7 @@ public sealed class Cells
             {
                 var cx = cx0 + d;
                 var lm = (Material)_mat[Idx(cx, cy)];
-                if (lm != Material.Lava && lm != Material.Acid) continue;
+                if (lm != Material.Lava && lm != Material.Acid && lm != Material.Fire) continue;
                 // Skip interior pool cells whose four cardinal neighbours are all blocked.
                 var (icx, icy) = InnerCell(cx, cy);
                 var allBlocked = IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy) && IsBlocked(icx, icy);
