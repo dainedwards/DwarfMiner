@@ -1142,7 +1142,9 @@ public sealed partial class DwarfMinerGame : Game
             p.JetTier2 = jetTier >= 2; p.JetTier3 = jetTier >= 3; p.JetTier4 = jetTier >= 4;
             if (p.Inventory.Count("jetpack") == 0) p.Inventory.Add("jetpack", 1);
             p.Equipment.AutoEquip("jetpack");
-            jumpHeld = true;
+            // Pulse the button (released ~0.4s in every 4s) — a permanently-held jump
+            // never makes a fresh press edge, so a landed dwarf would just stand there.
+            jumpHeld = _totalTime % 4.0f > 0.4f;
         }
 
         // Vertical input for fly mode: W/Up = ascend, S/Down = descend along local up.
