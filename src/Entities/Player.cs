@@ -103,7 +103,7 @@ public sealed class Player
     /// <summary>1-4 while owned (drives the exhaust flame colour: red→orange→yellow→blue),
     /// 0 without the pack.</summary>
     public int JetTier => JetTier4 ? 4 : JetTier3 ? 3 : JetTier2 ? 2 : HasJetpack ? 1 : 0;
-    private float JetRiseSpeed => JetTier4 ? 165f : JetTier3 ? 140f : JetTier2 ? 120f : 100f;
+    private float JetRiseSpeed => JetTier4 ? 110f : JetTier3 ? 95f : JetTier2 ? 82f : 70f;
     /// <summary>Net upward acceleration while thrusting (applied on top of cancelling
     /// gravity) — low enough that catching a fall takes a beat, the Noita float.</summary>
     private const float JetLift = 150f;
