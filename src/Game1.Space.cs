@@ -130,9 +130,11 @@ public sealed partial class DwarfMinerGame
             "SSSS.",
             ".DD..");
         // Worn jetpack — drawn on the dwarf's back (not the grip), upright with the body:
-        // one compact solid tank with the exhaust nozzle at its base.
+        // one compact solid tank, dome-topped, with the exhaust nozzle at its base. The
+        // draw squeezes it to ~2/3 width (non-uniform scale), so it reads as a slim canister.
         _jetpackTex = T(
-            "LLL",
+            ".L.",
+            "LSL",
             "SSS",
             "SSS",
             "ddd",
