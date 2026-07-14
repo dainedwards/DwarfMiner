@@ -32,9 +32,15 @@ public sealed class DebugMenu
     public void Toggle() => Open = !Open;
     public void Close() => Open = false;
 
+    /// <summary>Row hit-rects captured at draw time (toolbelt pattern) so Update can do
+    /// hover + click against exactly what was rendered.</summary>
+    private Rectangle[] _rowRects = Array.Empty<Rectangle>();
+
     /// <summary>Menu input. Up/Down move the cursor, Enter/Space runs the highlighted entry,
-    /// number keys 1-9 run directly, F9/Esc closes.</summary>
-    public void Update(KeyboardState keys, KeyboardState prevKeys)
+    /// number keys 1-9 run directly, hover moves the cursor and click runs the row,
+    /// F9/Esc closes.</summary>
+    public void Update(KeyboardState keys, KeyboardState prevKeys,
+        MouseState mouse, MouseState prevMouse)
     {
         if (Pressed(keys, prevKeys, Keys.F9) || Pressed(keys, prevKeys, Keys.Escape))
         {
@@ -47,6 +53,20 @@ public sealed class DebugMenu
             _cursor = (_cursor + 1) % _entries.Length;
         if (Pressed(keys, prevKeys, Keys.Up) || Pressed(keys, prevKeys, Keys.W))
             _cursor = (_cursor - 1 + _entries.Length) % _entries.Length;
+
+        var clicked = mouse.LeftButton == ButtonState.Pressed
+                   && prevMouse.LeftButton != ButtonState.Pressed;
+        for (var i = 0; i < Math.Min(_rowRects.Length, _entries.Length); i++)
+        {
+            if (!_rowRects[i].Contains(mouse.X, mouse.Y)) continue;
+            _cursor = i;
+            if (clicked)
+            {
+                _entries[i].Run();
+                Open = false;
+                return;
+            }
+        }
 
         for (var i = 0; i < Math.Min(9, _entries.Length); i++)
             if (Pressed(keys, prevKeys, Keys.D1 + i))
