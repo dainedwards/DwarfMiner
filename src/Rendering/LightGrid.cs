@@ -90,12 +90,12 @@ public sealed class LightGrid
                     if (p < _profMin) _profMin = p;
                     if (p > _profMax) _profMax = p;
                 }
-                var baseR = planet.SurfaceRadiusAt(planet.Center + Vector2.UnitX) -
-                            planet.SurfaceProfile[0];
-                _profMin += baseR; _profMax += baseR;
+                _profMin += Planet.RingMin;
+                _profMax += Planet.RingMin;
             }
             else
             {
+                // Legacy save without a stamped profile: flat baseline.
                 _profMin = _profMax = planet.SurfaceRadiusAt(planet.Center + Vector2.UnitX);
             }
         }
