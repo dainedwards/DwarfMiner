@@ -23,6 +23,14 @@ if (args.Length > 0 && args[0] == "--spawnprobe")
     return;
 }
 
+// Temporary diagnostic: `--cityprobe` counts the city-tower refit (doors/ladders/furniture)
+// and checks the door-opening creature AI.
+if (args.Length > 0 && args[0] == "--cityprobe")
+{
+    DwarfMiner.Systems.CityProbe.Run();
+    return;
+}
+
 // Temporary diagnostic: `--acidprobe` measures acid corrosion + wake-set on an acid world.
 if (args.Length > 0 && args[0] == "--acidprobe")
 {
