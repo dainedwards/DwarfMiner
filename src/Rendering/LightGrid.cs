@@ -27,8 +27,10 @@ public sealed class LightGrid
     /// seed drops below ~5% after ln(0.05)/ln(AttAir) ≈ 36 cells (~145 world px).</summary>
     private const float AttAir = 0.92f;
     /// <summary>Per-cell decay through solid tiles — light dies within a few tiles of
-    /// rock, which is the whole Terraria trick.</summary>
-    private const float AttSolid = 0.60f;
+    /// rock, which is the whole Terraria trick. Cells are 4 px, so this must be far
+    /// gentler than Terraria's per-16px-tile factor: 0.78 shades a rock face to black
+    /// across ~12 cells (~48 px), a readable gradient instead of a hard silhouette.</summary>
+    private const float AttSolid = 0.78f;
     /// <summary>Seed strength bounds. The cap limits how far a huge source reaches; the
     /// floor keeps small glints (bullets, gem speckles) from vanishing entirely.</summary>
     private const float SeedCap = 2.4f;
