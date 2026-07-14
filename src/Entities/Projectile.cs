@@ -241,8 +241,22 @@ public sealed class Projectile
         // ballistic for their lifetime so aim is direct.
         if (Kind == ProjectileKind.Dynamite)
             Velocity += planet.GravityAt(Position) * 240f * dt;
-        else if (Kind == ProjectileKind.Tnt)
+        else if (Kind == ProjectileKind.Tnt && !_resting)
             Velocity += planet.GravityAt(Position) * 380f * dt;
+        else if (Kind == ProjectileKind.TntPack && !_stuck)
+            Velocity += planet.GravityAt(Position) * 380f * dt;
+
+        // A settled TNT satchel / cemented pack just burns its fuse where it is.
+        if (_resting || _stuck)
+        {
+            Life -= dt;
+            if (Life <= 0)
+            {
+                Dead = true;
+                CarveCrater(planet, physics, cells, CraterTiles, particles);
+            }
+            return;
+        }
 
         PrevPosition = Position;
         // Substep the move so fast rounds can't tunnel: the laser covers ~2 tiles per frame,
