@@ -10,13 +10,14 @@ using Microsoft.Xna.Framework.Input;
 namespace DwarfMiner.UI;
 
 /// <summary>
-/// The character screen (I key): a paper-doll pane of equipment slots — torch, head, chest,
-/// legs, feet, two weapons, and a mining tool — beside a backpack grid of everything carried.
-/// Gear is drag-and-dropped between the two; hovering any item shows a detailed tooltip and
-/// lights up the doll slots it can be equipped to.
+/// The character screen (I key): a Terraria-styled paper-doll of equipment slots — torch,
+/// head, chest, legs, feet, gloves, two weapons, a mining tool, and two accessory slots —
+/// beside a backpack grid of everything carried. Gear is drag-and-dropped between the two;
+/// hovering any item shows a rarity-coloured tooltip and pulses the doll slots it fits.
 ///
 /// Slots are pointers into the inventory (same rule as the toolbelt): equipping never
-/// changes counts, and unequipping just clears the pointer. Hit-test rectangles are cached
+/// changes counts, and unequipping just clears the pointer. Empty slots draw a ghost of a
+/// representative item so their role reads without labels. Hit-test rectangles are cached
 /// during Draw and consumed by the next Update — the layout doesn't move per frame so the
 /// 1-frame staleness is invisible.
 /// </summary>
@@ -31,13 +32,32 @@ public sealed class CharacterScreen
     private readonly Rectangle[] _slotRects = new Rectangle[Equipment.SlotCount];
     private readonly List<(string id, Rectangle rect)> _bagRects = new();
 
-    private const int SlotSize = 44;
-    private const int CellSize = 36;
+    private const int SlotSize = 46;
+    private const int SlotPitch = 62;
+    private const int CellSize = 38;
     private const int CellGap = 4;
-    private const int BagCols = 6;
+    private const int BagCols = 8;
 
+    // ── Terraria-flavoured palette: deep blue panel, beveled indigo slots, gold accents ──
+    private static readonly Color PanelBg      = new(28, 30, 66, 244);
+    private static readonly Color PanelEdgeOut = new(9, 9, 24);
+    private static readonly Color PanelEdgeIn  = new(99, 107, 178);
+    private static readonly Color TitleBarBg   = new(46, 50, 100);
+    private static readonly Color SlotFill     = new(56, 62, 122, 240);
+    private static readonly Color SlotFillHot  = new(84, 94, 165, 245);
+    private static readonly Color BevelLight   = new(122, 132, 198);
+    private static readonly Color BevelDark    = new(22, 24, 52);
+    private static readonly Color Gold         = new(255, 220, 120);
+    private static readonly Color TextDim      = new(155, 158, 180);
+
+    /// <summary>Label order matches the EquipSlot enum.</summary>
     private static readonly string[] SlotLabels =
-        { "TORCH", "HEAD", "CHEST", "LEGS", "FEET", "WEAPON 1", "WEAPON 2", "TOOL" };
+        { "TORCH", "HEAD", "CHEST", "LEGS", "FEET", "WEAPON 1", "WEAPON 2", "TOOL", "GLOVES", "ACC 1", "ACC 2" };
+
+    /// <summary>Representative item drawn as a dim ghost in each empty slot, Terraria-style,
+    /// so the slot's role reads at a glance.</summary>
+    private static readonly string[] GhostIds =
+        { "torch", "iron_helmet", "armor", "iron_leggings", "iron_boots", "pistol", "pistol", "pickaxe", "leather_gloves", "magnet_ring", "aegis_pendant" };
 
     public void Show() { Open = true; _carry = null; }
 
@@ -126,70 +146,84 @@ public sealed class CharacterScreen
         var sb = renderer.Batch;
         var mouse = Screen.Mouse();
 
-        const int panelW = 660;
-        const int panelH = 420;
+        const int panelW = 700;
+        const int panelH = 462;
         var px = (viewportWidth - panelW) / 2;
         var py = (viewportHeight - panelH) / 2;
 
         sb.Begin(samplerState: SamplerState.PointClamp);
-        sb.Draw(renderer.Pixel, new Rectangle(0, 0, viewportWidth, viewportHeight), new Color(0, 0, 0, 170));
-        sb.Draw(renderer.Pixel, new Rectangle(px, py, panelW, panelH), new Color(15, 15, 25, 235));
-        DrawBorder(sb, renderer.Pixel, new Rectangle(px, py, panelW, panelH), new Color(140, 130, 200));
+        sb.Draw(renderer.Pixel, new Rectangle(0, 0, viewportWidth, viewportHeight), new Color(0, 0, 0, 175));
+        // Double-edged panel: dark outer line, light inner line, deep blue body + title bar.
+        sb.Draw(renderer.Pixel, new Rectangle(px - 2, py - 2, panelW + 4, panelH + 4), PanelEdgeOut);
+        sb.Draw(renderer.Pixel, new Rectangle(px - 1, py - 1, panelW + 2, panelH + 2), PanelEdgeIn);
+        sb.Draw(renderer.Pixel, new Rectangle(px, py, panelW, panelH), PanelBg);
+        sb.Draw(renderer.Pixel, new Rectangle(px, py, panelW, 24), TitleBarBg);
+        sb.Draw(renderer.Pixel, new Rectangle(px, py + 24, panelW, 1), PanelEdgeIn);
         // Divider between doll and backpack panes.
-        sb.Draw(renderer.Pixel, new Rectangle(px + 300, py + 40, 1, panelH - 52), new Color(140, 130, 200, 90));
+        sb.Draw(renderer.Pixel, new Rectangle(px + 318, py + 34, 1, panelH - 46), new Color(99, 107, 178, 110));
         sb.End();
 
-        renderer.DrawText("CHARACTER — drag gear between doll and backpack   RMB quick-equip   I/ESC close",
-            new Vector2(px + 12, py + 12), Color.White);
+        renderer.DrawText("CHARACTER", new Vector2(px + 10, py + 6), Gold);
+        renderer.DrawText("RMB QUICK-EQUIP   I/ESC CLOSE", new Vector2(px + panelW - 186, py + 6), TextDim);
 
         // What the cursor/carry is proposing to equip — drives the slot highlights.
         var proposing = _carry?.Id ?? HoveredBagId(mouse.X, mouse.Y);
 
         DrawDoll(renderer, player, px, py, proposing);
-        DrawBackpack(renderer, player, px + 316, py + 44, panelW - 316 - 16);
+        DrawBackpack(renderer, player, px + 334, py + 36, panelW - 334 - 14);
         DrawCarryIcon(renderer, player, mouse);
         DrawTooltip(renderer, player, mouse, viewportWidth, viewportHeight);
     }
 
     // ───────── doll pane ─────────
 
-    /// <summary>Slot rectangle layout, relative to the panel origin. Body slots run down the
-    /// silhouette (head/chest/legs/feet); torch hangs off the left hand; weapons and the
-    /// mining tool stack on the right, where the belt would sling them.</summary>
+    /// <summary>Slot layout, relative to the panel origin — three columns. Body armor runs
+    /// down the centre (head→boots); held/hung gear on the left (torch, gloves, trinkets);
+    /// weapons and the mining tool on the right.</summary>
     private static Rectangle SlotRect(EquipSlot s, int px, int py)
     {
-        var cx = px + 128;   // silhouette centreline
-        return s switch
+        var cx = px + 136;   // doll centreline
+        const int top = 62;
+        var (col, row) = s switch
         {
-            EquipSlot.Torch      => new Rectangle(cx - 106, py + 84, SlotSize, SlotSize),
-            EquipSlot.Head       => new Rectangle(cx - 22, py + 56, SlotSize, SlotSize),
-            EquipSlot.Chest      => new Rectangle(cx - 22, py + 118, SlotSize, SlotSize),
-            EquipSlot.Legs       => new Rectangle(cx - 22, py + 180, SlotSize, SlotSize),
-            EquipSlot.Feet       => new Rectangle(cx - 22, py + 242, SlotSize, SlotSize),
-            EquipSlot.Weapon1    => new Rectangle(cx + 62, py + 84, SlotSize, SlotSize),
-            EquipSlot.Weapon2    => new Rectangle(cx + 62, py + 152, SlotSize, SlotSize),
-            EquipSlot.MiningTool => new Rectangle(cx + 62, py + 220, SlotSize, SlotSize),
-            _ => Rectangle.Empty,
+            EquipSlot.Torch      => (-1, 0),
+            EquipSlot.Gloves     => (-1, 1),
+            EquipSlot.Accessory1 => (-1, 2),
+            EquipSlot.Accessory2 => (-1, 3),
+            EquipSlot.Head       => (0, 0),
+            EquipSlot.Chest      => (0, 1),
+            EquipSlot.Legs       => (0, 2),
+            EquipSlot.Feet       => (0, 3),
+            EquipSlot.Weapon1    => (1, 0),
+            EquipSlot.Weapon2    => (1, 1),
+            _                    => (1, 2),   // MiningTool
         };
+        return new Rectangle(cx - 23 + col * 84, py + top + row * SlotPitch, SlotSize, SlotSize);
+    }
+
+    /// <summary>Terraria-style beveled slot: filled box, 2-px light bevel on the top/left,
+    /// 2-px dark on the bottom/right, optional gold eligibility ring.</summary>
+    private static void DrawSlotBox(SpriteBatch sb, Texture2D pixel, Rectangle r, bool hot, Color? ring)
+    {
+        sb.Draw(pixel, r, hot ? SlotFillHot : SlotFill);
+        sb.Draw(pixel, new Rectangle(r.X, r.Y, r.Width, 2), BevelLight);
+        sb.Draw(pixel, new Rectangle(r.X, r.Y, 2, r.Height), BevelLight);
+        sb.Draw(pixel, new Rectangle(r.X, r.Y + r.Height - 2, r.Width, 2), BevelDark);
+        sb.Draw(pixel, new Rectangle(r.X + r.Width - 2, r.Y, 2, r.Height), BevelDark);
+        if (ring is { } c)
+        {
+            DrawBorder(sb, pixel, new Rectangle(r.X - 1, r.Y - 1, r.Width + 2, r.Height + 2), c);
+            DrawBorder(sb, pixel, new Rectangle(r.X - 2, r.Y - 2, r.Width + 4, r.Height + 4), c);
+        }
     }
 
     private void DrawDoll(Renderer renderer, Player player, int px, int py, string? proposing)
     {
         var sb = renderer.Batch;
-        var cx = px + 128;
+        var mouse = Screen.Mouse();
+        renderer.DrawText("EQUIPMENT", new Vector2(px + 14, py + 36), Gold);
 
         sb.Begin(samplerState: SamplerState.PointClamp);
-        // Faint dwarf silhouette behind the body slots so the pane reads as a figure, not a
-        // grid: head knob, broad torso, stub legs, boots.
-        var body = new Color(58, 62, 82, 130);
-        sb.Draw(renderer.Pixel, new Rectangle(cx - 12, py + 62, 24, 26), body);   // head
-        sb.Draw(renderer.Pixel, new Rectangle(cx - 20, py + 92, 40, 84), body);   // torso
-        sb.Draw(renderer.Pixel, new Rectangle(cx - 32, py + 98, 12, 52), body);   // arm L
-        sb.Draw(renderer.Pixel, new Rectangle(cx + 20, py + 98, 12, 52), body);   // arm R
-        sb.Draw(renderer.Pixel, new Rectangle(cx - 16, py + 178, 13, 66), body);  // leg L
-        sb.Draw(renderer.Pixel, new Rectangle(cx + 3, py + 178, 13, 66), body);   // leg R
-
-        // Gold pulse on every slot the hovered/carried item could equip to.
         var pulse = 0.55f + 0.45f * MathF.Sin(Environment.TickCount64 / 160f);
         for (var s = 0; s < Equipment.SlotCount; s++)
         {
@@ -199,25 +233,19 @@ public sealed class CharacterScreen
 
             var worn = player.Equipment.Slots[s];
             var eligible = proposing is not null && Equipment.Fits(proposing, slot);
-            var hovered = r.Contains(Screen.Mouse().X, Screen.Mouse().Y);
+            var hovered = r.Contains(mouse.X, mouse.Y);
+            var ring = eligible ? Color.Lerp(new Color(130, 105, 40), Gold, pulse) : (Color?)null;
+            DrawSlotBox(sb, renderer.Pixel, r, hovered, ring);
 
-            sb.Draw(renderer.Pixel, r, worn is null ? new Color(22, 24, 36, 230) : new Color(45, 50, 70, 240));
-            var border = eligible ? Color.Lerp(new Color(120, 100, 40), new Color(255, 220, 120), pulse)
-                       : hovered ? new Color(200, 205, 225)
-                       : new Color(110, 115, 130);
-            DrawBorder(sb, renderer.Pixel, r, border);
-            if (eligible)   // second ring so the highlight carries at a glance
-                DrawBorder(sb, renderer.Pixel, new Rectangle(r.X - 2, r.Y - 2, r.Width + 4, r.Height + 4), border);
-
-            if (worn is not null)
-            {
-                var tex = Icons.GetForSlot(worn, player.PickaxeTier);
-                if (tex is not null)
-                    sb.Draw(tex, new Rectangle(r.X + 4, r.Y + 4, r.Width - 8, r.Height - 8), Color.White);
-                else
-                    sb.Draw(renderer.Pixel, new Rectangle(r.X + 12, r.Y + 12, r.Width - 24, r.Height - 24),
-                        Tiles.ResourceColor(worn));
-            }
+            // Worn icon, or a dim ghost of a representative item in an empty slot.
+            var iconId = worn ?? GhostIds[s];
+            var tex = Icons.GetForSlot(iconId, worn is null ? 1 : player.PickaxeTier);
+            var tint = worn is null ? new Color(255, 255, 255, 42) : Color.White;
+            if (tex is not null)
+                sb.Draw(tex, new Rectangle(r.X + 5, r.Y + 5, r.Width - 10, r.Height - 10), tint);
+            else if (worn is not null)
+                sb.Draw(renderer.Pixel, new Rectangle(r.X + 13, r.Y + 13, r.Width - 26, r.Height - 26),
+                    Tiles.ResourceColor(worn));
         }
         sb.End();
 
@@ -227,19 +255,28 @@ public sealed class CharacterScreen
             var label = SlotLabels[s];
             renderer.DrawText(label,
                 new Vector2(r.X + (r.Width - renderer.MeasureText(label)) / 2f, r.Y + r.Height + 3),
-                new Color(150, 150, 165));
+                TextDim);
         }
 
-        // Worn-gear summary under the doll — makes the pieces' effects legible at a glance.
+        // Worn-gear summary — every live effect in one block, gold like a Terraria set bonus.
+        var y = py + 62 + 4 * SlotPitch + 6;
         var reduction = (int)MathF.Round(player.Equipment.ArmorReduction * 100f);
         var lightName = player.EffectiveLightTier switch
         {
             0 => "NONE", 1 => "TORCH", 2 => "LANTERN", 3 => "HEADLAMP", _ => "SUNSTONE",
         };
-        renderer.DrawText($"DAMAGE TAKEN −{reduction}%   LIGHT: {lightName}",
-            new Vector2(px + 16, py + 320), new Color(190, 220, 170));
-        renderer.DrawText($"HP {(int)player.Health}/{(int)player.MaxHealth}",
-            new Vector2(px + 16, py + 336), new Color(200, 200, 215));
+        var swing = (int)MathF.Round((1f - player.Equipment.MineSpeedMul) * 100f);
+        renderer.DrawText($"DAMAGE TAKEN −{reduction}%    LIGHT: {lightName}", new Vector2(px + 14, y), new Color(190, 220, 170));
+        var line2 = $"HP {(int)player.Health}/{(int)player.MaxHealth}    MINE POWER {player.EffectivePickaxePower}";
+        if (swing > 0) line2 += $"    SWING +{swing}%";
+        renderer.DrawText(line2, new Vector2(px + 14, y + 15), new Color(190, 220, 170));
+        var perks = new List<string>();
+        if (player.Equipment.HasAccessory("band_regen")) perks.Add("REGEN");
+        if (player.Equipment.HasAccessory("magnet_ring")) perks.Add("ORE MAGNET");
+        if (player.Equipment.HasAccessory("miners_charm")) perks.Add("+1 POWER");
+        if (player.Equipment.HasAccessory("aegis_pendant")) perks.Add("AEGIS");
+        if (perks.Count > 0)
+            renderer.DrawText("PERKS: " + string.Join("  ", perks), new Vector2(px + 14, y + 30), Gold);
     }
 
     // ───────── backpack pane ─────────
@@ -261,7 +298,7 @@ public sealed class CharacterScreen
 
     private void DrawBackpack(Renderer renderer, Player player, int bx, int by, int width)
     {
-        renderer.DrawText("BACKPACK", new Vector2(bx, by), Color.White);
+        renderer.DrawText("BACKPACK", new Vector2(bx, by), Gold);
 
         var sb = renderer.Batch;
         var ids = BagIds(player);
@@ -278,36 +315,38 @@ public sealed class CharacterScreen
                 CellSize, CellSize);
             _bagRects.Add((id, cell));
 
-            var equippable = Equipment.IsEquippable(id);
             var hovered = cell.Contains(mouse.X, mouse.Y);
-            sb.Draw(renderer.Pixel, cell, hovered ? new Color(60, 70, 95, 240) : new Color(24, 26, 38, 230));
-            // Equippable gear gets a brighter frame than raw materials so it reads as gear.
-            DrawBorder(sb, renderer.Pixel, cell,
-                hovered ? new Color(220, 225, 240)
-                : equippable ? new Color(170, 165, 200)
-                : new Color(90, 95, 110));
+            DrawSlotBox(sb, renderer.Pixel, cell, hovered, null);
 
             var tex = Icons.GetForSlot(id, player.PickaxeTier);
             if (tex is not null)
-                sb.Draw(tex, new Rectangle(cell.X + 2, cell.Y + 2, cell.Width - 4, cell.Height - 4), Color.White);
+                sb.Draw(tex, new Rectangle(cell.X + 3, cell.Y + 3, cell.Width - 6, cell.Height - 6), Color.White);
             else
-                sb.Draw(renderer.Pixel, new Rectangle(cell.X + 10, cell.Y + 10, cell.Width - 20, cell.Height - 20),
-                    Tiles.ResourceColor(id));
+            {
+                // Raw materials: colour chip with a darker base — reads as a little pile.
+                var chip = Tiles.ResourceColor(id);
+                sb.Draw(renderer.Pixel, new Rectangle(cell.X + 9, cell.Y + 11, cell.Width - 18, cell.Height - 20),
+                    new Color(chip.R / 2, chip.G / 2, chip.B / 2));
+                sb.Draw(renderer.Pixel, new Rectangle(cell.X + 11, cell.Y + 9, cell.Width - 22, cell.Height - 20), chip);
+            }
 
             // Gold pip: this piece is currently on the doll.
             if (player.Equipment.IsEquipped(id))
-                sb.Draw(renderer.Pixel, new Rectangle(cell.X + 3, cell.Y + 3, 5, 5), new Color(255, 220, 120));
+                sb.Draw(renderer.Pixel, new Rectangle(cell.X + 4, cell.Y + 4, 5, 5), Gold);
         }
         sb.End();
 
-        // Count badges over stacks (labels handle their own batch).
+        // Count badges: right-aligned small text with a 1-px drop shadow (no black plate).
         for (var i = 0; i < ids.Count; i++)
         {
             var count = player.Inventory.Count(ids[i]);
             if (count <= 1) continue;
             var cell = _bagRects[i].rect;
-            renderer.DrawDebugLabel(count > 9999 ? "9999" : count.ToString(),
-                new Vector2(cell.X + cell.Width - 16, cell.Y + cell.Height - 12), Color.White);
+            var str = count > 9999 ? "9999" : count.ToString();
+            var tw = renderer.MeasureText(str);
+            var pos = new Vector2(cell.X + cell.Width - tw - 3, cell.Y + cell.Height - 10);
+            renderer.DrawText(str, pos + new Vector2(1, 1), new Color(0, 0, 0, 220));
+            renderer.DrawText(str, pos, Color.White);
         }
     }
 
@@ -320,7 +359,7 @@ public sealed class CharacterScreen
         sb.Begin(samplerState: SamplerState.PointClamp);
         var tex = Icons.GetForSlot(carry.Id, player.PickaxeTier);
         if (tex is not null)
-            sb.Draw(tex, new Rectangle(mouse.X - 16, mouse.Y - 16, 32, 32), new Color(255, 255, 255, 220));
+            sb.Draw(tex, new Rectangle(mouse.X - 18, mouse.Y - 18, 36, 36), new Color(255, 255, 255, 225));
         else
             sb.Draw(renderer.Pixel, new Rectangle(mouse.X - 8, mouse.Y - 8, 16, 16), Tiles.ResourceColor(carry.Id));
         sb.End();
@@ -332,6 +371,26 @@ public sealed class CharacterScreen
             if (rect.Contains(mx, my)) return Equipment.IsEquippable(id) ? id : null;
         return null;
     }
+
+    /// <summary>Terraria-style rarity tint for the tooltip title line.</summary>
+    private static Color Rarity(string id) => id switch
+    {
+        // Top shelf — the late-game jewels.
+        "sun_crystal" or "laser_cannon" or "mining_laser" or "core_drill" or "aegis_pendant" or "nuke"
+            => new Color(210, 140, 255),
+        // High tier.
+        "helm_lamp" or "laser" or "rocket_launcher" or "iron_gauntlets" or "miners_charm" or "harpoon"
+            => new Color(255, 180, 90),
+        // Mid tier.
+        "lantern" or "machine_gun" or "drill" or "hammer" or "cannon" or "magnet_ring" or "band_regen"
+            or "chitin_armor" or "chitin_helmet" or "chitin_leggings" or "chitin_boots" or "sentry"
+            => new Color(150, 255, 140),
+        // Base gear.
+        "torch" or "pistol" or "pickaxe" or "leather_gloves"
+            or "armor" or "iron_helmet" or "iron_leggings" or "iron_boots"
+            => new Color(140, 180, 255),
+        _ => Color.White,
+    };
 
     private void DrawTooltip(Renderer renderer, Player player, MouseState mouse, int viewportWidth, int viewportHeight)
     {
@@ -347,21 +406,21 @@ public sealed class CharacterScreen
 
         var lines = new List<(string text, Color color)>
         {
-            (Tiles.ResourceLabel(id), new Color(255, 230, 160)),
+            (Tiles.ResourceLabel(id), Rarity(id)),
         };
-        foreach (var line in Describe(id)) lines.Add((line, new Color(210, 215, 230)));
+        foreach (var line in Describe(id)) lines.Add((line, new Color(215, 218, 232)));
 
         if (Equipment.IsEquippable(id))
         {
             var slots = new List<string>();
             for (var s = 0; s < Equipment.SlotCount; s++)
                 if (Equipment.Fits(id, (EquipSlot)s)) slots.Add(SlotLabels[s]);
-            lines.Add(($"EQUIPS TO: {string.Join(" / ", slots)}", new Color(255, 220, 120)));
+            lines.Add(($"EQUIPS TO: {string.Join(" / ", slots)}", Gold));
             if (player.Equipment.IsEquipped(id)) lines.Add(("CURRENTLY WORN", new Color(160, 235, 160)));
-            else lines.Add(("DRAG TO THE LIT SLOT (OR RMB)", new Color(150, 150, 165)));
+            else lines.Add(("DRAG TO THE LIT SLOT (OR RMB)", TextDim));
         }
         var count = player.Inventory.Count(id);
-        if (count > 0) lines.Add(($"IN PACK: {count}", new Color(150, 150, 165)));
+        if (count > 0) lines.Add(($"IN PACK: {count}", TextDim));
 
         var w = 0;
         foreach (var (text, _) in lines) w = Math.Max(w, renderer.MeasureText(text));
@@ -372,8 +431,9 @@ public sealed class CharacterScreen
 
         var sb = renderer.Batch;
         sb.Begin(samplerState: SamplerState.PointClamp);
-        sb.Draw(renderer.Pixel, new Rectangle(x, y, w, h), new Color(8, 8, 16, 245));
-        DrawBorder(sb, renderer.Pixel, new Rectangle(x, y, w, h), new Color(255, 220, 120, 160));
+        sb.Draw(renderer.Pixel, new Rectangle(x - 1, y - 1, w + 2, h + 2), PanelEdgeOut);
+        sb.Draw(renderer.Pixel, new Rectangle(x, y, w, h), new Color(24, 18, 54, 250));
+        DrawBorder(sb, renderer.Pixel, new Rectangle(x, y, w, h), new Color(130, 110, 200));
         sb.End();
         for (var i = 0; i < lines.Count; i++)
             renderer.DrawText(lines[i].text, new Vector2(x + 8, y + 6 + i * 13), lines[i].color);
@@ -397,6 +457,13 @@ public sealed class CharacterScreen
         "chitin_leggings" => new[] { "Chitin leggings.", "−10% damage taken while worn." },
         "iron_boots"      => new[] { "Iron boots.", "−5% damage taken while worn." },
         "chitin_boots"    => new[] { "Chitin boots.", "−5% damage taken while worn." },
+        "leather_gloves"  => new[] { "Soft hide grips.", "Mining swings 15% faster, −5% damage." },
+        "iron_gauntlets"  => new[] { "Articulated iron fists.", "Mining swings 30% faster, −5% damage." },
+        // Accessories
+        "band_regen"    => new[] { "A warm mossy band.", "Slowly restores health while worn." },
+        "magnet_ring"   => new[] { "Hums near ore.", "Loose drops leap into the pack", "from four times the reach." },
+        "miners_charm"  => new[] { "A prospector's lucky token.", "+1 mining power while worn." },
+        "aegis_pendant" => new[] { "A ward of platinum and sapphire.", "−10% damage taken while worn." },
         // Weapons
         "pistol"          => new[] { "Sidearm — solid single shots.", "No ammo cost; slow but dependable." },
         "machine_gun"     => new[] { "Hold LMB to spray.", "High rate of fire, shreds packs." },
@@ -432,7 +499,7 @@ public sealed class CharacterScreen
         "sentry"             => new[] { "Auto-firing turret, placed at your feet." },
         // Creature parts
         "meat"   => new[] { "Hunted. Cooks into feasts." },
-        "hide"   => new[] { "Hunted. Binds chitin armor." },
+        "hide"   => new[] { "Hunted. Binds armor and gloves." },
         "chitin" => new[] { "Hunted. Carves into armor pieces." },
         "fuel"   => new[] { "Rocket fuel ore." },
         _ => new[] { "Raw material — used in crafting." },
