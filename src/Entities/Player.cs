@@ -96,8 +96,9 @@ public sealed class Player
     private float JetRiseSpeed => JetTier3 ? 190f : JetTier2 ? 150f : 110f;
     private const float JetAccel = 420f;
 
-    /// <summary>How far loose material sweeps into the pack — touch range only, no magnet.</summary>
-    public float PickupReach => 4f;
+    /// <summary>How far loose material sweeps into the pack — touch range by default; the
+    /// Magnet Ring accessory turns it into a real pull radius.</summary>
+    public float PickupReach => Equipment.HasAccessory("magnet_ring") ? 16f : 4f;
 
     /// <summary>Seconds of Leatherback EMP remaining. While positive the dwarf's tech is
     /// fried: the jetpack won't burn and energy weapons (laser / laser cannon / mining
