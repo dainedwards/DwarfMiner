@@ -95,7 +95,7 @@ public static class Upgrades
         // ── Third-tier lines (phase 10) ──
 
         new("jetpack3", "Jetpack III",
-            "Another 30 percent of burn and more lift - yellow flame",
+            "A third second of burn and more lift - yellow flame",
             Souls: 2, Mats: new[] { ("ruby", 2), ("diamond", 2) }, SoulKind: "Kong", Requires: "jetpack2"),
 
         new("jetpack4", "Jetpack IV",
