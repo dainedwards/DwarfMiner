@@ -31,6 +31,28 @@ public sealed class CharacterScreen
 
     private readonly Rectangle[] _slotRects = new Rectangle[Equipment.SlotCount];
     private readonly List<(string id, Rectangle rect)> _bagRects = new();
+    private readonly Rectangle[] _hotbarRects = new Rectangle[9];
+    private readonly List<(ItemCategory cat, Rectangle rect)> _tabRects = new();
+
+    /// <summary>Active backpack filter tab + scroll row (mouse wheel drives it).</summary>
+    private ItemCategory _bagTab = ItemCategory.All;
+    private int _bagScroll;
+    private int _bagMaxScroll;
+
+    /// <summary>Item context menu (RMB on a backpack cell): equip / upgrade / drop.</summary>
+    private (string Id, Point Pos)? _ctx;
+    private readonly List<(string action, Rectangle rect, bool enabled)> _ctxRects = new();
+
+    /// <summary>Wired by Game1: upgrade-path probe (label + affordability; null = no
+    /// upgrade path / maxed), the upgrade craft itself, and the world-side item drop.</summary>
+    public Func<string, (string label, bool can)?>? UpgradeInfo;
+    public Action<string>? DoUpgrade;
+    public Action<string, int>? DropAction;
+
+    /// <summary>Doll slots retired from display — weapons and the mining tool live on the
+    /// hotbar row now. (The enum entries stay for save compatibility.)</summary>
+    private static bool HiddenSlot(EquipSlot s) =>
+        s is EquipSlot.Weapon1 or EquipSlot.Weapon2 or EquipSlot.MiningTool;
 
     private const int SlotSize = 46;
     private const int SlotPitch = 62;
