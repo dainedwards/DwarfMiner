@@ -1106,6 +1106,7 @@ public sealed class Equipment
         EquipSlot.Weapon1 or EquipSlot.Weapon2 => IsWeapon(id),
         EquipSlot.MiningTool => id is "pickaxe" or "drill" or "hammer" or "mining_laser",
         EquipSlot.Accessory1 or EquipSlot.Accessory2 => IsAccessory(id),
+        EquipSlot.Back       => id is "jetpack",
         _ => false,
     };
 
