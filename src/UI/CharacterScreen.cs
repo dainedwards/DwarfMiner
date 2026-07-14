@@ -398,6 +398,7 @@ public sealed class CharacterScreen
         for (var s = 0; s < Equipment.SlotCount; s++)
         {
             var slot = (EquipSlot)s;
+            if (HiddenSlot(slot)) { _slotRects[s] = Rectangle.Empty; continue; }
             var r = SlotRect(slot, px, py);
             _slotRects[s] = r;
 
