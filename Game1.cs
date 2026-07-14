@@ -2481,14 +2481,16 @@ public sealed partial class DwarfMinerGame : Game
     /// mine power — the energy edge carves terrain in the swing arc.</summary>
     private static (float dmg, float reach, float cd, string family) MeleeBase(string id) => id switch
     {
-        "sword"        => (14f, 22f, 0.30f, "sword"),
-        "mace"         => (18f, 20f, 0.42f, "mace"),
-        "warhammer"    => (24f, 20f, 0.55f, "hammer"),
-        "shield"       => (6f, 14f, 0.50f, "shield"),
-        "great_sword"  => (26f, 28f, 0.55f, "sword"),
-        "great_mace"   => (32f, 26f, 0.70f, "mace"),
-        "great_hammer" => (40f, 26f, 0.85f, "hammer"),
-        _              => (10f, 16f, 0.60f, "shield"),   // tower_shield bash
+        // Reaches match the drawn blades (weapons render 50% longer now); cadences are
+        // deliberate — a full arcing swing, not a poke.
+        "sword"        => (14f, 29f, 0.38f, "sword"),
+        "mace"         => (18f, 26f, 0.52f, "mace"),
+        "warhammer"    => (24f, 26f, 0.68f, "hammer"),
+        "shield"       => (6f, 18f, 0.60f, "shield"),
+        "great_sword"  => (26f, 37f, 0.68f, "sword"),
+        "great_mace"   => (32f, 34f, 0.86f, "mace"),
+        "great_hammer" => (40f, 34f, 1.05f, "hammer"),
+        _              => (10f, 21f, 0.72f, "shield"),   // tower_shield bash
     };
 
     /// <summary>Rung-4 energy edge colour, by weapon family — the "lightsaber" glow.</summary>
