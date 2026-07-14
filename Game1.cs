@@ -2508,6 +2508,18 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.ShootCooldown = 0.6f;
     }
 
+    /// <summary>TNT pack: the sticky charge. A real throw (it has to reach a ceiling), and
+    /// it cements to the first wall it touches, burning the same fuse as the satchel.</summary>
+    private void FireTntPack(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _run.Player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 5f, dir * 190f, 120f, 2.5f,
+            ProjectileKind.TntPack));
+        _run.Player.ShootCooldown = 0.6f;
+    }
+
     /// <summary>Fire the cannon. Consumes the highest-tier shell in inventory before falling
     /// back to the regular cannon round. Per-shell stats are kept here so the dispatch stays
     /// declarative.</summary>
