@@ -1851,7 +1851,7 @@ public sealed partial class DwarfMinerGame : Game
                 _run.Cells.LaunchAtWorld(_run.Player.Position + up * 2f,
                     right * (((float)Random.Shared.NextDouble() - 0.5f) * 110f)
                     + up * (50f + (float)Random.Shared.NextDouble() * 60f),
-                    Material.Sand, srcKind);
+                    Material.Dust, srcKind);
         }
         _particles.EmitDust(_run.Player.Position, 5f);
         _toast = $"DROPPED {count} {Tiles.ResourceLabel(id)}";
