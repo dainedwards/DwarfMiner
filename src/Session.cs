@@ -75,6 +75,12 @@ public sealed class Session
     public float SpawnTimer;
     public float FaunaTimer;
     public float Shake;
+
+    /// <summary>City anger at the dwarf, 0-100. Killing residents and smashing tower tiles
+    /// pumps it; time bleeds it off. Past the tipping point the militia and air patrol turn
+    /// their guns on the player and civilians take cover. Transient — a fresh landing (or
+    /// enough good behaviour) resets the city's mood.</summary>
+    public float CityWrath;
     public float RunTime;
     public bool HasCannon;
 
