@@ -842,7 +842,9 @@ public sealed class Particles
                 break;
             case ProjectileKind.Dynamite:
             case ProjectileKind.Tnt:
-                // Sputtering fuse — intermittent tiny sparks tumbling off the stick.
+                // Sputtering fuse — intermittent tiny sparks tumbling off the stick, plus a
+                // flickering glow riding the charge itself so a lobbed stick visibly burns
+                // its way through a dark cave right up to the bang.
                 if (_rng.NextDouble() < 0.55)
                 {
                     _list.Add(new Particle
@@ -856,10 +858,22 @@ public sealed class Particles
                         Size = 1f,
                         GravityScale = 0.4f,
                         Drag = 1.5f,
-                        LightRadius = 4f,
+                        LightRadius = 10f,
                         LightColor = new Color(255, 200, 100),
                     });
                 }
+                _list.Add(new Particle
+                {
+                    Position = p.Position,
+                    Velocity = Vector2.Zero,
+                    Life = 0.05f,
+                    MaxLife = 0.05f,
+                    Color = Color.Transparent,   // pure light carrier — no visible quad
+                    FadeColor = Color.Transparent,
+                    Size = 0f,
+                    LightRadius = 16f + (float)_rng.NextDouble() * 8f,   // fuse flicker
+                    LightColor = new Color(255, 190, 90),
+                });
                 break;
             case ProjectileKind.LaserCannon:
                 // Ionised wake — cyan motes hanging briefly along the beam's path.
