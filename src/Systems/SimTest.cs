@@ -849,7 +849,12 @@ public static class SimTest
             for (var i = 0; i < 600; i++) cells.Update(dt);
             var waterBelow = CountMatInTile(cells, r, Ti(r, af, 0), Material.Water);
             var oilAbove = CountMatInTile(cells, r + 1, Ti(r + 1, af, 0), Material.Oil);
-            Check($"oil: water sinks through it and it floats up ({waterBelow} water below, {oilAbove} oil above)",
+            var inv = "";
+            for (var dr = 0; dr < 2; dr++)
+                for (var da = -1; da <= 1; da++)
+                    inv += $" [{dr},{da}]o{CountMatInTile(cells, r + dr, Ti(r + dr, af, da), Material.Oil)}" +
+                           $"w{CountMatInTile(cells, r + dr, Ti(r + dr, af, da), Material.Water)}";
+            Check($"oil: water sinks through it and it floats up ({waterBelow} water below, {oilAbove} oil above;{inv} fly {cells.FlyingCellCount})",
                 waterBelow > 12 && oilAbove > 12);
         }
 
