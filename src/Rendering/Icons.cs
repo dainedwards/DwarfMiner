@@ -1405,6 +1405,34 @@ public static class Icons
         ['w'] = new Color(140, 95, 55),
     });
 
+    private static Texture2D BuildDoor(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "....TTTTTTTT....",
+        "....TppppppT....",
+        "....TpPPPPpT....",
+        "....TpPddPpT....",
+        "....TpPddPpT....",
+        "....TpPPPPpT....",
+        "....TppppppT....",
+        "....TpPPPPpT....",
+        "....TpPPPhpT....",
+        "....TpPPPhpT....",
+        "....TpPPPPpT....",
+        "....TppppppT....",
+        "....TTTTTTTT....",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['T'] = new Color(58, 78, 88),
+        ['p'] = new Color(88, 122, 132),
+        ['P'] = new Color(108, 146, 156),
+        ['d'] = new Color(150, 200, 210),
+        ['h'] = new Color(235, 210, 130),
+    });
+
     private static Texture2D BuildRail(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
     {
         "................",
