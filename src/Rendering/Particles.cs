@@ -21,6 +21,10 @@ public struct Particle
     public float LightRadius;   // 0 = no light emission
     public Color LightColor;
     public bool CollideTiles;
+    /// <summary>Flash-class light (explosion cores, muzzle flashes): rendered through the
+    /// ray-cast hero-light pass, so the flash throws crisp Noita-style shadows instead of
+    /// only feeding the soft propagated grid.</summary>
+    public bool HeroLight;
 }
 
 /// <summary>
