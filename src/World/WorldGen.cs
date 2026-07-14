@@ -497,6 +497,14 @@ public static class WorldGen
         if (def.CityLots <= 0)
             CarveLizardCities(planet, def, rng, mountains, blocked);
 
+        // Noita-style connectivity: winding worm tunnels stitch the noise caves into one
+        // traversable network. Carved after every architecture stamp so the den/district
+        // halos are known (worms leave plugs there), on an INDEPENDENT rng so the shared
+        // stream — and with it every seeded world layout — stays byte-identical whether or
+        // not a future change re-tunes the worms. LineAcidReservoirs runs after, re-skinning
+        // anything a worm grazed.
+        CarveWormTunnels(planet, new Random(seed ^ 0x5EED));
+
         // Skin every acid reservoir (surface pools, volcano plumbing, and the scattered crust
         // seeps) in obsidian so the acid can't chew outward through the crust. Obsidian shrugs
         // off both acid and lava but is still mineable/blastable, so the pools stay contained
