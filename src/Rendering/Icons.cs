@@ -58,6 +58,7 @@ public static class Icons
         _icons["nuke"]       = BuildNuke(gd);
         _icons["harpoon"]    = BuildHarpoon(gd);
         _icons["dynamite"]   = BuildDynamite(gd);
+        _icons["dynamite_pack"] = BuildDynamitePack(gd);
         _icons["poultice"]   = BuildPoultice(gd);
         _icons["feast"]      = BuildFeast(gd);
         _icons["core_drill"] = BuildCoreDrill(gd);
