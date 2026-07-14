@@ -455,26 +455,32 @@ public static class SpawnDirector
         }
         else if (depth > 45f)
         {
-            kind = roll < 0.28 ? CreatureKind.MagmaSlug
-                 : roll < 0.44 ? CreatureKind.HornedDelver
-                 : roll < 0.56 ? CreatureKind.Centipede
-                 : roll < 0.68 ? CreatureKind.AcidSpitter
-                 : roll < 0.78 ? CreatureKind.CaveEye
-                 : roll < 0.87 ? CreatureKind.BomberBeetle
-                 : roll < 0.96 ? CreatureKind.Grub
+            // Deep band gets the heavy bandits: the pyro brute and the jetpack raider.
+            kind = roll < 0.26 ? CreatureKind.MagmaSlug
+                 : roll < 0.40 ? CreatureKind.HornedDelver
+                 : roll < 0.51 ? CreatureKind.Centipede
+                 : roll < 0.62 ? CreatureKind.AcidSpitter
+                 : roll < 0.71 ? CreatureKind.CaveEye
+                 : roll < 0.79 ? CreatureKind.BomberBeetle
+                 : roll < 0.86 ? CreatureKind.Pyro
+                 : roll < 0.92 ? CreatureKind.Raider
+                 : roll < 0.97 ? CreatureKind.Grub
                  : CreatureKind.RockMimic;
         }
         else if (depth > 20f)
         {
-            kind = roll < 0.14 ? CreatureKind.HornedDelver
-                 : roll < 0.26 ? CreatureKind.Centipede
-                 : roll < 0.38 ? CreatureKind.Borer
-                 : roll < 0.48 ? CreatureKind.MoleBeast
-                 : roll < 0.58 ? CreatureKind.CaveSlime
-                 : roll < 0.68 ? CreatureKind.AcidSpitter
-                 : roll < 0.76 ? CreatureKind.BomberBeetle
-                 : roll < 0.84 ? CreatureKind.CaveEye
-                 : roll < 0.90 ? CreatureKind.Grub
+            // Mid band: marauder gunmen prowl the tunnels, the odd raider drops in.
+            kind = roll < 0.13 ? CreatureKind.HornedDelver
+                 : roll < 0.24 ? CreatureKind.Centipede
+                 : roll < 0.35 ? CreatureKind.Borer
+                 : roll < 0.44 ? CreatureKind.MoleBeast
+                 : roll < 0.53 ? CreatureKind.CaveSlime
+                 : roll < 0.62 ? CreatureKind.AcidSpitter
+                 : roll < 0.69 ? CreatureKind.BomberBeetle
+                 : roll < 0.77 ? CreatureKind.Marauder
+                 : roll < 0.82 ? CreatureKind.Raider
+                 : roll < 0.88 ? CreatureKind.CaveEye
+                 : roll < 0.92 ? CreatureKind.Grub
                  : roll < 0.97 ? CreatureKind.SnapperVine
                  : CreatureKind.RockMimic;
         }
