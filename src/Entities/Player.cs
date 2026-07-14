@@ -128,7 +128,7 @@ public sealed class Player
     /// late-game upgrade is disintegrating rock from a distance.</summary>
     public const float MiningLaserRange = 90f;
     public float MoveSpeed = 78f;          // shorter legs
-    public float JumpSpeed = 150f;
+    public float JumpSpeed = 118f;
     public float Gravity = 320f;
     public float MineCooldown;
     public float ShootCooldown;
