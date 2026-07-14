@@ -131,6 +131,9 @@ public sealed class Creature
     private readonly float _phase; // per-creature animation phase offset
     private float _aggroT;         // HornedDelver: seconds of aggro memory remaining
     private float _swing;          // HornedDelver: pickaxe swing / spit-maw / blink-shimmer timer
+    private Vector2 _gunAim;       // bandits: last aim direction (drives the drawn weapon)
+    private int _burst;            // Raider: rounds left in the current SMG burst
+    private float _burstT;         // Raider: delay until the next round in the burst
     private float _provokedT;      // MoleBeast: seconds of rage remaining after being hit
     private float _fuse;           // BomberBeetle: armed-detonation countdown (0 = not armed)
     private Vector2 _root;         // SnapperVine: anchor point it is tethered to
