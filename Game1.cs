@@ -248,6 +248,10 @@ public sealed partial class DwarfMinerGame : Game
 
     protected override void Initialize()
     {
+        // Adopt any pre-slot save as slot 1 BEFORE anything reads (and thereby creates)
+        // slot files — a fresh meta materialising first would block the migration and
+        // orphan the legacy campaign.
+        SaveSlots.MigrateLegacy();
         _meta = MetaSave.Load();
         // Roll (or restore) the campaign's 7 procedurally generated planets before anything
         // touches PlanetDefs.All — the seed persists in the meta save so the same system
