@@ -252,7 +252,13 @@ public sealed class Player
 
     public readonly Inventory Inventory = new();
 
-    public Player(Vector2 pos) { Position = pos; }
+    public Player(Vector2 pos)
+    {
+        Position = pos;
+        // The pickaxe is intrinsic gear — it starts in the mining-tool slot the same way it
+        // starts on the toolbelt.
+        Equipment.Set(EquipSlot.MiningTool, "pickaxe");
+    }
 
     public Vector2 Up(Planet planet) => planet.UpAt(Position);
     public Vector2 Right(Planet planet)
