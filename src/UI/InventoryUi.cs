@@ -277,7 +277,7 @@ public sealed class InventoryUi
     public void DrawCarry(Renderer renderer, Player player)
     {
         if (_carry is not { } carry) return;
-        var mouse = Mouse.GetState();
+        var mouse = Screen.Mouse();
         var sb = renderer.Batch;
         sb.Begin(samplerState: SamplerState.PointClamp);
         var tex = Icons.GetForSlot(carry.Id, player.PickaxeTier);
