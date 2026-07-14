@@ -470,20 +470,50 @@ public sealed class CharacterScreen
 
     private void DrawBackpack(Renderer renderer, Player player, int bx, int by, int width)
     {
-        renderer.DrawText("BACKPACK", new Vector2(bx, by), Gold);
-
         var sb = renderer.Batch;
-        var ids = BagIds(player);
-        _bagRects.Clear();
-
-        sb.Begin(samplerState: SamplerState.PointClamp);
         var mouse = Screen.Mouse();
-        for (var i = 0; i < ids.Count; i++)
+
+        // Filter tabs, colour-coded per category; the active one carries its colour.
+        _tabRects.Clear();
+        var tabX = bx;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        foreach (var cat in ItemInfo.Tabs)
+        {
+            var label = ItemInfo.LabelOf(cat);
+            var tw2 = renderer.MeasureText(label) + 10;
+            var r = new Rectangle(tabX, by - 3, tw2, 16);
+            _tabRects.Add((cat, r));
+            var active = cat == _bagTab;
+            sb.Draw(renderer.Pixel, r, active ? new Color(56, 62, 122, 235) : new Color(30, 33, 66, 200));
+            sb.Draw(renderer.Pixel, new Rectangle(r.X, r.Bottom - 2, r.Width, 2),
+                active ? ItemInfo.ColorOf(cat) : new Color(60, 64, 100));
+            tabX += tw2 + 4;
+        }
+        sb.End();
+        foreach (var (cat, r) in _tabRects)
+            renderer.DrawText(ItemInfo.LabelOf(cat), new Vector2(r.X + 5, r.Y + 3),
+                cat == _bagTab ? ItemInfo.ColorOf(cat) : TextDim);
+
+        // Filtered ids, scrolled by whole rows (mouse wheel).
+        var all = BagIds(player);
+        var ids = _bagTab == ItemCategory.All
+            ? all
+            : all.FindAll(id => ItemInfo.CategoryOf(id) == _bagTab);
+        const int rowsVisible = 7;
+        var totalRows = (ids.Count + BagCols - 1) / BagCols;
+        _bagMaxScroll = Math.Max(0, totalRows - rowsVisible);
+        _bagScroll = Math.Clamp(_bagScroll, 0, _bagMaxScroll);
+        var first = _bagScroll * BagCols;
+
+        _bagRects.Clear();
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        for (var i = first; i < ids.Count && i < first + rowsVisible * BagCols; i++)
         {
             var id = ids[i];
+            var vi = i - first;
             var cell = new Rectangle(
-                bx + (i % BagCols) * (CellSize + CellGap),
-                by + 18 + (i / BagCols) * (CellSize + CellGap),
+                bx + (vi % BagCols) * (CellSize + CellGap),
+                by + 20 + (vi / BagCols) * (CellSize + CellGap),
                 CellSize, CellSize);
             _bagRects.Add((id, cell));
 
@@ -502,6 +532,10 @@ public sealed class CharacterScreen
                 sb.Draw(renderer.Pixel, new Rectangle(cell.X + 11, cell.Y + 9, cell.Width - 22, cell.Height - 20), chip);
             }
 
+            // Category underline — the colour code carried onto every cell.
+            sb.Draw(renderer.Pixel, new Rectangle(cell.X + 2, cell.Bottom - 4, cell.Width - 4, 2),
+                ItemInfo.ColorOf(ItemInfo.CategoryOf(id)) * 0.85f);
+
             // Gold pip: this piece is currently on the doll.
             if (player.Equipment.IsEquipped(id))
                 sb.Draw(renderer.Pixel, new Rectangle(cell.X + 4, cell.Y + 4, 5, 5), Gold);
@@ -509,16 +543,25 @@ public sealed class CharacterScreen
         sb.End();
 
         // Count badges: right-aligned small text with a 1-px drop shadow (no black plate).
-        for (var i = 0; i < ids.Count; i++)
+        foreach (var (id, cell) in _bagRects)
         {
-            var count = player.Inventory.Count(ids[i]);
+            var count = player.Inventory.Count(id);
             if (count <= 1) continue;
-            var cell = _bagRects[i].rect;
             var str = count > 9999 ? "9999" : count.ToString();
             var tw = renderer.MeasureText(str);
-            var pos = new Vector2(cell.X + cell.Width - tw - 3, cell.Y + cell.Height - 10);
+            var pos = new Vector2(cell.X + cell.Width - tw - 3, cell.Y + cell.Height - 12);
             renderer.DrawText(str, pos + new Vector2(1, 1), new Color(0, 0, 0, 220));
             renderer.DrawText(str, pos, Color.White);
+        }
+        // Overflow: say how much is below the fold rather than silently clipping.
+        if (_bagMaxScroll > 0)
+        {
+            var below = ids.Count - Math.Min(ids.Count, first + rowsVisible * BagCols);
+            var msg = _bagScroll < _bagMaxScroll
+                ? $"SCROLL: {below} MORE BELOW"
+                : "SCROLL: TOP ABOVE";
+            renderer.DrawText(msg,
+                new Vector2(bx, by + 22 + rowsVisible * (CellSize + CellGap)), TextDim);
         }
     }
 
