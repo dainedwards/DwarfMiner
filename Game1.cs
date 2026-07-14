@@ -4674,11 +4674,20 @@ public sealed partial class DwarfMinerGame : Game
                 else
                 {
                     var wrot = MathF.Atan2(aim.Y, aim.X);
-                    // Mid-swing, melee sweeps a long deliberate arc around the aim.
+                    // Mid-swing, melee sweeps a long deliberate arc around the aim — an
+                    // OVERHEAD chop: the sweep side is picked from local planet-up so the
+                    // blade always starts sky-side and comes down, whatever the facing or
+                    // where on the planet the dwarf stands.
                     if (isMelee && _meleeAnim > 0f)
                     {
                         var swing = MathHelper.Lerp(-2.1f, 1.4f, 1f - _meleeAnim / _meleeAnimDur);
-                        wrot += aim.X < 0f ? -swing : swing;
+                        var upW = _run.Planet.UpAt(_run.Player.Position);
+                        float StartUpness(float sgn)
+                        {
+                            var a = wrot + sgn * -2.1f;
+                            return Vector2.Dot(new Vector2(MathF.Cos(a), MathF.Sin(a)), upW);
+                        }
+                        wrot += (StartUpness(1f) >= StartUpness(-1f) ? 1f : -1f) * swing;
                     }
                     // Melee reads big in hand: 30% larger overall, 50% longer down the
                     // blade axis (X is the length axis — all weapon art points +X).
