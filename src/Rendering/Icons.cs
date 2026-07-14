@@ -26,11 +26,17 @@ public static class Icons
     /// then falls back to a coloured swatch).</summary>
     public static Texture2D? Get(string id) => _icons.TryGetValue(id, out var t) ? t : null;
 
-    /// <summary>Lookup with pickaxe-tier substitution: "pickaxe" maps to "pickaxe_t<tier>"
-    /// so the slot reflects the player's current pickaxe level.</summary>
+    /// <summary>Melee upgrade-rung probe, wired by Game1 at load (reads the live run's
+    /// Player.MeleeTiers) — lets slot icons escalate with each upgrade craft.</summary>
+    public static System.Func<string, int>? MeleeTierOf;
+
+    /// <summary>Lookup with tier substitution: "pickaxe" maps to "pickaxe_t<tier>", and the
+    /// melee ids map to their current upgrade rung's icon.</summary>
     public static Texture2D? GetForSlot(string id, int pickaxeTier)
     {
         if (id == "pickaxe") return Get($"pickaxe_t{System.Math.Clamp(pickaxeTier, 1, 4)}");
+        if (System.Array.IndexOf(Toolbelt.MeleeIds, id) >= 0)
+            return Get($"{id}_t{System.Math.Clamp(MeleeTierOf?.Invoke(id) ?? 1, 1, 4)}");
         return Get(id);
     }
 
