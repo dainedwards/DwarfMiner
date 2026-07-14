@@ -1845,6 +1845,8 @@ public sealed class Creature
         if (planet.IsSolidAt(ahead) && planet.IsSolidAt(ahead + up * 10f)
             && planet.IsSolidAt(ahead + up * 18f))
         {
+            // A tall "wall" that is actually a closed door gets opened and walked through.
+            if (CanUseDoors(Kind) && TryOpenDoorAt(planet, up, ahead)) return moveAxis;
             _amble = -(int)dir;
             return 0f;
         }
