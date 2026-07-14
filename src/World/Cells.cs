@@ -1081,7 +1081,7 @@ public sealed class Cells
         // water is itself a neighbour change.
         i = Idx(cx, cy);
         var self = (Material)_mat[i];
-        if (self == Material.Water || self == Material.Lava || self == Material.Acid)
+        if (self == Material.Water || self == Material.Lava || self == Material.Acid || self == Material.Oil)
         {
             var (scx, scy) = InnerCell(cx, cy);
             var hemmed = (cy <= 0 || IsBlocked(scx, scy)) && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy);
