@@ -91,6 +91,11 @@ public sealed class Corpse
         CreatureKind.Peacekeeper  => new[] { ("iron", 1) },
         // A crashed patrol saucer is a small salvage yard.
         CreatureKind.Saucer       => new[] { ("iron", 2), ("crystal", 1) },
+        // Bandits carry their kit: the gunmen drop scrap and powder-coal; the raider's
+        // wrecked pack and the pyro's tank both drain a little fuel.
+        CreatureKind.Marauder     => new[] { ("iron", 1), ("coal", 1) },
+        CreatureKind.Raider       => new[] { ("iron", 1), ("fuel", 1) },
+        CreatureKind.Pyro         => new[] { ("coal", 2), ("fuel", 1) },
         // A whale carcass is a feast; a cracked crab is prime chitin.
         CreatureKind.AlienWhale   => new[] { ("meat", 6), ("hide", 2) },
         CreatureKind.AlienCrab    => new[] { ("chitin", 2), ("meat", 1) },
