@@ -860,7 +860,7 @@ public sealed class Player
     public Vector2 SwingAim = new(1f, 0f);     // unit aim captured at swing start
     public Vector2 SwingCursor;                // raw world cursor captured at swing start
     public MiningTool SwingTool;               // tool the active swing belongs to
-    public int SwingFlip = 1;                  // alternates so consecutive chops go down-up-down
+    public int SwingFlip = 1;                  // sweep side — chosen per swing so the chop always starts sky-side
     public bool SwingLanded;                   // the active swing already spent its strike
 
     /// <summary>Total sweep of a swing, centred on the aim (~109°).</summary>
