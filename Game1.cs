@@ -1765,12 +1765,20 @@ public sealed partial class DwarfMinerGame : Game
             var fireR = pk.Kind == CreatureKind.Saucer ? 280f : 230f;
             pk.GuardFireCd -= dt;
             Vector2? threat = null;
+            var threatIsPlayer = false;
             var bestSq = scanR * scanR;
             foreach (var other in _run.Creatures)
             {
                 if (!other.Hostile || other.Health <= 0) continue;
                 var dSq = (other.Position - pk.Position).LengthSquared();
                 if (dSq < bestSq) { bestSq = dSq; threat = other.Position; }
+            }
+            // The city remembers: enough dead residents or wrecked floors and the dwarf
+            // IS the invader — militia and saucers add the player to the threat scan.
+            if (cityWrathful && _run.Player.Health > 0)
+            {
+                var pSq = (_run.Player.Position - pk.Position).LengthSquared();
+                if (pSq < bestSq) { bestSq = pSq; threat = _run.Player.Position; threatIsPlayer = true; }
             }
             if (threat is null && _run.Titan.Hatched && _run.Titan.Health > 0
                 && (_run.Titan.Position - pk.Position).LengthSquared() < 380f * 380f)
@@ -1783,9 +1791,16 @@ public sealed partial class DwarfMinerGame : Game
                 if (d > 10f && d < fireR)
                 {
                     var dir = diff / d;
-                    _run.Projectiles.Add(new Projectile(
-                        pk.Position + dir * (pk.Radius + 3f), dir * 260f, 3f, 1.1f,
-                        ProjectileKind.CivicBolt));
+                    if (threatIsPlayer)
+                        // Player-seeking rounds ride the self-contained titan-shot path
+                        // (civic bolts are hard-coded friendly to the dwarf).
+                        _run.TitanShots.Add(new TitanProjectile(
+                            pk.Position + dir * (pk.Radius + 3f), dir * 270f,
+                            TitanShotKind.Slug, damage: 7f));
+                    else
+                        _run.Projectiles.Add(new Projectile(
+                            pk.Position + dir * (pk.Radius + 3f), dir * 260f, 3f, 1.1f,
+                            ProjectileKind.CivicBolt));
                     pk.GuardFireCd = 1.1f + (float)Random.Shared.NextDouble() * 0.5f;
                     pk.GuardMuzzleFlash();
                     PlayAt("shoot", pk.Position, 0.35f, pitch: 0.45f, minGap: 0.1f);
