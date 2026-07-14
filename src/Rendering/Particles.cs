@@ -1005,28 +1005,46 @@ public sealed class Particles
         // Fade stays saturated (not sooty brown/near-black) so the whole length of the
         // column reads as flame, not smoke.
         var fade = tier >= 4 ? new Color(50, 90, 210) : new Color(215, 75, 25);
-        for (var i = 0; i < 3; i++)
+        // Retro-thruster look (same family as the rover's landing burn): a short wide
+        // spray of many tiny flame flecks that die fast, rather than one long jet column.
+        for (var i = 0; i < 5; i++)
         {
-            // Narrow, fast, fine: a rocket-nozzle jet stream, not a campfire — the tight
-            // spread and low drag draw a long thin column under the pack.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.55f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            var hot = i == 0;
+            var hot = i < 2;
             _list.Add(new Particle
             {
-                Position = pos + Jitter(0.7f),
-                Velocity = d * (180f + (float)_rng.NextDouble() * 100f),
-                Life = 0.16f + (float)_rng.NextDouble() * 0.18f,
-                MaxLife = 0.34f,
+                Position = pos + Jitter(0.8f),
+                Velocity = d * (55f + (float)_rng.NextDouble() * 85f),
+                Life = 0.07f + (float)_rng.NextDouble() * 0.11f,
+                MaxLife = 0.18f,
                 Color = hot ? Color.Lerp(flame, Color.White, 0.55f) : flame,
                 FadeColor = fade,
-                Size = hot ? 1.0f : 1.4f,
+                Size = hot ? 0.7f : 1.0f,
                 GravityScale = 0f,
-                Drag = 1.2f,
-                LightRadius = hot ? 46f : 0f,
+                Drag = 2.5f,
+                // Deliberately small glow — the pack lights the dwarf's boots, not the
+                // cave; a worn torch out-shines it.
+                LightRadius = hot ? 26f : 0f,
                 LightColor = flame,
+            });
+        }
+        // A couple of true sparks — fast pinpricks spitting past the flame cone.
+        for (var i = 0; i < 2; i++)
+        {
+            _list.Add(new Particle
+            {
+                Position = pos + Jitter(0.6f),
+                Velocity = dir * (140f + (float)_rng.NextDouble() * 80f) + Jitter(30f),
+                Life = 0.05f + (float)_rng.NextDouble() * 0.06f,
+                MaxLife = 0.11f,
+                Color = Color.Lerp(flame, Color.White, 0.7f),
+                FadeColor = fade,
+                Size = 0.6f,
+                GravityScale = 0f,
+                Drag = 1.0f,
             });
         }
     }
