@@ -652,30 +652,19 @@ public sealed partial class DwarfMinerGame
         if (_space.AimedPlanet() is { } aimed) EnsurePrefetch(aimed.Def);
         if (nearP is not null && surfDist < 4200f) EnsurePrefetch(nearP.Def);
 
-        // Flying into the upper atmosphere IS the transition — no prompt, no keypress. The
-        // bearing you flew in on becomes the bearing you arrive above.
+        // Flying into the upper atmosphere commits the ship to the entry cinematic — no
+        // prompt, no keypress. The bearing you flew in on becomes the bearing you arrive
+        // above. The dive plays ~2 s of heat-shield plunge while the world build (kicked
+        // here if a last-second swerve dodged the prefetch) finishes on its thread, so
+        // the handover to orbit never blocks a frame.
         if (_space.AtmosphereContact() is { } entry)
         {
-            // Contact with a world that was never prefetched (a hard swerve at the last
-            // second): kick the build now so the hold below overlaps it.
             EnsurePrefetch(entry.Def);
-            // Entry never waits for the liquid pre-settle — cancel whatever settle time is
-            // left and take the world as soon as generation itself is done (~a quarter
-            // second even on the biggest worlds). The leftover settling runs live in the
-            // orbit frames instead: a briefly heavier framerate from orbit beats any hold
-            // here. With normal prefetch lead the settle already finished and this is moot.
-            if (_prefetch.TryGetValue(entry.Def.Id, out var bake) && !bake.Task.IsCompleted)
-            {
-                bake.SettleCts.Cancel();
-                _space.ShipVel *= MathF.Exp(-6f * dt);
-                _toast = $"ENTERING {entry.Def.Name.ToUpperInvariant()} ATMOSPHERE";
-                _toastTimer = 0.5f;
-                return;
-            }
-            CaptureShipState();
-            _meta.Save();
             var toShip = _space.ShipPos - entry.Pos;
-            EnterOrbit(entry.Def, MathF.Atan2(toShip.Y, toShip.X));
+            _entryDef = entry.Def;
+            _entryBearing = MathF.Atan2(toShip.Y, toShip.X);
+            _entryT = 0f;
+            _sfx.Play("launch", 0.4f);
             return;
         }
 
