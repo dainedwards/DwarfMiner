@@ -2143,6 +2143,25 @@ public sealed partial class DwarfMinerGame : Game
         _run.Shake = MathF.Max(_run.Shake, 0.5f);
     }
 
+    /// <summary>Lob a torch: it arcs under gravity, sticks to whatever solid it hits, and
+    /// burns there — dangling slightly — as a persistent planted light. Throw distance
+    /// scales with how far the cursor is, like dynamite.</summary>
+    private void ThrowTorch(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _run.Player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        var dist = dir.Length();
+        dir /= dist;
+        var up = _run.Planet.UpAt(_run.Player.Position);
+        var speed = MathHelper.Clamp(120f + dist * 0.8f, 120f, 230f);
+        _run.Torches.Add(new ThrownTorch(_run.Player.Position + dir * 5f, dir * speed + up * 50f));
+        // Threw the last one straight out of the light slot → the dwarf is empty-handed.
+        if (_run.Player.Inventory.Count("torch") == 0
+            && _run.Player.Equipment.Get(EquipSlot.Torch) == "torch")
+            _run.Player.Equipment.Set(EquipSlot.Torch, null);
+        _run.Player.ShootCooldown = 0.3f;
+    }
+
     /// <summary>Flamethrower: hoses a cone of REAL burning fuel — Fire cells launched into
     /// ballistic flight that ignite oil, gutter on rock, and light the cave as they fly.
     /// Creatures caught in the near cone catch fire (the standard burn DoT). Continuous
