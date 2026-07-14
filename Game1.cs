@@ -2085,6 +2085,155 @@ public sealed partial class DwarfMinerGame : Game
         _run.Shake = MathF.Max(_run.Shake, 0.5f);
     }
 
+    /// <summary>Flamethrower: hoses a cone of REAL burning fuel — Fire cells launched into
+    /// ballistic flight that ignite oil, gutter on rock, and light the cave as they fly.
+    /// Creatures caught in the near cone catch fire (the standard burn DoT). Continuous
+    /// while held; the short cooldown just paces the puffs.</summary>
+    private void FireFlamethrower(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _run.Player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        var muzzle = _run.Player.Position + dir * 8f;
+        for (var i = 0; i < 3; i++)
+        {
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.4f;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            _run.Cells.LaunchAtWorld(muzzle, d * (150f + (float)Random.Shared.NextDouble() * 80f),
+                Material.Fire);
+        }
+        _particles.EmitFlameJet(muzzle, dir);
+        // Near-cone ignition: anything standing in the tongue starts burning and takes a
+        // steady roast on top (the flying cells alone are too sparse to be the damage).
+        foreach (var c in _run.Creatures)
+        {
+            var to = c.Position - _run.Player.Position;
+            var dist = to.Length();
+            if (dist > 75f || dist < 1f) continue;
+            if (Vector2.Dot(to / dist, dir) < 0.78f) continue;
+            if (c.ImmuneTo(Material.Fire)) continue;
+            c.BurnSeconds = MathF.Max(c.BurnSeconds, 3f);
+            c.Health -= 26f * _frameDt;
+            c.HitFlash = 0.1f;
+        }
+        _run.Player.ShootCooldown = 0.05f;
+    }
+
+    /// <summary>Acid spewer: sprays REAL Acid cells that pool where they land and eat
+    /// through soft rock (at the halved corrosion rate) — a mining tool as much as a
+    /// weapon. The caustic splash sickens creatures in the near cone.</summary>
+    private void FireAcidSpewer(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _run.Player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        var muzzle = _run.Player.Position + dir * 8f;
+        for (var i = 0; i < 3; i++)
+        {
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.3f;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            _run.Cells.LaunchAtWorld(muzzle, d * (170f + (float)Random.Shared.NextDouble() * 70f),
+                Material.Acid);
+        }
+        _particles.EmitAcidJet(muzzle, dir);
+        foreach (var c in _run.Creatures)
+        {
+            var to = c.Position - _run.Player.Position;
+            var dist = to.Length();
+            if (dist > 70f || dist < 1f) continue;
+            if (Vector2.Dot(to / dist, dir) < 0.8f) continue;
+            if (c.ImmuneTo(Material.Acid)) continue;
+            c.Health -= 32f * _frameDt;
+            c.HitFlash = 0.1f;
+        }
+        _run.Player.ShootCooldown = 0.06f;
+    }
+
+    /// <summary>Lightning gun: instant chain arc. The bolt seeks the closest creature (or
+    /// the Titan) near the aim line and forks to further victims within reach of the last;
+    /// with no target it grounds out on terrain at the aim point. Each arc renders as a
+    /// jagged strobing bolt with hero-lit endpoints.</summary>
+    private void FireLightningGun(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _run.Player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        const float range = 160f;
+        const float chainReach = 70f;
+
+        // First victim: nearest creature roughly along the aim; the titan competes too.
+        var from = _run.Player.Position + dir * 6f;
+        Creature? victim = null;
+        var bestDist = range;
+        foreach (var c in _run.Creatures)
+        {
+            var to = c.Position - _run.Player.Position;
+            var dist = to.Length();
+            if (dist >= bestDist || dist < 1f) continue;
+            if (Vector2.Dot(to / dist, dir) < 0.7f) continue;
+            victim = c;
+            bestDist = dist;
+        }
+        var titanFirst = false;
+        if (_run.Titan.Health > 0 && _run.Titan.Targetable)
+        {
+            var to = _run.Titan.Position - _run.Player.Position;
+            var dist = to.Length();
+            if (dist < bestDist && dist > 1f && Vector2.Dot(to / dist, dir) > 0.7f)
+                titanFirst = true;
+        }
+
+        var damage = 30f;
+        if (titanFirst)
+        {
+            _particles.EmitLightning(from, _run.Titan.Position);
+            _run.Titan.Health -= damage;
+            _run.Titan.HitFlash = 0.15f;
+        }
+        else if (victim is null)
+        {
+            // No body in reach: the arc grounds out on the first rock along the aim.
+            var end = _run.Player.Position + dir * range;
+            for (var d = 8f; d < range; d += 4f)
+            {
+                var probe = _run.Player.Position + dir * d;
+                if (_run.Planet.IsSolidAt(probe)) { end = probe; break; }
+            }
+            _particles.EmitLightning(from, end);
+        }
+        else
+        {
+            // Chain: hit, then fork from the last victim to the nearest fresh body, up to
+            // three jumps, each arc weaker than the last.
+            var hit = new HashSet<Creature>();
+            var source = from;
+            for (var jump = 0; jump < 4 && victim is not null; jump++)
+            {
+                _particles.EmitLightning(source, victim.Position);
+                victim.Health -= damage;
+                victim.HitFlash = 0.15f;
+                hit.Add(victim);
+                damage *= 0.7f;
+                source = victim.Position;
+                Creature? next = null;
+                var nextDist = chainReach;
+                foreach (var c in _run.Creatures)
+                {
+                    if (hit.Contains(c)) continue;
+                    var dist = (c.Position - source).Length();
+                    if (dist < nextDist) { next = c; nextDist = dist; }
+                }
+                victim = next;
+            }
+        }
+        _run.Player.ShootCooldown = 0.4f;
+        _run.Shake = MathF.Max(_run.Shake, 0.2f);
+    }
+
     /// <summary>Sentry-emitted bullet. Lower damage and speed than the player's bullet so the
     /// turrets feel like supplementary support, not an instant clear button.</summary>
     private void FireSentryShot(Vector2 muzzle, Vector2 dir)
