@@ -351,7 +351,7 @@ public sealed class Cells
         // Cells has no entity access, so shatter sites queue here and Game1 drains the queue
         // into Session.Pickups (headless callers just leave it; the list is per-planet).
         if (Planet.TakeGem(tx, ty) is var embedded && embedded != TileKind.Sky)
-            PendingGemDrops.Add((Planet.TileToWorld(tx, ty), embedded, true));
+            PendingGemDrops.Add((Planet.TileToWorld(tx, ty), embedded));
         // Gem tiles (geode/cavern linings + old worlds' veins): no dust — each shattered
         // crystal is its own find, so it pops a whole physical drop right where it broke.
         // (Previously banked ¼ into a global accumulator, which made three out of four
