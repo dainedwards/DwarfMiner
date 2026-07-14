@@ -746,7 +746,9 @@ public static class SimTest
         Check("hazard: contact probe sees acid",
             cells.SampleHazardsNear(planet.TileToWorld(ar + 1, at), Planet.TileSize).acid > 0);
         var corroded = false;
-        for (var i = 0; i < 3000 && !corroded; i++)
+        // Corrosion was halved to 1-in-90 per neighbour tick (acid-spewer balance), so the
+        // window doubles with it — dissolution still happens, at half the old pace.
+        for (var i = 0; i < 7000 && !corroded; i++)
         {
             cells.Update(dt);
             if (planet.Get(ar, at) == TileKind.Sky) corroded = true;
