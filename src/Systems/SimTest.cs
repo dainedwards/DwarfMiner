@@ -1558,7 +1558,10 @@ public static class SimTest
                     calmDist > 55f);
 
                 var angry = new Creature(cavePos, CreatureKind.Borer);
-                for (var i = 0; i < 60 * 14; i++)
+                // 22s of pursuit: the gate under test is the provocation (contrast with the
+                // unprovoked check above), not raw dig speed — and the worm-tunnelled crust
+                // gives even a solid-corridor site the odd pothole to climb out of.
+                for (var i = 0; i < 60 * 22; i++)
                 {
                     if (i % 60 == 0) angry.HitFlash = 0.2f;   // keep the grudge fresh
                     angry.Update(dt, planet, physics, cells, prey);
