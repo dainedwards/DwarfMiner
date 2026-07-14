@@ -4353,10 +4353,11 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.DrawRect(_landerPos - up * 4.4f + lRight * 3.4f, new Vector2(1.8f, 3.4f), new Color(90, 92, 105), rot);
         }
 
-        // Reticle.
+        // Reticle — a small dot; the OS cursor does the pointing, this just marks the
+        // world-space aim.
         var mouse = Screen.Mouse();
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
-        _renderer.DrawCircle(worldCursor, 3f, new Color(255, 255, 255, 180));
+        _renderer.DrawCircle(worldCursor, 1.1f, new Color(255, 255, 255, 200));
 
         // Held weapon: the selected toolbelt slot's sidearm drawn in the dwarf's grip,
         // rotated to the aim and flipped when facing left so it's never upside-down.
