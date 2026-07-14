@@ -1736,6 +1736,24 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
+    /// <summary>God mode's unlimited crafting stock: top the pack up to 9999 of every known
+    /// resource, every creature part, and every id any active recipe bills in (which sweeps
+    /// in planet-specific ship ores automatically). Mirrors the mothership debug menu's
+    /// "fill cargo hold" grant, planet-side.</summary>
+    private void GrantGodmodeMaterials()
+    {
+        var inv = _run.Player.Inventory;
+        void Top(string id)
+        {
+            var have = inv.Count(id);
+            if (have < 9999) inv.Add(id, 9999 - have);
+        }
+        foreach (var id in Tiles.ResourceOrder) Top(id);
+        foreach (var id in new[] { "meat", "hide", "chitin" }) Top(id);
+        foreach (var r in Crafting.All)
+            foreach (var (id, _) in r.Cost) Top(id);
+    }
+
     /// <summary>Step the belt selection to the next/previous slot holding a weapon, wrapping
     /// around and skipping tools/placeables. No-op if no weapon is on the belt.</summary>
     private void CycleWeapon(int dir)
