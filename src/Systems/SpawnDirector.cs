@@ -169,21 +169,20 @@ public static class SpawnDirector
         }
 
         // Sky fauna on station around the whole planet (they used to trickle in near the
-        // player; now the flock exists from the start).
-        if (run.Def.Biome is not "rift")
+        // player; now the flock exists from the start). The Rift's one neutral species is
+        // the null moth; airless rocks get drifting star jellies.
+        for (var a = 0.1f; a < MathHelper.TwoPi; a += 0.55f)
         {
-            for (var a = 0.1f; a < MathHelper.TwoPi; a += 0.55f)
-            {
-                if (Random.Shared.Next(3) == 0) continue;
-                var ground = FindSurfaceSpawn(planet, a, planet.Radius);
-                var up2 = planet.UpAt(ground);
-                var kind = run.Def.Biome is "belt" or "moon" ? CreatureKind.StarJelly
-                    : Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth
-                    : CreatureKind.SkyStinger;
-                run.Creatures.Add(new Creature(
-                    ground + up2 * (50f + (float)Random.Shared.NextDouble() * 90f), kind)
-                { Resident = true });
-            }
+            if (Random.Shared.Next(3) == 0) continue;
+            var ground = FindSurfaceSpawn(planet, a, planet.Radius);
+            var up2 = planet.UpAt(ground);
+            var kind = run.Def.Biome == "rift" ? CreatureKind.NullMoth
+                : run.Def.Biome is "belt" or "moon" ? CreatureKind.StarJelly
+                : Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth
+                : CreatureKind.SkyStinger;
+            run.Creatures.Add(new Creature(
+                ground + up2 * (50f + (float)Random.Shared.NextDouble() * 90f), kind)
+            { Resident = true });
         }
 
         // ── Physical spawners — the only post-load source of new creatures. ──────────
