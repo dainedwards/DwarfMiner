@@ -61,7 +61,7 @@ public sealed class CharacterScreen
     private const int BagCols = 8;
 
     // ── Terraria-flavoured palette: deep blue panel, beveled indigo slots, gold accents ──
-    private static readonly Color PanelBg      = new(28, 30, 66, 168);
+    private static readonly Color PanelBg      = new(28, 30, 66, 255);
     private static readonly Color PanelEdgeOut = new(9, 9, 24);
     private static readonly Color PanelEdgeIn  = new(99, 107, 178);
     private static readonly Color TitleBarBg   = new(46, 50, 100);
