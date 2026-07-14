@@ -71,7 +71,6 @@ public sealed class Lighting
         // out (orbit at 0.44 needs a 2909×1636 RT at world scale) the per-frame clear +
         // composite + bloom of that surface alone was ~15 ms of draw. Beyond the cap the
         // lightmap just gets coarser per world pixel, which is invisible at those scales.
-        var lightScale = MathF.Min(1f, cam.Zoom);
         var w = Math.Max(1, Math.Min(cam.ViewportSize.X, (int)(cam.ViewportSize.X / cam.Zoom)));
         var h = Math.Max(1, Math.Min(cam.ViewportSize.Y, (int)(cam.ViewportSize.Y / cam.Zoom)));
         if (_rt is null || _rtSize.X != w || _rtSize.Y != h)
@@ -86,9 +85,12 @@ public sealed class Lighting
         _gd.SetRenderTarget(_rt);
         _gd.Clear(Color.Black);
 
+        // RT pixels per world pixel: 1 at play zooms; below the cap it shrinks with the
+        // zoom so the (viewport-sized) RT still covers the whole widened world view.
+        var lightScale = w * cam.Zoom / cam.ViewportSize.X;
         _viewMatrix = Matrix.CreateTranslation(-cam.Target.X, -cam.Target.Y, 0)
                     * Matrix.CreateRotationZ(-cam.SmoothRotation)
-                    * Matrix.CreateScale(MathF.Max(lightScale, cam.ViewportSize.X / (float)w * cam.Zoom >= 1f ? lightScale : lightScale))
+                    * Matrix.CreateScale(lightScale)
                     * Matrix.CreateTranslation(_rtSize.X * 0.5f, _rtSize.Y * 0.5f, 0);
         _sb.Begin(blendState: BlendState.Opaque, samplerState: SamplerState.LinearClamp,
             transformMatrix: _viewMatrix);
