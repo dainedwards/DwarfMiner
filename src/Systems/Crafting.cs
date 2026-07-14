@@ -67,12 +67,18 @@ public static class Crafting
         // Carried-light ladder — the deep dark is near-total without one. Tiers step
         // sequentially like pickaxes; each bumps Player.LightTier. None of them help on the
         // surface or in the dirt band, where daylight already covers you.
-        new("torch", "Torch — carried flame (light I)",
+        new("torch", "Torch — carried flame; LMB throws it to stick and burn",
             new Dictionary<string, int> { ["coal"] = 1, ["stone"] = 1 }),
         new("lantern", "Lantern — steady oil glow (light II)",
             new Dictionary<string, int> { ["coal"] = 2, ["iron"] = 1 }),
-        new("helm_lamp", "Miner's headlamp — hands-free beam (light III)",
+        new("helm_lamp", "Headlamp — hands-free beam (light III, upgradeable)",
             new Dictionary<string, int> { ["silver"] = 2, ["crystal"] = 1, ["iron"] = 2 }),
+        new("headlamp_ii", "Headlamp II — brighter bulb",
+            new Dictionary<string, int> { ["silver"] = 3, ["crystal"] = 1 }),
+        new("headlamp_iii", "Headlamp III — focused lens",
+            new Dictionary<string, int> { ["gold"] = 2, ["crystal"] = 2 }),
+        new("headlamp_iv", "Headlamp IV — arc filament",
+            new Dictionary<string, int> { ["platinum"] = 2, ["ruby"] = 1, ["crystal"] = 2 }),
         new("sun_crystal", "Sunstone charm — bottled daylight (light IV)",
             new Dictionary<string, int> { ["diamond"] = 1, ["ruby"] = 2, ["crystal"] = 2 }),
         new("air_tank", "Air tank — doubles your air supply for deeper dives",
