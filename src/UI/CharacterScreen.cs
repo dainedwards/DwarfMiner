@@ -610,6 +610,7 @@ public sealed class CharacterScreen
     private void DrawTooltip(Renderer renderer, Player player, MouseState mouse, int viewportWidth, int viewportHeight)
     {
         if (_carry is not null) return;   // mid-drag, the carry icon is the feedback
+        if (_ctx is not null) return;     // the context menu owns the cursor
 
         string? id = null;
         for (var s = 0; s < Equipment.SlotCount && id is null; s++)
