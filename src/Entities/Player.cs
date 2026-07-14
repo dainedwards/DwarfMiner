@@ -87,17 +87,31 @@ public sealed class Player
     public bool HasLightningGun;
 
     /// <summary>Mothership-foundry upgrades (not craftable in-run, not in the run save —
-    /// re-applied from MetaSave on every planet entry). Jetpack: hold jump while airborne to
-    /// fly on a charge that refills on the ground; tier II doubles the charge and climbs
-    /// harder.</summary>
+    /// re-applied from MetaSave on every planet entry). Jetpack: a worn BACK item (the
+    /// paper-doll's Back slot — it only burns while equipped there). Hold jump while
+    /// airborne to hover Noita-style: thrust is an acceleration fighting gravity, so you
+    /// feather it to hold altitude and momentum carries through. The charge refills over a
+    /// second on the ground. Tier I burns 5 s (Noita's levitation); each tier +30%.</summary>
     public bool HasJetpack;
     public bool JetTier2;
     public bool JetTier3;
+    public bool JetTier4;
     public float JetCharge = JetChargeMax;
-    public const float JetChargeMax = 2.6f;   // seconds of burn (tier I)
-    public float JetChargeCap => JetChargeMax * (JetTier3 ? 3f : JetTier2 ? 2f : 1f);
-    private float JetRiseSpeed => JetTier3 ? 190f : JetTier2 ? 150f : 110f;
-    private const float JetAccel = 420f;
+    public const float JetChargeMax = 5f;     // seconds of burn (tier I)
+    public float JetChargeCap =>
+        JetChargeMax * (JetTier4 ? 2.197f : JetTier3 ? 1.69f : JetTier2 ? 1.3f : 1f);
+    /// <summary>1-4 while owned (drives the exhaust flame colour: red→orange→yellow→blue),
+    /// 0 without the pack.</summary>
+    public int JetTier => JetTier4 ? 4 : JetTier3 ? 3 : JetTier2 ? 2 : HasJetpack ? 1 : 0;
+    private float JetRiseSpeed => JetTier4 ? 165f : JetTier3 ? 140f : JetTier2 ? 120f : 100f;
+    /// <summary>Net upward acceleration while thrusting (applied on top of cancelling
+    /// gravity) — low enough that catching a fall takes a beat, the Noita float.</summary>
+    private const float JetLift = 300f;
+    /// <summary>Seconds a grounded refill takes, whatever the tier's cap.</summary>
+    private const float JetRefillTime = 1.2f;
+    /// <summary>True on frames the jet actually burned — Game1 reads it to emit the
+    /// tier-coloured exhaust flame.</summary>
+    public bool IsJetting;
 
     /// <summary>How far loose material sweeps into the pack — touch range by default; the
     /// Magnet Ring accessory turns it into a real pull radius.</summary>
