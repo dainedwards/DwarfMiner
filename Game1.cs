@@ -427,13 +427,13 @@ public sealed partial class DwarfMinerGame : Game
             Gravity = 320f * def.GravityScale,
         };
         _run.HasCannon = _meta.StartWithCannon;
-        // God mode carries the full armoury — load every weapon onto the belt from frame
-        // one (toggling god off strips the unowned loaners) — and stocks the pack with
-        // unlimited crafting materials.
+        // God mode grants everything PERMANENTLY from frame one — every item at max tier
+        // plus unlimited crafting materials (see GrantGodmodeItems).
         if (_run.Player.FlyMode)
         {
-            foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
+            GrantGodmodeItems();
             GrantGodmodeMaterials();
+            foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
         }
         // DM_BOSSCAM spawns the egg beside the dwarf (instead of across the planet) so tooling
         // can screenshot the boss without walking to it.
