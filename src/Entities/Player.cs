@@ -68,7 +68,6 @@ public sealed class Player
     public bool HasDrill;
     public bool HasHammer;
     public bool HasMiningLaser;
-    public bool HasLantern;
     public bool HasArmor;
     public bool HasCoreDrill;
     public bool HasPistol;
