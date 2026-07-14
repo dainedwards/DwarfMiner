@@ -28,6 +28,10 @@ public sealed partial class DwarfMinerGame
     /// All art points +X; the draw call rotates to the aim and flips below the horizontal.</summary>
     private readonly Dictionary<string, Texture2D> _weaponTex = new();
 
+    /// <summary>The worn jetpack, drawn strapped to the dwarf's back while it sits in the
+    /// paper doll's Back slot. Upright art — rotated with the body, not the aim.</summary>
+    private Texture2D _jetpackTex = null!;
+
     private void BuildWeaponTextures()
     {
         var pal = new Dictionary<char, Color>
