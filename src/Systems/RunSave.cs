@@ -17,7 +17,8 @@ public static class RunSave
 {
     // Bump when the format or the planet/cell geometry changes — old saves are discarded.
     // v8: 4-px tiles (doubled ring geometry) + Conglomerate composition table.
-    private const int Version = 19;  // 9: planet gem-overlay section
+    private const int Version = 20;  // 9: planet gem-overlay section
+                                     // 20: player ScannerTier (craftable geo-scanner)
                                      // 10: city civilian spawn sites + lizardman dens in planet state
                                      // 11: toolbelt widened 13 → 24 slots (belt block length changed)
                                      // 12: surface-profile section in planet state (lumpy asteroid)
