@@ -1216,7 +1216,7 @@ public sealed partial class DwarfMinerGame : Game
 
         if (_screen == GameScreen.Title)
         {
-            UpdateTitle(keys);
+            UpdateTitle(keys, mouse);
             _prevKeys = keys; _prevMouse = mouse;
             base.Update(gameTime);
             return;
