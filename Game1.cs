@@ -2974,6 +2974,9 @@ public sealed partial class DwarfMinerGame : Game
             _fps = (int)(_fpsFrames * 1000 / (now - _fpsMark));
             _fpsFrames = 0;
             _fpsMark = now;
+            // DM_FPSLOG=1 → per-second console FPS line, for headless perf comparisons.
+            if (Environment.GetEnvironmentVariable("DM_FPSLOG") is { Length: > 0 })
+                Console.WriteLine($"[fps] {_fps}  upd {_updateMs:0.0}  drw {_drawMs:0.0}");
         }
         var fpsText = $"FPS {_fps}  UPD {_updateMs:0.0}  DRW {_drawMs:0.0}";
         _renderer.DrawText(fpsText,
