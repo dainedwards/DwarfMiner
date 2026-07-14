@@ -512,7 +512,7 @@ public static class SpawnDirector
                 kind = CreatureKind.Lizardman;
         }
 
-        var c = new Creature(pos, kind);
+        var c = new Creature(pos, kind) { Resident = resident };
         if (HazardRejectsSpawn(run, pos, c)) return;   // don't hatch it inside lava/acid/water
         ClearSpawnSpace(run, pos, c.Radius);
         run.Creatures.Add(c);
