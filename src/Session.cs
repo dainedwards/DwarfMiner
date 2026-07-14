@@ -38,6 +38,10 @@ public sealed class Session
     /// <summary>Physical enemy spawners (goo piles, lizard doors, alien homes) — placed by
     /// SpawnDirector.PopulateWorld at load, the only post-load source of new creatures.</summary>
     public readonly List<Spawner> Spawners = new();
+    /// <summary>Set once PopulateWorld has run (normally on the background build thread —
+    /// its spawn-space carving wakes physics planet-wide, which must be digested by the
+    /// background settle, not by the first seconds of play).</summary>
+    public bool Populated;
 
     /// <summary>Meteor-strike cadence — the frequent ambient dodge hazard, outside the
     /// disaster clock. See AmbientDirector.</summary>
