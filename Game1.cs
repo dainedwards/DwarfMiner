@@ -2544,6 +2544,22 @@ public sealed partial class DwarfMinerGame : Game
         _run.Shake = MathF.Max(_run.Shake, 0.3f);
     }
 
+    // ── Throw-charge system ───────────────────────────────────────────────────────────
+    // Thrown items (dynamite, dynamite pack, TNT, TNT pack, torches) charge a strength gauge
+    // while LMB is held and release the throw on button-up. _throwCharge (0..1) drives the
+    // launch speed via ThrowSpeed and the gauge ring on the reticle.
+    private float _throwCharge;
+    private bool _throwCharging;
+    private const float ThrowChargeTime = 0.7f;   // seconds of hold to reach full power
+
+    /// <summary>True for the belt ids that use the charge-up throw (gauge on the reticle).</summary>
+    private static bool IsThrowable(string id) =>
+        id is "dynamite" or "dynamite_pack" or "tnt" or "tnt_pack" or "torch";
+
+    /// <summary>Launch speed for a thrown item: lerps from a soft lob to a hard throw across
+    /// the current charge. Read by every Fire*/ThrowTorch method so they share one gauge.</summary>
+    private float ThrowSpeed(float min, float max) => MathHelper.Lerp(min, max, _throwCharge);
+
     /// <summary>TNT: a heavy satchel charge. Barely throwable — a short weighty lob with a
     /// long fuse — but the biggest non-nuke blast in the game. Placement tool, not artillery.</summary>
     private void FireTnt(Vector2 worldCursor)
