@@ -988,6 +988,43 @@ public sealed class Particles
         if (_rng.Next(4) == 0) EmitCinders(pos + dir * 10f, dir * 120f, 1);
     }
 
+    /// <summary>Jetpack exhaust, coloured by tier: red (I) → orange (II) → yellow (III) →
+    /// blue (IV). A short downward tongue of hot core + tinted flame per burning frame,
+    /// with real light so night hovers glow.</summary>
+    public void EmitJetExhaust(Vector2 pos, Vector2 dir, int tier)
+    {
+        var flame = tier switch
+        {
+            1 => new Color(235, 70, 45),     // sputtering red stub
+            2 => new Color(255, 150, 50),    // orange burner
+            3 => new Color(255, 225, 90),    // hot yellow
+            _ => new Color(110, 185, 255),   // tier IV: full-blue jet
+        };
+        var fade = tier >= 4 ? new Color(30, 50, 120) : new Color(110, 35, 15);
+        for (var i = 0; i < 3; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.6f;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            var hot = i == 0;
+            _list.Add(new Particle
+            {
+                Position = pos + Jitter(1f),
+                Velocity = d * (90f + (float)_rng.NextDouble() * 70f),
+                Life = 0.10f + (float)_rng.NextDouble() * 0.14f,
+                MaxLife = 0.24f,
+                Color = hot ? Color.Lerp(flame, Color.White, 0.55f) : flame,
+                FadeColor = fade,
+                Size = hot ? 1.8f : 2.4f,
+                GravityScale = 0f,
+                Drag = 2.2f,
+                LightRadius = hot ? 46f : 0f,
+                LightColor = flame,
+            });
+        }
+    }
+
     /// <summary>Lasting cinders: glowing embers that arc out, bounce, and keep shedding
     /// warm light for a couple of seconds while they cool — the afterglow that makes fire
     /// linger instead of strobing off the instant the flash dies. Shared by explosions,
