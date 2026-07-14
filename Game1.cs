@@ -4028,6 +4028,36 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.DrawText(hint,
             new Vector2((VirtualWidth - _renderer.MeasureText(hint)) / 2f, y0 + 3 * (cardH + gap) + 24),
             new Color(150, 165, 200));
+
+        // Quit confirmation dialog — Esc opened it; nothing leaves without a yes.
+        if (_titleQuitConfirm)
+        {
+            const int dw = 300, dh = 110;
+            var dx = (VirtualWidth - dw) / 2;
+            var dy = (VirtualHeight - dh) / 2;
+            sb.Begin(samplerState: SamplerState.PointClamp);
+            sb.Draw(_renderer.Pixel, new Rectangle(0, 0, VirtualWidth, VirtualHeight), new Color(0, 0, 0, 140));
+            sb.Draw(_renderer.Pixel, new Rectangle(dx, dy, dw, dh), new Color(18, 21, 32, 250));
+            sb.Draw(_renderer.Pixel, new Rectangle(dx, dy, dw, 2), new Color(255, 220, 120));
+            sb.Draw(_renderer.Pixel, new Rectangle(dx, dy + dh - 2, dw, 2), new Color(255, 220, 120));
+            _titleConfirmYes = new Rectangle(dx + 28, dy + 62, 100, 26);
+            _titleConfirmNo = new Rectangle(dx + dw - 128, dy + 62, 100, 26);
+            var mouse = Screen.Mouse();
+            foreach (var (rect, hot) in new[]
+            {
+                (_titleConfirmYes, _titleConfirmYes.Contains(mouse.X, mouse.Y)),
+                (_titleConfirmNo, _titleConfirmNo.Contains(mouse.X, mouse.Y)),
+            })
+                sb.Draw(_renderer.Pixel, rect, hot ? new Color(70, 78, 108) : new Color(34, 38, 54));
+            sb.End();
+            var q = "QUIT THE GAME?";
+            _renderer.DrawText(q, new Vector2((VirtualWidth - _renderer.MeasureText(q, 2)) / 2f, dy + 18),
+                new Color(255, 220, 150), 2);
+            _renderer.DrawText("YES",
+                new Vector2(_titleConfirmYes.Center.X - _renderer.MeasureText("YES") / 2f, dy + 68), Color.White);
+            _renderer.DrawText("NO (ESC)",
+                new Vector2(_titleConfirmNo.Center.X - _renderer.MeasureText("NO (ESC)") / 2f, dy + 68), Color.White);
+        }
     }
 
     /// <summary>The pause overlay (Esc): dimmed frozen frame with resume / return to the
