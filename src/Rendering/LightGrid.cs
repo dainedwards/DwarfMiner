@@ -174,6 +174,45 @@ public sealed class LightGrid
         }
     }
 
+    /// <summary>Radial descent for one sky-heightmap bearing: from just above the tile grid
+    /// down to the first solid tile. Water/acid cells don't stop it — a lake floor counts
+    /// as open sky and the seeded light dims through the liquid via propagation.</summary>
+    private void ScanSkyBearing(Planet planet, int b)
+    {
+        var a = (b + 0.5f) / SkyBearings * MathHelper.TwoPi;
+        var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+        var lowStop = MathF.Max(1f, Planet.RingMin * 0.5f);
+        var d = (float)planet.Radius;
+        while (d > lowStop)
+        {
+            if (planet.IsSolidAt(planet.Center + dir * (d * Planet.TileSize))) break;
+            d -= 1f;
+        }
+        _skyR![b] = d + 1f;
+    }
+
+    private void RecalcSkyBounds()
+    {
+        _skyMin = float.MaxValue; _skyMax = float.MinValue;
+        foreach (var v in _skyR!)
+        {
+            if (v < _skyMin) _skyMin = v;
+            if (v > _skyMax) _skyMax = v;
+        }
+    }
+
+    private float SkyRadiusAt(float angle)
+    {
+        var t = (angle / MathHelper.TwoPi + 1f) % 1f * SkyBearings;
+        var i = (int)t;
+        var frac = t - i;
+        var a = _skyR![i % SkyBearings];
+        var b = _skyR[(i + 1) % SkyBearings];
+        // A cliff edge between neighbouring bearings shouldn't smear darkness sideways:
+        // take the lower (sunnier) side when the two disagree wildly.
+        return MathF.Abs(a - b) > 3f ? MathF.Min(a, b) + frac * 0f : a + (b - a) * frac;
+    }
+
     /// <summary>Seed a light. <paramref name="radius"/> keeps the legacy AddLight meaning
     /// (world px of intended reach) and converts to a seed strength that decays to ~5%
     /// at that distance in open air — so existing call sites read the same.</summary>
