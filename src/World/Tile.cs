@@ -167,8 +167,10 @@ public static class Tiles
         TileKind.PlanetCore => new Color(60, 60, 70),
         TileKind.CoalOre => new Color(55, 55, 62),
         TileKind.IronOre => new Color(150, 110, 90),
-        TileKind.SilverOre => new Color(180, 185, 200),
-        TileKind.GoldOre => new Color(170, 140, 70),
+        // Precious metals read bright and saturated — they should pop out of the rock
+        // (the renderer adds a live glint on top).
+        TileKind.SilverOre => new Color(202, 208, 224),
+        TileKind.GoldOre => new Color(198, 160, 74),
         TileKind.PlatinumOre => new Color(200, 215, 220),
         TileKind.Ruby => new Color(160, 40, 60),
         TileKind.Sapphire => new Color(50, 70, 170),
