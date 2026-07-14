@@ -277,6 +277,7 @@ public static class Tiles
         "ammo_diamond"  => new Color(220, 245, 255),
         "dynamite"    => new Color(180, 50, 60),
         "tnt"         => new Color(205, 65, 50),
+        "tnt_pack"    => new Color(190, 75, 45),
         "rocket"      => new Color(210, 130, 90),
         "pistol"          => new Color(200, 200, 215),
         "machine_gun"     => new Color(150, 160, 175),
