@@ -1908,8 +1908,8 @@ public sealed class Cells
                 // white — a pile of gold filings winks at you.
                 if (src is TileKind.GoldOre or TileKind.SilverOre or TileKind.PlatinumOre)
                 {
-                    var tick = (int)(_time * 5f);
-                    if ((((hash >> 6) ^ (tick * 2654435761)) & 15) == 0) return Color.White;
+                    var tick = (uint)(_time * 5f);
+                    if ((((uint)(hash >> 6) ^ (tick * 2654435761u)) & 15u) == 0) return Color.White;
                     var metal = Tiles.OreSpeckle(src);
                     return Tint(Color.Lerp(b, metal, 0.55f), jitter / 4);
                 }
