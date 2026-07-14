@@ -60,6 +60,13 @@ public enum TileKind : byte
     Rustbramble = 42,  // slag — oxidised metal thorn bush
     Vitrilily = 43,    // acid — bulbous acid-adapted pod (acid-proof)
     Geobloom = 44,     // crystal — faceted crystalline flower
+    // Crafted base-building blocks — neat "built" tiles (vs raw mined rock), for making
+    // proper bases. Solid, mineable, drop themselves back.
+    Brick = 45,        // tidy stone masonry
+    Plating = 46,      // riveted iron wall panel
+    GlassBlock = 47,   // clear pane — a window block
+    WoodPlank = 48,    // timber planking (crafted from harvested hide/chitin fibre)
+    Platform = 49,     // thin plank you stand on but jump/climb up through (one-way)
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
