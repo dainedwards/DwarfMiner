@@ -393,19 +393,31 @@ public sealed class Player
 
         if (EmpTimer > 0f) EmpTimer -= dt;
 
-        // Jetpack: holding jump while airborne thrusts toward a steady rise until the charge
-        // runs dry; the charge refills on the ground. The jump edge itself is still the
-        // ordinary jump (buffer/coyote below), so a hop flows into a burn naturally. Gated
-        // off ladders so climbing doesn't fight the thrust, and dead while EMP'd.
-        if (HasJetpack && EmpTimer <= 0f)
+        // Jetpack: holding jump while airborne burns the pack — but only while it's worn
+        // in the Back slot (like the torch, owning it isn't enough). Noita-style hover
+        // physics: thrust is an acceleration that cancels gravity plus a modest lift, so
+        // catching a fall takes a beat, feathering the button holds altitude, and momentum
+        // carries sideways. The jump edge itself is still the ordinary jump (buffer/coyote
+        // below), so a hop flows into a burn naturally. Gated off ladders so climbing
+        // doesn't fight the thrust, and dead while EMP'd.
+        IsJetting = false;
+        if (HasJetpack && Equipment.Get(EquipSlot.Back) == "jetpack" && EmpTimer <= 0f)
         {
             // No burning underwater — holding jump already swims up, and a jet that works
             // submerged would make the whole aquatics line pointless.
-            if (Grounded) JetCharge = JetChargeCap;
+            if (Grounded)
+            {
+                // Noita recharges levitation over a moment on the ground, not instantly.
+                JetCharge = MathF.Min(JetChargeCap, JetCharge + JetChargeCap * dt / JetRefillTime);
+            }
             else if (jumpHeld && !jumpEdge && !onLadder && !InWater && JetCharge > 0f)
             {
-                vNormal = MoveToward(vNormal, JetRiseSpeed, JetAccel * dt);
+                // Above the rise cap (e.g. straight off a jump) the thrust adds nothing —
+                // gravity bleeds the excess naturally instead of snapping the speed down.
+                if (vNormal < JetRiseSpeed)
+                    vNormal = MathF.Min(JetRiseSpeed, vNormal + (Gravity + JetLift) * dt);
                 JetCharge -= dt;
+                IsJetting = true;
             }
         }
 
