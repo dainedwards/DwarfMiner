@@ -1101,16 +1101,10 @@ public sealed class Toolbelt
         return false;
     }
 
-    /// <summary>Hotbar layout rule: slot 1 (index 0) is the mining tool, slots 2-4 are
-    /// weapons, slots 5-9 are general items; the overflow slots past 9 take anything
-    /// (god-mode armoury spill, spares).</summary>
-    public static bool SlotAccepts(int slot, string id)
-    {
-        if (slot == 0) return IsMiningToolId(id);
-        if (slot <= 3) return IsWeaponSlotId(id);
-        if (slot <= 8) return !IsMiningToolId(id) && !IsWeaponSlotId(id);
-        return true;
-    }
+    /// <summary>Hotbar layout rule: any item can live in any belt slot now — the old
+    /// mining/weapon/item typing was removed so the player arranges the bar however they
+    /// like (Terraria-style free placement).</summary>
+    public static bool SlotAccepts(int slot, string id) => true;
 
     /// <summary>Place <paramref name="id"/> into the first empty slot that accepts it.
     /// No-op if the id is already on the belt or no fitting slot is free.</summary>
