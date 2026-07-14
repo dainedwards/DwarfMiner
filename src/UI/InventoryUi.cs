@@ -30,19 +30,40 @@ public sealed class InventoryUi
     /// <summary>Drop any in-flight drag — called on run start.</summary>
     public void Reset() => _carry = null;
 
+    /// <summary>Context menu opened by right-clicking an inventory row: drop one / drop the
+    /// whole stack. Null when closed.</summary>
+    private (string Id, Point Pos)? _menu;
+    private Rectangle _menuDropOne, _menuDropAll;
+
     /// <summary>Drag-and-drop click handler. Returns true iff the click landed on a UI element
     /// (so the world doesn't also receive it as an LMB world-action this frame). Click on
-    /// inventory/toolbelt → pick up; click on toolbelt slot while carrying → drop. Right-click
-    /// a toolbelt slot → unequip back to inventory (stackables only). Click outside any UI
-    /// while carrying → cancel.</summary>
-    public bool HandleClick(Vector2 screenPos, bool lmbPressed, bool rmbPressed, Player player)
+    /// inventory/toolbelt → pick up; click on toolbelt slot while carrying → drop (slot-type
+    /// gated: tool/weapons/items). Right-click a toolbelt slot → unequip; right-click an
+    /// inventory row → drop context menu. Click outside any UI while carrying → cancel.
+    /// <paramref name="drop"/> performs the actual world-side drop (id, count).</summary>
+    public bool HandleClick(Vector2 screenPos, bool lmbPressed, bool rmbPressed, Player player,
+        Action<string, int> drop)
     {
         if (!lmbPressed && !rmbPressed) return false;
 
-        // RMB on a toolbelt slot: unequip stackable items back to inventory. Permanent slots
-        // stay put — there's nowhere else for them to live.
+        // An open context menu eats the next click: on a button → act, anywhere else → close.
+        if (_menu is { } menu)
+        {
+            if (lmbPressed)
+            {
+                if (_menuDropOne.Contains((int)screenPos.X, (int)screenPos.Y))
+                    drop(menu.Id, 1);
+                else if (_menuDropAll.Contains((int)screenPos.X, (int)screenPos.Y))
+                    drop(menu.Id, int.MaxValue);
+            }
+            _menu = null;
+            return true;
+        }
+
         if (rmbPressed)
         {
+            // RMB on a toolbelt slot: unequip stackable items back to inventory. Permanent
+            // slots stay put — there's nowhere else for them to live.
             for (var s = 0; s < Toolbelt.SlotCount; s++)
             {
                 if (!_beltHitTest[s].Contains((int)screenPos.X, (int)screenPos.Y)) continue;
@@ -50,6 +71,13 @@ public sealed class InventoryUi
                 if (id is null) return true;
                 if (Toolbelt.IsPermanent(id)) return true;
                 player.Toolbelt.Slots[s] = null;
+                return true;
+            }
+            // RMB on an inventory row: open the drop menu beside the cursor.
+            foreach (var (id, rect) in _invHitTest)
+            {
+                if (!rect.Contains((int)screenPos.X, (int)screenPos.Y)) continue;
+                _menu = (id, new Point((int)screenPos.X, (int)screenPos.Y));
                 return true;
             }
             return false;
