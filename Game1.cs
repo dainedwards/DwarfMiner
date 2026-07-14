@@ -2217,6 +2217,7 @@ public sealed partial class DwarfMinerGame : Game
         p.HasFlamethrower = p.HasAcidSpewer = p.HasLightningGun = true;
         _run.HasCannon = true;
         p.PickaxeTier = 4;
+        p.ScannerTier = 4;
         p.LightTier = 4;
         p.HeadlampTier = 4;
         p.HasJetpack = p.JetTier2 = p.JetTier3 = p.JetTier4 = true;
