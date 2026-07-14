@@ -2626,11 +2626,25 @@ public sealed partial class DwarfMinerGame : Game
         dir /= dist;
         // Lob speed scales with throw distance up to a cap. Plus a small upward kick along
         // planet-up so the stick arcs visibly instead of skimming the floor.
-        var speed = MathHelper.Clamp(110f + dist * 0.8f, 110f, 220f);
+        var speed = ThrowSpeed(110f, 240f);
         var up = _run.Planet.UpAt(_run.Player.Position);
         var velocity = dir * speed + up * 60f;
-        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, velocity, 50f, 2.0f, ProjectileKind.Dynamite));
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, velocity, 50f, 3.0f, ProjectileKind.Dynamite));
         _run.Player.ShootCooldown = 0.3f;
+    }
+
+    /// <summary>Dynamite pack: the bundled charge — throws like a stick but with 3× the
+    /// blast. Same 3-second fuse and bounce.</summary>
+    private void FireDynamitePack(Vector2 worldCursor)
+    {
+        var dir = worldCursor - _run.Player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        var up = _run.Planet.UpAt(_run.Player.Position);
+        var velocity = dir * ThrowSpeed(100f, 220f) + up * 60f;
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, velocity, 60f, 3.0f,
+            ProjectileKind.DynamitePack));
+        _run.Player.ShootCooldown = 0.35f;
     }
 
     private void FireHarpoon(Vector2 worldCursor)
