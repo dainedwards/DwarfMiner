@@ -1527,7 +1527,24 @@ public static class SimTest
 
         // --- 3. Diggers hunt only when provoked ---
         {
-            var pos = FindCavePos(planet, seedOffset: 4321);
+            // The pursuit leg needs a mostly-solid corridor between borer and prey — the
+            // test is "digs through rock toward the target", and the worm tunnels now
+            // riddle the crust with voids a straight-line dig can fall into. Scan sites
+            // until one has a proper digging bed.
+            Vector2? pos = null;
+            for (var so = 0; so < 60 && pos is null; so++)
+            {
+                if (FindCavePos(planet, seedOffset: 4321 + so * 17) is not { } cand) continue;
+                var cUp = planet.UpAt(cand);
+                var cRight = new Vector2(-cUp.Y, cUp.X);
+                var solid = 0; var samples = 0;
+                for (var d = 12f; d <= 150f; d += 6f)
+                {
+                    samples++;
+                    if (planet.IsSolidAt(cand + cRight * d)) solid++;
+                }
+                if (solid >= samples * 0.8f) pos = cand;
+            }
             if (pos is { } cavePos)
             {
                 var up = planet.UpAt(cavePos);
