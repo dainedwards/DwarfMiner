@@ -521,9 +521,10 @@ public sealed class Cells
         // Vacating always wakes (neighbours may now move into the hole), but *arriving* only
         // matters when the arriver can trigger a reaction in a sleeping neighbour: water must
         // wake hemmed lava it lands on (quench is lava-side — the sleep clause documents
-        // relying on exactly this wake). Lava kept out of caution for bulk flows. Inert grains
-        // — the entire mass-break dust case — skip it, halving the wake fan-out per move.
-        if (m == (byte)Material.Water || m == (byte)Material.Lava)
+        // relying on exactly this wake), and fire drifting against a sleeping oil surface
+        // must wake it or the pool never catches. Lava kept out of caution for bulk flows.
+        // Inert grains — the entire mass-break dust case — skip it, halving the wake fan-out.
+        if (m == (byte)Material.Water || m == (byte)Material.Lava || m == (byte)Material.Fire)
             WakeNeighbors(dCx, dCy);
         return true;
     }
