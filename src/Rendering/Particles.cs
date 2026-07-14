@@ -1005,22 +1005,24 @@ public sealed class Particles
         var fade = tier >= 4 ? new Color(30, 50, 120) : new Color(110, 35, 15);
         for (var i = 0; i < 3; i++)
         {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.6f;
+            // Narrow, fast, fine: a rocket-nozzle jet stream, not a campfire — the tight
+            // spread and low drag draw a long thin column under the pack.
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             var hot = i == 0;
             _list.Add(new Particle
             {
-                Position = pos + Jitter(1f),
-                Velocity = d * (90f + (float)_rng.NextDouble() * 70f),
-                Life = 0.10f + (float)_rng.NextDouble() * 0.14f,
-                MaxLife = 0.24f,
+                Position = pos + Jitter(0.7f),
+                Velocity = d * (180f + (float)_rng.NextDouble() * 100f),
+                Life = 0.16f + (float)_rng.NextDouble() * 0.18f,
+                MaxLife = 0.34f,
                 Color = hot ? Color.Lerp(flame, Color.White, 0.55f) : flame,
                 FadeColor = fade,
-                Size = hot ? 1.8f : 2.4f,
+                Size = hot ? 1.0f : 1.4f,
                 GravityScale = 0f,
-                Drag = 2.2f,
+                Drag = 1.2f,
                 LightRadius = hot ? 46f : 0f,
                 LightColor = flame,
             });
