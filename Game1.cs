@@ -974,6 +974,18 @@ public sealed partial class DwarfMinerGame : Game
             _autoShotAt += 5f;
         }
 
+        if (_screen == GameScreen.Loading)
+        {
+            // Hand over once the survey warm-up lands (with a floor so the screen never
+            // strobes, and a ceiling so a pathological world can't hold the game hostage —
+            // any leftover generation just runs in the background like it used to).
+            if ((_warmTask is not { IsCompleted: false } && _totalTime > 0.4f) || _totalTime > 15f)
+                _screen = GameScreen.Space;
+            _prevKeys = keys; _prevMouse = mouse;
+            base.Update(gameTime);
+            return;
+        }
+
         if (_screen == GameScreen.Space)
         {
             UpdateSpace(keys, mouse, dt);
