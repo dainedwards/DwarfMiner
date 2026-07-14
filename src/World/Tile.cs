@@ -143,6 +143,11 @@ public static class Tiles
         TileKind.Rail => 2,
         TileKind.Glowshroom => 1,
         TileKind.Beacon => 3,
+        TileKind.DoorClosed => 2,
+        TileKind.DoorOpen => 2,
+        TileKind.AlienPlant => 1,
+        TileKind.HoverPod => 1,
+        TileKind.OrbLamp => 1,
         _ => 0,
     };
 
