@@ -1395,7 +1395,9 @@ public sealed partial class DwarfMinerGame : Game
         if (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right)) moveAxis += 1;
         // Jump: pass the held state (continuous). Player.Update derives the press edge itself
         // and uses the held state for variable jump height (hold for full apex, tap for short).
-        var jumpHeld = keys.IsKeyDown(Keys.Space) || keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up);
+        // Spacebar is THE jump key — W/Up steer ladders, swimming, and menus, but no
+        // longer bounce the dwarf (tap Space = hop, hold Space = jetpack).
+        var jumpHeld = keys.IsKeyDown(Keys.Space);
 
         // DM_JETTEST=<1-4>: tooling hook — grants+equips that jetpack tier and holds jump
         // forever, so headless runs can screenshot the hover physics and each tier's
