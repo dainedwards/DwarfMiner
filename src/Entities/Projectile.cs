@@ -321,6 +321,7 @@ public sealed class Projectile
         var ang = MathF.Atan2(rel.Y, rel.X);
         if (ang < 0) ang += MathHelper.TwoPi;
         var chipBudget = 24;   // tiles that get a particle burst; ~2-3 particles each
+        var ejectaBudget = 90; // real dust cells blasted into ballistic flight per crater
         for (var r = centerRing - tiles; r <= centerRing + tiles; r++)
         {
             if (r < 0 || r >= planet.Rings) continue;
