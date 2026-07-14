@@ -82,6 +82,9 @@ public sealed class Player
     public bool HasLaser;
     public bool HasLaserCannon;
     public bool HasRocketLauncher;
+    public bool HasFlamethrower;
+    public bool HasAcidSpewer;
+    public bool HasLightningGun;
 
     /// <summary>Mothership-foundry upgrades (not craftable in-run, not in the run save —
     /// re-applied from MetaSave on every planet entry). Jetpack: hold jump while airborne to
