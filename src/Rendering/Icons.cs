@@ -109,6 +109,37 @@ public static class Icons
         _icons["lightning_gun"] = BuildLightningGun(gd);
         _icons["jetpack"]       = BuildJetpack(gd);
 
+        // Melee arsenal: one icon per weapon per upgrade rung (iron → steel → gilded →
+        // energy edge). The two-handed versions share their family's silhouette.
+        var meleeTiers = new (Color L, Color D, Color E)[]
+        {
+            (new Color(150, 155, 170), new Color(95, 100, 115), new Color(185, 190, 205)),
+            (new Color(205, 210, 225), new Color(135, 140, 155), new Color(240, 244, 252)),
+            (new Color(235, 200, 95),  new Color(165, 130, 55),  new Color(255, 240, 170)),
+            (new Color(150, 240, 255), new Color(80, 190, 225),  new Color(255, 255, 255)),
+        };
+        void MeleeIcon(string id, string[] rows)
+        {
+            for (var t = 0; t < 4; t++)
+            {
+                var (l, d, e) = meleeTiers[t];
+                _icons[$"{id}_t{t + 1}"] = Renderer.BuildSprite(gd, rows, new Dictionary<char, Color>
+                {
+                    ['.'] = Color.Transparent,
+                    ['w'] = new Color(120, 85, 55), ['k'] = new Color(80, 55, 32),
+                    ['M'] = l, ['x'] = d, ['E'] = e,
+                });
+            }
+        }
+        MeleeIcon("sword", SwordIcon);
+        MeleeIcon("great_sword", SwordIcon);
+        MeleeIcon("mace", MaceIcon);
+        MeleeIcon("great_mace", MaceIcon);
+        MeleeIcon("warhammer", HammerIcon);
+        MeleeIcon("great_hammer", HammerIcon);
+        MeleeIcon("shield", ShieldIcon);
+        MeleeIcon("tower_shield", ShieldIcon);
+
         // Terraria-style finish pass over the whole set: a dark contour outline hugging
         // every sprite plus a top-lit rim and under-shadow. Applied programmatically so
         // all ~60 icons share one consistent look without redrawing each by hand.
