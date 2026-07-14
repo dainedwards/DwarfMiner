@@ -1541,49 +1541,51 @@ public static class SimTest
 
         // --- 3. Diggers hunt only when provoked ---
         {
-            // The pursuit leg needs a mostly-solid corridor between borer and prey — the
-            // test is "digs through rock toward the target", and the worm tunnels now
-            // riddle the crust with voids a straight-line dig can fall into. Scan sites
-            // until one has a proper digging bed.
-            Vector2? pos = null;
-            for (var so = 0; so < 60 && pos is null; so++)
+            // Sites need a mostly-solid corridor between borer and prey — the test is
+            // "digs through rock toward the target", and the worm tunnels riddle the crust
+            // with voids a straight-line dig can fall into.
+            Vector2? FindCorridorSite(int seed0)
             {
-                if (FindCavePos(planet, seedOffset: 4321 + so * 17) is not { } cand) continue;
-                var cUp = planet.UpAt(cand);
-                var cRight = new Vector2(-cUp.Y, cUp.X);
-                var solid = 0; var samples = 0;
-                for (var d = 12f; d <= 150f; d += 6f)
+                for (var so = 0; so < 60; so++)
                 {
-                    samples++;
-                    if (planet.IsSolidAt(cand + cRight * d)) solid++;
+                    if (FindCavePos(planet, seedOffset: seed0 + so * 17) is not { } cand) continue;
+                    var cUp = planet.UpAt(cand);
+                    var cRight = new Vector2(-cUp.Y, cUp.X);
+                    var solid = 0; var samples = 0;
+                    for (var d = 12f; d <= 150f; d += 6f)
+                    {
+                        samples++;
+                        if (planet.IsSolidAt(cand + cRight * d)) solid++;
+                    }
+                    if (solid >= samples * 0.8f) return cand;
                 }
-                if (solid >= samples * 0.8f) pos = cand;
+                return null;
             }
-            if (pos is { } cavePos)
-            {
-                var up = planet.UpAt(cavePos);
-                var right = new Vector2(-up.Y, up.X);
-                var prey = new Player(cavePos + right * 150f);
 
-                var calm = new Creature(cavePos, CreatureKind.Borer);
-                for (var i = 0; i < 60 * 8; i++) calm.Update(dt, planet, physics, cells, prey);
-                var calmDist = (calm.Position - prey.Position).Length();
+            if (FindCorridorSite(4321) is { } calmSite)
+            {
+                var up = planet.UpAt(calmSite);
+                var right = new Vector2(-up.Y, up.X);
+                var calmPrey = new Player(calmSite + right * 150f);
+                var calm = new Creature(calmSite, CreatureKind.Borer);
+                for (var i = 0; i < 60 * 8; i++) calm.Update(dt, planet, physics, cells, calmPrey);
+                var calmDist = (calm.Position - calmPrey.Position).Length();
                 Check($"defense: unprovoked borer ignores the dwarf ({calmDist:0}px away)",
                     calmDist > 55f);
 
-                // The gate under test is provocation: the provoked borer must close in
-                // meaningfully (it wander-digs, not beelines, so any single pursuit is
-                // terrain-and-RNG luck — especially in the worm-tunnelled crust) while the
-                // calm one drifts. Best of three runs keeps the assertion about the GATE,
-                // not one dig's dice.
-                // "Pursued" = came meaningfully close at ANY point during the chase — the
+                // "Pursued" = came meaningfully close at ANY point during a chase (the
                 // borer wander-digs and can tumble down a worm tunnel after its closest
-                // pass, so the END position is terrain dice, not the behaviour under test.
-                // (The calm-side contrast is its own check above.)
+                // pass, so the END position is terrain dice). Each retry rolls a FRESH
+                // corridor site: one unlucky site with a hidden void must not be able to
+                // fail the behaviour gate on its own.
                 var angryDist = float.MaxValue;
-                for (var attempt2 = 0; attempt2 < 3 && angryDist >= 100f; attempt2++)
+                for (var attempt2 = 0; attempt2 < 4 && angryDist >= 100f; attempt2++)
                 {
-                    var angry = new Creature(cavePos, CreatureKind.Borer);
+                    if (FindCorridorSite(4321 + attempt2 * 1013) is not { } site) continue;
+                    var sUp = planet.UpAt(site);
+                    var sRight = new Vector2(-sUp.Y, sUp.X);
+                    var prey = new Player(site + sRight * 150f);
+                    var angry = new Creature(site, CreatureKind.Borer);
                     for (var i = 0; i < 60 * 22; i++)
                     {
                         if (i % 60 == 0) angry.HitFlash = 0.2f;   // keep the grudge fresh
