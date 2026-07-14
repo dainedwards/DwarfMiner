@@ -4363,6 +4363,22 @@ public sealed partial class DwarfMinerGame : Game
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
         _renderer.DrawCircle(worldCursor, 1.1f, new Color(255, 255, 255, 200));
 
+        // Terraria-style placement preview: with blocks selected, ghost the tiles the next
+        // click fills — white when legal, red when unsupported / out of range / no stock.
+        if (!_landing && !_ascending && !_orbiting
+            && _run.Player.Toolbelt.Current == "blocks"
+            && _run.Player.PlacePreview(_run.Planet, worldCursor) is { } prev)
+        {
+            var ghost = prev.valid ? new Color(255, 255, 255, 110) : new Color(255, 90, 80, 100);
+            foreach (var (gx2, gy2) in prev.stamp)
+            {
+                var centre = _run.Planet.TileToWorld(gx2, gy2);
+                var gUp = _run.Planet.UpAt(centre);
+                _renderer.DrawRect(centre, new Vector2(Planet.TileSize, Planet.TileSize),
+                    ghost, MathF.Atan2(gUp.X, -gUp.Y));
+            }
+        }
+
         // Held weapon: the selected toolbelt slot's sidearm drawn in the dwarf's grip,
         // rotated to the aim and flipped when facing left so it's never upside-down.
         // Pickaxe and hammer are swung tools instead — drawn along the swing arc.
