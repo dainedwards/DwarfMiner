@@ -45,7 +45,8 @@ public sealed class CraftingMenu
         Open = true;
         _tab = ItemCategory.All;
         _scroll = 0;
-        _selectedId = null;
+        // Pre-select the first recipe so the detail panel reads on open instead of blank.
+        _selectedId = Crafting.All.Count > 0 ? Crafting.All[0].Id : null;
     }
 
     /// <summary>Close and rewind — called on run start so a new planet begins clean.</summary>
