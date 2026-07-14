@@ -95,27 +95,37 @@ public static class Icons
 
     // ───────── worn-gear builders (character screen) ─────────
 
+    /// <summary>Shared 4-tone palette for the armor colourways: outline, light (top-lit),
+    /// mid, and dark (shadow side) — light comes from the upper-left like the tool icons.</summary>
+    private static Dictionary<char, Color> ArmorPalette(Color light, Color dark) => new()
+    {
+        ['.'] = Color.Transparent,
+        ['O'] = new Color(dark.R / 2, dark.G / 2, dark.B / 2),
+        ['L'] = light,
+        ['M'] = Color.Lerp(light, dark, 0.45f),
+        ['D'] = dark,
+    };
+
     private static Texture2D BuildHelmet(GraphicsDevice gd, Color light, Color dark) =>
         Renderer.BuildSprite(gd, new[]
         {
             "................",
             "................",
-            "................",
-            ".....SSSSSS.....",
-            "....SSSSSSSS....",
-            "...SSSSSSSSSS...",
-            "...SSSSSSSSSS...",
-            "...SSssssssSS...",
-            "...SS......SS...",
-            "...SS......SS...",
-            "...ss......ss...",
-            "................",
-            "................",
+            "....OOOOOOOO....",
+            "...OLLLLLLMDO...",
+            "..OLLLLLMMMDDO..",
+            "..OLLLLMMMMDDO..",
+            "..OLLMMMMMMDDO..",
+            "..OMMMOOOOMMDO..",
+            "..OMMO....OMDO..",
+            "..OMMO.OO.OMDO..",
+            "..OOO..OO..OOO..",
             "................",
             "................",
             "................",
-        }, new Dictionary<char, Color>
-        { ['.'] = Color.Transparent, ['S'] = light, ['s'] = dark });
+            "................",
+            "................",
+        }, ArmorPalette(light, dark));
 
     private static Texture2D BuildChestplate(GraphicsDevice gd, Color light, Color dark) =>
         Renderer.BuildSprite(gd, new[]
