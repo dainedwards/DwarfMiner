@@ -2723,11 +2723,11 @@ public sealed partial class DwarfMinerGame : Game
             var dist = to.Length();
             if (dist is > 1f and < 130f && Vector2.Dot(to / dist, dir) > 0.7f)
             {
-                _run.Titan.Health -= 40f * _frameDt;
+                _run.Titan.Health -= 80f * _frameDt;
                 _run.Titan.HitFlash = 0.1f;
             }
         }
-        _run.Player.ShootCooldown = 0.05f;
+        _run.Player.ShootCooldown = 0.11f;
     }
 
     /// <summary>Acid spewer: sprays REAL Acid cells that pool where they land and eat
