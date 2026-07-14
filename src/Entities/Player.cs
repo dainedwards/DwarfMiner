@@ -1030,3 +1030,85 @@ public sealed class Inventory
 
     public int Count(string id) => _items.GetValueOrDefault(id, 0);
 }
+
+/// <summary>The character screen's paper-doll slots. Order is the serialization order in
+/// RunSave — append only.</summary>
+public enum EquipSlot
+{
+    Torch = 0, Head = 1, Chest = 2, Legs = 3, Feet = 4,
+    Weapon1 = 5, Weapon2 = 6, MiningTool = 7,
+}
+
+/// <summary>
+/// Worn equipment — the character screen's paper doll. Slots store inventory ids and, like
+/// the toolbelt, are pointers to the inventory entry rather than a separate stash: equipping
+/// never changes counts, so the same pistol can sit on the belt and in a weapon slot.
+/// Armor slots feed <see cref="Player.DamageTakenMultiplier"/>; the torch slot feeds
+/// <see cref="Player.EffectiveLightTier"/>; weapon / mining-tool slots are the loadout the
+/// doll displays (use still dispatches through the toolbelt).
+/// </summary>
+public sealed class Equipment
+{
+    public const int SlotCount = 8;
+    public readonly string?[] Slots = new string?[SlotCount];
+
+    public string? Get(EquipSlot s) => Slots[(int)s];
+    public void Set(EquipSlot s, string? id) => Slots[(int)s] = id;
+
+    /// <summary>Slot gating — which ids each paper-doll slot accepts.</summary>
+    public static bool Fits(string id, EquipSlot slot) => slot switch
+    {
+        EquipSlot.Torch      => LightTierOf(id) > 0,
+        EquipSlot.Head       => id is "iron_helmet" or "chitin_helmet",
+        EquipSlot.Chest      => id is "armor" or "chitin_armor",
+        EquipSlot.Legs       => id is "iron_leggings" or "chitin_leggings",
+        EquipSlot.Feet       => id is "iron_boots" or "chitin_boots",
+        EquipSlot.Weapon1 or EquipSlot.Weapon2 => IsWeapon(id),
+        EquipSlot.MiningTool => id is "pickaxe" or "drill" or "hammer" or "mining_laser",
+        _ => false,
+    };
+
+    /// <summary>Firearms the weapon slots accept. Throwables/ammo stay toolbelt-only — the
+    /// doll shows what the dwarf carries at the ready, not the whole satchel.</summary>
+    public static bool IsWeapon(string id) => id is
+        "pistol" or "machine_gun" or "laser" or "laser_cannon" or "rocket_launcher" or "cannon";
+
+    public static bool IsEquippable(string id)
+    {
+        for (var s = 0; s < SlotCount; s++)
+            if (Fits(id, (EquipSlot)s)) return true;
+        return false;
+    }
+
+    public bool IsEquipped(string id)
+    {
+        for (var s = 0; s < SlotCount; s++)
+            if (Slots[s] == id) return true;
+        return false;
+    }
+
+    /// <summary>Craft-time convenience: put the id into the first fitting slot that's empty
+    /// (weapons try slot 1 then 2). No-op if it's already worn or every fitting slot is
+    /// occupied — the character screen exists for deliberate swaps.</summary>
+    public bool AutoEquip(string id)
+    {
+        if (IsEquipped(id)) return false;
+        for (var s = 0; s < SlotCount; s++)
+            if (Fits(id, (EquipSlot)s) && Slots[s] is null) { Slots[s] = id; return true; }
+        return false;
+    }
+
+    /// <summary>Light tier of a carried-light id, 0 for anything else (including null).</summary>
+    public static int LightTierOf(string? id) => id switch
+    {
+        "torch" => 1, "lantern" => 2, "helm_lamp" => 3, "sun_crystal" => 4, _ => 0,
+    };
+
+    /// <summary>Summed damage reduction from worn armor: chest 40% (the old full-armor
+    /// value), helmet and leggings 10% each, boots 5% — a full set reaches 65%.</summary>
+    public float ArmorReduction =>
+        (Get(EquipSlot.Chest) is not null ? 0.40f : 0f) +
+        (Get(EquipSlot.Head)  is not null ? 0.10f : 0f) +
+        (Get(EquipSlot.Legs)  is not null ? 0.10f : 0f) +
+        (Get(EquipSlot.Feet)  is not null ? 0.05f : 0f);
+}
