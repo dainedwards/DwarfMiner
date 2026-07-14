@@ -781,6 +781,9 @@ public sealed partial class DwarfMinerGame : Game
         // hook, since synthetic key input isn't available headless (same as DM_AUTOSAVE).
         if (Environment.GetEnvironmentVariable("DM_CHARSCREEN") is { Length: > 0 })
             _charScreen.Show();
+        // DM_CRAFT=1 opens the crafting menu on run start (headless layout check).
+        if (Environment.GetEnvironmentVariable("DM_CRAFT") is { Length: > 0 })
+            _craftingMenu.Show();
         _invUi.Reset();
         _screen = GameScreen.Playing;
         _orbiting = false;
