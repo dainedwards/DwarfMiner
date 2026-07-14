@@ -1002,6 +1002,35 @@ public static class Icons
         ['y'] = new Color(255, 225, 120),
     });
 
+    private static Texture2D BuildScanner(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        ".....CCCC.......",
+        "....CssssC......",
+        "...CsGGGGsC.....",
+        "...CsGwwGsC.....",
+        "...CsGwwGsC.....",
+        "...CsGGGGsC.....",
+        "....CssssC......",
+        ".....CppC.......",
+        "......pp........",
+        ".....pppp.......",
+        "....p....p......",
+        "...aa....aa.....",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['C'] = new Color(70, 82, 96),      // casing rim
+        ['s'] = new Color(120, 134, 150),   // dish shell
+        ['G'] = new Color(40, 70, 95),      // screen bezel
+        ['w'] = new Color(120, 240, 200),   // glowing scope blip
+        ['p'] = new Color(90, 96, 110),     // handle post
+        ['a'] = new Color(150, 130, 90),    // grip feet
+    });
+
     private static Texture2D BuildTntPack(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
     {
         "................",
