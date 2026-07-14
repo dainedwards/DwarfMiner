@@ -4074,7 +4074,14 @@ public sealed partial class DwarfMinerGame : Game
                 if (d <= 1f)
                 {
                     var lit = 1f - MathHelper.Clamp(dx / (float)shadeR + d * 0.55f, 0f, 1f) * 0.82f;
-                    var a = (int)((1f - lit) * 235);
+                    // Moon-sprite shading: quantise the terminator into four flat cels with
+                    // a dithered checker at each boundary — chunky painted steps instead of
+                    // an airbrushed gradient (same school as the drifting moon's shading).
+                    var step = (1f - lit) * 4f;
+                    var cel = MathF.Floor(step);
+                    var frac = step - cel;
+                    if (frac > 0.5f || (frac > 0.25f && ((dx + dy) & 1) == 0)) cel += 1f;
+                    var a = (int)(MathHelper.Clamp(cel / 4f, 0f, 1f) * 235);
                     shade[idx] = new Color(0, 0, 0, a);
                 }
                 else if (d < 1.09f)
