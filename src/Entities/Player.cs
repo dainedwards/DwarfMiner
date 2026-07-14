@@ -532,6 +532,7 @@ public sealed class Player
 
         if (MineCooldown > 0) MineCooldown -= dt;
         if (ShootCooldown > 0) ShootCooldown -= dt;
+        if (BuildCooldown > 0) BuildCooldown -= dt;
     }
 
     /// <summary>
