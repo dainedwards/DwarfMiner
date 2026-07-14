@@ -145,10 +145,10 @@ public sealed class LightGrid
             {
                 var i = y * _side + x;
                 var wp = new Vector2(_origin.X + (x + 0.5f) * _cell, wy);
-                var distTiles = (wp - planet.Center).Length() / Planet.TileSize;
-                // Beyond the tile grid entirely (planet.Radius, above even skyscrapers —
-                // NOT the terrain profile, which buildings overtop): open space, full sun,
-                // no tile lookup.
+                var rel = wp - planet.Center;
+                var distTiles = rel.Length() / Planet.TileSize;
+                // Beyond the tile grid entirely (planet.Radius, above even skyscrapers):
+                // open space, full sun, no tile lookup.
                 if (distTiles >= planet.Radius)
                 {
                     _solid[i] = false;
@@ -157,12 +157,12 @@ public sealed class LightGrid
                 }
                 var solid = planet.IsSolidAt(wp);
                 _solid[i] = solid;
-                // Sunlight: an air cell at or above the local terrain surface is open sky.
-                // (No per-cell raycast — the surface profile is the authority, and the
-                // propagation itself carries daylight down into dips and cave mouths.)
-                // Cells below the profile's global minimum skip the bearing lookup.
-                if (!solid && distTiles >= _profMin - 0.5f
-                    && distTiles >= planet.SurfaceRadiusAt(wp) - 0.5f)
+                // Sunlight: an air cell at or above the sky heightmap for its bearing is
+                // under open sky — including basin floors and crater bowls. Cells below the
+                // map's global minimum skip the bearing lookup (that's every cell when the
+                // view is underground).
+                if (!solid && distTiles >= _skyMin - 0.5f
+                    && distTiles >= SkyRadiusAt(MathF.Atan2(rel.Y, rel.X)) - 0.5f)
                 {
                     _r[i] = sunR; _g[i] = sunG; _b[i] = sunB;
                 }
