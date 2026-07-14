@@ -210,7 +210,7 @@ public sealed class LightGrid
         var b = _skyR[(i + 1) % SkyBearings];
         // A cliff edge between neighbouring bearings shouldn't smear darkness sideways:
         // take the lower (sunnier) side when the two disagree wildly.
-        return MathF.Abs(a - b) > 3f ? MathF.Min(a, b) + frac * 0f : a + (b - a) * frac;
+        return MathF.Abs(a - b) > 3f ? MathF.Min(a, b) : a + (b - a) * frac;
     }
 
     /// <summary>Seed a light. <paramref name="radius"/> keeps the legacy AddLight meaning
