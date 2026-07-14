@@ -3549,6 +3549,140 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.Batch.End();
     }
 
+    /// <summary>Generate the title vista once: a 320×180 pixel painting — starfield with a
+    /// banded gas giant and cratered moon, three parallax mountain ridges, and a crust
+    /// cross-section in the foreground veined with glowing lava and ore glints. Drawn at
+    /// 4× with point sampling, so every pixel here is a chunky screen pixel.</summary>
+    private static Texture2D BuildTitleBackdrop(GraphicsDevice gd)
+    {
+        const int w = 320, h = 180;
+        var rng = new Random(74921);
+        var px = new Color[w * h];
+
+        // Sky: deep space fading to a dusky purple horizon glow.
+        for (var y = 0; y < h; y++)
+        {
+            var t = MathF.Pow(y / (float)h, 1.6f);
+            var sky = Color.Lerp(new Color(5, 6, 14), new Color(46, 30, 62), t);
+            for (var x = 0; x < w; x++) px[y * w + x] = sky;
+        }
+        // Stars — a scattering with a few tinted bright ones.
+        for (var i = 0; i < 150; i++)
+        {
+            var x = rng.Next(w);
+            var y = rng.Next((int)(h * 0.68f));
+            var b = 90 + rng.Next(150);
+            var c = rng.Next(12) switch
+            {
+                0 => new Color(b, (int)(b * 0.8f), (int)(b * 0.6f)),
+                1 => new Color((int)(b * 0.7f), (int)(b * 0.85f), b),
+                _ => new Color(b, b, b),
+            };
+            px[y * w + x] = c;
+        }
+
+        // Banded gas giant, upper right, with a shadowed limb.
+        void Disc(int cx, int cy, int r, Func<int, int, float, Color?> shade)
+        {
+            for (var dy = -r; dy <= r; dy++)
+                for (var dx = -r; dx <= r; dx++)
+                {
+                    var d = MathF.Sqrt(dx * dx + dy * dy) / r;
+                    if (d > 1f) continue;
+                    var x = cx + dx; var y = cy + dy;
+                    if (x < 0 || y < 0 || x >= w || y >= h) continue;
+                    if (shade(dx, dy, d) is { } c) px[y * w + x] = c;
+                }
+        }
+        Disc(252, 42, 27, (dx, dy, d) =>
+        {
+            var band = (int)((dy + 27) / 6.5f) % 2 == 0;
+            var c = band ? new Color(196, 138, 92) : new Color(150, 96, 78);
+            // Terminator: the sunward (left) side is lit, the right limb falls into night.
+            var lit = 1f - MathHelper.Clamp((dx / 27f + d * 0.55f), 0f, 1f) * 0.8f;
+            return new Color((int)(c.R * lit), (int)(c.G * lit), (int)(c.B * lit));
+        });
+        // Small cratered moon.
+        Disc(64, 30, 8, (dx, dy, d) =>
+        {
+            var g = (int)(165 - d * 60);
+            return new Color(g, g, (int)(g * 1.08f));
+        });
+        px[29 * w + 62] = new Color(96, 96, 110);
+        px[31 * w + 66] = new Color(90, 90, 104);
+        px[27 * w + 65] = new Color(108, 108, 122);
+
+        // Three mountain ridges, far to near, each a random walk silhouette.
+        void Ridge(int baseY, int amp, Color col)
+        {
+            var yr = baseY + rng.Next(-amp, amp);
+            for (var x = 0; x < w; x++)
+            {
+                yr += rng.Next(3) - 1;
+                if (rng.Next(7) == 0) yr += rng.Next(5) - 2;
+                yr = Math.Clamp(yr, baseY - amp, baseY + amp);
+                for (var y = yr; y < h; y++) px[y * w + x] = col;
+            }
+        }
+        Ridge(96, 12, new Color(30, 24, 46));
+        Ridge(112, 12, new Color(42, 30, 50));
+        Ridge(128, 10, new Color(22, 17, 28));
+
+        // Foreground crust cross-section: hashed rock and dirt from y≈146 down.
+        for (var y = 146; y < h; y++)
+            for (var x = 0; x < w; x++)
+            {
+                var hash = ((x * 73856093) ^ (y * 19349663)) & 1023;
+                var deep = (y - 146) / (float)(h - 146);
+                var baseC = Color.Lerp(new Color(58, 44, 36), new Color(34, 28, 30), deep);
+                var j = (hash & 15) - 8;
+                px[y * w + x] = new Color(
+                    Math.Clamp(baseC.R + j, 0, 255),
+                    Math.Clamp(baseC.G + j, 0, 255),
+                    Math.Clamp(baseC.B + j, 0, 255));
+            }
+        // A few black cave pockets in the crust.
+        for (var i = 0; i < 7; i++)
+            Disc(rng.Next(w), 152 + rng.Next(22), 3 + rng.Next(4),
+                (dx, dy, d) => d < 0.9f ? new Color(12, 10, 12) : null);
+        // Glowing lava veins: meandering warm lines with a soft halo.
+        for (var v = 0; v < 3; v++)
+        {
+            float vx = rng.Next(w), vy = 155 + rng.Next(18);
+            var heading = (float)(rng.NextDouble() * Math.PI * 2);
+            for (var s = 0; s < 60; s++)
+            {
+                heading += (float)(rng.NextDouble() - 0.5) * 0.8f;
+                vx += MathF.Cos(heading); vy += MathF.Sin(heading) * 0.4f;
+                var xi = ((int)vx % w + w) % w;
+                var yi = Math.Clamp((int)vy, 148, h - 1);
+                px[yi * w + xi] = new Color(255, 150, 40);
+                foreach (var (ox, oy) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
+                {
+                    var nx = (xi + ox + w) % w; var ny = Math.Clamp(yi + oy, 146, h - 1);
+                    var e = px[ny * w + nx];
+                    if (e.R < 200) px[ny * w + nx] = new Color(
+                        Math.Min(255, e.R + 70), Math.Min(255, e.G + 30), e.B);
+                }
+            }
+        }
+        // Ore glints sprinkled through the crust.
+        var glints = new[]
+        {
+            new Color(255, 205, 90), new Color(255, 110, 90),
+            new Color(140, 190, 255), new Color(235, 250, 255), new Color(120, 230, 130),
+        };
+        for (var i = 0; i < 26; i++)
+        {
+            var x = rng.Next(w); var y = 150 + rng.Next(26);
+            px[y * w + x] = glints[rng.Next(glints.Length)];
+        }
+
+        var tex = new Texture2D(gd, w, h);
+        tex.SetData(px);
+        return tex;
+    }
+
     /// <summary>The title screen: game name over three save-slot cards — empty slots offer
     /// NEW GAME, played ones summarise the campaign and flag a suspended run.</summary>
     private void DrawTitle()
