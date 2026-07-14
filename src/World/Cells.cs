@@ -248,7 +248,8 @@ public sealed class Cells
     }
 
     /// <summary>Serialize the cell materials + source tiles for the run save. Kinetics
-    /// (velocity/travel/flow) are deliberately dropped — they're sub-second transients.</summary>
+    /// (velocity/travel/flow) and airborne flying cells are deliberately dropped — both are
+    /// sub-second transients (a save mid-splash loses at most a few grains of dust).</summary>
     public void WriteState(System.IO.BinaryWriter w)
     {
         w.Write(_mat.Length);
