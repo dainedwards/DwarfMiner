@@ -191,6 +191,14 @@ public sealed class Projectile
                 ExplodesOnFuse = true;
                 CreaturePierces = -1;
                 break;
+            case ProjectileKind.DynamitePack:
+                // 3× the stick's blast — a bundled charge for clearing a whole chamber.
+                Radius = 3f;
+                CraterTiles = 12;
+                ExplosionRadius = 150f;
+                ExplodesOnFuse = true;
+                CreaturePierces = -1;
+                break;
             case ProjectileKind.Harpoon:
                 Radius = 2f;
                 CreaturePierces = -1;        // skewers everything in its path
