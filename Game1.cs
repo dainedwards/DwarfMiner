@@ -204,6 +204,10 @@ public sealed partial class DwarfMinerGame : Game
     private Texture2D _titlePlanetShade = null!;
     private Texture2D _titleRingTex = null!;
     private Texture2D _titleSunTex = null!;
+    private Texture2D _titleMoonTex = null!;
+    /// <summary>Baked volcano summit positions (640-space) — the live eruption plumes
+    /// anchor here.</summary>
+    private Point _titleVolcanoA, _titleVolcanoB;
     private int[] _titleSurfY = System.Array.Empty<int>();
     /// <summary>Esc on the title asks before quitting.</summary>
     private bool _titleQuitConfirm;
@@ -3715,15 +3719,32 @@ public sealed partial class DwarfMinerGame : Game
                     if (shade(dx, dy, d) is { } c) sky[y * w + x] = c;
                 }
         }
-        SkyDisc(128, 60, 16, (dx, dy, d) =>
-        {
-            var g = (int)(165 - d * 62);
-            return new Color(g, g, (int)(g * 1.08f));
-        });
-        SkyDisc(124, 56, 3, (dx, dy, d) => d < 0.9f ? new Color(104, 104, 118) : null);
-        SkyDisc(133, 64, 2, (dx, dy, d) => new Color(96, 96, 110));
         _titleSkyTex = new Texture2D(gd, w, h);
         _titleSkyTex.SetData(sky);
+
+        // The moon is its own sprite now — it drifts across the sky live.
+        var moon = new Color[33 * 33];
+        for (var dy = -16; dy <= 16; dy++)
+            for (var dx = -16; dx <= 16; dx++)
+            {
+                var d = MathF.Sqrt(dx * dx + dy * dy) / 16f;
+                if (d > 1f) continue;
+                var g = (int)(165 - d * 62);
+                moon[(dy + 16) * 33 + dx + 16] = new Color(g, g, (int)(g * 1.08f));
+            }
+        void Crater(int cx, int cy, int r, Color c)
+        {
+            for (var dy = -r; dy <= r; dy++)
+                for (var dx = -r; dx <= r; dx++)
+                    if (dx * dx + dy * dy <= r * r && cx + dx is >= 0 and < 33 && cy + dy is >= 0 and < 33
+                        && moon[(cy + dy) * 33 + cx + dx].A > 0)
+                        moon[(cy + dy) * 33 + cx + dx] = c;
+        }
+        Crater(12, 12, 3, new Color(104, 104, 118));
+        Crater(21, 20, 2, new Color(96, 96, 110));
+        Crater(9, 22, 2, new Color(110, 110, 124));
+        _titleMoonTex = new Texture2D(gd, 33, 33);
+        _titleMoonTex.SetData(moon);
 
         // ── Land layer (transparent sky above the ridge line) ───────────────────────
         var px = new Color[w * h];   // starts fully transparent
@@ -3747,8 +3768,34 @@ public sealed partial class DwarfMinerGame : Game
             Color.Lerp(new Color(70, 44, 72), skyAtHorizon, 0.6f), 10);
         Ridge(216, 16, Color.Lerp(new Color(52, 36, 64), skyAtHorizon, 0.38f),
             Color.Lerp(new Color(64, 40, 66), skyAtHorizon, 0.45f), 8);
+        // Two distant volcanoes stand behind the nearer ridges — cones stamped between
+        // ridge passes so each successive ridge buries a little more of their flanks
+        // (classic painted depth). Their summits poke above the skyline; the live
+        // eruption plumes in DrawTitleVista anchor there.
+        void Volcano(int cx, int summitY, int baseY, int halfW, Color rock, Color dark)
+        {
+            for (var y = summitY; y < baseY; y++)
+            {
+                var f = (y - summitY) / (float)(baseY - summitY);
+                var hw = Math.Max(2, (int)(halfW * f));
+                for (var x = cx - hw; x <= cx + hw; x++)
+                {
+                    if (x < 0 || x >= w) continue;
+                    if (y < summitY + 2 && Math.Abs(x - cx) < 2) continue;   // crater notch
+                    var edge = Math.Abs(x - cx) > hw - 2;
+                    var hash = ((x * 73856093) ^ (y * 19349663)) & 7;
+                    px[y * w + x] = edge || hash == 0 ? dark : rock;
+                }
+            }
+        }
+        Volcano(100, 158, 226, 30,
+            Color.Lerp(new Color(48, 34, 58), skyAtHorizon, 0.3f),
+            Color.Lerp(new Color(36, 26, 46), skyAtHorizon, 0.25f));
+        _titleVolcanoA = new Point(100, 158);
         Ridge(238, 18, Color.Lerp(new Color(44, 30, 56), skyAtHorizon, 0.22f),
             Color.Lerp(new Color(56, 36, 58), skyAtHorizon, 0.3f), 7);
+        Volcano(146, 176, 252, 34, new Color(40, 28, 48), new Color(28, 20, 36));
+        _titleVolcanoB = new Point(146, 176);
         Ridge(262, 16, new Color(34, 24, 44), new Color(46, 30, 48), 6);
         Ridge(282, 12, new Color(20, 15, 26), new Color(30, 20, 32), 6);
 
@@ -3842,7 +3889,7 @@ public sealed partial class DwarfMinerGame : Game
         // ── Gas-giant cylinder map: pixel-art bands with dithered boundaries, a pale
         // storm oval, darker poles. Periodic over 320 px; the last 108 columns repeat the
         // first so a scrolling window never has to wrap mid-draw. ──
-        const int mapPeriod = 320, mapW = mapPeriod + 108, mapH = 108;
+        const int mapPeriod = 160, mapW = mapPeriod + 54, mapH = 54;
         var map = new Color[mapW * mapH];
         var bandCols = new[]
         {
@@ -3851,51 +3898,51 @@ public sealed partial class DwarfMinerGame : Game
         };
         for (var y = 0; y < mapH; y++)
         {
-            var band = (int)(y / 13.5f);
+            var band = (int)(y / 6.75f);
             var c = bandCols[band % bandCols.Length];
             var next = bandCols[(band + 1) % bandCols.Length];
-            var inBand = y - band * 13.5f;
+            var inBand = y - band * 6.75f;
             // Pole darkening squeezes the palette toward shadow at top/bottom.
             var pole = MathF.Abs(y - mapH / 2f) / (mapH / 2f);
             for (var x = 0; x < mapPeriod; x++)
             {
                 var cc = c;
-                // Dithered band edge: the last two rows checker toward the next band.
-                if (inBand > 11.5f && ((x + y) & 1) == 0) cc = next;
+                // Dithered band edge: the last row checkers toward the next band.
+                if (inBand > 5.5f && ((x + y) & 1) == 0) cc = next;
                 // Lazy longitudinal waviness so bands aren't dead-straight.
-                if (inBand < 1f && MathF.Sin(x * 0.10f + y) > 0.55f) cc = next;
+                if (inBand < 1f && MathF.Sin(x * 0.2f + y) > 0.55f) cc = next;
                 var dim = 1f - MathF.Pow(pole, 3f) * 0.45f;
                 map[y * mapW + x] = new Color((int)(cc.R * dim), (int)(cc.G * dim), (int)(cc.B * dim));
             }
         }
         // Storm oval — a pale swirl in the southern band.
-        for (var dy = -5; dy <= 5; dy++)
-            for (var dx = -9; dx <= 9; dx++)
+        for (var dy = -3; dy <= 3; dy++)
+            for (var dx = -5; dx <= 5; dx++)
             {
-                var d = dx * dx / 81f + dy * dy / 25f;
+                var d = dx * dx / 25f + dy * dy / 9f;
                 if (d > 1f) continue;
-                var x = (70 + dx + mapPeriod) % mapPeriod;
-                var y = 70 + dy;
+                var x = (35 + dx + mapPeriod) % mapPeriod;
+                var y = 35 + dy;
                 var cc = d < 0.4f ? new Color(238, 208, 170) : new Color(216, 168, 128);
                 if (((x + y) & 1) == 0 && d > 0.6f) continue;   // dithered rim
                 map[y * mapW + x] = cc;
             }
-        // Copy the leading 108 columns to the tail for wrap-free windows.
+        // Copy the leading 54 columns to the tail for wrap-free windows.
         for (var y = 0; y < mapH; y++)
-            for (var x = 0; x < 108; x++)
+            for (var x = 0; x < 54; x++)
                 map[y * mapW + mapPeriod + x] = map[y * mapW + x];
         _titlePlanetMap = new Texture2D(gd, mapW, mapH);
         _titlePlanetMap.SetData(map);
 
         // Shade overlay: terminator + limb darkening inside the disc, warm atmosphere rim
         // just outside it.
-        const int shadeR = 54;
-        var shade = new Color[108 * 108];
+        const int shadeR = 27;
+        var shade = new Color[54 * 54];
         for (var dy = -shadeR; dy < shadeR; dy++)
             for (var dx = -shadeR; dx < shadeR; dx++)
             {
                 var d = MathF.Sqrt(dx * dx + dy * dy) / shadeR;
-                var idx = (dy + shadeR) * 108 + dx + shadeR;
+                var idx = (dy + shadeR) * 54 + dx + shadeR;
                 if (d <= 1f)
                 {
                     var lit = 1f - MathHelper.Clamp(dx / (float)shadeR + d * 0.55f, 0f, 1f) * 0.82f;
@@ -3910,19 +3957,19 @@ public sealed partial class DwarfMinerGame : Game
                     shade[idx] = new Color((int)(255 * a * 0.85f), (int)(190 * a * 0.85f), (int)(140 * a * 0.85f), (int)(a * 40));
                 }
             }
-        _titlePlanetShade = new Texture2D(gd, 108, 108);
+        _titlePlanetShade = new Texture2D(gd, 54, 54);
         _titlePlanetShade.SetData(shade);
 
         // Ring system: a flat ellipse annulus (two bands split by a dark gap, dithered for
         // grain). Drawn in two halves around the tilted planet — far side behind, near side
         // in front.
-        const int ringW = 170, ringH = 48;
+        const int ringW = 86, ringH = 24;
         var ring = new Color[ringW * ringH];
         for (var y = 0; y < ringH; y++)
             for (var x = 0; x < ringW; x++)
             {
-                var nx = (x - ringW / 2f) / 80f;
-                var ny = (y - ringH / 2f) / 21f;
+                var nx = (x - ringW / 2f) / 40f;
+                var ny = (y - ringH / 2f) / 10.5f;
                 var rr = MathF.Sqrt(nx * nx + ny * ny);
                 if (rr is < 0.64f or > 1f) continue;
                 if (rr is > 0.82f and < 0.86f) continue;             // the dark division
@@ -3962,8 +4009,8 @@ public sealed partial class DwarfMinerGame : Game
         var time = _renderer.Time;
         sb.Begin(samplerState: SamplerState.PointClamp);
         sb.Draw(_titleSkyTex, new Rectangle(0, 0, VirtualWidth, VirtualHeight), Color.White);
-        // Twinkling stars.
-        for (var i = 0; i < 14; i++)
+        // Twinkling stars — a good scatter of them.
+        for (var i = 0; i < 26; i++)
         {
             var hsh = (uint)(i * 2654435761);
             var tx = (int)(hsh % 640) * 2;
@@ -3971,6 +4018,27 @@ public sealed partial class DwarfMinerGame : Game
             var tw = 0.5f + 0.5f * MathF.Sin(time * (1.2f + i * 0.37f) + i * 2.1f);
             sb.Draw(_renderer.Pixel, new Rectangle(tx, ty, 2, 2), Color.White * (0.25f + 0.55f * tw));
         }
+        // Shooting stars: brief bright streaks on independent clocks, each with a fading
+        // tail, at a hashed spot per appearance.
+        for (var i = 0; i < 2; i++)
+        {
+            var period = 7.5f + i * 4.3f;
+            var tt = (time + i * 3.7f) % period;
+            if (tt >= 0.7f) continue;
+            var p2 = tt / 0.7f;
+            var seed = (uint)((int)((time + i * 3.7f) / period) * 2654435761 + i * 97);
+            var sx = seed % 480 + 40 + p2 * 130f;
+            var syy = (seed >> 9) % 130 + 8 + p2 * 62f;
+            for (var k = 0; k < 7; k++)
+                sb.Draw(_renderer.Pixel,
+                    new Rectangle((int)(sx - k * 2.4f) * 2, (int)(syy - k * 1.1f) * 2, 2, 2),
+                    Color.White * ((1f - p2) * (1f - k / 7f)));
+        }
+        // The moon drifts slowly across the upper sky (wraps after it leaves the frame).
+        var moonX = (128f + time * 0.7f) % 720f - 40f;
+        var moonY = 66f - 26f * MathF.Sin(MathHelper.Clamp(moonX / 640f, 0f, 1f) * MathF.PI);
+        sb.Draw(_titleMoonTex, new Rectangle((int)(moonX - 16) * 2, (int)(moonY - 16) * 2, 66, 66),
+            Color.White);
         // The sun: a slow arc that sinks behind the ridge line and rises again (~150 s
         // cycle). Land is drawn after, so the set happens BEHIND the mountains.
         var setP = 0.5f + 0.5f * MathF.Sin(time * MathHelper.TwoPi / 150f - MathHelper.PiOver2);
@@ -3989,12 +4057,12 @@ public sealed partial class DwarfMinerGame : Game
         // row is drawn rotated about the planet's centre (origin trick), so the whole
         // assembly leans without losing the row-scroll rotation. Its ring system splits
         // around it: far half behind the disc, near half in front.
-        const int pcx = 504, pcy = 84, pr = 54;
+        const int pcx = 504, pcy = 84, pr = 27;   // half-res disc drawn at 4× = chunky pixels
         const float tilt = MathF.PI / 4f;
         var planetCentre = new Vector2(pcx * 2, pcy * 2);
-        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 0, 170, 24), Color.White,
-            tilt, new Vector2(85f, 24f), 2f, SpriteEffects.None, 0f);
-        var scroll = time * 5f;
+        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 0, 86, 12), Color.White,
+            tilt, new Vector2(43f, 12f), 4f, SpriteEffects.None, 0f);
+        var scroll = time * 2.5f;
         for (var row = 0; row < pr * 2; row++)
         {
             var dy = row - pr;
@@ -4002,18 +4070,72 @@ public sealed partial class DwarfMinerGame : Game
             if (halfSq <= 0) continue;
             var half = MathF.Sqrt(halfSq);
             var rowW = Math.Max(1, (int)(half * 2f));
-            var srcX = (int)(scroll % 320);
+            var srcX = (int)(scroll % 160);
             sb.Draw(_titlePlanetMap, planetCentre,
                 new Rectangle(srcX, row, rowW, 1), Color.White,
-                tilt, new Vector2(rowW / 2f, pr - row), 2f, SpriteEffects.None, 0f);
+                tilt, new Vector2(rowW / 2f, pr - row), 4f, SpriteEffects.None, 0f);
         }
         sb.Draw(_titlePlanetShade, planetCentre, null, Color.White,
-            tilt, new Vector2(54f, 54f), 2f, SpriteEffects.None, 0f);
-        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 24, 170, 24), Color.White,
-            tilt, new Vector2(85f, 0f), 2f, SpriteEffects.None, 0f);
+            tilt, new Vector2(27f, 27f), 4f, SpriteEffects.None, 0f);
+        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 12, 86, 12), Color.White,
+            tilt, new Vector2(43f, 0f), 4f, SpriteEffects.None, 0f);
 
-        // Land over the sky/sun/planet.
+        // The titan: every so often a colossal silhouette rises past the far skyline and
+        // lumbers off — drawn BEFORE the land layer, so only its head and shoulders show
+        // above the ridge line, a shadow on the horizon.
+        {
+            var cyc = (time + 20f) % 47f;
+            if (cyc < 13f)
+            {
+                var tp = cyc / 13f;
+                var tx2 = MathHelper.Lerp(700f, -80f, tp);
+                var bob = MathF.Sin(time * 2.2f) * 1.4f;
+                var ty2 = 196f + bob;
+                var dark = new Color(9, 7, 13) * 0.92f;
+                void TBlock(float x, float y, int wPx, int hPx) =>
+                    sb.Draw(_renderer.Pixel, new Rectangle((int)x * 2, (int)y * 2, wPx * 2, hPx * 2), dark);
+                TBlock(tx2 - 14, ty2 - 22, 28, 40);           // torso (lower half hides behind land)
+                TBlock(tx2 - 22, ty2 - 34, 10, 9);            // head, leading the walk
+                TBlock(tx2 - 18, ty2 - 27, 8, 6);             // jaw/neck
+                for (var sp = 0; sp < 3; sp++)                // back spines
+                    TBlock(tx2 - 4 + sp * 7, ty2 - 28 - sp * 2, 4, 7 + sp * 2);
+                TBlock(tx2 + 14, ty2 - 12, 12, 6);            // tail root
+            }
+        }
+
+        // Land over the sky/sun/planet (and over the titan's legs).
         sb.Draw(_titleLandTex, new Rectangle(0, 0, VirtualWidth, VirtualHeight), Color.White);
+
+        // Volcano eruptions: slow, occasional, far away. Each summit runs its own clock;
+        // during a window the crater glows and a column of embers-then-ash climbs a few
+        // pixels a second and drifts.
+        void Erupt(Point summit, float period, float phase)
+        {
+            var cyc = (time + phase) % period;
+            if (cyc >= 11f) return;
+            var swell = MathF.Sin(cyc / 11f * MathF.PI);
+            sb.Draw(_renderer.Pixel,
+                new Rectangle((summit.X - 2) * 2, summit.Y * 2, 8, 4),
+                new Color(255, 140, 50) * (0.55f * swell));
+            for (var k = 0; k < 9; k++)
+            {
+                var age = cyc - k * 1.05f;
+                if (age is < 0f or > 7f) continue;
+                var hsh = (uint)((k * 73856093) ^ ((int)((time + phase) / period) * 19349663));
+                var drift = ((int)(hsh % 9) - 4) * 0.32f;
+                var bx2 = summit.X + drift * age;
+                var by2 = summit.Y - age * (2.6f + hsh % 3);
+                var hot = age < 1.8f;
+                var size = 1 + (int)(age * 0.7f);
+                var col = hot
+                    ? new Color(255, 150, 60) * 0.95f
+                    : Color.Lerp(new Color(120, 95, 90), new Color(70, 60, 72), age / 7f) * (1f - age / 8f);
+                sb.Draw(_renderer.Pixel,
+                    new Rectangle((int)(bx2 - size / 2f) * 2, (int)by2 * 2, size * 2, size * 2), col);
+            }
+        }
+        Erupt(_titleVolcanoA, 34f, 6f);
+        Erupt(_titleVolcanoB, 47f, 21f);
 
         // Ambient critters (all in 640-space, drawn as 2-px blocks). Grazers amble the
         // turf, a hopper bounces, moths stitch figure-eights through the dusk.
