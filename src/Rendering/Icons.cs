@@ -100,6 +100,7 @@ public static class Icons
         _icons["flamethrower"]  = BuildFlamethrower(gd);
         _icons["acid_spewer"]   = BuildAcidSpewer(gd);
         _icons["lightning_gun"] = BuildLightningGun(gd);
+        _icons["jetpack"]       = BuildJetpack(gd);
 
         // Terraria-style finish pass over the whole set: a dark contour outline hugging
         // every sprite plus a top-lit rim and under-shadow. Applied programmatically so
