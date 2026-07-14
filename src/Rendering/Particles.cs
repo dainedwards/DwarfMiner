@@ -989,7 +989,7 @@ public sealed class Particles
     /// warm light for a couple of seconds while they cool — the afterglow that makes fire
     /// linger instead of strobing off the instant the flash dies. Shared by explosions,
     /// the flamethrower, and anything else that burns.</summary>
-    public void EmitCinders(Vector2 pos, Vector2 baseVel, int count)
+    public void EmitCinders(Vector2 pos, Vector2 baseVel, int count, float scatter = 60f)
     {
         for (var i = 0; i < count; i++)
         {
@@ -997,7 +997,7 @@ public sealed class Particles
             _list.Add(new Particle
             {
                 Position = pos + Jitter(3f),
-                Velocity = baseVel * (0.4f + (float)_rng.NextDouble() * 0.8f) + Jitter(60f),
+                Velocity = baseVel * (0.4f + (float)_rng.NextDouble() * 0.8f) + Jitter(scatter),
                 Life = 1.3f + (float)_rng.NextDouble() * 1.4f,
                 MaxLife = 2.7f,
                 Color = hot ? new Color(255, 200, 90) : new Color(255, 140, 50),
