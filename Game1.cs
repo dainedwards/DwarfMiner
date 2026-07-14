@@ -816,6 +816,29 @@ public sealed partial class DwarfMinerGame : Game
         // Camera exists except when DM_AUTOSTART triggers a run during Initialize —
         // LoadContent snaps it then. Descents open zoomed out at the station and ease in
         // on the way down; surface starts restore the play zoom directly.
+        // DM_DEEP=1 teleports straight to ore depth (~45% radius) and carves a small pocket
+        // so tooling can screenshot underground features (scanner arrows, veins, gems)
+        // without riding the rover down and mining a shaft.
+        if (Environment.GetEnvironmentVariable("DM_DEEP") is { Length: > 0 } && !_landing)
+        {
+            var up = _run.Planet.UpAt(_run.Player.Position);
+            var ang = MathF.Atan2(_run.Player.Position.Y - _run.Planet.Center.Y,
+                                  _run.Player.Position.X - _run.Planet.Center.X);
+            var deep = _run.Planet.Center
+                + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * _run.Planet.Radius * 0.45f * Planet.TileSize;
+            var (dr, dtc) = _run.Planet.WorldToTile(deep);
+            for (var rr = dr - 4; rr <= dr + 4; rr++)
+                for (var tt = dtc - 4; tt <= dtc + 4; tt++)
+                    if (rr >= 0 && rr < _run.Planet.Rings)
+                    {
+                        var n = _run.Planet.TilesAt(rr);
+                        var t = ((tt % n) + n) % n;
+                        if (!Tiles.IsAnchored(_run.Planet.Get(rr, t)))
+                            _run.Planet.Set(rr, t, TileKind.Sky);
+                    }
+            _run.Player.Position = deep;
+        }
+
         if (_camera is not null)
         {
             _camera.Zoom = _landing ? 1.5f : _playZoom;
