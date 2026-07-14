@@ -13,10 +13,12 @@ using Microsoft.Xna.Framework.Input;
 
 namespace DwarfMiner;
 
-/// <summary>Top-level screen state. Space is the flyable solar system (entry screen and
-/// post-run hub — see src/Game1.Space.cs); Playing is a live run; GameOver overlays the
-/// frozen run until R returns you to your ship.</summary>
-public enum GameScreen { Space, Playing, GameOver }
+/// <summary>Top-level screen state. Loading covers the boot-time survey warm-up (world
+/// generation for every planet's preview disc) so the space screen starts smooth instead
+/// of stuttering; Space is the flyable solar system (entry screen and post-run hub — see
+/// src/Game1.Space.cs); Playing is a live run; GameOver overlays the frozen run until R
+/// returns you to your ship.</summary>
+public enum GameScreen { Loading, Space, Playing, GameOver }
 
 public sealed partial class DwarfMinerGame : Game
 {
