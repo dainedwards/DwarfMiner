@@ -194,9 +194,19 @@ public sealed partial class DwarfMinerGame : Game
     /// same pattern as the toolbelt).</summary>
     private readonly Rectangle[] _titleCardRects = new Rectangle[SaveSlots.Count];
     private readonly Rectangle[] _pauseOptionRects = new Rectangle[3];
-    /// <summary>The title screen's pixel-art vista, generated once at load and drawn at 4×
-    /// with point sampling for the chunky look.</summary>
-    private Texture2D _titleBgTex = null!;
+    /// <summary>The title screen's living pixel vista, generated once at load and drawn at
+    /// 2× point-sampled: a static sky layer and a static land layer sandwich the animated
+    /// elements (setting sun, rotating gas giant, ambient fauna). _titleSurfY is the crust
+    /// lip per column so the surface critters can walk the actual ground line.</summary>
+    private Texture2D _titleSkyTex = null!;
+    private Texture2D _titleLandTex = null!;
+    private Texture2D _titlePlanetMap = null!;
+    private Texture2D _titlePlanetShade = null!;
+    private Texture2D _titleSunTex = null!;
+    private int[] _titleSurfY = System.Array.Empty<int>();
+    /// <summary>Esc on the title asks before quitting.</summary>
+    private bool _titleQuitConfirm;
+    private Rectangle _titleConfirmYes, _titleConfirmNo;
 
     /// <summary>Pause menu (Esc during play/space). While open the whole sim freezes.</summary>
     private bool _pauseOpen;
