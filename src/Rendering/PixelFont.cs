@@ -48,6 +48,9 @@ public sealed class PixelFont
         foreach (var ch in text)
         {
             var c = char.ToUpperInvariant(ch);
+            // Typographic dashes fold to the hyphen glyph — recipe/UI copy uses em-dashes
+            // and U+2212 minus signs freely and they should read as dashes, not '?'.
+            if (c is '—' or '–' or '−') c = '-';
             if (c == '\n') { y += (H + 1) * scale; x = pos.X; continue; }
             if (!_index.TryGetValue(c, out var idx))
             {
