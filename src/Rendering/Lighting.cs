@@ -5,17 +5,16 @@ using Microsoft.Xna.Framework.Graphics;
 namespace DwarfMiner.Rendering;
 
 /// <summary>
-/// Noita-style lightmap pass. The lightmap is rendered to a low-res RenderTarget at
-/// world-pixel scale (zoom = 1) so light edges scale up chunky alongside the world.
-/// Lights are additive into an ambient base, then the whole RT is composited back over
-/// the scene with multiplicative blending — dark lightmap pixels darken the scene, bright
-/// ones leave it alone (or tint it warm/cold via colored lights).
+/// Lightmap pass. The propagated LightGrid is stretched into a RenderTarget at
+/// world-pixel scale (zoom = 1), then the whole RT is composited back over the scene
+/// with multiplicative blending — dark lightmap pixels darken the scene, bright ones
+/// leave it alone (or tint it warm/cold via colored lights). Bloom/vignette/grade
+/// post-passes run off the same RT.
 /// </summary>
 public sealed class Lighting
 {
     private readonly GraphicsDevice _gd;
     private readonly SpriteBatch _sb;
-    private readonly Texture2D _lightTex;
     private RenderTarget2D? _rt;
     private Point _rtSize;
     private Matrix _viewMatrix;
