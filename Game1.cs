@@ -1161,19 +1161,13 @@ public sealed partial class DwarfMinerGame : Game
             // guns vanish with the mode while crafted gear stays put.
             if (_run.Player.FlyMode)
             {
-                foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
-                // God mode also means never grinding for a recipe: top the pack up to 9999
-                // of every crafting material. The grant is permanent (like the loaner sweep,
-                // materials are cheap to keep — stripping them back out would eat legit stock).
+                // Everything is granted PERMANENTLY: ownership flags flip for real (so
+                // nothing is swept when god mode ends), plus 9999 of every material.
+                GrantGodmodeItems();
                 GrantGodmodeMaterials();
-                _toast = "GOD MODE - FLIGHT, ARMOURY, AND 9999 OF EVERY MATERIAL";
+                foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
+                _toast = "GOD MODE - FLIGHT, EVERY ITEM, AND 9999 OF EVERY MATERIAL";
                 _toastTimer = 3f;
-            }
-            else
-            {
-                for (var s = 0; s < Toolbelt.SlotCount; s++)
-                    if (_run.Player.Toolbelt.Slots[s] is { } wid && IsGodLoanerWeapon(wid))
-                        _run.Player.Toolbelt.Slots[s] = null;
             }
         }
 
