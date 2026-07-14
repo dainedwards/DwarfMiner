@@ -339,12 +339,13 @@ public sealed class Cells
         }
     }
 
-    /// <summary>Spawn a checkerboard of dust cells filling half the polar tile, tagged with the
-    /// source TileKind so the cells render in that tile's colours and pay out that tile's drop on
-    /// pickup. Deterministic count (DustCellsPerTile = Density² / 2) so accumulation math is
-    /// exact: collecting every cell from a 2×2 tile quad yields exactly drop.count units.
-    /// A shattered Conglomerate ignores the checkerboard and spills the exact cells that were
-    /// pressed into it (see the compaction sweep) — value round-trips, nothing is minted.</summary>
+    /// <summary>Spawn dust cells filling the whole polar tile, tagged with the source TileKind
+    /// so the cells render in that tile's colours and pay out that tile's drop on pickup.
+    /// Deterministic count (DustCellsPerTile = Density²) so the debris occupies exactly the
+    /// space the block did and accumulation math is exact: collecting every cell from a 2×2
+    /// tile quad yields exactly drop.count units. A shattered Conglomerate instead spills the
+    /// exact cells that were pressed into it (see the compaction sweep) — value round-trips,
+    /// nothing is minted.</summary>
     public void SpawnDustInTile(int tx, int ty, TileKind src)
     {
         // A gem embedded in this tile pops out as a physical pickup when the host shatters.
@@ -352,11 +353,13 @@ public sealed class Cells
         // into Session.Pickups (headless callers just leave it; the list is per-planet).
         if (Planet.TakeGem(tx, ty) is var embedded && embedded != TileKind.Sky)
             PendingGemDrops.Add((Planet.TileToWorld(tx, ty), embedded, true));
-        // Legacy gem *tiles* (old worlds only — gen now embeds gems in hosts): no dust,
-        // queue a quarter-drop instead.
+        // Gem tiles (geode/cavern linings + old worlds' veins): no dust — each shattered
+        // crystal is its own find, so it pops a whole physical drop right where it broke.
+        // (Previously banked ¼ into a global accumulator, which made three out of four
+        // mined crystals visibly vanish with nothing to pick up.)
         if (Tiles.IsGem(src))
         {
-            PendingGemDrops.Add((Planet.TileToWorld(tx, ty), src, false));
+            PendingGemDrops.Add((Planet.TileToWorld(tx, ty), src, true));
             return;
         }
         var c0y = tx * Density;
