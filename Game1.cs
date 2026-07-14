@@ -1842,7 +1842,7 @@ public sealed partial class DwarfMinerGame : Game
         // Which tile kind does this id come from? (Reverse of Tiles.Drop.)
         TileKind srcKind = TileKind.Sky;
         foreach (var k in Enum.GetValues<TileKind>())
-            if (Tiles.Drop(k) == id) { srcKind = k; break; }
+            if (Tiles.Drop(k) is { } d && d.id == id) { srcKind = k; break; }
 
         if (srcKind is TileKind.Ruby or TileKind.Sapphire or TileKind.Diamond
             or TileKind.Emerald or TileKind.Voidstone or TileKind.Crystal)
