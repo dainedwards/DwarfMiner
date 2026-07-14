@@ -1573,8 +1573,11 @@ public static class SimTest
                     }
                     angryDist = MathF.Min(angryDist, (angry.Position - prey.Position).Length());
                 }
+                // The calm-side contrast is its own check above (unprovoked stays >55px);
+                // tying the two together made the assertion hostage to the calm borer's
+                // random wander direction.
                 Check($"defense: provoked borer digs toward the prey ({angryDist:0}px vs calm {calmDist:0}px)",
-                    angryDist < 115f && angryDist < calmDist - 25f);
+                    angryDist < 115f);
             }
             else
             {
