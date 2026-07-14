@@ -3464,7 +3464,7 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.AddLight(_run.Player.Position, 50f * lightMul,  new Color(245, 215, 165) * auraGate);
             // Sunstone burns cold white at the core — reads as a different light source, not
             // just a bigger torch. Tier IV pickaxe (diamond) keeps its faint icy sheen.
-            if (_run.Player.LightTier >= 4)
+            if (_run.Player.EffectiveLightTier >= 4)
                 _renderer.AddLight(_run.Player.Position, 70f * lightMul, new Color(200, 215, 235) * auraGate);
             if (_run.Player.PickaxeTier >= 4)
                 _renderer.AddLight(_run.Player.Position, 28f, new Color(180, 220, 255) * auraGate);
