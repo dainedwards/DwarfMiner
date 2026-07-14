@@ -1001,6 +1001,20 @@ public sealed class Cells
         var i = Idx(cx, cy);
         var impact = 0f;
 
+        // Buoyancy: every other liquid is denser than oil, so a cell sitting on oil sinks
+        // through it (one swap per tick — mixed pools separate into clean layers over a
+        // second or two rather than snapping). Lava sinking into an oil film is the fun
+        // case: guaranteed contact, and TickOil torches it next tick.
+        if ((Material)_mat[i] != Material.Oil && cy > 0)
+        {
+            var (ocx, ocy) = InnerCell(cx, cy);
+            if (Get(ocx, ocy) == Material.Oil)
+            {
+                SwapCells(cx, cy, ocx, ocy);
+                return;
+            }
+        }
+
         var (bcx, bcy) = InnerCell(cx, cy);
         if (cy > 0 && !IsBlocked(bcx, bcy))
         {
