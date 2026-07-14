@@ -308,6 +308,7 @@ public sealed partial class DwarfMinerGame : Game
             // "ocean"/"acidworld" start the campaign's guaranteed instance of each.
             else if (auto == "ocean") StartNewRun(FirstDef(d => d.LakeScale > 2f));
             else if (auto == "acidworld") StartNewRun(FirstDef(d => d.AcidRain));
+            else if (auto == "city") StartNewRun(FirstDef(d => d.Biome == "city"));
             else StartNewRun(PlanetDefs.ById(auto));
         }
         // DM_ORBIT=<planet-id> boots straight into the parking orbit — tooling can
