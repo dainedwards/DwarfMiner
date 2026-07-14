@@ -530,13 +530,14 @@ public static class WorldGen
     /// below the dirt band (the surface keeps its skin) and above the deep core, never
     /// carve anchored tiles or obsidian (acid/volcano linings stay sealed), and simply
     /// leave those tiles standing as natural dead-ends when they meet one.</summary>
-    private static void CarveWormTunnels(Planet planet, Random rng)
+    private static void CarveWormTunnels(Planet planet, PlanetDef def, Random rng)
     {
         var worms = 20 + rng.Next(9);
-        // Stay above the deep lava zone (lava fills of up to ~0.45×radius flood every sky
-        // tile they cover — tunnels crossing that line become permanent lava plumbing and
-        // wreck the steady-state cell budget) and below the dirt band.
-        const float minFrac = 0.54f;
+        // Stay above THIS world's lava zone — StartNewRun floods every sky tile below
+        // LavaFillFrac×radius (ember-class worlds run 0.55-0.70), and tunnels crossing
+        // that line become permanent lava plumbing that wrecks the steady-state cell
+        // budget — and below the dirt band.
+        var minFrac = MathF.Max(0.50f, def.LavaFillFrac + 0.10f);
         var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
         for (var i = 0; i < worms; i++)
         {
@@ -546,14 +547,14 @@ public static class WorldGen
             var start = planet.Center
                 + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
             CarveWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
-                220 + rng.Next(260), branchBudget: 1);
+                220 + rng.Next(260), branchBudget: 1, minFrac);
         }
     }
 
     private static void CarveWorm(Planet planet, Random rng, Vector2 pos, float heading,
-        int length, int branchBudget)
+        int length, int branchBudget, float minFrac)
     {
-        var minRad = planet.Radius * 0.52f * Planet.TileSize;
+        var minRad = planet.Radius * (minFrac - 0.02f) * Planet.TileSize;
         var maxRad = (Planet.RingMin + planet.SurfaceRing - 14f * Planet.LegacyTileScale)
                      * Planet.TileSize;
         for (var s = 0; s < length; s++)
