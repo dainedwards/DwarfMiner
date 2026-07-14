@@ -532,6 +532,63 @@ public static class WorldGen
     /// into acid-proof (and lava-proof) obsidian. Anchored tiles and existing obsidian are left
     /// alone. The shallow depth budget keeps it hugging the reservoir instead of glassing entire
     /// cave systems that merely touch an acid seep.</summary>
+    /// <summary>The signature surface plant for a biome, or Sky for worlds that grow none
+    /// (airless rock, the city's paved districts, the rift's dead ground).</summary>
+    private static TileKind FloraFor(string biome) => biome switch
+    {
+        "verdant" => TileKind.Fernleaf,
+        "frost"   => TileKind.Frostcap,
+        "ember"   => TileKind.Emberbloom,
+        "slag"    => TileKind.Rustbramble,
+        "acid"    => TileKind.Vitrilily,
+        "crystal" => TileKind.Geobloom,
+        _         => TileKind.Sky,   // ocean/city/rift/belt/moon/debug: no scattered flora
+    };
+
+    /// <summary>Scatter the biome's signature plant across the open surface: for a spread of
+    /// bearings, drop from the sky to the first solid ground tile and, if it's walkable soil
+    /// under open sky (not a mountain wall, lake, or building), seat a plant in the air tile
+    /// just above it. The plants are anchored + fire/lava-proof + acid-proof (see the tile
+    /// flags), so the ember bloom survives its lava world and the vitriol lily its acid one —
+    /// the "give the plants resistance on hostile worlds" ask.</summary>
+    private static void ScatterBiomeFlora(Planet planet, PlanetDef def, Random rng)
+    {
+        var flora = FloraFor(def.Biome);
+        if (flora == TileKind.Sky) return;
+
+        // One roll per bearing across the whole circumference; density ~35% so the surface
+        // reads as dotted with plants, not carpeted.
+        var bearings = 360 + rng.Next(120);
+        for (var b = 0; b < bearings; b++)
+        {
+            if (rng.Next(100) >= 35) continue;
+            var ang = (b + (float)rng.NextDouble()) / bearings * MathHelper.TwoPi;
+            var dir = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
+            // Walk down from well above the surface to the first solid tile.
+            var topR = planet.SurfaceRing + 30;
+            TileKind ground = TileKind.Sky;
+            var groundR = -1;
+            for (var r = topR; r > planet.SurfaceRing - 24; r--)
+            {
+                var n = planet.TilesAt(r);
+                var t = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                var k = planet.Get(r, t);
+                if (k == TileKind.Sky) continue;
+                ground = k; groundR = r;
+                break;
+            }
+            if (groundR < 0) continue;
+            // Only seat plants on natural walkable soil — never on rock walls, built tiles,
+            // ore, obsidian linings, or anything already occupied.
+            if (ground is not (TileKind.Grass or TileKind.Dirt or TileKind.Snow
+                or TileKind.Gravel or TileKind.MossStone or TileKind.Basalt)) continue;
+            var an = planet.TilesAt(groundR + 1);
+            var at = (int)((ang / MathHelper.TwoPi + 1f) % 1f * an);
+            if (planet.Get(groundR + 1, at) != TileKind.Sky) continue;
+            planet.Set(groundR + 1, at, flora);
+        }
+    }
+
     /// <summary>Rich metal veins: every world has a coin-flip shot at ONE concentrated
     /// gold or silver ribbon (and a slim shot at a second) buried in the deep crust — a
     /// wandering walk that converts plain rock to solid ore in a narrow band. This is the
