@@ -3378,6 +3378,20 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
+        // Planted (and flying) torches: a short stick with a flame knob, swinging gently
+        // around its planted pose — the dangle sells them as physical objects.
+        foreach (var torch in _run.Torches)
+        {
+            var tRot = torch.Stuck
+                ? torch.Swing(_renderer.Time)
+                : MathF.Atan2(torch.Velocity.X, -torch.Velocity.Y);   // tumble nose-first
+            var tUp = new Vector2(MathF.Sin(tRot), -MathF.Cos(tRot));
+            _renderer.DrawRect(torch.Position, new Vector2(1.2f, 4.2f), new Color(115, 78, 45), tRot);
+            var tip = torch.Position + tUp * 2.4f;
+            _renderer.DrawRect(tip, new Vector2(2.0f, 1.8f), new Color(255, 165, 55), tRot);
+            _renderer.DrawRect(tip + tUp * 0.5f, new Vector2(1.0f, 1.0f), new Color(255, 235, 150), tRot);
+        }
+
         // Corpses — drawn under the living so a fresh kill layers naturally. A flattened
         // slab of the creature's (desaturated) body colour lying along the local tangent,
         // with a paler belly stripe. Blinks during the last seconds before decay.
