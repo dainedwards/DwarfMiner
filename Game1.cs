@@ -1172,6 +1172,14 @@ public sealed partial class DwarfMinerGame : Game
                 && _run.Cells.CountWaterNear(p.Position + pUp * (p.Radius + 1f), 2f) >= 2;
         }
         _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, verticalAxis);
+
+        // Jetpack exhaust: a tier-coloured flame streaming from the worn pack — red stub
+        // burner up through orange and yellow to the tier-IV blue jet.
+        if (_run.Player.IsJetting)
+        {
+            var jetUp = _run.Planet.UpAt(_run.Player.Position);
+            _particles.EmitJetExhaust(_run.Player.Position - jetUp * 3.2f, -jetUp, _run.Player.JetTier);
+        }
         TickSwing(dt);
         TickOxygen(dt);
         TickBreath(dt);
