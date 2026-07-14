@@ -395,6 +395,13 @@ public static class WorldGen
                     if (!isReservoir && def.SeedsGas && depth > 34f
                         && SampleNoise(pocketNoise, wx * 0.06f + 21f, wy * 0.06f + 21f) > 0.80f)
                         planet.GasSeeds.Add((r, t));
+
+                    // Oil sumps: mid-crust black pools, shallower than the gas band so a
+                    // burning tunnel doesn't automatically chain both. Inert until lit.
+                    var isGasPocket = planet.GasSeeds.Count > 0 && planet.GasSeeds[^1] == (r, t);
+                    if (!isReservoir && !isGasPocket && def.SeedsOil && depth > 14f && depth < 42f
+                        && SampleNoise(pocketNoise, wx * 0.055f - 33f, wy * 0.055f - 33f) > 0.815f)
+                        planet.OilSeeds.Add((r, t));
                 }
 
                 if (k == TileKind.Stone && depth > 12f)
