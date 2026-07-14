@@ -379,8 +379,10 @@ public static class SpawnDirector
     }
 
     /// <summary>Roll a kind for the depth band at <paramref name="pos"/> and spawn it.
-    /// Unconnected sites only ever get diggers — anything else would be stranded.</summary>
-    private static void SpawnAt(Session run, Vector2 pos, bool connected)
+    /// Unconnected sites only ever get diggers — anything else would be stranded.
+    /// <paramref name="resident"/> marks census placements: frozen at distance, never
+    /// culled (see Creature.Resident).</summary>
+    private static void SpawnAt(Session run, Vector2 pos, bool connected, bool resident = false)
     {
         var planet = run.Planet;
         // Roster shifts with depth: slimes, moles and skitterers riddle the upper crust
