@@ -1174,6 +1174,13 @@ public sealed class Cells
         ClearKinetics(i);
         Enqueue(i);
         WakeNeighbors(cx, cy);
+        // The quench spits: sometimes the fresh gravel pops out as a hot ballistic bead, so
+        // a lava/water front crackles instead of quietly trading cells.
+        if (_rng.Next(3) == 0 && _flying.Count < MaxFlying)
+        {
+            var (up, tan) = AxesAt(cx, cy);
+            LaunchCell(cx, cy, up * (70f + _rng.Next(70)) + tan * (_rng.Next(120) - 60));
+        }
         return true;
     }
 
