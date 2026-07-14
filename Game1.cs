@@ -3285,9 +3285,9 @@ public sealed partial class DwarfMinerGame : Game
         {
             var packRight = new Vector2(-up.Y, up.X);
             _renderer.Batch.Draw(_jetpackTex,
-                _run.Player.Position - packRight * _playerFacing * 3.0f + up * 0.8f, null,
+                _run.Player.Position - packRight * _playerFacing * 3.2f + up * 0.8f, null,
                 Color.White, rot, new Vector2(_jetpackTex.Width * 0.5f, _jetpackTex.Height * 0.5f),
-                0.85f, SpriteEffects.None, 0f);
+                1.0f, SpriteEffects.None, 0f);
         }
         if (_playerSprite is { } ps)
         {
