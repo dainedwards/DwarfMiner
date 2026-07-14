@@ -379,9 +379,10 @@ public sealed partial class DwarfMinerGame : Game
         _camera?.SnapTo(_space.ShipPos, 0f);
     }
 
-    /// <summary>Title-screen input: pick a slot (arrows / 1-3), Enter commits (new game on
-    /// an empty slot, continue otherwise). Esc here quits — the title IS the quit screen.</summary>
-    private void UpdateTitle(KeyboardState keys)
+    /// <summary>Title-screen input: hover highlights a slot card, click or Enter commits
+    /// (new game on an empty slot, continue otherwise); arrows / 1-3 drive the cursor from
+    /// the keyboard. Esc here quits — the title IS the quit screen.</summary>
+    private void UpdateTitle(KeyboardState keys, MouseState mouse)
     {
         if (Pressed(keys, _prevKeys, Keys.Escape)) Exit();
         if (Pressed(keys, _prevKeys, Keys.Up) || Pressed(keys, _prevKeys, Keys.W))
@@ -391,22 +392,43 @@ public sealed partial class DwarfMinerGame : Game
         if (Pressed(keys, _prevKeys, Keys.D1)) _titleCursor = 0;
         if (Pressed(keys, _prevKeys, Keys.D2)) _titleCursor = 1;
         if (Pressed(keys, _prevKeys, Keys.D3)) _titleCursor = 2;
-        if (Pressed(keys, _prevKeys, Keys.Enter))
+
+        var clicked = mouse.LeftButton == ButtonState.Pressed
+                   && _prevMouse.LeftButton != ButtonState.Pressed;
+        var hoverAny = false;
+        for (var i = 0; i < SaveSlots.Count; i++)
+        {
+            if (!_titleCardRects[i].Contains(mouse.X, mouse.Y)) continue;
+            _titleCursor = i;
+            hoverAny = true;
+        }
+        if (Pressed(keys, _prevKeys, Keys.Enter) || (clicked && hoverAny))
         {
             _sfx.Play("ui", 0.7f);
             SelectSlot(_titleCursor + 1);
         }
     }
 
-    /// <summary>Pause-menu input: resume / return to the title (saving first) / quit.</summary>
-    private void UpdatePauseMenu(KeyboardState keys)
+    /// <summary>Pause-menu input: hover + click, or arrows + Enter — resume / return to the
+    /// title (saving first) / quit.</summary>
+    private void UpdatePauseMenu(KeyboardState keys, MouseState mouse)
     {
         if (Pressed(keys, _prevKeys, Keys.Escape)) { _pauseOpen = false; return; }
         if (Pressed(keys, _prevKeys, Keys.Up) || Pressed(keys, _prevKeys, Keys.W))
             _pauseCursor = (_pauseCursor + 2) % 3;
         if (Pressed(keys, _prevKeys, Keys.Down) || Pressed(keys, _prevKeys, Keys.S))
             _pauseCursor = (_pauseCursor + 1) % 3;
-        if (!Pressed(keys, _prevKeys, Keys.Enter)) return;
+
+        var clicked = mouse.LeftButton == ButtonState.Pressed
+                   && _prevMouse.LeftButton != ButtonState.Pressed;
+        var hoverAny = false;
+        for (var i = 0; i < _pauseOptionRects.Length; i++)
+        {
+            if (!_pauseOptionRects[i].Contains(mouse.X, mouse.Y)) continue;
+            _pauseCursor = i;
+            hoverAny = true;
+        }
+        if (!Pressed(keys, _prevKeys, Keys.Enter) && !(clicked && hoverAny)) return;
         _sfx.Play("ui", 0.7f);
         switch (_pauseCursor)
         {
