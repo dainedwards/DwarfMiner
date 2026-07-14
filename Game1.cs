@@ -3448,7 +3448,7 @@ public sealed partial class DwarfMinerGame : Game
         // Dirt band bottom ≈ 12 legacy tiles; gate from there to fully-on ~10 legacy tiles deeper.
         var auraGate = MathHelper.Clamp(
             (playerDepthTiles - 12f * Planet.LegacyTileScale) / (10f * Planet.LegacyTileScale), 0f, 1f);
-        var lightMul = _run.Player.LightTier switch
+        var lightMul = _run.Player.EffectiveLightTier switch
         {
             0 => 0.30f,   // bare headlamp stub — see your own feet, not much else
             1 => 0.65f,   // torch
