@@ -239,32 +239,112 @@ public sealed class CharacterScreen
         var mouse = Screen.Mouse();
 
         const int panelW = 700;
-        const int panelH = 412;
+        const int panelH = 470;
         var px = (viewportWidth - panelW) / 2;
         var py = (viewportHeight - panelH) / 2;
 
         sb.Begin(samplerState: SamplerState.PointClamp);
-        sb.Draw(renderer.Pixel, new Rectangle(0, 0, viewportWidth, viewportHeight), new Color(0, 0, 0, 175));
-        // Double-edged panel: dark outer line, light inner line, deep blue body + title bar.
+        // Semi-transparent: the frozen world stays readable through the panel body.
+        sb.Draw(renderer.Pixel, new Rectangle(0, 0, viewportWidth, viewportHeight), new Color(0, 0, 0, 110));
+        // Double-edged panel: dark outer line, light inner line, translucent blue body.
         sb.Draw(renderer.Pixel, new Rectangle(px - 2, py - 2, panelW + 4, panelH + 4), PanelEdgeOut);
         sb.Draw(renderer.Pixel, new Rectangle(px - 1, py - 1, panelW + 2, panelH + 2), PanelEdgeIn);
         sb.Draw(renderer.Pixel, new Rectangle(px, py, panelW, panelH), PanelBg);
         sb.Draw(renderer.Pixel, new Rectangle(px, py, panelW, 24), TitleBarBg);
         sb.Draw(renderer.Pixel, new Rectangle(px, py + 24, panelW, 1), PanelEdgeIn);
         // Divider between doll and backpack panes.
-        sb.Draw(renderer.Pixel, new Rectangle(px + 318, py + 34, 1, panelH - 46), new Color(99, 107, 178, 110));
+        sb.Draw(renderer.Pixel, new Rectangle(px + 318, py + 34, 1, panelH - 104), new Color(99, 107, 178, 110));
         sb.End();
 
         renderer.DrawText("CHARACTER", new Vector2(px + 10, py + 6), Gold);
-        renderer.DrawText("RMB QUICK-EQUIP   I/ESC CLOSE", new Vector2(px + panelW - 186, py + 6), TextDim);
+        renderer.DrawText("RMB ITEM MENU   I/ESC CLOSE", new Vector2(px + panelW - 180, py + 6), TextDim);
 
         // What the cursor/carry is proposing to equip — drives the slot highlights.
         var proposing = _carry?.Id ?? HoveredBagId(mouse.X, mouse.Y);
 
         DrawDoll(renderer, player, px, py, proposing);
         DrawBackpack(renderer, player, px + 334, py + 36, panelW - 334 - 14);
+        DrawHotbar(renderer, player, px, py + panelH - 62, panelW);
+        DrawContextMenu(renderer, player, viewportWidth, viewportHeight);
         DrawCarryIcon(renderer, player, mouse);
         DrawTooltip(renderer, player, mouse, viewportWidth, viewportHeight);
+    }
+
+    /// <summary>The hotbar strip (belt slots 1-9) along the panel bottom: the home for
+    /// weapons and tools now that the doll doesn't hold them. Drag items on/off; the same
+    /// slot-typing as the HUD belt applies (1 tool, 2-4 weapons, 5-9 items).</summary>
+    private void DrawHotbar(Renderer renderer, Player player, int px, int hy, int panelW)
+    {
+        var sb = renderer.Batch;
+        var mouse = Screen.Mouse();
+        renderer.DrawText("HOTBAR", new Vector2(px + 14, hy - 14), Gold);
+        const int cell = 44, gap = 6;
+        var totalW = 9 * cell + 8 * gap;
+        var hx = px + (panelW - totalW) / 2;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        for (var s = 0; s < 9; s++)
+        {
+            var r = new Rectangle(hx + s * (cell + gap), hy, cell, cell);
+            _hotbarRects[s] = r;
+            var eligible = _carry is { } c && Toolbelt.SlotAccepts(s, c.Id);
+            DrawSlotBox(sb, renderer.Pixel, r, r.Contains(mouse.X, mouse.Y),
+                eligible ? Gold : null);
+            if (player.Toolbelt.Slots[s] is { } id)
+            {
+                var tex = Icons.GetForSlot(id, player.PickaxeTier);
+                if (tex is not null)
+                    sb.Draw(tex, new Rectangle(r.X + 5, r.Y + 5, cell - 10, cell - 10), Color.White);
+                else
+                    sb.Draw(renderer.Pixel, new Rectangle(r.X + 13, r.Y + 13, cell - 26, cell - 26),
+                        Tiles.ResourceColor(id));
+            }
+        }
+        sb.End();
+        for (var s = 0; s < 9; s++)
+            renderer.DrawText((s + 1).ToString(),
+                new Vector2(_hotbarRects[s].X + 3, _hotbarRects[s].Y + 2), TextDim);
+    }
+
+    /// <summary>The RMB item menu: equip, upgrade (with live cost/affordability from the
+    /// crafting table), and drop one/all.</summary>
+    private void DrawContextMenu(Renderer renderer, Player player, int viewportWidth, int viewportHeight)
+    {
+        _ctxRects.Clear();
+        if (_ctx is not { } ctx) return;
+        var rows = new List<(string action, string label, bool enabled)>();
+        if (Equipment.IsEquippable(ctx.Id) && !player.Equipment.IsEquipped(ctx.Id))
+            rows.Add(("equip", "EQUIP", true));
+        if (UpgradeInfo?.Invoke(ctx.Id) is { } up)
+            rows.Add(("upgrade", up.label, up.can));
+        var count = player.Inventory.Count(ctx.Id);
+        rows.Add(("drop1", "DROP ONE", count > 0));
+        rows.Add(("dropall", $"DROP ALL ({count})", count > 0));
+
+        var w = renderer.MeasureText(Tiles.ResourceLabel(ctx.Id)) + 20;
+        foreach (var (_, label, _) in rows) w = Math.Max(w, renderer.MeasureText(label) + 20);
+        var h = 20 + rows.Count * 17;
+        var x = Math.Min(ctx.Pos.X, viewportWidth - w - 4);
+        var y = Math.Min(ctx.Pos.Y, viewportHeight - h - 4);
+
+        var sb = renderer.Batch;
+        var mouse = Screen.Mouse();
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(renderer.Pixel, new Rectangle(x - 1, y - 1, w + 2, h + 2), PanelEdgeOut);
+        sb.Draw(renderer.Pixel, new Rectangle(x, y, w, h), new Color(24, 18, 54, 250));
+        DrawBorder(sb, renderer.Pixel, new Rectangle(x, y, w, h), ItemInfo.ColorOf(ItemInfo.CategoryOf(ctx.Id)));
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var r = new Rectangle(x + 2, y + 18 + i * 17, w - 4, 16);
+            _ctxRects.Add((rows[i].action, r, rows[i].enabled));
+            if (rows[i].enabled && r.Contains(mouse.X, mouse.Y))
+                sb.Draw(renderer.Pixel, r, new Color(120, 130, 200, 70));
+        }
+        sb.End();
+        renderer.DrawText(Tiles.ResourceLabel(ctx.Id), new Vector2(x + 8, y + 3),
+            ItemInfo.ColorOf(ItemInfo.CategoryOf(ctx.Id)));
+        for (var i = 0; i < rows.Count; i++)
+            renderer.DrawText(rows[i].label, new Vector2(x + 8, y + 20 + i * 17),
+                rows[i].enabled ? Color.White : new Color(120, 122, 140));
     }
 
     // ───────── doll pane ─────────
