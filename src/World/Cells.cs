@@ -22,8 +22,16 @@ public enum Material : byte
     /// lava melts, but a different tile set and no light); burns bodies on contact.</summary>
     Acid = 8,
     /// <summary>Flammable gas pocket. Rises like smoke and lingers; chokes the dwarf (drains
-    /// air) and flash-burns to smoke when it meets lava.</summary>
+    /// air) and ignites into a rolling flame front when it meets lava or open fire.</summary>
     Gas = 9,
+    /// <summary>Open flame. Short-lived cells that flicker upward, catch adjacent oil/gas
+    /// alight, char flammable tiles, spit glowing embers, and gutter to smoke — instantly
+    /// steam-quenched by water. Not conserved matter: fire is emitted freely and decays.</summary>
+    Fire = 10,
+    /// <summary>Flammable liquid. Flows like water but lighter — every other liquid sinks
+    /// through it, so oil films collect on top of pools. Inert until a flame or lava tongue
+    /// touches it, then it burns away cell by cell.</summary>
+    Oil = 11,
 }
 
 public static class Materials
