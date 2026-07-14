@@ -510,6 +510,10 @@ public static class WorldGen
         // all). Isolated rng for the same stream-stability reason as the worms.
         StampRichVeins(planet, new Random(seed ^ 0x60D5));
 
+        // Biome flora: dot the surface with the world's signature plant (fire/acid-proof on
+        // the hostile worlds). Isolated rng, same stream-stability reason.
+        ScatterBiomeFlora(planet, def, new Random(seed ^ 0xF10A));
+
         // Skin every acid reservoir (surface pools, volcano plumbing, and the scattered crust
         // seeps) in obsidian so the acid can't chew outward through the crust. Obsidian shrugs
         // off both acid and lava but is still mineable/blastable, so the pools stay contained
