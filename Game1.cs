@@ -1197,7 +1197,7 @@ public sealed partial class DwarfMinerGame : Game
             var jetUp = _run.Planet.UpAt(_run.Player.Position);
             var jetRight = new Vector2(-jetUp.Y, jetUp.X);
             _particles.EmitJetExhaust(
-                _run.Player.Position - jetRight * _playerFacing * 3.0f - jetUp * 2.2f,
+                _run.Player.Position - jetRight * _playerFacing * 2.6f - jetUp * 2.6f,
                 -jetUp, _run.Player.JetTier);
         }
         TickSwing(dt);
