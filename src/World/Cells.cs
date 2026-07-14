@@ -1266,6 +1266,137 @@ public sealed class Cells
         SpawnInTile(tx, ty, Material.Smoke, Density / 2); // acrid fizz
     }
 
+    /// <summary>Oil: inert dark liquid until lava touches it (fire-side ignition lives in
+    /// <see cref="TickFire"/>'s probe so sleeping pools still catch). Otherwise flows like
+    /// water; the buoyancy swap in TickLiquid keeps it floating on everything else.</summary>
+    private void TickOil(int cx, int cy, float dt)
+    {
+        if (FindNeighbour(cx, cy, Material.Lava) >= 0 && _rng.Next(3) == 0)
+        {
+            IgniteCell(cx, cy);
+            return;
+        }
+        TickLiquid(cx, cy, dt);
+    }
+
+    /// <summary>Convert a fuel cell (oil/gas) to open flame in place.</summary>
+    private void IgniteCell(int cx, int cy)
+    {
+        var i = Idx(cx, cy);
+        _mat[i] = (byte)Material.Fire;
+        _srcTile[i] = 0;
+        ClearKinetics(i);
+        Enqueue(i);
+        WakeNeighbors(cx, cy);
+    }
+
+    /// <summary>Tiles open flame chars away: living groundcover and the wooden builds. Lava
+    /// melts far more (IsMeltable) because molten rock outranks a campfire.</summary>
+    private static bool IsFlammable(TileKind k) => k is
+        TileKind.Grass or TileKind.Support or TileKind.Ladder;
+
+    /// <summary>Open flame. One cardinal probe pass drives everything: water on any side
+    /// quenches it to steam, fuel cells (oil/gas) catch alight and anchor the flame, and
+    /// flammable tiles char through now and then. A fuelled flame lives ~0.7s and licks
+    /// upward; a starved one gutters out in a tenth — fire on bare rock dies where it
+    /// stands, so a stray ember is only dangerous if it finds something to eat.</summary>
+    private void TickFire(int cx, int cy)
+    {
+        var i = Idx(cx, cy);
+        var fuelled = false;
+        var doused = false;
+
+        void Probe(int ncx, int ncy)
+        {
+            if (ncy < 0 || ncy >= Height) return;
+            var ni = Idx(ncx, ncy);
+            switch ((Material)_mat[ni])
+            {
+                case Material.Water:
+                    doused = true;
+                    return;
+                case Material.Oil:
+                case Material.Gas:
+                    fuelled = true;
+                    // Flame front: catch the neighbouring fuel cell alight. Probabilistic so
+                    // a pool burns across its surface over a second, not in one frame.
+                    if (_rng.Next(3) == 0)
+                    {
+                        var (fcx, fcy) = UnIdx(ni);
+                        IgniteCell(fcx, fcy);
+                    }
+                    return;
+            }
+            var k = TileAt(ncx, ncy);
+            if (!IsFlammable(k)) return;
+            fuelled = true;
+            // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke,
+            // which is what walks a grass fire along the surface.
+            if (_rng.Next(50) != 0) return;
+            var tx = ncy / Density;
+            var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
+            Planet.TakeGem(tx, ty);
+            Planet.Set(tx, ty, TileKind.Sky);
+            SpawnInTile(tx, ty, Material.Fire, Density);
+            SpawnInTile(tx, ty, Material.Smoke, Density / 2);
+        }
+
+        Probe(cx + 1, cy);
+        Probe(cx - 1, cy);
+        var (icx, icy) = InnerCell(cx, cy);
+        Probe(icx, icy);
+        if (cy < Height - 1)
+        {
+            var oc = OuterCellCount(cx, cy);
+            for (var w = 0; w < oc; w++)
+            {
+                var (ocx, ocy) = OuterCell(cx, cy, w);
+                Probe(ocx, ocy);
+            }
+        }
+
+        if (doused)
+        {
+            // Steam-quenched — the flame flashes to smoke without touching the water.
+            _mat[i] = (byte)Material.Smoke;
+            _srcTile[i] = 0;
+            ClearKinetics(i);
+            Enqueue(i);
+            WakeNeighbors(cx, cy);
+            return;
+        }
+
+        // Gutter out: half to a smoke wisp, half to nothing (all-smoke fires read as grey
+        // soup over a burning pool).
+        if (_rng.Next(fuelled ? 42 : 8) == 0)
+        {
+            _mat[i] = _rng.Next(2) == 0 ? (byte)Material.Smoke : (byte)0;
+            _srcTile[i] = 0;
+            ClearKinetics(i);
+            if (_mat[i] != 0) Enqueue(i);
+            WakeNeighbors(cx, cy);
+            return;
+        }
+
+        // Ember spit: a rare glowing mote arcs off a fuelled blaze and can start a spot
+        // fire where it lands. Emitted, not launched — flame isn't conserved matter.
+        if (fuelled && _rng.Next(60) == 0 && _flying.Count < MaxFlying)
+        {
+            var (up, tan) = AxesAt(cx, cy);
+            LaunchAtWorld(CellToWorld(cx, cy),
+                up * (50f + _rng.Next(60)) + tan * (_rng.Next(140) - 70), Material.Fire);
+        }
+
+        // Flicker upward sometimes so flames lick and dance instead of squatting.
+        if (_rng.Next(3) == 0 && cy < Height - 1)
+        {
+            var oc2 = OuterCellCount(cx, cy);
+            var (ux, uy) = OuterCell(cx, cy, _rng.Next(oc2));
+            if (TryMoveTo(cx, cy, ux, uy)) return;
+        }
+        Enqueue(Idx(cx, cy));
+    }
+
     private bool HasCorrodibleNeighbour(int cx, int cy)
     {
         if (IsCorrodible(TileAt(cx + 1, cy)) || IsCorrodible(TileAt(cx - 1, cy))) return true;
