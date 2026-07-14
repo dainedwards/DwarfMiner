@@ -44,9 +44,13 @@ public enum ProjectileKind
     LaserCannon,
     /// <summary>Launcher round: straight flight, explodes on contact with a proper crater.</summary>
     Rocket,
-    /// <summary>Heavy satchel charge: barely throwable (strong gravity, short lob), long
-    /// fuse, and the biggest non-nuke blast in the game.</summary>
+    /// <summary>Heavy satchel charge: barely throwable (strong gravity, short lob). Bounces
+    /// off terrain with a dead thud a few times, settles, and detonates on its FUSE — never
+    /// on contact. The biggest non-nuke blast in the game.</summary>
     Tnt,
+    /// <summary>Sticky charge: the TNT pack. Same blast and fuse as the satchel, but it
+    /// cements to the first wall it touches — demolition you can place on a ceiling.</summary>
+    TntPack,
     /// <summary>Peacekeeper sidearm round: a weak cyan stun-bolt fired by the city militia at
     /// hostile creatures (and, feebly, at a rampaging titan). Flagged friendly-to-neutrals so
     /// a street crowd never eats a stray round, and it never aggros the titan onto the player.</summary>
