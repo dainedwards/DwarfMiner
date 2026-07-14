@@ -1004,8 +1004,8 @@ public sealed class Particles
             LightColor = new Color(255, 170, 80),
             HeroLight = true,
         });
-        // The hose sheds the odd tumbling cinder that keeps burning where it lands.
-        if (_rng.Next(4) == 0) EmitCinders(pos + dir * 10f, dir * 120f, 1);
+        // The hose sheds tumbling cinders that keep burning where they land.
+        if (_rng.Next(3) == 0) EmitCinders(pos + dir * 10f, dir * 120f, 1);
     }
 
     /// <summary>Jetpack exhaust, coloured by tier: red (I) → orange (II) → yellow (III) →
