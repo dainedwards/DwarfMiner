@@ -35,6 +35,9 @@ public sealed class Session
     /// <summary>Thrown torches — in flight and planted. Stuck ones persist in the run save
     /// (a lit-up shaft should stay lit across a suspend).</summary>
     public readonly List<ThrownTorch> Torches = new();
+    /// <summary>Physical enemy spawners (goo piles, lizard doors, alien homes) — placed by
+    /// SpawnDirector.PopulateWorld at load, the only post-load source of new creatures.</summary>
+    public readonly List<Spawner> Spawners = new();
 
     /// <summary>Meteor-strike cadence — the frequent ambient dodge hazard, outside the
     /// disaster clock. See AmbientDirector.</summary>
