@@ -394,7 +394,25 @@ public sealed partial class DwarfMinerGame : Game
     /// the keyboard. Esc here quits — the title IS the quit screen.</summary>
     private void UpdateTitle(KeyboardState keys, MouseState mouse)
     {
-        if (Pressed(keys, _prevKeys, Keys.Escape)) Exit();
+        var confirmClick = mouse.LeftButton == ButtonState.Pressed
+                        && _prevMouse.LeftButton != ButtonState.Pressed;
+        // Quit needs a second opinion: Esc opens the confirm dialog; Y/Enter/click-YES
+        // quits, anything dismissive cancels.
+        if (_titleQuitConfirm)
+        {
+            if (Pressed(keys, _prevKeys, Keys.Escape) || Pressed(keys, _prevKeys, Keys.N)
+                || (confirmClick && _titleConfirmNo.Contains(mouse.X, mouse.Y)))
+                _titleQuitConfirm = false;
+            else if (Pressed(keys, _prevKeys, Keys.Enter) || Pressed(keys, _prevKeys, Keys.Y)
+                || (confirmClick && _titleConfirmYes.Contains(mouse.X, mouse.Y)))
+                Exit();
+            return;
+        }
+        if (Pressed(keys, _prevKeys, Keys.Escape))
+        {
+            _titleQuitConfirm = true;
+            return;
+        }
         if (Pressed(keys, _prevKeys, Keys.Up) || Pressed(keys, _prevKeys, Keys.W))
             _titleCursor = (_titleCursor - 1 + SaveSlots.Count) % SaveSlots.Count;
         if (Pressed(keys, _prevKeys, Keys.Down) || Pressed(keys, _prevKeys, Keys.S))
