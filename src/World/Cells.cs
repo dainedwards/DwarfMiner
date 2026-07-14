@@ -1231,7 +1231,8 @@ public sealed class Cells
     /// (planet core, bedrock) resist, so acid melts through nearly anything you'd build or
     /// mine but still can't chew an unbounded hole into the deep obsidian crust.</summary>
     private static bool IsCorrodible(TileKind k) =>
-        Tiles.IsSolid(k) && !Tiles.IsAnchored(k) && k != TileKind.Obsidian;
+        Tiles.IsSolid(k) && !Tiles.IsAnchored(k) && k != TileKind.Obsidian
+        && !Tiles.IsFlora(k);   // flora is acid-adapted on the acid world, hardy elsewhere
 
     /// <summary>Acid: corrode a touching soft tile now and then, otherwise flow like water.
     /// Mirrors <see cref="TickLava"/>'s structure (eat-then-flow) but with no self-light and a
