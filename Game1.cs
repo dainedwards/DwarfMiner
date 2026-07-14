@@ -2111,7 +2111,9 @@ public sealed partial class DwarfMinerGame : Game
         _run.MothershipAngle += Session.StationDriftRate * dt;
 
         // Geo Scanner sweep: refresh the nearest fuel / signature-ore fixes on a timer (the
-        // ring-band search is cheap, but not run-it-every-frame cheap).
+        // ring-band search is cheap, but not run-it-every-frame cheap). The ship-upgrade
+        // scanner drives the fuel/signature edge arrows; the CRAFTED geo-scanner drives the
+        // radiating material arrows (its own rung-gated deposit list).
         if (Upgrades.Owned(_meta, "scanner"))
         {
             _scanTimer -= dt;
@@ -2121,6 +2123,15 @@ public sealed partial class DwarfMinerGame : Game
                 _scanFuel = Scanner.FindNearest(_run.Planet, _run.Player.Position, TileKind.FuelOre, 620f);
                 _scanOre = Scanner.FindNearest(_run.Planet, _run.Player.Position,
                     Scanner.OreTileFor(_run.Def.ShipOre), 620f);
+            }
+        }
+        if (_run.Player.ScannerTier > 0)
+        {
+            _geoScanTimer -= dt;
+            if (_geoScanTimer <= 0f)
+            {
+                _geoScanTimer = 0.8f;
+                RefreshGeoScan();
             }
         }
 
