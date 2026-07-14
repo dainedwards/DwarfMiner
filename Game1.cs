@@ -458,6 +458,14 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.HasJetpack = Upgrades.Owned(_meta, "jetpack");
         _run.Player.JetTier2 = Upgrades.Owned(_meta, "jetpack2");
         _run.Player.JetTier3 = Upgrades.Owned(_meta, "jetpack3");
+        _run.Player.JetTier4 = Upgrades.Owned(_meta, "jetpack4");
+        // The pack is a real worn item now: it rides down in the backpack and straps into
+        // the paper doll's Back slot (it only burns while equipped there).
+        if (_run.Player.HasJetpack)
+        {
+            _run.Player.Inventory.Add("jetpack", 1);
+            _run.Player.Equipment.AutoEquip("jetpack");
+        }
         _run.Player.HasO2Recycler = Upgrades.Owned(_meta, "o2");
         _run.Player.O2Tier2 = Upgrades.Owned(_meta, "o22");
         if (Upgrades.Owned(_meta, "drill")) _run.Player.PickaxeTier++;
