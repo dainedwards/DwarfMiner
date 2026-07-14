@@ -293,9 +293,10 @@ public sealed class LightGrid
     /// the lightmap (linear-filtered — Terraria "smooth lighting").</summary>
     public void Upload(GraphicsDevice gd)
     {
-        if (!_active && _tex is not null) return;
-        if (_tex is null || _tex.Width != _side)
-            _tex = new Texture2D(gd, _side, _side, false, SurfaceFormat.Color);
+        if (!_active && _tex[_front] is not null) return;
+        var back = 1 - _front;
+        if (_tex[back] is null || _tex[back]!.Width != _side)
+            _tex[back] = new Texture2D(gd, _side, _side, false, SurfaceFormat.Color);
         for (var i = 0; i < _pix.Length; i++)
         {
             _pix[i] = new Color(
@@ -303,6 +304,7 @@ public sealed class LightGrid
                 Math.Clamp(_g[i], 0f, 1f),
                 Math.Clamp(_b[i], 0f, 1f));
         }
-        _tex.SetData(_pix);
+        _tex[back]!.SetData(_pix);
+        _front = back;
     }
 }
