@@ -258,6 +258,12 @@ public static class RunSave
                 });
             }
             run.Player.HeadlampTier = r.ReadInt32();
+            var meleeCount = r.ReadInt32();
+            for (var i = 0; i < meleeCount; i++)
+            {
+                var mid = r.ReadString();
+                run.Player.MeleeTiers[mid] = r.ReadInt32();
+            }
 
             // Timers restart at their run-start defaults — a beat of calm after resuming.
             run.DisasterTimer = AmbientDirector.NextInterval(def) * 0.5f;
