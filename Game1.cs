@@ -178,9 +178,22 @@ public sealed partial class DwarfMinerGame : Game
     /// view's terrain discs and the M-key ore census). The load screen holds until it
     /// completes so the generation never contends with live play.</summary>
     private System.Threading.Tasks.Task? _warmTask;
+    private System.Threading.CancellationTokenSource? _warmCts;
     private int _warmDone;
     private int _warmTotal;
     private volatile string? _warmName;
+    /// <summary>Wall time the Loading screen was (re-)entered — its gates are relative to
+    /// this, since a slot switch can enter Loading long after boot.</summary>
+    private float _loadingSince;
+
+    /// <summary>Title screen state: highlighted slot + a cached summary per slot
+    /// (meta progress or null = empty, plus whether a suspended run exists).</summary>
+    private int _titleCursor;
+    private readonly (MetaSave? Meta, bool HasRun)[] _slotInfo = new (MetaSave?, bool)[SaveSlots.Count];
+
+    /// <summary>Pause menu (Esc during play/space). While open the whole sim freezes.</summary>
+    private bool _pauseOpen;
+    private int _pauseCursor;
 
     public DwarfMinerGame()
     {
