@@ -95,7 +95,8 @@ public sealed class Particles
         {
             if (p.LightRadius <= 0f) continue;
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
-            r.AddLight(p.Position, p.LightRadius * t, p.LightColor);
+            if (p.HeroLight) r.AddHeroLight(p.Position, p.LightRadius * t, p.LightColor);
+            else r.AddLight(p.Position, p.LightRadius * t, p.LightColor);
         }
     }
 
