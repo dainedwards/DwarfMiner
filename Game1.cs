@@ -850,6 +850,7 @@ public sealed partial class DwarfMinerGame : Game
     private void UpdateFrame(GameTime gameTime)
     {
         var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _frameDt = dt;   // for per-frame item actions dispatched by id (see BuildItems)
         var keys = Keyboard.GetState();
         var mouse = Mouse.GetState();
         _totalTime += dt;
