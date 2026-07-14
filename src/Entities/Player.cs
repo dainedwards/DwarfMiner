@@ -910,7 +910,7 @@ public sealed class Player
             var a = theta + sgn * SwingArc * 0.5f;
             return Vector2.Dot(new Vector2(MathF.Cos(a), MathF.Sin(a)), up);
         }
-        SwingFlip = StartUpness(1f) >= StartUpness(-1f) ? 1f : -1f;
+        SwingFlip = StartUpness(1f) >= StartUpness(-1f) ? 1 : -1;
         SwingDuration = SwingTime = MineCooldownFor(tool);
         MineCooldown = SwingDuration;
         SwingLanded = false;
