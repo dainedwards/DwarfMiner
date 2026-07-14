@@ -655,23 +655,31 @@ public sealed class Renderer
     /// the source exactly once — the pattern flows across tile boundaries and terrain reads
     /// as continuous mass. Procedural kinds have four unrelated patterns; parity would tile
     /// them with an obvious 2-tile period, so they keep the hash pick.</summary>
-    /// <summary>The embedded-gem marker: a long vertical diamond in the gem's colour —
-    /// dark-rimmed points tapering to a wide bright waist, a paler inner facet, and a glint
-    /// pixel. Drawn over the host tile's atlas art (8×8 reference coords). The soft light it
-    /// sheds comes from the lighting pass (Game1's ore scan), not here.</summary>
-    private void DrawGemLozenge(Vector2 centre, Vector2 right, Vector2 up, float rotation,
-        float chord, TileKind gem)
+    /// <summary>The embedded-gem marker: a small faceted crystal shard in the gem's colour —
+    /// a dark-rimmed elongated body with diamond tips, a paler facet stripe, and a glint
+    /// pixel. Each sits at its own hash-stable random angle and slight off-centre jitter, so
+    /// a seam of gems reads as shards seated every which way in the rock rather than a row
+    /// of identical uniform markers. Fits inside its 4-px host tile. The soft light it sheds
+    /// comes from the lighting pass (Game1's ore scan), not here.</summary>
+    private void DrawGemCrystal(Vector2 centre, int hash, TileKind gem)
     {
         var body = Tiles.BaseColor(gem);
         var edge = new Color(body.R / 2, body.G / 2, body.B / 2);
         var facet = Tiles.OreSpeckle(gem);
-        DrawDeco(centre, right, up, rotation, chord, 3.5f, 0.5f, 1, 1, edge);    // top point
-        DrawDeco(centre, right, up, rotation, chord, 3, 1.5f, 2, 1.5f, body);    // shoulders
-        DrawDeco(centre, right, up, rotation, chord, 2.5f, 3, 3, 1.5f, body);    // waist (widest)
-        DrawDeco(centre, right, up, rotation, chord, 3, 4.5f, 2, 1.5f, body);    // hips
-        DrawDeco(centre, right, up, rotation, chord, 3.5f, 6f, 1, 1.5f, edge);   // bottom point
-        DrawDeco(centre, right, up, rotation, chord, 3.5f, 2f, 1, 2f, facet);    // inner facet
-        DrawDeco(centre, right, up, rotation, chord, 3f, 2f, 0.7f, 0.7f, Color.White); // glint
+        var ang = ((hash >> 5) & 63) / 64f * MathF.Tau;               // seat angle, hash-stable
+        var axis = new Vector2(-MathF.Sin(ang), MathF.Cos(ang));      // long axis of the shard
+        var perp = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
+        var pos = centre + perp * ((((hash >> 11) & 3) - 1.5f) * 0.3f)
+                         + axis * ((((hash >> 13) & 3) - 1.5f) * 0.3f);
+        // Dark rim first (slightly larger silhouette), then the bright body over it.
+        DrawRect(pos, new Vector2(2.0f, 3.6f), edge, ang);
+        DrawRect(pos + axis * 1.9f, new Vector2(1.5f, 1.5f), edge, ang + MathF.PI / 4f);
+        DrawRect(pos - axis * 1.9f, new Vector2(1.5f, 1.5f), edge, ang + MathF.PI / 4f);
+        DrawRect(pos, new Vector2(1.3f, 3.0f), body, ang);
+        DrawRect(pos + axis * 1.7f, new Vector2(1.0f, 1.0f), body, ang + MathF.PI / 4f);
+        DrawRect(pos - axis * 1.7f, new Vector2(1.0f, 1.0f), body, ang + MathF.PI / 4f);
+        DrawRect(pos + perp * 0.35f, new Vector2(0.5f, 2.0f), facet, ang);   // facet stripe
+        DrawRect(pos + axis * 0.7f - perp * 0.3f, new Vector2(0.6f, 0.6f), Color.White, ang);
     }
 
     /// <summary>The rock a gem tile appears embedded in: the most common of its solid,
