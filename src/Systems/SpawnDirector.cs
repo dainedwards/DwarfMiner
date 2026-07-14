@@ -90,10 +90,11 @@ public static class SpawnDirector
             budget--;
         }
 
-        // Air patrol: two saucers on station over every district.
+        // Air patrol: four saucers on station over every district — a proper picket line
+        // over the skyline, not a token pair.
         foreach (var (ang, half) in planet.CityDistricts)
         {
-            for (var i = 0; i < 2; i++)
+            for (var i = 0; i < 4; i++)
             {
                 var a = ang + ((float)Random.Shared.NextDouble() * 2f - 1f) * half;
                 var ground = FindSurfaceSpawn(planet, a, planet.Radius);
