@@ -747,8 +747,11 @@ public sealed class Particles
             Size = 3f,
             GravityScale = 0f,
             Drag = 0f,
-            LightRadius = 16f,
+            // One-frame hero flash: each shot strobes the cave with hard shadows — the
+            // propagated grid alone made muzzle flashes read as a faint blush.
+            LightRadius = 44f,
             LightColor = color,
+            HeroLight = true,
         });
         for (var i = 0; i < 4; i++)
         {
