@@ -240,7 +240,7 @@ public sealed class InventoryUi
             _invHitTest[id] = rowRect;
 
             // Hover highlight — handy feedback without a full hover system.
-            var mouse = Mouse.GetState();
+            var mouse = Screen.Mouse();
             if (rowRect.Contains(mouse.X, mouse.Y))
                 sb.Draw(renderer.Pixel, rowRect, new Color(120, 130, 200, 60));
 
