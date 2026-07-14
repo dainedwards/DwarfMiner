@@ -1008,7 +1008,7 @@ public sealed class Player
     /// landed in a sky tile and stock was available; null otherwise.</summary>
     public TileKind? TryPlaceBuildId(Planet planet, Physics physics, Vector2 worldCursor, string invId, float dt)
     {
-        if (MineCooldown > 0) return null;
+        if (MineCooldown > 0 || BuildCooldown > 0) return null;
         var d = worldCursor - Position;
         if (d.Length() > EffectiveMineRange) return null;
 
