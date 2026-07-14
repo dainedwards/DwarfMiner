@@ -14,32 +14,49 @@ namespace DwarfMiner.Systems;
 /// </summary>
 public static class SpawnDirector
 {
-    /// <summary>Per-frame population upkeep — the two spawn-timer loops.</summary>
+    /// <summary>Per-frame population upkeep. The world's population is rolled ONCE at load
+    /// (PopulateWorld) — nothing pops into existence around the player any more. The only
+    /// source of new creatures afterwards is the physical spawners: goo piles bubble out
+    /// slimes, warren doors let lizardmen trickle out, city homes send their households
+    /// into the street. Each ticks only inside its activity band and stops while its brood
+    /// cap is alive nearby.</summary>
     public static void Update(float dt, Session run)
     {
-        // Cave dwellers. Cap counts them only — surface/sky fauna have their own loop.
-        run.SpawnTimer -= dt;
-        if (run.SpawnTimer <= 0 && CountKindsNear(run, 550f, cave: true) < run.Def.CaveSpawnCap)
+        foreach (var s in run.Spawners)
         {
-            TrySpawnCreature(run);
-            run.SpawnTimer = 2.3f + (float)Random.Shared.NextDouble() * 1.7f;
-        }
+            s.Timer -= dt;
+            if (s.Timer > 0f) continue;
+            var toPlayer = (s.Position - run.Player.Position).Length();
+            // Too close = visible pop-in; too far = frozen anyway (creature freeze band).
+            if (toPlayer < 100f || toPlayer > 750f) { s.Timer = 3f; continue; }
 
-        // Fauna upkeep: keep the surface grazed and the sky populated. Slow cadence — these
-        // are ambience, not a threat escalation. City streets run at double the herd cap:
-        // a metropolis with six pedestrians reads abandoned.
-        run.FaunaTimer -= dt;
-        if (run.FaunaTimer <= 0)
-        {
-            run.FaunaTimer = 6f + (float)Random.Shared.NextDouble() * 4f;
-            // Plain wildlife caps — city populations are pre-seeded residents, not topped
-            // up here, and standing downtown the resident crowd saturates these anyway.
-            if (CountKindsNear(run, 700f, surface: true) < 7) TrySpawnSurfaceAnimal(run);
-            if (CountKindsNear(run, 700f, sky: true) < 6) TrySpawnSkyAnimal(run);
-            // Lakes get their own small population of aquatic-only life.
-            if (run.Def.HasWater && CountKindsNear(run, 700f, water: true) < 4)
-                TrySpawnAquatic(run);
+            var (kind, cap, interval) = s.Kind switch
+            {
+                SpawnerKind.GooPile    => (CreatureKind.CaveSlime, 3, 22f),
+                SpawnerKind.LizardDoor => (CreatureKind.Lizardman, 2, 60f),   // low rate
+                _                      => (CreatureKind.Civilian, 3, 35f),
+            };
+            if (CountKindNear(run, s.Position, 240f, kind) >= cap) { s.Timer = 8f; continue; }
+
+            var up = run.Planet.UpAt(s.Position);
+            var c = new Creature(s.Position + up * 4f, kind) { Resident = true };
+            if (!HazardRejectsSpawn(run, c.Position, c))
+            {
+                ClearSpawnSpace(run, c.Position, c.Radius);
+                run.Creatures.Add(c);
+            }
+            s.Timer = interval * (0.75f + (float)Random.Shared.NextDouble() * 0.5f);
         }
+    }
+
+    /// <summary>Living population of one kind around a point — the per-spawner brood cap.</summary>
+    private static int CountKindNear(Session run, Vector2 pos, float radius, CreatureKind kind)
+    {
+        var rSq = radius * radius;
+        var n = 0;
+        foreach (var c in run.Creatures)
+            if (c.Kind == kind && (c.Position - pos).LengthSquared() < rSq) n++;
+        return n;
     }
 
     /// <summary>Populate the fresh planet with ambient life: the planet-wide RESIDENT census
