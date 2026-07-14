@@ -886,7 +886,7 @@ public static class SimTest
 
         // --- Splash: a waterfall droplet actually leaves the grid mid-fall ---
         {
-            int r = 170, t = 140;
+            int r = AlignedRing(170, 10), t = 140;
             // Tall open shaft with a solid floor: drop water from the top, watch for a
             // ballistic droplet at any point after the first landing.
             for (var dr = -1; dr <= 9; dr++)
