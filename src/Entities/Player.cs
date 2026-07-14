@@ -236,9 +236,12 @@ public sealed class Player
     /// incoming damage, multiplicative with the craftable armor.</summary>
     public bool HasPlating;
 
-    /// <summary>Damage-take multiplier applied at the entity damage call sites. 1.0 = normal,
-    /// 0.6 = 40% reduction (iron plate armor); foundry plating stacks multiplicatively.</summary>
-    public float DamageTakenMultiplier => (HasArmor ? 0.6f : 1.0f) * (HasPlating ? 0.7f : 1.0f);
+    /// <summary>Damage-take multiplier applied at the entity damage call sites. 1.0 = normal.
+    /// Reduction now comes from what's actually worn on the equipment doll — chest plate 40%,
+    /// helmet/leggings 10% each, boots 5% (full set 65%) — with foundry plating stacking
+    /// multiplicatively on top. Crafting armor auto-equips it, so nothing is lost vs the old
+    /// HasArmor flag; stripping the doll strips the protection.</summary>
+    public float DamageTakenMultiplier => (1f - Equipment.ArmorReduction) * (HasPlating ? 0.7f : 1.0f);
 
     /// <summary>Apply incoming damage with armor scaling. Centralised so all damage paths
     /// (creature contact, boulder, falling chunk, sentry friendly-fire, boss attacks) honour
