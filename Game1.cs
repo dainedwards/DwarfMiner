@@ -2215,6 +2215,95 @@ public sealed partial class DwarfMinerGame : Game
         _run.Shake = MathF.Max(_run.Shake, 0.5f);
     }
 
+    /// <summary>Swing timer for the held melee weapon's arc animation (counts down;
+    /// duration in _meleeAnimDur).</summary>
+    private float _meleeAnim;
+    private float _meleeAnimDur = 1f;
+
+    /// <summary>Per-weapon melee tuning. Damage scales +40% per upgrade rung; rung 4 gains
+    /// mine power — the energy edge carves terrain in the swing arc.</summary>
+    private static (float dmg, float reach, float cd, string family) MeleeBase(string id) => id switch
+    {
+        "sword"        => (14f, 22f, 0.30f, "sword"),
+        "mace"         => (18f, 20f, 0.42f, "mace"),
+        "warhammer"    => (24f, 20f, 0.55f, "hammer"),
+        "shield"       => (6f, 14f, 0.50f, "shield"),
+        "great_sword"  => (26f, 28f, 0.55f, "sword"),
+        "great_mace"   => (32f, 26f, 0.70f, "mace"),
+        "great_hammer" => (40f, 26f, 0.85f, "hammer"),
+        _              => (10f, 16f, 0.60f, "shield"),   // tower_shield bash
+    };
+
+    /// <summary>Rung-4 energy edge colour, by weapon family — the "lightsaber" glow.</summary>
+    private static Color MeleeGlow(string id) => MeleeBase(id).family switch
+    {
+        "sword"  => new Color(120, 225, 255),
+        "mace"   => new Color(255, 120, 230),
+        "hammer" => new Color(255, 170, 80),
+        _        => new Color(140, 255, 160),
+    };
+
+    /// <summary>One melee swing: damages and knocks back every creature in the aim arc
+    /// (the titan too), and at rung 4 the energy edge carves soft terrain along the arc.
+    /// The swing animation is driven by _meleeAnim in the held-weapon draw.</summary>
+    private void MeleeAttack(string id, Vector2 worldCursor)
+    {
+        var dir = worldCursor - _run.Player.Position;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        var tier = Math.Clamp(_run.Player.MeleeTiers.GetValueOrDefault(id, 1), 1, 4);
+        var (baseDmg, reach, cd, _) = MeleeBase(id);
+        var dmg = baseDmg * (1f + 0.4f * (tier - 1));
+        var up = _run.Planet.UpAt(_run.Player.Position);
+
+        foreach (var c in _run.Creatures)
+        {
+            var to = c.Position - _run.Player.Position;
+            var dist = to.Length();
+            if (dist > reach + c.Radius || dist < 0.5f) continue;
+            if (Vector2.Dot(to / dist, dir) < 0.35f) continue;
+            c.Health -= dmg;
+            c.HitFlash = 0.15f;
+            c.Velocity += dir * 150f + up * 50f;
+            _particles.EmitDust(c.Position, 4f);
+        }
+        if (_run.Titan.Health > 0 && _run.Titan.Targetable)
+        {
+            var to = _run.Titan.Position - _run.Player.Position;
+            var dist = to.Length();
+            if (dist < reach + 28f && dist > 0.5f && Vector2.Dot(to / dist, dir) > 0.3f)
+            {
+                _run.Titan.Health -= dmg * 0.9f;
+                _run.Titan.HitFlash = 0.15f;
+            }
+        }
+
+        // Rung 4: the blade shears terrain — two bites along the swing line, sized to the
+        // weapon class ("cut through objects much easier").
+        if (tier >= 4)
+        {
+            var power = id.StartsWith("great") ? 7 : 5;
+            foreach (var frac in new[] { 0.55f, 0.95f })
+            {
+                var at = _run.Player.Position + dir * reach * frac;
+                var (mx, my) = _run.Planet.WorldToTile(at);
+                for (var dy2 = -1; dy2 <= 1; dy2++)
+                    for (var dx2 = -1; dx2 <= 1; dx2++)
+                    {
+                        if (_run.Planet.Mine(mx + dx2, my + dy2, power) is not { } cut) continue;
+                        _run.Cells.SpawnDustInTile(mx + dx2, my + dy2, cut);
+                        _run.Physics.MarkDirty(mx + dx2, my + dy2);
+                        _particles.EmitChips(_run.Planet.TileToWorld(mx + dx2, my + dy2), cut);
+                    }
+            }
+        }
+
+        _run.Player.ShootCooldown = cd;
+        _meleeAnimDur = MathF.Min(0.22f, cd * 0.7f);
+        _meleeAnim = _meleeAnimDur;
+        if (id.StartsWith("great")) _run.Shake = MathF.Max(_run.Shake, 0.15f);
+    }
+
     /// <summary>Lob a torch: it arcs under gravity, sticks to whatever solid it hits, and
     /// burns there — dangling slightly — as a persistent planted light. Throw distance
     /// scales with how far the cursor is, like dynamite.</summary>
