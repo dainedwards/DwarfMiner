@@ -384,7 +384,7 @@ public sealed class Player
         var onLadder = ProbeTileKind(planet, Position) == TileKind.Ladder;
 
         var targetTangent = moveAxis * moveSpeed;
-        var accel = Grounded ? 900f : 320f;   // snappier ground accel; tighter air control
+        var accel = Grounded ? 900f : 220f;   // snappy ground accel; floatier Noita-ish air control
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
 
         // Gravity only applies while airborne. When grounded, skipping it keeps vNormal at 0
