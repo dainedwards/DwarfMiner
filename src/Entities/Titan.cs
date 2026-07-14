@@ -1326,7 +1326,7 @@ public sealed class Titan
         }
 
         if (worm && canMine) _biteTimer = 0.36f;   // was 0.18 — the worm bores rock half as fast
-        if (wrecked) _wreckTimer = 0.2f;   // was 0.3 — titans batter architecture 50% faster
+        if (wrecked) _wreckTimer = 0.12f;  // wrecking cadence — a leaning kaiju levels a wall in moments
     }
 
     /// <summary>Tangent sign (-1/0/+1) pointing the roam at the nearest city tower by
