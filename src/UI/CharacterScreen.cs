@@ -147,7 +147,7 @@ public sealed class CharacterScreen
         var mouse = Screen.Mouse();
 
         const int panelW = 700;
-        const int panelH = 462;
+        const int panelH = 412;
         var px = (viewportWidth - panelW) / 2;
         var py = (viewportHeight - panelH) / 2;
 
