@@ -57,12 +57,28 @@ public sealed class Renderer
     /// scene target the whole frame renders into. See Lighting.SceneTarget.</summary>
     public RenderTarget2D? SceneTarget { set => _lighting.SceneTarget = value; }
 
-    public void BeginLighting(Camera cam, Color ambient) => _lighting.Begin(cam, ambient);
-    public void AddLight(Vector2 worldPos, float radius, Color color) => _lighting.AddPoint(worldPos, radius, color);
-    public void EndLighting() => _lighting.End();
+    /// <summary>The frame's active light grid — every AddLight call seeds it. Game1 owns
+    /// the grid and calls its Begin (occlusion + sun) before the seeding pass, then
+    /// RenderLightGrid to propagate/upload/rasterize into the lightmap.</summary>
+    public LightGrid? Grid;
+
+    /// <summary>Seed a light into the propagated grid. Radius keeps its historical
+    /// meaning (intended reach in world px); occlusion now comes for free — light stops
+    /// at rock instead of shining through it.</summary>
+    public void AddLight(Vector2 worldPos, float radius, Color color) => Grid?.Seed(worldPos, radius, color);
+
+    /// <summary>Propagate the seeded grid and rasterize it into the lightmap RT, ready
+    /// for CompositeLighting/BloomLighting.</summary>
+    public void RenderLightGrid(Camera cam)
+    {
+        if (Grid is null) return;
+        Grid.Propagate();
+        Grid.Upload(_gd);
+        _lighting.RenderGrid(cam, Grid);
+    }
+
     public void CompositeLighting(Point screenSize) => _lighting.Composite(_sb, screenSize);
     public void BloomLighting(Point screenSize, Color tint) => _lighting.Bloom(_sb, screenSize, tint);
-    public void Darken(Vector2 worldPos, float radius, Color color) => _lighting.Darken(worldPos, radius, color);
     public void VignetteScene(Point screenSize) => _lighting.Vignette(_sb, screenSize);
     public void GradeScene(Point screenSize, Color tint) => _lighting.Grade(_sb, _pixel, screenSize, tint);
 
