@@ -72,7 +72,8 @@ public sealed class Renderer
     public void RenderLightGrid(Camera cam)
     {
         if (Grid is null) return;
-        var sw = System.Diagnostics.Stopwatch.StartNew();
+        _lightPerfSw.Restart();
+        var sw = _lightPerfSw;
         Grid.Propagate();
         var tProp = sw.Elapsed.TotalMilliseconds;
         Grid.Upload(_gd);
