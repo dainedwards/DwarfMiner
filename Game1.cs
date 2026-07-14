@@ -202,6 +202,7 @@ public sealed partial class DwarfMinerGame : Game
     private Texture2D _titleLandTex = null!;
     private Texture2D _titlePlanetMap = null!;
     private Texture2D _titlePlanetShade = null!;
+    private Texture2D _titleRingTex = null!;
     private Texture2D _titleSunTex = null!;
     private int[] _titleSurfY = System.Array.Empty<int>();
     /// <summary>Esc on the title asks before quitting.</summary>
