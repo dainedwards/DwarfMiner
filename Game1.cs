@@ -5509,7 +5509,8 @@ public sealed partial class DwarfMinerGame : Game
         if (_charScreen.Open)
             _charScreen.Draw(_renderer, _run.Player, VirtualWidth, VirtualHeight);
         if (_craftingMenu.Open)
-            _craftingMenu.Draw(_renderer, _run.Player.Inventory, IsOwned, VirtualWidth, VirtualHeight);
+            _craftingMenu.Draw(_renderer, _run.Player.Inventory, IsOwned,
+                id => CanAffordId(id), Screen.Mouse(), VirtualWidth, VirtualHeight, _totalTime);
         if (_debugMenu.Open)
             _debugMenu.Draw(_renderer, VirtualWidth, VirtualHeight);
 
