@@ -2285,6 +2285,11 @@ public sealed partial class DwarfMinerGame : Game
     private void OnTileBroken(int x, int y, TileKind bk, MiningTool tool)
     {
         if (Tiles.Drop(bk) is not null) _meta.TotalOreMined++;
+        // Wrecking city architecture is noticed — each broken tower tile stokes the city's
+        // anger a little; keep chewing through apartments and the militia turns on you.
+        if (bk is TileKind.AlienAlloy or TileKind.CityGlass
+            or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp)
+            AddCityWrath(2.5f);
         var depth = _run.Planet.Radius - (int)((_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize);
         if (depth > _meta.DeepestDepth) _meta.DeepestDepth = depth;
         if (tool == MiningTool.Hammer && Tiles.Hardness(bk) >= 4)
