@@ -519,6 +519,89 @@ public static class WorldGen
     /// into acid-proof (and lava-proof) obsidian. Anchored tiles and existing obsidian are left
     /// alone. The shallow depth budget keeps it hugging the reservoir instead of glassing entire
     /// cave systems that merely touch an acid seep.</summary>
+    /// <summary>Noita-style interconnecting tunnels: a couple dozen "perlin worms" wander
+    /// the crust carving narrow winding corridors, each with a chance to fork once. The
+    /// noise caves give chambers; the worms give the paths BETWEEN them — the difference
+    /// between isolated pockets you mine into and a cave system you can travel. Worms stay
+    /// below the dirt band (the surface keeps its skin) and above the deep core, never
+    /// carve anchored tiles or obsidian (acid/volcano linings stay sealed), and simply
+    /// leave those tiles standing as natural dead-ends when they meet one.</summary>
+    private static void CarveWormTunnels(Planet planet, Random rng)
+    {
+        var worms = 20 + rng.Next(9);
+        var minFrac = 0.42f;
+        var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
+        for (var i = 0; i < worms; i++)
+        {
+            var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+            var radiusTiles = MathHelper.Lerp(planet.Radius * minFrac, maxTiles,
+                (float)rng.NextDouble());
+            var start = planet.Center
+                + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
+            CarveWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
+                220 + rng.Next(260), branchBudget: 1);
+        }
+    }
+
+    private static void CarveWorm(Planet planet, Random rng, Vector2 pos, float heading,
+        int length, int branchBudget)
+    {
+        var minRad = planet.Radius * 0.40f * Planet.TileSize;
+        var maxRad = (Planet.RingMin + planet.SurfaceRing - 14f * Planet.LegacyTileScale)
+                     * Planet.TileSize;
+        for (var s = 0; s < length; s++)
+        {
+            // Meander, but steer back toward the band when drifting out of it — the pull
+            // toward/away from the core is what keeps worms lateral (Noita's corridors
+            // wind mostly sideways with dips, not straight radial bores).
+            heading += ((float)rng.NextDouble() - 0.5f) * 0.55f;
+            var rel = pos - planet.Center;
+            var dist = rel.Length();
+            if (dist > maxRad || dist < minRad)
+            {
+                var radial = MathF.Atan2(rel.Y, rel.X);
+                var желаемый = dist > maxRad ? radial + MathF.PI : radial;
+                heading += MathHelper.WrapAngle(желаемый - heading) * 0.18f;
+            }
+            pos += new Vector2(MathF.Cos(heading), MathF.Sin(heading)) * Planet.TileSize;
+            CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 11f : 8f);
+            if (branchBudget > 0 && s > length / 3 && rng.Next(90) == 0)
+            {
+                branchBudget--;
+                CarveWorm(planet, rng, pos,
+                    heading + (rng.Next(2) == 0 ? 1f : -1f) * (0.8f + (float)rng.NextDouble()),
+                    length / 2, 0);
+            }
+        }
+    }
+
+    /// <summary>One worm step's bite: a small disk of soft tiles → Sky. Anchored tiles and
+    /// obsidian stay (containment linings, city foundations, the core).</summary>
+    private static void CarveWormDisk(Planet planet, Vector2 centre, float radius)
+    {
+        var (er, _) = planet.WorldToTile(centre);
+        var span = (int)(radius / Planet.TileSize) + 1;
+        var rel = centre - planet.Center;
+        var ang = MathF.Atan2(rel.Y, rel.X);
+        if (ang < 0) ang += MathHelper.TwoPi;
+        var radiusSq = radius * radius;
+        for (var dr = -span; dr <= span; dr++)
+        {
+            var r = er + dr;
+            if (r < 1 || r >= planet.Rings) continue;
+            var n = planet.TilesAt(r);
+            var t0 = (int)(ang / MathHelper.TwoPi * n);
+            for (var dt = -span * 2; dt <= span * 2; dt++)
+            {
+                var t = ((t0 + dt) % n + n) % n;
+                if ((planet.TileToWorld(r, t) - centre).LengthSquared() > radiusSq) continue;
+                var k = planet.Get(r, t);
+                if (k == TileKind.Sky || Tiles.IsAnchored(k) || k == TileKind.Obsidian) continue;
+                planet.Set(r, t, TileKind.Sky);
+            }
+        }
+    }
+
     private static void LineAcidReservoirs(Planet planet)
     {
         if (planet.AcidSeeds.Count == 0) return;
