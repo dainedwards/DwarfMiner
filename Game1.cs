@@ -1349,7 +1349,8 @@ public sealed partial class DwarfMinerGame : Game
         // stops so the player isn't fighting the game while shopping for upgrades.
         if (_craftingMenu.Open)
         {
-            _craftingMenu.Update(keys, _prevKeys, ApplyCraft);
+            _craftingMenu.Update(keys, _prevKeys, mouse, _prevMouse, IsOwned,
+                id => CanAffordId(id), ApplyCraft);
             _run.Physics.Update(dt);
             _particles.Update(dt, _run.Planet);
             _run.Cells.Update(dt);
