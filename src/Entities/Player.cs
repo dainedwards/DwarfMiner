@@ -438,7 +438,8 @@ public sealed class Player
                 // Noita recharges levitation over a moment on the ground, not instantly.
                 JetCharge = MathF.Min(JetChargeCap, JetCharge + JetChargeCap * dt / JetRefillTime);
             }
-            else if (jumpHeld && !jumpEdge && !onLadder && !InWater && JetCharge > 0f)
+            else if (jumpHeld && !jumpEdge && _jumpHoldTime > 0.2f
+                     && !onLadder && !InWater && JetCharge > 0f)
             {
                 // Above the rise cap (e.g. straight off a jump) the thrust adds nothing —
                 // gravity bleeds the excess naturally instead of snapping the speed down.
