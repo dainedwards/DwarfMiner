@@ -1791,6 +1791,42 @@ public sealed class Creature
     private bool IsGrounded(Planet planet, Vector2 up) =>
         planet.IsSolidAt(Position - up * (Radius + 1.5f));
 
+    /// <summary>Kinds with hands and the sense to use a latch — city folk, warren guards,
+    /// and the bandits (who are, after all, people).</summary>
+    private static bool CanUseDoors(CreatureKind k) =>
+        k is CreatureKind.Civilian or CreatureKind.Peacekeeper or CreatureKind.Lizardman
+          or CreatureKind.Marauder or CreatureKind.Pyro;
+
+    /// <summary>If the probed spot (or head height above it) is a closed door, swing the
+    /// whole contiguous vertical leaf open and report success — the walker strolls through
+    /// instead of turning around.</summary>
+    private bool TryOpenDoorAt(Planet planet, Vector2 up, Vector2 at)
+    {
+        for (var lift = 0f; lift <= 16f; lift += 8f)
+        {
+            var probe = at + up * lift;
+            var (tx, ty) = planet.WorldToTile(probe);
+            if (planet.Get(tx, ty) != TileKind.DoorClosed) continue;
+            SetDoorRun(planet, up, probe, TileKind.DoorOpen);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>Set every door tile in the contiguous vertical run through <paramref name="at"/>.</summary>
+    private static void SetDoorRun(Planet planet, Vector2 up, Vector2 at, TileKind to)
+    {
+        var (tx, ty) = planet.WorldToTile(at);
+        planet.Set(tx, ty, to);
+        foreach (var s in new[] { 1f, -1f })
+            for (var step = 1; step <= 6; step++)
+            {
+                var (nx, ny) = planet.WorldToTile(at + up * (Planet.TileSize * step * s));
+                if (planet.Get(nx, ny) is not (TileKind.DoorClosed or TileKind.DoorOpen)) break;
+                planet.Set(nx, ny, to);
+            }
+    }
+
     /// <summary>Terrain sense for walkers: adjusts a desired walk axis so the creature
     /// navigates instead of grinding. A climbable lip passes through unchanged (GroundMove's
     /// reflex hop handles it); a TALL wall — a building hull, a cliff face — returns 0 and
