@@ -117,6 +117,12 @@ public sealed partial class DwarfMinerGame : Game
     private Vector2? _scanFuel;
     private Vector2? _scanOre;
 
+    /// <summary>Crafted geo-scanner state: the nearest deposit fix per detected material,
+    /// refreshed on its own timer. Drawn as arrows radiating from the player, spaced so they
+    /// never overlap.</summary>
+    private float _geoScanTimer;
+    private readonly List<(TileKind kind, Vector2 pos)> _geoScanHits = new();
+
     /// <summary>Rover loadout menu (L, in orbit): kits bought with cargo stack in the
     /// pending manifest and pay out into the pack on the next drop.</summary>
     private bool _loadoutOpen;
