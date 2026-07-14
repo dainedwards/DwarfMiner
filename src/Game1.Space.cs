@@ -577,9 +577,28 @@ public sealed partial class DwarfMinerGame
     private float _entryBearing;
     private const float EntryCinematicDur = 2.2f;
 
+    /// <summary>DM_ENTRYTEST=1: commit the entry cinematic to the nearest planet on the
+    /// first space frame — tooling can screenshot the dive without flight input.</summary>
+    private bool _entryTestFired;
+
     private void UpdateSpace(KeyboardState keys, MouseState mouse, float dt)
     {
         _toastTimer -= dt;
+
+        if (!_entryTestFired && _entryDef is null
+            && Environment.GetEnvironmentVariable("DM_ENTRYTEST") is { Length: > 0 })
+        {
+            _entryTestFired = true;
+            var (nearest, _) = _space.NearestPlanet();
+            if (nearest is not null)
+            {
+                EnsurePrefetch(nearest.Def);
+                var toShip = _space.ShipPos - nearest.Pos;
+                _entryDef = nearest.Def;
+                _entryBearing = MathF.Atan2(toShip.Y, toShip.X);
+                _entryT = 0f;
+            }
+        }
 
         // Committed atmosphere dive: the ship plunges, the camera closes in, the heat
         // shield glows — and underneath it all the world finishes baking on its thread.
