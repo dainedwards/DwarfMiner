@@ -69,7 +69,7 @@ public sealed partial class DwarfMinerGame
             _run.Player.Toolbelt.AutoEquip(id);
         };
         Action<Vector2> Place(string id) => c =>
-            _run.Player.TryPlaceBuildId(_run.Planet, _run.Physics, c, id);
+            _run.Player.TryPlaceBuildId(_run.Planet, _run.Physics, c, id, _frameDt);
 
         return new Dictionary<string, ItemDef>
         {
