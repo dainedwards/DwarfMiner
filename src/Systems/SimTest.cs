@@ -857,13 +857,13 @@ public static class SimTest
 
         // --- Fire: a flame dropped on an oil pool burns it away, then dies out itself ---
         {
-            int r = 150, t = 100;
+            int r = AlignedRing(150, 4), t = 100;
             // Sealed single-column pocket so the pool can't spread away from the flames:
             // a full tile of oil with two tiles of air above it, roofed.
             for (var dr = -1; dr <= 3; dr++)
-                for (var da = -1; da <= 1; da++)
+                for (var da = -2; da <= 2; da++)
                     planet.Set(r + dr, t + da,
-                        dr is -1 or 3 || da is -1 or 1 ? TileKind.Granite : TileKind.Sky);
+                        dr is -1 or 3 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
             cells.FillTile(r, t, Material.Oil);
             int CountColumn(Material m)
             {
