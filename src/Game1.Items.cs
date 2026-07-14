@@ -218,6 +218,28 @@ public sealed partial class DwarfMinerGame
                 Blocked = () => _run.Player.PickaxeTier < 3,
                 OnCraft = () => _run.Player.PickaxeTier = 4,
             },
+            // Geo-scanner tiers: sequential like the pickaxe. Each rung widens what the HUD
+            // arrows detect (ores → metals → gems → super-rare). No belt slot — it's a
+            // passive sense once crafted.
+            ["scanner"] = new() { Owned = () => _run.Player.ScannerTier >= 1, OnCraft = () => _run.Player.ScannerTier = 1 },
+            ["scanner_ii"] = new()
+            {
+                Owned = () => _run.Player.ScannerTier >= 2,
+                Blocked = () => _run.Player.ScannerTier < 1,
+                OnCraft = () => _run.Player.ScannerTier = 2,
+            },
+            ["scanner_iii"] = new()
+            {
+                Owned = () => _run.Player.ScannerTier >= 3,
+                Blocked = () => _run.Player.ScannerTier < 2,
+                OnCraft = () => _run.Player.ScannerTier = 3,
+            },
+            ["scanner_iv"] = new()
+            {
+                Owned = () => _run.Player.ScannerTier >= 4,
+                Blocked = () => _run.Player.ScannerTier < 3,
+                OnCraft = () => _run.Player.ScannerTier = 4,
+            },
             // Carried-light ladder — steps sequentially like pickaxe tiers. Each light is a
             // real item now: it lands in the backpack and the doll's torch slot, and only
             // sheds light while equipped there (LightTier stays the crafted-rung gate).
