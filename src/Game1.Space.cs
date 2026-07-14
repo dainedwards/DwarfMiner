@@ -588,15 +588,21 @@ public sealed partial class DwarfMinerGame
         if (!_entryTestFired && _entryDef is null
             && Environment.GetEnvironmentVariable("DM_ENTRYTEST") is { Length: > 0 })
         {
-            _entryTestFired = true;
+            // Mimic a real approach: the prefetch starts immediately (as it would when the
+            // planet comes into aim range), the entry commits after the flight time a real
+            // approach would take — so the bake gets its usual lead.
             var (nearest, _) = _space.NearestPlanet();
             if (nearest is not null)
             {
                 EnsurePrefetch(nearest.Def);
-                var toShip = _space.ShipPos - nearest.Pos;
-                _entryDef = nearest.Def;
-                _entryBearing = MathF.Atan2(toShip.Y, toShip.X);
-                _entryT = 0f;
+                if (_toastTimer < -8f)   // ~8s after the space screen went quiet
+                {
+                    _entryTestFired = true;
+                    var toShip = _space.ShipPos - nearest.Pos;
+                    _entryDef = nearest.Def;
+                    _entryBearing = MathF.Atan2(toShip.Y, toShip.X);
+                    _entryT = 0f;
+                }
             }
         }
 
