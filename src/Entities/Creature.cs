@@ -362,7 +362,10 @@ public sealed class Creature
     public bool ImmuneTo(Material m) => m switch
     {
         Material.Water => Swims || IsWaterKind,
-        Material.Lava or Material.Fire => Kind is CreatureKind.MagmaSlug or CreatureKind.CinderSkink,
+        // The pyro's suit is rated for its own hose (fire only — lava still cooks it).
+        Material.Fire => Kind is CreatureKind.MagmaSlug or CreatureKind.CinderSkink
+            or CreatureKind.Pyro,
+        Material.Lava => Kind is CreatureKind.MagmaSlug or CreatureKind.CinderSkink,
         Material.Acid => Kind is CreatureKind.AcidStrider or CreatureKind.AcidSpitter,
         _ => true,
     };
