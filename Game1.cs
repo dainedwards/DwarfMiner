@@ -1376,7 +1376,7 @@ public sealed partial class DwarfMinerGame : Game
         // world keeps ticking but player control is suspended until a boss is picked or it closes.
         if (_debugMenu.Open)
         {
-            _debugMenu.Update(keys, _prevKeys);
+            _debugMenu.Update(keys, _prevKeys, mouse, _prevMouse);
             _run.Physics.Update(dt);
             _particles.Update(dt, _run.Planet);
             _run.Cells.Update(dt);
