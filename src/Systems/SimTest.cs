@@ -803,9 +803,18 @@ public static class SimTest
         var cells = new Cells(planet);
         const float dt = 1f / 60f;
 
+        // Hand-carved pockets need every ring they span to share one tile count — across a
+        // band-halving boundary a constant tile index skews in angle and the "walls" leak.
+        int AlignedRing(int start, int span)
+        {
+            var r = start;
+            while (planet.TilesAt(r - 1) != planet.TilesAt(r + span)) r++;
+            return r;
+        }
+
         // --- Flying cells: ejected sand arcs out and every grain lands back in the grid ---
         {
-            int r = 110, t = 40;
+            int r = AlignedRing(110, 4), t = 40;
             // Sealed box: solid floor, 3 tiles of headroom, walls both sides.
             for (var dr = -1; dr <= 3; dr++)
                 for (var da = -2; da <= 2; da++)
