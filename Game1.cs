@@ -5063,13 +5063,19 @@ public sealed partial class DwarfMinerGame : Game
                     _renderer.DrawCircle(p.Position, p.Radius * 0.6f, Color.White);
                     break;
                 case ProjectileKind.Dynamite:
+                case ProjectileKind.DynamitePack:
                 {
-                    // Stick-of-dynamite sprite oriented along velocity. Fuse tip flickers.
+                    // Stick (or fatter bundle) oriented along velocity, fuse tip flickering
+                    // faster as the 3s timer runs down so you can read the bang coming.
+                    var pack = p.Kind == ProjectileKind.DynamitePack;
                     var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
-                    _renderer.DrawRect(p.Position, new Vector2(7f, 2.5f), new Color(180, 40, 50), ang);
-                    _renderer.DrawRect(p.Position, new Vector2(7f, 1f), new Color(120, 20, 30), ang);
-                    var fuseFlicker = (MathF.Sin(_run.RunTime * 50f) * 0.5f + 0.5f);
-                    var fuseTip = p.Position + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * 4f;
+                    var w = pack ? 8f : 7f;
+                    var h = pack ? 5f : 2.5f;
+                    _renderer.DrawRect(p.Position, new Vector2(w, h), new Color(180, 40, 50), ang);
+                    _renderer.DrawRect(p.Position, new Vector2(w, h * 0.4f), new Color(120, 20, 30), ang);
+                    var strobe = 30f + MathF.Max(0f, 3f - p.Life) * 30f;
+                    var fuseFlicker = MathF.Sin(_run.RunTime * strobe) * 0.5f + 0.5f;
+                    var fuseTip = p.Position + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (w * 0.55f);
                     _renderer.DrawCircle(fuseTip, 1.2f + fuseFlicker * 0.6f, new Color(255, 200, 100));
                     break;
                 }
