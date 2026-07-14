@@ -282,6 +282,7 @@ public static class Tiles
         "rocket_launcher" => new Color(180, 150, 110),
         "poultice"    => new Color(120, 180, 110),
         "ladder"      => BaseColor(TileKind.Ladder),
+        "door"        => BaseColor(TileKind.DoorClosed),
         "rail"        => BaseColor(TileKind.Rail),
         "reinforced_support" => BaseColor(TileKind.ReinforcedSupport),
         "glowshroom"  => BaseColor(TileKind.Glowshroom),
