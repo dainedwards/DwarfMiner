@@ -389,6 +389,8 @@ public static class Tiles
         // Player-built tiles drop their craft input back when mined — lets you reposition
         // a misplaced ladder / torch without losing the resource.
         TileKind.Ladder => ("ladder", 1),
+        TileKind.DoorClosed => ("door", 1),
+        TileKind.DoorOpen => ("door", 1),
         TileKind.Rail => ("rail", 1),
         TileKind.ReinforcedSupport => ("reinforced_support", 1),
         TileKind.Glowshroom => ("glowshroom", 1),
