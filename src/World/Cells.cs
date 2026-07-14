@@ -380,8 +380,7 @@ public sealed class Cells
         }
         for (var dy = 0; dy < Density; dy++)
             for (var dx = 0; dx < Density; dx++)
-                if (((dx + dy) & 1) == 0)
-                    Place(c0x + dx, c0y + dy, Material.Dust, src);
+                Place(c0x + dx, c0y + dy, Material.Dust, src);
     }
 
     /// <summary>Fill every sub-cell of the polar tile with material — used for water seeding
