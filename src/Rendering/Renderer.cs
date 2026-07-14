@@ -67,9 +67,18 @@ public sealed class Renderer
     /// at rock instead of shining through it.</summary>
     public void AddLight(Vector2 worldPos, float radius, Color color) => Grid?.Seed(worldPos, radius, color);
 
-    /// <summary>Propagate the seeded grid and rasterize it into the lightmap RT, ready
-    /// for CompositeLighting/BloomLighting.</summary>
-    public void RenderLightGrid(Camera cam)
+    /// <summary>This frame's ray-cast hero lights (carried lamp, explosion cores, muzzle
+    /// flashes) — collected here, drawn and cleared in RenderLightGrid. See
+    /// Lighting.RenderHeroLights.</summary>
+    private readonly List<(Vector2 pos, float radius, Color color)> _heroLights = new();
+    public void AddHeroLight(Vector2 worldPos, float radius, Color color)
+    {
+        if (radius > 2f) _heroLights.Add((worldPos, radius, color));
+    }
+
+    /// <summary>Propagate the seeded grid, rasterize it into the lightmap RT, then cut the
+    /// hero lights' shadow fans over it — ready for CompositeLighting/BloomLighting.</summary>
+    public void RenderLightGrid(Camera cam, Planet planet)
     {
         if (Grid is null) return;
         _lightPerfSw.Restart();
@@ -79,6 +88,8 @@ public sealed class Renderer
         Grid.Upload(_gd);
         var tUp = sw.Elapsed.TotalMilliseconds - tProp;
         _lighting.RenderGrid(cam, Grid);
+        _lighting.RenderHeroLights(_heroLights, planet);
+        _heroLights.Clear();
         var tRas = sw.Elapsed.TotalMilliseconds - tUp - tProp;
         if (Environment.GetEnvironmentVariable("DM_LIGHTPERF") is { Length: > 0 } && ++_lightPerfN % 60 == 0)
             Console.WriteLine($"[lightperf] begin {LightGridBeginMs:0.00} prop {tProp:0.00} upload {tUp:0.00} raster {tRas:0.00}");
