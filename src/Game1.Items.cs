@@ -191,7 +191,7 @@ public sealed partial class DwarfMinerGame
             // ─── Consumables ──────────────────────────────────────────────────────
             ["poultice"] = new() { Ammo = "poultice", Use = _ => UseHealPotion() },
             ["feast"]    = new() { Ammo = "feast",    Use = _ => UseFeast() },
-            ["sentry"]   = new() { Ammo = "sentry",   Use = _ => PlaceSentryAtFeet() },
+            ["sentry"]   = new() { Ammo = "sentry", NeedsCooldown = true, Use = _ => PlaceSentryAtFeet() },
 
             // ─── Placeable build tiles ────────────────────────────────────────────
             ["support"]            = new() { Use = Place("support") },
