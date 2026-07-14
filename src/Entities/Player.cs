@@ -1017,16 +1017,46 @@ public sealed class Toolbelt
     {
         Slots[0] = "pickaxe";
         Slots[1] = "bullets";
-        Slots[2] = "blocks";
+        Slots[4] = "blocks";   // slot 5 on the HUD — the first general-item slot
     }
 
-    /// <summary>Place <paramref name="id"/> into the first empty slot. No-op if the id is
-    /// already on the belt or the belt is full. Returns true on placement.</summary>
+    /// <summary>The crafted melee arsenal (one- and two-handed) — weapon-slot items with
+    /// per-weapon upgrade rungs in Player.MeleeTiers.</summary>
+    public static readonly string[] MeleeIds =
+        { "sword", "mace", "warhammer", "shield", "great_sword", "great_mace", "great_hammer", "tower_shield" };
+
+    public static bool IsMiningToolId(string id) =>
+        id is "pickaxe" or "drill" or "hammer" or "mining_laser";
+
+    /// <summary>Everything the weapon slots (2-4 on the HUD) accept: firearms, throwables,
+    /// the intrinsic bullets, and the melee arsenal.</summary>
+    public static bool IsWeaponSlotId(string id)
+    {
+        if (id is "bullets" or "pistol" or "machine_gun" or "laser" or "laser_cannon"
+            or "rocket_launcher" or "cannon" or "flamethrower" or "acid_spewer"
+            or "lightning_gun" or "dynamite" or "tnt" or "harpoon" or "nuke") return true;
+        foreach (var m in MeleeIds) if (m == id) return true;
+        return false;
+    }
+
+    /// <summary>Hotbar layout rule: slot 1 (index 0) is the mining tool, slots 2-4 are
+    /// weapons, slots 5-9 are general items; the overflow slots past 9 take anything
+    /// (god-mode armoury spill, spares).</summary>
+    public static bool SlotAccepts(int slot, string id)
+    {
+        if (slot == 0) return IsMiningToolId(id);
+        if (slot <= 3) return IsWeaponSlotId(id);
+        if (slot <= 8) return !IsMiningToolId(id) && !IsWeaponSlotId(id);
+        return true;
+    }
+
+    /// <summary>Place <paramref name="id"/> into the first empty slot that accepts it.
+    /// No-op if the id is already on the belt or no fitting slot is free.</summary>
     public bool AutoEquip(string id)
     {
         for (var i = 0; i < SlotCount; i++) if (Slots[i] == id) return false;
         for (var i = 0; i < SlotCount; i++)
-            if (Slots[i] is null) { Slots[i] = id; return true; }
+            if (Slots[i] is null && SlotAccepts(i, id)) { Slots[i] = id; return true; }
         return false;
     }
 
