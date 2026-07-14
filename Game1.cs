@@ -160,6 +160,21 @@ public sealed partial class DwarfMinerGame : Game
     private const int VirtualWidth = 1280;
     private const int VirtualHeight = 720;
 
+    /// <summary>The fixed 1280×720 scene target every frame renders into; presented scaled
+    /// (aspect-fit, letterboxed) to whatever the real window/display size is. All UI code
+    /// keeps its hardcoded virtual coordinates; Screen maps the mouse back.</summary>
+    private RenderTarget2D _sceneRt = null!;
+    /// <summary>Reentrancy guard for the ClientSizeChanged → ApplyChanges round-trip.</summary>
+    private bool _resizing;
+
+    /// <summary>Boot-time survey warm-up (one world generated per planet, for the system
+    /// view's terrain discs and the M-key ore census). The load screen holds until it
+    /// completes so the generation never contends with live play.</summary>
+    private System.Threading.Tasks.Task? _warmTask;
+    private int _warmDone;
+    private int _warmTotal;
+    private volatile string? _warmName;
+
     public DwarfMinerGame()
     {
         _graphics = new GraphicsDeviceManager(this)
