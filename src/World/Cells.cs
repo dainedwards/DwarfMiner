@@ -1602,14 +1602,15 @@ public sealed class Cells
             for (var dx = -rCols; dx <= rCols; dx++)
             {
                 var m = (Material)_mat[Idx(cx0 + dx, cy)];
-                if (m != Material.Lava && m != Material.Acid && m != Material.Gas) continue;
+                if (m != Material.Lava && m != Material.Acid && m != Material.Gas && m != Material.Fire) continue;
                 if (Vector2.DistanceSquared(CellToWorld(cx0 + dx, cy), worldPos) > rSq) continue;
                 if (m == Material.Lava) lava++;
                 else if (m == Material.Acid) acid++;
+                else if (m == Material.Fire) fire++;
                 else gas++;
             }
         }
-        return (lava, acid, gas);
+        return (lava, acid, gas, fire);
     }
 
     /// <summary>Water cell count within a world-space radius — the immersion probe behind
