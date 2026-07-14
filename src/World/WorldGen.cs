@@ -565,7 +565,10 @@ public static class WorldGen
                         var tt = ((tt0 + dt2) % n + n) % n;
                         if ((planet.TileToWorld(rr, tt) - pos).LengthSquared() > rad * rad) continue;
                         var k = planet.Get(rr, tt);
-                        if (!IsOreHost(k) || Tiles.IsOre(k)) continue;
+                        // Common rock only — never obsidian (acid/volcano linings must stay
+                        // sealed), never existing ore/gem, never anchored architecture.
+                        if (!IsOreHost(k) || Tiles.IsOre(k) || k == TileKind.Obsidian) continue;
+                        if (planet.GemAt(rr, tt) != TileKind.Sky) continue;
                         planet.Set(rr, tt, ore);
                     }
                 }
