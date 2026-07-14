@@ -3143,14 +3143,22 @@ public sealed partial class DwarfMinerGame : Game
             return;
         }
 
-        // Airless worlds (the Hollow): no atmosphere means no free-breathing band at all —
-        // the tank drains from the first tile underground, and even at the surface only the
-        // suit's slow starlight recycler tops it back up.
+        // Worlds WITH an atmosphere breathe freely at any depth now — caves carry air.
+        // (Water is its own system: the breath meter handles submersion; gas pockets still
+        // choke via the gas hazard's direct drain.) Only the airless rocks — the Hollow,
+        // the moon — ration the tank: no free-breathing band at all, the tank drains from
+        // the first tile underground, and even at the surface only the suit's slow
+        // starlight recycler tops it back up.
         var airless = _run.Def.Airless;
+        if (!airless)
+        {
+            p.Oxygen = MathF.Min(max, p.Oxygen + OxygenRules.RefillRate * dt);
+            return;
+        }
         var depth = DepthBelowSurface();
         if (OxygenRules.AtSurfaceAir(depth, airless))
             p.Oxygen = MathF.Min(max, p.Oxygen
-                + OxygenRules.RefillRate * (airless ? OxygenRules.AirlessRefillFrac : 1f) * dt);
+                + OxygenRules.RefillRate * OxygenRules.AirlessRefillFrac * dt);
         else
             p.Oxygen = MathF.Max(0f, p.Oxygen
                 - OxygenRules.DrainPerSecond(depth, _run.Def.OxygenDrainScale, airless) * dt);
