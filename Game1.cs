@@ -193,7 +193,22 @@ public sealed partial class DwarfMinerGame : Game
         IsFixedTimeStep = true;
         TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
         Window.Title = "Dwarf Miner";
-        Window.AllowUserResizing = false;
+        // The scene renders at the fixed virtual resolution and scales to the window, so
+        // the window itself is free to be any size (drag-resize or F11 fullscreen).
+        Window.AllowUserResizing = true;
+        Window.ClientSizeChanged += (_, _) =>
+        {
+            if (_resizing || _graphics.IsFullScreen) return;
+            _resizing = true;
+            var b = Window.ClientBounds;
+            if (b.Width > 0 && b.Height > 0)
+            {
+                _graphics.PreferredBackBufferWidth = b.Width;
+                _graphics.PreferredBackBufferHeight = b.Height;
+                _graphics.ApplyChanges();
+            }
+            _resizing = false;
+        };
         // Item table lambdas capture `this` (they read _run at call time), so this can't be
         // a field initializer — C# forbids `this` there.
         _items = BuildItems();
