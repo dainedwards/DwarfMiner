@@ -276,7 +276,8 @@ public static class Tiles
         "nuke", "harpoon",
         "ammo_diamond", "ammo_sapphire", "ammo_ruby", "ammo_silver",
         "rocket", "tnt", "tnt_pack", "dynamite", "dynamite_pack", "poultice",
-        "ladder", "door", "rail", "reinforced_support", "glowshroom", "beacon", "sentry",
+        "ladder", "door", "platform", "brick", "plating", "glass_block",
+        "rail", "reinforced_support", "glowshroom", "beacon", "sentry",
         "obsidian", "granite", "basalt", "moss_stone", "gravel",
         "stone", "dirt", "snow",
     };
