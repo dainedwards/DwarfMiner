@@ -1131,6 +1131,20 @@ public sealed partial class DwarfMinerGame : Game
         // and uses the held state for variable jump height (hold for full apex, tap for short).
         var jumpHeld = keys.IsKeyDown(Keys.Space) || keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up);
 
+        // DM_JETTEST=<1-4>: tooling hook — grants+equips that jetpack tier and holds jump
+        // forever, so headless runs can screenshot the hover physics and each tier's
+        // exhaust colour without input access.
+        if (Environment.GetEnvironmentVariable("DM_JETTEST") is { Length: > 0 } jetTest
+            && int.TryParse(jetTest, out var jetTier))
+        {
+            var p = _run.Player;
+            p.HasJetpack = true;
+            p.JetTier2 = jetTier >= 2; p.JetTier3 = jetTier >= 3; p.JetTier4 = jetTier >= 4;
+            if (p.Inventory.Count("jetpack") == 0) p.Inventory.Add("jetpack", 1);
+            p.Equipment.AutoEquip("jetpack");
+            jumpHeld = true;
+        }
+
         // Vertical input for fly mode: W/Up = ascend, S/Down = descend along local up.
         var verticalAxis = 0;
         if (keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up)) verticalAxis += 1;
