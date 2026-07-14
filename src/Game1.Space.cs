@@ -444,6 +444,57 @@ public sealed partial class DwarfMinerGame
     /// DM_ZOOM may have overridden the default).</summary>
     private float _playZoom = 4.0f;
 
+    /// <summary>The atmosphere-entry overlay: heat streaks rushing past, a pulsing shield
+    /// glow at the screen edges, and the destination callout — the show that covers the
+    /// last of the world bake. Streaks are hash-positioned and driven by the entry clock,
+    /// so there's no particle state to manage.</summary>
+    private void DrawAtmosphereEntry()
+    {
+        if (_entryDef is not { } def) return;
+        var t = _entryT;
+        var ramp = MathHelper.Clamp(t / 0.8f, 0f, 1f);
+        var centre = new Vector2(VirtualWidth / 2f, VirtualHeight / 2f);
+        var sb = _renderer.Batch;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        // Heat streaks: radial lines racing outward from the dive vector's vanishing point.
+        for (var i = 0; i < 52; i++)
+        {
+            var h = (uint)(i * 2654435761);
+            var ang = (h % 6283u) / 1000f;
+            var phase = (h >> 8) % 560;
+            var speed = 340f + (h >> 16) % 420;
+            var prog = (t * speed + phase) % 620f;
+            var pos = centre + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * prog;
+            var len = 24f + prog * 0.55f;
+            var alpha = ramp * MathHelper.Clamp(prog / 620f, 0.12f, 0.85f);
+            var col = Color.Lerp(new Color(255, 190, 110), Color.White, i % 5 / 5f) * alpha;
+            sb.Draw(_renderer.Pixel, pos, null, col, ang,
+                new Vector2(0f, 0.5f), new Vector2(len, 1.4f), SpriteEffects.None, 0f);
+        }
+        // Heat-shield glow hugging the screen edges, throbbing with the rattle.
+        var edge = new Color(255, 120, 40)
+            * (0.38f * ramp * (0.7f + 0.3f * MathF.Sin(t * 9f)));
+        sb.Draw(_renderer.Pixel, new Rectangle(0, 0, VirtualWidth, 30), edge);
+        sb.Draw(_renderer.Pixel, new Rectangle(0, VirtualHeight - 30, VirtualWidth, 30), edge);
+        sb.Draw(_renderer.Pixel, new Rectangle(0, 0, 30, VirtualHeight), edge);
+        sb.Draw(_renderer.Pixel, new Rectangle(VirtualWidth - 30, 0, 30, VirtualHeight), edge);
+        sb.End();
+
+        var msg = $"ENTERING {def.Name.ToUpperInvariant()} ATMOSPHERE";
+        _renderer.DrawText(msg,
+            new Vector2((VirtualWidth - _renderer.MeasureText(msg, 2)) / 2f, VirtualHeight * 0.30f),
+            new Color(255, 220, 150) * ramp, 2);
+        // Past the cinematic and the world is still baking: say so rather than stall silently.
+        if (t >= EntryCinematicDur)
+        {
+            var dots = new string('.', 1 + (int)(t * 3f) % 3);
+            var wait = "PREPARING LANDING ZONE" + dots;
+            _renderer.DrawText(wait,
+                new Vector2((VirtualWidth - _renderer.MeasureText(wait)) / 2f, VirtualHeight * 0.30f + 26),
+                new Color(190, 200, 220));
+        }
+    }
+
     /// <summary>Switch to the space screen with the mothership parked at a planet. Launch
     /// handoffs pass an exit speed and start the camera at planet scale so docking reads as
     /// one motion.</summary>
