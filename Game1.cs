@@ -2564,8 +2564,8 @@ public sealed partial class DwarfMinerGame : Game
         var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 5f, dir * 190f, 120f, 2.5f,
-            ProjectileKind.TntPack));
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 5f,
+            dir * ThrowSpeed(150f, 320f), 120f, 3.0f, ProjectileKind.TntPack));
         _run.Player.ShootCooldown = 0.6f;
     }
 
