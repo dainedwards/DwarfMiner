@@ -139,6 +139,91 @@ public sealed partial class DwarfMinerGame
             "SSS",
             "ddd",
             ".n.");
+
+        // Melee arsenal: one texture per upgrade rung — iron → polished steel → gilded →
+        // the rung-4 energy edge (near-white metal the lighting pass makes glow). All art
+        // points +X like the guns.
+        var meleeTiers = new (Color L, Color D, Color E)[]
+        {
+            (new Color(150, 155, 170), new Color(95, 100, 115), new Color(185, 190, 205)),  // iron
+            (new Color(205, 210, 225), new Color(135, 140, 155), new Color(240, 244, 252)), // steel
+            (new Color(235, 200, 95),  new Color(165, 130, 55),  new Color(255, 240, 170)), // gilded
+            (new Color(150, 240, 255), new Color(80, 190, 225),  new Color(255, 255, 255)), // energy
+        };
+        void Melee(string id, string[] rows)
+        {
+            for (var t = 0; t < 4; t++)
+            {
+                var (l, d2, e) = meleeTiers[t];
+                _weaponTex[$"{id}_t{t + 1}"] = Renderer.BuildSprite(GraphicsDevice, rows,
+                    new Dictionary<char, Color>
+                    {
+                        ['.'] = Color.Transparent,
+                        ['w'] = new Color(105, 75, 50),
+                        ['k'] = new Color(70, 48, 30),
+                        ['M'] = l, ['x'] = d2, ['E'] = e,
+                    });
+            }
+        }
+        Melee("sword", new[]
+        {
+            "..x.........",
+            "wwxMMMMMMME.",
+            "..x.........",
+        });
+        Melee("great_sword", new[]
+        {
+            "...x............",
+            "wwkxMMMMMMMMMME.",
+            "wwkxMMMMMMMMME..",
+            "...x............",
+        });
+        Melee("mace", new[]
+        {
+            ".........E...",
+            "........xMMx.",
+            "wwwwwwwwMMMME",
+            "........xMMx.",
+            ".........E...",
+        });
+        Melee("great_mace", new[]
+        {
+            "...........E....",
+            "..........xMMMx.",
+            "wwkwwkwwwwMMMMME",
+            "..........xMMMx.",
+            "...........E....",
+        });
+        Melee("warhammer", new[]
+        {
+            "........xMME",
+            "wwwwwwwwMMME",
+            "........xMME",
+        });
+        Melee("great_hammer", new[]
+        {
+            "..........xMMME",
+            "wwkwwkwwwwMMMME",
+            "wwkwwkwwwwMMMME",
+            "..........xMMME",
+        });
+        Melee("shield", new[]
+        {
+            ".xE",
+            "xME",
+            "MME",
+            "xME",
+            ".xE",
+        });
+        Melee("tower_shield", new[]
+        {
+            "xME",
+            "MME",
+            "MME",
+            "MME",
+            "MME",
+            "xME",
+        });
         // Swung tools — handle along +X with the head at the far end, vertically symmetric
         // so the swing draw can rotate through the full arc without any flip bookkeeping.
         // The pick head is a thin ")" arc bowed away from the handle with twin tips curling
