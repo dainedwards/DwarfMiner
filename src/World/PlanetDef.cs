@@ -172,7 +172,7 @@ public static class PlanetDefs
         },
         QuakeScale: 0.45f, CaveSpawnCap: 20,
         ShipOre: "gold", ShipOreCount: 3,
-        OxygenDrainScale: 1.5f, SeedsGas: true, SeedsAcid: true,
+        OxygenDrainScale: 1.5f, SeedsGas: true, SeedsAcid: true, SeedsOil: true,
         Titan: TitanKind.Godzilla,
         CrystalPockets: 3, FungalPockets: 3,
         SizeScale: 1.8f, LakeScale: 1.4f,
