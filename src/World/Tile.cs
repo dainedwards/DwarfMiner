@@ -386,6 +386,7 @@ public static class Tiles
         "machine_gun"        => "MACHINE GUN",
         "tnt_pack"           => "TNT PACK",
         "dynamite_pack"      => "DYNAMITE PACK",
+        "glass_block"        => "GLASS BLOCK",
         "rocket_launcher"    => "ROCKET LAUNCHER",
         "chitin_armor"       => "CHITIN ARMOR",
         "armor"              => "IRON PLATE ARMOR",
