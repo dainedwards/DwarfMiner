@@ -4548,6 +4548,7 @@ public sealed partial class DwarfMinerGame : Game
         if (_orbiting && _loadoutOpen) DrawLoadoutMenu(_renderer.Batch);
         if (_screen == GameScreen.GameOver) DrawGameOverOverlay();
         DrawTransitionFlash();
+        DrawPauseMenu();
         DrawFpsOverlay();
 
         if (_screenshotPending)
