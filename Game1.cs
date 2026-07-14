@@ -1544,6 +1544,9 @@ public sealed partial class DwarfMinerGame : Game
             var k = Keys.D1 + s;
             if (Pressed(keys, _prevKeys, k)) _run.Player.Toolbelt.Selected = s;
         }
+        // The "0" key selects the tenth slot (index 9), sitting after 1-9 on the number row.
+        if (Toolbelt.SlotCount > 9 && Pressed(keys, _prevKeys, Keys.D0))
+            _run.Player.Toolbelt.Selected = 9;
         // Mouse-wheel cycles selection — handy for fast tool swaps without leaving the home row.
         if (mouse.ScrollWheelValue != _prevMouse.ScrollWheelValue)
         {
