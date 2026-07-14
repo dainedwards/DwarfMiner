@@ -179,7 +179,26 @@ public sealed partial class DwarfMinerGame
                 Blocked = () => _run.Player.PickaxeTier < 3,
                 OnCraft = () => _run.Player.PickaxeTier = 4,
             },
-            ["lantern"]      = new() { Owned = () => _run.Player.HasLantern, OnCraft = () => _run.Player.HasLantern = true },
+            // Carried-light ladder — steps sequentially like pickaxe tiers.
+            ["torch"] = new() { Owned = () => _run.Player.LightTier >= 1, OnCraft = () => _run.Player.LightTier = 1 },
+            ["lantern"] = new()
+            {
+                Owned = () => _run.Player.LightTier >= 2,
+                Blocked = () => _run.Player.LightTier < 1,
+                OnCraft = () => _run.Player.LightTier = 2,
+            },
+            ["helm_lamp"] = new()
+            {
+                Owned = () => _run.Player.LightTier >= 3,
+                Blocked = () => _run.Player.LightTier < 2,
+                OnCraft = () => _run.Player.LightTier = 3,
+            },
+            ["sun_crystal"] = new()
+            {
+                Owned = () => _run.Player.LightTier >= 4,
+                Blocked = () => _run.Player.LightTier < 3,
+                OnCraft = () => _run.Player.LightTier = 4,
+            },
             ["armor"]        = new() { Owned = () => _run.Player.HasArmor,   OnCraft = () => _run.Player.HasArmor = true },
             ["chitin_armor"] = new() { Owned = () => _run.Player.HasArmor,   OnCraft = () => _run.Player.HasArmor = true },
             // Air tank tops the supply to the new (doubled) ceiling on craft, so it's an
