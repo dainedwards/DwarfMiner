@@ -794,6 +794,113 @@ public static class SimTest
         return graniteMelted && planet2.Get(r, t) == TileKind.Obsidian;
     }
 
+    /// <summary>The Noita layer: flying cells conserve their material back into the grid,
+    /// oil separates under water and burns away under open flame, and fire always gutters
+    /// out rather than raging forever. Hand-carved pockets, same style as TestHazards.</summary>
+    private static void TestNoitaFeel()
+    {
+        var planet = WorldGen.Generate(77);
+        var cells = new Cells(planet);
+        const float dt = 1f / 60f;
+
+        // --- Flying cells: ejected sand arcs out and every grain lands back in the grid ---
+        {
+            int r = 110, t = 40;
+            // Sealed box: solid floor, 3 tiles of headroom, walls both sides.
+            for (var dr = -1; dr <= 3; dr++)
+                for (var da = -2; da <= 2; da++)
+                    planet.Set(r + dr, t + da,
+                        dr is -1 or 3 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
+            cells.FillTile(r, t, Material.Sand);
+            int CountSand()
+            {
+                var n = 0;
+                for (var dr = 0; dr < 3; dr++)
+                    for (var da = -1; da <= 1; da++)
+                        n += CountMatInTile(cells, r + dr, t + da, Material.Sand);
+                return n;
+            }
+            var before = CountSand();
+            var up = Vector2.Normalize(planet.TileToWorld(r + 1, t) - planet.Center);
+            var launched = cells.EjectFromTile(r, t, up, 60f, 8);
+            Check($"flying: EjectFromTile launches grains ({launched})", launched > 0);
+            for (var i = 0; i < 240; i++) cells.Update(dt);
+            Check($"flying: ejected sand is conserved back into the grid " +
+                  $"({before} → {CountSand()}, {cells.FlyingCellCount} still airborne)",
+                CountSand() == before && cells.FlyingCellCount == 0);
+        }
+
+        // --- Buoyancy: water poured over oil sinks through it; the oil ends up on top ---
+        {
+            int r = 130, t = 60;
+            for (var dr = -1; dr <= 2; dr++)
+                for (var da = -1; da <= 1; da++)
+                    planet.Set(r + dr, t + da,
+                        dr is -1 or 2 || da is -1 or 1 ? TileKind.Granite : TileKind.Sky);
+            cells.FillTile(r, t, Material.Oil);        // oil at the bottom (unstable)
+            cells.FillTile(r + 1, t, Material.Water);  // water on top
+            for (var i = 0; i < 600; i++) cells.Update(dt);
+            var waterBelow = CountMatInTile(cells, r, t, Material.Water);
+            var oilAbove = CountMatInTile(cells, r + 1, t, Material.Oil);
+            Check($"oil: water sinks through it and it floats up ({waterBelow} water below, {oilAbove} oil above)",
+                waterBelow > 12 && oilAbove > 12);
+        }
+
+        // --- Fire: a flame dropped on an oil pool burns it away, then dies out itself ---
+        {
+            int r = 150, t = 100;
+            for (var dr = -1; dr <= 3; dr++)
+                for (var da = -2; da <= 2; da++)
+                    planet.Set(r + dr, t + da,
+                        dr is -1 or 3 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
+            cells.FillTile(r, t, Material.Oil);
+            for (var i = 0; i < 60; i++) cells.Update(dt);   // let the pool spread and settle
+            int CountAround(Material m)
+            {
+                var n = 0;
+                for (var dr = 0; dr < 3; dr++)
+                    for (var da = -1; da <= 1; da++)
+                        n += CountMatInTile(cells, r + dr, t + da, m);
+                return n;
+            }
+            var before = CountAround(Material.Oil);
+            // Flames dotted along just above the pool floor.
+            for (var da = -1; da <= 1; da++)
+                cells.Place(t * Cells.Density + da * Cells.Density + 2, r * Cells.Density + 3, Material.Fire);
+            for (var i = 0; i < 1800; i++) cells.Update(dt);
+            var after = CountAround(Material.Oil);
+            Check($"fire: an oil pool burns away under open flame ({before} → {after})",
+                after < before / 2);
+            Check($"fire: the blaze gutters out once the fuel is gone ({CountAround(Material.Fire)} flames left)",
+                CountAround(Material.Fire) == 0);
+        }
+
+        // --- Splash: a waterfall droplet actually leaves the grid mid-fall ---
+        {
+            int r = 170, t = 140;
+            // Tall open shaft with a solid floor: drop water from the top, watch for a
+            // ballistic droplet at any point after the first landing.
+            for (var dr = -1; dr <= 9; dr++)
+                for (var da = -2; da <= 2; da++)
+                    planet.Set(r + dr, t + da,
+                        dr is -1 || da is -2 or 2 ? TileKind.Granite : TileKind.Sky);
+            var sawDroplet = false;
+            for (var i = 0; i < 600; i++)
+            {
+                if (i % 30 == 0) cells.FillTile(r + 8, t, Material.Water);
+                cells.Update(dt);
+                if (cells.FlyingCellCount > 0) sawDroplet = true;
+            }
+            Check("splash: hard-landing water throws ballistic droplets", sawDroplet);
+        }
+
+        // --- Worldgen gating: oil worlds bury sumps, dry biomes stay dry ---
+        Check("oil: slag world seeds oil sumps",
+            WorldGen.Generate(5, PlanetDefs.ById("slag")).OilSeeds.Count > 0);
+        Check("oil: ember world seeds none",
+            WorldGen.Generate(5, PlanetDefs.ById("ember")).OilSeeds.Count == 0);
+    }
+
     private static int CountMatInTile(Cells cells, int tx, int ty, Material m)
     {
         var n = 0;
