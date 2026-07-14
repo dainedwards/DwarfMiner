@@ -116,6 +116,21 @@ public static class Crafting
             new Dictionary<string, int> { ["chitin"] = 4, ["hide"] = 2 }),
         new("chitin_boots", "Chitin boots (−5% damage taken) — hunted",
             new Dictionary<string, int> { ["chitin"] = 2, ["hide"] = 1 }),
+        // Gloves — worn on the doll's glove slot; quicker swings with every mining tool.
+        new("leather_gloves", "Leather gloves (swing 15% faster, −5% damage)",
+            new Dictionary<string, int> { ["hide"] = 3 }),
+        new("iron_gauntlets", "Iron gauntlets (swing 30% faster, −5% damage)",
+            new Dictionary<string, int> { ["iron"] = 5, ["hide"] = 2 }),
+
+        // ─── Accessories (character screen trinket slots — wear any two) ──────
+        new("band_regen", "Band of Regeneration (slowly restores HP)",
+            new Dictionary<string, int> { ["moss_stone"] = 4, ["silver"] = 2 }),
+        new("magnet_ring", "Magnet Ring (pulls loose ore into the pack)",
+            new Dictionary<string, int> { ["iron"] = 4, ["silver"] = 2 }),
+        new("miners_charm", "Miner's Charm (+1 mining power)",
+            new Dictionary<string, int> { ["gold"] = 3, ["crystal"] = 1 }),
+        new("aegis_pendant", "Aegis Pendant (−10% damage taken)",
+            new Dictionary<string, int> { ["platinum"] = 2, ["sapphire"] = 2 }),
         new("sentry", "Sentry turret (placeable, auto-fires)",
             new Dictionary<string, int> { ["iron"] = 4, ["coal"] = 3 }),
         // Firearm ladder — each weapon has its own resource profile: the pistol is cheap
