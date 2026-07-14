@@ -851,9 +851,10 @@ public sealed class Player
 
     /// <summary>Place a build item at the cursor by inventory id. Each placeable's id maps
     /// to a tile kind via <see cref="BuildIdToTile"/>; the inventory entry with that same id
-    /// is debited 1. Returns the placed tile kind if it landed in a sky tile and stock was
-    /// available; null otherwise.</summary>
-    public TileKind? TryPlaceBuildId(Planet planet, Physics physics, Vector2 worldCursor, string invId)
+    /// is debited 1. Held construction like <see cref="TryPlace"/>: the build only lands
+    /// after <see cref="BuildTime"/> of sustained aim. Returns the placed tile kind if it
+    /// landed in a sky tile and stock was available; null otherwise.</summary>
+    public TileKind? TryPlaceBuildId(Planet planet, Physics physics, Vector2 worldCursor, string invId, float dt)
     {
         if (MineCooldown > 0) return null;
         var d = worldCursor - Position;
@@ -866,6 +867,8 @@ public sealed class Player
         // stamp, so you can drop a torch right next to your feet.
         if (PlacementStamp(planet, worldCursor, Tiles.IsPassable(placedKind)) is not { } stamp)
             return null;
+        if (Inventory.Count(invId) <= 0) return null;
+        if (!TickBuild(planet, worldCursor, dt)) return null;
         if (!Inventory.TryConsume(invId, 1)) return null;
 
         foreach (var (fx, fy) in stamp)
