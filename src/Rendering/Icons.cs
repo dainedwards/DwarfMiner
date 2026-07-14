@@ -996,6 +996,35 @@ public static class Icons
         ['y'] = new Color(255, 225, 120),
     });
 
+    private static Texture2D BuildTntPack(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "......y.........",
+        ".....y..........",
+        "....ww..........",
+        "...RRRRRRRRR....",
+        "...RrrRrrRrr....",
+        "...GGGGGGGGG....",
+        "...RRRRRRRRR....",
+        "...GGGGGGGGG....",
+        "...RrrRrrRrr....",
+        "...RRRRRRRRR....",
+        "....sssssss.....",
+        "....s.....s.....",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['R'] = new Color(190, 60, 45),
+        ['r'] = new Color(130, 32, 26),
+        ['G'] = new Color(120, 120, 100),   // resin straps — the sticky part
+        ['s'] = new Color(165, 125, 85),    // carry sling
+        ['w'] = new Color(200, 190, 170),
+        ['y'] = new Color(255, 225, 120),
+    });
+
     private static Texture2D BuildPickaxe(GraphicsDevice gd, Color head, Color headDark) => Renderer.BuildSprite(gd, new[]
     {
         "................",
