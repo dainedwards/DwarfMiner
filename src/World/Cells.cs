@@ -1791,10 +1791,25 @@ public sealed class Cells
                 // Thin the emitters with grain resolution — a pool surface has Density/2 more
                 // cells per world unit than the old 2-px grid, and each light is a lightmap blit.
                 if ((step++ % (Density / 2)) != 0) continue;
-                // Acid glows a dim toxic green; lava a hot orange.
-                r.AddLight(CellToWorld(cx, cy), lm == Material.Acid ? 7f : 10f,
-                    lm == Material.Acid ? new Color(90, 190, 40) : new Color(255, 130, 40));
+                // Acid glows a dim toxic green; lava a hot orange; open flame bright and warm.
+                r.AddLight(CellToWorld(cx, cy),
+                    lm == Material.Acid ? 7f : lm == Material.Fire ? 9f : 10f,
+                    lm == Material.Acid ? new Color(90, 190, 40)
+                    : lm == Material.Fire ? new Color(255, 170, 70) : new Color(255, 130, 40));
             }
+        }
+
+        // Airborne lava beads and embers glow too — capped so a spark storm can't flood
+        // the lightmap blit budget.
+        var flyLights = 0;
+        var flyDistSq = viewRadius * viewRadius;
+        foreach (var f in _flying)
+        {
+            var fm = (Material)f.Mat;
+            if (fm != Material.Lava && fm != Material.Fire) continue;
+            if (Vector2.DistanceSquared(f.Pos, viewCentre) > flyDistSq) continue;
+            r.AddLight(f.Pos, 7f, new Color(255, 150, 60));
+            if (++flyLights >= 48) break;
         }
     }
 
