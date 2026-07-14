@@ -560,8 +560,8 @@ public static class WorldGen
             if (dist > maxRad || dist < minRad)
             {
                 var radial = MathF.Atan2(rel.Y, rel.X);
-                var желаемый = dist > maxRad ? radial + MathF.PI : radial;
-                heading += MathHelper.WrapAngle(желаемый - heading) * 0.18f;
+                var desired = dist > maxRad ? radial + MathF.PI : radial;
+                heading += MathHelper.WrapAngle(desired - heading) * 0.18f;
             }
             pos += new Vector2(MathF.Cos(heading), MathF.Sin(heading)) * Planet.TileSize;
             CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 11f : 8f);
