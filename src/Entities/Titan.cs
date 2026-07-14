@@ -1296,7 +1296,7 @@ public sealed class Titan
                     if (_wreckTimer <= 0f
                         && k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
                     {
-                        if (planet.Mine(x, y, 16) is { } smashed)
+                        if (planet.Mine(x, y, 30) is { } smashed)
                         {
                             physics.MarkDirty(x, y);
                             cells.SpawnDustInTile(x, y, smashed);
