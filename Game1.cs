@@ -524,7 +524,8 @@ public sealed partial class DwarfMinerGame : Game
                 _run.Titan.Hatch();
             }
         }
-        SpawnDirector.SpawnInitialFauna(_run);
+        // Prefetched sessions arrive already populated (and settled) from the build thread.
+        if (!_run.Populated) SpawnDirector.SpawnInitialFauna(_run);
         // DM_FAUNA=1 parades the biome fauna beside the spawn so tooling can screenshot
         // creature art without hunting for natural spawns.
         if (Environment.GetEnvironmentVariable("DM_FAUNA") is { Length: > 0 })
