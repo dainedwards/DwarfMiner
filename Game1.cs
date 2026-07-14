@@ -1342,25 +1342,21 @@ public sealed partial class DwarfMinerGame : Game
                 _run.Corpses.RemoveAt(i);
         }
 
-        // Gem drops: drain the cell sim's shatter queue into physical pickups. An embedded
-        // gem popping out of its host is a whole drop; a legacy gem *tile* banks ¼ (four
-        // fine tiles made up one legacy tile) and pops when a unit accrues.
+        // Gem drops: drain the cell sim's shatter queue into physical pickups. Every shatter
+        // site — embedded gem popping out of its host, or a gem tile breaking — pops its
+        // whole drop right where it broke, so a mined crystal never silently vanishes.
         if (_run.Cells.PendingGemDrops.Count > 0)
         {
-            foreach (var (gpos, gkind, whole) in _run.Cells.PendingGemDrops)
+            foreach (var (gpos, gkind) in _run.Cells.PendingGemDrops)
             {
                 if (Tiles.Drop(gkind) is not { } gd) continue;
-                _run.GemDropAccum.TryGetValue(gd.id, out var acc);
-                acc += whole ? gd.count : gd.count / 4f;
-                while (acc >= 1f)
+                for (var n = 0; n < gd.count; n++)
                 {
-                    acc -= 1f;
                     var gemUp = _run.Planet.UpAt(gpos);
                     var kick = gemUp * (55f + (float)Random.Shared.NextDouble() * 30f)
                              + new Vector2(-gemUp.Y, gemUp.X) * (((float)Random.Shared.NextDouble() - 0.5f) * 50f);
                     _run.Pickups.Add(new Pickup(gpos, gkind, kick));
                 }
-                _run.GemDropAccum[gd.id] = acc;
             }
             _run.Cells.PendingGemDrops.Clear();
         }
