@@ -390,6 +390,7 @@ public sealed class Particles
                 EmitExplosion(pos, strength: 16f, sparkCount: 18, smokeCount: 12, sparkColor: new Color(255, 150, 60));
                 break;
             case ProjectileKind.Tnt:
+            case ProjectileKind.TntPack:
                 EmitExplosion(pos, strength: 24f, sparkCount: 30, smokeCount: 22, sparkColor: new Color(255, 160, 60));
                 EmitEmbers(pos, count: 12);
                 break;
