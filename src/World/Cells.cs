@@ -529,6 +529,22 @@ public sealed class Cells
         return true;
     }
 
+    /// <summary>Exchange two cells' full state (buoyancy swaps). Both wake — a swap changes
+    /// both neighbourhoods, and the lighter cell must keep bobbing up next tick.</summary>
+    private void SwapCells(int aCx, int aCy, int bCx, int bCy)
+    {
+        var ai = Idx(aCx, aCy);
+        var bi = Idx(bCx, bCy);
+        (_mat[ai], _mat[bi]) = (_mat[bi], _mat[ai]);
+        (_srcTile[ai], _srcTile[bi]) = (_srcTile[bi], _srcTile[ai]);
+        ClearKinetics(ai);
+        ClearKinetics(bi);
+        Enqueue(ai);
+        Enqueue(bi);
+        WakeNeighbors(aCx, aCy);
+        WakeNeighbors(bCx, bCy);
+    }
+
     /// <summary>Local surface axes at a cell: outward radial (up) and its perpendicular
     /// (tangent) — the frame splash/spark launch velocities are authored in.</summary>
     private (Vector2 up, Vector2 tan) AxesAt(int cx, int cy)
