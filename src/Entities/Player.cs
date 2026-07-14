@@ -656,20 +656,21 @@ public sealed class Player
         return stamp;
     }
 
-    /// <summary>Place a block from inventory into the sky tiles under the cursor. Stone first,
-    /// then dirt. Placement is held construction: the aim must stay on the target for
-    /// <see cref="BuildTime"/> before the block appears (see <see cref="TickBuild"/>).</summary>
+    /// <summary>Place a block from inventory into the sky tiles under the cursor —
+    /// Terraria rules now: INSTANT placement (hold LMB to paint a run of blocks at the
+    /// cooldown's rhythm), but a block needs support: an adjacent solid tile or a back
+    /// wall behind it. Stone first, then the richer variants, then dirt.</summary>
     public TileKind? TryPlace(Planet planet, Physics physics, Vector2 worldCursor, float dt)
     {
         if (MineCooldown > 0) return null;
         var d = worldCursor - Position;
         if (d.Length() > EffectiveMineRange) return null;
         if (PlacementStamp(planet, worldCursor, passable: false) is not { } stamp) return null;
+        if (!PlacementSupported(planet, stamp)) return null;
 
         // Priority: plain stone (most abundant) → richer stone variants (granite/basalt/etc) →
         // dirt. Each variant places its own tile kind so a granite stockpile builds granite
         // walls, not generic stone — preserves the resource's identity through placement.
-        // Peek-only here: material is spent when the build completes, not while it's held.
         (TileKind kind, string id) pick;
         if      (Inventory.Count("stone") > 0)      pick = (TileKind.Stone, "stone");
         else if (Inventory.Count("granite") > 0)    pick = (TileKind.Granite, "granite");
@@ -680,7 +681,6 @@ public sealed class Player
         else if (Inventory.Count("dirt") > 0)       pick = (TileKind.Dirt, "dirt");
         else return null;
 
-        if (!TickBuild(planet, worldCursor, dt)) return null;
         if (!Inventory.TryConsume(pick.id, 1)) return null;
         var placed = pick.kind;
 
@@ -689,8 +689,37 @@ public sealed class Player
             planet.Set(fx, fy, placed);
             physics.MarkDirty(fx, fy);
         }
-        MineCooldown = 0.10f;
+        MineCooldown = 0.14f;   // painting rhythm while LMB is held
         return placed;
+    }
+
+    /// <summary>Terraria's support rule: at least one stamp tile must touch a solid
+    /// neighbour or sit over a back wall — no free-floating blocks conjured in mid-air.</summary>
+    private static bool PlacementSupported(Planet planet, List<(int x, int y)> stamp)
+    {
+        foreach (var (fx, fy) in stamp)
+        {
+            if (planet.GetWall(fx, fy) != TileKind.Sky) return true;
+            if (Tiles.IsSolid(planet.Get(fx, fy - 1))) return true;
+            if (Tiles.IsSolid(planet.Get(fx, fy + 1))) return true;
+            if (fx > 0 && Tiles.IsSolid(planet.Get(fx - 1, fy))) return true;
+            if (fx < planet.Rings - 1 && Tiles.IsSolid(planet.Get(fx + 1, fy))) return true;
+        }
+        return false;
+    }
+
+    /// <summary>Placement preview for the HUD: the stamp tiles the next click would fill,
+    /// plus whether the placement is currently legal (range, support, material in stock).</summary>
+    public (List<(int x, int y)> stamp, bool valid)? PlacePreview(Planet planet, Vector2 worldCursor)
+    {
+        if (PlacementStamp(planet, worldCursor, passable: false) is not { } stamp) return null;
+        var hasMat = Inventory.Count("stone") > 0 || Inventory.Count("granite") > 0
+            || Inventory.Count("basalt") > 0 || Inventory.Count("moss_stone") > 0
+            || Inventory.Count("obsidian") > 0 || Inventory.Count("gravel") > 0
+            || Inventory.Count("dirt") > 0;
+        var valid = (worldCursor - Position).Length() <= EffectiveMineRange
+            && PlacementSupported(planet, stamp) && hasMat;
+        return (stamp, valid);
     }
 
     /// <summary>Advance the held-construction timer toward the stamp anchored at the cursor
