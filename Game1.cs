@@ -1507,7 +1507,7 @@ public sealed partial class DwarfMinerGame : Game
         if (Pressed(keys, _prevKeys, Keys.E))
         {
             if (NearShip()) TryLaunchShip();
-            else CycleWeapon(+1);
+            else if (!TryToggleDoor(worldCursor)) CycleWeapon(+1);
         }
 
         // Drag-and-drop UI input runs on click edges and updates the carry state. If the click
