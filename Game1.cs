@@ -851,6 +851,14 @@ public sealed partial class DwarfMinerGame : Game
         run.Player.HasJetpack = Upgrades.Owned(_meta, "jetpack");
         run.Player.JetTier2 = Upgrades.Owned(_meta, "jetpack2");
         run.Player.JetTier3 = Upgrades.Owned(_meta, "jetpack3");
+        run.Player.JetTier4 = Upgrades.Owned(_meta, "jetpack4");
+        // Worn-pack grant, idempotent against the reloaded save: the saved inventory and
+        // Back slot usually already carry it — only a fresh foundry purchase adds it here.
+        if (run.Player.HasJetpack)
+        {
+            if (run.Player.Inventory.Count("jetpack") == 0) run.Player.Inventory.Add("jetpack", 1);
+            run.Player.Equipment.AutoEquip("jetpack");
+        }
         run.Player.HasO2Recycler = Upgrades.Owned(_meta, "o2");
         run.Player.O2Tier2 = Upgrades.Owned(_meta, "o22");
         run.Player.HasPlating = Upgrades.Owned(_meta, "plating");
