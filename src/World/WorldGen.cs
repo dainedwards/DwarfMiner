@@ -532,6 +532,11 @@ public static class WorldGen
     /// leave those tiles standing as natural dead-ends when they meet one.</summary>
     private static void CarveWormTunnels(Planet planet, PlanetDef def, Random rng)
     {
+        // High-lava worlds skip the worms: their habitable band is a thin shell squeezed
+        // between the flood line and the surface (the warrens carry the underground feel
+        // there), and every tunnel that grazes the lava zone becomes permanent plumbing
+        // that keeps the cell sim awake — measured at 3× the steady update budget.
+        if (def.LavaFillFrac > 0.5f) return;
         var worms = 20 + rng.Next(9);
         // Stay above THIS world's lava zone — StartNewRun floods every sky tile below
         // LavaFillFrac×radius (ember-class worlds run 0.55-0.70), and tunnels crossing
