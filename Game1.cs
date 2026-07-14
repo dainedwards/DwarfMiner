@@ -898,6 +898,8 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.Grid = _lightGrid;
         _sfx.Build();
         Icons.Build(GraphicsDevice);
+        // Slot icons for the melee arsenal escalate with the live run's upgrade rungs.
+        Icons.MeleeTierOf = id => _run?.Player?.MeleeTiers.GetValueOrDefault(id, 1) ?? 1;
         _camera = new Camera
         {
             ViewportSize = new Point(VirtualWidth, VirtualHeight),
