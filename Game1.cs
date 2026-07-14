@@ -3460,9 +3460,9 @@ public sealed partial class DwarfMinerGame : Game
         // into cave mouths before rock eats it), every AddLight below seeds it, and the
         // propagation floods light through air while walls block it. No ambient, no
         // darkness disks: unlit underground is genuinely black now. ===
-        var lightSw = System.Diagnostics.Stopwatch.StartNew();
+        _lightSw.Restart();
         _lightGrid.Begin(_run.Planet, _camera);
-        _renderer.LightGridBeginMs = lightSw.Elapsed.TotalMilliseconds;
+        _renderer.LightGridBeginMs = _lightSw.Elapsed.TotalMilliseconds;
 
         // Player light — reach scales with the carried-light tier (bare stub → torch →
         // lantern → headlamp → sunstone), which is what makes the light ladder feel like
