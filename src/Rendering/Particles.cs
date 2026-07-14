@@ -946,28 +946,46 @@ public sealed class Particles
     /// around it.)</summary>
     public void EmitFlameJet(Vector2 pos, Vector2 dir)
     {
-        for (var i = 0; i < 6; i++)
+        for (var i = 0; i < 10; i++)
         {
-            // Tight cone, fast fine droplets, low drag: a long pressurised stream of
-            // burning fuel rather than a fat billow at the muzzle.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.32f;
+            // Wider cone, more droplets: with the slower trigger cadence each puff has to
+            // read as a fat tongue of fire, not a hiss.
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.46f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            var hot = i < 2;
+            var hot = i < 3;
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 6f,
-                Velocity = d * (240f + (float)_rng.NextDouble() * 140f),
-                Life = 0.22f + (float)_rng.NextDouble() * 0.22f,
-                MaxLife = 0.44f,
+                Position = pos + d * (float)_rng.NextDouble() * 8f,
+                Velocity = d * (230f + (float)_rng.NextDouble() * 150f),
+                Life = 0.24f + (float)_rng.NextDouble() * 0.26f,
+                MaxLife = 0.5f,
                 Color = hot ? new Color(255, 240, 170) : new Color(255, 160, 60),
                 FadeColor = new Color(140, 40, 15),
-                Size = hot ? 1.2f : 1.7f,
+                Size = hot ? 1.4f : 2.1f,
                 GravityScale = -0.12f,   // heat rises
                 Drag = 1.6f,
                 LightRadius = hot ? 70f : 36f,
                 LightColor = new Color(255, 170, 70),
+            });
+        }
+        // Sooty curls that outlive the flame — the lingering body of the thick stream.
+        for (var i = 0; i < 2; i++)
+        {
+            var d = Vector2.Normalize(dir + new Vector2(
+                (float)(_rng.NextDouble() - 0.5) * 0.5f, (float)(_rng.NextDouble() - 0.5) * 0.5f));
+            _list.Add(new Particle
+            {
+                Position = pos + d * (14f + (float)_rng.NextDouble() * 14f),
+                Velocity = d * (60f + (float)_rng.NextDouble() * 50f),
+                Life = 0.5f + (float)_rng.NextDouble() * 0.4f,
+                MaxLife = 0.9f,
+                Color = new Color(90, 60, 45),
+                FadeColor = new Color(35, 28, 30),
+                Size = 1.8f,
+                GravityScale = -0.25f,
+                Drag = 2.4f,
             });
         }
         // Hero flicker riding a third of the way down the tongue: the shadow-casting part
