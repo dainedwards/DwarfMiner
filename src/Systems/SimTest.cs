@@ -2381,7 +2381,10 @@ public static class SimTest
         dummy.TakeDamage(10f);
         Check("plating: 30 percent damage cut", MathF.Abs(dummy.Health - 93f) < 0.01f,
             $"hp {dummy.Health}");
+        // Armor reduction reads the worn paper-doll now, not the legacy HasArmor flag —
+        // the chest piece alone carries the old full-armor 40% cut.
         dummy.HasArmor = true;
+        dummy.Equipment.Set(EquipSlot.Chest, "armor");
         dummy.TakeDamage(10f);
         Check("plating: stacks with crafted armor (x0.42)",
             MathF.Abs(dummy.Health - (93f - 4.2f)) < 0.01f, $"hp {dummy.Health}");
