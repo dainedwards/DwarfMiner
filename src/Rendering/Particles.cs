@@ -946,24 +946,26 @@ public sealed class Particles
     /// around it.)</summary>
     public void EmitFlameJet(Vector2 pos, Vector2 dir)
     {
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 6; i++)
         {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.5f;
+            // Tight cone, fast fine droplets, low drag: a long pressurised stream of
+            // burning fuel rather than a fat billow at the muzzle.
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.32f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             var hot = i < 2;
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 4f,
-                Velocity = d * (140f + (float)_rng.NextDouble() * 120f),
-                Life = 0.18f + (float)_rng.NextDouble() * 0.22f,
-                MaxLife = 0.4f,
+                Position = pos + d * (float)_rng.NextDouble() * 6f,
+                Velocity = d * (240f + (float)_rng.NextDouble() * 140f),
+                Life = 0.22f + (float)_rng.NextDouble() * 0.22f,
+                MaxLife = 0.44f,
                 Color = hot ? new Color(255, 240, 170) : new Color(255, 160, 60),
                 FadeColor = new Color(140, 40, 15),
-                Size = hot ? 2.2f : 3.2f,
+                Size = hot ? 1.2f : 1.7f,
                 GravityScale = -0.12f,   // heat rises
-                Drag = 2.8f,
+                Drag = 1.6f,
                 LightRadius = hot ? 70f : 36f,
                 LightColor = new Color(255, 170, 70),
             });
@@ -972,7 +974,7 @@ public sealed class Particles
         // of the fire, jittered per puff so the whole cave breathes with the hose.
         _list.Add(new Particle
         {
-            Position = pos + dir * (12f + (float)_rng.NextDouble() * 10f),
+            Position = pos + dir * (20f + (float)_rng.NextDouble() * 20f),
             Velocity = dir * 80f,
             Life = 0.07f,
             MaxLife = 0.07f,
