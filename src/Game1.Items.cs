@@ -75,7 +75,7 @@ public sealed partial class DwarfMinerGame
         {
             // ─── Intrinsic tools (on the belt from spawn, always owned) ───────────
             ["pickaxe"] = new() { Owned = () => true, Use = c => DoMine(c, MiningTool.Pickaxe) },
-            ["blocks"]  = new() { Owned = () => true, Use = c => _run.Player.TryPlace(_run.Planet, _run.Physics, c) },
+            ["blocks"]  = new() { Owned = () => true, Use = c => _run.Player.TryPlace(_run.Planet, _run.Physics, c, _frameDt) },
             ["bullets"] = new() { Weapon = true, Owned = () => true, NeedsCooldown = true, Use = FireBullet },
 
             // ─── Crafted tools ────────────────────────────────────────────────────
