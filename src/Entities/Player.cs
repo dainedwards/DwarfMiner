@@ -187,8 +187,9 @@ public sealed class Player
         get
         {
             if (FlyMode) return GodPickaxePower;
-            // Future: + augment bonuses (e.g. ruby tip → +0.x chain power).
-            return PickaxeTier;
+            // Miner's Charm (accessory) — the first of the augment bonuses this getter was
+            // always going to grow.
+            return PickaxeTier + (Equipment.HasAccessory("miners_charm") ? 1 : 0);
         }
     }
 
