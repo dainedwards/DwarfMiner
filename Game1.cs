@@ -878,6 +878,7 @@ public sealed partial class DwarfMinerGame : Game
         _sceneRt = new RenderTarget2D(GraphicsDevice, VirtualWidth, VirtualHeight, false,
             SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
         _renderer.SceneTarget = _sceneRt;
+        _renderer.Grid = _lightGrid;
         _sfx.Build();
         Icons.Build(GraphicsDevice);
         _camera = new Camera
