@@ -27,8 +27,8 @@ public sealed class InventoryUi
     /// <summary>True while an item is being dragged — Game1 suppresses world LMB actions.</summary>
     public bool Carrying => _carry is not null;
 
-    /// <summary>Drop any in-flight drag — called on run start.</summary>
-    public void Reset() => _carry = null;
+    /// <summary>Drop any in-flight drag and close menus — called on run start.</summary>
+    public void Reset() { _carry = null; _menu = null; }
 
     /// <summary>Context menu opened by right-clicking an inventory row: drop one / drop the
     /// whole stack. Null when closed.</summary>
