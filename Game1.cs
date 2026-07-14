@@ -4075,6 +4075,7 @@ public sealed partial class DwarfMinerGame : Game
         _invUi.DrawInventoryPanel(_renderer, _run.Player, VirtualWidth);
         _invUi.DrawToolbelt(_renderer, _run.Player, VirtualWidth, VirtualHeight);
         _invUi.DrawCarry(_renderer, _run.Player);
+        _invUi.DrawContextMenu(_renderer, _run.Player);
 
         DrawHoverDebugLabel();
         DrawBuildProgress();
