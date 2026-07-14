@@ -72,6 +72,13 @@ public sealed partial class DwarfMinerGame
             _run.Player.Inventory.Add(id, 1);
             _run.Player.Equipment.Set(slot, id);
         };
+        // Accessories: stock 1 and take the first free trinket slot (AutoEquip no-ops when
+        // both are full — unlike Wear, a new trinket shouldn't silently displace a chosen one).
+        Action Trinket(string id) => () =>
+        {
+            _run.Player.Inventory.Add(id, 1);
+            _run.Player.Equipment.AutoEquip(id);
+        };
         // Multi-count stackables (the "5×" recipes) — stock N, then equip like the default.
         Action Stock(string id, int count) => () =>
         {
