@@ -3252,6 +3252,10 @@ public sealed partial class DwarfMinerGame : Game
                 _renderer.Batch.Draw(heldTex, _run.Player.Position + aim * 3.2f, null, Color.White,
                     wrot, new Vector2(1.5f, heldTex.Height / 2f), 0.55f,
                     aim.X < 0f ? SpriteEffects.FlipVertically : SpriteEffects.None, 0f);
+                // The dwarf's fist wrapped around the grip — a small skin-tone knuckle over
+                // the stock, so the weapon reads as held rather than floating at his hip.
+                _renderer.DrawRect(_run.Player.Position + aim * 3.4f, new Vector2(1.7f, 1.7f),
+                    new Color(230, 180, 140), wrot);
             }
         }
 
