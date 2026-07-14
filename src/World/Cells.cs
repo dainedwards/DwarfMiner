@@ -528,9 +528,136 @@ public sealed class Cells
         return true;
     }
 
+    /// <summary>Local surface axes at a cell: outward radial (up) and its perpendicular
+    /// (tangent) — the frame splash/spark launch velocities are authored in.</summary>
+    private (Vector2 up, Vector2 tan) AxesAt(int cx, int cy)
+    {
+        var n = CellsAt(cy);
+        var ang = (WrapX(cx, n) + 0.5f) / n * MathHelper.TwoPi;
+        var up = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
+        return (up, new Vector2(-up.Y, up.X));
+    }
+
+    /// <summary>Emit a flying cell from thin air (no grid cell consumed) — fire embers only;
+    /// anything that is matter should go through <see cref="LaunchCell"/> so mass conserves.</summary>
+    public void LaunchAtWorld(Vector2 pos, Vector2 vel, Material m, TileKind src = TileKind.Sky)
+    {
+        if (_flying.Count >= MaxFlying) return;
+        _flying.Add(new Flying { Pos = pos, Vel = vel, Mat = (byte)m, Src = (byte)src });
+    }
+
+    /// <summary>Pluck the grid cell at (cx,cy) into ballistic flight with the given
+    /// world-space velocity. The cell leaves the grid (neighbours wake into the hole) and
+    /// re-enters wherever it lands, so launched material is conserved.</summary>
+    public bool LaunchCell(int cx, int cy, Vector2 vel)
+    {
+        if (!InBounds(cx, cy) || _flying.Count >= MaxFlying) return false;
+        var i = Idx(cx, cy);
+        if (_mat[i] == 0) return false;
+        _flying.Add(new Flying { Pos = CellToWorld(cx, cy), Vel = vel, Mat = _mat[i], Src = _srcTile[i] });
+        _mat[i] = 0;
+        _srcTile[i] = 0;
+        ClearKinetics(i);
+        WakeNeighbors(cx, cy);
+        return true;
+    }
+
+    /// <summary>Fling up to <paramref name="count"/> of the polar tile's cells into flight
+    /// along <paramref name="dir"/> (with angular spread and speed jitter). Gases and flame
+    /// are skipped — only matter with weight gets thrown. Returns how many launched; callers
+    /// budget on that so a mass event can't drown the flying list.</summary>
+    public int EjectFromTile(int tx, int ty, Vector2 dir, float speed, int count)
+    {
+        var c0y = tx * Density;
+        var c0x = ty * Density;
+        var launched = 0;
+        for (var i = 0; i < count; i++)
+        {
+            var cx = c0x + _rng.Next(Density);
+            var cy = c0y + _rng.Next(Density);
+            if (!InBounds(cx, cy)) continue;
+            var m = (Material)_mat[Idx(cx, cy)];
+            if (m is Material.Empty or Material.Smoke or Material.Gas or Material.Fire) continue;
+            var spread = ((float)_rng.NextDouble() - 0.5f) * 1.1f;
+            var (c, s) = (MathF.Cos(spread), MathF.Sin(spread));
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            if (LaunchCell(cx, cy, d * speed * (0.6f + (float)_rng.NextDouble() * 0.8f)))
+                launched++;
+        }
+        return launched;
+    }
+
+    /// <summary>Integrate the flying cells: planet-centre gravity, sub-cell stepping so fast
+    /// grains can't tunnel, and re-entry into the grid on contact. Runs before the grid tick
+    /// each frame; landings enqueue + wake through Place, so a just-landed grain gets its
+    /// first grid tick the same frame's pass.</summary>
+    private void UpdateFlying(float dt)
+    {
+        for (var fi = _flying.Count - 1; fi >= 0; fi--)
+        {
+            var f = _flying[fi];
+            f.Age += dt;
+            var toCore = Planet.Center - f.Pos;
+            var dist = toCore.Length();
+            if (dist > 1f) f.Vel += toCore * (FlyGravity * dt / dist);
+            var speed = f.Vel.Length();
+            if (speed > FlyMaxSpeed) f.Vel *= FlyMaxSpeed / speed;
+
+            var move = f.Vel * dt;
+            var steps = Math.Clamp((int)(move.Length() / PxPerCell) + 1, 1, 12);
+            var step = move / steps;
+            var done = false;
+            for (var s = 0; s < steps; s++)
+            {
+                var next = f.Pos + step;
+                var (cx, cy) = WorldToCell(next);
+                if (cy >= Height) { f.Pos = next; continue; }   // open sky: pure ballistics
+                if (cy < 0 || IsBlocked(cx, cy))
+                {
+                    // Contact: bank the cell in the last free spot along its path. A failed
+                    // deposit (landing site filled since) damps the cell and lets it keep
+                    // falling — it re-tries next tick from wherever it slid to.
+                    done = TryDeposit(f);
+                    if (!done) f.Vel *= 0.3f;
+                    break;
+                }
+                f.Pos = next;
+            }
+            if (!done && f.Age > FlyMaxAge) done = TryDeposit(f) || true; // give up either way
+            if (done)
+            {
+                _flying[fi] = _flying[^1];   // swap-remove; order is irrelevant
+                _flying.RemoveAt(_flying.Count - 1);
+                continue;
+            }
+            _flying[fi] = f;
+        }
+    }
+
+    /// <summary>Re-enter the grid at the flying cell's position, probing outward a few rows
+    /// when the exact cell is taken (a droplet landing on a pool surfaces on top of it).</summary>
+    private bool TryDeposit(in Flying f)
+    {
+        var (cx, cy) = WorldToCell(f.Pos);
+        if (cy < 0) cy = 0;
+        for (var k = 0; k < 6; k++)
+        {
+            if (cy >= Height) return false;
+            if (!IsBlocked(cx, cy))
+            {
+                Place(cx, cy, (Material)f.Mat, (TileKind)f.Src);
+                return true;
+            }
+            (cx, cy) = OuterCell(cx, cy);
+        }
+        return false;
+    }
+
     public void Update(float dt)
     {
         _time += dt;
+
+        UpdateFlying(dt);
 
         if (_time >= _compactSweepAt)
         {
