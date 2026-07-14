@@ -2197,11 +2197,11 @@ public sealed partial class DwarfMinerGame : Game
         var muzzle = _run.Player.Position + dir * 8f;
         for (var i = 0; i < 3; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.3f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.24f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (170f + (float)Random.Shared.NextDouble() * 70f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (260f + (float)Random.Shared.NextDouble() * 70f),
                 Material.Acid);
         }
         _particles.EmitAcidJet(muzzle, dir);
@@ -2209,11 +2209,24 @@ public sealed partial class DwarfMinerGame : Game
         {
             var to = c.Position - _run.Player.Position;
             var dist = to.Length();
-            if (dist > 70f || dist < 1f) continue;
-            if (Vector2.Dot(to / dist, dir) < 0.8f) continue;
+            if (dist > 100f || dist < 1f) continue;
+            if (Vector2.Dot(to / dist, dir) < 0.84f) continue;
             if (c.ImmuneTo(Material.Acid)) continue;
             c.Health -= 32f * _frameDt;
             c.HitFlash = 0.1f;
+        }
+        // Caustic against titans too — except the acid-blooded (Otachi's spit, the
+        // Vitriodactyl's rain), which the spray just washes over.
+        if (_run.Titan.Health > 0 && _run.Titan.Targetable
+            && _run.Titan.Kind is not (TitanKind.Otachi or TitanKind.Vitriodactyl))
+        {
+            var to = _run.Titan.Position - _run.Player.Position;
+            var dist = to.Length();
+            if (dist is > 1f and < 120f && Vector2.Dot(to / dist, dir) > 0.7f)
+            {
+                _run.Titan.Health -= 45f * _frameDt;
+                _run.Titan.HitFlash = 0.1f;
+            }
         }
         _run.Player.ShootCooldown = 0.06f;
     }
