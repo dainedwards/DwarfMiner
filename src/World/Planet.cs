@@ -129,6 +129,9 @@ public sealed class Planet
     /// gen only records the sites; Game1 pours the cells once Cells exists.</summary>
     public readonly List<(int x, int y)> GasSeeds = new();
     public readonly List<(int x, int y)> AcidSeeds = new();
+    /// <summary>Cave tiles world gen wants filled with oil cells — flammable sumps that pool
+    /// on cave floors, inert until fire or lava reaches them. Same contract as the others.</summary>
+    public readonly List<(int x, int y)> OilSeeds = new();
 
     /// <summary>Volcano plumbing tiles to prime with lava — crater pool, throat, and the
     /// deep magma chamber (see WorldGen.CarveVolcanoes). Acid volcanoes record theirs in
