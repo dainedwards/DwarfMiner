@@ -290,12 +290,21 @@ public sealed partial class DwarfMinerGame : Game
         }
         // Normal boot (no test-hook jump-in): land on the title screen — the save-slot
         // choice then (re)loads that profile behind the load screen. Test hooks skip
-        // straight in on slot 1.
+        // straight in on slot 1 (DM_ENTRYTEST needs the space screen, so it skips the
+        // title and goes through the load screen directly).
         if (_screen == GameScreen.Space)
         {
             SaveSlots.MigrateLegacy();
-            RefreshSlotSummaries();
-            _screen = GameScreen.Title;
+            if (Environment.GetEnvironmentVariable("DM_ENTRYTEST") is { Length: > 0 })
+            {
+                _loadingSince = 0f;
+                _screen = GameScreen.Loading;
+            }
+            else
+            {
+                RefreshSlotSummaries();
+                _screen = GameScreen.Title;
+            }
         }
         base.Initialize();
     }
