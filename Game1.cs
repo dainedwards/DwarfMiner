@@ -3776,7 +3776,7 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
-        var hint = "UP/DOWN OR 1-3 SELECT   ENTER START   ESC QUIT";
+        var hint = "CLICK A SLOT OR UP/DOWN + ENTER   ESC QUIT";
         _renderer.DrawText(hint,
             new Vector2((VirtualWidth - _renderer.MeasureText(hint)) / 2f, y0 + 3 * (cardH + gap) + 24),
             new Color(150, 165, 200));
