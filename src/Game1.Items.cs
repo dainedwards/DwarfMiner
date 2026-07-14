@@ -88,7 +88,7 @@ public sealed partial class DwarfMinerGame
         Action<Vector2> Place(string id) => c =>
             _run.Player.TryPlaceBuildId(_run.Planet, _run.Physics, c, id, _frameDt);
 
-        return new Dictionary<string, ItemDef>
+        var items = new Dictionary<string, ItemDef>
         {
             // ─── Intrinsic tools (on the belt from spawn, always owned) ───────────
             ["pickaxe"] = new() { Owned = () => true, Use = c => DoMine(c, MiningTool.Pickaxe) },
