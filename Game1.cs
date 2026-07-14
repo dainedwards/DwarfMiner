@@ -4964,8 +4964,10 @@ public sealed partial class DwarfMinerGame : Game
                     break;
                 }
                 case ProjectileKind.Tnt:
+                case ProjectileKind.TntPack:
                 {
-                    // Strapped bundle of three sticks with a sparking fuse.
+                    // Strapped bundle of three sticks with a sparking fuse. The fuse spark
+                    // strobes faster as the timer runs down — you can read the bang coming.
                     var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
                     _renderer.DrawRect(p.Position, new Vector2(6f, 5f), new Color(180, 45, 45), ang);
                     _renderer.DrawRect(p.Position, new Vector2(6f, 1f), new Color(120, 25, 25), ang);
