@@ -1686,6 +1686,12 @@ public sealed partial class DwarfMinerGame : Game
                 if (c.Kind != CreatureKind.BomberBeetle)
                     _run.Corpses.Add(new Corpse(c.Position, c.Kind, c.Radius));
                 _particles.EmitDust(c.Position, 5f);
+                // A dead resident is a big black mark — unless the titan is rampaging right
+                // there, the city pins the death on the dwarf.
+                if (c.Kind is CreatureKind.Civilian or CreatureKind.Peacekeeper or CreatureKind.Saucer
+                    && (!_run.Titan.Hatched || _run.Titan.Health <= 0
+                        || (_run.Titan.Position - c.Position).LengthSquared() > 380f * 380f))
+                    AddCityWrath(35f);
                 switch (c.Kind)
                 {
                     // Spore bats burst into a choking puff — kill them at arm's length.
