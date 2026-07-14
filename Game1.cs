@@ -1176,7 +1176,7 @@ public sealed partial class DwarfMinerGame : Game
         if (_pauseOpen)
         {
             // True pause: nothing below runs — the whole sim freezes under the overlay.
-            if (!pauseToggled) UpdatePauseMenu(keys);
+            if (!pauseToggled) UpdatePauseMenu(keys, mouse);
             _prevKeys = keys; _prevMouse = mouse;
             base.Update(gameTime);
             return;
