@@ -131,23 +131,22 @@ public static class Icons
         Renderer.BuildSprite(gd, new[]
         {
             "................",
+            ".OO..........OO.",
+            "OLLO..OOOO..OMDO",
+            "OLLLOOLLMDOOMMDO",
+            "OLLLLLOOMDMMMMDO",
+            ".OLLLLLMMMMMMDO.",
+            ".OLLLLMMMMMMDDO.",
+            "..OLLMMOOMMDDO..",
+            "..OLLMMMMMMDDO..",
+            "..OLMMDMMDMMDO..",
+            "..OLMMMMMMMMDO..",
+            "...OMMMMMMMDO...",
+            "....OOOOOOOO....",
             "................",
-            "..ss........ss..",
-            ".sSSs......sSSs.",
-            ".sSSSSSSSSSSSSs.",
-            ".sSSSSSSSSSSSSs.",
-            "..sSSSssssSSSs..",
-            "..sSSSSSSSSSSs..",
-            "..sSSSSSSSSSSs..",
-            "..sSSSssssSSSs..",
-            "..sSSSSSSSSSSs..",
-            "...sSSSSSSSSs...",
-            "....ssssssss....",
             "................",
             "................",
-            "................",
-        }, new Dictionary<char, Color>
-        { ['.'] = Color.Transparent, ['S'] = light, ['s'] = dark });
+        }, ArmorPalette(light, dark));
 
     private static Texture2D BuildLeggings(GraphicsDevice gd, Color light, Color dark) =>
         Renderer.BuildSprite(gd, new[]
