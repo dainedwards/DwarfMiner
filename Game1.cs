@@ -1138,7 +1138,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             ViewportSize = new Point(VirtualWidth, VirtualHeight),
             // DM_ZOOM overrides the default zoom for testing (e.g. zoom out to frame a boss).
-            Zoom = float.TryParse(Environment.GetEnvironmentVariable("DM_ZOOM"), out var z) ? z : 4.0f,
+            Zoom = float.TryParse(Environment.GetEnvironmentVariable("DM_ZOOM"), out var z) ? z : 5.6f,
         };
         // The space screen drives Zoom itself every frame; remember the in-run zoom (incl. any
         // DM_ZOOM override) so landing on a planet restores it.
