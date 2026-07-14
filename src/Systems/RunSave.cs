@@ -88,6 +88,9 @@ public static class RunSave
             for (var s = 0; s < Toolbelt.SlotCount; s++)
                 w.Write(p.Toolbelt.Slots[s] ?? "");
 
+            for (var s = 0; s < Equipment.SlotCount; s++)
+                w.Write(p.Equipment.Slots[s] ?? "");
+
             w.Write(p.Inventory.Items.Count);
             foreach (var (id, count) in p.Inventory.Items)
             {
