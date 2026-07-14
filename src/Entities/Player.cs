@@ -587,18 +587,19 @@ public sealed class Player
         // dirt. Each variant places its own tile kind so a granite stockpile builds granite
         // walls, not generic stone — preserves the resource's identity through placement.
         // Peek-only here: material is spent when the build completes, not while it's held.
-        TileKind placed;
-        if      (Inventory.Count("stone") > 0)      placed = TileKind.Stone;
-        else if (Inventory.Count("granite") > 0)    placed = TileKind.Granite;
-        else if (Inventory.Count("basalt") > 0)     placed = TileKind.Basalt;
-        else if (Inventory.Count("moss_stone") > 0) placed = TileKind.MossStone;
-        else if (Inventory.Count("obsidian") > 0)   placed = TileKind.Obsidian;
-        else if (Inventory.Count("gravel") > 0)     placed = TileKind.Gravel;
-        else if (Inventory.Count("dirt") > 0)       placed = TileKind.Dirt;
+        (TileKind kind, string id) pick;
+        if      (Inventory.Count("stone") > 0)      pick = (TileKind.Stone, "stone");
+        else if (Inventory.Count("granite") > 0)    pick = (TileKind.Granite, "granite");
+        else if (Inventory.Count("basalt") > 0)     pick = (TileKind.Basalt, "basalt");
+        else if (Inventory.Count("moss_stone") > 0) pick = (TileKind.MossStone, "moss_stone");
+        else if (Inventory.Count("obsidian") > 0)   pick = (TileKind.Obsidian, "obsidian");
+        else if (Inventory.Count("gravel") > 0)     pick = (TileKind.Gravel, "gravel");
+        else if (Inventory.Count("dirt") > 0)       pick = (TileKind.Dirt, "dirt");
         else return null;
 
         if (!TickBuild(planet, worldCursor, dt)) return null;
-        if (!Inventory.TryConsume(Tiles.Drop(placed)?.id ?? "stone", 1)) return null;
+        if (!Inventory.TryConsume(pick.id, 1)) return null;
+        var placed = pick.kind;
 
         foreach (var (fx, fy) in stamp)
         {
