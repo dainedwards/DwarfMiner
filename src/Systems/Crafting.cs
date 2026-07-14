@@ -101,6 +101,8 @@ public static class Crafting
             new Dictionary<string, int> { ["stone"] = 2 }),
         new("rail", "Rail (5×) — speed boost where laid",
             new Dictionary<string, int> { ["iron"] = 3 }),
+        new("door", "Door (2×) — pops open and shut (E to use)",
+            new Dictionary<string, int> { ["stone"] = 3, ["iron"] = 1 }),
 
         // ─── Combat ───────────────────────────────────────────────────────────
         new("armor", "Iron plate armor — chest (−40% damage taken)",
