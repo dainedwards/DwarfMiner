@@ -216,10 +216,7 @@ public sealed class CharacterScreen
             EquipSlot.Chest      => (0, 1),
             EquipSlot.Legs       => (0, 2),
             EquipSlot.Feet       => (0, 3),
-            EquipSlot.Weapon1    => (1, 0),
-            EquipSlot.Weapon2    => (1, 1),
-            EquipSlot.MiningTool => (1, 2),
-            _                    => (1, 3),   // Back (jetpack)
+            _                    => (1, 0),   // Back (jetpack) — weapons/tool retired to the hotbar
         };
         return new Rectangle(cx - 23 + col * 84, py + top + row * SlotPitch, SlotSize, SlotSize);
     }
