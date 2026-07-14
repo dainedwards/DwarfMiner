@@ -59,19 +59,11 @@ public static class SpawnDirector
         return n;
     }
 
-    /// <summary>Populate the fresh planet with ambient life: the planet-wide RESIDENT census
-    /// first (cities staffed, warrens garrisoned, lakes stocked, wild herds scattered — all
-    /// in place before the player goes anywhere), then the usual local warm-up around the
-    /// spawn. Update keeps only the local wildlife topped up afterwards.</summary>
-    public static void SpawnInitialFauna(Session run)
-    {
-        PopulateWorld(run);
-        for (var i = 0; i < 7; i++) TrySpawnSurfaceAnimal(run);
-        for (var i = 0; i < 6; i++) TrySpawnSkyAnimal(run);
-        for (var i = 0; i < 12; i++) TrySpawnCreature(run);
-        if (run.Def.HasWater)
-            for (var i = 0; i < 4; i++) TrySpawnAquatic(run);
-    }
+    /// <summary>Populate the fresh planet with ambient life. Everything is rolled here, once
+    /// — the planet-wide RESIDENT census (cities staffed, warrens garrisoned, lakes stocked,
+    /// caves crawling, skies flown, herds scattered) plus the physical spawners. After this,
+    /// only the spawners make new creatures.</summary>
+    public static void SpawnInitialFauna(Session run) => PopulateWorld(run);
 
     /// <summary>Seed the whole planet's population up front (run start AND resume — creatures
     /// aren't saved): every city address staffed, saucers on station over each district, a
