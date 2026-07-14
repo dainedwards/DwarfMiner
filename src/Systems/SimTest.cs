@@ -2409,14 +2409,17 @@ public static class SimTest
 
         // Tier-III effects: jetpack charge/climb curve, O2 ceiling, hull 9,
         // and the Aegis shield recharge.
+        // Noita-tuned burn: 5s at tier I, +30% per tier (5 / 6.5 / 8.45 / ~10.99).
         var tiers = new Player(Vector2.Zero) { HasJetpack = true };
         var cap1 = tiers.JetChargeCap;
         tiers.JetTier2 = true;
         var cap2 = tiers.JetChargeCap;
         tiers.JetTier3 = true;
-        Check("tiers: jetpack charge 1x/2x/3x",
-            MathF.Abs(cap1 - 2.6f) < 0.01f && MathF.Abs(cap2 - 5.2f) < 0.01f
-            && MathF.Abs(tiers.JetChargeCap - 7.8f) < 0.01f);
+        var cap3 = tiers.JetChargeCap;
+        tiers.JetTier4 = true;
+        Check("tiers: jetpack burn 5s +30% per tier",
+            MathF.Abs(cap1 - 5f) < 0.01f && MathF.Abs(cap2 - 6.5f) < 0.01f
+            && MathF.Abs(cap3 - 8.45f) < 0.01f && MathF.Abs(tiers.JetChargeCap - 10.985f) < 0.01f);
         Check("tiers: pickup reach stays touch-range (no magnet)", tiers.PickupReach == 4f);
         tiers.HasO2Recycler = true;
         tiers.O2Tier2 = true;
