@@ -1834,6 +1834,26 @@ public sealed class Cells
                 var g = new Color(150, 190, 70);
                 return new Color(g.R + jitter / 5, g.G + jitter / 5 + swirl, g.B + jitter / 5, (byte)110);
             }
+            case Material.Fire:
+            {
+                // Fast per-cell flicker cycling white-hot → orange → deep red, so even a
+                // static flame cell dances. Brighter than lava — this is open flame.
+                var t = (int)(_time * 14f);
+                var h2 = (uint)(hash ^ (t * 48271));
+                return (h2 % 5) switch
+                {
+                    0 => new Color(255, 245, 180),
+                    1 => new Color(255, 200, 90),
+                    2 or 3 => new Color(255, 140, 40),
+                    _ => new Color(220, 70, 20),
+                };
+            }
+            case Material.Oil:
+            {
+                // Near-black slick with a slow oily sheen crawling across it.
+                var sheen = (int)(MathF.Sin(_time * 1.1f + ((hash >> 3) & 7) * 0.9f + cy * 0.25f) * 7f);
+                return Tint(new Color(38, 32, 26), jitter / 6 + sheen) * 0.94f;
+            }
             case Material.Dirt:    return Tint(new Color(115, 75, 42), jitter / 3);
             case Material.Gravel:  return Tint(new Color(125, 120, 110), jitter / 3);
             case Material.Dust:
