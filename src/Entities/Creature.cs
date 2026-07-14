@@ -381,6 +381,31 @@ public sealed class Creature
             BurnSeconds -= dt;
         }
         if (FreezeSeconds > 0f) FreezeSeconds -= dt;
+
+        // Environmental hazard contact: the same cell probe the dwarf uses, throttled and
+        // immunity-filtered — lava sears anything not molten-blooded, acid eats anything
+        // not acid-native, open flame sets the burn debuff alight. Deliberately NOT wired
+        // to aggro: a grazer scalded by a lava seep flees pain, it doesn't blame the dwarf
+        // (HitFlash doubles as the provocation signal above, so it must stay untouched).
+        _hazardProbeT -= dt;
+        if (_hazardProbeT <= 0f)
+        {
+            _hazardProbeT += HazardProbePeriod;
+            var (lava, acid, _, fire) = cells.SampleHazardsNear(Position, Radius + 1.5f);
+            if (lava > 0 && !ImmuneTo(Material.Lava))
+            {
+                Health -= LavaDps * HazardProbePeriod;
+                BurnSeconds = MathF.Max(BurnSeconds, 1.5f);
+            }
+            if (acid > 0 && !ImmuneTo(Material.Acid))
+                Health -= AcidDps * HazardProbePeriod;
+            if (fire > 0 && !ImmuneTo(Material.Fire))
+            {
+                Health -= FireDps * HazardProbePeriod;
+                BurnSeconds = MathF.Max(BurnSeconds, 1.5f);
+            }
+        }
+
         // A shot digger holds a grudge — the pain flash doubles as the provocation signal.
         // All the tunnelling kinds use it: unprovoked, they wander-dig their own galleries
         // and leave the dwarf alone; only a hit (or point-blank crowding, per-kind) turns
