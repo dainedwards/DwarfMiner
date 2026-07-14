@@ -71,7 +71,9 @@ public static class Tiles
           // Built architecture: skyscraper hulls and lizard-city masonry never crumble —
           // mining one wall must not condemn the tower above it (they also shrug off acid,
           // which corrodes any non-anchored tile).
-          or TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick;
+          or TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick
+          or TileKind.DoorClosed or TileKind.DoorOpen
+          or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp;
 
     /// <summary>Tiles the player walks through (climb / pass through) instead of colliding with.
     /// Ladders are passable so the dwarf can climb; small placed lights are passable too so the
