@@ -221,6 +221,14 @@ public sealed partial class DwarfMinerGame
             ["chitin_helmet"]   = new() { Owned = () => _run.Player.Inventory.Count("chitin_helmet") > 0,   OnCraft = Wear("chitin_helmet", EquipSlot.Head) },
             ["chitin_leggings"] = new() { Owned = () => _run.Player.Inventory.Count("chitin_leggings") > 0, OnCraft = Wear("chitin_leggings", EquipSlot.Legs) },
             ["chitin_boots"]    = new() { Owned = () => _run.Player.Inventory.Count("chitin_boots") > 0,    OnCraft = Wear("chitin_boots", EquipSlot.Feet) },
+            ["leather_gloves"]  = new() { Owned = () => _run.Player.Inventory.Count("leather_gloves") > 0,  OnCraft = Wear("leather_gloves", EquipSlot.Gloves) },
+            ["iron_gauntlets"]  = new() { Owned = () => _run.Player.Inventory.Count("iron_gauntlets") > 0,  OnCraft = Wear("iron_gauntlets", EquipSlot.Gloves) },
+            // Accessories — stock 1 and slip into the first free trinket slot; if both are
+            // occupied it waits in the backpack for a manual swap on the character screen.
+            ["band_regen"]    = new() { Owned = () => _run.Player.Inventory.Count("band_regen") > 0,    OnCraft = Trinket("band_regen") },
+            ["magnet_ring"]   = new() { Owned = () => _run.Player.Inventory.Count("magnet_ring") > 0,   OnCraft = Trinket("magnet_ring") },
+            ["miners_charm"]  = new() { Owned = () => _run.Player.Inventory.Count("miners_charm") > 0,  OnCraft = Trinket("miners_charm") },
+            ["aegis_pendant"] = new() { Owned = () => _run.Player.Inventory.Count("aegis_pendant") > 0, OnCraft = Trinket("aegis_pendant") },
             // Air tank tops the supply to the new (doubled) ceiling on craft, so it's an
             // immediate breather as well as a permanent capacity bump.
             ["air_tank"] = new()
