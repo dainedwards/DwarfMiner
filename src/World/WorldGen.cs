@@ -537,7 +537,9 @@ public static class WorldGen
         // there), and every tunnel that grazes the lava zone becomes permanent plumbing
         // that keeps the cell sim awake — measured at 3× the steady update budget.
         if (def.LavaFillFrac > 0.5f) return;
-        var worms = 20 + rng.Next(9);
+        // Dense enough that neighbouring walks intersect constantly — the underground
+        // should read as one connected Noita warren, not isolated corridors.
+        var worms = 30 + rng.Next(11);
         // Stay above THIS world's lava zone — StartNewRun floods every sky tile below
         // LavaFillFrac×radius (ember-class worlds run 0.55-0.70), and tunnels crossing
         // that line become permanent lava plumbing that wrecks the steady-state cell
