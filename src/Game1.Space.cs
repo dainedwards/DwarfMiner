@@ -84,6 +84,45 @@ public sealed partial class DwarfMinerGame
             "DSGGGGGGSm",
             ".dSSSSSSd.",
             "..DD......");
+        // Elemental arms. Flamethrower: fat fuel tank under a long burner with a pilot
+        // flame; acid spewer: bulbous green reservoir with a dripping spout; lightning
+        // gun: coil rings along the barrel with a forked prong at the muzzle.
+        _weaponTex["flamethrower"] = T(
+            ".ddddddddd..",
+            "DSSSSSSSSSmm",
+            "DSRRRRSSSSmm",
+            ".dRRRRd.....",
+            "..DDdd......");
+        _weaponTex["acid_spewer"] = T(
+            "..dGGGGd....",
+            "DSGGGGGGSSm.",
+            "DSGGGGGGSSm.",
+            "..dGGGGd..m.",
+            "..DD........");
+        _weaponTex["lightning_gun"] = T(
+            ".dCdSdCdSd.C",
+            "DSSSSSSSSSmC",
+            ".dCdSdCdSd.C",
+            "..DD........");
+        // Thrown / heavy ordnance — so the dwarf visibly holds the stick, the satchel,
+        // and the nuke instead of miming empty-handed.
+        _weaponTex["dynamite"] = T(
+            "....m",
+            "RRRR.",
+            "RRRR.");
+        _weaponTex["tnt"] = T(
+            ".m...",
+            "RRRRR",
+            "RRRRR",
+            "RRRRR");
+        _weaponTex["nuke"] = T(
+            ".SSSSSR",
+            "SSSSSSR",
+            ".SSSSSR");
+        _weaponTex["bullets"] = T(
+            "SSSSm",
+            "SSSS.",
+            ".DD..");
         // Swung tools — handle along +X with the head at the far end, vertically symmetric
         // so the swing draw can rotate through the full arc without any flip bookkeeping.
         // The pick head is a thin ")" arc bowed away from the handle with twin tips curling
