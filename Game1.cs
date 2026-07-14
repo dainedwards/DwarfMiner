@@ -2829,11 +2829,39 @@ public sealed partial class DwarfMinerGame : Game
     protected override void Draw(GameTime gameTime)
     {
         _drawSw.Restart();
+        // Everything renders into the fixed virtual-resolution scene target, then scales
+        // to the real window in one letterboxed blit — resolution independence without a
+        // single UI coordinate changing.
+        GraphicsDevice.SetRenderTarget(_sceneRt);
         DrawFrame(gameTime);
+        PresentScene();
         _drawSw.Stop();
         _drawMs = _drawMs * 0.9f + (float)_drawSw.Elapsed.TotalMilliseconds * 0.1f;
 
         base.Draw(gameTime);
+    }
+
+    /// <summary>Blit the finished scene target to the backbuffer, aspect-fit and centred.
+    /// Integer scale factors stay point-sampled so the pixel art keeps hard edges; anything
+    /// fractional smooths instead of shimmering. Also refreshes the Screen mouse mapping.</summary>
+    private void PresentScene()
+    {
+        var gd = GraphicsDevice;
+        gd.SetRenderTarget(null);
+        var pp = gd.PresentationParameters;
+        var scale = MathF.Min(pp.BackBufferWidth / (float)VirtualWidth,
+                              pp.BackBufferHeight / (float)VirtualHeight);
+        var w = Math.Max(1, (int)(VirtualWidth * scale));
+        var h = Math.Max(1, (int)(VirtualHeight * scale));
+        var dest = new Rectangle((pp.BackBufferWidth - w) / 2, (pp.BackBufferHeight - h) / 2, w, h);
+        Screen.Scale = scale;
+        Screen.Offset = dest.Location;
+        gd.Clear(Color.Black);
+        var sampler = MathF.Abs(scale - MathF.Round(scale)) < 0.01f
+            ? SamplerState.PointClamp : SamplerState.LinearClamp;
+        _renderer.Batch.Begin(samplerState: sampler);
+        _renderer.Batch.Draw(_sceneRt, dest, Color.White);
+        _renderer.Batch.End();
     }
 
     /// <summary>Real rendered frame rate + smoothed CPU times, top-right on every screen.
