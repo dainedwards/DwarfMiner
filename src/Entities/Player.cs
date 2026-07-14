@@ -140,6 +140,13 @@ public sealed class Player
     public float Gravity = 320f;
     public float MineCooldown;
     public float ShootCooldown;
+    /// <summary>Shared placement cadence: every placed thing (blocks, ladders, supports,
+    /// doors, sentries/turrets) sets this so nothing can be frame-spammed. A short rhythm
+    /// for painting blocks; heavier placeables set a longer one.</summary>
+    public float BuildCooldown;
+    /// <summary>Base seconds between block placements — the "building speed" the player
+    /// paints walls at.</summary>
+    public const float BlockPlaceCooldown = 0.22f;
 
     /// <summary>Seconds of held aim it takes to raise one placed block/build stamp —
     /// placement is a short construction job, not an instant conjure, so cover can't be
