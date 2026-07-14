@@ -277,7 +277,30 @@ public sealed partial class DwarfMinerGame : Game
         {
             EnterOrbit(PlanetDefs.ById(orbit));
         }
+        // Normal boot (no test-hook jump-in): hold on the load screen until the survey
+        // warm-up finishes, then hand over to the space screen.
+        if (_screen == GameScreen.Space) _screen = GameScreen.Loading;
         base.Initialize();
+    }
+
+    /// <summary>Apply the display mode: borderless fullscreen at the desktop resolution, or
+    /// a plain window back at the virtual size. The scene itself always renders at 1280×720
+    /// and scales, so no other system notices the change.</summary>
+    private void SetFullscreen(bool on)
+    {
+        _graphics.HardwareModeSwitch = false;   // borderless — no display-mode switch flicker
+        _graphics.IsFullScreen = on;
+        if (on)
+        {
+            _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+            _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+        }
+        else
+        {
+            _graphics.PreferredBackBufferWidth = VirtualWidth;
+            _graphics.PreferredBackBufferHeight = VirtualHeight;
+        }
+        _graphics.ApplyChanges();
     }
 
     /// <summary>The heavy half of starting a run: world generation, cell seeding, and the
