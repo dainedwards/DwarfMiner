@@ -4296,13 +4296,15 @@ public sealed partial class DwarfMinerGame : Game
                 else
                 {
                     var wrot = MathF.Atan2(aim.Y, aim.X);
-                    // Mid-swing, melee sweeps through an arc around the aim.
+                    // Mid-swing, melee sweeps a long deliberate arc around the aim.
                     if (isMelee && _meleeAnim > 0f)
                     {
-                        var swing = MathHelper.Lerp(-1.5f, 1.1f, 1f - _meleeAnim / _meleeAnimDur);
+                        var swing = MathHelper.Lerp(-2.1f, 1.4f, 1f - _meleeAnim / _meleeAnimDur);
                         wrot += aim.X < 0f ? -swing : swing;
                     }
-                    var scale = isMelee ? 0.7f : 0.55f;
+                    // Melee reads big in hand: 30% larger overall, 50% longer down the
+                    // blade axis (X is the length axis — all weapon art points +X).
+                    var scale = isMelee ? new Vector2(1.37f, 0.91f) : new Vector2(0.55f, 0.55f);
                     _renderer.Batch.Draw(heldTex, _run.Player.Position + aim * 3.2f, null, Color.White,
                         wrot, new Vector2(1.5f, heldTex.Height / 2f), scale,
                         aim.X < 0f ? SpriteEffects.FlipVertically : SpriteEffects.None, 0f);
