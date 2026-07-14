@@ -4972,7 +4972,8 @@ public sealed partial class DwarfMinerGame : Game
                     _renderer.DrawRect(p.Position, new Vector2(6f, 5f), new Color(180, 45, 45), ang);
                     _renderer.DrawRect(p.Position, new Vector2(6f, 1f), new Color(120, 25, 25), ang);
                     _renderer.DrawRect(p.Position, new Vector2(1.4f, 5f), new Color(90, 70, 45), ang);
-                    var spark = MathF.Sin(_run.RunTime * 60f) * 0.5f + 0.5f;
+                    var strobe = 30f + MathF.Max(0f, 2.5f - p.Life) * 40f;
+                    var spark = MathF.Sin(_run.RunTime * strobe) * 0.5f + 0.5f;
                     var up2 = _run.Planet.UpAt(p.Position);
                     _renderer.DrawCircle(p.Position + up2 * 3.5f, 1f + spark * 0.8f, new Color(255, 230, 130));
                     break;
