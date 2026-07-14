@@ -256,9 +256,9 @@ public sealed class Player
         var cd = tool switch
         {
             MiningTool.Drill       => 0.04f,
-            MiningTool.Hammer      => 0.30f,
+            MiningTool.Hammer      => 0.34f,
             MiningTool.MiningLaser => 0.03f,
-            _                      => 0.10f,
+            _                      => 0.16f,   // pickaxe: a slower, weightier chop
         };
         // Worn gloves quicken every tool's rhythm.
         return cd * Equipment.MineSpeedMul;
