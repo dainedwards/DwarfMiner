@@ -91,15 +91,15 @@ public sealed class Player
     /// paper-doll's Back slot — it only burns while equipped there). Hold jump while
     /// airborne to hover Noita-style: thrust is an acceleration fighting gravity, so you
     /// feather it to hold altitude and momentum carries through. The charge refills over a
-    /// second on the ground. Tier I burns 3 s; each tier +30%.</summary>
+    /// couple of seconds on the ground (and ONLY there). Burn: 1 s at tier I, +1 s per
+    /// tier, +2 s for the final tier (1/2/3/5).</summary>
     public bool HasJetpack;
     public bool JetTier2;
     public bool JetTier3;
     public bool JetTier4;
     public float JetCharge = JetChargeMax;
-    public const float JetChargeMax = 3f;     // seconds of burn (tier I)
-    public float JetChargeCap =>
-        JetChargeMax * (JetTier4 ? 2.197f : JetTier3 ? 1.69f : JetTier2 ? 1.3f : 1f);
+    public const float JetChargeMax = 1f;     // seconds of burn (tier I)
+    public float JetChargeCap => JetTier4 ? 5f : JetTier3 ? 3f : JetTier2 ? 2f : JetChargeMax;
     /// <summary>1-4 while owned (drives the exhaust flame colour: red→orange→yellow→blue),
     /// 0 without the pack.</summary>
     public int JetTier => JetTier4 ? 4 : JetTier3 ? 3 : JetTier2 ? 2 : HasJetpack ? 1 : 0;
