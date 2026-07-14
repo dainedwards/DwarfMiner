@@ -69,6 +69,7 @@ public sealed partial class DwarfMinerGame : Game
     /// culprit.</summary>
     private readonly System.Diagnostics.Stopwatch _updSw = new();
     private readonly System.Diagnostics.Stopwatch _drawSw = new();
+    private readonly System.Diagnostics.Stopwatch _lightSw = new();
     private float _updateMs, _drawMs;
     private int _fps, _fpsFrames;
     private long _fpsMark = Environment.TickCount64;
