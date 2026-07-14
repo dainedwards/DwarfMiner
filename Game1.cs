@@ -288,10 +288,74 @@ public sealed partial class DwarfMinerGame : Game
         {
             EnterOrbit(PlanetDefs.ById(orbit));
         }
-        // Normal boot (no test-hook jump-in): hold on the load screen until the survey
-        // warm-up finishes, then hand over to the space screen.
-        if (_screen == GameScreen.Space) _screen = GameScreen.Loading;
+        // Normal boot (no test-hook jump-in): land on the title screen — the save-slot
+        // choice then (re)loads that profile behind the load screen. Test hooks skip
+        // straight in on slot 1.
+        if (_screen == GameScreen.Space)
+        {
+            SaveSlots.MigrateLegacy();
+            RefreshSlotSummaries();
+            _screen = GameScreen.Title;
+        }
         base.Initialize();
+    }
+
+    /// <summary>(Re)start the background survey warm-up for the ACTIVE campaign. Any
+    /// previous slot's warm-up is cancelled first — its cache entries were cleared and
+    /// letting it keep writing would repopulate them with the wrong worlds.</summary>
+    private void StartSurveyWarm()
+    {
+        _warmCts?.Cancel();
+        var cts = new System.Threading.CancellationTokenSource();
+        _warmCts = cts;
+        _warmDone = 0;
+        var defs = PlanetDefs.All;
+        _warmTotal = defs.Length;
+        _warmTask = System.Threading.Tasks.Task.Run(() =>
+        {
+            foreach (var def in defs)
+            {
+                if (cts.IsCancellationRequested) return;
+                _warmName = def.Name;
+                Space.Survey.WorldFor(def);
+                System.Threading.Interlocked.Increment(ref _warmDone);
+            }
+        });
+    }
+
+    /// <summary>Re-read each slot's summary for the title screen.</summary>
+    private void RefreshSlotSummaries()
+    {
+        for (var i = 0; i < SaveSlots.Count; i++)
+            _slotInfo[i] = (MetaSave.Peek(i + 1), RunSave.ExistsIn(i + 1));
+    }
+
+    /// <summary>Commit to a save slot from the title screen: load (or freshly create) its
+    /// profile, roll/restore its campaign, reset every per-campaign cache, and hand over
+    /// to the load screen while its survey warm-up runs.</summary>
+    private void SelectSlot(int slot)
+    {
+        SaveSlots.Active = slot;
+        _meta = MetaSave.Load();
+        if (_meta.WorldSeed == 0)
+        {
+            _meta.WorldSeed = Random.Shared.Next(1, int.MaxValue);
+            _meta.Save();
+        }
+        PlanetDefs.Activate(PlanetGen.Campaign(_meta.WorldSeed));
+        // Per-campaign caches: survey worlds, disc previews, and prefetched sessions all
+        // key by planet id, and ids collide across campaigns ("moon", biome aliases).
+        Space.Survey.Reset();
+        foreach (var tex in _planetPreview.Values) tex.Dispose();
+        _planetPreview.Clear();
+        _prefetch.Clear();
+        _space = new SpaceSim();
+        RestoreShipState();
+        _sfx.Master = VolumeSteps[Math.Clamp(_meta.VolumeStep, 0, VolumeSteps.Length - 1)];
+        StartSurveyWarm();
+        _loadingSince = _totalTime;
+        _screen = GameScreen.Loading;
+        _camera?.SnapTo(_space.ShipPos, 0f);
     }
 
     /// <summary>Apply the display mode: borderless fullscreen at the desktop resolution, or
