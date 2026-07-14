@@ -44,7 +44,9 @@ public sealed class Renderer
     /// ladders, rails, glowing placeables) rather than sampled from the texture atlas.</summary>
     private static bool UsesAuthoredArt(TileKind k) => k is
         TileKind.Core or TileKind.Support or TileKind.ReinforcedSupport or
-        TileKind.Ladder or TileKind.Rail or TileKind.Glowshroom or TileKind.Beacon;
+        TileKind.Ladder or TileKind.Rail or TileKind.Glowshroom or TileKind.Beacon or
+        TileKind.DoorClosed or TileKind.DoorOpen or
+        TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp;
 
     public Texture2D Pixel => _pixel;
     public SpriteBatch Batch => _sb;
