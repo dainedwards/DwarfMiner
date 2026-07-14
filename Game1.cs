@@ -1852,6 +1852,36 @@ public sealed partial class DwarfMinerGame : Game
         _toastTimer = 2f;
     }
 
+    /// <summary>God mode's permanent item grant: every tool, weapon, light, armor piece,
+    /// accessory, and pack at max tier — ownership flags flip for real, so it all stays
+    /// when god mode is toggled off.</summary>
+    private void GrantGodmodeItems()
+    {
+        var p = _run.Player;
+        p.HasDrill = p.HasHammer = p.HasMiningLaser = p.HasCoreDrill = true;
+        p.HasPistol = p.HasMachineGun = p.HasLaser = p.HasLaserCannon = p.HasRocketLauncher = true;
+        p.HasFlamethrower = p.HasAcidSpewer = p.HasLightningGun = true;
+        _run.HasCannon = true;
+        p.PickaxeTier = 4;
+        p.LightTier = 4;
+        p.HeadlampTier = 4;
+        p.HasJetpack = p.JetTier2 = p.JetTier3 = p.JetTier4 = true;
+        p.HasAirTank = p.HasArmor = true;
+        foreach (var mid in Toolbelt.MeleeIds) p.MeleeTiers[mid] = 4;
+        foreach (var id in new[]
+        {
+            "torch", "lantern", "helm_lamp", "sun_crystal", "jetpack",
+            "armor", "iron_helmet", "iron_leggings", "iron_boots", "iron_gauntlets",
+            "chitin_armor", "chitin_helmet", "chitin_leggings", "chitin_boots", "leather_gloves",
+            "band_regen", "magnet_ring", "miners_charm", "aegis_pendant",
+            "sword", "mace", "warhammer", "shield",
+            "great_sword", "great_mace", "great_hammer", "tower_shield",
+        })
+            if (p.Inventory.Count(id) == 0) p.Inventory.Add(id, 1);
+        p.Equipment.AutoEquip("jetpack");
+        if (p.Equipment.Get(EquipSlot.Torch) is null) p.Equipment.Set(EquipSlot.Torch, "sun_crystal");
+    }
+
     private void GrantGodmodeMaterials()
     {
         var inv = _run.Player.Inventory;
