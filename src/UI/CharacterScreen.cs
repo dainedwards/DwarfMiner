@@ -196,7 +196,8 @@ public sealed class CharacterScreen
             EquipSlot.Feet       => (0, 3),
             EquipSlot.Weapon1    => (1, 0),
             EquipSlot.Weapon2    => (1, 1),
-            _                    => (1, 2),   // MiningTool
+            EquipSlot.MiningTool => (1, 2),
+            _                    => (1, 3),   // Back (jetpack)
         };
         return new Rectangle(cx - 23 + col * 84, py + top + row * SlotPitch, SlotSize, SlotSize);
     }
