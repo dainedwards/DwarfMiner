@@ -2556,6 +2556,40 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>One melee swing: damages and knocks back every creature in the aim arc
     /// (the titan too), and at rung 4 the energy edge carves soft terrain along the arc.
     /// The swing animation is driven by _meleeAnim in the held-weapon draw.</summary>
+    /// <summary>E on/near a door pops it open or shut. Checks the cursor tile first, then a
+    /// small ring around the player, so standing in a doorway and mashing E always works.
+    /// Both leaves of a two-tall door toggle together (doors place/generate as vertical
+    /// pairs) — half-open doors read as broken, not ajar.</summary>
+    private bool TryToggleDoor(Vector2 worldCursor)
+    {
+        bool TryAt(Vector2 at)
+        {
+            var (tx, ty) = _run.Planet.WorldToTile(at);
+            var k = _run.Planet.Get(tx, ty);
+            if (k is not (TileKind.DoorClosed or TileKind.DoorOpen)) return false;
+            var to = k == TileKind.DoorClosed ? TileKind.DoorOpen : TileKind.DoorClosed;
+            _run.Planet.Set(tx, ty, to);
+            // Partner leaf: the door tile directly above or below swings with this one.
+            var up = _run.Planet.UpAt(at);
+            foreach (var s in new[] { 1f, -1f })
+            {
+                var (nx, ny) = _run.Planet.WorldToTile(at + up * (Planet.TileSize * s));
+                if (_run.Planet.Get(nx, ny) is TileKind.DoorClosed or TileKind.DoorOpen)
+                    _run.Planet.Set(nx, ny, to);
+            }
+            PlayAt("place", at, 0.5f, pitch: to == TileKind.DoorOpen ? 0.3f : -0.2f);
+            return true;
+        }
+
+        if ((worldCursor - _run.Player.Position).Length() < 40f && TryAt(worldCursor)) return true;
+        // Fallback sweep: the player's own tile plus its neighbours.
+        for (var dx = -1; dx <= 1; dx++)
+            for (var dy = -1; dy <= 1; dy++)
+                if (TryAt(_run.Player.Position + new Vector2(dx, dy) * Planet.TileSize))
+                    return true;
+        return false;
+    }
+
     private void MeleeAttack(string id, Vector2 worldCursor)
     {
         var dir = worldCursor - _run.Player.Position;
