@@ -79,7 +79,7 @@ public sealed class LightGrid
     /// and sunlight from the planet. Light seeds come afterwards via Seed().</summary>
     public void Begin(Planet planet, Camera cam)
     {
-        _active = ++_frame % 2 == 0 || _tex is null;
+        _active = ++_frame % 2 == 0 || _tex[_front] is null;
         if (!_active) return;
 
         if (!ReferenceEquals(_profilePlanet, planet))
