@@ -1099,26 +1099,44 @@ public sealed class Particles
     /// payload is real Acid cells launched by Game1 — this is the visible mist around it.</summary>
     public void EmitAcidJet(Vector2 pos, Vector2 dir)
     {
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 9; i++)
         {
-            // Same pressurised-stream read as the flamethrower: tight, fast, fine droplets.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.28f;
+            // Same thick-gout read as the flamethrower: wider fan, more droplets per spurt.
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.4f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 5f,
-                Velocity = d * (250f + (float)_rng.NextDouble() * 90f),
-                Life = 0.2f + (float)_rng.NextDouble() * 0.2f,
-                MaxLife = 0.4f,
-                Color = i == 0 ? new Color(200, 255, 120) : new Color(120, 220, 60),
+                Position = pos + d * (float)_rng.NextDouble() * 7f,
+                Velocity = d * (240f + (float)_rng.NextDouble() * 100f),
+                Life = 0.22f + (float)_rng.NextDouble() * 0.24f,
+                MaxLife = 0.46f,
+                Color = i < 2 ? new Color(200, 255, 120) : new Color(120, 220, 60),
                 FadeColor = new Color(40, 90, 25),
-                Size = 1.1f + (float)_rng.NextDouble() * 0.6f,
+                Size = 1.3f + (float)_rng.NextDouble() * 0.8f,
                 GravityScale = 0.5f,
                 Drag = 1.2f,
-                LightRadius = i == 0 ? 16f : 8f,
+                LightRadius = i < 2 ? 18f : 8f,
                 LightColor = new Color(150, 240, 80),
+            });
+        }
+        // Caustic vapour that hangs where the rope passed — sickly and slow.
+        for (var i = 0; i < 2; i++)
+        {
+            var d = Vector2.Normalize(dir + new Vector2(
+                (float)(_rng.NextDouble() - 0.5) * 0.6f, (float)(_rng.NextDouble() - 0.5) * 0.6f));
+            _list.Add(new Particle
+            {
+                Position = pos + d * (12f + (float)_rng.NextDouble() * 16f),
+                Velocity = d * (40f + (float)_rng.NextDouble() * 40f),
+                Life = 0.5f + (float)_rng.NextDouble() * 0.4f,
+                MaxLife = 0.9f,
+                Color = new Color(90, 150, 55),
+                FadeColor = new Color(30, 55, 25),
+                Size = 1.7f,
+                GravityScale = -0.1f,
+                Drag = 2.6f,
             });
         }
     }
