@@ -3847,6 +3847,16 @@ public sealed partial class DwarfMinerGame : Game
         foreach (var g in _run.Pickups)
             _renderer.AddLight(g.Position, 9f, Tiles.OreSpeckle(g.Kind));
 
+        // Planted torches burn with a soft per-torch flicker; in-flight ones carry their
+        // flame with them.
+        foreach (var torch in _run.Torches)
+        {
+            var flick = torch.Stuck
+                ? 62f + MathF.Sin(_renderer.Time * 6.5f + torch.Phase) * 7f
+                : 50f;
+            _renderer.AddLight(torch.Position, flick, new Color(255, 180, 90));
+        }
+
         // Sentry muzzle glow: a small pre-flash that ramps with cooldown — about-to-fire
         // turrets pulse, idle ones are nearly dark. Helps the player see active overwatch in
         // a dim cave at a glance.
