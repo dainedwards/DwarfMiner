@@ -1824,6 +1824,9 @@ public sealed class TitanProjectile
                 case TitanShotKind.Laser:
                     if (diff.LengthSquared() > 0.0001f) player.Velocity += Vector2.Normalize(diff) * 200f;
                     break;
+                case TitanShotKind.Slug:
+                    if (diff.LengthSquared() > 0.0001f) player.Velocity += Vector2.Normalize(diff) * 60f;
+                    break;
             }
             Dead = true;
             return;
