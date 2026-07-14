@@ -87,6 +87,9 @@ public sealed class MetaSave
     /// <summary>Master-volume step (0 full … 3 muted) — cycled with F6, applied at boot.</summary>
     public int VolumeStep { get; set; }
 
+    /// <summary>Borderless-fullscreen preference — toggled with F11, applied at boot.</summary>
+    public bool Fullscreen { get; set; }
+
     /// <summary>Raw metals refined N:1 into pure ingots at the dock. Gems and other rares
     /// (crystal, ruby, sapphire, diamond) are precious as-is and skip refining; bulk stone
     /// stays bulk. Remainders stay raw in the hold and join the next batch.</summary>
