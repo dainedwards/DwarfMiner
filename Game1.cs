@@ -190,6 +190,13 @@ public sealed partial class DwarfMinerGame : Game
     /// (meta progress or null = empty, plus whether a suspended run exists).</summary>
     private int _titleCursor;
     private readonly (MetaSave? Meta, bool HasRun)[] _slotInfo = new (MetaSave?, bool)[SaveSlots.Count];
+    /// <summary>Hit rects cached by the draw passes for mouse hover/click (1-frame stale,
+    /// same pattern as the toolbelt).</summary>
+    private readonly Rectangle[] _titleCardRects = new Rectangle[SaveSlots.Count];
+    private readonly Rectangle[] _pauseOptionRects = new Rectangle[3];
+    /// <summary>The title screen's pixel-art vista, generated once at load and drawn at 4×
+    /// with point sampling for the chunky look.</summary>
+    private Texture2D _titleBgTex = null!;
 
     /// <summary>Pause menu (Esc during play/space). While open the whole sim freezes.</summary>
     private bool _pauseOpen;
