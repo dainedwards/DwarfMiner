@@ -1137,15 +1137,47 @@ public sealed partial class DwarfMinerGame
 
         // The mothership — a ring station spinning slowly (its facing doesn't read from the
         // hull, so a nose lamp marks the thrust axis). Recent asteroid hits flash it red for
-        // the invulnerability window.
+        // the invulnerability window. During the atmosphere-entry cinematic the ring
+        // visibly banks over: it squashes edge-on through the first half of the dive, then
+        // the side profile swings out nose-first along the descent — the same silhouette
+        // that will hold the parking orbit.
         var tint = _space.HitTimer > 0f && MathF.Sin(_totalTime * 40f) > 0f
             ? new Color(255, 120, 110) : Color.White;
-        sb.Draw(_stationTex, _space.ShipPos, null, tint,
-            _totalTime * 0.12f,
-            new Vector2(_stationTex.Width / 2f, _stationTex.Height / 2f), 1.5f, SpriteEffects.None, 0f);
-        // Heading lamp: a bright dot on the ring along the nose vector.
-        var lamp = _space.ShipPos + _space.ShipDir * (SpaceSim.ShipRadius - 3f);
-        FillCircleWorld(sb, lamp, 4f, new Color(255, 240, 170));
+        if (_entryDef is not null)
+        {
+            var p = MathHelper.Clamp(_entryT / EntryCinematicDur, 0f, 1f);
+            if (p < 0.5f)
+            {
+                // Bank: the ring turns edge-on (horizontal squash), its spin easing out.
+                var squash = MathHelper.Lerp(1.5f, 0.18f, p * 2f);
+                sb.Draw(_stationTex, _space.ShipPos, null, tint,
+                    _totalTime * 0.12f * (1f - p * 2f),
+                    new Vector2(_stationTex.Width / 2f, _stationTex.Height / 2f),
+                    new Vector2(squash, 1.5f), SpriteEffects.None, 0f);
+            }
+            else
+            {
+                // Unfold: the side profile grows out of the edge-on sliver, nosed along
+                // the dive vector, riding a small entry shudder.
+                var q = (p - 0.5f) * 2f;
+                var dive = _space.ShipVel.LengthSquared() > 1f
+                    ? MathF.Atan2(_space.ShipVel.Y, _space.ShipVel.X) : 0f;
+                var shudder = MathF.Sin(_totalTime * 30f) * 0.02f * q;
+                sb.Draw(_stationSideTex, _space.ShipPos, null, tint,
+                    dive + shudder,
+                    new Vector2(_stationSideTex.Width / 2f, _stationSideTex.Height / 2f),
+                    new Vector2(MathHelper.Lerp(0.18f, 1.5f, q), 1.5f), SpriteEffects.None, 0f);
+            }
+        }
+        else
+        {
+            sb.Draw(_stationTex, _space.ShipPos, null, tint,
+                _totalTime * 0.12f,
+                new Vector2(_stationTex.Width / 2f, _stationTex.Height / 2f), 1.5f, SpriteEffects.None, 0f);
+            // Heading lamp: a bright dot on the ring along the nose vector.
+            var lamp = _space.ShipPos + _space.ShipDir * (SpaceSim.ShipRadius - 3f);
+            FillCircleWorld(sb, lamp, 4f, new Color(255, 240, 170));
+        }
 
         if (_muzzle > 0f)
         {
