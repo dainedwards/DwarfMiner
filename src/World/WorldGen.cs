@@ -1055,13 +1055,39 @@ public static class WorldGen
                     // Interior: floor slab at the base of every storey above the ground
                     // floor (the plinth is street level's floor), with a stair gap hugging
                     // alternating walls so the shaft zig-zags up the tower.
-                    var slab = slabRow;
-                    if (slab)
+                    var gapSide = storey / floorEvery % 2 == 0 ? 1 : -1;
+                    var slab = slabRow && dt * gapSide < span - 4;
+
+                    // Climbing spine: a ladder shaft hugging the wall opposite the street
+                    // door, running the full tower — it punches through the slabs (the
+                    // ladder tile replaces the floor there), so every storey connects.
+                    if (span >= 5 && dt == -doorSide * (span - 2)
+                        && storey >= 0 && storey < height - 3)
                     {
-                        var gapSide = storey / floorEvery % 2 == 0 ? 1 : -1;
-                        slab = dt * gapSide < span - 4;
+                        planet.Set(r, t, TileKind.Ladder);
+                        continue;
                     }
-                    planet.Set(r, t, slab ? TileKind.AlienAlloy : TileKind.Sky);
+                    if (slab) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
+
+                    // Apartment furniture on the row sitting directly on each slab: potted
+                    // tentacle-plants, levitating egg-chairs, orb lamps — placed by a
+                    // position hash (no rng draws, so downstream worldgen streams hold).
+                    if (storey >= floorEvery && storey % floorEvery == 2
+                        && Math.Abs(dt) < span - 2 && dt * gapSide < span - 4)
+                    {
+                        var h = (r * 7919 + t * 104729) & 1023;
+                        if (h < 150)
+                        {
+                            planet.Set(r, t, (h % 3) switch
+                            {
+                                0 => TileKind.AlienPlant,
+                                1 => TileKind.HoverPod,
+                                _ => TileKind.OrbLamp,
+                            });
+                            continue;
+                        }
+                    }
+                    planet.Set(r, t, TileKind.Sky);
                 }
             }
 
