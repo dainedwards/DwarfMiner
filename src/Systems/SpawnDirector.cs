@@ -487,12 +487,13 @@ public static class SpawnDirector
         else
         {
             kind = roll < 0.20 ? CreatureKind.Skitterer
-                 : roll < 0.40 ? CreatureKind.CaveSlime
-                 : roll < 0.55 ? CreatureKind.MoleBeast
-                 : roll < 0.65 ? CreatureKind.Grub
-                 : roll < 0.75 ? CreatureKind.CaveEye
-                 : roll < 0.85 ? CreatureKind.SnapperVine
-                 : roll < 0.93 ? CreatureKind.HornedDelver
+                 : roll < 0.38 ? CreatureKind.CaveSlime
+                 : roll < 0.52 ? CreatureKind.MoleBeast
+                 : roll < 0.62 ? CreatureKind.Grub
+                 : roll < 0.72 ? CreatureKind.CaveEye
+                 : roll < 0.81 ? CreatureKind.SnapperVine
+                 : roll < 0.88 ? CreatureKind.HornedDelver
+                 : roll < 0.94 ? CreatureKind.Marauder
                  : roll < 0.98 ? CreatureKind.BomberBeetle
                  : CreatureKind.RockMimic;
         }
