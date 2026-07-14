@@ -120,7 +120,7 @@ public sealed class Lighting
     public void End()
     {
         _sb.End();
-        _gd.SetRenderTarget(null);
+        _gd.SetRenderTarget(SceneTarget);
     }
 
     public void Composite(SpriteBatch target, Point screenSize)
