@@ -232,7 +232,7 @@ public static class PlanetDefs
             // charted now (base threshold unreachable).
             OreBias: new[] { (TileKind.GoldOre, 0.13f), (TileKind.IronOre, 0.015f), (TileKind.CoalOre, 0.015f), (TileKind.Emerald, 0.020f) },
             QuakeScale: 1.0f, CaveSpawnCap: 14,
-            ShipOre: "gold", ShipOreCount: 3, Titan: TitanKind.Kong,
+            ShipOre: "gold", ShipOreCount: 3, SeedsOil: true, Titan: TitanKind.Kong,
             CrystalPockets: 1, FungalPockets: 4, Difficulty: 0f),
 
         new("frost", "Frost", "Frozen wastes, deep water, sapphire seams",
