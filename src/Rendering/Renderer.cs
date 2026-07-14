@@ -84,6 +84,7 @@ public sealed class Renderer
             Console.WriteLine($"[lightperf] begin {LightGridBeginMs:0.00} prop {tProp:0.00} upload {tUp:0.00} raster {tRas:0.00}");
     }
     private int _lightPerfN;
+    private readonly System.Diagnostics.Stopwatch _lightPerfSw = new();
     /// <summary>Set by Game1 around LightGrid.Begin — DM_LIGHTPERF diagnostic only.</summary>
     public double LightGridBeginMs;
 
