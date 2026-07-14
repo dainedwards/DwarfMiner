@@ -53,17 +53,29 @@ public static class SimTest
 
         // --- 2. Digging: drop each digger into a cave pocket; after a while the planet-wide
         // solid tile count must have dropped (window-relative counts miss wandering diggers).
+        // Up to three sites per kind: the worm-tunnelled crust has pockets where a wanderer
+        // can drift through connected air for the whole window without ever needing to dig.
         foreach (var kind in new[] { CreatureKind.Borer, CreatureKind.Centipede, CreatureKind.MoleBeast })
         {
-            var pos = FindCavePos(planet, seedOffset: (int)kind * 211);
-            if (pos is not { } p) { Check($"digging: {kind} pocket found", false, "no cave"); continue; }
-            var before = CountSolidPlanet(planet);
-            var c = new Creature(p, kind);
-            for (var step = 0; step < 60 * 20; step++)
-                c.Update(dt, planet, physics, cells, player);
-            var after = CountSolidPlanet(planet);
-            Check($"digging: {kind} removed tiles (before {before} → after {after})", after < before);
-            Check($"digging: {kind} not embedded in rock", !EmbeddedInRock(planet, c.Position));
+            var dug = false;
+            var tried = 0;
+            int before = 0, after = 0;
+            Creature? last = null;
+            for (var attempt = 0; attempt < 3 && !dug; attempt++)
+            {
+                var pos = FindCavePos(planet, seedOffset: (int)kind * 211 + attempt * 977);
+                if (pos is not { } p) continue;
+                tried++;
+                before = CountSolidPlanet(planet);
+                last = new Creature(p, kind);
+                for (var step = 0; step < 60 * 20; step++)
+                    last.Update(dt, planet, physics, cells, player);
+                after = CountSolidPlanet(planet);
+                dug = after < before;
+            }
+            if (tried == 0) { Check($"digging: {kind} pocket found", false, "no cave"); continue; }
+            Check($"digging: {kind} removed tiles (before {before} → after {after})", dug);
+            Check($"digging: {kind} not embedded in rock", last is null || !EmbeddedInRock(planet, last.Position));
         }
 
         // --- 3. Delver: aggro-mines toward a player separated from it by real rock. Pick a
