@@ -108,7 +108,7 @@ public sealed class Player
     /// gravity) — low enough that catching a fall takes a beat, the Noita float.</summary>
     private const float JetLift = 300f;
     /// <summary>Seconds a grounded refill takes, whatever the tier's cap.</summary>
-    private const float JetRefillTime = 1.2f;
+    private const float JetRefillTime = 2.4f;
     /// <summary>True on frames the jet actually burned — Game1 reads it to emit the
     /// tier-coloured exhaust flame.</summary>
     public bool IsJetting;
