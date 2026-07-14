@@ -199,6 +199,7 @@ public sealed partial class DwarfMinerGame
             // Ladder/rail craft in fives — matches their "(5×)" recipe labels.
             ["ladder"] = new() { Use = Place("ladder"), OnCraft = Stock("ladder", 5) },
             ["rail"]   = new() { Use = Place("rail"),   OnCraft = Stock("rail", 5) },
+            ["door"]   = new() { Use = Place("door"),   OnCraft = Stock("door", 2) },
 
             // ─── Recipe-only upgrades (no belt slot of their own) ─────────────────
             // Pickaxe tiers step sequentially: each is "owned" at or past its tier and
