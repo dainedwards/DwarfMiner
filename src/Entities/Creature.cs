@@ -288,6 +288,15 @@ public sealed class Creature
             case CreatureKind.DustDevil:
                 Radius = 4f; Health = 16f; MoveSpeed = 62f; ContactDamage = 7f;
                 break;
+            case CreatureKind.Marauder:
+                Radius = 4f; Health = 26f; MoveSpeed = 42f; ContactDamage = 6f;
+                break;
+            case CreatureKind.Raider:
+                Radius = 4f; Health = 22f; MoveSpeed = 50f; ContactDamage = 6f;
+                break;
+            case CreatureKind.Pyro:
+                Radius = 4.4f; Health = 38f; MoveSpeed = 30f; ContactDamage = 10f;
+                break;
         }
     }
 
