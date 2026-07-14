@@ -3644,14 +3644,14 @@ public sealed partial class DwarfMinerGame : Game
         _run.Cells.AddLights(_renderer, viewCentre, viewRadius,
             _camera.Zoom < 0.55f ? 6 : _camera.Zoom < 0.9f ? 3 : 1);
 
-        // Propagate the seeded grid and rasterize it into the lightmap. Depth darkness is
-        // emergent now: rock occludes, so anywhere the sun and the seeds can't reach is
-        // simply black — no subtractive disks needed.
+        // Propagate the seeded grid, rasterize it into the lightmap, and cut the hero
+        // lights' ray-cast shadow fans over it. Depth darkness is emergent now: rock
+        // occludes, so anywhere the sun and the seeds can't reach is simply black.
         // DM_NOLIGHT=1 skips the whole pass (perf isolation diagnostic).
         var noLight = Environment.GetEnvironmentVariable("DM_NOLIGHT") is { Length: > 0 };
         if (!noLight)
         {
-            _renderer.RenderLightGrid(_camera);
+            _renderer.RenderLightGrid(_camera, _run.Planet);
             _renderer.CompositeLighting(new Point(VirtualWidth, VirtualHeight));
         }
         // Multi-tap separable Gaussian bloom — bright spots (lava, projectiles, headlamp core)
