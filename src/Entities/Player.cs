@@ -446,6 +446,11 @@ public sealed class Player
             else if (jumpHeld && !jumpEdge && _jumpHoldTime > 0.2f
                      && !onLadder && !InWater && JetCharge > 0f)
             {
+                // Initial thrust: the frame the burn first lights, kick the dwarf up with a
+                // punchier impulse so a hover starts with a real pop, then settle into the
+                // steady acceleration below.
+                if (!_jetPrev && vNormal < JetRiseSpeed)
+                    vNormal = MathF.Min(JetRiseSpeed, vNormal + JetInitialKick);
                 // Above the rise cap (e.g. straight off a jump) the thrust adds nothing —
                 // gravity bleeds the excess naturally instead of snapping the speed down.
                 if (vNormal < JetRiseSpeed)
@@ -454,6 +459,7 @@ public sealed class Player
                 IsJetting = true;
             }
         }
+        _jetPrev = IsJetting;
 
         // Cap fall speed — see MaxFallSpeed comment for why this is essential.
         if (vNormal < -MaxFallSpeed) vNormal = -MaxFallSpeed;
