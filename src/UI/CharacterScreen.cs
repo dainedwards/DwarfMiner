@@ -31,7 +31,7 @@ public sealed class CharacterScreen
 
     private readonly Rectangle[] _slotRects = new Rectangle[Equipment.SlotCount];
     private readonly List<(string id, Rectangle rect)> _bagRects = new();
-    private readonly Rectangle[] _hotbarRects = new Rectangle[9];
+    private readonly Rectangle[] _hotbarRects = new Rectangle[10];
     private readonly List<(ItemCategory cat, Rectangle rect)> _tabRects = new();
 
     /// <summary>Active backpack filter tab + scroll row (mouse wheel drives it).</summary>
