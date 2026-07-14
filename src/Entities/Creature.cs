@@ -340,17 +340,33 @@ public sealed class Creature
         or CreatureKind.Grub or CreatureKind.AlienWhale;
 
     /// <summary>Whether this kind can live inside a hazard cell — the gate the spawner uses so a
-    /// creature is never dropped into a material that would drown/burn/dissolve it. Water: only
-    /// swimmers and water-native kinds. Lava: molten-blooded fire fauna (magma slugs, cinder
-    /// skinks). Acid: the acid-world natives (striders and acid spitters). Everything else stays
-    /// out of the pool. Anything not a body-contact hazard (gas, empty) never blocks a spawn.</summary>
+    /// creature is never dropped into a material that would drown/burn/dissolve it, and the
+    /// filter the environmental-damage tick uses once it's alive. Water: only swimmers and
+    /// water-native kinds. Lava/fire: molten-blooded fire fauna (magma slugs, cinder skinks).
+    /// Acid: the acid-world natives (striders and acid spitters). Everything else stays out of
+    /// the pool. Anything not a body-contact hazard (gas, empty) never blocks a spawn.</summary>
     public bool ImmuneTo(Material m) => m switch
     {
         Material.Water => Swims || IsWaterKind,
-        Material.Lava => Kind is CreatureKind.MagmaSlug or CreatureKind.CinderSkink,
+        Material.Lava or Material.Fire => Kind is CreatureKind.MagmaSlug or CreatureKind.CinderSkink,
         Material.Acid => Kind is CreatureKind.AcidStrider or CreatureKind.AcidSpitter,
         _ => true,
     };
+
+    // Environmental hazard contact (per second of overlap). Tuned to creature HP (5-45,
+    // aliens 2x): lava kills a grub in under a second and a big brute in a couple — the same
+    // "nothing wades through lava" rule the dwarf lives under — while acid gives even small
+    // fauna a beat to scramble out. Fire mostly works through the burn debuff, so a creature
+    // that dashes clear keeps cooking briefly instead of shrugging the flame off.
+    private const float LavaDps = 26f;
+    private const float AcidDps = 12f;
+    private const float FireDps = 5f;
+    /// <summary>Seconds between hazard probes. SampleHazardsNear walks a body-sized cell
+    /// window, so ticking it every frame for every creature near a pool adds up; damage is
+    /// applied per-period at the same per-second rates. Started at a random phase so a herd
+    /// standing in one pool doesn't probe in lockstep.</summary>
+    private const float HazardProbePeriod = 0.2f;
+    private float _hazardProbeT = (float)Random.Shared.NextDouble() * HazardProbePeriod;
 
     /// <summary><paramref name="shots"/> is the shared enemy-shot list (the Titan's): ranged
     /// creatures (acid spitters, crystal crawlers) add their projectiles to it and the existing
