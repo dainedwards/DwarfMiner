@@ -946,6 +946,16 @@ public sealed partial class DwarfMinerGame : Game
         // holds the fully composited frame (post lighting/bloom/vignette).
         if (Pressed(keys, _prevKeys, Keys.F12)) _screenshotPending = true;
 
+        // F11 toggles borderless fullscreen on any screen; the choice persists.
+        if (Pressed(keys, _prevKeys, Keys.F11))
+        {
+            _meta.Fullscreen = !_graphics.IsFullScreen;
+            SetFullscreen(_meta.Fullscreen);
+            _meta.Save();
+            _toast = _meta.Fullscreen ? "FULLSCREEN (F11)" : "WINDOWED (F11)";
+            _toastTimer = 2f;
+        }
+
         // F6 cycles the master volume on any screen; the step persists across sessions.
         if (Pressed(keys, _prevKeys, Keys.F6))
         {
