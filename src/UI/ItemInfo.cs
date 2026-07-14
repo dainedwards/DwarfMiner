@@ -53,8 +53,9 @@ public static class ItemInfo
             || id is "rocket" or "ammo_silver" or "ammo_ruby" or "ammo_sapphire" or "ammo_diamond")
             return ItemCategory.Weapons;
 
-        // Tools: mining implements and field kit.
-        if (Toolbelt.IsMiningToolId(id) || id is "core_drill" or "poultice" or "feast" or "sentry")
+        // Tools: mining implements and field kit — including the geo-scanner rungs.
+        if (Toolbelt.IsMiningToolId(id) || id is "core_drill" or "poultice" or "feast" or "sentry"
+            or "scanner" or "scanner_ii" or "scanner_iii" or "scanner_iv")
             return ItemCategory.Tools;
 
         // Building: everything placeable, plus the base/ship construction chain.
