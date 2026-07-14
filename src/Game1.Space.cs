@@ -1173,6 +1173,8 @@ public sealed partial class DwarfMinerGame
                 new Vector2((VirtualWidth - _renderer.MeasureText(_toast, 2)) / 2f, 84),
                 new Color(255, 225, 140), 2);
 
+        DrawAtmosphereEntry();
+
         // Ship status block, bottom-left: hull pips, tank, currencies, rovers.
         var hullY = VirtualHeight - 96;
         _renderer.DrawText("HULL", new Vector2(24, hullY), new Color(150, 155, 175));
