@@ -65,8 +65,7 @@ public enum TileKind : byte
     Brick = 45,        // tidy stone masonry
     Plating = 46,      // riveted iron wall panel
     GlassBlock = 47,   // clear pane — a window block
-    WoodPlank = 48,    // timber planking (crafted from harvested hide/chitin fibre)
-    Platform = 49,     // thin plank you stand on but jump/climb up through (one-way)
+    Platform = 49,     // thin ledge you stand on but jump/drop through (one-way, anchored)
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
