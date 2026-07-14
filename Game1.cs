@@ -3587,6 +3587,61 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.DrawDebugLabel(label, screenPos + new Vector2(12, 12), Color.White);
     }
 
+    /// <summary>Display name of the nameable thing under the cursor, or null: the nearest
+    /// overlapped creature first (the living thing wins over whatever it stands on), then
+    /// physical gem pickups, then a gem embedded in (or a crystal tile at) the hovered tile.</summary>
+    private string? HoverName(Vector2 world)
+    {
+        Creature? bestCreature = null;
+        var bestD2 = float.MaxValue;
+        foreach (var c in _run.Creatures)
+        {
+            var r = MathF.Max(c.Radius, 3f) + 2f;   // small floor so tiny fauna are hoverable
+            var d2 = (c.Position - world).LengthSquared();
+            if (d2 < r * r && d2 < bestD2) { bestD2 = d2; bestCreature = c; }
+        }
+        if (bestCreature is not null) return Humanize(bestCreature.Kind.ToString());
+
+        foreach (var g in _run.Pickups)
+            if ((g.Position - world).LengthSquared() < 5f * 5f)
+                return Humanize(g.Kind.ToString());
+
+        var (tx, ty) = _run.Planet.WorldToTile(world);
+        var gem = _run.Planet.GemAt(tx, ty);
+        if (gem == TileKind.Sky && Tiles.IsGem(_run.Planet.Get(tx, ty)))
+            gem = _run.Planet.Get(tx, ty);
+        return gem == TileKind.Sky ? null : Humanize(gem.ToString());
+    }
+
+    /// <summary>PascalCase enum name → spaced caps for the HUD: "CaveEye" → "CAVE EYE".</summary>
+    private static string Humanize(string pascal)
+    {
+        var sb = new System.Text.StringBuilder(pascal.Length + 4);
+        for (var i = 0; i < pascal.Length; i++)
+        {
+            if (i > 0 && char.IsUpper(pascal[i]) && !char.IsUpper(pascal[i - 1])) sb.Append(' ');
+            sb.Append(char.ToUpperInvariant(pascal[i]));
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>Progress bar under the cursor while a placement is under construction —
+    /// the visible cost of the build time (see Player.BuildTime).</summary>
+    private void DrawBuildProgress()
+    {
+        var f = _run.Player.BuildFraction;
+        if (f <= 0f) return;
+        var mouse = Mouse.GetState();
+        var x = mouse.X - 12;
+        var y = mouse.Y + 16;
+        var sb = _renderer.Batch;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(_renderer.Pixel, new Rectangle(x - 1, y - 1, 26, 5), new Color(0, 0, 0, 190));
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y, 24, 3), new Color(70, 62, 50));
+        sb.Draw(_renderer.Pixel, new Rectangle(x, y, (int)(24 * f), 3), new Color(235, 205, 120));
+        sb.End();
+    }
+
     /// <summary>Dim the frozen run and stack the reason lines centred. Single-sentence
     /// deaths render big; the multi-line campaign-victory summary steps down so every line
     /// fits the viewport.</summary>
