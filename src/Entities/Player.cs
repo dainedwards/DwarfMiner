@@ -893,16 +893,24 @@ public sealed class Player
     public float SwingAngle => SwingAngleAt(SwingProgress);
 
     /// <summary>Begin a pickaxe/hammer swing toward the cursor. Fails while the previous swing
-    /// (or its cooldown) is still in flight. The swing direction alternates each time, and each
-    /// swing starts where the last one ended — a natural chopping pendulum.</summary>
-    public bool TryStartSwing(Vector2 worldCursor, MiningTool tool)
+    /// (or its cooldown) is still in flight. Every swing is an overhead chop: the sweep side
+    /// is chosen from local planet-up so the head always starts sky-side of the aim and comes
+    /// DOWN through it — never an uppercut (the old alternating pendulum read backwards half
+    /// the time).</summary>
+    public bool TryStartSwing(Vector2 worldCursor, MiningTool tool, Vector2 up)
     {
         if (MineCooldown > 0 || SwingActive) return false;
         var aim = worldCursor - Position;
         SwingCursor = worldCursor;
         SwingAim = aim.LengthSquared() > 0.001f ? Vector2.Normalize(aim) : new Vector2(1f, 0f);
         SwingTool = tool;
-        SwingFlip = -SwingFlip;
+        var theta = MathF.Atan2(SwingAim.Y, SwingAim.X);
+        float StartUpness(float sgn)
+        {
+            var a = theta + sgn * SwingArc * 0.5f;
+            return Vector2.Dot(new Vector2(MathF.Cos(a), MathF.Sin(a)), up);
+        }
+        SwingFlip = StartUpness(1f) >= StartUpness(-1f) ? 1f : -1f;
         SwingDuration = SwingTime = MineCooldownFor(tool);
         MineCooldown = SwingDuration;
         SwingLanded = false;
