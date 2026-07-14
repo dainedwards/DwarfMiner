@@ -91,7 +91,132 @@ public static class Icons
         _icons["lantern"]     = BuildLantern(gd);
         _icons["helm_lamp"]   = BuildHelmLamp(gd);
         _icons["sun_crystal"] = BuildSunCrystal(gd);
+        _icons["leather_gloves"] = BuildGloves(gd, new Color(180, 140, 95), new Color(110, 80, 50));
+        _icons["iron_gauntlets"] = BuildGloves(gd, ironL, ironD);
+        _icons["band_regen"]    = BuildBandRegen(gd);
+        _icons["magnet_ring"]   = BuildMagnetRing(gd);
+        _icons["miners_charm"]  = BuildMinersCharm(gd);
+        _icons["aegis_pendant"] = BuildAegisPendant(gd);
     }
+
+    private static Texture2D BuildGloves(GraphicsDevice gd, Color light, Color dark) =>
+        Renderer.BuildSprite(gd, new[]
+        {
+            "................",
+            "................",
+            "..OOO....OOO....",
+            ".OLLDO..OLLDO...",
+            ".OLLDO..OLLDO...",
+            ".OLMDO..OLMDO...",
+            ".OLMMOO.OLMMOO..",
+            ".OLMMMLO.OLMMLO.",  // thumb pokes out
+            ".OLMMMMO.OLMMMO.",
+            ".OMMMMDO.OMMMDO.",
+            ".OMMMDDO.OMMDDO.",
+            "..OOOOO...OOOO..",
+            "................",
+            "................",
+            "................",
+            "................",
+        }, ArmorPalette(light, dark));
+
+    private static Texture2D BuildBandRegen(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        ".....R..R.......",
+        "....RRRRRR......",
+        "....RRRRRR......",
+        ".....RRRR.......",
+        "....S.RR.S......",
+        "...S......S.....",
+        "...S......S.....",
+        "...S......S.....",
+        "....S....S......",
+        ".....SSSS.......",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['R'] = new Color(230, 80, 95), ['S'] = new Color(200, 205, 220),
+    });
+
+    private static Texture2D BuildMagnetRing(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "...WW.....WW....",
+        "...WW.....WW....",
+        "...RR.....RR....",
+        "...RR.....RR....",
+        "...RR.....RR....",
+        "...RRR...RRR....",
+        "....RRRRRRR.....",
+        ".....RRRRR......",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['R'] = new Color(210, 70, 60), ['W'] = new Color(230, 235, 245),
+    });
+
+    private static Texture2D BuildMinersCharm(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "....C......C....",
+        "...C........C...",
+        "...C........C...",
+        "....C......C....",
+        ".....C....C.....",
+        "......CCCC......",
+        ".....GGGGGG.....",
+        "....GGGYYGGG....",
+        "....GGYYYYGG....",
+        "....GGYYYYGG....",
+        "....GGGYYGGG....",
+        ".....GGGGGG.....",
+        "......GGGG......",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['C'] = new Color(120, 100, 60),
+        ['G'] = new Color(235, 190, 80), ['Y'] = new Color(255, 245, 170),
+    });
+
+    private static Texture2D BuildAegisPendant(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "....C......C....",
+        "...C........C...",
+        "...C........C...",
+        "....C......C....",
+        ".....C....C.....",
+        "......CCCC......",
+        "......BBBB......",
+        ".....BBLLBB.....",
+        ".....BLLLLB.....",
+        ".....BBLLBB.....",
+        "......BBBB......",
+        ".......BB.......",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['C'] = new Color(170, 175, 190),
+        ['B'] = new Color(80, 120, 220), ['L'] = new Color(170, 200, 255),
+    });
 
     // ───────── worn-gear builders (character screen) ─────────
 
