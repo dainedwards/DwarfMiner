@@ -852,6 +852,7 @@ public sealed class Particles
                 });
                 break;
             case ProjectileKind.Dynamite:
+            case ProjectileKind.DynamitePack:
             case ProjectileKind.Tnt:
             case ProjectileKind.TntPack:
                 // Sputtering fuse — intermittent tiny sparks tumbling off the stick, plus a
