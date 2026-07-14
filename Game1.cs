@@ -537,6 +537,7 @@ public sealed partial class DwarfMinerGame : Game
             { _run.DisasterTimer = vt; _run.NextDisaster = DisasterKind.Eruption; }
         _gameOverReason = "";
         _craftingMenu.Reset();
+        _charScreen.Reset();
         _invUi.Reset();
         _screen = GameScreen.Playing;
         _orbiting = false;
@@ -850,6 +851,7 @@ public sealed partial class DwarfMinerGame : Game
         SpawnDirector.PopulateWorld(_run);
         _gameOverReason = "";
         _craftingMenu.Reset();
+        _charScreen.Reset();
         _invUi.Reset();
         _screen = GameScreen.Playing;
         if (_camera is not null)
