@@ -1254,8 +1254,9 @@ public sealed class Cells
 
     private void TryCorrode((int cx, int cy) c)
     {
-        // Faster than the old sizzle — acid is meant to MELT through, not tickle.
-        if (_rng.Next(45) != 0) return;
+        // Halved from the old 1-in-45 melt rate: with the acid spewer putting player-aimed
+        // acid everywhere, full-rate corrosion chewed terrain (and cities) far too fast.
+        if (_rng.Next(90) != 0) return;
         if (c.cy < 0 || c.cy >= Height) return;
         var tx = c.cy / Density;
         var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
