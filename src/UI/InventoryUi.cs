@@ -303,6 +303,32 @@ public sealed class InventoryUi
         }
     }
 
+    /// <summary>The right-click drop menu, drawn topmost. Buttons: drop one, drop the whole
+    /// stack. Hit rects are cached for the next HandleClick.</summary>
+    public void DrawContextMenu(Renderer renderer, Player player)
+    {
+        if (_menu is not { } menu) return;
+        var count = player.Inventory.Count(menu.Id);
+        var label = Tiles.ResourceLabel(menu.Id);
+        const int w = 120, rowH = 16;
+        var x = Math.Min(menu.Pos.X, 1280 - w - 4);
+        var y = menu.Pos.Y;
+        var sb = renderer.Batch;
+        sb.Begin(samplerState: SamplerState.PointClamp);
+        sb.Draw(renderer.Pixel, new Rectangle(x - 2, y - 2, w + 4, rowH * 3 + 8), new Color(15, 17, 26, 240));
+        sb.Draw(renderer.Pixel, new Rectangle(x - 2, y - 2, w + 4, 1), new Color(255, 220, 120));
+        _menuDropOne = new Rectangle(x, y + rowH + 2, w, rowH);
+        _menuDropAll = new Rectangle(x, y + rowH * 2 + 4, w, rowH);
+        var mouse = Screen.Mouse();
+        foreach (var r in new[] { _menuDropOne, _menuDropAll })
+            if (r.Contains(mouse.X, mouse.Y))
+                sb.Draw(renderer.Pixel, r, new Color(120, 130, 200, 70));
+        sb.End();
+        renderer.DrawDebugLabel(label, new Vector2(x + 2, y + 2), new Color(255, 220, 120));
+        renderer.DrawDebugLabel("DROP ONE", new Vector2(x + 2, _menuDropOne.Y + 2), Color.White);
+        renderer.DrawDebugLabel($"DROP ALL ({count})", new Vector2(x + 2, _menuDropAll.Y + 2), Color.White);
+    }
+
     /// <summary>Render the icon currently being carried at the cursor — a clear visual that
     /// something is in hand. No-op when nothing is carried. Uses the same icon lookup the
     /// slot/inventory uses so the appearance matches.</summary>
