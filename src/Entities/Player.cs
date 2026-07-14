@@ -691,7 +691,7 @@ public sealed class Player
     /// wall behind it. Stone first, then the richer variants, then dirt.</summary>
     public TileKind? TryPlace(Planet planet, Physics physics, Vector2 worldCursor, float dt)
     {
-        if (MineCooldown > 0) return null;
+        if (MineCooldown > 0 || BuildCooldown > 0) return null;
         var d = worldCursor - Position;
         if (d.Length() > EffectiveMineRange) return null;
         if (PlacementStamp(planet, worldCursor, passable: false) is not { } stamp) return null;
