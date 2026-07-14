@@ -31,7 +31,7 @@ public static class Upgrades
             Souls: 0, Mats: new[] { ("pure_iron", 3), ("pure_coal", 2) }, Repeatable: true),
 
         new("jetpack", "Jetpack",
-            "Worn on the back: hold JUMP airborne to hover (3s burn, refills grounded)",
+            "Worn on the back: hold JUMP airborne to hover (1s burn, refills grounded)",
             Souls: 1, Mats: new[] { ("pure_gold", 2), ("pure_iron", 3) }, SoulKind: "Kong"),
 
         new("gun2", "Autocannon II",
