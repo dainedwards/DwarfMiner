@@ -1183,10 +1183,15 @@ public sealed class Equipment
         _ => 1f,
     };
 
-    /// <summary>Firearms the weapon slots accept. Throwables/ammo stay toolbelt-only — the
-    /// doll shows what the dwarf carries at the ready, not the whole satchel.</summary>
-    public static bool IsWeapon(string id) => id is
-        "pistol" or "machine_gun" or "laser" or "laser_cannon" or "rocket_launcher" or "cannon";
+    /// <summary>Firearms + melee the doll's weapon slots accept. Throwables/ammo stay
+    /// toolbelt-only — the doll shows what the dwarf carries at the ready, not the satchel.</summary>
+    public static bool IsWeapon(string id)
+    {
+        if (id is "pistol" or "machine_gun" or "laser" or "laser_cannon" or "rocket_launcher"
+            or "cannon" or "flamethrower" or "acid_spewer" or "lightning_gun") return true;
+        foreach (var m in Toolbelt.MeleeIds) if (m == id) return true;
+        return false;
+    }
 
     public static bool IsEquippable(string id)
     {
