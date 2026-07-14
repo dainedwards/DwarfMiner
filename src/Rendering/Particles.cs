@@ -555,20 +555,22 @@ public sealed class Particles
     private void EmitExplosion(Vector2 pos, float strength, int sparkCount, int smokeCount, Color sparkColor)
     {
         // Flash core — one big, near-instant blob of light at the epicentre. Sells the "bang"
-        // frame before the sparks/smoke read as an aftermath.
+        // frame before the sparks/smoke read as an aftermath. Hero-lit: the flash throws
+        // hard ray-cast shadows off the crater rim and every creature silhouette near it.
         _list.Add(new Particle
         {
             Position = pos,
             Velocity = Vector2.Zero,
-            Life = 0.1f,
-            MaxLife = 0.1f,
+            Life = 0.14f,
+            MaxLife = 0.14f,
             Color = Color.White,
             FadeColor = sparkColor,
             Size = strength * 0.55f,
             GravityScale = 0f,
             Drag = 0f,
-            LightRadius = strength * 3.5f,
-            LightColor = sparkColor,
+            LightRadius = strength * 4.5f,
+            LightColor = Color.Lerp(sparkColor, Color.White, 0.5f),
+            HeroLight = true,
         });
         // Fireball — a cluster of fat white-yellow→orange→red blobs boiling out of the
         // centre. Tinted slightly toward the shell's colour so elemental blasts keep their
