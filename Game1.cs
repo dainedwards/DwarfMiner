@@ -3804,8 +3804,11 @@ public sealed partial class DwarfMinerGame : Game
         {
             var hot = i == _pauseCursor;
             var label = hot ? "> " + options[i] : options[i];
+            var oy = by + 52 + i * 26;
+            // Generous hit band the full box width — mouse hover/click drives the cursor.
+            _pauseOptionRects[i] = new Rectangle(bx, oy - 5, boxW, 24);
             _renderer.DrawText(label,
-                new Vector2((VirtualWidth - _renderer.MeasureText(label)) / 2f, by + 52 + i * 26),
+                new Vector2((VirtualWidth - _renderer.MeasureText(label)) / 2f, oy),
                 hot ? Color.White : new Color(170, 175, 190));
         }
     }
