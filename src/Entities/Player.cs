@@ -1001,6 +1001,7 @@ public sealed class Player
         "support"            => TileKind.Support,
         "reinforced_support" => TileKind.ReinforcedSupport,
         "ladder"             => TileKind.Ladder,
+        "door"               => TileKind.DoorClosed,
         "rail"               => TileKind.Rail,
         "glowshroom"         => TileKind.Glowshroom,
         "beacon"             => TileKind.Beacon,
