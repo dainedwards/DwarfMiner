@@ -267,6 +267,20 @@ public static class Tiles
         "hide"        => new Color(165, 125, 85),
         "chitin"      => new Color(105, 125, 90),
         "feast"       => new Color(230, 150, 90),
+        // Worn gear (character screen) — iron pieces read steel-grey, chitin pieces read
+        // like the material they're carved from; lights get warm flame tints.
+        "armor"           => new Color(185, 190, 205),
+        "iron_helmet"     => new Color(185, 190, 205),
+        "iron_leggings"   => new Color(170, 175, 190),
+        "iron_boots"      => new Color(150, 155, 170),
+        "chitin_armor"    => new Color(110, 135, 95),
+        "chitin_helmet"   => new Color(110, 135, 95),
+        "chitin_leggings" => new Color(100, 120, 85),
+        "chitin_boots"    => new Color(90, 110, 80),
+        "torch"           => new Color(240, 180, 90),
+        "lantern"         => new Color(245, 205, 120),
+        "helm_lamp"       => new Color(200, 220, 240),
+        "sun_crystal"     => new Color(255, 240, 180),
         _             => Color.White,
     };
 
