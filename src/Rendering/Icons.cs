@@ -77,6 +77,7 @@ public static class Icons
         _icons["rocket_launcher"] = BuildRocketLauncher(gd);
         _icons["rocket"]          = BuildRocket(gd);
         _icons["tnt"]             = BuildTnt(gd);
+        _icons["tnt_pack"]        = BuildTntPack(gd);
         _icons["ammo_silver"]   = BuildAmmo(gd, new Color(220, 225, 240), new Color(150, 155, 170));
         _icons["ammo_ruby"]     = BuildAmmo(gd, new Color(255, 110, 90), new Color(160, 30, 40));
         _icons["ammo_sapphire"] = BuildAmmo(gd, new Color(140, 180, 255), new Color(40, 70, 160));
