@@ -5119,7 +5119,8 @@ public sealed partial class DwarfMinerGame : Game
                 Color glow; float r;
                 switch (k)
                 {
-                    case TileKind.GoldOre: glow = new Color(255, 180, 60);  r = 9f; break;
+                    case TileKind.GoldOre: glow = new Color(255, 190, 70);  r = 12f; break;
+                    case TileKind.SilverOre: glow = new Color(210, 225, 255); r = 9f; break;
                     case TileKind.Crystal: glow = new Color(180, 110, 230); r = 11f; break;
                     case TileKind.IronOre: glow = new Color(220, 150, 110); r = 5f; break;
                     case TileKind.Glowshroom:
