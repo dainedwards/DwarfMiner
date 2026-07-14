@@ -227,13 +227,15 @@ public static class PlanetGen
             "gold" => TileKind.GoldOre, "sapphire" => TileKind.Sapphire, "ruby" => TileKind.Ruby,
             "platinum" => TileKind.PlatinumOre, _ => TileKind.Diamond,
         };
-        var sigBias = oreKind == TileKind.GoldOre ? 0.15f : 0.028f;
+        var sigBias = oreKind == TileKind.GoldOre ? 0.12f : 0.028f;
 
         // The rare-metal chart rolled in Campaign, flavoured by biome: frost worlds always
         // run silver in the ice, the slag world's "rich veins" tagline earns it gold odds.
+        // Gold runs noticeably LEANER than silver everywhere — the ambient scatter is
+        // thin; the real payday is a rich vein (WorldGen.StampRichVeins).
         var rare = new List<(TileKind ore, float bias)>();
         if (goldVein || (biome == Biome.Slag && rng.Next(2) == 0))
-            rare.Add((TileKind.GoldOre, J(0.11f, 0.14f)));
+            rare.Add((TileKind.GoldOre, J(0.07f, 0.09f)));
         if (silverVein || biome == Biome.Frost)
             rare.Add((TileKind.SilverOre, J(0.12f, 0.15f)));
         (TileKind, float)[] WithRare(params (TileKind ore, float bias)[] biases)
