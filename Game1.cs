@@ -1216,6 +1216,12 @@ public sealed partial class DwarfMinerGame : Game
         _totalTime += dt;
         _transitionFlash = MathF.Max(0f, _transitionFlash - dt * 1.6f);
 
+        // The OS pointer only shows where there is something to point AT — menus, pause,
+        // and overlay screens. In raw play the drawn reticle is the cursor.
+        IsMouseVisible = _pauseOpen
+            || _screen is not GameScreen.Playing
+            || _craftingMenu.Open || _debugMenu.Open || _loadoutOpen || _charScreen.Open;
+
         // Esc never quits the game directly any more: open menus consume their own Esc
         // edge to close (crafting, character screen, loadout, foundry, survey, debug);
         // with nothing open, Esc toggles the PAUSE menu — quitting lives there.
