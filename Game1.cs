@@ -4788,6 +4788,28 @@ public sealed partial class DwarfMinerGame : Game
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
         _renderer.DrawCircle(worldCursor, 1.1f, new Color(255, 255, 255, 200));
 
+        // Throw-strength gauge: while charging a thrown item, a ring around the reticle
+        // fills clockwise from the top and shifts green→orange→red, pulsing white at full
+        // power — so the aim and the power read in one place.
+        if (_throwCharge > 0.001f)
+        {
+            var frac = _throwCharge;
+            var full = frac >= 0.999f;
+            var pulse = full ? MathF.Sin(_totalTime * 18f) * 0.5f + 0.5f : 1f;
+            var col = Color.Lerp(Color.Lerp(new Color(120, 235, 120), new Color(255, 210, 70), frac),
+                new Color(255, 80, 55), MathF.Max(0f, frac - 0.5f) * 2f);
+            if (full) col = Color.Lerp(col, Color.White, pulse);
+            const int segs = 24;
+            const float ring = 4.6f;
+            var filled = (int)MathF.Ceiling(frac * segs);
+            for (var i = 0; i < filled; i++)
+            {
+                var a = -MathF.PI / 2f + i / (float)segs * MathF.Tau;   // top, clockwise
+                var p = worldCursor + new Vector2(MathF.Cos(a), MathF.Sin(a)) * ring;
+                _renderer.DrawRect(p, new Vector2(1.2f, 1.2f), col);
+            }
+        }
+
         // Terraria-style placement preview: with blocks selected, ghost the tiles the next
         // click fills — white when legal, red when unsupported / out of range / no stock.
         if (!_landing && !_ascending && !_orbiting
