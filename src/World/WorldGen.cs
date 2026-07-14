@@ -505,6 +505,11 @@ public static class WorldGen
         // anything a worm grazed.
         CarveWormTunnels(planet, def, new Random(seed ^ 0x5EED));
 
+        // The prospector's jackpot: the odd RICH gold/silver vein — a solid ribbon of ore
+        // far denser than the ambient scatter (which runs deliberately lean, gold most of
+        // all). Isolated rng for the same stream-stability reason as the worms.
+        StampRichVeins(planet, new Random(seed ^ 0x60D5));
+
         // Skin every acid reservoir (surface pools, volcano plumbing, and the scattered crust
         // seeps) in obsidian so the acid can't chew outward through the crust. Obsidian shrugs
         // off both acid and lava but is still mineable/blastable, so the pools stay contained
