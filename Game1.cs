@@ -608,6 +608,14 @@ public sealed partial class DwarfMinerGame : Game
             var (ldr, ldt) = _run.Planet.LizardDens[0];
             surfacePos = _run.Planet.TileToWorld(ldr, ldt);
         }
+        // DM_CITY=1 drops the dwarf at the first city district's bearing, so tooling can
+        // screenshot the skyline (doors, ladders, furniture, patrols) without the hike.
+        if (Environment.GetEnvironmentVariable("DM_CITY") is { Length: > 0 }
+            && _run.Planet.CityDistricts.Count > 0)
+        {
+            surfacePos = SpawnDirector.FindSurfaceSpawn(
+                _run.Planet, _run.Planet.CityDistricts[0].ang, _run.Planet.Radius);
+        }
         // DM_SWIM=1 drops the dwarf into the first lake found, so tooling can screenshot
         // swimming, the breath meter, and the aquatic fauna without hiking to water.
         if (Environment.GetEnvironmentVariable("DM_SWIM") is { Length: > 0 })
