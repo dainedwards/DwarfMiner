@@ -91,7 +91,7 @@ public sealed class Player
     /// paper-doll's Back slot — it only burns while equipped there). Hold jump while
     /// airborne to hover Noita-style: thrust is an acceleration fighting gravity, so you
     /// feather it to hold altitude and momentum carries through. The charge refills over a
-    /// second on the ground. Tier I burns 5 s (Noita's levitation); each tier +30%.</summary>
+    /// second on the ground. Tier I burns 3 s; each tier +30%.</summary>
     public bool HasJetpack;
     public bool JetTier2;
     public bool JetTier3;
