@@ -278,11 +278,11 @@ public sealed class CharacterScreen
         var sb = renderer.Batch;
         var mouse = Screen.Mouse();
         renderer.DrawText("HOTBAR", new Vector2(px + 14, hy - 14), Gold);
-        const int cell = 44, gap = 6;
-        var totalW = 9 * cell + 8 * gap;
+        const int slots = 10, cell = 40, gap = 6;
+        var totalW = slots * cell + (slots - 1) * gap;
         var hx = px + (panelW - totalW) / 2;
         sb.Begin(samplerState: SamplerState.PointClamp);
-        for (var s = 0; s < 9; s++)
+        for (var s = 0; s < slots; s++)
         {
             var r = new Rectangle(hx + s * (cell + gap), hy, cell, cell);
             _hotbarRects[s] = r;
@@ -300,8 +300,9 @@ public sealed class CharacterScreen
             }
         }
         sb.End();
-        for (var s = 0; s < 9; s++)
-            renderer.DrawText((s + 1).ToString(),
+        // Number labels: 1-9 then 0 for the tenth quick-slot.
+        for (var s = 0; s < slots; s++)
+            renderer.DrawText(s < 9 ? (s + 1).ToString() : "0",
                 new Vector2(_hotbarRects[s].X + 3, _hotbarRects[s].Y + 2), TextDim);
     }
 
