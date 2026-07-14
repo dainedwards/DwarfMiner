@@ -303,6 +303,9 @@ public static class SpawnDirector
         bool cave = false, bool surface = false, bool sky = false, bool stationary = false,
         bool water = false)
     {
+        // Census placement runs on the build thread before the Player exists — nothing is
+        // "near the player" yet.
+        if (run.Player is null) return 0;
         var rSq = radius * radius;
         var n = 0;
         foreach (var c in run.Creatures)
