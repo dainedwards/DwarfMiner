@@ -2149,11 +2149,11 @@ public sealed partial class DwarfMinerGame : Game
         var muzzle = _run.Player.Position + dir * 8f;
         for (var i = 0; i < 3; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.4f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.28f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (150f + (float)Random.Shared.NextDouble() * 80f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (260f + (float)Random.Shared.NextDouble() * 80f),
                 Material.Fire);
         }
         _particles.EmitFlameJet(muzzle, dir);
@@ -2163,12 +2163,25 @@ public sealed partial class DwarfMinerGame : Game
         {
             var to = c.Position - _run.Player.Position;
             var dist = to.Length();
-            if (dist > 75f || dist < 1f) continue;
-            if (Vector2.Dot(to / dist, dir) < 0.78f) continue;
+            if (dist > 110f || dist < 1f) continue;
+            if (Vector2.Dot(to / dist, dir) < 0.82f) continue;
             if (c.ImmuneTo(Material.Fire)) continue;
             c.BurnSeconds = MathF.Max(c.BurnSeconds, 3f);
             c.Health -= 26f * _frameDt;
             c.HitFlash = 0.1f;
+        }
+        // The hose roasts titans too — except the fire-blooded (Godzilla's breath, the
+        // Pyrodactyl's lava): you can't burn what already burns.
+        if (_run.Titan.Health > 0 && _run.Titan.Targetable
+            && _run.Titan.Kind is not (TitanKind.Godzilla or TitanKind.Pyrodactyl))
+        {
+            var to = _run.Titan.Position - _run.Player.Position;
+            var dist = to.Length();
+            if (dist is > 1f and < 130f && Vector2.Dot(to / dist, dir) > 0.7f)
+            {
+                _run.Titan.Health -= 40f * _frameDt;
+                _run.Titan.HitFlash = 0.1f;
+            }
         }
         _run.Player.ShootCooldown = 0.05f;
     }
