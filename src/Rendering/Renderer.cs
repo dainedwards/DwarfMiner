@@ -275,7 +275,7 @@ public sealed class Renderer
                 }
             }
 
-            for (var ti = t0; ti < t1; ti++)
+            for (var ti = t0; ti < t1; ti += tileStep)
             {
                 var t = ((ti % tpr) + tpr) % tpr;
                 var k = planet.Get(r, t);
