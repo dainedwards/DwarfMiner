@@ -1245,7 +1245,7 @@ public sealed partial class DwarfMinerGame : Game
         var screenPos = new Vector2(mouse.X, mouse.Y);
         var lmbPressed = mouse.LeftButton == ButtonState.Pressed && _prevMouse.LeftButton != ButtonState.Pressed;
         var rmbPressed = mouse.RightButton == ButtonState.Pressed && _prevMouse.RightButton != ButtonState.Pressed;
-        var clickConsumed = _invUi.HandleClick(screenPos, lmbPressed, rmbPressed, _run.Player);
+        var clickConsumed = _invUi.HandleClick(screenPos, lmbPressed, rmbPressed, _run.Player, DropItem);
 
         // Held LMB activates the selected slot's action. UseSelectedSlot is the single place
         // that maps id → in-world action (mine / shoot / place / throw / heal / …).
