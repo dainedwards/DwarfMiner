@@ -158,6 +158,38 @@ public static class Icons
         return tex;
     }
 
+    private static Texture2D BuildJetpack(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "....SS....SS....",
+        "...SLLS..SLLS...",
+        "...SLLS..SLLS...",
+        "...SMMSssSMMS...",
+        "...SMMS..SMMS...",
+        "...SMDS..SMDS...",
+        "...SDDS..SDDS...",
+        "....nn....nn....",
+        "....FF....FF....",
+        "....fY....fY....",
+        ".....Y.....Y....",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['S'] = new Color(150, 155, 170),   // twin tank shells
+        ['L'] = new Color(210, 215, 230),   // top-lit
+        ['M'] = new Color(120, 125, 140),
+        ['D'] = new Color(85, 90, 105),
+        ['s'] = new Color(100, 105, 120),   // strap bar
+        ['n'] = new Color(70, 72, 82),      // nozzles
+        ['F'] = new Color(255, 150, 50),    // flame
+        ['f'] = new Color(235, 90, 45),
+        ['Y'] = new Color(255, 230, 120),
+    });
+
     private static Texture2D BuildFlamethrower(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
     {
         "................",
