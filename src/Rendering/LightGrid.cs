@@ -191,55 +191,99 @@ public sealed class LightGrid
     public void Propagate()
     {
         if (!_active) return;
+        // Manually inlined taps into locals — this loop runs hot every recompute and the
+        // Debug JIT inlines nothing, so a Take() helper costs a real method call per tap.
+        var r = _r; var g = _g; var b = _b; var solid = _solid;
+        var side = _side;
         for (var round = 0; round < 2; round++)
         {
             // Forward sweep: left / up / up-left / up-right are already final-ish.
-            for (var y = 0; y < _side; y++)
+            for (var y = 0; y < side; y++)
             {
-                var row = y * _side;
-                for (var x = 0; x < _side; x++)
+                var row = y * side;
+                for (var x = 0; x < side; x++)
                 {
                     var i = row + x;
                     float a, d;
-                    if (_solid[i]) { a = AttSolid; d = AttSolidDiag; }
+                    if (solid[i]) { a = AttSolid; d = AttSolidDiag; }
                     else { a = AttAir; d = AttAirDiag; }
-                    if (x > 0) Take(i, i - 1, a);
+                    float mr = r[i], mg = g[i], mb = b[i];
+                    float v; int j;
+                    if (x > 0)
+                    {
+                        j = i - 1;
+                        v = r[j] * a; if (v > mr) mr = v;
+                        v = g[j] * a; if (v > mg) mg = v;
+                        v = b[j] * a; if (v > mb) mb = v;
+                    }
                     if (y > 0)
                     {
-                        Take(i, i - _side, a);
-                        if (x > 0) Take(i, i - _side - 1, d);
-                        if (x < _side - 1) Take(i, i - _side + 1, d);
+                        j = i - side;
+                        v = r[j] * a; if (v > mr) mr = v;
+                        v = g[j] * a; if (v > mg) mg = v;
+                        v = b[j] * a; if (v > mb) mb = v;
+                        if (x > 0)
+                        {
+                            j = i - side - 1;
+                            v = r[j] * d; if (v > mr) mr = v;
+                            v = g[j] * d; if (v > mg) mg = v;
+                            v = b[j] * d; if (v > mb) mb = v;
+                        }
+                        if (x < side - 1)
+                        {
+                            j = i - side + 1;
+                            v = r[j] * d; if (v > mr) mr = v;
+                            v = g[j] * d; if (v > mg) mg = v;
+                            v = b[j] * d; if (v > mb) mb = v;
+                        }
                     }
+                    r[i] = mr; g[i] = mg; b[i] = mb;
                 }
             }
             // Backward sweep: right / down / down-right / down-left.
-            for (var y = _side - 1; y >= 0; y--)
+            for (var y = side - 1; y >= 0; y--)
             {
-                var row = y * _side;
-                for (var x = _side - 1; x >= 0; x--)
+                var row = y * side;
+                for (var x = side - 1; x >= 0; x--)
                 {
                     var i = row + x;
                     float a, d;
-                    if (_solid[i]) { a = AttSolid; d = AttSolidDiag; }
+                    if (solid[i]) { a = AttSolid; d = AttSolidDiag; }
                     else { a = AttAir; d = AttAirDiag; }
-                    if (x < _side - 1) Take(i, i + 1, a);
-                    if (y < _side - 1)
+                    float mr = r[i], mg = g[i], mb = b[i];
+                    float v; int j;
+                    if (x < side - 1)
                     {
-                        Take(i, i + _side, a);
-                        if (x < _side - 1) Take(i, i + _side + 1, d);
-                        if (x > 0) Take(i, i + _side - 1, d);
+                        j = i + 1;
+                        v = r[j] * a; if (v > mr) mr = v;
+                        v = g[j] * a; if (v > mg) mg = v;
+                        v = b[j] * a; if (v > mb) mb = v;
                     }
+                    if (y < side - 1)
+                    {
+                        j = i + side;
+                        v = r[j] * a; if (v > mr) mr = v;
+                        v = g[j] * a; if (v > mg) mg = v;
+                        v = b[j] * a; if (v > mb) mb = v;
+                        if (x < side - 1)
+                        {
+                            j = i + side + 1;
+                            v = r[j] * d; if (v > mr) mr = v;
+                            v = g[j] * d; if (v > mg) mg = v;
+                            v = b[j] * d; if (v > mb) mb = v;
+                        }
+                        if (x > 0)
+                        {
+                            j = i + side - 1;
+                            v = r[j] * d; if (v > mr) mr = v;
+                            v = g[j] * d; if (v > mg) mg = v;
+                            v = b[j] * d; if (v > mb) mb = v;
+                        }
+                    }
+                    r[i] = mr; g[i] = mg; b[i] = mb;
                 }
             }
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Take(int i, int from, float att)
-    {
-        var v = _r[from] * att; if (v > _r[i]) _r[i] = v;
-        v = _g[from] * att; if (v > _g[i]) _g[i] = v;
-        v = _b[from] * att; if (v > _b[i]) _b[i] = v;
     }
 
     /// <summary>Pack the light field into the texture the lighting pass stretches over
