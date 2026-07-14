@@ -3351,10 +3351,14 @@ public sealed partial class DwarfMinerGame : Game
     /// surface rather than burying into a slope.</summary>
     private void PlaceSentryAtFeet()
     {
+        // A turret is a heavy deploy — a longer build cooldown so they can't be machine-gunned
+        // down all at once.
+        if (_run.Player.BuildCooldown > 0f) return;
         var up = _run.Planet.UpAt(_run.Player.Position);
         var pos = _run.Player.Position - up * (_run.Player.Radius + 1f);
         _run.Sentries.Add(new Sentry(pos));
         _particles.EmitDust(pos, 4f);
+        _run.Player.BuildCooldown = 0.9f;
     }
 
     /// <summary>Tiles below the planet's baseline surface at the player's current radius —
