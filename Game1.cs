@@ -2335,7 +2335,7 @@ public sealed partial class DwarfMinerGame : Game
         var p = _run.Player;
         if (p.FlyMode) return;
 
-        var (lava, acid, gas) = _run.Cells.SampleHazardsNear(p.Position, p.Radius + 1.5f);
+        var (lava, acid, gas, fire) = _run.Cells.SampleHazardsNear(p.Position, p.Radius + 1.5f);
         if (lava > 0)
         {
             p.Health -= LavaBurnDps * dt;
