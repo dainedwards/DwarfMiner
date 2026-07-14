@@ -441,6 +441,19 @@ public sealed class Creature
         var toPlayer = player.Position - Position;
         var dist = toPlayer.Length();
 
+        // Door-users tidy up: standing beside an open door, they occasionally swing it
+        // shut behind them (rare roll so doorways aren't slamming nonstop, and never with
+        // the dwarf close enough to be standing in the frame).
+        if (CanUseDoors(Kind) && dist > 60f && Random.Shared.Next(700) == 0)
+            foreach (var side in new[] { 1f, -1f })
+            {
+                var beside = Position + right * (side * (Radius + 5f));
+                var (bx, by) = planet.WorldToTile(beside);
+                if (planet.Get(bx, by) != TileKind.DoorOpen) continue;
+                SetDoorRun(planet, up, beside, TileKind.DoorClosed);
+                break;
+            }
+
         switch (Kind)
         {
             case CreatureKind.Grub:       TickGrub(dt, planet, up, right, toPlayer, dist, speedMul); break;
