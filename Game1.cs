@@ -298,7 +298,6 @@ public sealed partial class DwarfMinerGame : Game
         // title and goes through the load screen directly).
         if (_screen == GameScreen.Space)
         {
-            SaveSlots.MigrateLegacy();
             if (Environment.GetEnvironmentVariable("DM_ENTRYTEST") is { Length: > 0 })
             {
                 _loadingSince = 0f;
