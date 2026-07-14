@@ -23,6 +23,7 @@ public static class RunSave
                                      // 12: surface-profile section in planet state (lumpy asteroid)
                                      // 13: player LightTier int replaces HasLantern bool
                                      // 14: equipment (paper-doll) slot block after the toolbelt
+                                     // 15: gloves + 2 accessory slots (equipment block 8 → 11)
     private const uint Magic = 0x444D5253; // "DMRS"
 
     private static string SavePath
