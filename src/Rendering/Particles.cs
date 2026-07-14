@@ -933,6 +933,144 @@ public sealed class Particles
         }
     }
 
+    /// <summary>Flamethrower tongue: a fat cone of white→orange→ember blobs riding the aim,
+    /// each shedding real light. Called every puff, so held fire reads as one continuous
+    /// roaring jet. (The burning FUEL is real Fire cells launched by Game1 — these are the
+    /// glow around it.)</summary>
+    public void EmitFlameJet(Vector2 pos, Vector2 dir)
+    {
+        for (var i = 0; i < 5; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.5f;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            var hot = i < 2;
+            _list.Add(new Particle
+            {
+                Position = pos + d * (float)_rng.NextDouble() * 4f,
+                Velocity = d * (140f + (float)_rng.NextDouble() * 120f),
+                Life = 0.18f + (float)_rng.NextDouble() * 0.22f,
+                MaxLife = 0.4f,
+                Color = hot ? new Color(255, 240, 170) : new Color(255, 160, 60),
+                FadeColor = new Color(140, 40, 15),
+                Size = hot ? 2.2f : 3.2f,
+                GravityScale = -0.12f,   // heat rises
+                Drag = 2.8f,
+                LightRadius = hot ? 26f : 14f,
+                LightColor = new Color(255, 170, 70),
+            });
+        }
+    }
+
+    /// <summary>Acid spewer spray: caustic green droplets with a sickly glow. The corrosive
+    /// payload is real Acid cells launched by Game1 — this is the visible mist around it.</summary>
+    public void EmitAcidJet(Vector2 pos, Vector2 dir)
+    {
+        for (var i = 0; i < 4; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.4f;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            _list.Add(new Particle
+            {
+                Position = pos + d * (float)_rng.NextDouble() * 3f,
+                Velocity = d * (160f + (float)_rng.NextDouble() * 90f),
+                Life = 0.15f + (float)_rng.NextDouble() * 0.2f,
+                MaxLife = 0.35f,
+                Color = i == 0 ? new Color(200, 255, 120) : new Color(120, 220, 60),
+                FadeColor = new Color(40, 90, 25),
+                Size = 1.6f + (float)_rng.NextDouble() * 1.4f,
+                GravityScale = 0.5f,
+                Drag = 1.8f,
+                LightRadius = i == 0 ? 16f : 8f,
+                LightColor = new Color(150, 240, 80),
+            });
+        }
+    }
+
+    /// <summary>One lightning arc segment chain from <paramref name="from"/> to
+    /// <paramref name="to"/>: a jagged polyline of blinding white-violet nodes (with dimmer
+    /// branch flecks) that lives for a couple of frames. Every node sheds light, so the
+    /// whole bolt strobes its surroundings; the endpoints get hero flashes for hard shadows.</summary>
+    public void EmitLightning(Vector2 from, Vector2 to)
+    {
+        var span = to - from;
+        var len = span.Length();
+        if (len < 2f) return;
+        var dir = span / len;
+        var perp = new Vector2(-dir.Y, dir.X);
+        var segs = Math.Clamp((int)(len / 7f), 3, 16);
+        var prev = from;
+        for (var i = 1; i <= segs; i++)
+        {
+            var t = i / (float)segs;
+            // Mid-bolt wanders hardest; the endpoints stay pinned to source and victim.
+            var wander = MathF.Sin(t * MathF.PI) * ((float)_rng.NextDouble() * 2f - 1f) * len * 0.14f;
+            var node = from + span * t + perp * wander;
+            // Nodes along the segment so the bolt reads as a line, not dots.
+            var steps = Math.Max(1, (int)((node - prev).Length() / 2.5f));
+            for (var sIdx = 0; sIdx <= steps; sIdx++)
+            {
+                var p = Vector2.Lerp(prev, node, sIdx / (float)steps);
+                _list.Add(new Particle
+                {
+                    Position = p,
+                    Velocity = Vector2.Zero,
+                    Life = 0.07f + (float)_rng.NextDouble() * 0.05f,
+                    MaxLife = 0.12f,
+                    Color = new Color(235, 235, 255),
+                    FadeColor = new Color(120, 90, 220),
+                    Size = 1.4f,
+                    GravityScale = 0f,
+                    Drag = 0f,
+                    LightRadius = 12f,
+                    LightColor = new Color(180, 160, 255),
+                });
+            }
+            // Occasional dead-end branch fork off a node — sells "electricity", not "rope".
+            if (_rng.Next(3) == 0)
+            {
+                var bDir = dir + perp * ((float)_rng.NextDouble() * 2f - 1f);
+                bDir.Normalize();
+                for (var bi = 1; bi <= 3; bi++)
+                {
+                    _list.Add(new Particle
+                    {
+                        Position = node + bDir * bi * 3f + Jitter(1.5f),
+                        Velocity = Vector2.Zero,
+                        Life = 0.06f,
+                        MaxLife = 0.06f,
+                        Color = new Color(190, 180, 255),
+                        FadeColor = new Color(70, 50, 140),
+                        Size = 1f,
+                        LightRadius = 6f,
+                        LightColor = new Color(160, 140, 255),
+                    });
+                }
+            }
+            prev = node;
+        }
+        // Endpoint flashes: hard-shadow strobe at the muzzle and the struck body.
+        foreach (var end in new[] { from, to })
+        {
+            _list.Add(new Particle
+            {
+                Position = end,
+                Velocity = Vector2.Zero,
+                Life = 0.08f,
+                MaxLife = 0.08f,
+                Color = Color.White,
+                FadeColor = new Color(150, 120, 255),
+                Size = 3f,
+                LightRadius = 46f,
+                LightColor = new Color(200, 185, 255),
+                HeroLight = true,
+            });
+        }
+    }
+
     private Vector2 Jitter(float r) =>
         new((float)(_rng.NextDouble() * 2 - 1) * r, (float)(_rng.NextDouble() * 2 - 1) * r);
 }
