@@ -26,9 +26,12 @@ public enum ProjectileKind
     CannonSapphire,
     /// <summary>Cannon variant — heavy crater + big damage radius. The diamond shell.</summary>
     CannonDiamond,
-    /// <summary>Thrown explosive: arcs under gravity, fuse counts down, explodes on fuse-out
-    /// or on solid contact with a 3-tile crater + radial creature damage.</summary>
+    /// <summary>Thrown explosive: arcs under gravity, bounces off terrain, and blows on its
+    /// 3-second fuse (never on contact) with a crater + radial creature damage.</summary>
     Dynamite,
+    /// <summary>Bundled dynamite: throws like the stick but with 3× the blast radius. Same
+    /// bounce-and-fuse behaviour.</summary>
+    DynamitePack,
     /// <summary>Anti-Titan harpoon: punches through tiles + creatures alike, big damage to
     /// the Titan specifically. One-shot heavy spear.</summary>
     Harpoon,
