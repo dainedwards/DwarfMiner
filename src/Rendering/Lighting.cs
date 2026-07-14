@@ -67,8 +67,13 @@ public sealed class Lighting
     public void RenderGrid(Camera cam, LightGrid grid)
     {
         if (grid.Texture is null) return;
-        var w = Math.Max(1, (int)(cam.ViewportSize.X / cam.Zoom));
-        var h = Math.Max(1, (int)(cam.ViewportSize.Y / cam.Zoom));
+        // World-pixel lightmap at play zooms — but capped at the viewport size: zoomed way
+        // out (orbit at 0.44 needs a 2909×1636 RT at world scale) the per-frame clear +
+        // composite + bloom of that surface alone was ~15 ms of draw. Beyond the cap the
+        // lightmap just gets coarser per world pixel, which is invisible at those scales.
+        var lightScale = MathF.Min(1f, cam.Zoom);
+        var w = Math.Max(1, Math.Min(cam.ViewportSize.X, (int)(cam.ViewportSize.X / cam.Zoom)));
+        var h = Math.Max(1, Math.Min(cam.ViewportSize.Y, (int)(cam.ViewportSize.Y / cam.Zoom)));
         if (_rt is null || _rtSize.X != w || _rtSize.Y != h)
         {
             _rt?.Dispose();
@@ -83,6 +88,7 @@ public sealed class Lighting
 
         _viewMatrix = Matrix.CreateTranslation(-cam.Target.X, -cam.Target.Y, 0)
                     * Matrix.CreateRotationZ(-cam.SmoothRotation)
+                    * Matrix.CreateScale(MathF.Max(lightScale, cam.ViewportSize.X / (float)w * cam.Zoom >= 1f ? lightScale : lightScale))
                     * Matrix.CreateTranslation(_rtSize.X * 0.5f, _rtSize.Y * 0.5f, 0);
         _sb.Begin(blendState: BlendState.Opaque, samplerState: SamplerState.LinearClamp,
             transformMatrix: _viewMatrix);
