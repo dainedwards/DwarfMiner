@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using DwarfMiner.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
