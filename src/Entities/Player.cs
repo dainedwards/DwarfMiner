@@ -212,13 +212,15 @@ public sealed class Player
     public float MineCooldownFor(MiningTool tool)
     {
         if (FlyMode) return 0.04f;
-        return tool switch
+        var cd = tool switch
         {
             MiningTool.Drill       => 0.04f,
             MiningTool.Hammer      => 0.30f,
             MiningTool.MiningLaser => 0.03f,
             _                      => 0.10f,
         };
+        // Worn gloves quicken every tool's rhythm.
+        return cd * Equipment.MineSpeedMul;
     }
 
     /// <summary>True iff the given <paramref name="tool"/> can crack a tile of the given kind.
