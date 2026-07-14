@@ -51,7 +51,7 @@ public static class CityProbe
         planet.Set(dx1, dy1, TileKind.DoorClosed);
         planet.Set(dx2, dy2, TileKind.DoorClosed);
         planet.Set(dx3, dy3, TileKind.DoorClosed);
-        var player = new Player { Position = ground + right * 260f + up * 6f };
+        var player = new Player(ground + right * 260f + up * 6f);
         var opened = false;
         for (var i = 0; i < 900 && !opened; i++)
         {
