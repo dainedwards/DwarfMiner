@@ -82,12 +82,13 @@ public static class Tiles
           // which corrodes any non-anchored tile).
           or TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick
           or TileKind.DoorClosed or TileKind.DoorOpen
-          or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp
-          or TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
-          or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom;
+          or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp;
 
-    /// <summary>Biome flora — decorative surface plants. Grouped so hazard rules and the
-    /// renderer can treat them as one family.</summary>
+    /// <summary>Biome flora — decorative surface plants. NOT anchored (so a walking titan
+    /// tramples them and settling terrain drops them naturally), but hazard-immune via the
+    /// explicit checks in Cells (acid/lava/fire skip them) so the ember bloom survives its
+    /// lava world and the vitriol lily its acid one. Grouped so those rules and the renderer
+    /// can treat them as one family.</summary>
     public static bool IsFlora(TileKind k) =>
         k is TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
           or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom;
