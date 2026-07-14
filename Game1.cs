@@ -1710,6 +1710,13 @@ public sealed partial class DwarfMinerGame : Game
             _particles.EmitChips(_run.Planet.TileToWorld(x, y), bk);
         }
         _run.Cells.SpawnDustInTile(x, y, bk);
+        // Dig spray: a couple of the fresh dust grains kick out of the hole toward the dwarf
+        // — real material in ballistic flight, not just cosmetic chips. They land nearby and
+        // are vacuumable like the rest of the pile.
+        var brokeAt = _run.Planet.TileToWorld(x, y);
+        var toDwarf = _run.Player.Position - brokeAt;
+        if (toDwarf.LengthSquared() > 1f)
+            _run.Cells.EjectFromTile(x, y, Vector2.Normalize(toDwarf), 90f, 2);
         // minGap: one strike now shatters up to 4 fine tiles in the same frame — one crack, not a burst.
         PlayAt("break", _run.Planet.TileToWorld(x, y), 0.6f,
             pitch: -0.1f + (float)Random.Shared.NextDouble() * 0.25f, minGap: 0.05f);
