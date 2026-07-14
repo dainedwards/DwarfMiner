@@ -79,6 +79,11 @@ public enum CreatureKind : byte
     // with the belt, plus these two):
     Selenite,     // crystalline moon-spider — glassy shard-legged pouncer that haunts the crater caves
     DustDevil,    // charged regolith vortex — a spinning column of moon dust that hounds anything grounded
+    // Cave bandits: humanoid outcasts carrying WEAKER versions of the dwarf's own arsenal —
+    // the first enemies that shoot back with guns instead of glands.
+    Marauder,     // ground bandit with a slug pistol — holds a firing band and pops off aimed rounds
+    Raider,       // jetpack bandit — hovers on a sputtering pack and rakes short SMG bursts
+    Pyro,         // suited brute lugging a tank flamethrower — closes in and hoses real fire
 }
 
 public sealed class Creature
