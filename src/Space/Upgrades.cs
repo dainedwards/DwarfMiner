@@ -57,7 +57,7 @@ public static class Upgrades
         // ── Tier II of the dwarf/ship lines + the wishlist batch (phase 6) ──
 
         new("jetpack2", "Jetpack II",
-            "Burn 30 percent longer, a stronger climb - orange flame",
+            "One more second of burn, a stronger climb - orange flame",
             Souls: 1, Mats: new[] { ("ruby", 3) }, SoulKind: "Kong", Requires: "jetpack"),
 
         new("gun3", "Autocannon III",
