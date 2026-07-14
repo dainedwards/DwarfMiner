@@ -173,6 +173,14 @@ public sealed class Player
     /// itself stays one "helm_lamp" in the light slot, shining harder per rung.</summary>
     public int HeadlampTier = 1;
 
+    /// <summary>Owned melee weapons and their upgrade rung (id → 1..4). Absent = not owned.
+    /// Rung 4 is the energy edge: the metal glows and the swing cuts terrain.</summary>
+    public readonly Dictionary<string, int> MeleeTiers = new();
+
+    /// <summary>Damage multiplier while guarding — set per frame by Game1 from the selected
+    /// belt item (shield 0.55, tower shield 0.40, otherwise 1).</summary>
+    public float GuardMul = 1f;
+
     /// <summary>Carried-light brightness multiplier from the worn light-slot item. The
     /// headlamp scales with its upgrade rung; the sunstone is the bottled-daylight top end.
     /// The bare 0.30 stub is the see-your-own-feet fallback with nothing worn.</summary>
