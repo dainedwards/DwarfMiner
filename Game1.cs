@@ -3681,7 +3681,7 @@ public sealed partial class DwarfMinerGame : Game
         var status = $"{_run.Def.Name.ToUpperInvariant()}   DEPTH {depth}   SHIP: {ship}   {titanStatus}\n" +
                      $"META: ESCAPES {_meta.Escapes}  KILLS {_meta.TitansDefeated}  DEEPEST {_meta.DeepestDepth}";
         var controls = "WASD MOVE  SPACE JUMP  1-9 TOOLBELT  LMB USE  WHEEL CYCLE  Q/E WEAPONS\n" +
-                       "C CRAFT  T BEACON  E/L BOARD ROCKET  B/N DEPOT BANK  F5 SAVE  G GOD MODE";
+                       "C CRAFT  I GEAR  T BEACON  E/L BOARD ROCKET  B/N DEPOT BANK  F5 SAVE  G GOD MODE";
         if (_orbiting)
             controls = $"LEFT/RIGHT ORBIT THE PLANET   ENTER LAUNCH LANDER ({_meta.Rovers} ABOARD{(_meta.Rovers <= 0 ? " - DROP POD!" : "")})   SPACE LEAVE PLANET\n" +
                        $"L LOADOUT{(PendingKitCount() > 0 ? $" ({PendingKitCount()} KITS PACKED)" : "")}   PICK YOUR DROP SITE - THE LANDER FALLS FROM THE SHIP";
