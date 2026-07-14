@@ -51,27 +51,20 @@ public sealed class Lighting
         AlphaDestinationBlend = Blend.One,
     };
 
-    /// <summary>Reverse-subtract: result = dst − src. Used to subtract a radial darkness
-    /// gradient from the lightmap (depth-based dimming).</summary>
-    public static readonly BlendState ReverseSubtract = new()
-    {
-        ColorBlendFunction = BlendFunction.ReverseSubtract,
-        ColorSourceBlend = Blend.One,
-        ColorDestinationBlend = Blend.One,
-        AlphaBlendFunction = BlendFunction.ReverseSubtract,
-        AlphaSourceBlend = Blend.One,
-        AlphaDestinationBlend = Blend.One,
-    };
-
     public Lighting(GraphicsDevice gd)
     {
         _gd = gd;
         _sb = new SpriteBatch(gd);
-        _lightTex = MakeRadialGradient(gd, 64);
     }
 
-    public void Begin(Camera cam, Color ambient)
+    /// <summary>Render the propagated light grid into the lightmap RT: the grid texture
+    /// (one texel per grid cell) stretched with linear filtering — Terraria's "smooth
+    /// lighting" — under the camera's translation+rotation at zoom = 1, so each lightmap
+    /// pixel corresponds to a world pixel. Everything outside the grid clears to black:
+    /// unlit is genuinely dark now, there is no ambient base.</summary>
+    public void RenderGrid(Camera cam, LightGrid grid)
     {
+        if (grid.Texture is null) return;
         var w = Math.Max(1, (int)(cam.ViewportSize.X / cam.Zoom));
         var h = Math.Max(1, (int)(cam.ViewportSize.Y / cam.Zoom));
         if (_rt is null || _rtSize.X != w || _rtSize.Y != h)
@@ -81,43 +74,15 @@ public sealed class Lighting
             _rtSize = new Point(w, h);
         }
         _gd.SetRenderTarget(_rt);
-        _gd.Clear(ambient);
+        _gd.Clear(Color.Black);
 
-        // Mirror the camera's translation+rotation but at zoom = 1 so each lightmap pixel
-        // corresponds to a world pixel. Upscaling at composite time gives chunky pixel light.
         _viewMatrix = Matrix.CreateTranslation(-cam.Target.X, -cam.Target.Y, 0)
                     * Matrix.CreateRotationZ(-cam.SmoothRotation)
                     * Matrix.CreateTranslation(_rtSize.X * 0.5f, _rtSize.Y * 0.5f, 0);
-        _sb.Begin(blendState: ColorAdditive, samplerState: SamplerState.PointClamp, transformMatrix: _viewMatrix);
-    }
-
-    public void AddPoint(Vector2 worldPos, float radius, Color color)
-    {
-        if (radius <= 0f) return;
-        _sb.Draw(_lightTex, worldPos, null, color, 0f,
-            new Vector2(_lightTex.Width / 2f, _lightTex.Height / 2f),
-            (radius * 2f) / _lightTex.Width, SpriteEffects.None, 0f);
-    }
-
-    /// <summary>Subtract a radial darkness gradient from the lightmap (e.g. centre of planet).
-    /// Brightest src pixels subtract the most; the gradient's quadratic falloff ensures the
-    /// darkening tapers off at the radius boundary.</summary>
-    public void Darken(Vector2 worldPos, float radius, Color color)
-    {
-        if (radius <= 0f) return;
-        // SpriteBatch can't change blend mid-batch, so we end the additive pass, draw with
-        // ReverseSubtract, and reopen the additive pass for any subsequent AddPoint calls.
-        _sb.End();
-        _sb.Begin(blendState: ReverseSubtract, samplerState: SamplerState.PointClamp, transformMatrix: _viewMatrix);
-        _sb.Draw(_lightTex, worldPos, null, color, 0f,
-            new Vector2(_lightTex.Width / 2f, _lightTex.Height / 2f),
-            (radius * 2f) / _lightTex.Width, SpriteEffects.None, 0f);
-        _sb.End();
-        _sb.Begin(blendState: ColorAdditive, samplerState: SamplerState.PointClamp, transformMatrix: _viewMatrix);
-    }
-
-    public void End()
-    {
+        _sb.Begin(blendState: BlendState.Opaque, samplerState: SamplerState.LinearClamp,
+            transformMatrix: _viewMatrix);
+        _sb.Draw(grid.Texture, grid.Origin, null, Color.White, 0f, Vector2.Zero,
+            grid.CellSize, SpriteEffects.None, 0f);
         _sb.End();
         _gd.SetRenderTarget(SceneTarget);
     }
