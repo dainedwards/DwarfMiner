@@ -1187,12 +1187,16 @@ public sealed partial class DwarfMinerGame : Game
         }
         _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, verticalAxis);
 
-        // Jetpack exhaust: a tier-coloured flame streaming from the worn pack — red stub
-        // burner up through orange and yellow to the tier-IV blue jet.
+        // Jetpack exhaust: a tier-coloured jet stream from the worn pack's nozzles — red
+        // stub burner up through orange and yellow to the tier-IV blue jet. The origin
+        // matches the drawn pack (trailing side of the body, at its base).
         if (_run.Player.IsJetting)
         {
             var jetUp = _run.Planet.UpAt(_run.Player.Position);
-            _particles.EmitJetExhaust(_run.Player.Position - jetUp * 3.2f, -jetUp, _run.Player.JetTier);
+            var jetRight = new Vector2(-jetUp.Y, jetUp.X);
+            _particles.EmitJetExhaust(
+                _run.Player.Position - jetRight * _playerFacing * 3.0f - jetUp * 2.2f,
+                -jetUp, _run.Player.JetTier);
         }
         TickSwing(dt);
         TickOxygen(dt);
