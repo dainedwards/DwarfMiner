@@ -2155,6 +2155,37 @@ public sealed partial class DwarfMinerGame : Game
         if (p.Equipment.Get(EquipSlot.Torch) is null) p.Equipment.Set(EquipSlot.Torch, "sun_crystal");
     }
 
+    /// <summary>Whether an item id has an upgrade ladder at all (for the "MAXED" label).</summary>
+    private static bool HasUpgradePath(string id) =>
+        id is "pickaxe" or "helm_lamp" or "jetpack" || Array.IndexOf(Toolbelt.MeleeIds, id) >= 0;
+
+    /// <summary>The next rung's crafting recipe for an upgradeable item, given the live
+    /// run's current tier — null when maxed or the id has no ladder.</summary>
+    private Recipe? UpgradeRecipeFor(string id)
+    {
+        var next = id switch
+        {
+            "pickaxe" => _run.Player.PickaxeTier switch
+            {
+                1 => "pickaxe_ii", 2 => "pickaxe_iii", 3 => "pickaxe_iv", _ => null,
+            },
+            "helm_lamp" => _run.Player.HeadlampTier switch
+            {
+                1 => "headlamp_ii", 2 => "headlamp_iii", 3 => "headlamp_iv", _ => null,
+            },
+            "jetpack" => !_run.Player.JetTier2 ? "jetpack_ii"
+                : !_run.Player.JetTier3 ? "jetpack_iii"
+                : !_run.Player.JetTier4 ? "jetpack_iv" : null,
+            _ when Array.IndexOf(Toolbelt.MeleeIds, id) >= 0 =>
+                _run.Player.MeleeTiers.GetValueOrDefault(id, 1) < 4 ? $"{id}_up" : null,
+            _ => null,
+        };
+        if (next is null) return null;
+        foreach (var r in Crafting.All)
+            if (r.Id == next) return r;
+        return null;
+    }
+
     private void GrantGodmodeMaterials()
     {
         var inv = _run.Player.Inventory;
