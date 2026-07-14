@@ -65,6 +65,7 @@ public static class Icons
         _icons["beacon"]     = BuildBeacon(gd);
         _icons["glowshroom"] = BuildGlowshroom(gd);
         _icons["ladder"]     = BuildLadder(gd);
+        _icons["door"]       = BuildDoor(gd);
         _icons["rail"]       = BuildRail(gd);
         _icons["support"]    = BuildSupport(gd);
         _icons["reinforced_support"] = BuildReinforcedSupport(gd);
