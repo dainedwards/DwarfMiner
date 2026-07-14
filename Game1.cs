@@ -3208,17 +3208,38 @@ public sealed partial class DwarfMinerGame : Game
         // dwarf in the dim zone. ===
         _renderer.BeginLighting(_camera, new Color(180, 175, 195));
 
-        // Player aura — four nested radials stacked together for a soft, wide glow. Lantern
-        // upgrade makes every ring bigger and brighter — visible improvement to dark-cave
-        // navigation. Tier IV pickaxe (diamond) adds a faint icy-white sheen so the player
-        // sprite reads as freshly tooled.
-        var lanternMul = _run.Player.HasLantern ? 1.55f : 1.0f;
-        _renderer.AddLight(_run.Player.Position, 200f * lanternMul, new Color(85, 70, 50));
-        _renderer.AddLight(_run.Player.Position, 140f * lanternMul, new Color(140, 115, 80));
-        _renderer.AddLight(_run.Player.Position, 90f * lanternMul,  new Color(200, 170, 120));
-        _renderer.AddLight(_run.Player.Position, 50f * lanternMul,  new Color(245, 215, 165));
-        if (_run.Player.PickaxeTier >= 4)
-            _renderer.AddLight(_run.Player.Position, 28f, new Color(180, 220, 255));
+        // Player aura — four nested radials stacked together for a soft, wide glow, gated by
+        // depth: on the surface and through the dirt band (layer 1) the dwarf sheds NO light
+        // at all (daylight owns those layers), then the aura fades in across the next stretch
+        // of crust so there's no pop. Size scales with the carried-light tier (bare stub →
+        // torch → lantern → headlamp → sunstone), which is what makes the light ladder feel
+        // like real progression against the near-black deep.
+        var playerDepthTiles = _run.Planet.SurfaceRadiusAt(_run.Player.Position)
+                             - (_run.Player.Position - _run.Planet.Center).Length() / Planet.TileSize;
+        // Dirt band bottom ≈ 12 legacy tiles; gate from there to fully-on ~10 legacy tiles deeper.
+        var auraGate = MathHelper.Clamp(
+            (playerDepthTiles - 12f * Planet.LegacyTileScale) / (10f * Planet.LegacyTileScale), 0f, 1f);
+        var lightMul = _run.Player.LightTier switch
+        {
+            0 => 0.30f,   // bare headlamp stub — see your own feet, not much else
+            1 => 0.65f,   // torch
+            2 => 1.00f,   // lantern
+            3 => 1.50f,   // miner's headlamp
+            _ => 2.10f,   // sunstone charm
+        };
+        if (auraGate > 0f)
+        {
+            _renderer.AddLight(_run.Player.Position, 200f * lightMul, new Color(85, 70, 50) * auraGate);
+            _renderer.AddLight(_run.Player.Position, 140f * lightMul, new Color(140, 115, 80) * auraGate);
+            _renderer.AddLight(_run.Player.Position, 90f * lightMul,  new Color(200, 170, 120) * auraGate);
+            _renderer.AddLight(_run.Player.Position, 50f * lightMul,  new Color(245, 215, 165) * auraGate);
+            // Sunstone burns cold white at the core — reads as a different light source, not
+            // just a bigger torch. Tier IV pickaxe (diamond) keeps its faint icy sheen.
+            if (_run.Player.LightTier >= 4)
+                _renderer.AddLight(_run.Player.Position, 70f * lightMul, new Color(200, 215, 235) * auraGate);
+            if (_run.Player.PickaxeTier >= 4)
+                _renderer.AddLight(_run.Player.Position, 28f, new Color(180, 220, 255) * auraGate);
+        }
 
         // Core: molten heart of the planet.
         _renderer.AddLight(_run.Planet.Center, 90f, new Color(255, 90, 30));
