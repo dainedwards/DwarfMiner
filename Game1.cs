@@ -348,16 +348,27 @@ public sealed partial class DwarfMinerGame : Game
         foreach (var (ox, oy) in run.Planet.OilSeeds)
             run.Cells.FillTile(ox, oy, Material.Oil);
 
+        // The planet-wide population census (creatures + spawners) also runs on the build
+        // thread: its spawn-space carving marks physics dirty at ~85 sites across the
+        // planet, and paying that on arrival meant several seconds of collapse-churn
+        // framerate right as the player landed.
+        SpawnDirector.SpawnInitialFauna(run);
+        run.Populated = true;
+
         // Pre-settle the seeded liquids during load: the first ~2s of cell ticks carry every
         // seeded cell awake (tens of ms per tick at Density 8). Burning them here turns a
         // visible gameplay stutter into a slightly longer world-gen pause; after settling,
-        // hemmed pool interiors sleep and the steady-state tick is cheap. The settle is by
+        // hemmed pool interiors sleep and the steady-state tick is cheap. Physics ticks
+        // alongside so the census's dirty tiles are digested here too. The settle is by
         // far the heavy half (the generation above is ~200 ms; a big world settles for many
         // seconds), so it's cancellable: atmosphere entry takes the world the moment the
         // token fires and the leftover settling runs live in the orbit/descent frames — a
         // few heavy frames from orbit beat any hold at the atmosphere.
         for (var i = 0; i < 120 && !settleToken.IsCancellationRequested; i++)
+        {
             run.Cells.Update(1f / 60f);
+            run.Physics.Update(1f / 60f);
+        }
         return run;
     }
 
