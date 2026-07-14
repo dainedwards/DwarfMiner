@@ -232,7 +232,12 @@ public sealed class Renderer
 
         var camAngle = MathF.Atan2(cam.Target.Y - planet.Center.Y, cam.Target.X - planet.Center.X);
 
-        for (var r = minRing; r <= maxRing; r++)
+        // Orbital stride: at planet-scale zooms a tile is ~1.8 screen px, and the full limb
+        // is ~190k tile iterations — sample every 2nd ring/tile and draw double-size quads
+        // (visually identical at that scale, a quarter of the quads and the loop work).
+        var tileStep = cam.Zoom < 0.55f ? 2 : 1;
+
+        for (var r = minRing; r <= maxRing; r += tileStep)
         {
             var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
             var tpr = planet.TilesAt(r);
