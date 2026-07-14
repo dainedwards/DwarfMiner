@@ -1040,7 +1040,11 @@ public static class WorldGen
                             : storey >= floorEvery && storey % floorEvery >= 3
                                                    && storey % floorEvery <= floorEvery - 3;
                         if (storey < doorH && Math.Sign(dt) == doorSide)
-                            planet.Set(r, t, TileKind.Sky);
+                            // Outer column gets a real working door (closed at gen time —
+                            // residents and the dwarf pop it open with E / by walking up);
+                            // the inner column stays open as the lobby behind it.
+                            planet.Set(r, t, Math.Abs(dt) >= spanHere ? TileKind.DoorClosed
+                                                                      : TileKind.Sky);
                         else if (storey == doorH && Math.Sign(dt) == doorSide)
                             planet.Set(r, t, TileKind.CityGlass);
                         else
