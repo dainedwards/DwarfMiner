@@ -538,6 +538,10 @@ public sealed partial class DwarfMinerGame : Game
         _gameOverReason = "";
         _craftingMenu.Reset();
         _charScreen.Reset();
+        // DM_CHARSCREEN=1 opens the character screen on run start — visual-verification
+        // hook, since synthetic key input isn't available headless (same as DM_AUTOSAVE).
+        if (Environment.GetEnvironmentVariable("DM_CHARSCREEN") is { Length: > 0 })
+            _charScreen.Show();
         _invUi.Reset();
         _screen = GameScreen.Playing;
         _orbiting = false;
