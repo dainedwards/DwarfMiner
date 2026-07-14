@@ -1283,18 +1283,20 @@ public sealed class Cells
         return false;
     }
 
-    /// <summary>Flammable gas: rise outward like smoke, but flash-burn to smoke the moment it
-    /// touches lava — a gas pocket you tunnel lava into (or vent onto the surface toward a lava
-    /// flow) goes up in a puff. Lingers far longer than smoke so pockets survive to be found.</summary>
+    /// <summary>Flammable gas: rise outward like smoke, but ignite the moment it touches lava
+    /// — a gas pocket you tunnel lava into (or vent onto the surface toward a lava flow) goes
+    /// up as a rolling flame front. Lingers far longer than smoke so pockets survive to be
+    /// found. (Open fire also ignites gas, but that spark comes from the fire side —
+    /// TickFire's neighbour probe — so a sleeping cloud still catches.)</summary>
     private void TickGas(int cx, int cy)
     {
-        // Ignition: any adjacent lava sets it off. Convert to smoke; neighbours are woken by
-        // the tile change, so an adjacent gas cell ignites on its own next tick — the burn
-        // walks through the cloud one ring per tick.
+        // Ignition: any adjacent lava sets it off. Convert to FIRE, not smoke — the flame
+        // cell then torches its own gas neighbours (TickFire), so the burn rolls through the
+        // cloud as a visible front and each flame gutters to smoke behind it.
         if (FindNeighbour(cx, cy, Material.Lava) >= 0)
         {
             var bi = Idx(cx, cy);
-            _mat[bi] = (byte)Material.Smoke;
+            _mat[bi] = (byte)Material.Fire;
             ClearKinetics(bi);
             Enqueue(bi);
             WakeNeighbors(cx, cy);
