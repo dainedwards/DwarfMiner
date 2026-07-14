@@ -106,7 +106,7 @@ public sealed class Player
     private float JetRiseSpeed => JetTier4 ? 165f : JetTier3 ? 140f : JetTier2 ? 120f : 100f;
     /// <summary>Net upward acceleration while thrusting (applied on top of cancelling
     /// gravity) — low enough that catching a fall takes a beat, the Noita float.</summary>
-    private const float JetLift = 300f;
+    private const float JetLift = 150f;
     /// <summary>Seconds a grounded refill takes, whatever the tier's cap.</summary>
     private const float JetRefillTime = 2.4f;
     /// <summary>True on frames the jet actually burned — Game1 reads it to emit the
