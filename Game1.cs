@@ -3710,11 +3710,14 @@ public sealed partial class DwarfMinerGame : Game
 
     private void SaveScreenshot()
     {
-        var pp = GraphicsDevice.PresentationParameters;
-        var w = pp.BackBufferWidth;
-        var h = pp.BackBufferHeight;
+        // The finished frame lives in the virtual scene target (the backbuffer only gets
+        // the scaled blit at present time) — read it there, unbinding first so the copy
+        // isn't from a live render target.
+        GraphicsDevice.SetRenderTarget(null);
+        const int w = VirtualWidth;
+        const int h = VirtualHeight;
         var data = new Color[w * h];
-        GraphicsDevice.GetBackBufferData(data);
+        _sceneRt.GetData(data);
 
         var dir = Path.Combine(AppContext.BaseDirectory, "screenshots");
         Directory.CreateDirectory(dir);
