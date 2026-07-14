@@ -2537,28 +2537,30 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
-        // Rung 4: the blade shears terrain — two bites along the swing line, sized to the
-        // weapon class ("cut through objects much easier").
+        // Rung 4: the energy edge shears terrain along the ACTUAL swing path — single
+        // tiles sampled along the blade's crescent, so the cut is an arc matching the
+        // sweep, not disconnected square bites punched through walls.
         if (tier >= 4)
         {
-            var power = id.StartsWith("great") ? 7 : 5;
-            foreach (var frac in new[] { 0.55f, 0.95f })
+            var power = id.StartsWith("great") ? 6 : 4;
+            var aimAng = MathF.Atan2(dir.Y, dir.X);
+            var chips = 4;
+            for (var i = 0; i <= 9; i++)
             {
-                var at = _run.Player.Position + dir * reach * frac;
+                var a = aimAng + MathHelper.Lerp(-1.0f, 0.75f, i / 9f);
+                var at = _run.Player.Position
+                    + new Vector2(MathF.Cos(a), MathF.Sin(a)) * reach * 0.85f;
                 var (mx, my) = _run.Planet.WorldToTile(at);
-                for (var dy2 = -1; dy2 <= 1; dy2++)
-                    for (var dx2 = -1; dx2 <= 1; dx2++)
-                    {
-                        if (_run.Planet.Mine(mx + dx2, my + dy2, power) is not { } cut) continue;
-                        _run.Cells.SpawnDustInTile(mx + dx2, my + dy2, cut);
-                        _run.Physics.MarkDirty(mx + dx2, my + dy2);
-                        _particles.EmitChips(_run.Planet.TileToWorld(mx + dx2, my + dy2), cut);
-                    }
+                if (_run.Planet.Mine(mx, my, power) is not { } cut) continue;
+                _run.Cells.SpawnDustInTile(mx, my, cut);
+                _run.Physics.MarkDirty(mx, my);
+                if (chips-- > 0) _particles.EmitChips(_run.Planet.TileToWorld(mx, my), cut);
             }
         }
 
         _run.Player.ShootCooldown = cd;
-        _meleeAnimDur = MathF.Min(0.22f, cd * 0.7f);
+        // The swing animation covers most of the cadence — a long deliberate arc.
+        _meleeAnimDur = MathF.Min(0.38f, cd * 0.85f);
         _meleeAnim = _meleeAnimDur;
         if (id.StartsWith("great")) _run.Shake = MathF.Max(_run.Shake, 0.15f);
     }
