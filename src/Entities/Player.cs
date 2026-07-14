@@ -63,6 +63,13 @@ public sealed class Player
     /// through the getter so future augment modifiers slot in cleanly.</summary>
     public int PickaxeTier = 1;
 
+    /// <summary>Carried-light tier 0..4. The dwarf sheds no light on the surface or in the
+    /// dirt band regardless of tier (daylight covers it); below that the aura fades in and
+    /// this tier sets its reach. 0 = bare headlamp stub (barely past arm's length),
+    /// 1 = torch, 2 = lantern, 3 = miner's headlamp, 4 = sunstone charm. Replaces the older
+    /// <c>HasLantern</c> bool so light upgrades ladder like pickaxes do.</summary>
+    public int LightTier;
+
     /// <summary>Tools the player has crafted. Each is a one-time flag; crafting again is a
     /// no-op. Augments (future) will live in a separate flags struct beside these.</summary>
     public bool HasDrill;
