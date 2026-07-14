@@ -146,12 +146,102 @@ public static class Icons
         foreach (var key in new List<string>(_icons.Keys))
             _icons[key] = Polish(gd, _icons[key]);
 
-        // Aliases (post-polish so they share the finished texture): the headlamp upgrade
-        // rungs show the lamp itself in the crafting list.
+        // Aliases (post-polish so they share the finished texture): upgrade-recipe ids
+        // show the item they improve.
         _icons["headlamp_ii"] = _icons["helm_lamp"];
         _icons["headlamp_iii"] = _icons["helm_lamp"];
         _icons["headlamp_iv"] = _icons["helm_lamp"];
+        _icons["jetpack_ii"] = _icons["jetpack"];
+        _icons["jetpack_iii"] = _icons["jetpack"];
+        _icons["jetpack_iv"] = _icons["jetpack"];
+        foreach (var mid in Toolbelt.MeleeIds)
+        {
+            _icons[mid] = _icons[$"{mid}_t1"];
+            _icons[$"{mid}_up"] = _icons[$"{mid}_t2"];
+        }
     }
+
+    // ───────── melee icon shapes (shared by 1h/2h; palette carries the rung) ─────────
+
+    private static readonly string[] SwordIcon =
+    {
+        "............E...",
+        "...........EME..",
+        "..........EMM...",
+        ".........MMM....",
+        "........MMM.....",
+        ".......MMM......",
+        "......MMM.......",
+        ".....MMM........",
+        "..x.MMM.........",
+        "..xxMM..........",
+        "..xxx...........",
+        ".wwxxx..........",
+        "www..x..........",
+        "ww..............",
+        "................",
+        "................",
+    };
+
+    private static readonly string[] MaceIcon =
+    {
+        "................",
+        "..........E.....",
+        ".......E.MMM.E..",
+        "........MMMMM...",
+        ".......MMxMMM...",
+        "........MMMMM...",
+        ".......E.MMM.E..",
+        "......ww..E.....",
+        ".....ww.........",
+        "....ww..........",
+        "...ww...........",
+        "..ww............",
+        ".kw.............",
+        "................",
+        "................",
+        "................",
+    };
+
+    private static readonly string[] HammerIcon =
+    {
+        "................",
+        "........EMMMME..",
+        "........MMMMMM..",
+        "........MMxxMM..",
+        "........MMMMMM..",
+        "........EMMMME..",
+        "......ww........",
+        ".....ww.........",
+        "....ww..........",
+        "...ww...........",
+        "..ww............",
+        ".kw.............",
+        "................",
+        "................",
+        "................",
+        "................",
+    };
+
+    private static readonly string[] ShieldIcon =
+    {
+        "................",
+        "....EEEEEEEE....",
+        "...EMMMMMMMME...",
+        "...EMMMMMMMME...",
+        "...EMMxMMxMME...",
+        "...EMMMMMMMME...",
+        "...EMMMMMMMME...",
+        "....EMMMMMME....",
+        "....EMMxxMME....",
+        ".....EMMMME.....",
+        ".....EMMMME.....",
+        "......EMME......",
+        ".......EE.......",
+        "................",
+        "................",
+        "................",
+    };
 
     /// <summary>The high-fidelity finish: (1) 1-px outline in a darkened tint of the
     /// adjacent art wherever a transparent pixel borders an opaque one; (2) opaque pixels
