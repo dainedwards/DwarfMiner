@@ -43,6 +43,14 @@ public enum TileKind : byte
     CityGlass = 32,
     // Carved masonry of the underground lizardmen cities — scaled sandstone brick.
     LizardBrick = 33,
+    // Craftable pop-open door: Closed blocks and seals, Open is walk-through. City towers
+    // are built with them and the aliens work the latch themselves.
+    DoorClosed = 34,
+    DoorOpen = 35,
+    // Alien apartment furniture — decorative, a little funny, and satisfyingly smashable.
+    AlienPlant = 36,   // tentacled houseplant in a pot
+    HoverPod = 37,     // levitating egg-chair
+    OrbLamp = 38,      // glowing lamp orb on a squiggle stand
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
