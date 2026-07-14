@@ -820,7 +820,23 @@ public sealed class Renderer
         var perp = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
         var pos = centre + perp * ((((hash >> 11) & 3) - 1.5f) * 0.3f)
                          + axis * ((((hash >> 13) & 3) - 1.5f) * 0.3f);
-        // Dark rim first (slightly larger silhouette), then the bright body over it.
+
+        if (gem == TileKind.Crystal)
+        {
+            // Crystal reads as a DIAMOND: a rhombus (rotated square) with bright facets and
+            // a small tip past each point, seated at its hash angle — sharper and more
+            // gem-like than the elongated shard the other stones use.
+            DrawRect(pos, new Vector2(2.9f, 2.9f), edge, ang + MathF.PI / 4f);
+            DrawRect(pos, new Vector2(2.0f, 2.0f), body, ang + MathF.PI / 4f);
+            DrawRect(pos + axis * 2.1f, new Vector2(0.9f, 1.2f), body, ang);
+            DrawRect(pos - axis * 2.1f, new Vector2(0.9f, 1.2f), body, ang);
+            DrawRect(pos, new Vector2(1.0f, 1.0f), facet, ang + MathF.PI / 4f);
+            DrawRect(pos + perp * 0.5f + axis * 0.5f, new Vector2(0.5f, 0.5f), Color.White, ang);
+            return;
+        }
+
+        // The true gems: a dark-rimmed elongated body with diamond tips, a paler facet
+        // stripe, and a glint pixel — the stone reads as its own material colour.
         DrawRect(pos, new Vector2(2.0f, 3.6f), edge, ang);
         DrawRect(pos + axis * 1.9f, new Vector2(1.5f, 1.5f), edge, ang + MathF.PI / 4f);
         DrawRect(pos - axis * 1.9f, new Vector2(1.5f, 1.5f), edge, ang + MathF.PI / 4f);
