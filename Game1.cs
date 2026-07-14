@@ -1044,8 +1044,6 @@ public sealed partial class DwarfMinerGame : Game
             base.Update(gameTime);
             return;
         }
-        if (Pressed(keys, _prevKeys, Keys.C)) { _craftingMenu.Show(); _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return; }
-
         // Character screen (I) — same interception contract as crafting: the world keeps
         // simulating while the player shuffles gear between backpack and doll.
         if (_charScreen.Open)
@@ -1059,6 +1057,7 @@ public sealed partial class DwarfMinerGame : Game
             return;
         }
         if (Pressed(keys, _prevKeys, Keys.I)) { _charScreen.Show(); _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return; }
+        if (Pressed(keys, _prevKeys, Keys.C)) { _craftingMenu.Show(); _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return; }
 
         // F9 — developer boss-spawn menu. While open it intercepts input (like crafting): the
         // world keeps ticking but player control is suspended until a boss is picked or it closes.
