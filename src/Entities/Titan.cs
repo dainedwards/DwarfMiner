@@ -1735,7 +1735,10 @@ public sealed class TitanLeg
 /// is a straight bolt from Slattern's tail fan; Lava is the Pyrodactyl's ballistic gout
 /// that bursts into live lava cells where it lands; Void is the Starspawn's slow fat
 /// null-energy orb — it doesn't splash or drill, it just hurts.</summary>
-public enum TitanShotKind { Flame, Laser, Acid, Spike, Lava, Void }
+/// <summary>Slug is not a titan shot at all: it's the pistol/SMG round the humanoid bandit
+/// creatures fire (Marauder/Raider) — a weaker cousin of the player's own guns riding the
+/// same self-contained shot physics.</summary>
+public enum TitanShotKind { Flame, Laser, Acid, Spike, Lava, Void, Slug }
 
 public sealed class TitanProjectile
 {
