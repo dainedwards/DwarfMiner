@@ -3049,7 +3049,23 @@ public sealed partial class DwarfMinerGame : Game
         new("Disaster — earthquake",    () => TriggerDebugDisaster(DisasterKind.Earthquake)),
         new("Meteor strike (ambient)",  () => AmbientDirector.SpawnMeteor(_run)),
         new("Toggle fullbright (light up the underground)", () => _fullbright = !_fullbright),
+        new("Return to mothership (suspends run)", DebugReturnToShip),
     };
+
+    /// <summary>Debug: hop straight back aboard the mothership. The run is suspend-saved
+    /// exactly like the quit path, so it stays resumable from the star map.</summary>
+    private void DebugReturnToShip()
+    {
+        if (_run is null || _screen != GameScreen.Playing) return;
+        if (!_orbiting) RunSave.Write(_run);
+        _orbiting = false;
+        _landing = false;
+        _ascending = false;
+        _transitionFlash = 0.6f;
+        EnterSpace(PlanetDefs.IndexOf(_run.Def), zoomFromPlanet: true);
+        _toast = "DEBUG: BACK ABOARD THE MOTHERSHIP";
+        _toastTimer = 3f;
+    }
 
     /// <summary>Debug: render with no lighting pass at all — the whole underground reads
     /// as fully lit. Toggled from the debug menu.</summary>
