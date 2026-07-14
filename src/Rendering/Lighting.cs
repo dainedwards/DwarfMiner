@@ -89,6 +89,79 @@ public sealed class Lighting
         _gd.SetRenderTarget(SceneTarget);
     }
 
+    // ── Noita-style ray-cast hero lights ────────────────────────────────────────
+    // A handful of lights per frame (the carried lamp, explosion cores, muzzle flashes)
+    // get real 2D shadow-casting: rays march out from the source against the tile grid
+    // and the lit region is drawn as an additive triangle fan into the lightmap ON TOP of
+    // the soft propagated field. Occluders cut crisp shadows; the grid still provides the
+    // gentle bounce-light everywhere else.
+
+    private const int HeroRays = 96;
+    private const int MaxHeroLights = 10;
+    private BasicEffect? _heroFx;
+    private VertexPositionColor[] _heroVerts = new VertexPositionColor[HeroRays * 3];
+
+    /// <summary>Draw the frame's hero lights into the lightmap RT (which must still be the
+    /// pass's target — call between RenderGrid's raster and the composite).</summary>
+    public void RenderHeroLights(List<(Vector2 pos, float radius, Color color)> lights, Planet planet)
+    {
+        if (lights.Count == 0 || _rt is null) return;
+        _gd.SetRenderTarget(_rt);
+
+        _heroFx ??= new BasicEffect(_gd) { VertexColorEnabled = true, TextureEnabled = false };
+        _heroFx.World = Matrix.Identity;
+        _heroFx.View = _viewMatrix;
+        _heroFx.Projection = Matrix.CreateOrthographicOffCenter(0, _rtSize.X, _rtSize.Y, 0, 0, 1);
+
+        _gd.BlendState = BlendState.Additive;
+        _gd.RasterizerState = RasterizerState.CullNone;
+        _gd.DepthStencilState = DepthStencilState.None;
+
+        var n = Math.Min(lights.Count, MaxHeroLights);
+        for (var li = 0; li < n; li++)
+        {
+            var (pos, radius, color) = lights[li];
+            if (radius <= 2f) continue;
+
+            // March each ray against the tile grid; the fan edge stops just inside the
+            // first solid hit (small bleed so the struck wall face itself catches light).
+            Span<float> hitDist = stackalloc float[HeroRays];
+            for (var r = 0; r < HeroRays; r++)
+            {
+                var ang = r * MathHelper.TwoPi / HeroRays;
+                var dir = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
+                var d = 3f;
+                while (d < radius)
+                {
+                    if (planet.IsSolidAt(pos + dir * d)) { d += 2.5f; break; }
+                    d += 3f;
+                }
+                hitDist[r] = MathF.Min(d, radius);
+            }
+
+            // Fan → triangle list: centre at full colour, rim transparent (linear falloff;
+            // the bloom pass rounds it off).
+            var centre = new VertexPositionColor(new Vector3(pos, 0f), color);
+            var vi = 0;
+            for (var r = 0; r < HeroRays; r++)
+            {
+                var a0 = r * MathHelper.TwoPi / HeroRays;
+                var a1 = (r + 1) % HeroRays * MathHelper.TwoPi / HeroRays;
+                var p0 = pos + new Vector2(MathF.Cos(a0), MathF.Sin(a0)) * hitDist[r];
+                var p1 = pos + new Vector2(MathF.Cos(a1), MathF.Sin(a1)) * hitDist[(r + 1) % HeroRays];
+                _heroVerts[vi++] = centre;
+                _heroVerts[vi++] = new VertexPositionColor(new Vector3(p0, 0f), Color.Transparent);
+                _heroVerts[vi++] = new VertexPositionColor(new Vector3(p1, 0f), Color.Transparent);
+            }
+            foreach (var pass in _heroFx.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                _gd.DrawUserPrimitives(PrimitiveType.TriangleList, _heroVerts, 0, HeroRays);
+            }
+        }
+        _gd.SetRenderTarget(SceneTarget);
+    }
+
     public void Composite(SpriteBatch target, Point screenSize)
     {
         if (_rt is null) return;
