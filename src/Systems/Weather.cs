@@ -130,11 +130,12 @@ public static class Weather
         }
     }
 
-    /// <summary>The altitude (offset above the baseline ground at <paramref name="angle"/>) a
-    /// cloud should ride at to sit SEVERAL tiles clear of the tallest object beneath its whole
-    /// band — peaks and giant trees included. Samples a few bearings across the band, finds the
-    /// topmost non-sky tile at each, and clears the highest by a comfortable margin.</summary>
-    private static float TargetAlt(Planet planet, float angle, float halfWidth)
+    /// <summary>Radius (world px from the planet centre) of the tallest object beneath the
+    /// whole band — peaks, skyscrapers and giant trees included. Samples a few bearings
+    /// across the band and takes the topmost non-sky tile. Used once at spawn to pick a
+    /// clear cruising altitude, and per-frame to notice when the drift has run the bank
+    /// into something tall enough to shred it.</summary>
+    private static float BandTopRadius(Planet planet, float angle, float halfWidth)
     {
         var baseR = (SpawnDirector.FindSurfaceSpawn(planet, angle, planet.Radius) - planet.Center).Length();
         // Water is cells, not tiles, so over a lake/ocean the topmost-solid scan below finds
