@@ -1252,6 +1252,24 @@ public sealed class Cells
         if (_rng.Next(3) == 0) SpawnInTile(tx, ty, Material.Lava, Density / 4);
     }
 
+    /// <summary>Lava licking a flammable tile (wood, grass, fronds) sets it ALIGHT rather than
+    /// melting it — the tile becomes a fire cell, which then spreads through TickFire like any
+    /// other blaze (and is bound by the same spread budget, so lava can't torch a planet).</summary>
+    private void TryIgniteTile((int cx, int cy) c)
+    {
+        if (_rng.Next(24) != 0) return;
+        if (c.cy < 0 || c.cy >= Height) return;
+        var tx = c.cy / Density;
+        var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
+        var k = Planet.Get(tx, ty);
+        if (!IsFlammable(k)) return;
+        if (!SpendFire()) return;
+        Planet.TakeGem(tx, ty);
+        Planet.Set(tx, ty, TileKind.Sky);
+        SpawnInTile(tx, ty, Material.Fire, Density);
+        SpawnInTile(tx, ty, Material.Smoke, Density / 2);
+    }
+
     private static bool IsMeltable(TileKind k) => k is
         TileKind.Dirt or TileKind.Grass or TileKind.Gravel or
         TileKind.MossStone or TileKind.Snow or TileKind.Support or
