@@ -5613,6 +5613,7 @@ public sealed partial class DwarfMinerGame : Game
         var liquidPass = cellStride == 1
             && Environment.GetEnvironmentVariable("DM_LIQRT") != "0"
             && Environment.GetEnvironmentVariable("DM_NORT") is not { Length: > 0 };
+        var tDraw = FramePerf.Now();
         if (liquidPass)
         {
             var (lw, lh) = (_camera.ViewportSize.X, _camera.ViewportSize.Y);
