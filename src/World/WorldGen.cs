@@ -600,6 +600,13 @@ public static class WorldGen
         // anything a worm grazed.
         CarveWormTunnels(planet, def, new Random(seed ^ 0x5EED));
 
+        // Island grotto mouths (ocean worlds): a few natural cave entrances opening on dry
+        // land, winding down into the worm band — the under-sea network is meant to be
+        // EXPLORED, so the islands offer a way in that isn't mining blind through the
+        // beach. Isolated rng (ocean-only anyway) for the usual stream-stability reason.
+        if (def.LakeScale > 2.5f)
+            CarveIslandGrottoes(planet, new Random(seed ^ 0x0CEA), lakes, mountains);
+
         // Seams enforced LAST, as a hard pass over the final tile state: every carver above
         // (noise caves, worms, biome pockets, the geode) is also seam-aware or band-clamped,
         // but a disk radius poking one tile over a boundary is enough to let the lava sea
