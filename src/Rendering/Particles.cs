@@ -1045,20 +1045,21 @@ public sealed class Particles
         // of the fire, jittered per puff so the whole cave breathes with the hose.
         _list.Add(new Particle
         {
-            Position = pos + dir * (20f + (float)_rng.NextDouble() * 20f),
-            Velocity = dir * 80f,
+            Position = pos + dir * (reach * (0.3f + (float)_rng.NextDouble() * 0.25f)),
+            Velocity = dir * 60f,
             Life = 0.07f,
             MaxLife = 0.07f,
             Color = Color.Transparent,   // pure light carrier
             FadeColor = Color.Transparent,
             Size = 0f,
             Drag = 0f,
+            CollideTiles = true,
             LightRadius = 40f + (float)_rng.NextDouble() * 16f,
             LightColor = new Color(255, 170, 80),
             HeroLight = true,
         });
         // The hose sheds tumbling cinders that keep burning where they land.
-        if (_rng.Next(3) == 0) EmitCinders(pos + dir * 10f, dir * 120f, 1);
+        if (_rng.Next(3) == 0) EmitCinders(pos + dir * 8f, dir * (reach * 0.9f), 1);
     }
 
     /// <summary>Jetpack exhaust, coloured by tier: red (I) → orange (II) → yellow (III) →
