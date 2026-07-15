@@ -1320,14 +1320,25 @@ public sealed class Renderer
         }
     }
 
+    /// <summary>Reference-grid cells per tile edge for DrawDeco/BiteEdge coords — ALL deco
+    /// art is authored in 8×8 tile coords (a holdover from the original 8-px tiles).</summary>
+    private const float DecoGrid = 8f;
+
     private void DrawDeco(Vector2 tileCentre, Vector2 right, Vector2 up, float rotation, float chord,
                           float lx, float ly, float lw, float lh, Color color)
     {
-        var scaleX = chord / Planet.TileSize;
-        var offX = (lx + lw * 0.5f - Planet.TileSize * 0.5f) * scaleX;
-        var offY = (ly + lh * 0.5f - Planet.TileSize * 0.5f);
+        // Map the 8×8 reference grid onto ONE tile. This used Planet.TileSize (4 since the
+        // tile halving) as the grid divisor — every decoration drew at 2× scale anchored at
+        // the tile's top-left corner, spilling exactly one tile right and one tile inward.
+        // The spill was silently overdrawn wherever a solid neighbour drew later, but where
+        // it hit SKY on the right (surface crumbs, tuft bases, glint flares) it showed as
+        // random floating pixels that vanished when the source block was mined.
+        var scaleX = chord / DecoGrid;
+        var scaleY = Planet.TileSize / DecoGrid;
+        var offX = (lx + lw * 0.5f - DecoGrid * 0.5f) * scaleX;
+        var offY = (ly + lh * 0.5f - DecoGrid * 0.5f) * scaleY;
         var world = tileCentre + right * offX - up * offY;
-        var size = new Vector2(lw * scaleX + 0.3f, lh + 0.3f);
+        var size = new Vector2(lw * scaleX + 0.3f, lh * scaleY + 0.3f);
         _sb.Draw(_pixel, world, null, color, rotation, new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
     }
 
