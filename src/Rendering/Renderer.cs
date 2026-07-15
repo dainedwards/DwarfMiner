@@ -58,6 +58,54 @@ public sealed class Renderer
     /// pixels (layer 0 present ~60%, layer 1 ~34%), giving a fractal 1–2 px fringe. See DrawCrust.</summary>
     private static readonly float[] _crustThresh = { 0.40f, 0.66f };
 
+    /// <summary>The current planet's biome id — Game1 sets it before the world draw so the
+    /// tree tiles (trunk/canopy) render in that biome's own palette. Tiles stay one TileKind
+    /// everywhere (save-compatible); only the paint differs per world.</summary>
+    public string TreeBiome = "";
+
+    /// <summary>Per-biome bark palette (body, shade, highlight) — each world's forest gets its
+    /// own species of trunk: warm forest timber, salt-bleached driftwood, frozen pine, glassy
+    /// crystal stalk, bile-stained acid wood, charred ember coal, rusted slag scrap, groomed
+    /// city ornamental — with the alien mauve as the fallback.</summary>
+    private static (Color bark, Color dk, Color hi) TreeBarkFor(string biome) => biome switch
+    {
+        "verdant" => (new Color(110, 78, 48), new Color(74, 52, 32), new Color(146, 108, 70)),
+        "ocean"   => (new Color(150, 128, 96), new Color(104, 88, 66), new Color(190, 168, 130)),
+        "frost"   => (new Color(70, 62, 78), new Color(46, 40, 54), new Color(104, 96, 118)),
+        "crystal" => (new Color(140, 120, 170), new Color(96, 80, 122), new Color(190, 170, 220)),
+        "acid"    => (new Color(112, 116, 60), new Color(76, 80, 40), new Color(150, 154, 88)),
+        "ember"   => (new Color(52, 44, 44), new Color(30, 26, 26), new Color(78, 64, 60)),
+        "slag"    => (new Color(108, 84, 64), new Color(70, 54, 42), new Color(150, 120, 92)),
+        "city"    => (new Color(120, 116, 132), new Color(82, 78, 92), new Color(160, 156, 174)),
+        _         => (new Color(96, 70, 92), new Color(66, 48, 66), new Color(128, 96, 124)),
+    };
+
+    /// <summary>Per-biome foliage palette (body, shade, highlight). <paramref name="alt"/> is
+    /// the TreeCanopy2 off-tone — the biome's SIBLING species, a genuinely different colour
+    /// (autumn amber in the green forest, icy pale against the blue pines…) so mixed stands
+    /// read as two kinds of tree, not one tree in two lights.</summary>
+    private static (Color leaf, Color dk, Color hi) TreeLeafFor(string biome, bool alt) => (biome, alt) switch
+    {
+        ("verdant", false) => (new Color(64, 138, 62), new Color(40, 96, 44), new Color(112, 196, 96)),
+        ("verdant", true)  => (new Color(196, 142, 54), new Color(140, 92, 38), new Color(240, 196, 96)),   // autumn amber
+        ("ocean", false)   => (new Color(56, 150, 118), new Color(34, 104, 84), new Color(104, 210, 168)),
+        ("ocean", true)    => (new Color(70, 170, 180), new Color(44, 118, 130), new Color(130, 226, 232)), // lagoon turquoise
+        ("frost", false)   => (new Color(58, 110, 118), new Color(36, 74, 84), new Color(110, 170, 178)),   // blue needles
+        ("frost", true)    => (new Color(150, 180, 200), new Color(104, 132, 152), new Color(214, 236, 250)),// icy pale
+        ("crystal", false) => (new Color(168, 110, 200), new Color(118, 72, 148), new Color(224, 170, 250)),// amethyst
+        ("crystal", true)  => (new Color(96, 160, 210), new Color(62, 112, 156), new Color(160, 220, 255)), // sapphire
+        ("acid", false)    => (new Color(140, 168, 48), new Color(96, 120, 34), new Color(196, 222, 84)),   // toxic chartreuse
+        ("acid", true)     => (new Color(110, 130, 70), new Color(74, 90, 48), new Color(160, 182, 108)),   // sickly olive
+        ("ember", false)   => (new Color(150, 70, 40), new Color(96, 44, 28), new Color(224, 120, 56)),     // smoulder-leaf
+        ("ember", true)    => (new Color(110, 100, 96), new Color(70, 64, 62), new Color(160, 148, 142)),   // ash grey
+        ("slag", false)    => (new Color(96, 140, 110), new Color(62, 96, 76), new Color(140, 192, 154)),   // oxidised copper
+        ("slag", true)     => (new Color(160, 110, 60), new Color(112, 74, 42), new Color(212, 156, 92)),   // rust bloom
+        ("city", false)    => (new Color(70, 150, 140), new Color(44, 104, 100), new Color(120, 210, 196)), // groomed teal
+        ("city", true)     => (new Color(170, 100, 160), new Color(120, 66, 112), new Color(226, 152, 214)),// magenta ornamental
+        (_, false)         => (new Color(78, 150, 130), new Color(52, 110, 96), new Color(120, 200, 170)),  // alien teal
+        (_, true)          => (new Color(150, 120, 190), new Color(112, 86, 150), new Color(196, 168, 228)),// alien violet
+    };
+
     public Renderer(GraphicsDevice gd)
     {
         _gd = gd;
