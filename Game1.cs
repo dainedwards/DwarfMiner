@@ -3726,10 +3726,10 @@ public sealed partial class DwarfMinerGame : Game
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 1.7f + (float)Random.Shared.NextDouble() * 30f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 1.35f + (float)Random.Shared.NextDouble() * 24f),
                 Material.Fire);
         }
-        _particles.EmitFlameJet(muzzle, dir, reach);
+        _particles.EmitFlameJet(muzzle, dir, reach, _run.Planet.UpAt(muzzle));
         // Near-cone ignition out to the current reach — a tight cone.
         foreach (var c in _run.Creatures)
         {
@@ -3776,10 +3776,10 @@ public sealed partial class DwarfMinerGame : Game
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 1.7f + (float)Random.Shared.NextDouble() * 28f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 1.35f + (float)Random.Shared.NextDouble() * 22f),
                 Material.Acid);
         }
-        _particles.EmitAcidJet(muzzle, dir, reach);
+        _particles.EmitAcidJet(muzzle, dir, reach, _run.Planet.UpAt(muzzle));
         foreach (var c in _run.Creatures)
         {
             var to = c.Position - _run.Player.Position;

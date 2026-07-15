@@ -2397,7 +2397,7 @@ public sealed class Cells
             foreach (var f in _flying)
             {
                 if (Vector2.DistanceSquared(f.Pos, viewCentre) > maxDistSq) continue;
-                var col = ColorFor((Material)f.Mat, (int)f.Pos.X, (int)f.Pos.Y, f.Src);
+                var col = ColorFor((Material)f.Mat, (int)f.Pos.X, (int)f.Pos.Y, f.Src, airborne: true);
                 var speed = f.Vel.Length();
                 // Streak length/width in CELL units so the smear scales with the grain:
                 // at least one full cell long (sub-cell quads flicker against the pixel-
@@ -2664,7 +2664,7 @@ public sealed class Cells
         _ => new Color(84, 72, 58),
     };
 
-    private Color ColorFor(Material m, int cx, int cy, byte srcByte)
+    private Color ColorFor(Material m, int cx, int cy, byte srcByte, bool airborne = false)
     {
         var hash = (cx * 73856093) ^ (cy * 19349663);
         var jitter = ((hash >> 4) & 31) - 16;
@@ -2707,8 +2707,12 @@ public sealed class Cells
                 // tier on an airborne mote is invisible anyway.
                 var t = (int)(_time * 14f);
                 var h2 = (uint)(hash ^ (t * 48271));
-                var tier = 0;
-                if (cy > 0 && cy < Height - 1)
+                // Airborne fire (hose payload, flying embers) pins to the MID body tier:
+                // the grid probe below reads garbage at world-px coords and mostly rolled
+                // tier 0 — pale white-yellow streaks flickering out of key with the flame
+                // stream they fly inside.
+                var tier = airborne ? 1 : 0;
+                if (!airborne && cy > 0 && cy < Height - 1)
                 {
                     var (icx, icy) = InnerCell(cx, cy);
                     if (Get(icx, icy) == Material.Fire)

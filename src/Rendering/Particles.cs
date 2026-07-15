@@ -1186,13 +1186,13 @@ public sealed class Particles
     /// droops along exactly the trajectory the real fire/acid lands on.</summary>
     private const float HoseArcGravity = 2.25f;
 
-    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach)
+    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
     {
-        // Flow speed EXACTLY matches Game1's payload launch (reach*1.7): any gap between
+        // Flow speed EXACTLY matches Game1's payload launch (reach*1.35): any gap between
         // the two puts the landing fire beyond (or short of) the visible tongue tip — the
-        // "mismatch" read. Still ~35% slower than the original 2.6 spray; grain lives are
+        // "mismatch" read. Roughly half the original 2.6 spray speed; grain lives are
         // sized so travel ≈ reach at every hold length.
-        var jetSpeed = reach * 1.7f;
+        var jetSpeed = reach * 1.35f;
         // Many TINY grains rather than a few fat blobs — the stream reads as granular burning
         // fluid (Noita's pixel-fire) instead of soft puffballs. Grain colours pick from a
         // FOUR-TONE fire ramp (white-yellow → gold → orange → red-orange) so the stream body
@@ -1211,6 +1211,12 @@ public sealed class Particles
             var hot = i < 7;
             var tone = hot ? _rng.Next(2) : _rng.Next(4);
             var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
+            // Mirror the flying-cell FlyMaxOutward cap (170 px/s radially outward): the
+            // PAYLOAD cells obey it, so an uncapped glow out-raced them whenever the hose
+            // aimed skyward — the visible rope split from the landing fire (the recurring
+            // "yellow streaks that don't line up"). Same clamp = same arc at every angle.
+            var outward = Vector2.Dot(vel, up);
+            if (outward > 170f) vel -= up * (outward - 170f);
             // De-pulse: every grain starts with a random fraction of one puff interval
             // already travelled, so consecutive puffs interleave into one continuous flow
             // instead of reading as discrete waves marching down the stream.
@@ -1219,8 +1225,8 @@ public sealed class Particles
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
                 Velocity = vel,
-                Life = 0.5f + (float)_rng.NextDouble() * 0.35f - lead,
-                MaxLife = 0.85f,
+                Life = 0.55f + (float)_rng.NextDouble() * 0.4f - lead,
+                MaxLife = 0.95f,
                 Color = tone switch
                 {
                     0 => new Color(255, 250, 200),
@@ -1385,10 +1391,10 @@ public sealed class Particles
 
     /// <summary>Acid spewer spray: caustic green droplets with a sickly glow. The corrosive
     /// payload is real Acid cells launched by Game1 — this is the visible mist around it.</summary>
-    public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach)
+    public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
     {
         // Speed matches Game1's payload launch exactly — see EmitFlameJet.
-        var jetSpeed = reach * 1.7f;
+        var jetSpeed = reach * 1.35f;
         // Many TINY droplets — a granular liquid rope, not fat green puffs. Lights on the
         // bright leading droplets only (see EmitFlameJet).
         for (var i = 0; i < 22; i++)
@@ -1405,14 +1411,17 @@ public sealed class Particles
             // fire wants none.
             var tone = i < 7 ? 0 : _rng.Next(4);
             var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
+            // Same FlyMaxOutward mirror as EmitFlameJet — glow and payload share one arc.
+            var outward = Vector2.Dot(vel, up);
+            if (outward > 170f) vel -= up * (outward - 170f);
             // De-pulse — see EmitFlameJet: random emission-time head start interleaves puffs.
             var lead = (float)_rng.NextDouble() * 0.06f;
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
                 Velocity = vel,
-                Life = 0.5f + (float)_rng.NextDouble() * 0.32f - lead,
-                MaxLife = 0.82f,
+                Life = 0.55f + (float)_rng.NextDouble() * 0.37f - lead,
+                MaxLife = 0.92f,
                 Color = tone switch
                 {
                     0 => new Color(215, 255, 100),
