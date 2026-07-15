@@ -1280,6 +1280,51 @@ public static class WorldGen
         }
     }
 
+    /// <summary>Ocean worlds: open a few natural grotto mouths on the islands — winding
+    /// entrance shafts from the surface down into the worm band, so the dry under-sea cave
+    /// network has walk-in doors on dry land. Bearings must be genuinely dry (any sea
+    /// coverage disqualifies — a mouth on a seabed is just a drain) and keep off the
+    /// mountain cores; mouths spread out so different islands get different doors.</summary>
+    private static void CarveIslandGrottoes(Planet planet, Random rng,
+        (float ang, float depth, float w)[] lakes, (float ang, float h, float w)[] mountains)
+    {
+        var want = 3 + rng.Next(2);
+        var mouths = new List<float>();
+        for (var attempt = 0; attempt < 240 && mouths.Count < want; attempt++)
+        {
+            var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+            var wet = false;
+            foreach (var l in lakes)
+                if (MathF.Abs(MathHelper.WrapAngle(ang - l.ang)) < l.w) { wet = true; break; }
+            if (wet) continue;
+            if (NearMountain(mountains, ang, 0.03f)) continue;
+            var apart = true;
+            foreach (var m in mouths)
+                if (MathF.Abs(MathHelper.WrapAngle(ang - m)) < 0.35f) { apart = false; break; }
+            if (!apart) continue;
+            mouths.Add(ang);
+
+            // Winding descent: open at the local ground line, then bite mostly inward with
+            // a lazy side-sway until the shaft reaches worm-band depth (~35-48 tiles) — a
+            // grotto, not a drilled bore.
+            var dir = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
+            var pos = planet.Center + dir
+                * (planet.SurfaceRadiusAt(planet.Center + dir) * Planet.TileSize);
+            var heading = MathF.Atan2(-dir.Y, -dir.X) + ((float)rng.NextDouble() - 0.5f) * 0.5f;
+            var steps = 34 + rng.Next(14);
+            for (var s = 0; s < steps; s++)
+            {
+                var toCore = planet.Center - pos;
+                var inward = MathF.Atan2(toCore.Y, toCore.X);
+                heading += MathHelper.WrapAngle(inward - heading) * 0.22f
+                    + ((float)rng.NextDouble() - 0.5f) * 0.5f;
+                pos += new Vector2(MathF.Cos(heading), MathF.Sin(heading)) * Planet.TileSize;
+                if (!NearDenOrCity(planet, pos))
+                    CarveWormDisk(planet, pos, s < 4 ? 6f : 7.5f);
+            }
+        }
+    }
+
     /// <summary>True near a lizard-warren hall or under a city district's bearing span —
     /// the two kinds of architecture a worm must not undermine.</summary>
     private static bool NearDenOrCity(Planet planet, Vector2 pos)
