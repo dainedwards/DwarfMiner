@@ -2329,6 +2329,16 @@ public sealed partial class DwarfMinerGame : Game
             _run.Cells.PendingBubbles.Clear();
         }
 
+        // Licking-flame sites: every burning cell the sim sampled this tick grows a
+        // rising flame tongue — the standing fire the jet leaves reads as actual flame,
+        // scaling with how long the jet dwelt there and spreading with the fire itself.
+        if (_run.Cells.PendingFlames.Count > 0)
+        {
+            foreach (var fpos in _run.Cells.PendingFlames)
+                _particles.EmitLickingFlame(fpos, _run.Planet.UpAt(fpos));
+            _run.Cells.PendingFlames.Clear();
+        }
+
         // Pickups — settle where they fell and collect by walk-over (no magnet: the player
         // goes to the gem). No decay and no distance cull: a dropped gem is exactly the
         // thing the player came down here for.

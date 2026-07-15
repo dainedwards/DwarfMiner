@@ -501,12 +501,22 @@ public sealed class Cells
     /// footprint. A cinder that lands stamps fire where the fire can actually live.</summary>
     /// <summary><paramref name="fireFuse"/> (Fire only): a burn fuse carried in the fire
     /// cell's otherwise-unused source slot — while it runs down the flame won't gutter
-    /// (~fuse×3 ticks of guaranteed burning; see the fuse clause in TickFire). Rides the
-    /// save like any src byte.</summary>
+    /// (~fuse×3 ticks ≈ fuse/20 seconds of guaranteed burning; see the fuse clause in
+    /// TickFire). Rides the save like any src byte. Re-stamping a cell that's ALREADY
+    /// burning TOPS UP its fuse (capped at 80 ≈ 4 s): holding the jet on one spot builds
+    /// a longer-lived flame there — dwell time IS the burn duration.</summary>
     public void StampAtWorld(Vector2 worldPos, Material m, byte fireFuse = 0)
     {
         var (cx, cy) = WorldToCell(worldPos);
-        if (!IsBlocked(cx, cy)) Place(cx, cy, m, (TileKind)fireFuse);
+        if (!IsBlocked(cx, cy))
+        {
+            Place(cx, cy, m, (TileKind)fireFuse);
+            return;
+        }
+        if (m != Material.Fire || fireFuse == 0 || !InBounds(cx, cy)) return;
+        var i = Idx(cx, cy);
+        if (_mat[i] == (byte)Material.Fire)
+            _srcTile[i] = (byte)Math.Min(80, _srcTile[i] + fireFuse / 2);
     }
 
     /// <summary>Spawn cells inside the polar tile (tx = ring, ty = angle). Picks random sub-cells.</summary>
@@ -575,6 +585,14 @@ public sealed class Cells
     {
         if (PendingBubbles.Count < MaxPendingBubbles) PendingBubbles.Add(pos);
     }
+
+    /// <summary>World positions of cells actively BURNING this tick (fused or fuelled) —
+    /// Game1 drains this into licking-flame particles, so the visible flame body lives
+    /// exactly where the sim's fire lives: it grows with dwell (more/refreshed fuse
+    /// cells), and when fuel lets the fire spread, the flames visibly spread with it.
+    /// Sampled (not exhaustive) and capped like PendingBubbles.</summary>
+    public readonly List<Vector2> PendingFlames = new();
+    private const int MaxPendingFlames = 200;
 
     /// <summary>Spawn dust cells filling the whole polar tile, tagged with the source TileKind
     /// so the cells render in that tile's colours and pay out that tile's drop on pickup.
@@ -2054,6 +2072,13 @@ public sealed class Cells
         {
             if (_rng.Next(3) == 0) _srcTile[i]--;
         }
+        // Licking-flame sites: burning cells (fused or fuelled — NOT bare guttering
+        // strays) sample themselves into the flame queue; Game1 turns each entry into a
+        // rising flame tongue. Because the source is the live fire population, the
+        // visible flames grow with jet dwell and spread wherever fuel carries the fire.
+        if ((_srcTile[i] > 0 || fuelled) && _rng.Next(12) == 0
+            && PendingFlames.Count < MaxPendingFlames)
+            PendingFlames.Add(CellToWorld(cx, cy));
         // Gutter out: half to a smoke wisp, half to nothing (all-smoke fires read as grey
         // soup over a burning pool). A fuelled flame lives ~0.9s; a STARVED one now pools
         // ~0.8s before dying (was ~0.27s) — flame dropped on bare rock visibly burns as a

@@ -1405,6 +1405,31 @@ public sealed class Particles
     /// and nowhere else, by construction. Buoyant puffs can never arc back down, so
     /// firing straight up is structurally incapable of raining fire on the shooter.
     /// DELIBERATELY INDEPENDENT of EmitAcidJet.</summary>
+    /// <summary>One licking flame tongue rising off a burning cell (see
+    /// Cells.PendingFlames): joins the fire metaball body, so a burn site reads as a
+    /// standing, writhing FLAME — not smouldering sparks. No world interaction of its
+    /// own (the burning cell it rises from is the real fire).</summary>
+    public void EmitLickingFlame(Vector2 pos, Vector2 up)
+    {
+        var side = new Vector2(-up.Y, up.X);
+        _list.Add(new Particle
+        {
+            Position = pos + side * (((float)_rng.NextDouble() - 0.5f) * 2f),
+            Velocity = up * (14f + (float)_rng.NextDouble() * 22f)
+                     + side * (((float)_rng.NextDouble() - 0.5f) * 16f),
+            Life = 0.3f + (float)_rng.NextDouble() * 0.3f,
+            MaxLife = 0.6f,
+            Color = FlameTones[_rng.Next(3)],
+            FadeColor = new Color(205, 75, 15),
+            Size = 0.8f,
+            GravityScale = -0.35f,   // flame rises
+            Drag = 1.6f,
+            LightRadius = _rng.Next(4) == 0 ? 24f : 0f,
+            LightColor = new Color(255, 160, 55),
+            Fluid = (byte)Material.Fire,
+        });
+    }
+
     public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
     {
         var jetSpeed = reach * 1.35f;
@@ -1439,9 +1464,12 @@ public sealed class Particles
                 LightColor = new Color(255, 170, 70),
                 Fluid = (byte)Material.Fire,
                 LandMat = ignites ? (byte)Material.Fire : (byte)0,
-                // 6-9s burn fuse (also the first-contact trigger in Update: fuse-carrying
-                // grains deliver on their first strike, not at rest).
-                LandFuse = ignites ? (byte)(120 + _rng.Next(60)) : (byte)0,
+                // SMALL initial fuse (~1.5-2s): a passing lick leaves a short-lived flame;
+                // DWELL builds duration — every further stamp on an already-burning cell
+                // tops its fuse up (StampAtWorld, cap 80 ≈ 4s of fuel-less burn). Also the
+                // first-contact trigger in Update: fuse-carrying grains deliver on their
+                // first strike, not at rest.
+                LandFuse = ignites ? (byte)(30 + _rng.Next(12)) : (byte)0,
                 LandSparks = ignites,
             });
         }
