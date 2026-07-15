@@ -169,10 +169,13 @@ public sealed class Particles
                     // Flame grains DIE on touchdown (fire isn't matter — it can't lie on
                     // the ground): dozens of glowing grains resting in one spot fused into
                     // a molten PUDDLE under the metaball body. The stamped Fire cell (with
-                    // its burn fuse) is the standing flame now. Everything else keeps the
-                    // cinder rule: lit debris cools in place, dull debris vanishes fast.
+                    // its burn fuse) is the standing flame now. JET SPARKS die on contact
+                    // too — the LIT ones were parking on surfaces as 1.4s glowing embers
+                    // under the cinder rule, which read as sparks setting fires (they
+                    // never stamp fire; it just looked like it). Everything else keeps
+                    // the cinder rule: lit debris cools in place, dull debris vanishes.
                     p.Life = MathF.Min(p.Life,
-                        p.Fluid == (byte)Material.Fire ? 0.1f
+                        p.Fluid == (byte)Material.Fire || p.JetSpark ? 0.1f
                         : p.LightRadius > 0f ? 1.4f : 0.15f);
                     // Handoff on rest: the particle's persistent half enters the cell sim
                     // (a landed cinder becomes real fire). Once only.
