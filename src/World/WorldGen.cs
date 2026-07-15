@@ -1728,7 +1728,7 @@ public static class WorldGen
                             && Math.Abs(dt) < span - 2 && dt * gapSide < span - 4)
                         {
                             var h = (r * 7919 + t * 104729) & 1023;
-                            if (h < 150)
+                            if (h < 260)
                             {
                                 planet.Set(r, t, (h % 3) switch
                                 {
