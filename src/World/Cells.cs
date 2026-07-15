@@ -2819,7 +2819,9 @@ public sealed class Cells
         var cx = cx0 + d;
         var idx = Idx(cx, cy);
         var m = (Material)_mat[idx];
-        if (m is not (Material.Water or Material.Acid or Material.Oil)) return;
+        if (m is not (Material.Water or Material.Acid or Material.Oil)
+            && !(blobMode && m == Material.Lava)) return;
+        var hot = m == Material.Lava;
         var cellAng = (cx + 0.5f) * angStep;
         var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
         var centre = Planet.Center + up * ringRadius;
