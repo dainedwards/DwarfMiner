@@ -1020,6 +1020,23 @@ public sealed class Cells
         }
     }
 
+    /// <summary>Tick counter for the far-field throttle's round-robin phase.</summary>
+    private int _tickNo;
+
+    /// <summary>Whether a cell sits beyond the full-rate sim bubble around the focus —
+    /// ~2.5 screens, measured separately along the radial and the ring arc (cheap radial
+    /// reject first; the trig-free arc estimate is exact enough for a rate gate).</summary>
+    private bool IsFarFromFocus(int cx, int cy, int fcy, float ffrac)
+    {
+        const float FarPx = 1200f;
+        if (Math.Abs(cy - fcy) * PxPerCell > FarPx) return true;
+        var n = _cellsAt[cy];
+        var df = MathF.Abs((float)WrapX(cx, n) / n - ffrac);
+        if (df > 0.5f) df = 1f - df;
+        var ringR = (Planet.RingMin + (float)cy / Density) * Planet.TileSize;
+        return df * MathHelper.TwoPi * ringR > FarPx;
+    }
+
     /// <summary>Decompose a flat cell index back to (cx, cy): coarse block lookup, then a
     /// short forward walk. Runs once per active cell per tick, so the storm ticks after a
     /// mass break call it tens of thousands of times — the block table turns the old 12-step
