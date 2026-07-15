@@ -224,6 +224,7 @@ public sealed class Physics
         // The tile may have been mined (or melted) during the tremble — nothing to do.
         if (!Tiles.CanFall(k)) return;
         _planet.Set(x, y, TileKind.Sky);
+        _planet.ClearStructureWall(x, y);
         _cells.SpawnDustInTile(x, y, k);
         CollapsesThisTick++;
         MarkDirty(x, y); // wake neighbours — adjacent regions may now be unanchored too.
