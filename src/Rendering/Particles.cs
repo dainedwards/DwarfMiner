@@ -41,6 +41,9 @@ public struct Particle
     /// One-shot (cleared after the burst); the spawned sparks never carry the flag, so a
     /// splash can't cascade.</summary>
     public bool LandSparks;
+    /// <summary>Multiplier on the motion-smear length (0 = 1×). The hoses use 2× so their
+    /// strands read as long ribbons without touching the shared smear factor.</summary>
+    public float SmearScale;
 }
 
 /// <summary>
