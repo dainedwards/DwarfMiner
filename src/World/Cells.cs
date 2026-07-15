@@ -499,9 +499,9 @@ public sealed class Cells
     /// never use their source slot, so it's free to carry provenance: rain-fed water slowly
     /// evaporates once it rests exposed to open air near the surface (see the rain clause in
     /// <see cref="TickLiquid"/>), so a thin shower film dries out instead of creeping into a
-    /// permanent flood — but rain that reaches a REAL body of water (or pools ≥3 deep in a
-    /// hollow) sheds the tag and JOINS it for good (see <see cref="JoinsWaterBody"/>): lakes
-    /// and seas rise with the weather. The marker rides every move/swap/launch like dust's
+    /// permanent flood — but rain that reaches a REAL body of water (or pools a full tile
+    /// deep in a basin) sheds the tag and JOINS it for good (see <see cref="JoinsWaterBody"/>):
+    /// lakes and seas rise with the weather. The marker rides every move/swap/launch like dust's
     /// source kind does, survives the save, and clears if the cell steams away against lava.</summary>
     private const byte RainWaterSrc = 255;
 
