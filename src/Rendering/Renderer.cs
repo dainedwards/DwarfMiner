@@ -1683,6 +1683,61 @@ public sealed class Renderer
 
     public void EndEntities() => _sb.End();
 
+    // ── liquid composite pass ──────────────────────────────────────────────────
+    /// <summary>Whether the metaball composite shader is live — decides how the liquid RT
+    /// gets FILLED: soft coverage blobs (shader thresholds them) vs plain hard quads
+    /// (blitted as-is).</summary>
+    public bool LiquidShaderOn => _liquidFx != null;
+
+    /// <summary>Soft radial alpha blob liquid cells rasterize with in shader mode. White
+    /// RGB (vertex colour carries the material colour); the alpha profile is calibrated to
+    /// a quad THREE CELLS wide: ~1 at the core texel, ~0.45 one cell out, gone by ~1.5 —
+    /// see <see cref="LiquidThresh"/> for the numbers that fuse/isolate correctly.</summary>
+    public Texture2D LiquidBlob => _liquidBlob;
+
+    private static Texture2D MakeLiquidBlob(GraphicsDevice gd, int size)
+    {
+        var data = new Color[size * size];
+        var half = (size - 1) / 2f;
+        for (var y = 0; y < size; y++)
+            for (var x = 0; x < size; x++)
+            {
+                var r = MathF.Sqrt((x - half) * (x - half) + (y - half) * (y - half)) / half;
+                var a = Math.Clamp(1.3f * (1f - r * 1.96f), 0f, 1f);
+                data[y * size + x] = new Color(1f, 1f, 1f, a);
+            }
+        var tex = new Texture2D(gd, size, size);
+        tex.SetData(data);
+        return tex;
+    }
+
+    /// <summary>Composite the finished liquid RT over the current target in ONE blend.
+    /// Shader mode thresholds the coverage field (metaball edge + rim highlight) and owns
+    /// its opacity; fallback is a NonPremultiplied blit of the hard-quad fill. Either way
+    /// every liquid texel reaches the scene through exactly one alpha blend — the fix for
+    /// the per-quad double-blend mottling that made pools read as stacked pixels.</summary>
+    public void CompositeLiquids(RenderTarget2D rt)
+    {
+        if (_liquidFx != null)
+        {
+            var vp = _gd.Viewport;
+            var m = Matrix.CreateOrthographicOffCenter(0, vp.Width, vp.Height, 0, 0, -1);
+            _lqCol0!.SetValue(new Vector4(m.M11, m.M21, m.M31, m.M41));
+            _lqCol1!.SetValue(new Vector4(m.M12, m.M22, m.M32, m.M42));
+            _lqCol2!.SetValue(new Vector4(m.M13, m.M23, m.M33, m.M43));
+            _lqCol3!.SetValue(new Vector4(m.M14, m.M24, m.M34, m.M44));
+            _lqPs!.SetValue(new Vector4(1f / rt.Width, 1f / rt.Height, LiquidThresh, LiquidOpacity));
+            _lqPs2!.SetValue(new Vector4(LiquidRimMul, LiquidRimAdd, 0f, 0f));
+            _sb.Begin(samplerState: SamplerState.PointClamp, effect: _liquidFx);
+        }
+        else
+        {
+            _sb.Begin(blendState: BlendState.NonPremultiplied, samplerState: SamplerState.PointClamp);
+        }
+        _sb.Draw(rt, Vector2.Zero, Color.White);
+        _sb.End();
+    }
+
     // ── entity FX state ────────────────────────────────────────────────────────
     // Outline pass: while set, every DrawRect/DrawCircle renders an enlarged silhouette in
     // the outline colour instead of its own — drawing an entity once inside the pass and
