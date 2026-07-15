@@ -2448,13 +2448,26 @@ public sealed class Cells
         if (maxRing <= 0) return;
         maxRing = Math.Min(maxRing, Planet.Rings);
         var minRing = Math.Max(0, (int)floorTilesFromCentre - Planet.RingMin);
+        // Same expected mass as the old random fill (Density² draws with replacement cover
+        // ~63.2% of the tile), but packed BOTTOM-UP and placed silently: the fill is born
+        // locally settled, so the wake pass below only has to rouse each tile's fill
+        // surface instead of a porous sea whose every interior hole kept a neighbour
+        // awake. The old path enqueued every seeded cell — a multi-second first-tick
+        // storm at Density 8 while the load screen (or the first live frames) chewed it.
+        var fillCount = (int)(Density * Density * 0.632f);
         for (var r = minRing; r < maxRing; r++)
         {
             var n = Planet.TilesAt(r);
             for (var t = 0; t < n; t++)
                 if (Planet.Get(r, t) == TileKind.Sky)
-                    SpawnInTile(r, t, m, Density * Density);
+                {
+                    var c0y = r * Density;
+                    var c0x = t * Density;
+                    for (var i = 0; i < fillCount; i++)
+                        PlaceSilent(c0x + i % Density, c0y + i / Density, m);
+                }
         }
+        WakeFreeSurfaces(minRing * Density, maxRing * Density);
     }
 
     private Color ColorFor(Material m, int cx, int cy, byte srcByte)
