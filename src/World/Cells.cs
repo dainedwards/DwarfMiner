@@ -2209,12 +2209,11 @@ public sealed class Cells
             var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
             var chord = MathHelper.TwoPi * ringRadius / n;
             // Quad padding is NEIGHBOUR-AWARE at the close-up LOD (see below): the flat
-            // +0.5 bleed that keeps pools seamless made every ISOLATED cell — a falling
-            // droplet, a fire flick, a stray sand grain — a 1.5x1.5 px square, 50% fatter
-            // than the cell it drew. Sizes are now picked per cell; this is the fallback
-            // for the zoomed-out stride, where scaled quads need the full bleed and the
-            // oversize is sub-pixel anyway.
-            var size = new Vector2((chord + 0.5f) * stride, (radial + 0.5f) * stride);
+            // 50% bleed that keeps pools seamless made every ISOLATED cell — a falling
+            // droplet, a fire flick, a stray sand grain — read 50% fatter than the cell it
+            // drew. Sizes are now picked per cell; this is the fallback for the zoomed-out
+            // stride, where scaled quads need the full bleed and the oversize is sub-pixel.
+            var size = new Vector2(chord * 1.5f * stride, radial * 1.5f * stride);
             var halfAng = MathF.Min(MathF.PI, viewRadius / MathF.Max(ringRadius, 1f));
             var cx0 = (int)(camAng / MathHelper.TwoPi * n);
             var range = Math.Min(n / 2, (int)(halfAng / MathHelper.TwoPi * n) + 2);
