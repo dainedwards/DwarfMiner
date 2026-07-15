@@ -2514,6 +2514,51 @@ public sealed partial class DwarfMinerGame : Game
             pitch: -0.1f + (float)Random.Shared.NextDouble() * 0.25f, minGap: 0.05f);
     }
 
+    /// <summary>Fell a tree from a cut trunk tile: everything above the break (the rest of the
+    /// trunk and the whole canopy) collapses into settling dust — trunk tiles shed a full block
+    /// of wood dust, canopy tiles a thin 30%-of-a-tile foliage puff. The stump and the roots are
+    /// left standing, and the matching <see cref="TreeSite"/> is marked felled so it regrows.</summary>
+    private void ToppleTree(int baseRing, int baseCol)
+    {
+        var planet = _run.Planet;
+        var centerFrac = (baseCol + 0.5f) / planet.TilesAt(baseRing);
+        for (var rr = baseRing + 1; rr < planet.Rings - 1; rr++)
+        {
+            var n = planet.TilesAt(rr);
+            var c0 = (int)(centerFrac * n);
+            var found = false;
+            for (var dt = -4; dt <= 4; dt++)
+            {
+                var t = ((c0 + dt) % n + n) % n;
+                var k = planet.Get(rr, t);
+                if (k == TileKind.TreeTrunk)
+                {
+                    planet.Set(rr, t, TileKind.Sky);
+                    _run.Cells.SpawnDustInTile(rr, t, TileKind.TreeTrunk);
+                    found = true;
+                }
+                else if (k is TileKind.TreeCanopy or TileKind.TreeCanopy2)
+                {
+                    planet.Set(rr, t, TileKind.Sky);
+                    _run.Cells.SpawnDustFraction(rr, t, k, 0.3f);   // airy foliage: 30% of a tile
+                    found = true;
+                }
+            }
+            if (!found) break;   // cleared the top of the crown
+        }
+        // Mark the felled site so the ecosystem regrows it from the surviving roots. Growth
+        // resumes from whatever trunk is left standing below the cut.
+        var ang = centerFrac * MathHelper.TwoPi;
+        foreach (var s in _run.Trees)
+        {
+            if (MathF.Abs(MathHelper.WrapAngle(s.Angle - ang)) > 0.03f) continue;
+            if (baseRing < s.GroundR || baseRing > s.GroundR + s.Height + 1) continue;
+            s.Standing = false;
+            s.Growth = MathHelper.Clamp((baseRing - 1 - s.GroundR) / (float)Math.Max(1, s.Height), 0f, 1f);
+            break;
+        }
+    }
+
     /// <summary>Advance an in-flight pickaxe/hammer swing and land its strike. Runs every
     /// frame (not just while LMB is held) so a started swing always completes. Contact that
     /// only damages — or clinks off something unbreakable — still gets the pick-tick and a
