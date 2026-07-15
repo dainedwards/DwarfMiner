@@ -614,14 +614,16 @@ public sealed class RigidBodies
         }
     }
 
-    /// <summary>Flood the payload over local-frame adjacency; if more than one component
-    /// remains, the largest keeps this body and the rest respawn as their own bodies.</summary>
+    /// <summary>Flood the payload over local-frame adjacency (spatial-hash candidates, so a
+    /// whole toppled skyscraper floods in O(n)); if more than one component remains, the
+    /// largest keeps this body and the rest respawn as their own bodies.</summary>
     private void SplitIfDisconnected(Body b)
     {
         var n = b.Cells.Count;
         var comp = new int[n];
         for (var i = 0; i < n; i++) comp[i] = -1;
         const float adjSq = (Planet.TileSize * 1.5f) * (Planet.TileSize * 1.5f);
+        BuildCellHash(b);
         var compCount = 0;
         var stack = new Stack<int>();
         for (var seed = 0; seed < n; seed++)
@@ -632,15 +634,23 @@ public sealed class RigidBodies
             while (stack.Count > 0)
             {
                 var i = stack.Pop();
-                for (var j = 0; j < n; j++)
-                {
-                    if (comp[j] >= 0) continue;
-                    if ((b.Cells[j].Local - b.Cells[i].Local).LengthSquared() <= adjSq)
+                var bx = (int)MathF.Floor(b.Cells[i].Local.X / HashSpan);
+                var by = (int)MathF.Floor(b.Cells[i].Local.Y / HashSpan);
+                for (var dy = -1; dy <= 1; dy++)
+                    for (var dx = -1; dx <= 1; dx++)
                     {
-                        comp[j] = compCount;
-                        stack.Push(j);
+                        if (!_cellHash.TryGetValue(((long)(bx + dx) << 32) ^ (uint)(by + dy), out var list))
+                            continue;
+                        foreach (var j in list)
+                        {
+                            if (comp[j] >= 0) continue;
+                            if ((b.Cells[j].Local - b.Cells[i].Local).LengthSquared() <= adjSq)
+                            {
+                                comp[j] = compCount;
+                                stack.Push(j);
+                            }
+                        }
                     }
-                }
             }
             compCount++;
         }
