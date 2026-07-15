@@ -1712,6 +1712,38 @@ public static class SimTest
             civ.Update(1f / 60f, city, cPhysics, cCells, farPlayer);
         Check("city: civilian not embedded after 8s", !EmbeddedInRock(city, civ.Position));
 
+        // The headline promise: cut a real generated skyscraper at street level and the
+        // WHOLE tower shears off as rigid debris — no size cap above ground, and a spire's
+        // beacon mast must not anchor it (Beacon topples with the structure).
+        {
+            var cRigid = new RigidBodies(city, cCells, cPhysics);
+            cPhysics.DetachToRigid = cRigid.TryDetach;
+            var (rd, td) = city.CitySpawns[0];     // first tower's doorway address
+            var n0 = city.TilesAt(rd);
+            for (var r = city.SurfaceRing + 1; r <= city.SurfaceRing + 4; r++)
+            {
+                var n = city.TilesAt(r);
+                var tC = (int)MathF.Round((td + 0.5f) / n0 * n - 0.5f);
+                for (var dtc = -24; dtc <= 24; dtc++)
+                {
+                    var t = ((tC + dtc) % n + n) % n;
+                    if (city.Get(r, t) == TileKind.Sky) continue;
+                    city.Set(r, t, TileKind.Sky);
+                    cPhysics.MarkDirty(r, t);
+                }
+            }
+            var ticks = 0;
+            while (cRigid.Bodies.Count == 0 && ticks++ < 240)
+            {
+                cPhysics.Update(1f / 60f);
+                cRigid.Update(1f / 60f);
+            }
+            Check($"city: tower cut at the street topples whole "
+                + $"({cRigid.Bodies.Count} bodies, {cRigid.CellCount} cells aloft after {ticks} ticks)",
+                cRigid.Bodies.Count >= 1 && cRigid.CellCount >= 150);
+            cRigid.StampAll();
+        }
+
         // Campaigns: exactly one metropolis, at least one warren world, warrens only under
         // acid/lava biomes, and never both civilisations on the same planet — several seeds.
         for (var seed = 1234; seed < 1237; seed++)
