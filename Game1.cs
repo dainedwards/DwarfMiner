@@ -3686,7 +3686,7 @@ public sealed partial class DwarfMinerGame : Game
         if (_run.RunTime - _streamLast > 0.15f) _streamHold = 0f;
         _streamLast = _run.RunTime;
         _streamHold = MathF.Min(_streamHold + _frameDt, StreamHoldMax);
-        return MathHelper.Lerp(42f, 132f, _streamHold / StreamHoldMax);
+        return MathHelper.Lerp(59f, 185f, _streamHold / StreamHoldMax);
     }
 
     /// <summary>Flamethrower: a steady, TIGHT tongue of REAL burning fuel — Fire cells launched
