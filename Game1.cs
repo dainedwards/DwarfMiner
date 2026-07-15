@@ -5898,7 +5898,7 @@ public sealed partial class DwarfMinerGame : Game
                 GraphicsDevice.Clear(Color.Transparent);
                 _renderer.Batch.Begin(SpriteSortMode.Deferred, Renderer.LiquidFillBlend,
                     SamplerState.LinearClamp, null, null, null, _camera.View);
-                _run.Cells.DrawHotLiquids(_renderer);
+                _run.Cells.DrawHotLiquids(_renderer, _particles);
                 _particles.DrawFluid(_renderer, Material.Fire);
                 _renderer.Batch.End();
             }
