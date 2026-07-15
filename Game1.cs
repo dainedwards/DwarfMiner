@@ -4832,6 +4832,22 @@ public sealed partial class DwarfMinerGame : Game
         var worldCursor = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
         _renderer.DrawCircle(worldCursor, 1.1f, new Color(255, 255, 255, 200));
 
+        // Geo-scanner pulse: an expanding dotted ring around the player for a beat after a
+        // scan fires (world-space, so it draws here in the world pass).
+        if (_scanPulseT < 0.9f && _run.Player.ScannerTier > 0)
+        {
+            var pr = _scanPulseT / 0.9f;
+            var rad = pr * (200f + (_run.Player.ScannerTier - 1) * 120f);
+            var col = new Color(120, 220, 160, (int)((1f - pr) * 160f));
+            const int dots = 48;
+            for (var i = 0; i < dots; i++)
+            {
+                var a = i / (float)dots * MathF.Tau;
+                _renderer.DrawRect(_run.Player.Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * rad,
+                    new Vector2(1.4f, 1.4f), col);
+            }
+        }
+
         // Throw-strength gauge: while charging a thrown item, a ring around the reticle
         // fills clockwise from the top and shifts green→orange→red, pulsing white at full
         // power — so the aim and the power read in one place.
