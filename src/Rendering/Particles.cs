@@ -106,6 +106,22 @@ public sealed class Particles
                 p.Velocity += planet.GravityAt(p.Position) * GravityStrength * p.GravityScale * dt;
             if (p.Drag > 0)
                 p.Velocity *= MathF.Max(0f, 1f - p.Drag * dt);
+            // Flame turbulence: a bounded lateral wander that grows down the stream (age)
+            // — the jet's body writhes like fire instead of flying a glassy arc. Phased
+            // off each grain's own Life clock (grains are born with random lives, so the
+            // phases scatter for free), and it's ±jitter AROUND the arc, never a separate
+            // trajectory — it cannot recreate the stray-strand problem.
+            if (p.Fluid == (byte)Material.Fire)
+            {
+                var sp = p.Velocity.LengthSquared();
+                if (sp > 100f)
+                {
+                    var inv = 1f / MathF.Sqrt(sp);
+                    var age = 1f - MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
+                    p.Velocity += new Vector2(-p.Velocity.Y * inv, p.Velocity.X * inv)
+                        * (MathF.Sin(p.Life * 55f) * 90f * age * dt);
+                }
+            }
 
             var next = p.Position + p.Velocity * dt;
             if (p.CollideTiles && planet.IsSolidAt(next))
