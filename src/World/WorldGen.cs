@@ -687,15 +687,15 @@ public static class WorldGen
         if (def.Airless) return (0, TileKind.TreeCanopy);        // belt / moon: no wood
         return def.Biome switch
         {
-            "verdant" => (26, TileKind.TreeCanopy),
-            "ocean"   => (20, TileKind.TreeCanopy),
-            "frost"   => (12, TileKind.TreeCanopy2),
-            "crystal" => (12, TileKind.TreeCanopy2),
-            "acid"    => (7, TileKind.TreeCanopy2),
-            "ember"   => (5, TileKind.TreeCanopy2),
-            "slag"    => (4, TileKind.TreeCanopy),               // barren: far less wood
-            "city"    => (10, TileKind.TreeCanopy),
-            _         => (12, TileKind.TreeCanopy),
+            "verdant" => (34, TileKind.TreeCanopy),
+            "ocean"   => (30, TileKind.TreeCanopy),              // lush shorelines
+            "frost"   => (16, TileKind.TreeCanopy2),
+            "crystal" => (16, TileKind.TreeCanopy2),
+            "acid"    => (10, TileKind.TreeCanopy2),
+            "ember"   => (7, TileKind.TreeCanopy2),
+            "slag"    => (6, TileKind.TreeCanopy),               // barren: far less wood
+            "city"    => (14, TileKind.TreeCanopy),
+            _         => (16, TileKind.TreeCanopy),
         };
     }
 
