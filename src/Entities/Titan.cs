@@ -1689,6 +1689,11 @@ public sealed class Titan
                         _digPending = false;
                         DigCrater(planet, physics, cells);
                     }
+                    if (_kickPending)
+                    {
+                        _kickPending = false;
+                        KickImpact(planet, physics, cells, leg.FootPos);
+                    }
                 }
                 else
                 {
