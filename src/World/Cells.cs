@@ -1299,10 +1299,24 @@ public sealed class Cells
             _travel[i] = MathF.Min(_travel[i] - steps, 1f);
             if (steps == 0) { Enqueue(i); return; }
 
+            var selfMat = (Material)_mat[i];
+            var plunges = 0;
             for (var s = 0; s < steps && cy > 0; s++)
             {
                 var (icx, icy) = InnerCell(cx, cy);
                 if (TryMoveTo(cx, cy, icx, icy, s == 0)) { cx = icx; cy = icy; continue; }
+                // Plunge: a falling stream meeting its own pool dives INTO it instead of
+                // stopping dead on the surface — swap with the liquid below and keep going
+                // (the displaced cell surfaces, wakes, and spreads). Probabilistic and
+                // depth-capped so half the stream still splashes and a deep dive can't
+                // chew a whole tick; different liquids never plunge (buoyancy owns that).
+                if (plunges < 2 && (Material)_mat[Idx(icx, icy)] == selfMat
+                    && !IsTileSolidAt(icx, icy) && _rng.Next(2) == 0)
+                {
+                    SwapCells(cx, cy, icx, icy);
+                    cx = icx; cy = icy; plunges++;
+                    continue;
+                }
                 var dd = _rng.Next(2) == 0 ? 1 : -1;
                 if (TryMoveTo(cx, cy, icx + dd, icy, s == 0)) { cx = WrapX(icx + dd, CellsAt(icy)); cy = icy; continue; }
                 if (TryMoveTo(cx, cy, icx - dd, icy, s == 0)) { cx = WrapX(icx - dd, CellsAt(icy)); cy = icy; continue; }
