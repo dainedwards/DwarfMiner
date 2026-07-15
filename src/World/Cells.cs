@@ -499,6 +499,16 @@ public sealed class Cells
         return _mat[Idx(cx, cy)] != 0;
     }
 
+    /// <summary>Whether the TILE holding this cell is solid rock (ignores cell contents) —
+    /// the flying-cell pass-through check needs to tell "smoke in open air" apart from
+    /// "cell somehow inside a wall".</summary>
+    private bool SolidTileAtCell(int cx, int cy)
+    {
+        var tx = cy / Density;
+        var ty = WrapX(cx, _cellsAt[cy]) / Density;
+        return Tiles.IsSolid(Planet.Get(tx, ty));
+    }
+
     /// <summary>Whether the cell at a world position holds settled powder (sand/dirt/gravel/
     /// dust). Pickups treat these as ground so a dropped gem rests on a pile, not under it.</summary>
     public bool PowderAtWorld(Vector2 worldPos)
