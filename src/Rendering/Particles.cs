@@ -124,7 +124,7 @@ public sealed class Particles
                     // (a landed cinder becomes real fire). Once only.
                     if (p.LandMat != 0 && cells != null)
                     {
-                        cells.StampAtWorld(p.Position, (Material)p.LandMat);
+                        cells.StampAtWorld(p.Position, (Material)p.LandMat, p.LandFuse);
                         p.LandMat = 0;
                     }
                     // Touchdown splash: a pinch of sparks in the lander's own colour,
