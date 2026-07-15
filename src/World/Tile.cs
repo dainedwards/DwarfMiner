@@ -69,10 +69,11 @@ public enum TileKind : byte
     // Alien trees & water plants — WorldGen scatters them on every world that grows life
     // (none on airless rock). Trunks are chopped for WOOD; canopies are passable foliage;
     // seafronds sway in the shallows.
-    TreeTrunk = 50,    // chop it → wood (anchored so the tree stands until felled)
-    TreeCanopy = 51,   // leafy foliage (passable, no drop)
+    TreeTrunk = 50,    // chop it → wood (felling the base topples the crown to dust)
+    TreeCanopy = 51,   // leafy foliage (passable, sheds foliage dust when felled)
     TreeCanopy2 = 52,  // a second canopy tone for variety / other biomes
     SeaFrond = 53,     // waving water plant rooted on the lakebed
+    TreeRoot = 54,     // underground root — survives felling and regrows the tree (watered by rain)
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
