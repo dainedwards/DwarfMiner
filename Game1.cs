@@ -1509,7 +1509,7 @@ public sealed partial class DwarfMinerGame : Game
         };
         _meleeAnim = MathF.Max(0f, _meleeAnim - dt);
 
-        _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, verticalAxis);
+        _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, jetHeld, verticalAxis);
 
         // Jetpack exhaust: a tier-coloured jet stream from the worn pack's nozzles — red
         // stub burner up through orange and yellow to the tier-IV blue jet. The origin
