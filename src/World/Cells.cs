@@ -1915,6 +1915,7 @@ public sealed class Cells
         var i = Idx(cx, cy);
         var fuelled = false;
         var doused = false;
+        var grounded = false;   // any solid-tile neighbour: a surface the fuse clings to
 
         void Probe(int ncx, int ncy)
         {
