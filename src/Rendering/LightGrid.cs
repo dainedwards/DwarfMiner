@@ -92,12 +92,7 @@ public sealed class LightGrid
         if (!_active) return;
 
         if (!ReferenceEquals(_profilePlanet, planet))
-        {
-            _profilePlanet = planet;
-            _skyR = new float[SkyBearings];
-            for (var b = 0; b < SkyBearings; b++) ScanSkyBearing(planet, b);
-            RecalcSkyBounds();
-        }
+            PrewarmSky(planet);
         else if (_skyR is not null)
         {
             // Round-robin refresh: 24 bearings per recompute ≈ a full sweep every ~3s, so
