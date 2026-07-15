@@ -138,6 +138,42 @@ public sealed class Particles
                 }
                 next = p.Position;
             }
+            else if (p.CollideTiles && cells != null && cells.WaterAtWorld(next))
+            {
+                // Water surface: colliding effects interact with pools instead of sailing
+                // through the body. A fire-natured grain FIZZLES — its handoff becomes a
+                // steam wisp at the last position above the waterline; any other payload
+                // (acid droplets) stamps there instead, settling ON the surface. Rain and
+                // sparks throw a tiny crown of spray. Everything dies at the surface.
+                if (p.LandMat == (byte)Material.Fire)
+                    cells.StampAtWorld(p.Position, Material.Smoke);
+                else if (p.LandMat != 0)
+                    cells.StampAtWorld(p.Position, (Material)p.LandMat);
+                p.LandMat = 0;
+                if (p.Velocity.LengthSquared() > 1600f)
+                {
+                    var n = planet.UpAt(p.Position);
+                    for (var k = 0; k < 2; k++)
+                        _list.Add(new Particle
+                        {
+                            Position = p.Position,
+                            Velocity = n * (22f + (float)_rng.NextDouble() * 30f)
+                                     + new Vector2(-n.Y, n.X)
+                                       * ((_rng.Next(2) == 0 ? 1f : -1f)
+                                          * (12f + (float)_rng.NextDouble() * 26f)),
+                            Life = 0.12f + (float)_rng.NextDouble() * 0.12f,
+                            MaxLife = 0.24f,
+                            Color = Color.Lerp(p.Color, Color.White, 0.5f),
+                            FadeColor = p.FadeColor,
+                            Size = 0.5f,
+                            GravityScale = 1f,
+                            Drag = 1.4f,
+                        });
+                }
+                p.Velocity = Vector2.Zero;
+                p.Life = MathF.Min(p.Life, 0.1f);
+                next = p.Position;
+            }
             p.Position = next;
             _list[i] = p;
         }
