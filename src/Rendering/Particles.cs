@@ -1159,7 +1159,9 @@ public sealed class Particles
         // swamp the lighting pass.
         for (var i = 0; i < 22; i++)
         {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.24f;
+            // Tighter cone + narrower speed band than the old fan: grains stay bunched
+            // along the stream axis, so their motion-smears overlap into one rope.
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.17f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
@@ -1168,7 +1170,7 @@ public sealed class Particles
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f,
-                Velocity = d * (jetSpeed * (0.75f + (float)_rng.NextDouble() * 0.5f)),
+                Velocity = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f)),
                 Life = 0.18f + (float)_rng.NextDouble() * 0.22f,
                 MaxLife = 0.4f,
                 Color = tone switch
