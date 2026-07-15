@@ -5652,7 +5652,10 @@ public sealed partial class DwarfMinerGame : Game
 
         // Cells (sand/lava/smoke — liquids too when the RT pass is off) draw above tiles
         // but below entities so the dwarf walks in front of his own debris pile.
+        tDraw = FramePerf.Now();
         _run.Cells.Draw(_renderer, viewCentre, viewRadius, cellStride, skipLiquids: liquidPass);
+        FramePerf.Add("cellsD", tDraw);
+        tDraw = FramePerf.Now();
 
         // Pixel-art dwarf sprite — drawn rotated to align local-up with planet's outward radial.
         // Sprite head-at-top, feet-at-bottom; the rotation maps sprite-up to world-up.
