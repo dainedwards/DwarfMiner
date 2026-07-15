@@ -816,7 +816,7 @@ public sealed class Particles
         // cells that rise, pool under ceilings, and drift out of cave mouths). The particle
         // side keeps only a brief soot puff for the first-instant read — full fat-blob smoke
         // only when the cell path is switched off.
-        var puffCount = CellFx ? Math.Min(smokeCount, 4) : smokeCount;
+        var puffCount = CellFx ? Math.Min(smokeCount, 8) : smokeCount * 2;
         var puffLife = CellFx ? 0.45f : 1.0f;
         for (var i = 0; i < puffCount; i++)
         {
@@ -826,13 +826,13 @@ public sealed class Particles
             // cools to near-black as it rises — fire turning into soot.
             _list.Add(new Particle
             {
-                Position = pos,
+                Position = pos + Jitter(2f),
                 Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * spd,
                 Life = (0.8f + (float)_rng.NextDouble() * 0.8f) * puffLife,
                 MaxLife = 1.6f * puffLife,
                 Color = new Color(185, 115, 60),
                 FadeColor = new Color(22, 18, 20),
-                Size = CellFx ? 1.5f : 2f + (float)_rng.NextDouble() * 1.5f,
+                Size = 1f + (float)_rng.NextDouble() * 0.5f,
                 GravityScale = -0.15f,
                 Drag = 0.7f,
             });
