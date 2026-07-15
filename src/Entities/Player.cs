@@ -280,9 +280,10 @@ public sealed class Player
             MiningTool.Drill       => 0.04f,
             MiningTool.Hammer      => 0.34f,
             MiningTool.MiningLaser => 0.03f,
-            // Pickaxe: a slow, weighty chop — and the tier-I starter is 50% slower still,
-            // a clumsy heavy thing until you forge a better head.
-            _                      => 0.16f * (PickaxeTier == 1 ? 1.5f : 1f),
+            // Pickaxe: a slow, weighty chop — the SAME deliberate cadence at every tier.
+            // Upgrades make the head STRONGER (EffectivePickaxePower = tier), never faster,
+            // so a better pickaxe breaks each tile in fewer swings but swings no quicker.
+            _                      => 0.24f,
         };
         // Worn gloves quicken every tool's rhythm.
         return cd * Equipment.MineSpeedMul;
