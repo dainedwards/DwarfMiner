@@ -815,6 +815,66 @@ public sealed class Renderer
                             Color.Lerp(petal, core, tw));
                         break;
                     }
+                    case TileKind.Brick:
+                    {
+                        // Tidy running-bond masonry: mortar grid over a warm stone body, the
+                        // course offset every other row so it reads as laid brick.
+                        var body = new Color(126, 100, 92);
+                        var mortar = new Color(92, 72, 66);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 8, body);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, mortar);   // top course line
+                        DrawDeco(centre, right, up, rotation, chord, 0, 4, 8, 1, mortar);   // mid course line
+                        DrawDeco(centre, right, up, rotation, chord, 4, 0, 1, 4, mortar);   // upper joint
+                        DrawDeco(centre, right, up, rotation, chord, 2, 4, 1, 4, mortar);   // lower joint (offset)
+                        DrawDeco(centre, right, up, rotation, chord, 1, 1, 2, 1, new Color(150, 122, 112)); // highlight
+                        break;
+                    }
+                    case TileKind.Plating:
+                    {
+                        // Riveted iron panel: steel body, bevelled edges, a rivet in each corner.
+                        var body = new Color(122, 134, 152);
+                        var dark = new Color(84, 94, 110);
+                        var rivet = new Color(60, 66, 78);
+                        var shine = new Color(168, 180, 198);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 8, body);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, shine);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, dark);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, shine);
+                        DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, dark);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 1, 1, 1, rivet);
+                        DrawDeco(centre, right, up, rotation, chord, 6, 1, 1, 1, rivet);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 6, 1, 1, rivet);
+                        DrawDeco(centre, right, up, rotation, chord, 6, 6, 1, 1, rivet);
+                        break;
+                    }
+                    case TileKind.GlassBlock:
+                    {
+                        // Clear pane: a pale translucent body with a bright frame and a
+                        // diagonal glint, so it reads as glass rather than solid rock.
+                        var pane = new Color(150, 200, 220, 150);
+                        var frame = new Color(200, 230, 245, 220);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 8, pane);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, frame);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 7, 8, 1, frame);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, frame);
+                        DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, frame);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 5, 1, 1, new Color(240, 250, 255, 200));
+                        DrawDeco(centre, right, up, rotation, chord, 3, 4, 1, 1, new Color(240, 250, 255, 200));
+                        DrawDeco(centre, right, up, rotation, chord, 4, 3, 1, 1, new Color(240, 250, 255, 200));
+                        break;
+                    }
+                    case TileKind.Platform:
+                    {
+                        // Thin ledge hugging the top of the tile — a plank walkway you stand
+                        // on. Wood tones with two support nubs so it reads as a platform.
+                        var plank = new Color(150, 116, 78);
+                        var plankDk = new Color(112, 84, 54);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 2, plank);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 1, 8, 1, plankDk);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 2, 1, 2, plankDk);
+                        DrawDeco(centre, right, up, rotation, chord, 6, 2, 1, 2, plankDk);
+                        break;
+                    }
                     case TileKind.Beacon:
                     {
                         // Crystal pillar on a dark plinth with a bright pulsing core. Pulse is
