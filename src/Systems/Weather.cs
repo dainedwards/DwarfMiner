@@ -283,9 +283,13 @@ public static class Weather
             var ground = SpawnDirector.FindSurfaceSpawn(planet, ang, planet.Radius);
             var up = planet.UpAt(ground);
             // Alt is the cloud's radius from the planet centre — convert to height above
-            // this bearing's ground so drops always start between cloud-base and ground.
+            // this bearing's ground. Drops spawn INSIDE the bank's lower half, just above
+            // its bottom edge (the base puffs centre on Alt with ~6-19px radii), and
+            // rain/snow render in the backdrop pass under the clouds — so the origin is
+            // hidden behind the puffs and the shower streams out of the underside instead
+            // of materialising on top of the bank.
             var altAbove = MathF.Max(30f, c.Alt - (ground - planet.Center).Length());
-            var start = ground + up * (altAbove * (0.5f + (float)rng.NextDouble() * 0.6f));
+            var start = ground + up * (altAbove - 2f - (float)rng.NextDouble() * 5f);
             if (kind == RainKind.Snow) particles.EmitSnow(start, -up, color);
             else particles.EmitRain(start, -up, color);
         }
