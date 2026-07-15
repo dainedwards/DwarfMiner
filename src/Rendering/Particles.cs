@@ -119,7 +119,14 @@ public sealed class Particles
                 p.Velocity = (p.Velocity - n * dot * 1.5f) * 0.4f;
                 if (p.Velocity.LengthSquared() < 4f)
                 {
-                    p.Life = MathF.Min(p.Life, p.LightRadius > 0f ? 1.4f : 0.15f);
+                    // Flame grains DIE on touchdown (fire isn't matter — it can't lie on
+                    // the ground): dozens of glowing grains resting in one spot fused into
+                    // a molten PUDDLE under the metaball body. The stamped Fire cell (with
+                    // its burn fuse) is the standing flame now. Everything else keeps the
+                    // cinder rule: lit debris cools in place, dull debris vanishes fast.
+                    p.Life = MathF.Min(p.Life,
+                        p.Fluid == (byte)Material.Fire ? 0.1f
+                        : p.LightRadius > 0f ? 1.4f : 0.15f);
                     // Handoff on rest: the particle's persistent half enters the cell sim
                     // (a landed cinder becomes real fire). Once only.
                     if (p.LandMat != 0 && cells != null)
