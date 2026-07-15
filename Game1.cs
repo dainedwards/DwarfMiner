@@ -1840,11 +1840,14 @@ public sealed partial class DwarfMinerGame : Game
         // dwarf into its crossfire.
         foreach (var pk in _run.Creatures)
         {
-            if (pk.Kind is not (CreatureKind.Peacekeeper or CreatureKind.Saucer) || pk.Health <= 0)
+            if (pk.Kind is not (CreatureKind.Peacekeeper or CreatureKind.Saucer or CreatureKind.BigSaucer)
+                || pk.Health <= 0)
                 continue;
-            // Saucers watch a wider circle from altitude and fire from further out.
-            var scanR = pk.Kind == CreatureKind.Saucer ? 320f : 240f;
-            var fireR = pk.Kind == CreatureKind.Saucer ? 280f : 230f;
+            var big = pk.Kind == CreatureKind.BigSaucer;
+            // Saucers watch a wider circle from altitude and fire from further out; the
+            // command ship sees and reaches the furthest of all.
+            var scanR = big ? 420f : pk.Kind == CreatureKind.Saucer ? 320f : 240f;
+            var fireR = big ? 380f : pk.Kind == CreatureKind.Saucer ? 280f : 230f;
             pk.GuardFireCd -= dt;
             Vector2? threat = null;
             var threatIsPlayer = false;
