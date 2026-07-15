@@ -56,6 +56,58 @@ public static class ToppleProbe
             }
             Console.WriteLine($"ring {r}: ±30 band has {solids} solid ({string.Join(",", kinds)})");
         }
+        // Trace the severed section's own connectivity: flood 4-connected solid from a tile
+        // just above the cut and report how low it reaches (crust contact = why it stands).
+        {
+            var startR = city.SurfaceRing + 5;
+            var nS = city.TilesAt(startR);
+            var tS = (int)MathF.Round((td + 0.5f) / n0 * nS - 0.5f);
+            var seed = -1;
+            for (var dtc = -14; dtc <= 14 && seed < 0; dtc++)
+            {
+                var t = ((tS + dtc) % nS + nS) % nS;
+                if (Tiles.IsSolid(city.Get(startR, t))) seed = t;
+            }
+            Console.WriteLine($"flood seed ring {startR} tile {seed}");
+            if (seed >= 0)
+            {
+                var seen = new HashSet<(int, int)>();
+                var stack = new Stack<(int, int)>();
+                stack.Push((startR, seed));
+                var minRing = startR;
+                (int r, int t) lowTile = (startR, seed);
+                var count = 0;
+                while (stack.Count > 0 && count < 90000)
+                {
+                    var (r, t) = stack.Pop();
+                    var n = city.TilesAt(r);
+                    t = ((t % n) + n) % n;
+                    if (!seen.Add((r, t))) continue;
+                    var k = city.Get(r, t);
+                    if (!Tiles.IsSolid(k)) continue;
+                    if (Tiles.IsAnchored(k) && !Tiles.Topples(k))
+                    {
+                        Console.WriteLine($"  hard anchor: {k} at ring {r} tile {t}");
+                        continue;
+                    }
+                    count++;
+                    if (r < minRing) { minRing = r; lowTile = (r, t); }
+                    var (ir, it) = city.InnerNeighbour(r, t);
+                    if (ir >= 0) stack.Push((ir, it));
+                    var oc = city.OuterNeighbourCount(r, t);
+                    for (var i = 0; i < oc; i++)
+                    {
+                        var (orr, ott) = city.OuterNeighbour(r, t, i);
+                        if (orr < city.Rings) stack.Push((orr, ott));
+                    }
+                    stack.Push((r, t - 1));
+                    stack.Push((r, t + 1));
+                }
+                Console.WriteLine($"  region {count} tiles, lowest ring {minRing} "
+                    + $"(crust line {city.SurfaceRing + 4}) low tile {lowTile.r}/{lowTile.t} "
+                    + $"kind {city.Get(lowTile.r, lowTile.t)}");
+            }
+        }
         var ticks = 0;
         while (cRigid.Bodies.Count == 0 && ticks++ < 240)
         {
