@@ -1187,25 +1187,8 @@ public sealed class Renderer
         _sb.Draw(_pixel, new Rectangle(12, 52 + barH - 1, barW, 1), Color.Black);
         _font.Draw(_sb, "TITAN ANGER", new Vector2(barW + 18, 53), Color.White, scale: 1);
 
-        // Breath bar — only while diving (or catching breath after): deep blue draining to
-        // a red drowning flash. Gill-grafted dwarves never see it drop.
-        var statusY = 76;
-        if (player.Breath < player.EffectiveMaxBreath - 0.01f || player.HeadInWater)
-        {
-            var brFrac = MathHelper.Clamp(player.Breath / player.EffectiveMaxBreath, 0f, 1f);
-            var brLow = brFrac < 0.25f;
-            var brColor = brLow
-                ? Color.Lerp(new Color(60, 110, 230), new Color(230, 70, 60), MathF.Sin(Time * 9f) * 0.5f + 0.5f)
-                : new Color(70, 130, 235);
-            _sb.Draw(_pixel, new Rectangle(12, 72, barW, barH), new Color(10, 18, 40));
-            _sb.Draw(_pixel, new Rectangle(12, 72, (int)(barW * brFrac), barH), brColor);
-            _sb.Draw(_pixel, new Rectangle(12, 72, barW, 1), Color.Black);
-            _sb.Draw(_pixel, new Rectangle(12, 72 + barH - 1, barW, 1), Color.Black);
-            _font.Draw(_sb, "BREATH", new Vector2(barW + 18, 73), Color.White, scale: 1);
-            statusY = 96;
-        }
-
-        _font.Draw(_sb, status, new Vector2(12, statusY), Color.White, scale: 1);
+        // (Breath is folded into the single AIR bar above now — no separate meter.)
+        _font.Draw(_sb, status, new Vector2(12, 76), Color.White, scale: 1);
         _font.Draw(_sb, controls, new Vector2(12, viewportHeight - 56), new Color(200, 200, 220), scale: 1);
         _sb.End();
     }
