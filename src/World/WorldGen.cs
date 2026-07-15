@@ -1113,8 +1113,11 @@ public static class WorldGen
     private static void CarveDeepWorm(Planet planet, Random rng, Vector2 pos, float heading,
         int length, int branchBudget, float bandLoTiles, float bandHiTiles, float[] ventBearings)
     {
-        var minPx = (bandLoTiles + 1.5f) * Planet.TileSize;
-        var maxPx = (bandHiTiles - 1.5f) * Planet.TileSize;
+        // 4-tile inset: the walk point is clamped, but each bite is a disk of up to 10 px
+        // (2.5 tiles) around it — the inset keeps the disk EDGE inside the band, so no bite
+        // can nibble into a seam (SealSeams would plug it anyway; don't waste the carve).
+        var minPx = (bandLoTiles + 4f) * Planet.TileSize;
+        var maxPx = (bandHiTiles - 4f) * Planet.TileSize;
         if (maxPx <= minPx) return;
         for (var s = 0; s < length; s++)
         {
