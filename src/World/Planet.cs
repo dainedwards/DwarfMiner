@@ -318,6 +318,21 @@ public sealed class Planet
     /// regular swing. The hammer / core drill bypass that gate via
     /// <paramref name="effectiveHardness"/>: pass a smaller value (e.g. 8) and the tile will
     /// take damage as if it had that hardness, while still being broken by repeated hits.</summary>
+    /// <summary>Height of the tree whose trunk occupies tile (x,y), or 0 if none — used to
+    /// scale trunk mining toughness by tree size. Cheap linear scan of the (small) tree list,
+    /// only ever hit while actually chopping a trunk tile.</summary>
+    public int TreeHeightAt(int x, int y)
+    {
+        foreach (var s in Trees)
+        {
+            if (x < s.GroundR + 1 || x > s.GroundR + s.Height) continue;
+            var n = TilesAt(x);
+            var col = (int)((s.Angle / MathHelper.TwoPi + 1f) % 1f * n);
+            if (col == y) return s.Height;
+        }
+        return 0;
+    }
+
     public TileKind? Mine(int x, int y, int power, int? effectiveHardness = null)
     {
         if (!InBounds(x, y)) return null;
