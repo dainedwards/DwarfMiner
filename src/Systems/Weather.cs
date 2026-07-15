@@ -101,7 +101,11 @@ public static class Weather
     private static float TargetAlt(Planet planet, float angle, float halfWidth)
     {
         var baseR = (SpawnDirector.FindSurfaceSpawn(planet, angle, planet.Radius) - planet.Center).Length();
-        var maxTop = baseR;
+        // Water is cells, not tiles, so over a lake/ocean the topmost-solid scan below finds
+        // the LAKE BED — and a cloud 130px above a deep seabed sits underwater. Never let the
+        // "tallest thing" fall below the baseline surface ring: basins fill to about that
+        // level, so clamping to it keeps every cloud above the sea.
+        var maxTop = MathF.Max(baseR, (Planet.RingMin + planet.SurfaceRing) * Planet.TileSize);
         // Scan from well above the tallest possible feature down to the first solid/flora tile.
         var hi = Math.Min(planet.Rings - 2, planet.SurfaceRing + 60);
         var lo = Math.Max(2, planet.SurfaceRing - 20);
