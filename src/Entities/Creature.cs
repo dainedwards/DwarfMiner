@@ -438,13 +438,21 @@ public sealed class Creature
     public void Update(float dt, Planet planet, Physics physics, Cells cells, Player player,
         List<TitanProjectile>? shots = null)
     {
-        // Status effect tick: burn drains HP per-second; freeze halves move speed.
+        // Status effect tick: burn drains HP per-second; freeze halves move speed; wet
+        // douses burning outright (and keeps it doused while it lasts); oily just decays —
+        // its teeth are in the hazard probe below.
         if (BurnSeconds > 0f)
         {
             Health -= 3f * dt;
             BurnSeconds -= dt;
         }
         if (FreezeSeconds > 0f) FreezeSeconds -= dt;
+        if (WetSeconds > 0f)
+        {
+            WetSeconds -= dt;
+            BurnSeconds = 0f;
+        }
+        if (OilySeconds > 0f) OilySeconds -= dt;
 
         // Environmental hazard contact: the same cell probe the dwarf uses, throttled and
         // immunity-filtered — lava sears anything not molten-blooded, acid eats anything
