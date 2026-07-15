@@ -1154,7 +1154,7 @@ public sealed class Toolbelt
     {
         if (id is "bullets" or "pistol" or "machine_gun" or "laser" or "laser_cannon"
             or "rocket_launcher" or "cannon" or "flamethrower" or "acid_spewer"
-            or "lightning_gun" or "dynamite" or "dynamite_pack" or "tnt" or "tnt_pack"
+            or "lightning_gun" or "dynamite" or "dynamite_pack"
             or "harpoon" or "nuke") return true;
         foreach (var m in MeleeIds) if (m == id) return true;
         return false;
