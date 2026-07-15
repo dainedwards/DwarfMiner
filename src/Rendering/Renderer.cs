@@ -40,13 +40,17 @@ public sealed class Renderer
     private readonly EffectParameter? _fxCol0, _fxCol1, _fxCol2, _fxCol3, _fxPs;
 
     /// <summary>Carve amplitude as a fraction of a tile edge. DM_CARVE=&lt;px&gt; overrides the
-    /// max carve depth in world pixels (default 1.3 — a shade past the old baked erosion so
-    /// the organic edge reads, without opening gaps the sand sim would care about).</summary>
+    /// max carve depth in world pixels. Default 2.0: deep enough that the long-wavelength
+    /// swell visibly bends a flat run of tiles, shallow enough (half a tile) that the sand
+    /// sim's square-tile collision stays a non-issue in practice.</summary>
     private static readonly float CarveAmp =
-        (float.TryParse(Environment.GetEnvironmentVariable("DM_CARVE"), out var cpx) ? cpx : 1.3f)
+        (float.TryParse(Environment.GetEnvironmentVariable("DM_CARVE"), out var cpx) ? cpx : 2.0f)
         / Planet.TileSize;
-    /// <summary>Carve noise frequency per world px (~2.2 px features).</summary>
-    private const float CarveFreq = 0.45f;
+    /// <summary>Base carve noise frequency per world px — ~8 px swells, so the coastline
+    /// undulates coherently ACROSS tiles instead of reading as per-pixel fuzz (the fuzz is
+    /// the shader's second octave on top; see RuntimeEffect.PixelGlsl). This wavelength is
+    /// the whole point of the world-space shader: baked per-tile frames can't wander.</summary>
+    private const float CarveFreq = 0.13f;
 
     /// <summary>Per-layer noise threshold for the silhouette crust: outward layers keep fewer
     /// pixels (layer 0 present ~60%, layer 1 ~34%), giving a fractal 1–2 px fringe. See DrawCrust.</summary>
