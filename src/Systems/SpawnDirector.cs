@@ -98,11 +98,12 @@ public static class SpawnDirector
             }
         }
 
-        // Air patrol: four saucers on station over every district — a proper picket line
-        // over the skyline, not a token pair.
+        // Air patrol: six saucers on station over every district — a dense picket line over
+        // the skyline — plus one big command saucer (multi-laser + tractor beam) per city.
+        var bigDropped = false;
         foreach (var (ang, half) in planet.CityDistricts)
         {
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < 6; i++)
             {
                 var a = ang + ((float)Random.Shared.NextDouble() * 2f - 1f) * half;
                 var ground = FindSurfaceSpawn(planet, a, planet.Radius);
@@ -110,6 +111,16 @@ public static class SpawnDirector
                 alt = MathF.Min(alt, (planet.Radius - 12) * Planet.TileSize);
                 var pos = planet.Center + new Vector2(MathF.Cos(a), MathF.Sin(a)) * alt;
                 run.Creatures.Add(new Creature(pos, CreatureKind.Saucer) { Resident = true });
+            }
+            // One capital-ship saucer, cruising higher over the largest district.
+            if (!bigDropped)
+            {
+                bigDropped = true;
+                var ground = FindSurfaceSpawn(planet, ang, planet.Radius);
+                var alt = MathF.Min((ground - planet.Center).Length() + 170f,
+                    (planet.Radius - 10) * Planet.TileSize);
+                var pos = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * alt;
+                run.Creatures.Add(new Creature(pos, CreatureKind.BigSaucer) { Resident = true });
             }
         }
 
