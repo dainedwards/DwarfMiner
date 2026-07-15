@@ -308,6 +308,12 @@ public sealed class Particles
                 var age = 1f - t;
                 wid = MathHelper.Lerp(2.5f, 7f, age);
                 c *= MathHelper.Lerp(1f, 0.5f, age * age);
+                // ~12 Hz whole-body flicker (item 4): each blob's brightness oscillates
+                // on its own phase, so the fused tongue boils visually. The per-grain
+                // phase key `Life + Time` is CONSTANT for a given grain (birth time +
+                // initial life), so a grain flickers coherently rather than strobing
+                // white-noise as its life ticks down.
+                c *= 0.85f + 0.25f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f);
             }
             r.Batch.Draw(tex, p.Position, null, c, rot, org,
                 new Vector2(len / tex.Width, wid / tex.Height), SpriteEffects.None, 0f);
