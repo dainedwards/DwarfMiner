@@ -454,6 +454,7 @@ public static class WorldGen
                     // Ocean worlds skip them: their design promise is DRY caves under a wet
                     // surface — all the water lives in the seas above the obsidian floor.
                     if (def.HasWater && !oceanWorld && depth > 10f && depth < 44f
+                        && radTiles > lavaTopTiles + 4f * S
                         && SampleNoise(waterNoise, wx * 0.05f, wy * 0.05f) > 0.62f)
                     {
                         planet.WaterSeeds.Add((r, t));
