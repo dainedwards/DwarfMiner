@@ -773,7 +773,7 @@ public sealed class Particles
         }
         // Debris chunks — heavy scorched-rock lumps lobbed out of the blast; full gravity,
         // bounce on terrain, long life so they visibly rain back down around the crater.
-        var debrisCount = (int)(strength * 0.6f);
+        var debrisCount = (int)(strength * 1.2f);
         for (var i = 0; i < debrisCount; i++)
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
@@ -786,13 +786,13 @@ public sealed class Particles
                 MaxLife = 1.9f,
                 Color = new Color(shade + 25, shade + 10, shade),
                 FadeColor = new Color(25, 20, 18),
-                Size = 2f + (float)_rng.NextDouble() * 1.6f,
+                Size = 1f + (float)_rng.NextDouble() * 0.7f,
                 GravityScale = 1.2f,
                 Drag = 0.3f,
                 CollideTiles = true,
             });
         }
-        for (var i = 0; i < sparkCount; i++)
+        for (var i = 0; i < sparkCount * 2; i++)
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
             var spd = strength * 6f + (float)_rng.NextDouble() * strength * 6f;
@@ -804,10 +804,10 @@ public sealed class Particles
                 MaxLife = 0.9f,
                 Color = sparkColor,
                 FadeColor = new Color(80, 40, 20),
-                Size = 1.2f + (float)_rng.NextDouble() * 1.2f,
+                Size = 0.8f + (float)_rng.NextDouble() * 0.5f,
                 GravityScale = 0.6f,
                 Drag = 1.0f,
-                LightRadius = 8f,
+                LightRadius = i % 4 == 0 ? 8f : 0f,
                 LightColor = sparkColor,
                 CollideTiles = true,
             });
