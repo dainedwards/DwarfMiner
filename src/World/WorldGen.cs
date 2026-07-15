@@ -519,7 +519,7 @@ public static class WorldGen
             for (var i = 0; i < samples; i++)
             {
                 var a = (i + 0.5f) / samples * MathHelper.TwoPi;
-                profile[i] = baselineR + AngularSample(surfA, a) * 2f * S + LumpAt(a);
+                profile[i] = baselineR + ElevAt(a);
             }
             planet.SurfaceProfile = profile;
         }
