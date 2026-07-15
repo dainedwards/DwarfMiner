@@ -1558,19 +1558,23 @@ public static class WorldGen
                 var classRoll = rng.NextDouble();
                 float halfWidthPx;
                 int height;
+                // Widths sized so interiors hold real ROOMS: past the 3-wide ladder shaft
+                // and the wall columns, every class keeps several tiles of open floor per
+                // side for furniture and pacing civilians (the old widths left mid-rises
+                // ~2 usable tiles a side — the apartments read as empty corridors).
                 if (classRoll < 0.18)         // small building: a squat shopfront
                 {
-                    halfWidthPx = 22f + (float)rng.NextDouble() * 10f;
+                    halfWidthPx = 30f + (float)rng.NextDouble() * 12f;
                     height = (int)((6f + (float)rng.NextDouble() * 6f) * S);
                 }
                 else if (classRoll < 0.60)    // mid-rise block
                 {
-                    halfWidthPx = 20f + (float)rng.NextDouble() * 12f;
+                    halfWidthPx = 30f + (float)rng.NextDouble() * 16f;
                     height = (int)((18f + (float)rng.NextDouble() * 16f) * S);
                 }
-                else                          // spire: thin and tall
+                else                          // spire: thinner and tall
                 {
-                    halfWidthPx = 15f + (float)rng.NextDouble() * 9f;
+                    halfWidthPx = 22f + (float)rng.NextDouble() * 10f;
                     height = (int)((30f + (float)rng.NextDouble() * 26f) * S);
                 }
                 height = Math.Min(height, (int)(Planet.SkyHeadroom - 16 * S));
