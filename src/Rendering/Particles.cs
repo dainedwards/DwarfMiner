@@ -1145,14 +1145,12 @@ public sealed class Particles
 
     public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach)
     {
-        // CONSTANT flow speed — the hold-ramp used to scale speed with reach (80→250 px/s
-        // by full stream), which read as pixels spraying ever faster. Per user, the flow
-        // now stays at the tap-fire STARTING speed for the whole hold; holding longer only
-        // lengthens the tongue (grain LIFE scales with reach below). Game1's payload
-        // launch is pinned to the same constant — the two must share an arc, so the
-        // stream's effective range is now the old tap-fire range at every hold length.
-        const float jetSpeed = 80f;
-        var lifeScale = reach / 42f;   // 1 at tap-fire reach → ~3 at full hold
+        // SLOW flow, FULL range: speed still scales with reach (the payload must land at
+        // the held stream's full distance — pinning it constant gutted the weapon's range,
+        // reverted per user), but at a much lower multiplier than the original 2.6, with
+        // grain lives sized so travel ≈ reach at every hold length (speed·life = 1.4r·0.7
+        // ≈ r). The flame drifts along the tongue instead of spraying down it.
+        var jetSpeed = reach * 1.4f;
         // Many TINY grains rather than a few fat blobs — the stream reads as granular burning
         // fluid (Noita's pixel-fire) instead of soft puffballs. Grain colours pick from a
         // FOUR-TONE fire ramp (white-yellow → gold → orange → red-orange) so the stream body
