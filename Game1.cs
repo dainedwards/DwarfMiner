@@ -6425,6 +6425,8 @@ public sealed partial class DwarfMinerGame : Game
         // into cave mouths before rock eats it), every AddLight below seeds it, and the
         // propagation floods light through air while walls block it. No ambient, no
         // darkness disks: unlit underground is genuinely black now. ===
+        FramePerf.Add("entsD", tDraw);
+        tDraw = FramePerf.Now();
         _lightSw.Restart();
         _lightGrid.Begin(_run.Planet, _camera);
         _renderer.LightGridBeginMs = _lightSw.Elapsed.TotalMilliseconds;
