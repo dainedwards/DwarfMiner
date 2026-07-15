@@ -1245,8 +1245,14 @@ public static class WorldGen
         }
     }
 
+    /// <param name="localCeiling">Ocean worlds: bites must also stay 14 legacy tiles below
+    /// the LOCAL surface line (SurfaceProfile), not just the global cap — the rolling
+    /// channel digs valleys deep enough that a globally-legal bite can surface inside a
+    /// shallow shore basin and turn the sea into a drain. Other worlds keep the historical
+    /// global-only rule so their layouts stay byte-identical.</param>
     private static void CarveWorm(Planet planet, Random rng, Vector2 pos, float heading,
-        int length, int branchBudget, float minFrac, float hardFloorPx)
+        int length, int branchBudget, float minFrac, float hardFloorPx,
+        bool localCeiling = false)
     {
         var minRad = planet.Radius * (minFrac - 0.02f) * Planet.TileSize;
         var maxRad = (Planet.RingMin + planet.SurfaceRing - 14f * Planet.LegacyTileScale)
