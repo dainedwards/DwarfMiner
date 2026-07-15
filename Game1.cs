@@ -1129,7 +1129,7 @@ public sealed partial class DwarfMinerGame : Game
         run.Player.HasFins = Upgrades.Owned(_meta, "fins");
         run.Player.LungTier = Upgrades.Owned(_meta, "lungs2") ? 2 : Upgrades.Owned(_meta, "lungs") ? 1 : 0;
         run.Player.HasGills = Upgrades.Owned(_meta, "gills");
-        run.Player.Breath = run.Player.EffectiveMaxBreath;
+        run.Player.HasHelmet = Upgrades.Owned(_meta, "vacsuit");
         if (Upgrades.Owned(_meta, "vitality")) run.Player.MaxHealth = 140f;
         // Gravity isn't in the run save — it's def-derived, like the foundry gear above.
         run.Player.Gravity = 320f * run.Def.GravityScale;
