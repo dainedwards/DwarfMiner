@@ -34,7 +34,7 @@ public static class SpawnDirector
             {
                 SpawnerKind.GooPile    => (CreatureKind.CaveSlime, 3, 22f),
                 SpawnerKind.LizardDoor => (CreatureKind.Lizardman, 2, 60f),   // low rate
-                _                      => (CreatureKind.Civilian, 3, 35f),
+                _                      => (CreatureKind.Civilian, 8, 20f),     // packed streets
             };
             if (CountKindNear(run, s.Position, 240f, kind) >= cap) { s.Timer = 8f; continue; }
 
