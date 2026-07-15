@@ -5846,7 +5846,8 @@ public sealed partial class DwarfMinerGame : Game
 
         // Liquid RT pass (DM_LIQRT=0 reverts to in-batch liquid quads): water/acid/oil
         // rasterize into their own transparent target, which then composites over the
-        // world in ONE alpha blend — see Renderer.CompositeLiquids. Filled FIRST, before
+        // world in ONE alpha blend — see Renderer.CompositeLiquids. Lava rides the same
+        // scan but diverts to the hot field below. Filled FIRST, before
         // the world target engages, so no mid-frame target switch can discard scene
         // content. Close-up LOD only; the strided zoomed-out passes keep liquids in the
         // main cell draw where the grain is sub-pixel anyway.
