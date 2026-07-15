@@ -28,6 +28,26 @@ public sealed class Renderer
     private static readonly bool _noita =
         Environment.GetEnvironmentVariable("DM_NOITA") != "0";
 
+    /// <summary>The runtime-built terrain carve shader (see <see cref="RuntimeEffect"/>), or
+    /// null when disabled (DM_SHADER=0) or unavailable — null keeps the baked-erosion path.
+    /// When live, the tile pass runs in its own batch under this effect: base tile quads flag
+    /// their air-exposure mask in the vertex alpha (64+mask) and the pixel shader carves the
+    /// exposed edges with WORLD-SPACE value noise, so the silhouette is per-pixel organic and
+    /// continuous across tile seams — the true Noita coastline the additive crust can only
+    /// approximate. Everything else in the batch draws with normal alphas and passes through
+    /// the shader untouched.</summary>
+    private readonly Effect? _tileFx;
+    private readonly EffectParameter? _fxCol0, _fxCol1, _fxCol2, _fxCol3, _fxPs;
+
+    /// <summary>Carve amplitude as a fraction of a tile edge. DM_CARVE=&lt;px&gt; overrides the
+    /// max carve depth in world pixels (default 1.3 — a shade past the old baked erosion so
+    /// the organic edge reads, without opening gaps the sand sim would care about).</summary>
+    private static readonly float CarveAmp =
+        (float.TryParse(Environment.GetEnvironmentVariable("DM_CARVE"), out var cpx) ? cpx : 1.3f)
+        / Planet.TileSize;
+    /// <summary>Carve noise frequency per world px (~2.2 px features).</summary>
+    private const float CarveFreq = 0.45f;
+
     /// <summary>Per-layer noise threshold for the silhouette crust: outward layers keep fewer
     /// pixels (layer 0 present ~60%, layer 1 ~34%), giving a fractal 1–2 px fringe. See DrawCrust.</summary>
     private static readonly float[] _crustThresh = { 0.40f, 0.66f };
