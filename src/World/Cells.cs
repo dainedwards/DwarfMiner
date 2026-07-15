@@ -2495,11 +2495,7 @@ public sealed class Cells
                 return new Color(b.R + jitter / 6, b.G + jitter / 6, b.B + jitter / 6, (byte)200);
             }
             case Material.Acid:
-            {
-                // Sickly green with a slow toxic shimmer, semi-translucent like water.
-                var shimmer = (int)(MathF.Sin(_time * 2.0f + ((hash >> 3) & 7) * 0.7f + cy * 0.3f) * 12f);
-                return Tint(new Color(120, 200, 40), jitter / 5 + shimmer) * 0.82f;
-            }
+                return LiquidBody(m, cx, cy) * 0.82f;
             case Material.Gas:
             {
                 // Faint yellow-green haze — low alpha so the wall behind reads through it.
