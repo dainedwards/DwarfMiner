@@ -68,7 +68,7 @@ public sealed class Physics
     public const float SettleInterval = 0.05f; // seconds between settle ticks
     /// <summary>Max collapsible region size for baseline rock (Stone, hardness 2). Regions
     /// bigger than their strength-derived budget are treated as supported.</summary>
-    public const int StoneCollapseBudget = 192;
+    public const int StoneCollapseBudget = 256;
     /// <summary>Budget shaved off per hardness tier above Stone — stronger material holds
     /// larger unsupported spans, so only smaller pockets of it can cave in.</summary>
     public const int BudgetPerHardness = 32;
