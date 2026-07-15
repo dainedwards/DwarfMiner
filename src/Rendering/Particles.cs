@@ -163,7 +163,8 @@ public sealed class Particles
                         _list.Add(new Particle
                         {
                             Position = p.Position,
-                            Velocity = n * (22f + (float)_rng.NextDouble() * 30f)
+                            // Low crown — kicked to ~70% of the first cut's height per user.
+                            Velocity = n * (15f + (float)_rng.NextDouble() * 21f)
                                      + new Vector2(-n.Y, n.X)
                                        * ((_rng.Next(2) == 0 ? 1f : -1f)
                                           * (12f + (float)_rng.NextDouble() * 26f)),
