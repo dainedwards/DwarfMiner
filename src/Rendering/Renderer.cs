@@ -1200,6 +1200,33 @@ public sealed class Renderer
             radius * 2f / _circle.Width, SpriteEffects.None, 0f);
     }
 
+    /// <summary>Red screen-edge pulse when the dwarf is hurt — banded strips on all four sides
+    /// that thicken and brighten with the hit's severity, so damage always reads even when the
+    /// eye is on the mining cursor. Fades as <paramref name="intensity"/> (Player.HurtFlash)
+    /// decays.</summary>
+    public void DrawHurtVignette(int w, int h, float intensity)
+    {
+        if (intensity <= 0.001f) return;
+        var t = MathHelper.Clamp(intensity, 0f, 1f);
+        _sb.Begin(samplerState: SamplerState.PointClamp);
+        // Several stacked, increasingly transparent bands from each edge inward — a cheap
+        // gradient vignette without a shader.
+        var band = (int)(10 + t * 46);
+        var bands = 6;
+        for (var i = 0; i < bands; i++)
+        {
+            var f = 1f - i / (float)bands;
+            var a = (byte)(t * 150 * f * f);
+            var col = new Color((byte)200, (byte)30, (byte)30, a);
+            var d = band * (i + 1) / bands;
+            _sb.Draw(_pixel, new Rectangle(0, 0, w, d), col);              // top
+            _sb.Draw(_pixel, new Rectangle(0, h - d, w, d), col);          // bottom
+            _sb.Draw(_pixel, new Rectangle(0, 0, d, h), col);             // left
+            _sb.Draw(_pixel, new Rectangle(w - d, 0, d, h), col);         // right
+        }
+        _sb.End();
+    }
+
     public void DrawHudBars(int viewportWidth, int viewportHeight, Player player, int titanAnger, string status, string controls)
     {
         _sb.Begin(samplerState: SamplerState.PointClamp);
