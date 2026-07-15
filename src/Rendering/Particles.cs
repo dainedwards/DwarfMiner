@@ -1396,61 +1396,21 @@ public sealed class Particles
     private static readonly Color[] AcidTones =
         { new(215, 255, 100), new(130, 225, 55), new(130, 225, 55), new(70, 150, 35) };
 
-    /// <summary>Flamethrower — the 3D-game construction (per user, after the Blender-
-    /// tutorial reference): an INVISIBLE carrier stream delivers the gameplay — the arc,
-    /// the long-fuse fire stamps, the touchdown licks — while the visible fire is PLUME
-    /// PUFFS born at the muzzle that ride the stream, stall under drag, then billow
-    /// upward and EXPAND, cooling through the fire ramp into smoke grey. Young puffs
-    /// form a brief tight jet core at the barrel; downstream the core dissolves into
-    /// roiling rising flame — the stream disappears into its own effects.
+    /// <summary>Flamethrower — NO invisible carriers (they were ballistic ghosts whose
+    /// arc never matched the visible flame, and every phantom fire/spark bug traced back
+    /// to them): THE VISIBLE FLAME IS THE WEAPON. Plume puffs born at the muzzle ride the
+    /// stream, stall under drag, billow upward and EXPAND, cooling through the fire ramp;
+    /// when a puff TOUCHES the world it stamps the long-fuse fire and throws the contact
+    /// spark burst right there — ignition happens exactly where flame is seen to touch,
+    /// and nowhere else, by construction. Buoyant puffs can never arc back down, so
+    /// firing straight up is structurally incapable of raining fire on the shooter.
     /// DELIBERATELY INDEPENDENT of EmitAcidJet.</summary>
     public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
     {
         var jetSpeed = reach * 1.35f;
         const float coneArc = 0.041f;
-        // 1) Carriers (3/frame, NEVER drawn — Size 0): the gameplay stream, unchanged
-        // physics. Their own fire tones exist only so the touchdown spark splash has ink.
-        for (var i = 0; i < 3; i++)
-        {
-            var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
-            var c = MathF.Cos(spread);
-            var s = MathF.Sin(spread);
-            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _list.Add(new Particle
-            {
-                Position = pos - shooterVel * ((float)_rng.NextDouble() * 0.016f)
-                         + d * (float)_rng.NextDouble() * 1.5f,
-                Velocity = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)) + shooterVel,
-                // Life bounded to the OUTBOUND arc only: at full stream speed a carrier
-                // needs ~0.75s to reach max range, and a straight-up shot tops out at
-                // ~0.55s and would land back at the shooter's feet at ~1.1s — the old
-                // 0.8-1.35s lives meant invisible carriers rained back down and stamped
-                // fire + spark bursts where the visible flame never went (the "sparks at
-                // my feet firing upward" bug). Dying by 0.85s, a carrier can reach
-                // anything the stream points at but can never complete a return arc.
-                Life = 0.65f + (float)_rng.NextDouble() * 0.2f,
-                MaxLife = 0.85f,
-                Color = new Color(255, 180, 60),
-                FadeColor = new Color(120, 35, 15),
-                Size = 0f,
-                GravityScale = HoseArcGravity,
-                Drag = 1.2f,
-                CollideTiles = true,
-                LandMat = CellFx ? (byte)Material.Fire : (byte)0,
-                // 6-9s burn fuse — the standing ground fire (see Cells.TickFire).
-                LandFuse = (byte)(120 + _rng.Next(60)),
-                // The contact spark burst is part of the STREAM's touch (fires on first
-                // strike, with the stamp) — distinct from the flying jet sparks, which
-                // never interact with the world.
-                LandSparks = true,
-            });
-        }
-        // 2) Plume puffs (6/frame — THE visible fire): launched with the stream but under
-        // heavy drag and BUOYANT, so each puff follows the jet a way, falls behind, and
-        // rises off the arc while expanding (blob width grows with age in DrawFluid) and
-        // cooling flame→smoke. The chain of puffs traces the stream's recent path and
-        // billows up off it — and it follows the aim/shooter automatically because every
-        // puff inherits the launch and shooter velocity at birth.
+        // Plume puffs (6/frame — the flame AND the weapon): half stamp fire on first
+        // contact (with the 6-9s fuse + spark burst), the rest are pure body.
         for (var i = 0; i < 6; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * (coneArc * 2.2f);
@@ -1459,6 +1419,7 @@ public sealed class Particles
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             var hot = i < 2;
             var tone = FlameTones[hot ? _rng.Next(2) : _rng.Next(FlameTones.Length)];
+            var ignites = CellFx && _rng.Next(2) == 0;
             _list.Add(new Particle
             {
                 Position = pos - shooterVel * ((float)_rng.NextDouble() * 0.016f)
@@ -1477,6 +1438,11 @@ public sealed class Particles
                 LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
                 LightColor = new Color(255, 170, 70),
                 Fluid = (byte)Material.Fire,
+                LandMat = ignites ? (byte)Material.Fire : (byte)0,
+                // 6-9s burn fuse (also the first-contact trigger in Update: fuse-carrying
+                // grains deliver on their first strike, not at rest).
+                LandFuse = ignites ? (byte)(120 + _rng.Next(60)) : (byte)0,
+                LandSparks = ignites,
             });
         }
         // (Spark pixels are shed by the plume grains THEMSELVES — see the Fluid==Fire
