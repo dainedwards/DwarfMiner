@@ -136,14 +136,18 @@ public sealed class Particles
                 // sparks right on the terrain — the other half of the phantom
                 // "sparks interacting with the ground".
                 if (!p.JetSpark && sp > 3600f && _rng.Next(7) < 4)
+                {
+                    // Born white-hot: MaxLife == initial Life (see EmitLickingFlame) so
+                    // every spark starts at the ramp's top and cools over its own path.
+                    var sparkLife = 0.2f + (float)_rng.NextDouble() * 0.25f;
                     _list.Add(new Particle
                     {
                         Position = p.Position + Jitter(1f),
                         // 78% stream inheritance + tight scatter: sparks ride the jet's
                         // line as a close-fitting sheath rather than flying off radially.
                         Velocity = p.Velocity * 0.78f + Jitter(26f),
-                        Life = 0.2f + (float)_rng.NextDouble() * 0.25f,
-                        MaxLife = 0.45f,
+                        Life = sparkLife,
+                        MaxLife = sparkLife,
                         Color = _rng.Next(2) == 0 ? new Color(255, 245, 190) : new Color(255, 205, 90),
                         FadeColor = new Color(255, 120, 30),
                         Size = 0.5f,
@@ -163,6 +167,7 @@ public sealed class Particles
                         SmearMax = 1.5f,
                         JetSpark = true,
                     });
+                }
             }
 
             var next = p.Position + p.Velocity * dt;
@@ -1438,14 +1443,19 @@ public sealed class Particles
         // TALL tongue that shoots past the rest — the dancing tip licking the air.
         var s0 = ((float)_rng.NextDouble() - 0.5f) * 4f;
         var tall = _rng.Next(4) == 0;
+        // MaxLife == initial Life: every lick is born at the TOP of the colour ramp
+        // (white-hot at the flame base) and cools across its own full rise. A fixed
+        // MaxLife had most licks spawning mid-ramp — already dimmed at the base, which
+        // read as the flame fading out far too low.
+        var life = ((tall ? 0.55f : 0.35f) + (float)_rng.NextDouble() * 0.2f)
+                 * (1f - MathF.Abs(s0) * 0.12f);
         _list.Add(new Particle
         {
             Position = pos + side * s0,
             Velocity = up * ((tall ? 34f : 18f) + (float)_rng.NextDouble() * (tall ? 30f : 18f))
                      - side * (s0 * 5f),
-            Life = ((tall ? 0.55f : 0.35f) + (float)_rng.NextDouble() * 0.2f)
-                 * (1f - MathF.Abs(s0) * 0.12f),
-            MaxLife = 0.75f,
+            Life = life,
+            MaxLife = life,
             Color = FlameTones[_rng.Next(3)],
             FadeColor = new Color(205, 75, 15),
             Size = 0.5f + (float)_rng.NextDouble() * 0.3f,
