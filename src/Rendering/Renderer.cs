@@ -439,6 +439,12 @@ public sealed class Renderer
                 // normalize, no Atan2 per visible tile (rotation of a radial quad is just the
                 // tile angle + 90°).
                 var angle = (t + 0.5f) / tpr * MathHelper.TwoPi;
+                // Machined structures draw on their tower's own column lattice: the polar
+                // grid's tiles-per-ring drift makes tile centres jitter ±½ tile per ring,
+                // which read as leaning sawtooth staircases on skyscraper hulls. Visual-only;
+                // the grid and collision stay put.
+                if (IsEngineered(k) && planet.CityFacades.Count > 0)
+                    angle = planet.FacadeSnapAngle(r, angle, ringRadius);
                 var up = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
                 var centre = planet.Center + up * ringRadius;
                 // Cull tiles whose centre is too far from the viewport rect (cheap secondary check).
