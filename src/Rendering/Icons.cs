@@ -1261,6 +1261,58 @@ public static class Icons
         ['D'] = new Color(70, 62, 95),      // grip
     });
 
+    private static Texture2D BuildGrapple(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "....S...S.......",
+        "...S.....S......",
+        "...S.....S......",
+        "....S...S.......",
+        ".....SSS........",
+        "......r.........",
+        ".......r........",
+        "........r.......",
+        ".........r......",
+        "..........r.....",
+        "..........r.....",
+        ".........www....",
+        ".........wWw....",
+        ".........www....",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['S'] = new Color(210, 215, 230),
+        ['r'] = new Color(196, 160, 96),
+        ['w'] = new Color(120, 85, 55),
+        ['W'] = new Color(170, 130, 80),
+    });
+
+    private static Texture2D BuildRope(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "....rrrrrr......",
+        "...r......r.....",
+        "..r........r....",
+        "..r........r....",
+        "..r........r....",
+        "...r......r.....",
+        "....rrrrrr......",
+        "...r......r.....",
+        "..r........r....",
+        "..r........r....",
+        "..r........r....",
+        "...r......r.....",
+        "....rrrrrr......",
+        "......R.........",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['r'] = new Color(196, 160, 96),
+        ['R'] = new Color(150, 118, 66),
+    });
+
     private static Texture2D BuildHarpoon(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
     {
         "................",
