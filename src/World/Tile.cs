@@ -106,7 +106,9 @@ public static class Tiles
           // A placed platform is a fixed ledge — it never caves in.
           or TileKind.Platform
           // Treasure chests sit solid in the warren vault — they never crumble; you loot them.
-          or TileKind.Chest or TileKind.ChestOpen;
+          or TileKind.Chest or TileKind.ChestOpen
+          // Lily pads float on the water — with no rock under them they must never "fall".
+          or TileKind.LilyPad;
           // NOTE: trees & water plants are NOT anchored — an anchored plant reads as an
           // immovable wall to a walking titan (it walled the boss out of its dig shaft), so
           // they stay crushable. Hazard-immunity comes from IsFlora instead.
