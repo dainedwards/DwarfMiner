@@ -588,6 +588,17 @@ public sealed class Player
                     var pLocalX = Vector2.Dot(rel, right);
                     var pLocalY = Vector2.Dot(rel, up);
 
+                    // Platforms are ONE-WAY: solid only when the player is landing on top —
+                    // their feet were at/above the platform's top surface last frame. Rising
+                    // up through it (a jump from below, or hopping off the top) passes clean.
+                    if (tk == TileKind.Platform)
+                    {
+                        var platTopRadius = (Planet.RingMin + x + 1) * Planet.TileSize;
+                        var feetRadiusPrev = _prevRadial - Radius;
+                        if (feetRadiusPrev < platTopRadius - 1f) continue;   // was below → pass
+                        if (Vector2.Dot(Velocity, up) > 30f) continue;       // rising → pass
+                    }
+
                     // Tile-local extents: chord (arc width) × TileSize (radial).
                     var ringRadius = (Planet.RingMin + x + 0.5f) * Planet.TileSize;
                     var halfX = MathHelper.TwoPi * ringRadius / planet.TilesAt(x) * 0.5f;
