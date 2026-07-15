@@ -1785,11 +1785,19 @@ public static class WorldGen
                         }
                         else if (k != TileKind.Sky)
                         {
-                            // Cavern shells line with crystal; grove shells with moss, and
-                            // the inward (floor) side sprouts glowshrooms.
-                            planet.Set(r, t, crystal ? TileKind.Crystal
-                                : dr < 0 && rng.Next(3) == 0 ? TileKind.Glowshroom
-                                : TileKind.MossStone);
+                            // Cavern shells are rock STUDDED with embedded crystals (inside the
+                            // wall, not solid crystal blocks); grove shells are moss, and the
+                            // inward (floor) side sprouts glowshrooms.
+                            if (crystal)
+                            {
+                                planet.Set(r, t, TileKind.Stone);
+                                planet.SetGem(r, t, TileKind.Crystal);
+                            }
+                            else
+                            {
+                                planet.Set(r, t, dr < 0 && rng.Next(3) == 0
+                                    ? TileKind.Glowshroom : TileKind.MossStone);
+                            }
                         }
                     }
                 }
