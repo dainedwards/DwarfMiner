@@ -1261,6 +1261,8 @@ public sealed class Particles
         // player runs and fires, and every grain is BORN AT THE MUZZLE.
         for (var i = 0; i < 8; i++)
         {
+            // ~20% thinner stream per user (expected 6.4 grains/frame).
+            if (_rng.Next(5) == 0) continue;
             var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
@@ -1284,7 +1286,13 @@ public sealed class Particles
             vel += shooterVel;
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 1.5f,
+                // Births are BACK-FILLED along the muzzle's last-frame travel: even at
+                // per-frame emission a fast-moving muzzle (jetpack up/down) steps 2-3 px
+                // per frame, and grains all born at the new spot read as chunky stair
+                // rows. Spreading them across the frame's motion makes the origin line
+                // continuous whatever the player is doing.
+                Position = pos - shooterVel * ((float)_rng.NextDouble() * 0.016f)
+                         + d * (float)_rng.NextDouble() * 1.5f,
                 Velocity = vel,
                 Life = 0.8f + (float)_rng.NextDouble() * 0.55f,
                 MaxLife = 1.35f,
@@ -1296,7 +1304,9 @@ public sealed class Particles
                 CollideTiles = true,
                 LightRadius = hot ? hotLight : i % 3 == 0 ? bodyLight : 0f,
                 LightColor = lightColor,
-                LandMat = CellFx ? (byte)landMat : (byte)0,
+                // Half the grains stamp their material on landing (was every grain) —
+                // the ground still catches/corrodes, at a gentler rate per user.
+                LandMat = CellFx && _rng.Next(2) == 0 ? (byte)landMat : (byte)0,
                 LandSparks = true,
                 SmearMax = hoseSmear,
                 SmearScale = 2f,
