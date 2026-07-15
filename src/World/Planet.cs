@@ -143,6 +143,13 @@ public sealed class Planet
     /// keep erupting.</summary>
     public readonly List<(int x, int y, bool acid)> VolcanoVents = new();
 
+    /// <summary>Living trees the ecosystem tracks. WorldGen registers one per planted tree;
+    /// <see cref="Systems.TreeEcology"/> regrows a felled one from its surviving underground
+    /// roots (faster when the biome's rain — water, acid, or fire — waters it). Not persisted:
+    /// standing trees survive in the tile grid across a reload; on load the sites are rebuilt
+    /// by scanning for TreeRoot tiles so regrowth keeps working.</summary>
+    public readonly List<TreeSite> Trees = new();
+
     /// <summary>Civilian spawn sites on city worlds — skyscraper doorways and apartment
     /// floors (WorldGen.RaiseCity). SpawnDirector prefers these when restocking the city
     /// biome's fauna so the towers actually read as inhabited. Persisted with the tile
