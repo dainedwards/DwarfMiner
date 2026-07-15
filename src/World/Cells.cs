@@ -1929,9 +1929,11 @@ public sealed class Cells
                 case Material.Oil:
                 case Material.Gas:
                     fuelled = true;
-                    // Flame front: catch the neighbouring fuel cell alight. Probabilistic so
-                    // a pool burns across its surface over a second, not in one frame.
-                    if (_rng.Next(3) == 0)
+                    // Flame front: catch the neighbouring fuel cell alight. Probabilistic
+                    // so a pool burns across its surface over seconds, not in one frame —
+                    // rate halved (3→6) so fuel is CONSUMED slower and a burning pool
+                    // lasts twice as long (the released fused fire keeps the front alive).
+                    if (_rng.Next(6) == 0)
                     {
                         var (fcx, fcy) = UnIdx(ni);
                         IgniteCell(fcx, fcy);
