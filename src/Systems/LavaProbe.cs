@@ -104,6 +104,27 @@ public static class LavaProbe
             }
             ScanLava(initial);
 
+            // Breach census: initial lava tiles whose INWARD or SIDEWAYS tile neighbour is
+            // open Sky outside the body — an open drain mouth (the pool's upper surface is
+            // Sky too, but that sits ABOVE, dr=+1, and is excluded).
+            var mouths = new System.Collections.Generic.List<string>();
+            foreach (var (r, t) in initial)
+            {
+                var n = planet.TilesAt(r);
+                foreach (var (dr, dtt) in new[] { (-1, 0), (0, -1), (0, 1) })
+                {
+                    var r2 = r + dr;
+                    if (r2 < 0 || r2 >= planet.Rings) continue;
+                    var n2 = planet.TilesAt(r2);
+                    var t2 = ((int)((t + 0.5f) / n * n2) + dtt % n2 + n2) % n2;
+                    if (planet.Get(r2, t2) == TileKind.Sky && !initial.Contains((r2, t2))
+                        && mouths.Count < 12)
+                        mouths.Add($"drain mouth: lava({r},{t}) -> Sky({r2},{t2}) dr={dr} dt={dtt}");
+                }
+            }
+            Console.WriteLine($"    drain mouths at load: {mouths.Count}");
+            foreach (var s in mouths) Console.WriteLine("    " + s);
+
             const float step = 1f / 60f;
             for (var tick = 0; tick < 120 * 60; tick++) cells.Update(step);
 
