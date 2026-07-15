@@ -1741,6 +1741,37 @@ public static class SimTest
                 builtFrac > 0.15f && spanFrac > 0.25f);
         }
 
+        // Street decks: every narrow gap between neighbouring towers carries a continuous
+        // anchored alloy bridge at the surface ring, so citizens cross between buildings
+        // without falling into the rolling ground's dips — and being anchored alloy,
+        // disasters can't disintegrate the crossing.
+        {
+            var deckR = city.SurfaceRing;
+            var surfPx = (Planet.RingMin + deckR) * Planet.TileSize;
+            var facs = new List<(float ang, float w)>();
+            foreach (var (fAng, halfW, _, _) in city.CityFacades) facs.Add((fAng, halfW));
+            facs.Sort((a, b) => a.ang.CompareTo(b.ang));
+            int gaps = 0, bridged = 0;
+            for (var i = 1; i < facs.Count; i++)
+            {
+                var e0 = facs[i - 1].ang + facs[i - 1].w / surfPx;
+                var e1 = facs[i].ang - facs[i].w / surfPx;
+                var gapWorld = (e1 - e0) * surfPx;
+                if (gapWorld <= 8f || gapWorld > 120f) continue;   // mirrors the gen's bridging rule
+                gaps++;
+                var n = city.TilesAt(deckR);
+                var whole = true;
+                for (var a = e0; a <= e1; a += MathHelper.TwoPi / n)
+                {
+                    var t = (int)((a / MathHelper.TwoPi + 1f) % 1f * n);
+                    if (city.Get(deckR, t) != TileKind.AlienAlloy) { whole = false; break; }
+                }
+                if (whole) bridged++;
+            }
+            Check($"city: street decks bridge the tower gaps ({bridged}/{gaps})",
+                gaps > 0 && bridged == gaps);
+        }
+
         // Warren world: ember (the lava homeland) carries the buried lizard city now — the
         // warrens live only under acid and lava worlds.
         var emberDef = PlanetDefs.ById("ember");
