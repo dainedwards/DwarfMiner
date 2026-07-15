@@ -2549,6 +2549,7 @@ public sealed class Cells
                 var m = (Material)_mat[idx];
                 if (m == Material.Empty) continue;
                 if (skipLiquids && m is Material.Water or Material.Acid or Material.Oil) continue;
+                if (skipLava && m == Material.Lava) continue;
                 // Analytic polar transform — one cos+sin per drawn cell instead of
                 // CellToWorld's wrap+trig plus UpAt's normalize plus an Atan2: the cell
                 // angle is already fixed by the loop index (cos/sin ignore the wrap), and
