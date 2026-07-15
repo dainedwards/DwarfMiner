@@ -107,6 +107,34 @@ public sealed class Particles
                         cells.StampAtWorld(p.Position, (Material)p.LandMat);
                         p.LandMat = 0;
                     }
+                    // Touchdown splash: a pinch of sparks in the lander's own colour,
+                    // kicked up and out along the local surface. Appended mid-iteration is
+                    // safe — the backwards loop never revisits fresh tail entries this
+                    // pass, and the sparks carry no flags that could cascade.
+                    if (p.LandSparks)
+                    {
+                        p.LandSparks = false;
+                        var t2 = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
+                        var sc = Color.Lerp(p.FadeColor, p.Color, MathF.Ceiling(t2 * 4f) * 0.25f);
+                        for (var k = 0; k < 3; k++)
+                        {
+                            var side = ((_rng.Next(2) == 0 ? 1f : -1f))
+                                * (0.35f + (float)_rng.NextDouble() * 0.65f);
+                            _list.Add(new Particle
+                            {
+                                Position = p.Position,
+                                Velocity = n * (26f + (float)_rng.NextDouble() * 34f)
+                                         + new Vector2(-n.Y, n.X) * side * 38f,
+                                Life = 0.14f + (float)_rng.NextDouble() * 0.14f,
+                                MaxLife = 0.28f,
+                                Color = Color.Lerp(sc, Color.White, 0.25f),
+                                FadeColor = p.FadeColor,
+                                Size = 0.5f,
+                                GravityScale = 1f,
+                                Drag = 1.6f,
+                            });
+                        }
+                    }
                 }
                 next = p.Position;
             }
