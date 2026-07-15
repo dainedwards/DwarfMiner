@@ -3166,7 +3166,7 @@ public sealed partial class DwarfMinerGame : Game
             if (Vector2.Dot(to / dist, dir) < 0.82f) continue;
             if (c.ImmuneTo(Material.Fire)) continue;
             c.BurnSeconds = MathF.Max(c.BurnSeconds, 3f);
-            c.Health -= 52f * _frameDt; // 2x per gout — the slower cadence keeps dps level
+            c.Health -= 26f * _frameDt; // halved per-puff to match the doubled (smoother) cadence
             c.HitFlash = 0.1f;
         }
         // The hose roasts titans too — except the fire-blooded (Godzilla's breath, the
