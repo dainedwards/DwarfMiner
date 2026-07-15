@@ -224,6 +224,8 @@ public sealed class Particles
                 {
                     cells.StampAtWorld(p.Position, (Material)p.LandMat, p.LandFuse);
                     p.LandMat = 0;
+                    // Guaranteed 3s of licking pixel flames right at the strike point.
+                    AddFlameSite(p.Position);
                     // Stop dead at the strike point: the rest branch below then runs THIS
                     // frame — contact spark burst + fast death — no skittering onward.
                     p.Velocity = Vector2.Zero;
