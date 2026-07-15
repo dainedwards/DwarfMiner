@@ -2747,7 +2747,6 @@ public sealed partial class DwarfMinerGame : Game
         p.ExplosionRadius *= 0.45f + 0.55f * f;
         p.CraterTiles = Math.Max(2, (int)(p.CraterTiles * (0.4f + 0.6f * f)));
         p.AlloyMinePower = Math.Max(2, (int)(12 * f));      // full charge = 12 (breaks alien metal ~4 hits)
-        p.ChargeScale = 0.6f + 0.8f * f;                    // drives the drawn orb size
         _run.Projectiles.Add(p);
         _run.Player.ShootCooldown = 0.6f;
         _run.Shake = MathF.Max(_run.Shake, 0.3f + 0.5f * f);
