@@ -338,15 +338,28 @@ public static class SpawnDirector
             if (found is not { } splash) continue;
             if ((splash - run.Player.Position).Length() < 160f) continue;
 
-            // Depth gate: a whale needs a real basin under it; shallows get crabs.
+            // Depth gate: deep basins host the leviathans and the big predators; shallows
+            // get crabs (and the odd shark cruising in).
             var deep = run.Cells.CountWaterNear(splash - dir * 14f, 5f) >= 8;
-            var kind = deep && Random.Shared.NextDouble() < 0.35
-                ? CreatureKind.AlienWhale
-                : CreatureKind.AlienCrab;
-            var c = new Creature(splash, kind);
+            var c = new Creature(splash, LakeKindFor(deep));
             run.Creatures.Add(c);
             return;
         }
+    }
+
+    /// <summary>Roll a lake resident. Deep water is the dangerous water: sharks, the anglerfish
+    /// gulper, and the brine-spitter share it with the gentle whale; shallows are crabs and
+    /// the odd shark. Roughly half the deep rolls are now hostile sea monsters.</summary>
+    private static CreatureKind LakeKindFor(bool deep)
+    {
+        var r = Random.Shared.NextDouble();
+        if (deep)
+            return r < 0.24 ? CreatureKind.AlienWhale
+                 : r < 0.50 ? CreatureKind.AlienShark
+                 : r < 0.68 ? CreatureKind.Gulper
+                 : r < 0.82 ? CreatureKind.Brinespitter
+                 : CreatureKind.AlienCrab;
+        return r < 0.22 ? CreatureKind.AlienShark : CreatureKind.AlienCrab;
     }
 
     private static void TrySpawnCreature(Session run)
