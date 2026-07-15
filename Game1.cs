@@ -3762,17 +3762,11 @@ public sealed partial class DwarfMinerGame : Game
         dir.Normalize();
         var muzzle = _run.Player.Position + dir * 8f;
         var reach = StreamReach();
-        // A caustic rope of acid cells (they collide with tiles, so it runs down walls instead
-        // of through them). Reach grows the longer fire is held; spread matches the visible fan.
-        for (var i = 0; i < 3; i++)
-        {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.064f;
-            var c = MathF.Cos(spread);
-            var s = MathF.Sin(spread);
-            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 1.35f + (float)Random.Shared.NextDouble() * 22f),
-                Material.Acid);
-        }
+        // NO launched acid cells any more — same treatment as the flamethrower: the
+        // launched payload rode its own physics and read as streaks off the stream's
+        // arc. Every visible droplet stamps a real Acid cell where it lands
+        // (Particles.LandMat), which IS the corrosion mechanic; the near cone below
+        // sickens creatures directly.
         _particles.EmitAcidJet(muzzle, dir, reach, _run.Planet.UpAt(muzzle));
         foreach (var c in _run.Creatures)
         {

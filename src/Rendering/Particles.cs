@@ -1180,41 +1180,49 @@ public sealed class Particles
     /// shadows while it roars. Called every puff, so held fire reads as one continuous
     /// jet. (The burning FUEL is real Fire cells launched by Game1 — these are the glow
     /// around it.)</summary>
-    /// <summary>Gravity multiplier that gives a hose particle the SAME ballistic arc as the
-    /// flying fuel cells it rides with: cells pull ~450 px/s² toward the core (FlyGravity),
-    /// particles pull GravityStrength(200) × scale — so 2.25 matches, and the visible tongue
-    /// droops along exactly the trajectory the real fire/acid lands on.</summary>
+    /// <summary>The hose arc: 2.25 × GravityStrength(200) = the sim's FlyGravity (450
+    /// px/s²), so the stream droops exactly like flying cell matter does. The launched
+    /// payload cells are gone (the grains stamp their material on landing instead), but
+    /// the arc keeps matching the rest of the world's ballistics.</summary>
     private const float HoseArcGravity = 2.25f;
 
-    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
+    private static readonly Color[] FlameTones =
+        { new(255, 250, 200), new(255, 220, 110), new(255, 170, 60), new(255, 120, 35) };
+    private static readonly Color[] AcidTones =
+        { new(215, 255, 100), new(130, 225, 55), new(130, 225, 55), new(70, 150, 35) };
+
+    /// <summary>The shared hose-stream core: the flamethrower and the acid spewer are ONE
+    /// effect with different inks — COUPLED deliberately, so any stream-feel tuning here
+    /// (flow speed, cone, lives, de-pulse, outward cap, smear) lands on both weapons at
+    /// once. Equally deliberately DECOUPLED from everything else: the grains carry their
+    /// own SmearMax so the shared fast-particle smear can move without dragging the hoses
+    /// (and vice versa), and no other emitter may borrow these constants.
+    /// The grains ARE the weapon now (no launched payload cells — they could never share
+    /// the particle arc exactly): every grain stamps its material where it lands and
+    /// throws the touchdown spark splash. Lights ride the hot minority only.</summary>
+    private void EmitJetCore(Vector2 pos, Vector2 dir, float reach, Vector2 up,
+        Color[] tones, int hotTones, Color fade, Material landMat,
+        Color lightColor, float hotLight, float bodyLight, float drag)
     {
-        // Flow speed EXACTLY matches Game1's payload launch (reach*1.35): any gap between
-        // the two puts the landing fire beyond (or short of) the visible tongue tip — the
-        // "mismatch" read. Roughly half the original 2.6 spray speed; grain lives are
-        // sized so travel ≈ reach at every hold length.
+        // Flow speed reach*1.35 (~half the original spray); lives sized so travel spans
+        // the reach at every hold length.
         var jetSpeed = reach * 1.35f;
-        // Many TINY grains rather than a few fat blobs — the stream reads as granular burning
-        // fluid (Noita's pixel-fire) instead of soft puffballs. Grain colours pick from a
-        // FOUR-TONE fire ramp (white-yellow → gold → orange → red-orange) so the stream body
-        // is speckled with distinct inks like Noita's, rather than two flat colours; the
-        // stepped life-fade in Draw then cools each grain through hard palette jumps.
-        // Lights ride the hot minority only: 22 grains all shedding 30-60px light would
-        // swamp the lighting pass.
+        // Hose cone — tightened 40% per user (round 23).
+        const float coneArc = 0.041f;
+        // The hoses' PRIVATE smear cap: equals today's shared-default look (16 × 0.55px),
+        // frozen here so it's now hose-owned.
+        const float hoseSmear = 8.8f;
         for (var i = 0; i < 22; i++)
         {
-            // Tighter cone + narrower speed band than the old fan: grains stay bunched
-            // along the stream axis, so their motion-smears overlap into one rope.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.068f;
+            var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             var hot = i < 7;
-            var tone = hot ? _rng.Next(2) : _rng.Next(4);
+            var tone = tones[hot ? _rng.Next(hotTones) : _rng.Next(tones.Length)];
             var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
-            // Mirror the flying-cell FlyMaxOutward cap (170 px/s radially outward): the
-            // PAYLOAD cells obey it, so an uncapped glow out-raced them whenever the hose
-            // aimed skyward — the visible rope split from the landing fire (the recurring
-            // "yellow streaks that don't line up"). Same clamp = same arc at every angle.
+            // Outward (skyward) speed cap, kept from the payload era: without it a
+            // skyward stream rocketed unnaturally compared to every other flying thing.
             var outward = Vector2.Dot(vel, up);
             if (outward > 170f) vel -= up * (outward - 170f);
             // De-pulse: every grain starts with a random fraction of one puff interval
@@ -1225,39 +1233,29 @@ public sealed class Particles
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
                 Velocity = vel,
-                // Longer-lived (was 0.55-0.95): with the launched payload gone, the grains
-                // ARE the flame — they linger, droop with the arc, and burn out slowly.
                 Life = 0.8f + (float)_rng.NextDouble() * 0.55f - lead,
                 MaxLife = 1.35f,
-                Color = tone switch
-                {
-                    0 => new Color(255, 250, 200),
-                    1 => new Color(255, 220, 110),
-                    2 => new Color(255, 170, 60),
-                    _ => new Color(255, 120, 35),
-                },
-                FadeColor = new Color(120, 35, 15),
+                Color = tone,
+                FadeColor = fade,
                 Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
-                GravityScale = HoseArcGravity,   // same arc as the fuel cells
-                Drag = 1.2f,
+                GravityScale = HoseArcGravity,
+                Drag = drag,
                 CollideTiles = true,
-                LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
-                LightColor = new Color(255, 170, 70),
-                // Every flame grain that lands IS fire: it stamps a real Fire cell where
-                // it rests (StampAtWorld only fills open cells, the sim's fire budget
-                // throttles spread, and starved fire gutters ~0.8s — so the tongue's
-                // landing zone burns for real without becoming an arson machine).
-                LandMat = CellFx ? (byte)Material.Fire : (byte)0,
-                // Touchdown splash in the grain's own fire tone — the impact-spark
-                // effect on every landing flame, per user.
+                LightRadius = hot ? hotLight : i % 3 == 0 ? bodyLight : 0f,
+                LightColor = lightColor,
+                LandMat = CellFx ? (byte)landMat : (byte)0,
                 LandSparks = true,
+                SmearMax = hoseSmear,
             });
         }
-        // NO off-trajectory populations: the buoyant "lick" grains and the hose-shed
-        // cinders both flew arcs of their own (rising / ember-gravity-flat) and kept
-        // reading as stray yellow embers out of step with the stream — removed per user.
-        // Everything visible in the tongue now rides the SAME arc as the fuel cells, and
-        // "keeps burning where it lands" is covered by every grain's Fire stamp.
+    }
+
+    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
+    {
+        EmitJetCore(pos, dir, reach, up, FlameTones, hotTones: 2,
+            fade: new Color(120, 35, 15), landMat: Material.Fire,
+            lightColor: new Color(255, 170, 70), hotLight: 60f, bodyLight: 30f, drag: 1.2f);
+        var jetSpeed = reach * 1.35f;
         // Sooty flecks shed along the tongue — they inherit the arc, then buoy upward as they
         // cool (weak net gravity), so spent flame rolls off the stream like Noita's smoke.
         for (var i = 0; i < 6; i++)
@@ -1391,59 +1389,17 @@ public sealed class Particles
         }
     }
 
-    /// <summary>Acid spewer spray: caustic green droplets with a sickly glow. The corrosive
-    /// payload is real Acid cells launched by Game1 — this is the visible mist around it.</summary>
+    /// <summary>Acid spewer spray: the liquid twin of the flamethrower — same stream core
+    /// (see <see cref="EmitJetCore"/>), acid inks, and every droplet that lands stamps a
+    /// real Acid cell (the corrosion mechanic itself now; acid self-depletes as it eats,
+    /// which keeps the spray from melting the planet). Neon leading droplets, bright
+    /// body, occasional deep green — a liquid rope needs dark grains for depth.</summary>
     public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
     {
-        // Speed matches Game1's payload launch exactly — see EmitFlameJet.
+        EmitJetCore(pos, dir, reach, up, AcidTones, hotTones: 1,
+            fade: new Color(40, 90, 25), landMat: Material.Acid,
+            lightColor: new Color(150, 240, 80), hotLight: 16f, bodyLight: 7f, drag: 1.0f);
         var jetSpeed = reach * 1.35f;
-        // Many TINY droplets — a granular liquid rope, not fat green puffs. Lights on the
-        // bright leading droplets only (see EmitFlameJet).
-        for (var i = 0; i < 22; i++)
-        {
-            // Caustic rope — droplets COLLIDE with tiles and fall on the SAME arc as the acid
-            // cells, so the visible spray lands exactly where the corrosive payload pools.
-            // Tight cone: the motion-smears in Draw fuse bunched grains into one rope.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.064f;
-            var c = MathF.Cos(spread);
-            var s = MathF.Sin(spread);
-            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            // Three liquid inks like Noita's acid: neon highlight, bright body, and the
-            // occasional DEEP green — a liquid rope needs dark grains for depth, where
-            // fire wants none.
-            var tone = i < 7 ? 0 : _rng.Next(4);
-            var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
-            // Same FlyMaxOutward mirror as EmitFlameJet — glow and payload share one arc.
-            var outward = Vector2.Dot(vel, up);
-            if (outward > 170f) vel -= up * (outward - 170f);
-            // De-pulse — see EmitFlameJet: random emission-time head start interleaves puffs.
-            var lead = (float)_rng.NextDouble() * 0.06f;
-            _list.Add(new Particle
-            {
-                Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
-                Velocity = vel,
-                Life = 0.55f + (float)_rng.NextDouble() * 0.37f - lead,
-                MaxLife = 0.92f,
-                Color = tone switch
-                {
-                    0 => new Color(215, 255, 100),
-                    1 or 2 => new Color(130, 225, 55),
-                    _ => new Color(70, 150, 35),
-                },
-                FadeColor = new Color(40, 90, 25),
-                Size = i < 7 ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
-                GravityScale = HoseArcGravity,   // same arc as the acid cells
-                Drag = 1.0f,
-                CollideTiles = true,
-                LightRadius = i < 7 ? 16f : i % 3 == 0 ? 7f : 0f,
-                LightColor = new Color(150, 240, 80),
-                // Every droplet that lands IS acid: it stamps a real Acid cell where it
-                // rests, so the whole visible spray corrodes and pools — not just the 3
-                // launched payload cells. (Acid self-depletes as it eats — TryCorrode
-                // fizzes the cell to smoke — which keeps this from melting the planet.)
-                LandMat = CellFx ? (byte)Material.Acid : (byte)0,
-            });
-        }
         // A few caustic vapour wisps riding the rope FROM THE MUZZLE (never seeded
         // mid-air along the stream — that materialised droplets in space that fell like rain).
         for (var i = 0; i < 3; i++)
