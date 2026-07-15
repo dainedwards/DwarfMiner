@@ -717,14 +717,16 @@ public static class WorldGen
             // spires/umbrellas soar, and roughly one in six of any species is a GIANT (a big
             // height bonus) so the canopy line is ragged with the odd towering old-growth alien.
             var species = TreeSpeciesFor(def.Biome, rng);
+            // Terraria proportions: a LONG straight bole under the crown — even the short
+            // species stand well over head height, and spires genuinely tower.
             var trunkH = species switch
             {
-                0 => 12 + rng.Next(10),  // spire   — the tallest, a thin plume on top
-                2 => 11 + rng.Next(8),   // umbrella — long bare bole under a flat cap
-                3 => 9 + rng.Next(7),    // weeping  — tall, draping crown
-                _ => 7 + rng.Next(6),    // broad    — shortest, still a proper trunk
+                0 => 16 + rng.Next(12),  // spire   — the tallest, a thin plume on top
+                2 => 14 + rng.Next(10),  // umbrella — long bare bole under a flat cap
+                3 => 12 + rng.Next(8),   // weeping  — tall, draping crown
+                _ => 10 + rng.Next(7),   // broad    — shortest, still a proper trunk
             };
-            if (rng.Next(6) == 0) trunkH += 8 + rng.Next(10);   // the occasional giant
+            if (rng.Next(6) == 0) trunkH += 10 + rng.Next(12);  // the occasional giant
             // Keep the crown (up to ~5 rings of canopy) inside the sky.
             trunkH = Math.Min(trunkH, planet.Rings - 6 - groundR);
             if (trunkH < 4) continue;
