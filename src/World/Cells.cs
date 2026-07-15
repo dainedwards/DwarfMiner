@@ -2017,7 +2017,12 @@ public sealed class Cells
     /// <summary>Water cell count within a world-space radius — the immersion probe behind
     /// swimming (player and creatures) and the breath meter. Same polar row/col walk as
     /// <see cref="SampleHazardsNear"/>, counting only water.</summary>
-    public int CountWaterNear(Vector2 worldPos, float radius)
+    public int CountWaterNear(Vector2 worldPos, float radius) =>
+        CountNear(worldPos, radius, Material.Water);
+
+    /// <summary>Cells of the given material within a world-space radius — the water counter
+    /// generalised (creature status probes need oil too).</summary>
+    public int CountNear(Vector2 worldPos, float radius, Material what)
     {
         var rSq = radius * radius;
         var (_, cy0) = WorldToCell(worldPos);
@@ -2026,7 +2031,7 @@ public sealed class Cells
         var rel = worldPos - Planet.Center;
         var ang = MathF.Atan2(rel.Y, rel.X);
         if (ang < 0) ang += MathHelper.TwoPi;
-        var water = 0;
+        var count = 0;
         for (var dy = -rRows; dy <= rRows; dy++)
         {
             var cy = cy0 + dy;
@@ -2038,12 +2043,91 @@ public sealed class Cells
             var cx0 = (int)(ang / MathHelper.TwoPi * n);
             for (var dx = -rCols; dx <= rCols; dx++)
             {
-                if ((Material)_mat[Idx(cx0 + dx, cy)] != Material.Water) continue;
+                if ((Material)_mat[Idx(cx0 + dx, cy)] != what) continue;
                 if (Vector2.DistanceSquared(CellToWorld(cx0 + dx, cy), worldPos) > rSq) continue;
-                water++;
+                count++;
             }
         }
-        return water;
+        return count;
+    }
+
+    // --- Lightning conduction: a strike into a pool flashes through every connected water
+    // cell. The zapped set is transient (draw tint + the "am I in the electrified pool"
+    // damage test) and expires in a fraction of a second; nothing is serialized.
+    private readonly HashSet<int> _zapped = new();
+    private float _zapUntil;
+
+    /// <summary>Conduct a lightning strike through the body of water at (or just beside)
+    /// <paramref name="worldPos"/>: flood-fills connected water cells (bounded by
+    /// <paramref name="maxCells"/>), flash-tints them for a beat, and returns a few world
+    /// positions scattered across the pool for arc/light effects. Empty list = no water at
+    /// the strike point, nothing conducted.</summary>
+    public List<Vector2> ZapWater(Vector2 worldPos, int maxCells = 700)
+    {
+        var hits = new List<Vector2>();
+        var (sx, sy) = WorldToCell(worldPos);
+        var startX = -1; var startY = -1;
+        for (var dy = -2; dy <= 2 && startX < 0; dy++)
+        {
+            var cy = sy + dy;
+            if (cy < 0 || cy >= Height) continue;
+            for (var dx = -2; dx <= 2; dx++)
+                if ((Material)_mat[Idx(sx + dx, cy)] == Material.Water)
+                {
+                    startX = WrapX(sx + dx, _cellsAt[cy]);
+                    startY = cy;
+                    break;
+                }
+        }
+        if (startX < 0) return hits;
+
+        _zapped.Clear();
+        _zapUntil = _time + 0.22f;
+        var queue = new Queue<(int cx, int cy)>();
+        void Visit(int cx, int cy)
+        {
+            if (cy < 0 || cy >= Height || _zapped.Count >= maxCells) return;
+            var i = Idx(cx, cy);
+            if ((Material)_mat[i] != Material.Water || !_zapped.Add(i)) return;
+            queue.Enqueue((WrapX(cx, _cellsAt[cy]), cy));
+        }
+        Visit(startX, startY);
+        var visited = 0;
+        while (queue.Count > 0)
+        {
+            var (cx, cy) = queue.Dequeue();
+            if (visited++ % 90 == 0) hits.Add(CellToWorld(cx, cy));
+            Visit(cx + 1, cy);
+            Visit(cx - 1, cy);
+            var (icx, icy) = InnerCell(cx, cy);
+            Visit(icx, icy);
+            if (cy < Height - 1)
+            {
+                var oc = OuterCellCount(cx, cy);
+                for (var w = 0; w < oc; w++)
+                {
+                    var (ocx, ocy) = OuterCell(cx, cy, w);
+                    Visit(ocx, ocy);
+                }
+            }
+        }
+        return hits;
+    }
+
+    /// <summary>Whether a world position sits in (or right beside) water the current
+    /// <see cref="ZapWater"/> flash is conducting through — the submerged-damage test.</summary>
+    public bool ZappedAt(Vector2 worldPos)
+    {
+        if (_time >= _zapUntil || _zapped.Count == 0) return false;
+        var (cx, cy) = WorldToCell(worldPos);
+        for (var dy = -2; dy <= 2; dy++)
+        {
+            var y = cy + dy;
+            if (y < 0 || y >= Height) continue;
+            for (var dx = -2; dx <= 2; dx++)
+                if (_zapped.Contains(Idx(cx + dx, y))) return true;
+        }
+        return false;
     }
 
     /// <summary>Flash-burn any gas cells within a small world-space radius (Godzilla's breath
