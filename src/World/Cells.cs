@@ -119,6 +119,13 @@ public sealed class Cells
     /// so an ejected grain falls exactly like a grid grain.</summary>
     private const float FlyGravity = GravityCells * PxPerCell;
     private const float FlyMaxSpeed = 520f;
+    /// <summary>Hard cap on the OUTWARD (away-from-core) speed of a flying cell. FlyMaxSpeed
+    /// alone let ejecta rocket ~75 tiles straight up under FlyGravity and hang near its apex
+    /// for the better part of a second — a lone 1-px grain drawn floating in the sky, always
+    /// on the side the player fired/dug. Capping just the radial-outward component keeps spray
+    /// arcing a lively ~8 tiles while making a space-escape impossible; lateral spread and the
+    /// inward fall are untouched. See <see cref="UpdateFlying"/>.</summary>
+    private const float FlyMaxOutward = 170f;
     /// <summary>Safety net: a cell that somehow never lands banks itself after this long.</summary>
     private const float FlyMaxAge = 6f;
     /// <summary>Flying cells currently airborne — diagnostics/perf only.</summary>
