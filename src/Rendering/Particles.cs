@@ -715,7 +715,14 @@ public sealed class Particles
     public void EmitRain(Vector2 pos, Vector2 down, Color color)
     {
         var jitter = new Vector2(-down.Y, down.X) * (((float)_rng.NextDouble() - 0.5f) * 12f);
-        var speed = 140f + (float)_rng.NextDouble() * 90f;
+        // Depth layer, rolled once per streamlet: 0 = far background, 1 = close foreground.
+        // The world is flat so this is pure illusion — far drops are thinner (size scales
+        // BELOW the 0.55px pixel cap; big is banned), fainter, slower, and shorter-smeared;
+        // near drops full-ink, quick, and long. A shower then reads as a volume of rain
+        // around the dwarf instead of one curtain at glass distance.
+        var depth = (float)_rng.NextDouble();
+        var speed = (140f + (float)_rng.NextDouble() * 90f) * (0.75f + depth * 0.4f);
+        var ink = 0.82f * (0.55f + depth * 0.45f);
         for (var i = 0; i < 3; i++)
         {
             var head = i == 0;
@@ -725,18 +732,18 @@ public sealed class Particles
                 Velocity = down * (speed * (head ? 1f : 0.94f - i * 0.04f)) + jitter,
                 Life = 1.0f + (float)_rng.NextDouble() * 0.6f,
                 MaxLife = 1.6f,
-                // Soft-toned but a touch more present: the head's white lift dropped
-                // (0.35→0.18, less glinting wire) while overall ink rose (0.72→0.82 —
-                // premultiplied Color* scales alpha too), per user tuning.
-                Color = (head ? Color.Lerp(color, Color.White, 0.18f) : color) * 0.82f,
+                // Soft-toned but present: the head's white lift dropped (0.35→0.18, less
+                // glinting wire) while overall ink rose (0.72→0.82 — premultiplied Color*
+                // scales alpha too), per user tuning; depth then fades the far layers.
+                Color = (head ? Color.Lerp(color, Color.White, 0.18f) : color) * ink,
                 FadeColor = color * 0.3f,
-                Size = head ? 0.55f : 0.45f,
-                GravityScale = 1.1f,
+                Size = (head ? 0.55f : 0.45f) * (0.6f + depth * 0.4f),
+                GravityScale = 1.1f * (0.8f + depth * 0.3f),
                 Drag = 0.02f,
                 CollideTiles = true,
                 // Rain's own streak length, decoupled from the hose smear tuning
-                // (was pinned 3.3 — lengthened to 6 per user).
-                SmearMax = 6f,
+                // (was pinned 3.3 — lengthened to 6 per user); far drops streak shorter.
+                SmearMax = 3.5f + depth * 3.5f,
             });
         }
     }
