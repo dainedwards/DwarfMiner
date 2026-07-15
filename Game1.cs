@@ -2947,6 +2947,54 @@ public sealed partial class DwarfMinerGame : Game
     /// small ring around the player, so standing in a doorway and mashing E always works.
     /// Both leaves of a two-tall door toggle together (doors place/generate as vertical
     /// pairs) — half-open doors read as broken, not ajar.</summary>
+    /// <summary>E at a warren treasure chest: loot it for a pile of gold and a good shot at a
+    /// rare gem, then leave the lid thrown back. Scans a short radius around the dwarf so you
+    /// just walk up and press E. Returns true if a chest was opened (so E doesn't also cycle
+    /// weapons that frame).</summary>
+    private bool TryOpenChest()
+    {
+        var planet = _run.Planet;
+        var pos = _run.Player.Position;
+        for (var a = 0; a < 12; a++)
+        {
+            var off = new Vector2(MathF.Cos(a * MathF.Tau / 12f), MathF.Sin(a * MathF.Tau / 12f));
+            for (var d = 0f; d <= 22f; d += 4f)
+            {
+                var (tx, ty) = planet.WorldToTile(pos + off * d);
+                if (tx < 0 || tx >= planet.Rings) continue;
+                if (planet.Get(tx, ty) != TileKind.Chest) continue;
+                OpenChest(tx, ty);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void OpenChest(int tx, int ty)
+    {
+        var planet = _run.Planet;
+        planet.Set(tx, ty, TileKind.ChestOpen);
+        var at = planet.TileToWorld(tx, ty);
+
+        // A hoard of gold, plus a strong chance of a rare gem — the warren vault pays out.
+        var gold = 10 + Random.Shared.Next(12);
+        _run.Player.Inventory.Add("gold", gold);
+        var roll = Random.Shared.NextDouble();
+        var (bonusId, bonusN) =
+              roll < 0.28 ? ("diamond", 1)
+            : roll < 0.52 ? ("ruby", 1 + Random.Shared.Next(2))
+            : roll < 0.74 ? ("sapphire", 1 + Random.Shared.Next(2))
+            : roll < 0.90 ? ("emerald", 1)
+            : ("silver", 4 + Random.Shared.Next(6));
+        _run.Player.Inventory.Add(bonusId, bonusN);
+
+        _sfx.Play("pickup", 0.9f);
+        _particles.EmitDust(at, 12f);
+        _renderer.AddLight(at, 26f, new Color(255, 220, 120));
+        _toast = $"CHEST LOOTED: +{gold} GOLD, +{bonusN} {Tiles.ResourceLabel(bonusId)}";
+        _toastTimer = 3f;
+    }
+
     private bool TryToggleDoor(Vector2 worldCursor)
     {
         bool TryAt(Vector2 at)
