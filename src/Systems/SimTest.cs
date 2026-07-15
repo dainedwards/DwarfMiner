@@ -2399,8 +2399,8 @@ public static class SimTest
             var slow = new Player(poolCentre) { InWater = true };
             for (var i = 0; i < 45; i++)
             {
-                finned.Update(dt, planet, +1, false, false);
-                slow.Update(dt, planet, +1, false, false);
+                finned.Update(dt, planet, +1, false);
+                slow.Update(dt, planet, +1, false);
             }
             var upF = planet.UpAt(poolCentre);
             var rF = new Vector2(-upF.Y, upF.X);
