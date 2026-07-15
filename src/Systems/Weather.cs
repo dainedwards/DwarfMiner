@@ -186,9 +186,10 @@ public static class Weather
             RainKind.Snow => new Color(235, 244, 255),
             _             => new Color(120, 170, 235),
         };
-        // A few flakes/drops per tick, scattered across the band, falling from the cloud. Snow
-        // drifts down slow and fluffy; everything else streaks.
-        for (var i = 0; i < 5; i++)
+        // Plenty of small flakes/drops per tick, scattered across the band, falling from the
+        // cloud. Snow drifts down slow and fluffy; everything else streaks. (Drops shrank to
+        // ~1px in the Noita-grain pass, so the count carries the "raining hard" read.)
+        for (var i = 0; i < 9; i++)
         {
             var ang = c.Angle + ((float)rng.NextDouble() - 0.5f) * 2f * c.HalfWidth;
             var ground = SpawnDirector.FindSurfaceSpawn(planet, ang, planet.Radius);
