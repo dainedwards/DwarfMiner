@@ -816,6 +816,57 @@ public sealed class Renderer
                             Color.Lerp(petal, core, tw));
                         break;
                     }
+                    case TileKind.TreeTrunk:
+                    {
+                        // Alien bark: a mauve trunk with darker grain streaks and a paler
+                        // sun-side highlight, filling the tile so a column reads as a solid bole.
+                        var bark = new Color(96, 70, 92);
+                        var barkDk = new Color(66, 48, 66);
+                        var barkHi = new Color(128, 96, 124);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 6, 8, bark);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 1, 8, barkHi);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 0, 1, 8, barkDk);
+                        DrawDeco(centre, right, up, rotation, chord, 6, 0, 1, 8, barkDk);
+                        break;
+                    }
+                    case TileKind.TreeCanopy:
+                    case TileKind.TreeCanopy2:
+                    {
+                        // Leafy alien foliage — a soft blob of two-tone leaves swaying on the
+                        // clock. Teal or violet depending on the canopy variant.
+                        var teal = k == TileKind.TreeCanopy;
+                        var leaf = teal ? new Color(78, 150, 130) : new Color(150, 120, 190);
+                        var leafDk = teal ? new Color(52, 110, 96) : new Color(112, 86, 150);
+                        var leafHi = teal ? new Color(120, 200, 170) : new Color(196, 168, 228);
+                        var sway = (int)(MathF.Sin(Time * 1.3f + (hash & 63) * 0.1f) * 1.2f);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 1, 8, 6, leaf);
+                        DrawDeco(centre, right, up, rotation, chord, 1 + sway, 0, 6, 2, leafHi);
+                        for (var i = 0; i < 5; i++)
+                        {
+                            var hh = ((i * 2654435761u) ^ (uint)hash) & 63;
+                            var lx = (int)(hh % 7);
+                            var ly = (int)((hh >> 3) % 6) + 1;
+                            DrawDeco(centre, right, up, rotation, chord, lx, ly, 1, 1,
+                                (hh & 1) == 0 ? leafDk : leafHi);
+                        }
+                        break;
+                    }
+                    case TileKind.SeaFrond:
+                    {
+                        // Water plant: a rooted stem with a few fronds waving in the current.
+                        var stem = new Color(60, 130, 110);
+                        var frond = new Color(84, 176, 150);
+                        var wave = MathF.Sin(Time * 1.8f + (hash & 63) * 0.12f);
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 3, 1, 5, stem);
+                        for (var i = 0; i < 3; i++)
+                        {
+                            var fx = 3.5f + (i - 1) * 1.6f + wave * (i - 1) * 0.8f;
+                            DrawDeco(centre, right, up, rotation, chord, fx, 1, 1, 3, frond);
+                            DrawDeco(centre, right, up, rotation, chord, fx, 0.5f, 1, 1,
+                                new Color(140, 220, 190));
+                        }
+                        break;
+                    }
                     case TileKind.Brick:
                     {
                         // Tidy running-bond masonry: mortar grid over a warm stone body, the
