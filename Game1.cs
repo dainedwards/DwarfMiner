@@ -4809,6 +4809,8 @@ public sealed partial class DwarfMinerGame : Game
 
     protected override void Draw(GameTime gameTime)
     {
+        if (_updatesSinceDraw > _updatesPerDrawMax) _updatesPerDrawMax = _updatesSinceDraw;
+        _updatesSinceDraw = 0;
         _drawSw.Restart();
         // Everything renders into the fixed virtual-resolution scene target, then scales
         // to the real window in one letterboxed blit — resolution independence without a
