@@ -32,6 +32,10 @@ public struct Particle
     /// instead of a light that fades. Cleared after stamping (a resting particle may live
     /// on visually but only hands off once).</summary>
     public byte LandMat;
+    /// <summary>Per-particle cap on the motion-smear length (world px); 0 = the shared
+    /// default (16× grain size). Rain pins this to its own short streak so hose smear
+    /// tuning stops dragging the weather along with it.</summary>
+    public float SmearMax;
 }
 
 /// <summary>
