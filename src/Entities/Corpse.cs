@@ -104,6 +104,11 @@ public sealed class Corpse
         CreatureKind.AlienShark   => new[] { ("meat", 3), ("hide", 2) },
         CreatureKind.Gulper       => new[] { ("meat", 4), ("hide", 1) },
         CreatureKind.Brinespitter => new[] { ("chitin", 1), ("meat", 2) },
+        // Deep-cave horrors: quill chitin off the flyer, a shard of the wisp's warped core,
+        // a heap of spine-chitin off the beetle.
+        CreatureKind.Quillwing    => new[] { ("chitin", 1), ("meat", 1) },
+        CreatureKind.Warpwisp     => new[] { ("crystal", 1) },
+        CreatureKind.Thornback    => new[] { ("chitin", 2) },
         _                         => new[] { ("meat", 1) },
     };
 
