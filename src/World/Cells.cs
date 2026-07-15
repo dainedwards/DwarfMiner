@@ -606,6 +606,113 @@ public sealed class Cells
     public readonly List<(Vector2 Pos, byte Fuse)> PendingFlames = new();
     private const int MaxPendingFlames = 200;
 
+    /// <summary>Queue a licking-flame site (cap-guarded) — for external emitters like
+    /// tumbling burning rigid bodies.</summary>
+    public void QueueFlame(Vector2 pos, byte fuse = 80)
+    {
+        if (PendingFlames.Count < MaxPendingFlames) PendingFlames.Add((pos, fuse));
+    }
+
+    // ── BURNING TILES: a first-class tile lifecycle (ignite → blaze → char out) ──
+    // The emergent cell-fire approach could never hold the arc "engulf fast, stand fully
+    // ablaze, then burn out" — spread, persistence and consumption were all side-effects
+    // of probabilistic cell mechanics fighting over shared budgets (see the compaction
+    // sweep for the same lesson at tile scale). Burning is now a STATE: ignition adds a
+    // flammable tile to this registry; after BurnSpreadDelay it ignites its 8 neighbours
+    // (a deterministic wavefront over the real fuel graph — no missed corners); each tile
+    // blazes for a fixed hash-stable 4-7 s (emitting licks + occasional hazard flame
+    // cells), then chars to sky. Engulfment (~1.5 s for a small tree) is therefore always
+    // far ahead of burn-through, BY CONSTRUCTION. Cell fire remains the transient/hazard
+    // layer (liquids, gas fronts, embers). Not serialized — a save mid-blaze drops the
+    // burn state, same policy as flying cells.
+    public readonly Dictionary<(int tx, int ty), float> BurningTiles = new();
+    private readonly List<((int tx, int ty) Key, float Clock)> _burnScratch = new();
+    private const int MaxBurningTiles = 400;   // planet-wide cap = the fire-storm guard
+    private const float BurnSpreadDelay = 0.25f;
+    private const float BurnDurMin = 4f, BurnDurVar = 3f;
+
+    /// <summary>Set a flammable tile alight (idempotent; cap-guarded). <paramref
+    /// name="clock"/> resumes a burn — a burning chunk that fell as a rigid body
+    /// re-ignites where it lands with its elapsed burn intact.</summary>
+    public void IgniteTile(int tx, int ty, float clock = 0f)
+    {
+        if (tx < 0 || tx >= Planet.Rings) return;
+        var n = Planet.TilesAt(tx);
+        ty = ((ty % n) + n) % n;
+        if (!IsFlammable(Planet.Get(tx, ty))) return;
+        if (BurningTiles.Count >= MaxBurningTiles) return;
+        if (!BurningTiles.ContainsKey((tx, ty))) BurningTiles[(tx, ty)] = clock;
+    }
+
+    /// <summary>Remove-and-return a tile's burn state — RigidBodies calls this when it
+    /// lifts tiles out of the grid, so fire PERSISTS on a chunk that detaches and falls,
+    /// resuming via <see cref="IgniteTile"/> when the body re-stamps.</summary>
+    public bool StealBurning(int tx, int ty, out float clock)
+    {
+        var n = Planet.TilesAt(tx);
+        var key = (tx, ((ty % n) + n) % n);
+        if (BurningTiles.TryGetValue(key, out clock))
+        {
+            BurningTiles.Remove(key);
+            return true;
+        }
+        return false;
+    }
+
+    private void TickBurningTiles(float dt)
+    {
+        if (BurningTiles.Count == 0) return;
+        _burnScratch.Clear();
+        foreach (var kv in BurningTiles) _burnScratch.Add((kv.Key, kv.Value));
+        foreach (var ((tx, ty), clock) in _burnScratch)
+        {
+            var k = Planet.Get(tx, ty);
+            if (!IsFlammable(k))   // mined, detached, melted away — self-heal
+            {
+                BurningTiles.Remove((tx, ty));
+                continue;
+            }
+            var nc = clock + dt;
+            var h = (uint)((tx * 73856093) ^ (ty * 19349663));
+            var dur = BurnDurMin + (h & 1023) / 1023f * BurnDurVar;
+            // Blaze visuals + hazard: licking flames off the tile, and the odd REAL fire
+            // cell in adjacent open space (creature burn, oil/gas ignition and quenching
+            // keep working through the normal cell rules).
+            if (_rng.Next(5) == 0) QueueFlame(Planet.TileToWorld(tx, ty));
+            if (_rng.Next(30) == 0)
+            {
+                var d4 = _rng.Next(4);
+                var (ax, ay) = d4 switch
+                {
+                    0 => (tx + 1, ty), 1 => (tx - 1, ty), 2 => (tx, ty + 1), _ => (tx, ty - 1),
+                };
+                if (ax >= 0 && ax < Planet.Rings && Planet.Get(ax, ay) == TileKind.Sky)
+                    SpawnInTile(ax, ay, Material.Fire, 1);
+            }
+            // Spread: one deterministic wavefront step over the fuel graph, diagonals
+            // included, the moment this tile has been alight past the delay.
+            if (clock < BurnSpreadDelay && nc >= BurnSpreadDelay)
+                for (var dr = -1; dr <= 1; dr++)
+                    for (var da = -1; da <= 1; da++)
+                    {
+                        if (dr == 0 && da == 0) continue;
+                        IgniteTile(tx + dr, ty + da);
+                    }
+            // Burn out: the tile gives way in a last gout of flame and smoke.
+            if (nc >= dur)
+            {
+                BurningTiles.Remove((tx, ty));
+                Planet.TakeGem(tx, ty);
+                Planet.Set(tx, ty, TileKind.Sky);
+                SpawnInTile(tx, ty, Material.Fire, Density / 2);
+                SpawnInTile(tx, ty, Material.Smoke, Density / 2);
+                ShedBurningLeaves(tx, ty, k);
+                continue;
+            }
+            BurningTiles[(tx, ty)] = nc;
+        }
+    }
+
     /// <summary>Spawn dust cells filling the whole polar tile, tagged with the source TileKind
     /// so the cells render in that tile's colours and pay out that tile's drop on pickup.
     /// Deterministic count (DustCellsPerTile = Density²) so the debris occupies exactly the
