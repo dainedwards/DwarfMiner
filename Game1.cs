@@ -2661,8 +2661,8 @@ public sealed partial class DwarfMinerGame : Game
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
         _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 220, 110));
-        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 420f, 6f, 1.4f, ProjectileKind.Bullet));
-        _run.Player.ShootCooldown = 0.18f;
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 300f, 6f, 1.4f, ProjectileKind.Bullet));
+        _run.Player.ShootCooldown = 0.26f;
     }
 
     /// <summary>Pistol: the crafted sidearm — twice the bullet's punch at half the cadence.</summary>
