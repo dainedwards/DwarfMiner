@@ -564,9 +564,11 @@ public static class SimTest
         }
     }
 
+    // Must match RunSave.SavePath — the ACTIVE save slot's run.sav, not a flat top-level
+    // file. (When a slot save exists, RunSave.Exists reads the slot while a flat path here
+    // would throw FileNotFound and crash the whole suite.)
     private static string RunSavePath() => System.IO.Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "DwarfMiner", "run.sav");
+        SaveSlots.Dir(SaveSlots.Active), "run.sav");
 
     /// <summary>Boss variants: the egg hatches on both its timer and enough damage, and each
     /// kind's signature attack fires when aggroed near the player (fire/laser shots, Sandworm
