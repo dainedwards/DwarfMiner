@@ -574,18 +574,23 @@ public sealed partial class DwarfMinerGame : Game
         // now. Water is always sim cells (never solid tiles), so it settles, flows into player
         // tunnels, and quenches lava per the cell rules.
         foreach (var (wsx, wsy) in run.Planet.WaterSeeds)
-            run.Cells.FillTile(wsx, wsy, Material.Water);
+            run.Cells.FillTileSilent(wsx, wsy, Material.Water);
 
         // Hazard cells: gas rises to the cave roofs, acid settles to the floors. Poured after
         // water so the pre-settle below carries them to rest alongside it.
         foreach (var (gx, gy) in run.Planet.GasSeeds)
-            run.Cells.FillTile(gx, gy, Material.Gas);
+            run.Cells.FillTileSilent(gx, gy, Material.Gas);
         foreach (var (ax, ay) in run.Planet.AcidSeeds)
-            run.Cells.FillTile(ax, ay, Material.Acid);
+            run.Cells.FillTileSilent(ax, ay, Material.Acid);
         // Oil sumps: inert black pools in the mid-crust caves — dead weight until a stray
         // flame, a lava tongue, or a careless explosion finds them.
         foreach (var (ox, oy) in run.Planet.OilSeeds)
-            run.Cells.FillTile(ox, oy, Material.Oil);
+            run.Cells.FillTileSilent(ox, oy, Material.Oil);
+        // One boundary-wake pass for everything seeded silently above: only free surfaces
+        // start awake (a lake's skin, a gas pocket's roof); hemmed interiors are born
+        // asleep — which is their steady state anyway — instead of parading millions of
+        // cells through the first sim ticks. See Cells.WakeFreeSurfaces.
+        run.Cells.WakeFreeSurfaces(0, run.Cells.Height - 1);
 
         // The planet-wide population census (creatures + spawners) also runs on the build
         // thread: its spawn-space carving marks physics dirty at ~85 sites across the
