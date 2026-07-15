@@ -3321,7 +3321,7 @@ public sealed partial class DwarfMinerGame : Game
 
     /// <summary>The grapple line as a hard length constraint on the player: swing inside it,
     /// never stretch past it. Hold LMB (with the hook selected) to reel in, S to pay line
-    /// out, W to cut it. A line latched to the titan rides its hide — the boarding route —
+    /// out, Space to cut it. A line latched to the titan rides its hide — the boarding route —
     /// and counts as clinging for the monster's shake-off patience.</summary>
     private void TickGrapple(float dt, KeyboardState keys, MouseState mouse)
     {
