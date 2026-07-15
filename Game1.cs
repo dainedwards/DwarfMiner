@@ -6590,9 +6590,12 @@ public sealed partial class DwarfMinerGame : Game
         // Glowing particles (ore flecks, projectile sparks, explosion embers) feed back into
         // the lightmap so they actually illuminate the cave wall behind them.
         _particles.AddLights(_renderer);
-        // Lava cells along their pool surface light up the cave roof (view-culled).
-        // Same Density-aware stride as the cell draw above.
-        _run.Cells.AddLights(_renderer, viewCentre, viewRadius, cellStride);
+        // Lava cells along their pool surface light up the cave roof (view-culled). Floor
+        // of 2 on the seeding stride even in close play: this pass re-scans the same cell
+        // candidates as the draw, but light seeds combine by MAX into 4-px light cells —
+        // every-2nd-cell seeding is visually identical and halves the second scan on both
+        // axes (the draw + seed scans together were ~half the descent frame cost).
+        _run.Cells.AddLights(_renderer, viewCentre, viewRadius, Math.Max(cellStride, 2));
 
         // Propagate the seeded grid, rasterize it into the lightmap, and cut the hero
         // lights' ray-cast shadow fans over it. Depth darkness is emergent now: rock
