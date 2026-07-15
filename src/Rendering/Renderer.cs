@@ -1120,33 +1120,36 @@ public sealed class Renderer
                 if (dmg > 0)
                 {
                     var cc = Color.White * MathHelper.Min(0.4f + dmg / 500f, 0.75f);
+                    // Walk coords are in DrawDeco's 8×8 reference grid (this used to be
+                    // authored in 4-wide tile units against the old mis-scaled DrawDeco;
+                    // doubled when DrawDeco was fixed so the cracks keep their size).
                     (float x, float y) Walk(int seed, float x, float y, int dirX, int dirY, int steps)
                     {
                         for (var s = 0; s < steps; s++)
                         {
                             var bits = seed >> (s & 15);
-                            var len = 0.4f + (bits & 3) * 0.15f;
+                            var len = 0.8f + (bits & 3) * 0.3f;
                             if (((s + ((bits >> 2) & 1)) & 1) == 0)
                             {
                                 var nx = x + dirX * len;
-                                if (nx < 0.1f || nx > Planet.TileSize - 0.4f) { dirX = -dirX; nx = x + dirX * len; }
+                                if (nx < 0.2f || nx > DecoGrid - 0.8f) { dirX = -dirX; nx = x + dirX * len; }
                                 DrawDeco(centre, right, up, rotation, chord,
-                                    MathF.Min(x, nx), y, MathF.Abs(nx - x), 0.3f, cc);
+                                    MathF.Min(x, nx), y, MathF.Abs(nx - x), 0.6f, cc);
                                 x = nx;
                             }
                             else
                             {
                                 var ny = y + dirY * len;
-                                if (ny < 0.1f || ny > Planet.TileSize - 0.4f) { dirY = -dirY; ny = y + dirY * len; }
+                                if (ny < 0.2f || ny > DecoGrid - 0.8f) { dirY = -dirY; ny = y + dirY * len; }
                                 DrawDeco(centre, right, up, rotation, chord,
-                                    x, MathF.Min(y, ny), 0.3f, MathF.Abs(ny - y), cc);
+                                    x, MathF.Min(y, ny), 0.6f, MathF.Abs(ny - y), cc);
                                 y = ny;
                             }
                         }
                         return (x, y);
                     }
-                    var sx = 1.4f + ((hash >> 2) & 3) * 0.3f;
-                    var sy = 1.4f + ((hash >> 4) & 3) * 0.3f;
+                    var sx = 2.8f + ((hash >> 2) & 3) * 0.6f;
+                    var sy = 2.8f + ((hash >> 4) & 3) * 0.6f;
                     var dx = ((hash >> 6) & 1) != 0 ? 1 : -1;
                     var dy = ((hash >> 7) & 1) != 0 ? 1 : -1;
                     // Main fracture: a nick on the first hit, edge to edge near breaking.
