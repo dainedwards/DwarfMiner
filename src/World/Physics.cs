@@ -293,13 +293,14 @@ public sealed class Physics
             if (_anchorStamp[idx] == _anchorGen) continue;
             if (IsRegionAnchored(x, y)) continue;
 
-            // Cave-ins are QUAKE-driven: an undercut UNDERGROUND region (it touches the
-            // crust, so the backdrop wall visibly holds it) stays standing however much
-            // the player mines out from under it — only the planet actually shaking
-            // brings it down (see Earthquake). Fully airborne regions — a severed tower,
-            // an undercut mountain peak — still fall the moment they're cut: there is
-            // nothing behind those, and the topple set-pieces depend on it.
-            if (_regionTouchesCrust && !QuakeShaking)
+            // Wholesale underground cave-ins are GONE: an undercut region that touches
+            // the crust (the backdrop wall visibly holds it) never condemns — not when
+            // the player mines it out, and not during quakes either. Earthquakes shake a
+            // few discrete chunks out of cave roofs instead (see ShakeLooseBlob), sized
+            // so single blocks are common and real slabs rare. Fully airborne regions —
+            // a severed tower, an undercut mountain peak — still fall the moment they're
+            // cut: there is nothing behind those, and the topple set-pieces depend on it.
+            if (_regionTouchesCrust)
             {
                 foreach (var v in _floodVisitList) _anchorStamp[v] = _anchorGen;
                 continue;
