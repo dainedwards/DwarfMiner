@@ -131,6 +131,23 @@ public static class TileAtlas
         }
     }
 
+    /// <summary>Terraria-style corner slopes: on by default; set DM_SLOPES=0 to fall back to
+    /// the old flat-corner chamfer for an A/B comparison against the boxy silhouette.</summary>
+    private static readonly bool _slopes =
+        Environment.GetEnvironmentVariable("DM_SLOPES") != "0";
+
+    /// <summary>Corner cut depth for the diagonal at one corner of the tile. A clean convex
+    /// corner (mask == the two wanted edge bits, nothing else open) cuts the whole corner to a
+    /// 45° slope; a busier corner that merely *contains* those two bits keeps a small ~3 px
+    /// chamfer; anything else leaves the corner square.</summary>
+    private static int Corner(int mask, int wanted, int seed, int idx)
+    {
+        var m = mask & 15;
+        if (_slopes && m == wanted) return Res - 1;              // clean corner → full 45° slope
+        if ((m & wanted) == wanted) return 2 + EdgeDepth(seed, 4, idx); // busy corner → chamfer
+        return 0;                                                // not a corner
+    }
+
     /// <summary>Ragged erosion depth for one position along one edge: 0 half the time,
     /// 1 a third, 2 the rest — hash-stable so the same tile always erodes the same way.</summary>
     private static int EdgeDepth(int seed, int edge, int i)
