@@ -81,7 +81,6 @@ public sealed class Projectile
     /// Charges are burned per wall *entered* (air→solid transition), not per frame.</summary>
     private bool _inWall;
     private int _bounces;      // timed explosives: damped hops taken so far
-    private bool _stuck;       // TntPack: cemented to a wall — fuse burns in place
 
     /// <summary>How many more creature hits this projectile can take before it dies. -1 means
     /// "never dies on creature hit" (used by AoE explosions whose damage is dealt at impact).
