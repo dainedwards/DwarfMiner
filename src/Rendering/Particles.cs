@@ -610,7 +610,7 @@ public sealed class Particles
             MaxLife = 1.6f,
             Color = color,
             FadeColor = color * 0.4f,
-            Size = 1.4f + (float)_rng.NextDouble() * 1.1f,
+            Size = 1f + (float)_rng.NextDouble() * 0.4f,
             GravityScale = 1.1f,
             Drag = 0.02f,
             CollideTiles = true,
