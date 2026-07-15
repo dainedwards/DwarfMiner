@@ -2856,6 +2856,14 @@ public sealed class Creature
                 // Evil warren-guard: green scaled biped with a swaying tail, pale belly,
                 // toothy snout, bone crest — and a bone spear that cocks back and whips
                 // forward on the cast. Eyes smoulder red while it hunts.
+                // While hunting it FACES the prey (not its walk direction), so a guard holding
+                // its ground still turns to aim its darts at the dwarf.
+                if (_aggroT > 0f)
+                {
+                    var toP = player.Position - Position;
+                    if (MathF.Abs(Vector2.Dot(toP, right)) > 0.5f)
+                        facing = Vector2.Dot(toP, right) >= 0f ? 1f : -1f;
+                }
                 var scale = Tinted(new Color(70, 118, 62));
                 var belly = Tinted(new Color(140, 160, 100));
                 var bone = Tinted(new Color(222, 212, 184));
