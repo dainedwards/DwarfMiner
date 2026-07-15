@@ -119,6 +119,10 @@ public sealed record PlanetDef(
     // The QA rig runs empty so it loads fast and perf/feature tests aren't confounded by
     // wildlife; the debug menu's creature tab spawns subjects on demand instead.
     bool NoFauna = false,
+    // True silences the AMBIENT event directors — the shared disaster clock and the
+    // meteor cadence never fire on their own. The debug menu's EVENTS tab still triggers
+    // every disaster and meteor on demand: the QA rig is a lab, not a weather channel.
+    bool NoDisasters = false,
     // Non-null on MOONS: the id of the planet this world orbits. SpaceSim hangs it on a
     // tight, fast satellite orbit around that parent instead of a solar orbit. Moons come
     // in two kinds: with an atmosphere (the ocean moon — lands like any planet) and
