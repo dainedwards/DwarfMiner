@@ -2448,13 +2448,14 @@ public sealed class Cells
         if (maxRing <= 0) return;
         maxRing = Math.Min(maxRing, Planet.Rings);
         var minRing = Math.Max(0, (int)floorTilesFromCentre - Planet.RingMin);
-        // Same expected mass as the old random fill (Density² draws with replacement cover
-        // ~63.2% of the tile), but packed BOTTOM-UP and placed silently: the fill is born
-        // locally settled, so the wake pass below only has to rouse each tile's fill
-        // surface instead of a porous sea whose every interior hole kept a neighbour
-        // awake. The old path enqueued every seeded cell — a multi-second first-tick
-        // storm at Density 8 while the load screen (or the first live frames) chewed it.
-        var fillCount = (int)(Density * Density * 0.632f);
+        // FULL, SILENT fill. The old SpawnInTile path drew Density² random cells with
+        // replacement — a ~63% porous sea that was never a design choice, just the
+        // artifact of sampling with replacement — and enqueued every one, so the load
+        // stall was first a wake storm over the whole sea and then a sea-wide collapse
+        // as the porosity settled out (seconds of 0-fps at Density 8). A solid sea is
+        // born at rest: the boundary wake below rouses only the surface and the cave
+        // mouths, and nothing has anywhere to fall. The band's top (LavaFillFrac) and
+        // floor (the strata seam) are the designed sea contract either way.
         for (var r = minRing; r < maxRing; r++)
         {
             var n = Planet.TilesAt(r);
@@ -2463,8 +2464,9 @@ public sealed class Cells
                 {
                     var c0y = r * Density;
                     var c0x = t * Density;
-                    for (var i = 0; i < fillCount; i++)
-                        PlaceSilent(c0x + i % Density, c0y + i / Density, m);
+                    for (var dy = 0; dy < Density; dy++)
+                        for (var dx = 0; dx < Density; dx++)
+                            PlaceSilent(c0x + dx, c0y + dy, m);
                 }
         }
         WakeFreeSurfaces(minRing * Density, maxRing * Density);
