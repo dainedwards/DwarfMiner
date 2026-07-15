@@ -264,6 +264,7 @@ public static class Tiles
         TileKind.TreeCanopy => new Color(78, 150, 130),   // teal foliage
         TileKind.TreeCanopy2 => new Color(150, 120, 190), // violet foliage
         TileKind.SeaFrond => new Color(70, 160, 140),
+        TileKind.TreeRoot => new Color(74, 54, 60),       // dark woody root in the soil
         TileKind.Rail => new Color(70, 60, 55),
         TileKind.Glowshroom => new Color(60, 110, 70),
         TileKind.Beacon => new Color(100, 60, 150),
