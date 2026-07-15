@@ -125,6 +125,16 @@ public sealed class Creature
     /// with a pale-blue tint. Set by sapphire cannon shells.</summary>
     public float FreezeSeconds;
 
+    /// <summary>Soaked status: set by standing-water contact (never on water-natives, who
+    /// would read permanently stained). While > 0 the creature can't catch alight — burn is
+    /// doused on the spot — and open flame stings at half rate. Subtle blue-dark tint.</summary>
+    public float WetSeconds;
+
+    /// <summary>Oil-soaked status: set by wading through an oil pool. While > 0 any flame or
+    /// lava contact sets a LONG burn instead of a brief one — an oily creature is a torch
+    /// waiting to happen. Dark oily tint; a soak in water rinses it off.</summary>
+    public float OilySeconds;
+
     // --- Per-kind scratch state ---
     private float _cd;             // multi-use cooldown: pounce / hop / stinger-retreat
     private float _hopDir;         // persistent idle-hop direction so hoppers don't jitter
