@@ -243,8 +243,10 @@ public static class TreeEcology
             // A pool lapping at the roots keeps them fed even without rain (the "or water").
             SoakFromPools(run, s);
 
-            // Slow when parched, up to ~6x faster when the roots are well watered.
-            var rate = 0.018f * (0.4f + s.Moisture * 2.8f);
+            // Slow when parched, up to ~6x faster when the roots are well watered — but
+            // deliberately unhurried overall: a felled tree takes several real minutes to
+            // stand again even in the wet, so a clear-cut stays cleared for a while.
+            var rate = 0.004f * (0.4f + s.Moisture * 2.8f);
             var prev = (int)(s.Growth * s.Height);
             s.Growth = MathHelper.Clamp(s.Growth + rate * dt, 0f, 1f);
             var now = (int)(s.Growth * s.Height);
