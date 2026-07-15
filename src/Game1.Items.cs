@@ -202,6 +202,11 @@ public sealed partial class DwarfMinerGame
             ["ladder"] = new() { Use = Place("ladder"), OnCraft = Stock("ladder", 5) },
             ["rail"]   = new() { Use = Place("rail"),   OnCraft = Stock("rail", 5) },
             ["door"]   = new() { Use = Place("door"),   OnCraft = Stock("door", 2) },
+            // Base-building blocks — craft in batches, place like any build tile.
+            ["brick"]        = new() { Use = Place("brick"),        OnCraft = Stock("brick", 4) },
+            ["plating"]      = new() { Use = Place("plating"),      OnCraft = Stock("plating", 4) },
+            ["glass_block"]  = new() { Use = Place("glass_block"),  OnCraft = Stock("glass_block", 4) },
+            ["platform"]     = new() { Use = Place("platform"),     OnCraft = Stock("platform", 6) },
 
             // ─── Recipe-only upgrades (no belt slot of their own) ─────────────────
             // Pickaxe tiers step sequentially: each is "owned" at or past its tier and
