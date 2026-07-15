@@ -82,7 +82,7 @@ public static class RuntimeEffect
         }
         catch (Exception e)
         {
-            Console.WriteLine($"[shader] terrain carve unavailable, using baked erosion: {e.Message}");
+            Console.WriteLine($"[shader] {label} unavailable, using fallback path: {e.Message}");
             return null;
         }
     }
