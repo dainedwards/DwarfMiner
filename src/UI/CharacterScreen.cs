@@ -322,13 +322,23 @@ public sealed class CharacterScreen
         _ctxRects.Clear();
         if (_ctx is not { } ctx) return;
         var rows = new List<(string action, string label, bool enabled)>();
-        if (Equipment.IsEquippable(ctx.Id) && !player.Equipment.IsEquipped(ctx.Id))
-            rows.Add(("equip", "EQUIP", true));
-        if (UpgradeInfo?.Invoke(ctx.Id) is { } up)
-            rows.Add(("upgrade", up.label, up.can));
-        var count = player.Inventory.Count(ctx.Id);
-        rows.Add(("drop1", "DROP ONE", count > 0));
-        rows.Add(("dropall", $"DROP ALL ({count})", count > 0));
+        if (_ctxUpgrade && UpgradeInfo?.Invoke(ctx.Id) is { } det)
+        {
+            // Upgrade detail: the materials line (from the live recipe) + Confirm / Back.
+            rows.Add(("info", det.label, false));   // non-clickable — shows the cost/options
+            rows.Add(("confirm", det.can ? "CONFIRM UPGRADE" : "NEED MATERIALS", det.can));
+            rows.Add(("back", "BACK", true));
+        }
+        else
+        {
+            if (Equipment.IsEquippable(ctx.Id) && !player.Equipment.IsEquipped(ctx.Id))
+                rows.Add(("equip", "EQUIP", true));
+            if (UpgradeInfo?.Invoke(ctx.Id) is { } up)
+                rows.Add(("upgrade", up.label, up.can || true));   // clickable to view the detail
+            var count = player.Inventory.Count(ctx.Id);
+            rows.Add(("drop1", "DROP ONE", count > 0));
+            rows.Add(("dropall", $"DROP ALL ({count})", count > 0));
+        }
 
         var w = renderer.MeasureText(Tiles.ResourceLabel(ctx.Id)) + 20;
         foreach (var (_, label, _) in rows) w = Math.Max(w, renderer.MeasureText(label) + 20);
