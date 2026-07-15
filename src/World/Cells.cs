@@ -1342,7 +1342,22 @@ public sealed class Cells
     private bool QuenchIfWet(int cx, int cy)
     {
         var wi = FindNeighbour(cx, cy, Material.Water);
-        if (wi < 0) return false;
+        if (wi < 0)
+        {
+            // No water, but a snow grain against lava flashes to meltwater (rain-tagged so
+            // the slush dries out later) — the real quench then fires against the droplet
+            // on the next tick.
+            var si = FindNeighbour(cx, cy, Material.Snow);
+            if (si < 0) return false;
+            _mat[si] = (byte)Material.Water;
+            _srcTile[si] = RainWaterSrc;
+            ClearKinetics(si);
+            Enqueue(si);
+            var (mcx, mcy) = UnIdx(si);
+            WakeNeighbors(mcx, mcy);
+            Enqueue(Idx(cx, cy));
+            return true;
+        }
         if (_rng.Next(3) != 0) { Enqueue(Idx(cx, cy)); return true; } // stay awake, react soon
 
         _mat[wi] = (byte)Material.Smoke;
