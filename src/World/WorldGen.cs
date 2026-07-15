@@ -1509,38 +1509,43 @@ public static class WorldGen
         // District centres: bearings clear of mountains, basins, volcanoes, the rover
         // drop, and each other. Layout is ONE CAPITAL plus one or two satellite towns —
         // most of the skyline concentrates in a single sprawling metropolis, with the
-        // wide mutual spacing keeping the towns from merging into its edges.
+        // wide mutual spacing keeping the towns from merging into its edges. Lot shares
+        // are planned up front so each district can demand mountain clearance for its
+        // WHOLE row — the wider towers make rows long enough that a mountain mid-row
+        // used to split the capital into fragments. If no bearing offers the full-row
+        // clearance, the district settles for the old centre-only margin.
         var districtCount = def.CityLots >= 24 ? 2 + rng.Next(2) : 2;
+        var lotsPlan = new int[districtCount];
+        lotsPlan[0] = districtCount == 1 ? def.CityLots : (int)(def.CityLots * 0.6f);
+        for (var i = 0; i < def.CityLots - lotsPlan[0]; i++)
+            lotsPlan[1 + i % Math.Max(1, districtCount - 1)]++;
+
         var centres = new List<float>();
+        var lotsOf = new List<int>();
         for (var d = 0; d < districtCount; d++)
         {
+            // ~96 px per lot (hull + street) — the row's angular half-length.
+            var rowHalfAng = MathF.Min(0.6f, lotsPlan[d] * 96f * 0.5f / surfRadiusPx);
             var cAng = 0f;
             var ok = false;
-            for (var tries = 0; tries < 90 && !ok; tries++)
+            for (var tries = 0; tries < 180 && !ok; tries++)
             {
+                // First half of the tries insists the whole row clears the mountains;
+                // the fallback half relaxes to the old centre-only margin.
+                var clearance = tries < 90 ? rowHalfAng + 0.04f : 0.16f;
                 cAng = (float)(rng.NextDouble() * MathHelper.TwoPi);
-                ok = !NearMountain(mountains, cAng, 0.16f)
+                ok = !NearMountain(mountains, cAng, clearance)
                      && AngDist(cAng, MathF.PI * 1.5f) > 0.3f;
                 for (var i = 0; ok && i < avoid.Count; i++)
                     ok = AngDist(cAng, avoid[i].ang) > avoid[i].w + 0.14f;
                 for (var i = 0; ok && i < centres.Count; i++)
                     ok = AngDist(cAng, centres[i]) > 0.95f;
             }
-            if (ok) centres.Add(cAng);
+            if (!ok) continue;
+            centres.Add(cAng);
+            lotsOf.Add(lotsPlan[d]);
         }
         if (centres.Count == 0) return;
-        // The capital takes ~60% of every lot; the towns split the remainder.
-        var lotsOf = new int[centres.Count];
-        if (centres.Count == 1)
-        {
-            lotsOf[0] = def.CityLots;
-        }
-        else
-        {
-            lotsOf[0] = (int)(def.CityLots * 0.6f);
-            var rest = def.CityLots - lotsOf[0];
-            for (var i = 0; i < rest; i++) lotsOf[1 + i % (centres.Count - 1)]++;
-        }
 
         for (var d = 0; d < centres.Count; d++)
         {
