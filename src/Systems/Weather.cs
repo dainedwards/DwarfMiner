@@ -138,7 +138,7 @@ public static class Weather
             if (c.RainTimer > 0f)
             {
                 c.RainTimer -= dt;
-                Rain(dt, run, c, kind, particles);
+                Rain(dt, run, c, c.KindOverride ?? kind, particles);
                 if (c.RainTimer <= 0f) c.RainCooldown = 10f + (float)rng.NextDouble() * 22f;
             }
             else if (c.Grow > 0.7f && c.Life > 10f && !c.Dissipating)
