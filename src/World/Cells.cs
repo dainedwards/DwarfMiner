@@ -3220,7 +3220,12 @@ public sealed class Cells
             case Material.Oil:
                 return LiquidBody(m, cx, cy) * 0.94f;
             case Material.Dirt:    return Tint(new Color(115, 75, 42), jitter / 3);
-            case Material.Gravel:  return Tint(new Color(125, 120, 110), jitter / 3);
+            case Material.Gravel:
+                // Quench crust (LavaRock-tagged, see QuenchIfWet) reads as dark
+                // fresh-cooled rock the moment it forms, not pale rubble.
+                if ((TileKind)srcByte == TileKind.LavaRock)
+                    return Tint(new Color(72, 52, 46), jitter / 4);
+                return Tint(new Color(125, 120, 110), jitter / 3);
             case Material.Dust:
             {
                 // Lighten the source tile's base colour so dust reads as granular crumb rather
