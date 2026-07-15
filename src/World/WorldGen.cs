@@ -600,6 +600,129 @@ public static class WorldGen
         }
     }
 
+    /// <summary>Trees per world: how many of the ~500 bearings grow a tree (0-100 scale),
+    /// and which canopy tone. Airless rock grows none; the dead/hostile worlds are sparse;
+    /// the living and ocean worlds are properly forested.</summary>
+    private static (int density, TileKind canopy) TreePlanFor(PlanetDef def)
+    {
+        if (def.Airless) return (0, TileKind.TreeCanopy);        // belt / moon: no wood
+        return def.Biome switch
+        {
+            "verdant" => (26, TileKind.TreeCanopy),
+            "ocean"   => (20, TileKind.TreeCanopy),
+            "frost"   => (12, TileKind.TreeCanopy2),
+            "crystal" => (12, TileKind.TreeCanopy2),
+            "acid"    => (7, TileKind.TreeCanopy2),
+            "ember"   => (5, TileKind.TreeCanopy2),
+            "slag"    => (4, TileKind.TreeCanopy),               // barren: far less wood
+            "city"    => (10, TileKind.TreeCanopy),
+            _         => (12, TileKind.TreeCanopy),
+        };
+    }
+
+    /// <summary>Scatter alien trees across the surface: a trunk column (2-4 tall) topped with
+    /// a canopy blob. The trunk tiles drop WOOD when chopped. Density and canopy tone vary by
+    /// world (airless rock grows none). Trees only root on open walkable soil clear of
+    /// buildings and each other.</summary>
+    private static void ScatterTrees(Planet planet, PlanetDef def, Random rng)
+    {
+        var (density, canopy) = TreePlanFor(def);
+        if (density <= 0) return;
+        var bearings = 500 + rng.Next(140);
+        var lastT = -999;
+        var lastRing = -1;
+        for (var b = 0; b < bearings; b++)
+        {
+            if (rng.Next(100) >= density) continue;
+            var ang = (b + (float)rng.NextDouble()) / bearings * MathHelper.TwoPi;
+            // Find the ground (topmost solid) on this bearing.
+            var groundR = -1;
+            for (var r = planet.SurfaceRing + 30; r > planet.SurfaceRing - 24; r--)
+            {
+                var n = planet.TilesAt(r);
+                var t = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                if (planet.Get(r, t) == TileKind.Sky) continue;
+                groundR = r;
+                break;
+            }
+            if (groundR < 0) continue;
+            var gn = planet.TilesAt(groundR);
+            var gt = (int)((ang / MathHelper.TwoPi + 1f) % 1f * gn);
+            var ground = planet.Get(groundR, gt);
+            if (ground is not (TileKind.Grass or TileKind.Dirt or TileKind.Snow
+                or TileKind.MossStone or TileKind.Gravel or TileKind.Basalt)) continue;
+            // Don't crowd trunks: keep a couple of tiles between neighbours.
+            if (lastRing == groundR && Math.Abs(gt - lastT) < 3) continue;
+            lastRing = groundR; lastT = gt;
+
+            var trunkH = 2 + rng.Next(3);
+            var clear = true;
+            for (var h = 1; h <= trunkH + 2 && clear; h++)
+            {
+                var rr = groundR + h;
+                if (rr >= planet.Rings - 1) { clear = false; break; }
+                var nn = planet.TilesAt(rr);
+                if (planet.Get(rr, (int)((ang / MathHelper.TwoPi + 1f) % 1f * nn)) != TileKind.Sky)
+                    clear = false;
+            }
+            if (!clear) continue;
+            // Trunk.
+            for (var h = 1; h <= trunkH; h++)
+            {
+                var rr = groundR + h;
+                var nn = planet.TilesAt(rr);
+                planet.Set(rr, (int)((ang / MathHelper.TwoPi + 1f) % 1f * nn), TileKind.TreeTrunk);
+            }
+            // Canopy: a small blob around the top.
+            for (var dr = 0; dr <= 2; dr++)
+            {
+                var rr = groundR + trunkH + dr;
+                if (rr >= planet.Rings - 1) break;
+                var nn = planet.TilesAt(rr);
+                var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * nn);
+                var wide = dr == 0 || dr == 1 ? 2 : 1;
+                for (var dt = -wide; dt <= wide; dt++)
+                {
+                    var t = ((t0 + dt) % nn + nn) % nn;
+                    if (planet.Get(rr, t) == TileKind.Sky) planet.Set(rr, t, canopy);
+                }
+            }
+        }
+    }
+
+    /// <summary>Scatter waving water plants (SeaFrond) on the shallow lakebeds of any world
+    /// that has water — rooted on the solid floor just under the surface of a pool.</summary>
+    private static void ScatterWaterPlants(Planet planet, PlanetDef def, Random rng)
+    {
+        if (!def.HasWater) return;
+        var bearings = 500 + rng.Next(160);
+        for (var b = 0; b < bearings; b++)
+        {
+            if (rng.Next(100) >= 22) continue;
+            var ang = (b + (float)rng.NextDouble()) / bearings * MathHelper.TwoPi;
+            // Walk down until the first solid tile that has a WaterSeed just above it (a
+            // lakebed), then plant a frond in that water tile.
+            for (var r = planet.SurfaceRing + 6; r > planet.SurfaceRing - 30; r--)
+            {
+                var n = planet.TilesAt(r);
+                var t = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                if (planet.Get(r, t) == TileKind.Sky)
+                {
+                    // Is this a water column? (the lake carver marks the basin as WaterSeeds)
+                    if (!planet.HasWaterSeed(r, t)) continue;
+                    // Root the frond just above the floor: the tile above the first solid.
+                    continue;
+                }
+                // Hit the floor — the tile above must be a water column to plant here.
+                var an = planet.TilesAt(r + 1);
+                var at = (int)((ang / MathHelper.TwoPi + 1f) % 1f * an);
+                if (planet.Get(r + 1, at) == TileKind.Sky && planet.HasWaterSeed(r + 1, at))
+                    planet.Set(r + 1, at, TileKind.SeaFrond);
+                break;
+            }
+        }
+    }
+
     /// <summary>Rich metal veins: every world has a coin-flip shot at ONE concentrated
     /// gold or silver ribbon (and a slim shot at a second) buried in the deep crust — a
     /// wandering walk that converts plain rock to solid ore in a narrow band. This is the
