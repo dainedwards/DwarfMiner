@@ -162,6 +162,11 @@ public sealed partial class DwarfMinerGame : Game
     private readonly bool _bossCam = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 };
     private readonly bool _rigidDbg = Environment.GetEnvironmentVariable("DM_RIGIDDBG") is { Length: > 0 };
     private int _prevRigidCount;
+    // Live harvest channel this frame (corpse or titan carcass) — drives the carving-knife
+    // + progress-bar overlay in the draw pass. Null when nothing is being carved.
+    private Vector2? _harvestFxPos;
+    private float _harvestFxFrac;
+    private float _harvestFxRadius;
     private float _autoShotAt =
         float.TryParse(Environment.GetEnvironmentVariable("DM_AUTOSHOT"), out var s)
             ? s : float.PositiveInfinity;
@@ -1894,15 +1899,20 @@ public sealed partial class DwarfMinerGame : Game
                 if (c.Kind != CreatureKind.BomberBeetle)
                 {
                     // The corpse inherits the death momentum (combat knockback is already in
-                    // the creature's velocity) and tumbles from it — a shot grazer keels
-                    // over and rolls instead of freezing in place.
+                    // the creature's velocity, capped so a blast kill doesn't hurl the body
+                    // out of the county) and tumbles from it — a shot grazer keels over and
+                    // rolls instead of freezing in place. It carries a dead clone of the
+                    // creature as its display body, so what hits the ground IS the animal.
                     var cUp = _run.Planet.UpAt(c.Position);
+                    var deathVel = c.Velocity.Length() > 240f
+                        ? Vector2.Normalize(c.Velocity) * 240f : c.Velocity;
                     _run.Corpses.Add(new Corpse(c.Position, c.Kind, c.Radius)
                     {
-                        Velocity = c.Velocity,
+                        Velocity = deathVel,
                         Angle = MathF.Atan2(cUp.X, -cUp.Y),
                         Spin = ((float)Random.Shared.NextDouble() - 0.5f) * 4f
                             * MathHelper.Clamp(c.Velocity.Length() / 100f, 0.3f, 1.5f),
+                        Body = new Creature(c.Position, c.Kind),
                     });
                 }
                 _particles.EmitDust(c.Position, 5f);
@@ -2075,17 +2085,40 @@ public sealed partial class DwarfMinerGame : Game
 
         // Corpses — settle under gravity, decay on a timer, and are harvested for materials
         // by walking over them (same sweep-up feel as dust collection).
+        // Corpse harvest is a CHANNEL now, not a walk-over: stand at the body and carve for
+        // HarvestTime seconds (bigger animals take longer), the corpse disintegrating as
+        // the work runs. Progress holds if the dwarf steps away mid-carve.
+        _harvestFxPos = null;
         for (var i = _run.Corpses.Count - 1; i >= 0; i--)
         {
             var corpse = _run.Corpses[i];
             corpse.Update(dt, _run.Planet);
-            var reach = _run.Player.Radius + corpse.Radius + 3f;
+            var reach = _run.Player.Radius + corpse.Radius + 4f;
             if (!corpse.Harvested && (corpse.Position - _run.Player.Position).LengthSquared() < reach * reach)
             {
-                foreach (var (id, count) in Corpse.DropsFor(corpse.Kind))
-                    _run.Player.Inventory.Add(id, count);
-                corpse.Harvested = true;
-                _particles.EmitDust(corpse.Position, 6f);
+                var beatBefore = (int)(corpse.HarvestProgress * 5f);
+                corpse.HarvestProgress += dt;
+                // Only one carving overlay even standing between two bodies.
+                if (_harvestFxPos is null)
+                {
+                    _harvestFxPos = corpse.Position;
+                    _harvestFxFrac = corpse.Dissolve;
+                    _harvestFxRadius = corpse.Radius;
+                }
+                // Work beats: flecks of the carcass come away with a wet chop.
+                if ((int)(corpse.HarvestProgress * 5f) != beatBefore)
+                {
+                    _particles.EmitDust(corpse.Position, 3f);
+                    PlayAt("dig", corpse.Position, 0.28f, pitch: 0.45f, minGap: 0.1f);
+                }
+                if (corpse.HarvestProgress >= corpse.HarvestTime)
+                {
+                    foreach (var (id, count) in Corpse.DropsFor(corpse.Kind))
+                        _run.Player.Inventory.Add(id, count);
+                    corpse.Harvested = true;
+                    _particles.EmitDust(corpse.Position, 8f);
+                    _sfx.Play("pickup", 0.5f, 0.2f, 0f, minGap: 0.1f);
+                }
             }
             if (corpse.Expired || (corpse.Position - _run.Player.Position).LengthSquared() > 1200f * 1200f)
                 _run.Corpses.RemoveAt(i);
@@ -2293,24 +2326,65 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
         // Slaying the titan no longer ends the visit — the rocket is the only way off-world.
-        // The kill banks a titan soul (foundry currency aboard the mothership) exactly once,
-        // on the frame health crosses zero; resumed saves of an already-dead titan can't
-        // re-award because both sides of the crossing are non-positive after load.
+        // Nor does it bank the soul any more: the kill drops a CARCASS where the kaiju fell,
+        // and the soul is claimed by carving it for 7 seconds (see the harvest block below).
+        // The crossing fires exactly once; resumed saves of an already-dead titan can't
+        // re-trigger because both sides of the crossing are non-positive after load.
         if (_run.Titan.Health <= 0 && _prevTitanHealth > 0)
         {
-            _meta.TitansDefeated++;
-            // Soul keyed off the titan actually fought — planets with a TitanPool roll a
-            // different kaiju per visit, so the def's static kind can be wrong.
-            var kindKey = _run.Titan.Kind.ToString();
-            _meta.TitanSouls[kindKey] = _meta.TitanSouls.GetValueOrDefault(kindKey) + 1;
-            _meta.Save();
+            _run.TitanCarcass = new TitanCorpse(_run.Titan.Position, _run.Titan.Kind,
+                _run.Titan.BodyRadius);
             _run.Shake = MathF.Max(_run.Shake, 1.6f);
             _particles.EmitDust(_run.Titan.Position, 44f);
             PlayAt("explode", _run.Titan.Position, 1f, pitch: -0.4f);
-            _toast = $"{TitanName(_run.Titan.Kind).ToUpperInvariant()} SLAIN - SOUL CLAIMED";
-            _toastTimer = 3.5f;
+            _toast = $"{TitanName(_run.Titan.Kind).ToUpperInvariant()} FELLED - HARVEST THE CARCASS FOR ITS SOUL";
+            _toastTimer = 4f;
         }
         _prevTitanHealth = _run.Titan.Health;
+
+        // Carcass harvest: stand at the fallen kaiju and carve. Seven seconds of work — the
+        // body visibly disintegrating — banks the soul (foundry currency) plus a butcher's
+        // bounty. Progress holds if the dwarf steps away; the carcass never decays.
+        if (_run.TitanCarcass is { Claimed: false } carc)
+        {
+            carc.Update(dt, _run.Planet);
+            var creach = _run.Player.Radius + carc.Radius * 0.7f + 8f;
+            if ((carc.Position - _run.Player.Position).LengthSquared() < creach * creach)
+            {
+                var beatBefore = (int)(carc.Progress * 5f);
+                carc.Progress += dt;
+                _harvestFxPos = carc.Position;
+                _harvestFxFrac = carc.Dissolve;
+                _harvestFxRadius = carc.Radius * 0.6f;
+                if ((int)(carc.Progress * 5f) != beatBefore)
+                {
+                    _particles.EmitDust(carc.Position + new Vector2(
+                        (float)(Random.Shared.NextDouble() - 0.5) * carc.Radius,
+                        (float)(Random.Shared.NextDouble() - 0.5) * carc.Radius * 0.4f), 4f);
+                    PlayAt("dig", carc.Position, 0.35f, pitch: 0.3f, minGap: 0.12f);
+                }
+                if (carc.Progress >= TitanCorpse.HarvestTime)
+                {
+                    carc.Claimed = true;
+                    _run.SoulClaimed = true;
+                    _meta.TitansDefeated++;
+                    // Soul keyed off the titan actually fought — planets with a TitanPool
+                    // roll a different kaiju per visit, so the def's static kind can be wrong.
+                    var kindKey = _run.Titan.Kind.ToString();
+                    _meta.TitanSouls[kindKey] = _meta.TitanSouls.GetValueOrDefault(kindKey) + 1;
+                    _meta.Save();
+                    // The butcher's bounty: a kaiju is a lot of animal.
+                    _run.Player.Inventory.Add("meat", 8);
+                    _run.Player.Inventory.Add("hide", 4);
+                    _particles.EmitDust(carc.Position, 30f);
+                    _run.Shake = MathF.Max(_run.Shake, 0.8f);
+                    PlayAt("pickup", carc.Position, 1f, pitch: -0.3f);
+                    _toast = $"{TitanName(_run.Titan.Kind).ToUpperInvariant()} SOUL CLAIMED  +8 MEAT +4 HIDE";
+                    _toastTimer = 3.5f;
+                    _run.TitanCarcass = null;
+                }
+            }
+        }
 
         for (var i = _run.Boulders.Count - 1; i >= 0; i--)
         {
@@ -5500,15 +5574,67 @@ public sealed partial class DwarfMinerGame : Game
         foreach (var corpse in _run.Corpses)
         {
             if (corpse.Life < Corpse.BlinkTime && (int)(corpse.Life * 6f) % 2 == 0) continue;
-            // The slab tumbles with the ragdoll's own angle now (it eases flat on rest);
-            // the belly stripe rides the corpse's local "back" so it rotates along.
-            var crot = corpse.Angle;
-            var bodyUp = new Vector2(MathF.Sin(crot), -MathF.Cos(crot));
-            var col = Corpse.BodyColor(corpse.Kind);
-            _renderer.DrawRect(corpse.Position, new Vector2(corpse.Radius * 2.2f, corpse.Radius * 0.9f), col, crot);
-            _renderer.DrawRect(corpse.Position - bodyUp * corpse.Radius * 0.2f,
-                new Vector2(corpse.Radius * 1.6f, corpse.Radius * 0.4f),
-                Color.Lerp(col, Color.White, 0.18f), crot);
+            if (corpse.Body is { } cbody)
+            {
+                // The corpse IS the creature: its dead clone drawn frozen and greyed, the
+                // whole pose rotated by the ragdoll's tumble (±90° so it lies on its side),
+                // fading out as the harvest carves it away. The entity-FX fade reaches the
+                // raw-colour details (eyes, glints) the dead tint alone can't.
+                cbody.Position = corpse.Position;
+                var pose = corpse.Angle + corpse.PoseSide * MathF.PI / 2f;
+                _renderer.SetEntityFx(1f - corpse.Dissolve * 0.9f, 0f);
+                _renderer.BeginOutline(new Color(14, 11, 16));
+                cbody.Draw(_renderer, _run.Planet, _run.Player, pose, corpse.Dissolve);
+                _renderer.EndOutline();
+                cbody.Draw(_renderer, _run.Planet, _run.Player, pose, corpse.Dissolve);
+                _renderer.ClearEntityFx();
+            }
+            else
+            {
+                // Legacy slab (headless-spawned corpses with no display body).
+                var crot = corpse.Angle;
+                var bodyUp = new Vector2(MathF.Sin(crot), -MathF.Cos(crot));
+                var col = Corpse.BodyColor(corpse.Kind);
+                _renderer.DrawRect(corpse.Position, new Vector2(corpse.Radius * 2.2f, corpse.Radius * 0.9f), col, crot);
+                _renderer.DrawRect(corpse.Position - bodyUp * corpse.Radius * 0.2f,
+                    new Vector2(corpse.Radius * 1.6f, corpse.Radius * 0.4f),
+                    Color.Lerp(col, Color.White, 0.18f), crot);
+            }
+        }
+
+        // The titan carcass — drawn like the corpses (outline + dissolve fade), before the
+        // living so anything walking past layers over it.
+        if (_run.TitanCarcass is { } carcDraw
+            && (carcDraw.Position - _camera.Target).LengthSquared() < 500f * 500f)
+        {
+            _renderer.SetEntityFx(1f - carcDraw.Dissolve * 0.85f, 0f);
+            _renderer.BeginOutline(new Color(14, 11, 16));
+            carcDraw.Draw(_renderer, _run.Planet);
+            _renderer.EndOutline();
+            carcDraw.Draw(_renderer, _run.Planet);
+            _renderer.ClearEntityFx();
+        }
+
+        // Carving overlay while a harvest channel runs: progress bar over the body and the
+        // dwarf's knife chopping at it — the "working on it" read the instant-pickup lacked.
+        if (_harvestFxPos is { } hpos)
+        {
+            var hup = _run.Planet.UpAt(hpos);
+            var hright = new Vector2(-hup.Y, hup.X);
+            var hrot = MathF.Atan2(hup.X, -hup.Y);
+            var barAt = hpos + hup * (_harvestFxRadius + 6f);
+            _renderer.DrawRect(barAt, new Vector2(13f, 2.2f), new Color(24, 20, 20), hrot);
+            _renderer.DrawRect(barAt - hright * (6.5f * (1f - _harvestFxFrac)),
+                new Vector2(13f * _harvestFxFrac, 1.6f), new Color(235, 185, 90), hrot);
+            // Knife: a pale blade rocking over the body from the dwarf's side, at the same
+            // beat as the work particles.
+            float hside = MathF.Sign(Vector2.Dot(_run.Player.Position - hpos, hright));
+            if (hside == 0f) hside = 1f;
+            var chop = MathF.Sin(_renderer.Time * 11f);
+            var hand = hpos + hright * (hside * _harvestFxRadius * 0.5f)
+                     + hup * (2.5f + MathF.Abs(chop) * 2.4f);
+            _renderer.DrawRect(hand, new Vector2(1.3f, 4.6f), new Color(205, 210, 220),
+                hrot + hside * (0.45f + chop * 0.5f));
         }
 
         // Gem pickups — sit upright along the local surface normal (no spin). A loose gem
@@ -5549,9 +5675,14 @@ public sealed partial class DwarfMinerGame : Game
         // Creatures — each kind draws its own procedural sprite, including the burn/freeze
         // status tinting and the burning-ember flicker. The planet-wide resident census
         // makes the list long; anything far outside the view skips its sprite entirely.
+        // Creatures draw twice: an enlarged dark-silhouette pass then the body — the chunky
+        // Noita-style outline that separates every living thing from the terrain behind it.
         foreach (var c in _run.Creatures)
         {
             if ((c.Position - _run.Player.Position).LengthSquared() > 1400f * 1400f) continue;
+            _renderer.BeginOutline(new Color(14, 11, 16));
+            c.Draw(_renderer, _run.Planet, _run.Player);
+            _renderer.EndOutline();
             c.Draw(_renderer, _run.Planet, _run.Player);
         }
 
@@ -6188,7 +6319,9 @@ public sealed partial class DwarfMinerGame : Game
         string titanStatus;
         if (_run.Titan.Health <= 0)
         {
-            titanStatus = $"{TitanName(_run.Def.Titan).ToUpperInvariant()} SLAIN - SOUL CLAIMED";
+            titanStatus = _run.TitanCarcass is { Claimed: false }
+                ? $"{TitanName(_run.Titan.Kind).ToUpperInvariant()} FELLED - CARVE THE CARCASS FOR ITS SOUL ({TitanCorpse.HarvestTime:0}s)"
+                : $"{TitanName(_run.Def.Titan).ToUpperInvariant()} SLAIN - SOUL CLAIMED";
         }
         else if (!_run.Titan.Hatched)
         {

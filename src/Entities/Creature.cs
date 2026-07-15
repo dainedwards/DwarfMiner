@@ -2308,16 +2308,31 @@ public sealed class Creature
     /// <summary>Per-kind procedural sprite, drawn with the renderer primitives so no textures
     /// are needed. Status tints match the old creature block: white on hit-flash, pale blue
     /// frozen, ember orange burning.</summary>
-    public void Draw(Renderer r, Planet planet, Player player)
+    /// <summary>Draw the creature. <paramref name="poseRot"/> overrides the planet-derived
+    /// orientation (corpses ragdoll: the Corpse's tumble angle drives the whole body), and
+    /// a non-negative <paramref name="dead"/> renders the corpse look — animation frozen on
+    /// this creature's phase, colours greyed toward lifeless (the Renderer's entity FX adds
+    /// the harvest-dissolve fade on top so raw-colour details like eyes fade too).</summary>
+    public void Draw(Renderer r, Planet planet, Player player, float? poseRot = null, float dead = -1f)
     {
         var up = planet.UpAt(Position);
+        if (poseRot is { } pr)
+            up = new Vector2(MathF.Sin(pr), -MathF.Cos(pr));
         var right = new Vector2(-up.Y, up.X);
         var rot = MathF.Atan2(up.X, -up.Y);
-        var t = r.Time;
+        // A corpse's animation is frozen: its phase stands in for time, so legs/wings stop
+        // mid-stride instead of pedalling on a dead body.
+        var t = dead >= 0f ? _phase : r.Time;
         var facing = Vector2.Dot(Velocity, right) >= 0f ? 1f : -1f;
 
         Color Tinted(Color baseCol)
         {
+            if (dead >= 0f)
+            {
+                // Lifeless: drained toward the corpse palette (the old slab grey-brown).
+                var grey = (byte)((baseCol.R + baseCol.G + baseCol.B) / 3);
+                return Color.Lerp(baseCol, new Color(grey, grey, grey), 0.55f);
+            }
             if (HitFlash > 0) return Color.White;
             if (FreezeSeconds > 0) return new Color(150, 200, 240);
             if (BurnSeconds > 0) return new Color(220, 110, 70);

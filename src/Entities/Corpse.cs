@@ -27,6 +27,18 @@ public sealed class Corpse
     /// local tangent once it comes to rest.</summary>
     public float Angle;
     public float Spin;
+    /// <summary>Which shoulder the body fell onto — offsets the creature-sprite pose ±90°
+    /// from the tumble angle so a settled corpse lies on its side, not standing.</summary>
+    public readonly int PoseSide = Random.Shared.Next(2) == 0 ? -1 : 1;
+    /// <summary>Display template: a dead clone of the creature this was, drawn frozen and
+    /// greyed by the renderer's corpse path so the body on the ground IS the creature.</summary>
+    public Creature? Body;
+    /// <summary>Harvest channel: standing over the corpse carves it up over
+    /// <see cref="HarvestTime"/> seconds (bigger animals take longer), the body visibly
+    /// disintegrating as the progress runs. Progress holds if the player steps away.</summary>
+    public float HarvestProgress;
+    public float HarvestTime => MathHelper.Clamp(1.0f + Radius * 0.25f, 1.3f, 4.5f);
+    public float Dissolve => MathHelper.Clamp(HarvestProgress / HarvestTime, 0f, 1f);
     private bool _resting;
     private float _sleepTimer;
     // Same lesson as RigidBodies: a resting body alternates contact/free frames (the
@@ -68,24 +80,70 @@ public sealed class Corpse
             _resting = false;
         }
 
+        // De-embed: a creature that died inside rock (a flyer splatted against a wall, a
+        // digger shot mid-burrow) surfaces instead of sinking out of sight — "aliens leave
+        // no corpse" was usually this, the body quietly buried in the terrain.
+        if (planet.IsSolidAt(Position))
+        {
+            Position += planet.UpAt(Position) * (Planet.TileSize * 0.75f);
+            Velocity = Vector2.Zero;
+            Spin *= 0.5f;
+        }
+
         Velocity += planet.GravityAt(Position) * 300f * dt;
         var speed = Velocity.Length();
-        if (speed > 400f) Velocity *= 400f / speed;
-        Position += Velocity * dt;
-        Angle += Spin * dt;
+        if (speed > 300f) Velocity *= 300f / speed;
 
-        // Contact solve on a ring of sample points — the RigidBodies recipe scaled down to
-        // one circle: inelastic below a bounce threshold, friction spins the slab as it
-        // scrapes, contact damping bleeds the jitter, rest gates on touched-recently.
-        var push = Vector2.Zero;
+        // Substep so a blast-flung corpse can't tunnel a thin floor in one integration and
+        // end up falling through the world (the other way "no corpse" happened).
+        var steps = Math.Clamp((int)MathF.Ceiling(speed * dt / 2.5f), 1, 4);
+        var sub = dt / steps;
         var contacted = false;
-        var invI = 2f / MathF.Max(1f, Radius * Radius);   // unit mass, disc inertia
-        var cr = Radius * 0.75f;
         // Below a crawl the rotational coupling only PUMPS motion: the sample ring turns
         // with the body, so each frame's contacts land somewhere new and their impulse
         // torques rock it forever (measured ±2 rad/s standing waves). A slow corpse is a
         // particle: impulses hit velocity only, and spin chokes to zero.
         var crawling = _sinceContact < 0.12f && Velocity.LengthSquared() < 30f * 30f;
+        for (var s = 0; s < steps; s++)
+        {
+            Position += Velocity * sub;
+            Angle += Spin * sub;
+            contacted |= ResolveContacts(planet, crawling);
+        }
+        if (crawling && contacted)
+        {
+            Spin *= 0.7f;
+            if (MathF.Abs(Spin) < 0.5f) Spin = 0f;
+        }
+        if (contacted)
+        {
+            Velocity *= 0.94f;
+            Spin *= 0.90f;
+        }
+        _sinceContact = contacted ? 0f : _sinceContact + dt;
+
+        // The slow window must clear the free-fall speed regained between contact frames
+        // (~15 px/s over the 0.1s hop the push-out causes) or the sleep timer flickers.
+        var slow = Velocity.LengthSquared() < 24f * 24f && MathF.Abs(Spin) < 0.6f;
+        _sleepTimer = _sinceContact < 0.12f && slow ? _sleepTimer + dt : 0f;
+        if (_sleepTimer >= 0.4f)
+        {
+            _resting = true;
+            Velocity = Vector2.Zero;
+            Spin = 0f;
+        }
+    }
+
+    /// <summary>One contact pass over the sample ring — the RigidBodies recipe scaled down
+    /// to one circle: inelastic below a bounce threshold, friction spins the slab as it
+    /// scrapes, one averaged push-out (never per-contact — that stacks and pops the body
+    /// airborne). Called per substep.</summary>
+    private bool ResolveContacts(Planet planet, bool crawling)
+    {
+        var push = Vector2.Zero;
+        var contacted = false;
+        var invI = 2f / MathF.Max(1f, Radius * Radius);   // unit mass, disc inertia
+        var cr = Radius * 0.75f;
         for (var i = 0; i < 6; i++)
         {
             var a = Angle + i * (MathF.Tau / 6f);
@@ -124,32 +182,9 @@ public sealed class Corpse
             push += n;
             contacted = true;
         }
-        if (crawling && contacted)
-        {
-            Spin *= 0.7f;
-            if (MathF.Abs(Spin) < 0.5f) Spin = 0f;
-        }
-        // ONE gentle push-out along the averaged normal — per-contact pushes stack up to
-        // several px a frame and pop the body airborne, so it never stops moving.
         if (push.LengthSquared() > 0.001f)
             Position += Vector2.Normalize(push) * 0.35f;
-        if (contacted)
-        {
-            Velocity *= 0.94f;
-            Spin *= 0.90f;
-        }
-        _sinceContact = contacted ? 0f : _sinceContact + dt;
-
-        // The slow window must clear the free-fall speed regained between contact frames
-        // (~15 px/s over the 0.1s hop the push-out causes) or the sleep timer flickers.
-        var slow = Velocity.LengthSquared() < 24f * 24f && MathF.Abs(Spin) < 0.6f;
-        _sleepTimer = _sinceContact < 0.12f && slow ? _sleepTimer + dt : 0f;
-        if (_sleepTimer >= 0.4f)
-        {
-            _resting = true;
-            Velocity = Vector2.Zero;
-            Spin = 0f;
-        }
+        return contacted;
     }
 
     /// <summary>Once at rest, ease the slab onto the nearest lie-flat orientation (tangent

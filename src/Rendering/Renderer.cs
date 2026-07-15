@@ -1604,9 +1604,54 @@ public sealed class Renderer
 
     public void EndEntities() => _sb.End();
 
+    // ── entity FX state ────────────────────────────────────────────────────────
+    // Outline pass: while set, every DrawRect/DrawCircle renders an enlarged silhouette in
+    // the outline colour instead of its own — drawing an entity once inside the pass and
+    // once normally gives it a chunky Noita-style dark rim with zero per-creature work.
+    // Fade/desat: applied to every primitive so corpse dissolve and death-grey reach the
+    // raw-colour details (eyes, glows) that never go through a creature's own tint helper.
+    private Color? _outline;
+    private float _fade = 1f;
+    private float _desat;
+
+    public void BeginOutline(Color color) => _outline = color;
+    public void EndOutline() => _outline = null;
+
+    /// <summary>Fade (premultiplied alpha scale) + desaturation applied to every entity
+    /// primitive until <see cref="ClearEntityFx"/>. Corpse rendering drives this.</summary>
+    public void SetEntityFx(float fade, float desat)
+    {
+        _fade = fade;
+        _desat = desat;
+    }
+
+    public void ClearEntityFx()
+    {
+        _fade = 1f;
+        _desat = 0f;
+    }
+
+    private Color ApplyFx(Color c)
+    {
+        if (_desat > 0f)
+        {
+            var grey = (byte)((c.R + c.G + c.B) / 3);
+            c = Color.Lerp(c, new Color(grey, grey, grey, c.A), _desat);
+        }
+        return _fade < 1f ? c * _fade : c;
+    }
+
     public void DrawRect(Vector2 worldPos, Vector2 size, Color color, float rotation = 0f)
     {
-        _sb.Draw(_pixel, worldPos, null, color, rotation, new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+        if (_outline is { } oc)
+        {
+            // Soft translucent parts (wing membranes) keep their softness — no hard rim.
+            if (color.A < 200) return;
+            _sb.Draw(_pixel, worldPos, null, ApplyFx(oc), rotation, new Vector2(0.5f, 0.5f),
+                size + new Vector2(1.6f, 1.6f), SpriteEffects.None, 0f);
+            return;
+        }
+        _sb.Draw(_pixel, worldPos, null, ApplyFx(color), rotation, new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
     }
 
     /// <summary>Rigid debris cells, drawn with the SAME atlas art + blob shading the terrain
@@ -1653,7 +1698,15 @@ public sealed class Renderer
 
     public void DrawCircle(Vector2 worldPos, float radius, Color color)
     {
-        _sb.Draw(_circle, worldPos, null, color, 0f,
+        if (_outline is { } oc)
+        {
+            if (color.A < 200) return;
+            _sb.Draw(_circle, worldPos, null, ApplyFx(oc), 0f,
+                new Vector2(_circle.Width / 2f, _circle.Height / 2f),
+                (radius + 0.8f) * 2f / _circle.Width, SpriteEffects.None, 0f);
+            return;
+        }
+        _sb.Draw(_circle, worldPos, null, ApplyFx(color), 0f,
             new Vector2(_circle.Width / 2f, _circle.Height / 2f),
             radius * 2f / _circle.Width, SpriteEffects.None, 0f);
     }

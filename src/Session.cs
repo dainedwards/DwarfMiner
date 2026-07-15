@@ -27,6 +27,13 @@ public sealed class Session
 
     public readonly List<Creature> Creatures = new();
     public readonly List<Corpse> Corpses = new();
+    /// <summary>The slain titan's carcass, awaiting its 7-second harvest. Null before the
+    /// kill and again once the soul is claimed. Persisted in the run save so quitting
+    /// between kill and harvest can't void the soul.</summary>
+    public TitanCorpse? TitanCarcass;
+    /// <summary>Set when the carcass harvest banks the soul — drives the HUD line and stops
+    /// a resumed save re-spawning the carcass.</summary>
+    public bool SoulClaimed;
     /// <summary>Physical gem drops lying in the world (see Entities.Pickup). Fed from
     /// Cells.PendingGemDrops, collected by touch.</summary>
     public readonly List<Pickup> Pickups = new();

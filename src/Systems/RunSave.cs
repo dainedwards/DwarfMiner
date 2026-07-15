@@ -17,7 +17,8 @@ public static class RunSave
 {
     // Bump when the format or the planet/cell geometry changes — old saves are discarded.
     // v8: 4-px tiles (doubled ring geometry) + Conglomerate composition table.
-    private const int Version = 20;  // 9: planet gem-overlay section
+    private const int Version = 21;  // 21: titan carcass + soul-claim flag
+                                     // 9: planet gem-overlay section
                                      // 20: player ScannerTier (craftable geo-scanner)
                                      // 10: city civilian spawn sites + lizardman dens in planet state
                                      // 11: toolbelt widened 13 → 24 slots (belt block length changed)
@@ -140,6 +141,16 @@ public static class RunSave
             {
                 w.Write(mid);
                 w.Write(mtier);
+            }
+
+            // v21: the titan-soul harvest. Quitting between kill and carve must not void the
+            // soul, so the carcass (position + carve progress) and the claimed flag persist.
+            w.Write(run.SoulClaimed);
+            w.Write(run.TitanCarcass is { Claimed: false });
+            if (run.TitanCarcass is { Claimed: false } tcc)
+            {
+                w.Write(tcc.Position.X); w.Write(tcc.Position.Y);
+                w.Write(tcc.Progress);
             }
         }
         catch (Exception ex)
@@ -267,6 +278,24 @@ public static class RunSave
             {
                 var mid = r.ReadString();
                 run.Player.MeleeTiers[mid] = r.ReadInt32();
+            }
+
+            // v21: the titan-soul harvest state (see Write).
+            run.SoulClaimed = r.ReadBoolean();
+            if (r.ReadBoolean())
+            {
+                var cPos = new Vector2(r.ReadSingle(), r.ReadSingle());
+                run.TitanCarcass = new TitanCorpse(cPos, run.Titan.Kind, run.Titan.BodyRadius)
+                {
+                    Progress = r.ReadSingle(),
+                };
+            }
+            // Belt-and-braces: a dead titan whose soul was never claimed always offers its
+            // carcass, even across saves from the crossing frame itself.
+            else if (run.Titan.Health <= 0 && !run.SoulClaimed)
+            {
+                run.TitanCarcass = new TitanCorpse(run.Titan.Position, run.Titan.Kind,
+                    run.Titan.BodyRadius);
             }
 
             // Timers restart at their run-start defaults — a beat of calm after resuming.
