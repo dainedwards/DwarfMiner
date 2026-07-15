@@ -2793,29 +2793,29 @@ public sealed partial class DwarfMinerGame : Game
         _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 130, 50));
         if (_run.Player.Inventory.TryConsume("ammo_diamond", 1))
         {
-            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 300f, 80f, 1.8f, ProjectileKind.CannonDiamond));
-            _run.Player.ShootCooldown = 0.7f;
+            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 220f, 80f, 1.8f, ProjectileKind.CannonDiamond));
+            _run.Player.ShootCooldown = 0.88f;
             _run.Shake = MathF.Max(_run.Shake, 0.5f);
         }
         else if (_run.Player.Inventory.TryConsume("ammo_sapphire", 1))
         {
-            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 320f, 35f, 1.7f, ProjectileKind.CannonSapphire));
-            _run.Player.ShootCooldown = 0.55f;
+            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 235f, 35f, 1.7f, ProjectileKind.CannonSapphire));
+            _run.Player.ShootCooldown = 0.72f;
         }
         else if (_run.Player.Inventory.TryConsume("ammo_ruby", 1))
         {
-            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 320f, 32f, 1.7f, ProjectileKind.CannonRuby));
-            _run.Player.ShootCooldown = 0.55f;
+            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 235f, 32f, 1.7f, ProjectileKind.CannonRuby));
+            _run.Player.ShootCooldown = 0.72f;
         }
         else if (_run.Player.Inventory.TryConsume("ammo_silver", 1))
         {
-            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 380f, 22f, 1.6f, ProjectileKind.CannonSilver));
-            _run.Player.ShootCooldown = 0.45f;
+            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 275f, 22f, 1.6f, ProjectileKind.CannonSilver));
+            _run.Player.ShootCooldown = 0.6f;
         }
         else
         {
-            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 320f, 25f, 1.6f, ProjectileKind.Cannon));
-            _run.Player.ShootCooldown = 0.55f;
+            _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 235f, 25f, 1.6f, ProjectileKind.Cannon));
+            _run.Player.ShootCooldown = 0.72f;
         }
     }
 
