@@ -38,6 +38,36 @@ public static class TitanRenderer
             case TitanKind.Vitriodactyl: DrawPterodactyl(r, t, planet, playerPos, f, time); break;
             case TitanKind.CosmicOctopus: DrawStarspawn(r, t, planet, playerPos, f, time); break;
         }
+
+        // Shootable weakpoints — pulsing soft-spots riding the hide (Combat pays triple
+        // damage inside them). A landed weakpoint hit flashes them white.
+        foreach (var wp in t.WeakpointsWorld())
+        {
+            var pulse = 0.5f + 0.5f * MathF.Sin(time * 5f);
+            var flash = t.WeakpointFlash > 0f;
+            r.DrawCircle(wp, 7f + pulse * 2.5f, (flash ? Color.White : new Color(255, 150, 60)) * 0.5f);
+            r.DrawCircle(wp, 3.5f + pulse * 1.2f, flash ? Color.White : new Color(255, 220, 120));
+        }
+    }
+
+    /// <summary>Drive one arm's hand through the shared smash swing: rest → reared high →
+    /// hammered onto <see cref="Titan.SmashTarget"/> (arriving exactly on the impact beat) →
+    /// buried follow-through. Every arm kind (<see cref="Titan.HasArms"/>) renders its swing
+    /// through this, so the whole roster works a skyline with its fists, not just Kong.</summary>
+    private static Vector2 SmashFist(Titan t, Frame f, int side, Vector2 shoulder, Vector2 rest)
+    {
+        if (t.SmashTimer <= 0f || side != t.SmashHand) return rest;
+        var elapsed = Titan.SmashDuration - t.SmashTimer;
+        var raised = shoulder + f.Up * 74f + f.Right * (f.Face * 26f);
+        const float raiseEnd = 0.35f;
+        const float hammerEnd = Titan.SmashDuration - Titan.SmashImpactAt;
+        if (elapsed < raiseEnd) return Vector2.Lerp(rest, raised, elapsed / raiseEnd);
+        if (elapsed < hammerEnd)
+        {
+            var q = (elapsed - raiseEnd) / (hammerEnd - raiseEnd);
+            return Vector2.Lerp(raised, t.SmashTarget, q * q);   // accelerating swing
+        }
+        return t.SmashTarget;
     }
 
     public static void AddLights(Renderer r, Titan t, Planet planet, Vector2 playerPos, float time)
