@@ -325,6 +325,11 @@ public sealed class Planet
         var k = _tiles[i];
         if (k == TileKind.Sky) return null;
         var hardness = effectiveHardness ?? Tiles.Hardness(k);
+        // A trunk gets tougher the taller its tree — a towering old-growth alien is genuinely
+        // hard to chop through, a sapling much less so. (Only when the caller didn't already
+        // force a hardness.)
+        if (k == TileKind.TreeTrunk && effectiveHardness is null)
+            hardness += Math.Min(4, TreeHeightAt(x, y) / 6);
         if (hardness >= 99) return null;
         var dmg = _damage[i] + Math.Max(1, power * 32 / hardness);
         if (dmg >= 255)
