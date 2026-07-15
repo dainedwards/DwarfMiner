@@ -1753,7 +1753,8 @@ public static class WorldGen
                 var mastTop = Math.Min(planet.Rings - 2, topR + (int)(3 * S) + rng.Next((int)(3 * S)));
                 for (var r = topR + 1; r <= mastTop; r++)
                 {
-                    var t = (int)((ang / MathHelper.TwoPi + 1f) % 1f * planet.TilesAt(r));
+                    var n = planet.TilesAt(r);
+                    var t = ((int)MathF.Round(ang / (MathHelper.TwoPi / n) - 0.5f) % n + n) % n;
                     if (Tiles.IsAnchored(planet.Get(r, t))) continue;
                     planet.Set(r, t, r == mastTop ? TileKind.Beacon : TileKind.AlienAlloy);
                     planet.SetWall(r, t, TileKind.AlienAlloy);
