@@ -4955,7 +4955,7 @@ public sealed partial class DwarfMinerGame : Game
                     {
                         var muzzle = _run.Player.Position + aim * 9f;
                         var f = EnergyPower(_energyCharge);
-                        var rad = 1.2f + f * 5.5f;
+                        var rad = (1.2f + f * 5.5f) * 0.35f;   // 35% of the old charging-orb size
                         var jit = MathF.Sin(_totalTime * 30f) * 0.4f * f;
                         _renderer.DrawCircle(muzzle, (rad + jit) * 1.5f, new Color(150, 90, 240, 90));
                         _renderer.DrawCircle(muzzle, rad + jit, Color.Lerp(new Color(150, 110, 235), new Color(255, 120, 240), f));
