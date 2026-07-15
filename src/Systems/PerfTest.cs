@@ -27,11 +27,21 @@ public static class PerfTest
         var physics = new Physics(planet, cells);
         var rng = new Random(7);
 
-        // Seed the world's water so the sim starts with realistic pool load, then settle.
-        foreach (var (x, y) in planet.WaterSeeds) cells.FillTile(x, y, Material.Water);
+        // Seed the world's liquids the way BuildSessionWorld does — lava sea + lakes via
+        // the SILENT fills and one boundary wake — so this measures the real load path
+        // (the old always-wake FillTile seeding made the first ticks walk every interior
+        // sea cell once; at Density 8 that was the user-visible multi-second load stall).
+        if (PlanetDefs.DebugWorld.LavaFillFrac > 0f)
+        {
+            var (_, _, seaFloor) = WorldGen.CaveStrata(planet, PlanetDefs.DebugWorld);
+            cells.FillSkyTilesWithin(planet.Radius * PlanetDefs.DebugWorld.LavaFillFrac,
+                Material.Lava, seaFloor);
+        }
+        foreach (var (x, y) in planet.WaterSeeds) cells.FillTileSilent(x, y, Material.Water);
+        cells.WakeFreeSurfaces(0, cells.Height - 1);
         sw.Restart();
         for (var i = 0; i < 120; i++) cells.Update(Dt);
-        Console.WriteLine($"[perf] water pre-settle 120 ticks: {sw.ElapsedMilliseconds}ms");
+        Console.WriteLine($"[perf] sea+water pre-settle 120 ticks: {sw.ElapsedMilliseconds}ms");
 
         // --- Scenario 1: meteor storm. 30 crater discs (r=10 tiles) breaking rock into dust
         // cells all around the surface, then 10 sim-seconds of cells+physics catching up.
