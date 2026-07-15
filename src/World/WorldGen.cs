@@ -1756,29 +1756,35 @@ public static class WorldGen
                         }
 
                         // Interior: floor slab at the base of every storey above the ground
-                        // floor (the plinth is street level's floor), with a stair gap
-                        // hugging alternating walls so the shaft zig-zags up the tower.
+                        // floor (the plinth is street level's floor). The stair gap is a
+                        // two-column hole in the slab BESIDE the climb channel, alternating
+                        // sides per floor so the open shaft zig-zags — never against the
+                        // wall: a wall-side gap severed the slab's outer strip from the hull,
+                        // leaving every other floor a free-floating shelf that broke the
+                        // tower into loose pieces the moment it toppled (or anything woke
+                        // the settle physics under it).
                         var dt = j - midJ;
                         var span = cols / 2;
-                        var slab = slabRow && dt * gapSide < span - 4;
+                        var inGap = slabRow && dt * gapSide is 2 or 3;
+                        var slab = slabRow && !inGap;
 
                         // Climbing spine: a full-height ladder shaft dead-centre in the
-                        // tower — always reachable from the ground floor and clear of the
-                        // slab, so every storey connects. The stair-gap beside it lets you
-                        // step off each level.
+                        // tower — always reachable from the ground floor, so every storey
+                        // connects. The stair-gap beside it lets you step off each level.
                         if (dt == 0 && storey >= 0 && storey < height - 2)
                         {
                             planet.Set(r, t, TileKind.Ladder);
                             continue;
                         }
-                        // Keep the two columns flanking the ladder open its full height, so
-                        // the climb shaft is a clean 3-wide channel: floor slabs stop short
-                        // of it and never seal over the ladder, and the dwarf's body clears
-                        // each storey. (A 1-tile ladder hole through a 2-tile-thick slab
-                        // used to wall you in.)
+                        // The two columns flanking the ladder stay a clear climb channel
+                        // (a 1-tile ladder hole through a 2-tile-thick slab used to wall
+                        // you in) — but at slab rows they carry LADDER landings instead of
+                        // open sky: still climb-through (ladders are passable), and they
+                        // lace the spine to every floor slab, so the tower is one connected
+                        // structure instead of a loose ladder strand between floating floors.
                         if (Math.Abs(dt) <= 1 && storey >= 0 && storey < height - 2)
                         {
-                            planet.Set(r, t, TileKind.Sky);
+                            planet.Set(r, t, slab ? TileKind.Ladder : TileKind.Sky);
                             continue;
                         }
                         if (slab) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
@@ -1786,9 +1792,9 @@ public static class WorldGen
                         // Apartment furniture on the row sitting directly on each slab:
                         // potted tentacle-plants, levitating egg-chairs, orb lamps — placed
                         // by a position hash (no rng draws, so downstream worldgen streams
-                        // hold).
+                        // hold). Skipped over the stair gap — nothing floats over the hole.
                         if (storey >= floorEvery && storey % floorEvery == 2
-                            && Math.Abs(dt) < span - 2 && dt * gapSide < span - 4)
+                            && Math.Abs(dt) < span - 2 && dt * gapSide is not (2 or 3))
                         {
                             var h = (r * 7919 + t * 104729) & 1023;
                             if (h < 260)
