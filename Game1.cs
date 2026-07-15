@@ -5216,8 +5216,14 @@ public sealed partial class DwarfMinerGame : Game
             switch (p.Kind)
             {
                 case ProjectileKind.Bullet:
-                    _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 230, 120));
+                {
+                    // Small brass round flying nose-first — a stubby casing with a bright tip.
+                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
+                    var nose = p.Position + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * 1.4f;
+                    _renderer.DrawRect(p.Position, new Vector2(3f, 1.1f), new Color(205, 170, 90), ang);
+                    _renderer.DrawRect(nose, new Vector2(1.3f, 1.1f), new Color(245, 230, 170), ang);
                     break;
+                }
                 case ProjectileKind.Cannon:
                     _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 140, 60));
                     break;
