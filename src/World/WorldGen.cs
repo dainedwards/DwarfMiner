@@ -471,7 +471,8 @@ public static class WorldGen
                     // fresh dry cave tiles down there would otherwise all roll gas seeds,
                     // and wandering gas is exactly the kind of never-sleeping cell load the
                     // strata design promises not to add.
-                    if (!isReservoir && def.SeedsGas && depth > 34f && radTiles > seaFloorTiles
+                    if (!isReservoir && def.SeedsGas && depth > 34f
+                        && radTiles > MathF.Max(seaFloorTiles, lavaTopTiles + 2f * S)
                         && SampleNoise(pocketNoise, wx * 0.06f + 21f, wy * 0.06f + 21f) > 0.80f)
                         planet.GasSeeds.Add((r, t));
 
