@@ -127,12 +127,15 @@ public sealed class Particles
         }
     }
 
-    /// <summary>Burst of chips when a tile shatters: tinted to the tile, gravity-bound, brief.</summary>
+    /// <summary>Burst of chips when a tile shatters: tinted to the tile, gravity-bound, brief.
+    /// Noita grain rule (applies to every emitter here): MANY ~1-px grains, never few fat
+    /// quads — a scaled featureless square reads as a giant pixel and breaks the pixel-art
+    /// scale. Counts go up where sizes came down so bursts keep their mass.</summary>
     public void EmitChips(Vector2 pos, TileKind kind)
     {
         var baseColor = Tiles.BaseColor(kind);
         var fade = Color.Multiply(baseColor, 0.4f);
-        for (var i = 0; i < 8; i++)
+        for (var i = 0; i < 14; i++)
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
             var spd = 30f + (float)_rng.NextDouble() * 60f;
@@ -144,7 +147,7 @@ public sealed class Particles
                 MaxLife = 0.9f,
                 Color = baseColor,
                 FadeColor = fade,
-                Size = 1f + (float)_rng.NextDouble(),
+                Size = 0.8f + (float)_rng.NextDouble() * 0.5f,
                 GravityScale = 1f,
                 Drag = 1.0f,
                 CollideTiles = true,
