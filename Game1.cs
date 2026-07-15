@@ -4226,9 +4226,9 @@ public sealed partial class DwarfMinerGame : Game
         _titlePlanetMap = new Texture2D(gd, mapW, mapH);
         _titlePlanetMap.SetData(map);
 
-        // Ring system: a flat ellipse annulus (two bands split by a dark gap, dithered for
-        // grain), also at DOUBLE resolution. Drawn in two halves around the tilted planet —
-        // far side behind, near side in front.
+        // Ring system: a flat ellipse annulus, SOLID now — two clean bands split by a dark
+        // gap, no grain speckle and no dithered edge. At double resolution, drawn in two
+        // halves around the tilted planet: far side behind, near side in front.
         const int ringW = 172, ringH = 48;
         var ring = new Color[ringW * ringH];
         for (var y = 0; y < ringH; y++)
@@ -4239,11 +4239,9 @@ public sealed partial class DwarfMinerGame : Game
                 var rr = MathF.Sqrt(nx * nx + ny * ny);
                 if (rr is < 0.64f or > 1f) continue;
                 if (rr is > 0.82f and < 0.86f) continue;             // the dark division
-                if (((x + y) & 1) == 0 && rr > 0.95f) continue;      // dithered outer edge
-                var bright = rr < 0.82f ? 0.9f : 0.65f;
-                if (((x * 7 + y * 13) & 7) == 0) bright *= 0.75f;    // grain
+                var bright = rr < 0.82f ? 0.9f : 0.7f;               // inner band brighter
                 ring[y * ringW + x] = new Color(
-                    (int)(214 * bright), (int)(188 * bright), (int)(148 * bright), 235);
+                    (int)(214 * bright), (int)(188 * bright), (int)(148 * bright), 255);
             }
         _titleRingTex = new Texture2D(gd, ringW, ringH);
         _titleRingTex.SetData(ring);
