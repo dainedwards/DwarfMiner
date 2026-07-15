@@ -387,6 +387,17 @@ public static class TileAtlas
                 for (var i = 0; i < 2; i++) Set(rng.Next(Res), rng.Next(Res), Tint(baseCol, 16, 16, 26));
                 break;
             }
+            case TileKind.LavaRock:
+            {
+                // Vesicular scoria: dark gas-bubble pits over charred rock, with a couple
+                // of faint ember-warm flecks — cooled lava, not cold basalt.
+                for (var i = 0; i < 6; i++)
+                    Blob(1 + rng.Next(Res - 2), 1 + rng.Next(Res - 2), 1, 1, Shade(baseCol, -26));
+                for (var i = 0; i < 3; i++) Set(rng.Next(Res), rng.Next(Res), Shade(baseCol, 18));
+                for (var i = 0; i < 2; i++)
+                    Set(1 + rng.Next(Res - 2), 1 + rng.Next(Res - 2), new Color(150, 74, 40));
+                break;
+            }
             case TileKind.Obsidian:
             {
                 // Glassy black: conchoidal ripple arcs plus two hard glints.
