@@ -679,6 +679,16 @@ public sealed class Cells
                 if (cy >= Height) { f.Pos = next; continue; }   // open sky: pure ballistics
                 if (cy < 0 || IsBlocked(cx, cy))
                 {
+                    // Open flame dies the moment it meets water: a flying fire gout that hits
+                    // (or is hosed into) a pool flashes to a wisp of steam instead of banking
+                    // a burning cell on the surface.
+                    if ((Material)f.Mat == Material.Fire && cy >= 0 && Get(cx, cy) == Material.Water)
+                    {
+                        var (qx, qy) = WorldToCell(f.Pos);
+                        if (!IsBlocked(qx, qy)) Place(qx, qy, Material.Smoke);
+                        done = true;
+                        break;
+                    }
                     // Contact: bank the cell in the last free spot along its path. A failed
                     // deposit (landing site filled since) damps the cell and lets it keep
                     // falling — it re-tries next tick from wherever it slid to.
