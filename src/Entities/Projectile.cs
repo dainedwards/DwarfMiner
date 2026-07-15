@@ -473,5 +473,13 @@ public sealed class Projectile
                 }
             }
         }
+        // Airburst: a blast that carved nothing still leaves a drifting puff — a small
+        // smoke cluster at the epicentre (StampAtWorld refuses cells inside solid tiles,
+        // so a shot dying against an unbreakable wall just puffs off its face).
+        if (Particles.CellFx && !carved)
+            for (var i = 0; i < 10; i++)
+                cells.StampAtWorld(Position + new Vector2(
+                    (Random.Shared.NextSingle() - 0.5f) * 8f,
+                    (Random.Shared.NextSingle() - 0.5f) * 8f), Material.Smoke);
     }
 }
