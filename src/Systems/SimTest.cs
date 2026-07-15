@@ -334,6 +334,140 @@ public static class SimTest
         Environment.Exit(_failed ? 1 : 0);
     }
 
+    /// <summary>The living tree ecosystem: a planted tree raises a slender trunk and threads
+    /// roots into the soil; felling it leaves those roots, which — once watered — regrow the
+    /// trunk back; and grubbing the roots out kills the tree for good.</summary>
+    private static void TestTreeEcology()
+    {
+        var prev = WorldGen.ScatterVegetation;
+        WorldGen.ScatterVegetation = false;   // we plant one tree by hand for a controlled test
+        try
+        {
+            var def = PlanetDefs.ById("ember");
+            var run = new Session(def) { Planet = WorldGen.Generate(88, def) };
+            run.Cells = new Cells(run.Planet);
+            run.Physics = new Physics(run.Planet, run.Cells);
+            run.Player = new Player(run.Planet.Center);
+            var p = run.Planet;
+
+            // Find a surface bearing with soil underfoot and clear sky overhead for the crown.
+            var found = false;
+            float ang = 0f;
+            var groundR = -1;
+            const int trunkH = 8;
+            for (var b = 0; b < 3000 && !found; b++)
+            {
+                ang = b / 3000f * MathHelper.TwoPi;
+                var gr = -1;
+                for (var r = p.SurfaceRing + 30; r > p.SurfaceRing - 24; r--)
+                {
+                    if (p.Get(r, Col(p, r, ang)) == TileKind.Sky) continue;
+                    gr = r; break;
+                }
+                if (gr < 0) continue;
+                if (p.Get(gr, Col(p, gr, ang)) is not (TileKind.Grass or TileKind.Dirt
+                    or TileKind.Snow or TileKind.MossStone or TileKind.Gravel or TileKind.Basalt)) continue;
+                var clear = true;
+                for (var h = 1; h <= trunkH + 5 && clear; h++)
+                    clear = gr + h < p.Rings - 1 && p.Get(gr + h, Col(p, gr + h, ang)) == TileKind.Sky;
+                if (!clear) continue;
+                groundR = gr; found = true;
+            }
+            Check("ecosystem: found a plantable surface site", found);
+            if (!found) return;
+
+            var site = new TreeSite
+            {
+                Angle = ang, GroundR = groundR, Species = 1, Height = trunkH,
+                Canopy = TileKind.TreeCanopy,
+            };
+            TreeEcology.Plant(p, site);
+            run.Trees.Add(site);
+
+            Check("ecosystem: planting raises a trunk", CountTrunk(p, site) >= 6,
+                $"{CountTrunk(p, site)} trunk tiles");
+            Check("ecosystem: planting threads roots underground", RootCount(p, site) >= 1,
+                $"{RootCount(p, site)} root tiles");
+
+            // Fell it: clear the standing tree, keep the roots. It stops being standing.
+            ClearCrown(p, site);
+            site.Standing = false;
+            site.Growth = 0f;
+            Check("ecosystem: a felled trunk is gone but roots remain",
+                CountTrunk(p, site) == 0 && RootCount(p, site) >= 1);
+
+            // Keep it watered and let the ecosystem tick: the trunk grows back.
+            var regrew = false;
+            for (var i = 0; i < 60 * 90 && !regrew; i++)
+            {
+                TreeEcology.WaterBand(run, site.Angle, 0.2f, RainKind.Water, 1f);
+                TreeEcology.Update(1f / 60f, run);
+                regrew = site.Standing;
+            }
+            Check("ecosystem: a watered, rooted tree regrows", regrew && CountTrunk(p, site) >= 6,
+                $"standing={site.Standing} trunk={CountTrunk(p, site)}");
+
+            // Grub the roots out and re-fell: with nothing left underground, it's gone for good.
+            ClearCrown(p, site);
+            site.Standing = false;
+            site.Growth = 0f;
+            for (var d = 1; d <= TreeEcology.MaxRootDepth; d++)
+            {
+                var rr = site.GroundR - d;
+                if (rr < 1) break;
+                if (p.Get(rr, Col(p, rr, site.Angle)) == TileKind.TreeRoot)
+                    p.Set(rr, Col(p, rr, site.Angle), TileKind.Dirt);
+            }
+            TreeEcology.Update(1f / 60f, run);
+            Check("ecosystem: grubbing out the roots kills the tree for good",
+                !run.Trees.Contains(site));
+        }
+        finally { WorldGen.ScatterVegetation = prev; }
+    }
+
+    private static int Col(Planet p, int r, float ang)
+        => (int)((ang / MathHelper.TwoPi + 1f) % 1f * p.TilesAt(r));
+
+    private static int CountTrunk(Planet p, TreeSite s)
+    {
+        var n = 0;
+        for (var h = 1; h <= s.Height + 5; h++)
+        {
+            var rr = s.GroundR + h;
+            if (rr >= p.Rings - 1) break;
+            if (p.Get(rr, Col(p, rr, s.Angle)) == TileKind.TreeTrunk) n++;
+        }
+        return n;
+    }
+
+    private static int RootCount(Planet p, TreeSite s)
+    {
+        var n = 0;
+        for (var d = 1; d <= TreeEcology.MaxRootDepth; d++)
+        {
+            var rr = s.GroundR - d;
+            if (rr < 1) break;
+            if (p.Get(rr, Col(p, rr, s.Angle)) == TileKind.TreeRoot) n++;
+        }
+        return n;
+    }
+
+    private static void ClearCrown(Planet p, TreeSite s)
+    {
+        for (var h = 1; h <= s.Height + 5; h++)
+        {
+            var rr = s.GroundR + h;
+            if (rr >= p.Rings - 1) break;
+            for (var dt = -4; dt <= 4; dt++)
+            {
+                var nn = p.TilesAt(rr);
+                var t = ((Col(p, rr, s.Angle) + dt) % nn + nn) % nn;
+                if (p.Get(rr, t) is TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2)
+                    p.Set(rr, t, TileKind.Sky);
+            }
+        }
+    }
+
     /// <summary>Round-trip the suspend save: build a mutated session, write, read back, and
     /// compare everything RunSave promises to preserve. The player's real save slot is
     /// untouched — any existing run.sav is backed up and restored around the test.</summary>
