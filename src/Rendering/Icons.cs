@@ -1257,9 +1257,6 @@ public static class Icons
         ['M'] = new Color(235, 215, 255),   // hot core
         ['O'] = new Color(120, 90, 210),    // muzzle emitter glow
         ['D'] = new Color(70, 62, 95),      // grip
-        ['P'] = new Color(255, 80, 200),
-        ['p'] = new Color(180, 40, 130),
-        ['K'] = new Color(46, 40, 60),
     });
 
     private static Texture2D BuildHarpoon(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
