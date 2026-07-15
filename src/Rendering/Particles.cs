@@ -1248,6 +1248,7 @@ public sealed class Particles
                 LandMat = CellFx ? (byte)landMat : (byte)0,
                 LandSparks = true,
                 SmearMax = hoseSmear,
+                SmearScale = 2f,
             });
         }
     }
