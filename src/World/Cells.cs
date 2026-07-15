@@ -2003,6 +2003,13 @@ public sealed class Cells
         {
             if (_rng.Next(3) == 0) _srcTile[i]--;
         }
+        // Licking-flame sites: burning cells (fused or fuelled — NOT bare guttering
+        // strays) sample themselves into the flame queue; Game1 turns each entry into a
+        // rising flame tongue. Because the source is the live fire population, the
+        // visible flames grow with jet dwell and spread wherever fuel carries the fire.
+        if ((_srcTile[i] > 0 || fuelled) && _rng.Next(12) == 0
+            && PendingFlames.Count < MaxPendingFlames)
+            PendingFlames.Add(CellToWorld(cx, cy));
         // Gutter out: half to a smoke wisp, half to nothing (all-smoke fires read as grey
         // soup over a burning pool). A fuelled flame lives ~0.9s; a STARVED one now pools
         // ~0.8s before dying (was ~0.27s) — flame dropped on bare rock visibly burns as a
