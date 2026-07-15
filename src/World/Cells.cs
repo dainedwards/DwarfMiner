@@ -2517,9 +2517,12 @@ public sealed class Cells
     /// touches millions of cells, and a 3-px tile can't show sub-tile grains anyway.</summary>
     /// <summary><paramref name="skipLiquids"/>: Water/Acid/Oil grid cells are being drawn
     /// by the dedicated liquid RT pass (<see cref="DrawLiquids"/>) this frame — skip them
-    /// here. Flying liquid cells stay in this pass either way: they're airborne streaks,
-    /// not part of a pool body.</summary>
-    public void Draw(Renderer r, Vector2 viewCentre, float viewRadius, int stride = 1, bool skipLiquids = false)
+    /// here. <paramref name="skipLava"/>: same for Lava, but only when the metaball shader
+    /// is live (blob mode routes lava to the hot coverage field; the plain fallback keeps
+    /// lava here). Flying liquid cells stay in this pass either way: they're airborne
+    /// streaks, not part of a pool body.</summary>
+    public void Draw(Renderer r, Vector2 viewCentre, float viewRadius, int stride = 1,
+        bool skipLiquids = false, bool skipLava = false)
     {
         var radial = (float)Planet.TileSize / Density;
         var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
