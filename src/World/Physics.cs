@@ -74,6 +74,12 @@ public sealed class Physics
     public const int BudgetPerHardness = 32;
     /// <summary>Obsidian is brittle: any unsupported span bigger than this caves in.</summary>
     public const int ObsidianCollapseBudget = 24;
+    /// <summary>Unsupported regions smaller than this never collapse, anywhere. Player-built
+    /// walls and bridges are ordinary tile kinds (placed stone IS stone), so without this
+    /// floor the connectivity check dusts a small build the moment one block of it is
+    /// broken. 64 grid tiles = 16 placed blocks (each placement stamps a 2×2); small
+    /// leftover mining nubs just keep floating, Terraria-style.</summary>
+    public const int MinCollapseSize = 64;
     /// <summary>Hard flood cap for regions entirely above the crust. Airborne rock gets no
     /// size-based reprieve — this only bounds the flood's worst-case work (the biggest
     /// giant-world massifs run ~28-32k tiles on the 4-px grid).</summary>
