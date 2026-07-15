@@ -20,6 +20,7 @@ public sealed class Cloud
     public float RainCooldown; // gap before it can rain again
     public float Phase;        // random phase for per-puff outline wobble
     public bool Dissipating;   // shredding against a peak/skyscraper — fading out for good
+    public RainKind? KindOverride; // debug-spawned clouds rain THIS regardless of biome
 }
 
 /// <summary>The sky half of the living ecosystem. Clouds form on every world, drift on the wind,
