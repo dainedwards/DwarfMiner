@@ -2386,7 +2386,7 @@ public static class SimTest
         // --- Player swimming ---
         {
             var swimmer = new Player(poolCentre) { InWater = true };
-            for (var i = 0; i < 60; i++) swimmer.Update(dt, planet, 0, false, false, +1);
+            for (var i = 0; i < 60; i++) swimmer.Update(dt, planet, 0, false, +1);
             var rose = Vector2.Dot(swimmer.Position - poolCentre, upP);
             Check($"swim: stroking up rises ({rose:0}px in 1s)", rose > 8f);
 
