@@ -1464,9 +1464,12 @@ public sealed class Particles
                 LightColor = new Color(255, 170, 70),
                 Fluid = (byte)Material.Fire,
                 LandMat = ignites ? (byte)Material.Fire : (byte)0,
-                // 6-9s burn fuse (also the first-contact trigger in Update: fuse-carrying
-                // grains deliver on their first strike, not at rest).
-                LandFuse = ignites ? (byte)(120 + _rng.Next(60)) : (byte)0,
+                // SMALL initial fuse (~1.5-2s): a passing lick leaves a short-lived flame;
+                // DWELL builds duration — every further stamp on an already-burning cell
+                // tops its fuse up (StampAtWorld, cap 80 ≈ 4s of fuel-less burn). Also the
+                // first-contact trigger in Update: fuse-carrying grains deliver on their
+                // first strike, not at rest.
+                LandFuse = ignites ? (byte)(30 + _rng.Next(12)) : (byte)0,
                 LandSparks = ignites,
             });
         }
