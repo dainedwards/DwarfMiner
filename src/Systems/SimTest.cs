@@ -1741,9 +1741,10 @@ public static class SimTest
         }
 
         // --- 8. Doubled alien constitutions.
-        Check("defense: aliens toughened (civilian 24hp, peacekeeper 52hp)",
+        Check("defense: civilians soft, other aliens 4x hp (civ 24, keeper 208)",
             new Creature(Vector2.Zero, CreatureKind.Civilian).Health == 24f
-            && new Creature(Vector2.Zero, CreatureKind.Peacekeeper).Health == 52f);
+            && new Creature(Vector2.Zero, CreatureKind.Peacekeeper).Health == 208f
+            && new Creature(Vector2.Zero, CreatureKind.Saucer).Health == 176f);
 
         // --- 9. Flame/acid walkers hose level, never into their own footing: park the prey
         // straight under the titan's chin and every grain of the breath still leaves within
