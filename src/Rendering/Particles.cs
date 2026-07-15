@@ -55,6 +55,9 @@ public struct Particle
     /// Cells.StampAtWorld) — the flamethrower's long-burning ground fire. 0 = normal
     /// short-lived flame. Meaningless for non-Fire LandMat.</summary>
     public byte LandFuse;
+    /// <summary>Spark shed by the flame plume: rides the SAME turbulence pattern as the
+    /// jet body (without joining the fluid coverage or shedding recursively).</summary>
+    public bool JetSpark;
 }
 
 /// <summary>
@@ -111,7 +114,7 @@ public sealed class Particles
             // off each grain's own Life clock (grains are born with random lives, so the
             // phases scatter for free), and it's ±jitter AROUND the arc, never a separate
             // trajectory — it cannot recreate the stray-strand problem.
-            if (p.Fluid == (byte)Material.Fire)
+            if (p.Fluid == (byte)Material.Fire || p.JetSpark)
             {
                 var sp = p.Velocity.LengthSquared();
                 if (sp > 100f)
@@ -125,9 +128,10 @@ public sealed class Particles
                 // spits a bright fleck at ITS OWN position and velocity — sparks are born
                 // on the actual burning body (arc, droop, turbulence, movement all
                 // inherited), not along the nominal aim ray. ~340 plume grains alive at
-                // full stream / 60 ≈ 5-6 sparks per frame. Sparks aren't Fluid, so they
-                // can't shed recursively.
-                if (_rng.Next(60) == 0)
+                // full stream / 60 ≈ 5-6 sparks per frame. JetSpark gives them the same
+                // turbulence pattern as the jet (clause above) WITHOUT joining the fluid
+                // coverage or shedding recursively.
+                if (!p.JetSpark && _rng.Next(60) == 0)
                     _list.Add(new Particle
                     {
                         Position = p.Position + Jitter(1f),
@@ -137,11 +141,16 @@ public sealed class Particles
                         Color = _rng.Next(2) == 0 ? new Color(255, 245, 190) : new Color(255, 205, 90),
                         FadeColor = new Color(255, 120, 30),
                         Size = 0.5f,
-                        GravityScale = 1.6f,
+                        // Symmetric ±gravity: half the sparks curve UP exactly as hard as
+                        // the others sag down — dancing fire flecks, not falling grit.
+                        GravityScale = ((float)_rng.NextDouble() * 2f - 1f) * 1.6f,
                         Drag = 1.4f,
                         CollideTiles = true,
                         LightRadius = _rng.Next(5) == 0 ? 14f : 0f,
                         LightColor = new Color(255, 190, 80),
+                        // MUCH shorter streak than the shared default (was up to 8 px).
+                        SmearMax = 1.5f,
+                        JetSpark = true,
                     });
             }
 
