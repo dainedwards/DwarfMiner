@@ -3194,11 +3194,12 @@ public sealed partial class DwarfMinerGame : Game
         var muzzle = _run.Player.Position + dir * 8f;
         var reach = StreamReach();
 
-        // A tight jet of fire cells fired straight down the aim — speed scaled so the flame
-        // carries just to the current reach, then gutters. Only a narrow spread.
-        for (var i = 0; i < 2; i++)
+        // A jet of fire cells fired down the aim — speed scaled so the flame carries just to
+        // the current reach, then gutters. Spread matches the particle fan so the payload
+        // lands where the visible tongue points.
+        for (var i = 0; i < 3; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.1f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.18f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
