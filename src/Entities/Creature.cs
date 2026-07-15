@@ -3419,6 +3419,67 @@ public sealed class Creature
                         new Vector2(1.2f, 3.4f), new Color(190, 220, 255), rot + 0.4f);
                 break;
             }
+            case CreatureKind.Quillwing:
+            {
+                // Barbed cave flyer: dark chitin body between two beating wings, a fan of pale
+                // quills bristling forward, one hot little eye.
+                var body = Tinted(new Color(70, 60, 88));
+                var quill = Tinted(new Color(206, 204, 182));
+                var flap = MathF.Sin(t * 20f + _phase) * 1.6f;
+                r.DrawRect(Position + right * 3f, new Vector2(5f, 1.6f), body, rot + flap * 0.5f);
+                r.DrawRect(Position - right * 3f, new Vector2(5f, 1.6f), body, rot - flap * 0.5f);
+                r.DrawCircle(Position, Radius, body);
+                for (var i = -1; i <= 1; i++)
+                {
+                    var qd = Rotate(right * facing, i * 0.4f);
+                    r.DrawRect(Position + qd * (Radius + 1.6f), new Vector2(3.4f, 1f), quill,
+                        MathF.Atan2(qd.Y, qd.X));
+                }
+                r.DrawCircle(Position + right * facing * 1.4f, 1f, new Color(255, 220, 120));
+                break;
+            }
+            case CreatureKind.Warpwisp:
+            {
+                // Eldritch caster: a dark core wreathed in a pulsing violet aura with a few
+                // motes orbiting it, and a bright charge-spark just before it looses a hex.
+                var glow = MathF.Sin(t * 3f + _phase) * 0.4f + 0.6f;
+                r.DrawCircle(Position, Radius + 2f + glow, new Color(90, 50, 160, 120));
+                r.DrawCircle(Position, Radius, Tinted(new Color(120, 70, 200)));
+                r.DrawCircle(Position, Radius * 0.5f, Tinted(new Color(20, 12, 34)));
+                if (_swing > 0f)
+                    r.DrawCircle(Position + right * facing * (Radius + 2f), 1.6f, new Color(220, 170, 255));
+                for (var i = 0; i < 3; i++)
+                {
+                    var a = t * 2.4f + _phase + i * MathF.Tau / 3f;
+                    r.DrawRect(Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * (Radius + 2.5f),
+                        new Vector2(1.2f, 1.2f), new Color(200, 160, 255));
+                }
+                break;
+            }
+            case CreatureKind.Thornback:
+            {
+                // Spine-beetle grenadier: a domed carapace on stubby legs, a row of raised
+                // barb-spines (its mortar tubes) that flare as it lobs.
+                var shell = Tinted(new Color(80, 96, 74));
+                var shellDk = Tinted(new Color(54, 66, 50));
+                var spine = Tinted(new Color(182, 192, 162));
+                var stride = MathF.Min(MathF.Abs(Vector2.Dot(Velocity, right)) / 24f, 1f);
+                for (var i = -1; i <= 1; i += 2)
+                {
+                    var a = MathF.Sin(t * 10f + _phase + i) * 0.5f * stride;
+                    r.DrawRect(Position - up * 1.6f + right * (i * 2f), new Vector2(1.2f, 2.2f), shellDk, rot + a);
+                }
+                r.DrawRect(Position + up * 0.6f, new Vector2(Radius * 2.1f, Radius * 1.4f), shell, rot);
+                r.DrawRect(Position + up * 1.8f, new Vector2(Radius * 1.3f, 1.6f), shellDk, rot);
+                for (var i = -1; i <= 1; i++)
+                {
+                    var lift = _swing > 0f && i == 0 ? 1.4f : 0f;
+                    r.DrawRect(Position + up * (2.6f + lift) + right * (i * 2f),
+                        new Vector2(1.2f, 2.6f + lift), spine, rot);
+                }
+                r.DrawCircle(Position + right * facing * 2.4f + up * 0.4f, 0.9f, new Color(230, 120, 90));
+                break;
+            }
         }
 
         // Burning creatures get a flickering ember dot above them, whatever the species.
