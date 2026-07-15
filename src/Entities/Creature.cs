@@ -527,6 +527,28 @@ public sealed class Creature
                 if (WetSeconds <= 0f)
                     BurnSeconds = MathF.Max(BurnSeconds, OilySeconds > 0f ? 5f : 1.5f);
             }
+
+            // Drowning: air-breathers with their HEAD underwater (wading chest-deep is
+            // safe) run down the grace reserve, then take steady damage. Swimmers, water
+            // natives and breather-equipped bandits pass ImmuneTo(Water) and never reach
+            // this; machines and the vacuum kinds fail Breathes. The design counterweight
+            // lives in WorldGen: the ocean world's caves sit behind an obsidian seabed,
+            // so drowning a cave full of gunmen takes real mining, not a casual breach.
+            if (Breathes && !ImmuneTo(Material.Water))
+            {
+                var upHead = planet.UpAt(Position);
+                var submerged = cells.CountWaterNear(Position + upHead * Radius, 2.5f) >= 3
+                    && cells.CountWaterNear(Position, Radius + 1f) >= 4;
+                if (submerged)
+                {
+                    _airT += HazardProbePeriod;
+                    if (_airT > DrownGraceSeconds) Health -= DrownDps * HazardProbePeriod;
+                }
+                else
+                {
+                    _airT = 0f;
+                }
+            }
         }
 
         // A shot digger holds a grudge — the pain flash doubles as the provocation signal.
