@@ -1984,6 +1984,7 @@ public sealed class Cells
         var i = Idx(cx, cy);
         var fuelled = false;
         var doused = false;
+        var grounded = false;   // any solid-tile neighbour: a surface the fuse clings to
 
         void Probe(int ncx, int ncy)
         {
@@ -2021,6 +2022,7 @@ public sealed class Cells
                     return;
             }
             var k = TileAt(ncx, ncy);
+            if (Tiles.IsSolid(k)) grounded = true;
             // Fire MELTS snow: the tile flashes to meltwater and steam. Not budget-gated —
             // melting isn't spreading flame — and the puddle it leaves will douse the fire
             // naturally on a later probe, so a flame eats a snowbank but drowns in the melt.
@@ -2086,7 +2088,12 @@ public sealed class Cells
         // non-flammable surface just hosts a long-lived flame that eventually dies.
         if (_srcTile[i] > 0)
         {
-            if (_rng.Next(3) == 0) _srcTile[i]--;
+            // The fuse is fuel-soaked RESIDUE CLINGING TO A SURFACE: mid-air with no fuel
+            // there's nothing to cling to, so it drains fast (~0.1s) and the flame
+            // gutters like any starved tongue instead of hovering as a long burn.
+            if (!grounded && !fuelled)
+                _srcTile[i] = (byte)Math.Max(0, _srcTile[i] - 3);
+            else if (_rng.Next(3) == 0) _srcTile[i]--;
         }
         // Licking-flame sites: burning cells (fused or fuelled — NOT bare guttering
         // strays) sample themselves into the flame queue; Game1 turns each entry into a
@@ -2121,14 +2128,19 @@ public sealed class Cells
                 up * (50f + _rng.Next(60)) + tan * (_rng.Next(140) - 70), Material.Fire);
         }
 
-        // Flicker upward sometimes so flames lick and dance instead of squatting —
-        // UNLESS the cell carries a burn fuse: fused fire is the flamethrower's GROUND
-        // fire and stays ANCHORED to the surface it ignited. Un-anchored, the fuse rode
-        // the upward drift and the long burn finished mid-air above a dark ignition
-        // point (with the licking-flame emission following it up) — the origin must be
-        // the last thing burning, and now it structurally is. Transient unfused fire
-        // (explosion seeds, gas fronts, charring) keeps the dance.
-        if (_srcTile[i] == 0 && _rng.Next(3) == 0 && cy < Height - 1)
+        // Flicker upward sometimes so flames lick and dance instead of squatting.
+        // THREE-STATE rule for fused (flamethrower) fire:
+        //  1. surface + no fuel → ANCHORED here (the origin burn: bolted to the ignition
+        //     point, dies last — the upward drift used to carry the fuse off into the
+        //     air above a dark origin).
+        //  2. FUELLED → released: the fire travels and spreads like any flame (the flick
+        //     is fire's transport — anchoring fuelled fire crippled fuel spread), with
+        //     the fuse still blocking gutter while it eats.
+        //  3. mid-air + no fuel → the fast fuse drain above is already killing it; it
+        //     keeps the dance for its last moments rather than freezing in the air.
+        // Unfused transient fire (explosions, gas fronts, charring) always dances.
+        var anchored = _srcTile[i] > 0 && !fuelled && grounded;
+        if (!anchored && _rng.Next(3) == 0 && cy < Height - 1)
         {
             var oc2 = OuterCellCount(cx, cy);
             var (ux, uy) = OuterCell(cx, cy, _rng.Next(oc2));
