@@ -153,6 +153,42 @@ public sealed class RigidBodies
     private readonly List<Vector2> _contacts = new();
     private readonly List<Vector2> _normals = new();
 
+    /// <summary>Body-frame spatial hash over payload cells, rebuilt per split/surface pass.
+    /// Whole-structure detaches carry tens of thousands of cells, so the all-pairs distance
+    /// scans the split and surface passes used to run are O(n²) cliffs — a toppling mountain
+    /// froze the frame. Bucket span 2 tiles: the 1.5-tile adjacency reach never crosses more
+    /// than one bucket, so a 3×3 bucket probe sees every candidate neighbour.</summary>
+    private readonly Dictionary<long, List<int>> _cellHash = new();
+    private const float HashSpan = Planet.TileSize * 2f;
+
+    private static long HashKey(Vector2 local) =>
+        ((long)(int)MathF.Floor(local.X / HashSpan) << 32)
+        ^ (uint)(int)MathF.Floor(local.Y / HashSpan);
+
+    private void BuildCellHash(Body b)
+    {
+        _cellHash.Clear();
+        for (var i = 0; i < b.Cells.Count; i++)
+        {
+            var key = HashKey(b.Cells[i].Local);
+            if (!_cellHash.TryGetValue(key, out var list)) _cellHash[key] = list = new List<int>(8);
+            list.Add(i);
+        }
+    }
+
+    /// <summary>Visit the indices of every cell within lattice-adjacency reach of
+    /// <paramref name="local"/> (3×3 hash buckets, exact distance check by the caller).</summary>
+    private void ForNeighbourCandidates(Vector2 local, Action<int> visit)
+    {
+        var bx = (int)MathF.Floor(local.X / HashSpan);
+        var by = (int)MathF.Floor(local.Y / HashSpan);
+        for (var dy = -1; dy <= 1; dy++)
+            for (var dx = -1; dx <= 1; dx++)
+                if (_cellHash.TryGetValue(((long)(bx + dx) << 32) ^ (uint)(by + dy), out var list))
+                    foreach (var j in list)
+                        visit(j);
+    }
+
     public RigidBodies(Planet planet, Cells cells, Physics physics)
     {
         _planet = planet;
