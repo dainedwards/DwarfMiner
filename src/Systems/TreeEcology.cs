@@ -171,7 +171,7 @@ public static class TreeEcology
                 var groundR = r + 1;
                 var ang = (t + 0.5f) / n * MathHelper.TwoPi;
                 var h = 0;
-                for (var hh = 1; hh < 30; hh++)
+                for (var hh = 1; hh < 52; hh++)   // covers the tallest giants (spire + giant bonus)
                 {
                     var rr = groundR + hh;
                     if (rr >= p.Rings - 1) break;
