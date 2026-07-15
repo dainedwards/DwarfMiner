@@ -4189,10 +4189,11 @@ public sealed partial class DwarfMinerGame : Game
         _titleLandTex.SetData(px);
 
         // ── Gas-giant cylinder map: pixel-art yellow/tan bands with dithered boundaries
-        // and a pale storm oval. Periodic over 160 px; the last 54 columns repeat the first
-        // so a scrolling window never has to wrap mid-draw. NO shading/shadows now — the
-        // bands are drawn flat and evenly lit (per the user's ask). ──
-        const int mapPeriod = 160, mapW = mapPeriod + 54, mapH = 54;
+        // and a pale storm oval. Built at DOUBLE resolution (period 320, 108 tall) and drawn
+        // at 2× so the pixels match the sun/moon's finer grain rather than the old chunky 4×.
+        // The last 108 columns repeat the first so a scrolling window never wraps mid-draw.
+        // NO shading/shadows — flat, evenly-lit bands. ──
+        const int mapPeriod = 320, mapW = mapPeriod + 108, mapH = 108;
         var map = new Color[mapW * mapH];
         var bandCols = new[]
         {
@@ -4201,50 +4202,49 @@ public sealed partial class DwarfMinerGame : Game
         };
         for (var y = 0; y < mapH; y++)
         {
-            var band = (int)(y / 6.75f);
+            var band = (int)(y / 13.5f);
             var c = bandCols[band % bandCols.Length];
             var next = bandCols[(band + 1) % bandCols.Length];
-            var inBand = y - band * 6.75f;
+            var inBand = y - band * 13.5f;
             for (var x = 0; x < mapPeriod; x++)
             {
                 var cc = c;
-                // Dithered band edge: the last row checkers toward the next band.
-                if (inBand > 5.5f && ((x + y) & 1) == 0) cc = next;
+                // Dithered band edge: the last rows checker toward the next band.
+                if (inBand > 11f && ((x + y) & 1) == 0) cc = next;
                 // Lazy longitudinal waviness so bands aren't dead-straight.
-                if (inBand < 1f && MathF.Sin(x * 0.2f + y) > 0.55f) cc = next;
-                // No pole darkening — flat, even bands (shading removed).
+                if (inBand < 2f && MathF.Sin(x * 0.1f + y * 0.5f) > 0.55f) cc = next;
                 map[y * mapW + x] = cc;
             }
         }
         // Storm oval — a pale swirl in the southern band.
-        for (var dy = -3; dy <= 3; dy++)
-            for (var dx = -5; dx <= 5; dx++)
+        for (var dy = -6; dy <= 6; dy++)
+            for (var dx = -10; dx <= 10; dx++)
             {
-                var dd = dx * dx / 25f + dy * dy / 9f;
+                var dd = dx * dx / 100f + dy * dy / 36f;
                 if (dd > 1f) continue;
-                var x = (35 + dx + mapPeriod) % mapPeriod;
-                var y = 35 + dy;
+                var x = (70 + dx + mapPeriod) % mapPeriod;
+                var y = 70 + dy;
                 var cc = dd < 0.4f ? new Color(238, 208, 170) : new Color(216, 168, 128);
                 if (((x + y) & 1) == 0 && dd > 0.6f) continue;   // dithered rim
                 map[y * mapW + x] = cc;
             }
-        // Copy the leading 54 columns to the tail for wrap-free windows.
+        // Copy the leading 108 columns to the tail for wrap-free windows.
         for (var y = 0; y < mapH; y++)
-            for (var x = 0; x < 54; x++)
+            for (var x = 0; x < 108; x++)
                 map[y * mapW + mapPeriod + x] = map[y * mapW + x];
         _titlePlanetMap = new Texture2D(gd, mapW, mapH);
         _titlePlanetMap.SetData(map);
 
         // Ring system: a flat ellipse annulus (two bands split by a dark gap, dithered for
-        // grain). Drawn in two halves around the tilted planet — far side behind, near side
-        // in front.
-        const int ringW = 86, ringH = 24;
+        // grain), also at DOUBLE resolution. Drawn in two halves around the tilted planet —
+        // far side behind, near side in front.
+        const int ringW = 172, ringH = 48;
         var ring = new Color[ringW * ringH];
         for (var y = 0; y < ringH; y++)
             for (var x = 0; x < ringW; x++)
             {
-                var nx = (x - ringW / 2f) / 40f;
-                var ny = (y - ringH / 2f) / 10.5f;
+                var nx = (x - ringW / 2f) / 80f;
+                var ny = (y - ringH / 2f) / 21f;
                 var rr = MathF.Sqrt(nx * nx + ny * ny);
                 if (rr is < 0.64f or > 1f) continue;
                 if (rr is > 0.82f and < 0.86f) continue;             // the dark division
