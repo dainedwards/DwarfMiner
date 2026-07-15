@@ -2012,15 +2012,15 @@ public static class SimTest
         {
             StampBlock(0.6f, TileKind.AlienAlloy, wide: 4, tall: 10, out var wall);
             var at = planet.TileToWorld(planet.SurfaceRing + 4, wall[0].t);
-            var tnt = new Projectile(at, Vector2.Zero, 120f, 0.01f, ProjectileKind.Tnt);
-            tnt.Explode(planet, physics, cells);
+            var bomb = new Projectile(at, Vector2.Zero, 120f, 0.01f, ProjectileKind.DynamitePack);
+            bomb.Explode(planet, physics, cells);
             int standing = 0, chipped = 0;
             foreach (var (r, t) in wall)
             {
                 if (planet.Get(r, t) == TileKind.AlienAlloy) standing++;
                 if (planet.Damage(r, t) > 0) chipped++;
             }
-            Check($"defense: TNT leaves the alloy wall standing ({standing}/{wall.Count})",
+            Check($"defense: the blast leaves the alloy wall standing ({standing}/{wall.Count})",
                 standing == wall.Count);
             Check($"defense: but the blast visibly chips it ({chipped} tiles damaged)", chipped > 0);
         }
