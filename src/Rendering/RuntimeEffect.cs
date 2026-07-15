@@ -57,6 +57,18 @@ public static class RuntimeEffect
             // try) rather than mid-frame on first use.
             _ = fx.Parameters["MatrixCol0"];
             _ = fx.Parameters["PsParams"];
+            // GLSL compiles LAZILY at the first draw (glShaderSource/link happen inside
+            // ApplyState) — so force one degenerate draw through the effect now. A driver
+            // that rejects the GLSL throws here, inside the guard, instead of crashing the
+            // game mid-frame on the first visible tile.
+            using (var px = new Texture2D(gd, 1, 1))
+            using (var sb = new SpriteBatch(gd))
+            {
+                px.SetData(new[] { Microsoft.Xna.Framework.Color.White });
+                sb.Begin(effect: fx);
+                sb.Draw(px, Microsoft.Xna.Framework.Vector2.Zero, Microsoft.Xna.Framework.Color.White);
+                sb.End();
+            }
             return fx;
         }
         catch (Exception e)
