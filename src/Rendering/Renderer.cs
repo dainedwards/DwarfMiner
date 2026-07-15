@@ -51,7 +51,7 @@ public sealed class Renderer
         TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom or
         TileKind.Brick or TileKind.Plating or TileKind.GlassBlock or TileKind.Platform or
         TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond or
-        TileKind.TreeRoot;
+        TileKind.TreeRoot or TileKind.Chest or TileKind.ChestOpen;
 
     public Texture2D Pixel => _pixel;
     public SpriteBatch Batch => _sb;
