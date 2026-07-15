@@ -976,15 +976,16 @@ public sealed class Cells
         // but 3 of 4 ticks just re-enqueue. A distant quench front or simmering lava rim
         // still evolves, at 15 Hz instead of 60, and its cost drops fourfold: the QA rig's
         // lava sea alone held ~27k cells churning forever with the player nowhere near.
-        // Focus rides CompactionExclusion (the player, set every live frame); headless
-        // contexts leave it null and throttle nothing, so tests see the full-rate sim.
+        // Focus rides SimFocus (the player in live frames, the station in orbit, the pod
+        // during descent, the spawn point during the load-time settle); headless contexts
+        // leave it null and throttle nothing, so tests see the full-rate sim.
         _tickNo++;
-        var throttled = CompactionExclusion is not null;
+        var throttled = SimFocus is not null;
         var fcy = 0;
         var ffrac = 0f;
         if (throttled)
         {
-            var (fcx, fc) = WorldToCell(CompactionExclusion!.Value);
+            var (fcx, fc) = WorldToCell(SimFocus!.Value);
             fcy = Math.Clamp(fc, 0, Height - 1);
             var fn = _cellsAt[fcy];
             ffrac = (float)WrapX(fcx, fn) / fn;
