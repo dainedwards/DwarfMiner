@@ -1021,13 +1021,17 @@ public sealed partial class DwarfMinerGame : Game
         _camera.Zoom = MathHelper.Lerp(_camera.Zoom, 0.44f, MathHelper.Clamp(dt * 2f, 0f, 1f));
         _camera.Follow(station - up * 630f, up, dt);
 
+        var tPerf = FramePerf.Now();
         _run.Physics.Update(dt);
+        FramePerf.Add("phys", tPerf);
         // From the parking orbit individual cells are sub-pixel — tick the material sim at
         // half rate (double dt every other frame keeps flow speeds right). On lava/ocean
         // worlds this is several ms a frame, exactly what pushed the orbit over the vsync
         // budget while the player picks a drop site.
+        tPerf = FramePerf.Now();
         if ((_orbitCellTick = !_orbitCellTick))
             _run.Cells.Update(dt * 2f);
+        FramePerf.Add("cells", tPerf);
         _particles.Update(dt, _run.Planet, _run.Cells);
         _toastTimer -= dt;
 
