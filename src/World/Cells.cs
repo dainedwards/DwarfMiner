@@ -2534,6 +2534,18 @@ public sealed class Cells
         var blob = r.LiquidBlob;
         var blobOrigin = new Vector2(blob.Width / 2f, blob.Height / 2f);
         _surface.Clear();
+        // Pool interiors merge into run quads: on an ocean world the view circle holds
+        // hundreds of thousands of water cells, and per-cell quads made this pass the
+        // single biggest frame cost (~8.5 ms CPU + a vertex flood that halved the GPU
+        // frame rate). A cell is mergeable when it rests (no fall offset) with both
+        // radial neighbours occupied; laterally the run itself guarantees liquid on both
+        // sides of every interior cell. Runs are capped so the straight quad never sags
+        // visibly off the ring arc, and the run's first/last cell always falls back to
+        // the per-cell path (it may face open air sideways and need its blob/waterline
+        // treatment). Merging drops the per-cell shimmer of LiquidBody — invisible on a
+        // pool interior, so the midpoint sample colours the whole run. Zap flashes light
+        // up per-cell subsets, so merging pauses for the beat of the flash.
+        var noMerge = _zapUntil > _time;
         for (var cy = cyMin; cy <= cyMax; cy++)
         {
             var n = _cellsAt[cy];
@@ -2543,52 +2555,89 @@ public sealed class Cells
             var cx0 = (int)(camAng / MathHelper.TwoPi * n);
             var range = Math.Min(n / 2, (int)(halfAng / MathHelper.TwoPi * n) + 2);
             var angStep = MathHelper.TwoPi / n;
-            for (var d = -range; d <= range; d++)
+            var rowOff = _rowOffsets[cy];
+            // Same-ring fast path: the Density cell rows of one tile ring share n, so the
+            // radial neighbour of a mid-ring cell is the SAME flat index ± n — and it sits
+            // in the SAME tile, which this liquid cell proves non-solid. One byte read
+            // replaces the InnerCell/OuterCell remap + IsBlocked tile probe.
+            var sameIn = cy % Density != 0 && cy > 0;
+            var sameOut = cy % Density != Density - 1 && cy < Height - 1;
+            // Run cap: keep the straight quad's sagitta vs the ring arc under ~0.2 px.
+            var maxRun = Math.Max(4, (int)(MathF.Sqrt(1.6f * ringRadius) / MathF.Max(chord, 0.001f)));
+            var runStart = 0; var runLen = 0; var runMat = Material.Empty;
+
+            void FlushRun()
             {
-                var cx = cx0 + d;
-                var idx = Idx(cx, cy);
-                var m = (Material)_mat[idx];
-                if (m is not (Material.Water or Material.Acid or Material.Oil)) continue;
-                var cellAng = (cx + 0.5f) * angStep;
-                var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
-                var centre = Planet.Center + up * ringRadius;
-                var rotation = cellAng + MathHelper.PiOver2;
-                // Sub-cell fall offset, same as Draw — streams glide between rows.
-                var frac = MathF.Min(_travel[idx], 1f);
-                if (frac > 0f) centre -= up * (frac * radial);
-                var openOut = false;
-                if (cy < Height - 1)
+                if (runLen <= 0) return;
+                // Boundary cells re-enter the per-cell path below; only the strict
+                // interior (len-2) merges. Short runs just draw per-cell.
+                if (runLen >= 3)
                 {
-                    var (ocx, ocy) = OuterCell(cx, cy, 0);
-                    openOut = !IsBlocked(ocx, ocy);
-                }
-                var openIn = false;
-                if (cy > 0)
-                {
-                    var (icx, icy) = InnerCell(cx, cy);
-                    openIn = !IsBlocked(icx, icy);
-                }
-                var body = LiquidBody(m, cx, cy);
-                var col = new Color(body.R, body.G, body.B, (byte)(MatAlpha(m) * 255f));
-                var interior = !openOut && !openIn && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy);
-                if (blobMode && !interior)
-                {
-                    r.Batch.Draw(blob, centre, null, col, rotation, blobOrigin,
-                        new Vector2(chord * 3f / blob.Width, radial * 3f / blob.Height),
-                        SpriteEffects.None, 0f);
+                    var s = runStart + 1;
+                    var e = runStart + runLen - 2;
+                    while (s <= e)
+                    {
+                        var seg = Math.Min(maxRun, e - s + 1);
+                        var midAng = (cx0 + s + (seg - 1) * 0.5f + 0.5f) * angStep;
+                        var up = new Vector2(MathF.Cos(midAng), MathF.Sin(midAng));
+                        var body = LiquidBody(runMat, cx0 + s + seg / 2, cy);
+                        var col = new Color(body.R, body.G, body.B, (byte)(MatAlpha(runMat) * 255f));
+                        r.Batch.Draw(r.Pixel, Planet.Center + up * ringRadius, null, col,
+                            midAng + MathHelper.PiOver2, new Vector2(0.5f, 0.5f),
+                            new Vector2(chord * (seg + 0.5f), radial * 1.5f),
+                            SpriteEffects.None, 0f);
+                        s += seg;
+                    }
+                    DrawLiquidCell(r, blob, blobOrigin, blobMode, runStart, cx0, cy,
+                        n, ringRadius, chord, radial, angStep);
+                    DrawLiquidCell(r, blob, blobOrigin, blobMode, runStart + runLen - 1, cx0, cy,
+                        n, ringRadius, chord, radial, angStep);
                 }
                 else
                 {
-                    // Neighbour-aware padding as in Draw: bleed only into occupied sides so
-                    // pools stay seamless while a lone droplet keeps its own grain size.
-                    var chordPad = IsBlocked(cx - 1, cy) || IsBlocked(cx + 1, cy) ? 0.5f : 0.1f;
-                    var radialPad = !openIn || !openOut ? 0.5f : 0.1f;
-                    r.Batch.Draw(r.Pixel, centre, null, col, rotation, new Vector2(0.5f, 0.5f),
-                        new Vector2(chord * (1f + chordPad), radial * (1f + radialPad)),
-                        SpriteEffects.None, 0f);
+                    for (var q = 0; q < runLen; q++)
+                        DrawLiquidCell(r, blob, blobOrigin, blobMode, runStart + q, cx0, cy,
+                            n, ringRadius, chord, radial, angStep);
                 }
-                if (openOut && _surface.Count < 4096) _surface.Add((cx, cy, (byte)m));
+                runLen = 0;
+                runMat = Material.Empty;
             }
+
+            for (var d = -range; d <= range; d++)
+            {
+                var wcx = WrapX(cx0 + d, n);
+                var idx = rowOff + wcx;
+                var m = (Material)_mat[idx];
+                if (m is not (Material.Water or Material.Acid or Material.Oil))
+                {
+                    FlushRun();
+                    continue;
+                }
+                // Mergeable: resting, radially hemmed, and continuing the current run.
+                var mergeable = !noMerge && _travel[idx] == 0f
+                    && (sameIn ? _mat[idx - n] != 0
+                               : cy > 0 && IsBlockedAt(InnerCell(wcx, cy)))
+                    && (sameOut ? _mat[idx + n] != 0
+                                : cy < Height - 1 && IsBlockedAt(OuterCell(wcx, cy, 0)));
+                if (mergeable && runLen > 0 && m == runMat && runStart + runLen == d)
+                {
+                    runLen++;
+                    continue;
+                }
+                FlushRun();
+                if (mergeable)
+                {
+                    runStart = d;
+                    runLen = 1;
+                    runMat = m;
+                }
+                else
+                {
+                    DrawLiquidCell(r, blob, blobOrigin, blobMode, d, cx0, cy,
+                        n, ringRadius, chord, radial, angStep);
+                }
+            }
+            FlushRun();
         }
 
         // Waterline: one wide band per surface cell, overlapping its neighbours, bobbing
