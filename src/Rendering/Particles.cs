@@ -1239,6 +1239,9 @@ public sealed class Particles
                 // throttles spread, and starved fire gutters ~0.8s — so the tongue's
                 // landing zone burns for real without becoming an arson machine).
                 LandMat = CellFx ? (byte)Material.Fire : (byte)0,
+                // Touchdown splash in the grain's own fire tone — the impact-spark
+                // effect on every landing flame, per user.
+                LandSparks = true,
             });
         }
         // NO off-trajectory populations: the buoyant "lick" grains and the hose-shed
