@@ -577,6 +577,11 @@ public static class WorldGen
             // for stream stability, like the flora above.
             ScatterTrees(planet, def, new Random(seed ^ 0x77EE));
             ScatterWaterPlants(planet, def, new Random(seed ^ 0x5EA1));
+
+            // Gentle worlds grow OASES: a few spots of tightly packed vegetation — a huddle
+            // of trees with undergrowth carpeting every gap — little green sanctuaries you
+            // stumble on while crossing otherwise ordinary terrain. Isolated rng as above.
+            ScatterOases(planet, def, new Random(seed ^ 0x0A51));
         }
 
         // Skin every acid reservoir (surface pools, volcano plumbing, and the scattered crust
