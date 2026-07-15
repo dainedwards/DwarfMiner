@@ -610,6 +610,8 @@ public sealed class Titan
         var targetTangent = moveAxis * MoveSpeed * speedMul * paceMul * (1f + Anger / 80f);
         var accel = Charging ? 900f : Grounded ? 260f : 100f;
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
+        // Mid-shake the body whips side to side — the convulsion the rider is flung by.
+        if (ShakeTimer > 0f) vTangent = MathF.Sin(ShakeTimer * 22f) * 150f;
 
         vNormal -= Gravity * dt;
 
