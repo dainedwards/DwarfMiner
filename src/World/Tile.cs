@@ -309,7 +309,7 @@ public static class Tiles
     {
         "dirt", "stone", "gravel", "moss_stone", "granite", "basalt", "obsidian", "snow",
         "coal", "iron", "silver", "gold", "platinum", "crystal", "fuel",
-        "ruby", "sapphire", "diamond", "emerald", "voidstone", "meat", "hide", "chitin",
+        "ruby", "sapphire", "diamond", "emerald", "voidstone", "meat", "hide", "chitin", "wood",
     };
 
     public static bool IsBankable(string id) => _bankable.Contains(id);
