@@ -1796,13 +1796,12 @@ public static class WorldGen
                     var f = dr / (float)domeH;
                     var domeW = halfWidthPx * 0.85f * MathF.Sqrt(MathF.Max(0.05f, 1f - f * f));
                     var n = planet.TilesAt(r);
-                    var t0 = (int)MathF.Round(ang / (MathHelper.TwoPi / n) - 0.5f);
-                    var sw = Math.Max(1, (int)MathF.Round(
-                        domeW / ((Planet.RingMin + r + 0.5f) * Planet.TileSize)
-                        / MathHelper.TwoPi * n));
+                    var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
+                    var sw = Math.Max(1, (int)MathF.Round(domeW / Planet.TileSize));
                     for (var dt = -sw; dt <= sw; dt++)
                     {
-                        var t = ((t0 + dt) % n + n) % n;
+                        var lat = -halfW + (midJ + dt + 0.5f) * Planet.TileSize;
+                        var t = ((int)MathF.Round((ang + lat / ringRadius) / (MathHelper.TwoPi / n) - 0.5f) % n + n) % n;
                         if (Tiles.IsAnchored(planet.Get(r, t))) continue;
                         var shell = Math.Abs(dt) >= sw - 1 || dr == domeH;
                         planet.Set(r, t, shell ? TileKind.CityGlass : TileKind.Sky);
