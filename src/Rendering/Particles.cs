@@ -121,6 +121,28 @@ public sealed class Particles
                     p.Velocity += new Vector2(-p.Velocity.Y * inv, p.Velocity.X * inv)
                         * (MathF.Sin(p.Life * 55f) * 90f * age * dt);
                 }
+                // Sparks shed FROM THE FLAME ITSELF: each living plume grain occasionally
+                // spits a bright fleck at ITS OWN position and velocity — sparks are born
+                // on the actual burning body (arc, droop, turbulence, movement all
+                // inherited), not along the nominal aim ray. ~340 plume grains alive at
+                // full stream / 60 ≈ 5-6 sparks per frame. Sparks aren't Fluid, so they
+                // can't shed recursively.
+                if (_rng.Next(60) == 0)
+                    _list.Add(new Particle
+                    {
+                        Position = p.Position + Jitter(1f),
+                        Velocity = p.Velocity * 0.6f + Jitter(45f),
+                        Life = 0.2f + (float)_rng.NextDouble() * 0.25f,
+                        MaxLife = 0.45f,
+                        Color = _rng.Next(2) == 0 ? new Color(255, 245, 190) : new Color(255, 205, 90),
+                        FadeColor = new Color(255, 120, 30),
+                        Size = 0.5f,
+                        GravityScale = 1.6f,
+                        Drag = 1.4f,
+                        CollideTiles = true,
+                        LightRadius = _rng.Next(5) == 0 ? 14f : 0f,
+                        LightColor = new Color(255, 190, 80),
+                    });
             }
 
             var next = p.Position + p.Velocity * dt;
