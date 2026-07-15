@@ -6778,8 +6778,6 @@ public sealed partial class DwarfMinerGame : Game
                 ProjectileKind.Laser          => (new Color(255, 90, 90),   30f),
                 ProjectileKind.LaserCannon    => (new Color(120, 225, 255), 44f),
                 ProjectileKind.Rocket         => (new Color(255, 160, 70),  16f),
-                ProjectileKind.Tnt            => (new Color(255, 210, 110), 10f),
-                ProjectileKind.TntPack        => (new Color(255, 210, 110), 10f),
                 _ => (Color.White, 6f),
             };
             _renderer.AddLight(p.Position, r, col);
