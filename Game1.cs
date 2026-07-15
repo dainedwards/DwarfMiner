@@ -626,6 +626,7 @@ public sealed partial class DwarfMinerGame : Game
         // asleep — which is their steady state anyway — instead of parading millions of
         // cells through the first sim ticks. See Cells.WakeFreeSurfaces.
         run.Cells.WakeFreeSurfaces(0, run.Cells.Height - 1);
+        var tSeed = loadSw.ElapsedMilliseconds;
 
         // The planet-wide population census (creatures + spawners) also runs on the build
         // thread: its spawn-space carving marks physics dirty at ~85 sites across the
@@ -635,8 +636,11 @@ public sealed partial class DwarfMinerGame : Game
         run.Populated = true;
         // Digest the census's physics dirt UNCONDITIONALLY (not under the cancellable
         // settle): a last-second atmosphere entry that cancels the settle must not dump
-        // planet-wide collapse checks into the first live frames.
-        for (var i = 0; i < 30; i++) run.Physics.Update(1f / 60f);
+        // planet-wide collapse checks into the first live frames. A NoFauna world ran no
+        // census, so there is nothing to digest.
+        if (!def.NoFauna)
+            for (var i = 0; i < 30; i++) run.Physics.Update(1f / 60f);
+        var tCensus = loadSw.ElapsedMilliseconds;
 
         // Pre-settle the seeded liquids during load: the first ~2s of cell ticks carry every
         // seeded cell awake (tens of ms per tick at Density 8). Burning them here turns a
@@ -647,16 +651,33 @@ public sealed partial class DwarfMinerGame : Game
         // seconds), so it's cancellable: atmosphere entry takes the world the moment the
         // token fires and the leftover settling runs live in the orbit/descent frames — a
         // few heavy frames from orbit beat any hold at the atmosphere.
+        // The far-field throttle runs during the settle too (focus = the surface spawn
+        // point), and the loop stops early the moment a tick comes back CHEAP — the whole
+        // point is to burn the wake storm, and once a tick is a frame-budget rounding
+        // error the storm is burnt. Worlds that never settle (the QA rig's simmering lava
+        // sea) instead hit the wall-clock budget rather than holding the load hostage:
+        // their churn is steady-state, so no amount of pre-settling would help anyway.
+        run.Cells.SimFocus = SpawnDirector.FindSurfaceSpawn(run.Planet, -MathF.PI / 2f, run.Planet.Radius);
+        var settleSw = System.Diagnostics.Stopwatch.StartNew();
+        var settleTicks = 0;
         for (var i = 0; i < 120 && !settleToken.IsCancellationRequested; i++)
         {
+            var tickStart = settleSw.Elapsed.TotalMilliseconds;
             run.Cells.Update(1f / 60f);
             run.Physics.Update(1f / 60f);
+            settleTicks++;
+            if (settleSw.Elapsed.TotalMilliseconds - tickStart < 0.6) break;   // settled
+            if (settleSw.ElapsedMilliseconds > 700) break;                     // budget
         }
+        run.Cells.SimFocus = null;   // live frames re-set it every tick (or leave headless null)
         // Rigid debris comes online only now: the census/settle churn above must digest as
         // plain dust (bodies spawned during a build nobody is watching would just hang in
         // the air waiting for the first live frame, and could exhaust the body budget).
         run.Rigid = new RigidBodies(run.Planet, run.Cells, run.Physics);
         run.Physics.DetachToRigid = run.Rigid.TryDetach;
+        Console.WriteLine($"[load] {def.Id}: gen {tGen}ms, seed {tSeed - tGen}ms, " +
+            $"census {tCensus - tSeed}ms, settle {loadSw.ElapsedMilliseconds - tCensus}ms " +
+            $"({settleTicks} ticks), total {loadSw.ElapsedMilliseconds}ms");
         return run;
     }
 
