@@ -1366,12 +1366,16 @@ public sealed class Cells
         // Landing ON LIQUID splashes far easier than landing on rock (a pool's surface
         // gives): raindrops crown off a lake at speeds that would land silently on stone.
         var splashBar = SplashMinImpact;
+        var onLiquid = false;
         if (cy > 0)
         {
             var (lcx, lcy) = InnerCell(cx, cy);
             var below = Get(lcx, lcy);
             if (below is Material.Water or Material.Acid or Material.Oil or Material.Lava)
+            {
+                onLiquid = true;
                 splashBar *= 0.35f;
+            }
         }
         if (impact > splashBar && _rng.Next(3) == 0
             && _flying.Count < MaxFlying && cy < Height - 1)
@@ -1380,7 +1384,10 @@ public sealed class Cells
             if (!IsBlocked(ucx, ucy))
             {
                 var (up, tan) = AxesAt(cx, cy);
-                var v = up * (impact * PxPerCell * (0.35f + (float)_rng.NextDouble() * 0.3f))
+                // Pool crowns stay LOW (×0.7): a raindrop's rebound off a lake is a lick
+                // of spray, not the full plunge-pool fountain a rock landing throws.
+                var v = up * (impact * PxPerCell * (0.35f + (float)_rng.NextDouble() * 0.3f)
+                              * (onLiquid ? 0.7f : 1f))
                       + tan * (((float)_rng.NextDouble() - 0.5f) * impact * PxPerCell * 0.8f);
                 if (LaunchCell(cx, cy, v)) return;
             }
