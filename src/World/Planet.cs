@@ -693,6 +693,11 @@ public sealed class Planet
         var profLen = r.ReadInt32();
         SurfaceProfile = profLen > 0 ? new float[profLen] : null;
         for (var i = 0; i < profLen; i++) SurfaceProfile![i] = r.ReadSingle();
+        // Skyscraper facade frames (RunSave v22).
+        CityFacades.Clear();
+        var facades = r.ReadInt32();
+        for (var i = 0; i < facades; i++)
+            CityFacades.Add((r.ReadSingle(), r.ReadSingle(), r.ReadInt32(), r.ReadInt32()));
     }
 }
 
