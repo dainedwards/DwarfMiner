@@ -2914,6 +2914,56 @@ public sealed class Creature
                 r.DrawCircle(c - up * 2.6f, _swing > 0f ? 2.2f : 1.4f, lampCol);
                 break;
             }
+            case CreatureKind.BigSaucer:
+            {
+                // Command ship: a huge banked hull with a stepped superstructure, a wide
+                // canopy, a ring of running lights, THREE laser turrets along the belly, and
+                // a broad tractor-beam emitter that glows and projects a cone at the player.
+                var hull = Tinted(new Color(120, 132, 156));
+                var hullDark = Tinted(new Color(78, 88, 108));
+                var tilt = MathHelper.Clamp(Vector2.Dot(Velocity, right) * 0.003f, -0.25f, 0.25f);
+                var bob = MathF.Sin(t * 1.6f + _phase) * 1.0f;
+                var c = Position + up * bob;
+                // Tractor beam cone (drawn first, under the hull) when locked on a target.
+                if (GuardTarget is { } beam)
+                {
+                    var bd = beam - c;
+                    var bl = bd.Length();
+                    if (bl > 1f)
+                    {
+                        var bdir = bd / bl;
+                        var flick = MathF.Sin(t * 20f) * 0.3f + 0.7f;
+                        var bperp = new Vector2(-bdir.Y, bdir.X);
+                        for (var k = 0.15f; k < 1f; k += 0.12f)
+                            r.DrawRect(c + bdir * (bl * k), new Vector2(2f, Radius * (0.5f + k * 1.4f)),
+                                new Color(120, 220, 255, 70) * flick,
+                                MathF.Atan2(bperp.Y, bperp.X));
+                    }
+                }
+                r.DrawRect(c, new Vector2(Radius * 2.6f, 5.5f), hull, rot + tilt);        // main disc
+                r.DrawRect(c - up * 2.6f, new Vector2(Radius * 1.7f, 3.2f), hullDark, rot + tilt);  // lower hull
+                r.DrawRect(c + up * 2.4f, new Vector2(Radius * 1.2f, 3.0f), hull, rot + tilt);      // superstructure
+                r.DrawCircle(c + up * 4.4f, 3.4f, Tinted(new Color(150, 210, 220)) * 0.9f);         // canopy
+                // Ring lights.
+                for (var i = -3; i <= 3; i++)
+                {
+                    var blink = MathF.Sin(t * 5f + _phase + i * 1.2f) * 0.5f + 0.5f;
+                    r.DrawCircle(c + right * (i * Radius * 0.36f) - up * 0.6f, 0.9f,
+                        Color.Lerp(new Color(60, 80, 100), new Color(160, 240, 255), blink));
+                }
+                // Three belly laser turrets — flare when firing (_swing).
+                var lit = _swing > 0f;
+                for (var i = -1; i <= 1; i++)
+                {
+                    r.DrawRect(c + right * (i * Radius * 0.7f) - up * 2.4f, new Vector2(2.2f, 2.4f), hullDark, rot);
+                    r.DrawCircle(c + right * (i * Radius * 0.7f) - up * 3.6f, lit ? 1.8f : 1.0f,
+                        lit ? new Color(255, 120, 110) : new Color(150, 60, 60));
+                }
+                // Central tractor emitter, glowing brighter while beaming.
+                var emit = GuardTarget is not null ? new Color(150, 230, 255) : new Color(90, 160, 190);
+                r.DrawCircle(c - up * 2.6f, GuardTarget is not null ? 2.8f : 1.8f, emit);
+                break;
+            }
             case CreatureKind.AlienWhale:
             {
                 // A glowing leviathan: long tapered body of overlapping discs, a raked tail
