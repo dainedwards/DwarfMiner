@@ -3479,10 +3479,11 @@ public static class SimTest
         }
         Check("rigid: alloy chunk lands and stamps", rigid.Bodies.Count == 0);
 
-        // Mountain-scale: a region past MaxChunkTiles partitions into several boulders
-        // instead of one huge cutout (or declining to dust).
+        // Mountain-scale, above ground: a sky region keeps its shape WHATEVER its size —
+        // even past MaxDetachTiles (which only caps crust-backed regions now). A severed
+        // skyscraper or an undercut mountain topples as ONE body, never boulders or dust.
         var t3 = slabT0 + 90;
-        const int bigH = 24, bigW = 60;   // 1440 tiles: > MaxChunkTiles, < MaxDetachTiles
+        const int bigH = 40, bigW = 70;   // 2800 tiles: > MaxDetachTiles on purpose
         for (var dr = 0; dr < bigH; dr++)
             for (var dtc = 0; dtc < bigW; dtc++)
             {
@@ -3496,10 +3497,12 @@ public static class SimTest
             rigid.Update(dt);
         }
         var bigGone = beforeBig - CountSolidPlanet(planet);
-        Check("rigid: mountain-scale slab breaks into several boulders", rigid.Bodies.Count >= 3,
+        Check("rigid: mountain-scale sky slab topples as ONE body (no size cap above ground)",
+            rigid.Bodies.Count == 1,
             $"{rigid.Bodies.Count} bodies, {rigid.CellCount} cells aloft");
-        Check("rigid: boulders + dust account for the whole slab",
-            bigGone == bigH * bigW, $"{bigGone}/{bigH * bigW} tiles left the grid");
+        Check("rigid: the whole slab left the grid together",
+            bigGone == bigH * bigW && rigid.CellCount == bigH * bigW,
+            $"{bigGone}/{bigH * bigW} tiles gone, {rigid.CellCount} aloft");
         rigid.StampAll();
     }
 
