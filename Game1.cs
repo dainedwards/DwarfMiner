@@ -292,6 +292,12 @@ public sealed partial class DwarfMinerGame : Game
         IsMouseVisible = true;
         IsFixedTimeStep = true;
         TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
+        // Catch-up cap: after a hitch, MonoGame's fixed step runs extra Updates per drawn
+        // frame to repay the debt (default cap 500 ms = up to 30). Each Update ticks the
+        // full material sim, so a bad frame could snowball into a pinned-at-20-fps spiral
+        // (updx 3 SLOW in the DM_FPSLOG line). Three updates per draw is the most that
+        // ever helps; past that, briefly running the world in slow motion beats the spiral.
+        MaxElapsedTime = TimeSpan.FromMilliseconds(50);
         Window.Title = "Dwarf Miner";
         // The scene renders at the fixed virtual resolution and scales to the window, so
         // the window itself is free to be any size (drag-resize or F11 fullscreen).
