@@ -1084,7 +1084,10 @@ public static class WorldGen
             // Stay above THIS world's lava zone (crossing the flood line turns tunnels into
             // permanent lava plumbing) and below the dirt band. The hard floor passed to
             // CarveWorm stops drifting walks from ever biting the stratum seam below.
-            var minFrac = MathF.Max(0.38f, def.LavaFillFrac + 0.08f);
+            // Ocean worlds run the band DEEPER (0.30 vs 0.38): their seas plunge far below
+            // the ordinary worm floor, and the quiet 0.22 lava fill leaves the room — the
+            // +0.08 flood-line margin still holds.
+            var minFrac = MathF.Max(ocean ? 0.30f : 0.38f, def.LavaFillFrac + 0.08f);
             var (upperSeams, _, _) = CaveStrata(planet, def);
             var hardFloorPx = upperSeams[0].lo * Planet.TileSize;
             var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
