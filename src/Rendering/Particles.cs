@@ -1168,11 +1168,16 @@ public sealed class Particles
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             var hot = i < 7;
             var tone = hot ? _rng.Next(2) : _rng.Next(4);
+            var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
+            // De-pulse: every grain starts with a random fraction of one puff interval
+            // already travelled, so consecutive puffs interleave into one continuous flow
+            // instead of reading as discrete waves marching down the stream.
+            var lead = (float)_rng.NextDouble() * 0.06f;
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 5f,
-                Velocity = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f)),
-                Life = 0.5f + (float)_rng.NextDouble() * 0.35f,
+                Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
+                Velocity = vel,
+                Life = 0.5f + (float)_rng.NextDouble() * 0.35f - lead,
                 MaxLife = 0.85f,
                 Color = tone switch
                 {
