@@ -399,6 +399,17 @@ public sealed class Cells
         Place(cx, cy, m);
     }
 
+    /// <summary>Particle→cell handoff: place a material at a world position only if the cell
+    /// is genuinely open air — unlike <see cref="PlaceAtWorld"/> this refuses cells inside
+    /// solid tiles, because handoff positions come from the PARTICLE collision test (world-
+    /// space float vs tile grid), which can rest a particle a hair inside a wall's cell
+    /// footprint. A cinder that lands stamps fire where the fire can actually live.</summary>
+    public void StampAtWorld(Vector2 worldPos, Material m)
+    {
+        var (cx, cy) = WorldToCell(worldPos);
+        if (!IsBlocked(cx, cy)) Place(cx, cy, m);
+    }
+
     /// <summary>Spawn cells inside the polar tile (tx = ring, ty = angle). Picks random sub-cells.</summary>
     public void SpawnInTile(int tx, int ty, Material m, int count)
     {
