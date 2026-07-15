@@ -1220,6 +1220,8 @@ public sealed class Particles
         // player runs and fires, and every grain is BORN AT THE MUZZLE.
         for (var i = 0; i < 8; i++)
         {
+            // ~20% thinner stream per user (expected 6.4 grains/frame).
+            if (_rng.Next(5) == 0) continue;
             var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);

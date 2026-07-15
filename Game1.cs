@@ -3698,7 +3698,10 @@ public sealed partial class DwarfMinerGame : Game
         var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        var muzzle = _run.Player.Position + dir * 4f;
+        // Muzzle at the DRAWN gun tip: grip anchor 3.2 + sprite length × the 0.39 held
+        // scale (see the held-weapon draw) — the flame is born at the barrel mouth.
+        var muzzle = _run.Player.Position + dir * (_weaponTex.TryGetValue("flamethrower", out var ftx)
+            ? 3.2f + (ftx.Width - 1.5f) * 0.39f : 9f);
 
         // Underwater (or with the muzzle pressed into a pool), the burner can't light — it
         // just belches steam bubbles and does nothing else.
@@ -3754,7 +3757,9 @@ public sealed partial class DwarfMinerGame : Game
         var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        var muzzle = _run.Player.Position + dir * 4f;
+        // Muzzle at the DRAWN gun tip — same convention as the flamethrower.
+        var muzzle = _run.Player.Position + dir * (_weaponTex.TryGetValue("acid_spewer", out var atx)
+            ? 3.2f + (atx.Width - 1.5f) * 0.39f : 9f);
         var reach = StreamReach();
         // NO launched acid cells any more — same treatment as the flamethrower: the
         // launched payload rode its own physics and read as streaks off the stream's
