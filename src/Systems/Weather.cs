@@ -150,6 +150,32 @@ public static class Weather
         }
     }
 
+    /// <summary>Debug-menu hook: conjure a fully-formed cloud right over the player that
+    /// opens up IMMEDIATELY, raining the given kind regardless of biome (acid cloud on a
+    /// verdant world, plain rain on an acid world — per-cloud KindOverride). Skips the
+    /// natural form/grow/cooldown ramp entirely; airless worlds still clear it next tick
+    /// (no atmosphere, no cloud).</summary>
+    public static void SpawnDebugCloud(Session run, RainKind kind)
+    {
+        var planet = run.Planet;
+        if (planet is null) return;
+        var rel = run.Player.Position - planet.Center;
+        var cAng = MathF.Atan2(rel.Y, rel.X);
+        const float cHalf = 0.14f;
+        run.Clouds.Add(new Cloud
+        {
+            Angle = cAng,
+            HalfWidth = cHalf,
+            Alt = BandTopRadius(planet, cAng, cHalf) + 110f + (float)Random.Shared.NextDouble() * 60f,
+            Drift = ((float)Random.Shared.NextDouble() - 0.5f) * 0.03f,
+            Life = 50f,
+            Grow = 1f,
+            RainTimer = 16f,
+            Phase = (float)Random.Shared.NextDouble() * MathHelper.TwoPi,
+            KindOverride = kind,
+        });
+    }
+
     /// <summary>Radius (world px from the planet centre) of the tallest object beneath the
     /// whole band — peaks, skyscrapers and giant trees included. Samples a few bearings
     /// across the band and takes the topmost non-sky tile. Used once at spawn to pick a
