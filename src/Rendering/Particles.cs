@@ -125,7 +125,7 @@ public sealed class Particles
             // clamps down, because "big" must come from COUNT and LIGHT, never from
             // scaling up a featureless quad.
             var s = MathF.Min(p.Size, 0.55f);
-            // Fast grains SMEAR along their motion (~two frames of travel, capped at 12
+            // Fast grains SMEAR along their motion (~three frames of travel, capped at 16
             // grains long): overlapping smears are what fuse a hose's grains into the
             // long continuous strands of fire/acid Noita streams read as — a stationary
             // square per grain reads as sprayed dots no matter how dense the emission.
@@ -133,7 +133,7 @@ public sealed class Particles
             var sp2 = p.Velocity.LengthSquared();
             if (sp2 > 3600f)
             {
-                var len = MathF.Min(s * 12f, MathF.Sqrt(sp2) * 0.035f);
+                var len = MathF.Min(s * 16f, MathF.Sqrt(sp2) * 0.045f);
                 if (len > s)
                 {
                     r.DrawRect(p.Position, new Vector2(len, s), c,
