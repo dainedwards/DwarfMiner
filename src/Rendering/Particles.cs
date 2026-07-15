@@ -136,14 +136,18 @@ public sealed class Particles
                 // sparks right on the terrain — the other half of the phantom
                 // "sparks interacting with the ground".
                 if (!p.JetSpark && sp > 3600f && _rng.Next(7) < 4)
+                {
+                    // Born white-hot: MaxLife == initial Life (see EmitLickingFlame) so
+                    // every spark starts at the ramp's top and cools over its own path.
+                    var sparkLife = 0.2f + (float)_rng.NextDouble() * 0.25f;
                     _list.Add(new Particle
                     {
                         Position = p.Position + Jitter(1f),
                         // 78% stream inheritance + tight scatter: sparks ride the jet's
                         // line as a close-fitting sheath rather than flying off radially.
                         Velocity = p.Velocity * 0.78f + Jitter(26f),
-                        Life = 0.2f + (float)_rng.NextDouble() * 0.25f,
-                        MaxLife = 0.45f,
+                        Life = sparkLife,
+                        MaxLife = sparkLife,
                         Color = _rng.Next(2) == 0 ? new Color(255, 245, 190) : new Color(255, 205, 90),
                         FadeColor = new Color(255, 120, 30),
                         Size = 0.5f,
