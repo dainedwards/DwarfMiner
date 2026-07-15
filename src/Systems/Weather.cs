@@ -39,6 +39,21 @@ public static class Weather
     private static readonly bool ForceRain =
         Environment.GetEnvironmentVariable("DM_RAIN") is { Length: > 0 };
 
+    /// <summary>The planet's prevailing wind, signed world px/s. Every cloud on a world drifts
+    /// the SAME way (±20% per-cloud speed spread at spawn) so the sky reads as one moving
+    /// weather system instead of banks crossing each other at random. Derived from the def id
+    /// so it's stable for the world's whole life with nothing to save; expressed as LINEAR
+    /// speed and divided by each cloud's Alt at spawn, so clouds pace the same on a small moon
+    /// and a giant world (a fixed angular rate would sprint at big-world altitudes).</summary>
+    public static float WindFor(PlanetDef def)
+    {
+        var h = 17;
+        foreach (var ch in def.Id) h = h * 31 + ch;
+        var u = (uint)h;
+        var speed = 6f + u % 997 / 997f * 12f; // 6..18 px/s
+        return (u & 0x400) == 0 ? speed : -speed;
+    }
+
     public static void Update(float dt, Session run, Particles particles)
     {
         var planet = run.Planet;
