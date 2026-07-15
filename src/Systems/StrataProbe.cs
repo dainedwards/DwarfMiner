@@ -25,7 +25,7 @@ public static class StrataProbe
         {
             ("verdant", 11, PlanetDefs.ById("verdant")),   // standard lava fill
             ("ember",   12, PlanetDefs.ById("ember")),     // high lava — no upper worms, deep strata only
-            ("moon",    13, PlanetDefs.ById("moon")),      // no lava at all — strata under the crust network
+            ("hollow",  13, PlanetDefs.ById("hollow")),    // no lava at all — strata under the crust network
         };
 
         var allOk = true;
