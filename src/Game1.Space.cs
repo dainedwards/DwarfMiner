@@ -387,13 +387,22 @@ public sealed partial class DwarfMinerGame
     /// the same direction stay individually readable (the user's "don't overlap" ask).</summary>
     private void DrawGeoScannerArrows()
     {
-        if (_run.Player.ScannerTier <= 0 || _geoScanHits.Count == 0) return;
+        // Expanding scan-pulse ring for a beat after firing (world-space around the player).
+        if (_scanPulseT < 0.9f && _run.Player.ScannerTier > 0)
+        {
+            var pr = _scanPulseT / 0.9f;
+            var rad = pr * (200f + (_run.Player.ScannerTier - 1) * 120f);
+            var a = (int)((1f - pr) * 160f);
+            _renderer.DrawCircleOutline(_run.Player.Position, rad, new Color(120, 220, 160, a), 1.5f);
+        }
+        if (_geoScanHits.Count == 0) return;
 
         var centre = Vector2.Transform(_run.Player.Position, _camera.View);
-        // Build (angle, kind, dist) then de-collide the angles.
+        // Build (angle, kind, dist) then de-collide the angles. Skip expired marks.
         var items = new List<(float ang, TileKind kind, float dist)>();
-        foreach (var (kind, pos) in _geoScanHits)
+        foreach (var (kind, pos, expiry) in _geoScanHits)
         {
+            if (_run.RunTime >= expiry) continue;
             var d = pos - _run.Player.Position;
             if (d.LengthSquared() < 1f) continue;
             items.Add((MathF.Atan2(d.Y, d.X), kind, d.Length()));
