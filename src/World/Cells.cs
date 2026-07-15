@@ -2233,6 +2233,27 @@ public sealed class Cells
                 var frac = MathF.Min(_travel[idx], 1f);
                 if (frac > 0f) centre -= up * (frac * radial);
                 var col = ColorFor(m, cx, cy, _srcTile[idx]);
+                // Neighbour-aware padding (stride 1 only): bleed an axis by the seam pad
+                // ONLY where something abuts it — into a pool neighbour (hides the hairline
+                // cracks between rotated polar quads) or into solid ground (invisible, the
+                // terrain is behind). Toward open air the quad stays a crisp ~1 px grain,
+                // so a lone droplet or ember is a PIXEL, Noita-sized, not a fat square.
+                if (stride == 1)
+                {
+                    var chordPad = IsBlocked(cx - 1, cy) || IsBlocked(cx + 1, cy) ? 0.5f : 0.1f;
+                    var radialPad = 0.1f;
+                    if (cy > 0)
+                    {
+                        var (icx, icy) = InnerCell(cx, cy);
+                        if (IsBlocked(icx, icy)) radialPad = 0.5f;
+                    }
+                    if (radialPad < 0.5f && cy < Height - 1)
+                    {
+                        var (pcx, pcy) = OuterCell(cx, cy, 0);
+                        if (IsBlocked(pcx, pcy)) radialPad = 0.5f;
+                    }
+                    size = new Vector2(chord + chordPad, radial + radialPad);
+                }
                 // Waterline: water open to air above draws as a brighter band that bobs with
                 // a travelling wave, so pools get a live surface instead of a flat blue slab.
                 if (m == Material.Water)
