@@ -432,6 +432,14 @@ public static class WorldGen
                         foreach (var (o, b) in def.OreBias) if (o == ore) return b;
                         return 0f;
                     }
+                    // Depth gradient for the RARE finds (precious metals + gems): 0 at the
+                    // surface, 1 in the deep crust. A shallow tile pays a threshold PENALTY, so
+                    // these are common deep, present through the mid layers, and only very rarely
+                    // near the top — a smooth gradient instead of a hard depth cutoff, so the
+                    // lower depths are where the real treasure is.
+                    var depthFrac = MathHelper.Clamp((depth - 8f) / 140f, 0f, 1f);
+                    var shallowMetal = (1f - depthFrac) * 0.075f;
+                    var shallowGem = (1f - depthFrac) * 0.06f;
 
                     if (oreN > 0.88f - boost - Bias(TileKind.CoalOre) && depth > 6f) k = TileKind.CoalOre;
                     // Fuel ore sits in a broad shallow band — you need a good stockpile to launch,
