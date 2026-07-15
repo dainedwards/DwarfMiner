@@ -108,7 +108,8 @@ public static class Combat
 
     /// <summary>Radial blast damage around a just-died explosive. Direct-hit victims are
     /// skipped — they already took the full contact damage. Everything else takes the
-    /// projectile's damage with linear falloff: full at the epicentre, 40% at the edge.</summary>
+    /// projectile's damage with a center-weighted falloff: full at the epicentre, tapering
+    /// off sharply toward the edge (a squared curve, floored at 10%).</summary>
     private static void ApplyExplosionDamage(Projectile p, List<Creature> creatures, Titan? titan)
     {
         var r = p.ExplosionRadius;
@@ -117,7 +118,7 @@ public static class Combat
             if (p.HitVictims.Contains(c)) continue;
             var dist = (c.Position - p.Position).Length();
             if (dist >= r + c.Radius) continue;
-            var falloff = 1f - 0.6f * MathHelper.Clamp(dist / r, 0f, 1f);
+            var falloff = BlastFalloff(dist / r);
             c.Health -= p.Damage * falloff;
             c.HitFlash = 0.15f;
             if (p.BurnSeconds > 0f) c.BurnSeconds = MathF.Max(c.BurnSeconds, p.BurnSeconds);
