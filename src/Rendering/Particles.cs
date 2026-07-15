@@ -1434,10 +1434,10 @@ public sealed class Particles
         _list.Add(new Particle
         {
             Position = pos + side * (((float)_rng.NextDouble() - 0.5f) * 2f),
-            Velocity = up * (14f + (float)_rng.NextDouble() * 22f)
+            Velocity = up * (18f + (float)_rng.NextDouble() * 26f)
                      + side * (((float)_rng.NextDouble() - 0.5f) * 16f),
-            Life = 0.3f + (float)_rng.NextDouble() * 0.3f,
-            MaxLife = 0.6f,
+            Life = 0.4f + (float)_rng.NextDouble() * 0.35f,
+            MaxLife = 0.75f,
             Color = FlameTones[_rng.Next(3)],
             FadeColor = new Color(205, 75, 15),
             Size = 0.5f + (float)_rng.NextDouble() * 0.3f,
