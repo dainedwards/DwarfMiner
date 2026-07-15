@@ -1438,14 +1438,19 @@ public sealed class Particles
         // TALL tongue that shoots past the rest — the dancing tip licking the air.
         var s0 = ((float)_rng.NextDouble() - 0.5f) * 4f;
         var tall = _rng.Next(4) == 0;
+        // MaxLife == initial Life: every lick is born at the TOP of the colour ramp
+        // (white-hot at the flame base) and cools across its own full rise. A fixed
+        // MaxLife had most licks spawning mid-ramp — already dimmed at the base, which
+        // read as the flame fading out far too low.
+        var life = ((tall ? 0.55f : 0.35f) + (float)_rng.NextDouble() * 0.2f)
+                 * (1f - MathF.Abs(s0) * 0.12f);
         _list.Add(new Particle
         {
             Position = pos + side * s0,
             Velocity = up * ((tall ? 34f : 18f) + (float)_rng.NextDouble() * (tall ? 30f : 18f))
                      - side * (s0 * 5f),
-            Life = ((tall ? 0.55f : 0.35f) + (float)_rng.NextDouble() * 0.2f)
-                 * (1f - MathF.Abs(s0) * 0.12f),
-            MaxLife = 0.75f,
+            Life = life,
+            MaxLife = life,
             Color = FlameTones[_rng.Next(3)],
             FadeColor = new Color(205, 75, 15),
             Size = 0.5f + (float)_rng.NextDouble() * 0.3f,
