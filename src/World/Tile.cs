@@ -77,6 +77,7 @@ public enum TileKind : byte
     Chest = 55,        // lizard-warren treasure chest — press E to loot gold / rare materials
     ChestOpen = 56,    // an already-looted chest (lid thrown back, empty)
     LilyPad = 57,      // alien lily pad floating on a lake surface (anchored, passable flora)
+    Rope = 58,         // deployed rope line — climbable like a ladder, hangs from an anchor
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
