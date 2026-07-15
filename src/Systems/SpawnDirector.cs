@@ -611,6 +611,14 @@ public static class SpawnDirector
         }
 
         var c = new Creature(pos, kind) { Resident = resident };
+        // Breather rigs: some gunmen (marauders/raiders) carry one — they SWIM after prey
+        // instead of drowning, mask pod visible on the sprite. A coin-flip on the water
+        // world (its bandits learned or died), a rarity everywhere else. The pyro never
+        // gets one: that tank is ballast, and the hose is useless under the waves. Rolled
+        // BEFORE the hazard gate so a rigged bandit may legally start in the water.
+        if (kind is CreatureKind.Marauder or CreatureKind.Raider
+            && Random.Shared.NextDouble() < (run.Def.Biome == "ocean" ? 0.5 : 0.18))
+            c.HasBreather = true;
         if (HazardRejectsSpawn(run, pos, c)) return;   // don't hatch it inside lava/acid/water
         ClearSpawnSpace(run, pos, c.Radius);
         run.Creatures.Add(c);
