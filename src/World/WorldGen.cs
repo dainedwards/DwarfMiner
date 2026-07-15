@@ -560,6 +560,14 @@ public static class WorldGen
         // anything a worm grazed.
         CarveWormTunnels(planet, def, new Random(seed ^ 0x5EED));
 
+        // Seams enforced LAST, as a hard pass over the final tile state: every carver above
+        // (noise caves, worms, biome pockets, the geode) is also seam-aware or band-clamped,
+        // but a disk radius poking one tile over a boundary is enough to let the lava sea
+        // drain into the deep strata — so anything that still opened a hole inside a seam is
+        // plugged back with its structural wall material here. The seam contract must hold
+        // ABSOLUTELY (perf + the mine-between-layers design), not just probabilistically.
+        SealSeams(planet, def);
+
         // The prospector's jackpot: the odd RICH gold/silver vein — a solid ribbon of ore
         // far denser than the ambient scatter (which runs deliberately lean, gold most of
         // all). Isolated rng for the same stream-stability reason as the worms.
