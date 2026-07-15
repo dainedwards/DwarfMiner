@@ -1625,6 +1625,28 @@ public sealed class Particles
         }
     }
 
+    /// <summary>Lava-bubble pop: a few tiny molten flecks spat off a pool surface. The
+    /// ambience layer over an already-glowing pool — deliberately lightless (a sea view
+    /// pops constantly; per-ember lights would flood the lightmap blit budget) and
+    /// non-igniting, unlike <see cref="EmitCinders"/>' arson-grade coals.</summary>
+    public void EmitLavaSparks(Vector2 pos, Vector2 up)
+    {
+        var n = 2 + _rng.Next(2);
+        for (var i = 0; i < n; i++)
+            _list.Add(new Particle
+            {
+                Position = pos + Jitter(1f),
+                Velocity = up * (16f + (float)_rng.NextDouble() * 26f) + Jitter(9f),
+                Life = 0.45f + (float)_rng.NextDouble() * 0.5f,
+                MaxLife = 0.95f,
+                Color = _rng.Next(3) == 0 ? new Color(255, 235, 150) : new Color(255, 170, 60),
+                FadeColor = new Color(120, 40, 15),   // cools to a dull fleck
+                Size = 0.7f,
+                GravityScale = 0.6f,
+                Drag = 0.95f,
+            });
+    }
+
     /// <summary>Acid spewer spray — DELIBERATELY INDEPENDENT of EmitFlameJet (split back
     /// from the shared core per user; tune each weapon on its own). Droplets render as
     /// the metaball liquid body (joining the pool coverage RT, so the spray fuses into
