@@ -38,6 +38,36 @@ public static class TitanRenderer
             case TitanKind.Vitriodactyl: DrawPterodactyl(r, t, planet, playerPos, f, time); break;
             case TitanKind.CosmicOctopus: DrawStarspawn(r, t, planet, playerPos, f, time); break;
         }
+
+        // Shootable weakpoints — pulsing soft-spots riding the hide (Combat pays triple
+        // damage inside them). A landed weakpoint hit flashes them white.
+        foreach (var wp in t.WeakpointsWorld())
+        {
+            var pulse = 0.5f + 0.5f * MathF.Sin(time * 5f);
+            var flash = t.WeakpointFlash > 0f;
+            r.DrawCircle(wp, 7f + pulse * 2.5f, (flash ? Color.White : new Color(255, 150, 60)) * 0.5f);
+            r.DrawCircle(wp, 3.5f + pulse * 1.2f, flash ? Color.White : new Color(255, 220, 120));
+        }
+    }
+
+    /// <summary>Drive one arm's hand through the shared smash swing: rest → reared high →
+    /// hammered onto <see cref="Titan.SmashTarget"/> (arriving exactly on the impact beat) →
+    /// buried follow-through. Every arm kind (<see cref="Titan.HasArms"/>) renders its swing
+    /// through this, so the whole roster works a skyline with its fists, not just Kong.</summary>
+    private static Vector2 SmashFist(Titan t, Frame f, int side, Vector2 shoulder, Vector2 rest)
+    {
+        if (t.SmashTimer <= 0f || side != t.SmashHand) return rest;
+        var elapsed = Titan.SmashDuration - t.SmashTimer;
+        var raised = shoulder + f.Up * 74f + f.Right * (f.Face * 26f);
+        const float raiseEnd = 0.35f;
+        const float hammerEnd = Titan.SmashDuration - Titan.SmashImpactAt;
+        if (elapsed < raiseEnd) return Vector2.Lerp(rest, raised, elapsed / raiseEnd);
+        if (elapsed < hammerEnd)
+        {
+            var q = (elapsed - raiseEnd) / (hammerEnd - raiseEnd);
+            return Vector2.Lerp(raised, t.SmashTarget, q * q);   // accelerating swing
+        }
+        return t.SmashTarget;
     }
 
     public static void AddLights(Renderer r, Titan t, Planet planet, Vector2 playerPos, float time)
@@ -198,11 +228,12 @@ public static class TitanRenderer
             r.DrawRect(Vector2.Lerp(pelvis + f.Up * 24f, chest, i / 3f) + f.Right * (f.Face * 20f),
                 new Vector2(34f - i * 3f, 12f), f.Belly, f.Rot);
 
-        // Forearms — short, clawed, held forward.
+        // Forearms — short, clawed, held forward; the committed arm hammers a smash.
         for (var s = -1; s <= 1; s += 2)
         {
             var shoulder = chest + f.Right * (s * 26f) + f.Up * 6f;
             var hand = shoulder + f.Right * (f.Face * 34f) - f.Up * (20f + MathF.Sin(f.Pulse + s) * 4f);
+            hand = SmashFist(t, f, s, shoulder, hand);
             Seg(r, shoulder, hand, 12f, f.HideDark);
             Seg(r, hand, hand + f.Right * (f.Face * 12f) - f.Up * 6f, 7f, f.Hide);
             for (var c = -1; c <= 1; c++)
@@ -281,8 +312,9 @@ public static class TitanRenderer
             var sh = chest + f.Right * (s * 52f) + f.Up * 8f;
             r.DrawRect(sh, new Vector2(30f, 26f), steelDark, f.Rot + s * 0.4f);
             r.DrawRect(sh, new Vector2(20f, 16f), steel, f.Rot + s * 0.4f);
-            // Arm.
+            // Arm — hammers when the smash state machine commits this side.
             var hand = sh + f.Right * (f.Face * 20f) - f.Up * (34f + MathF.Sin(f.Pulse + s) * 4f);
+            hand = SmashFist(t, f, s, sh, hand);
             Seg(r, sh, hand, 12f, steelDark);
             r.DrawRect(hand, new Vector2(12f, 12f), steel, f.Rot);   // fist
         }
@@ -522,24 +554,7 @@ public static class TitanRenderer
             var stance = shoulder + f.Right * (s * 10f) - f.Up * (66f + MathF.Sin(f.Pulse + s) * 5f);  // knuckle stance
             Vector2 fist;
             if (t.SmashTimer > 0f && s == t.SmashHand)
-            {
-                // The committed arm: rear the fist high, hammer it onto the smash target so
-                // it arrives exactly at the impact moment, then leave it buried in the rubble
-                // for the follow-through.
-                var elapsed = Titan.SmashDuration - t.SmashTimer;
-                var raised = shoulder + f.Up * 74f + f.Right * (f.Face * 26f);
-                const float raiseEnd = 0.35f;
-                const float hammerEnd = Titan.SmashDuration - Titan.SmashImpactAt;
-                if (elapsed < raiseEnd)
-                    fist = Vector2.Lerp(stance, raised, elapsed / raiseEnd);
-                else if (elapsed < hammerEnd)
-                {
-                    var q = (elapsed - raiseEnd) / (hammerEnd - raiseEnd);
-                    fist = Vector2.Lerp(raised, t.SmashTarget, q * q);   // accelerating swing
-                }
-                else
-                    fist = t.SmashTarget;
-            }
+                fist = SmashFist(t, f, s, shoulder, stance);
             else if (t.Leaping)
                 fist = shoulder + f.Up * 60f + f.Right * (f.Face * 18f);          // reaching to slam
             else
@@ -733,11 +748,12 @@ public static class TitanRenderer
             }
         }
 
-        // Column arms planted on rocky knuckles (broader than Kong's).
+        // Column arms planted on rocky knuckles (broader than Kong's); they hammer too.
         for (var s = -1; s <= 1; s += 2)
         {
             var shoulder = chest + f.Right * (s * 60f) + f.Up * 12f;
             var fist = shoulder + f.Right * (s * 16f) - f.Up * (62f + MathF.Sin(f.Pulse + s) * 4f);
+            fist = SmashFist(t, f, s, shoulder, fist);
             var elbow = Vector2.Lerp(shoulder, fist, 0.5f) + f.Right * (s * 18f);
             Seg(r, shoulder, elbow, 30f, f.HideDark);
             Seg(r, elbow, fist, 26f, f.Hide);
@@ -838,11 +854,12 @@ public static class TitanRenderer
             r.DrawRect(Vector2.Lerp(f.Tp + f.Up * 34f, chest, i / 3f) + f.Right * (f.Face * (14f - i * 3f)),
                 new Vector2(5f, 16f), Color.Lerp(f.Glow, f.Belly, 0.4f), f.Rot + 0.2f);
 
-        // Twin heavy arms with talon fans.
+        // Twin heavy arms with talon fans — the committed one hammers a smash.
         for (var s = -1; s <= 1; s += 2)
         {
             var shoulder = chest + f.Right * (s * 48f) + f.Up * 8f;
             var hand = shoulder + f.Right * (f.Face * 30f) - f.Up * (44f + MathF.Sin(f.Pulse + s) * 5f);
+            hand = SmashFist(t, f, s, shoulder, hand);
             var elbow = Vector2.Lerp(shoulder, hand, 0.5f) + f.Right * (s * 14f);
             Seg(r, shoulder, elbow, 20f, f.HideDark);
             Seg(r, elbow, hand, 16f, f.Hide);

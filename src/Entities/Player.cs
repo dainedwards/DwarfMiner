@@ -94,6 +94,7 @@ public sealed class Player
     public bool HasFlamethrower;
     public bool HasAcidSpewer;
     public bool HasLightningGun;
+    public bool HasGrapple;
 
     /// <summary>Mothership-foundry upgrades (not craftable in-run, not in the run save —
     /// re-applied from MetaSave on every planet entry). Jetpack: a worn BACK item (the
@@ -120,6 +121,11 @@ public sealed class Player
     /// "boost when used" pop off the ground, on top of the steady lift acceleration.</summary>
     private const float JetInitialKick = 62f;
     private bool _jetPrev;   // was the jet burning last frame (for the initial-kick edge)
+    /// <summary>How long a grounded Space press must be HELD before the pack lights — the
+    /// tap window. Shorter than that is a plain jump; longer turns the jump into a burn.
+    /// (Airborne presses skip the wait — see _jetPressAirborne.)</summary>
+    private const float JetHoldDelay = 0.18f;
+    private bool _jetPressAirborne;   // current hold began in the air → jet lights instantly
     private float _prevRadial;   // player-centre radius at frame start (one-way platform check)
     /// <summary>Seconds a grounded refill takes, whatever the tier's cap.</summary>
     private const float JetRefillTime = 2.4f;
@@ -348,15 +354,15 @@ public sealed class Player
     }
 
     /// <param name="moveAxis">-1 left, 0 idle, +1 right (in player-local tangent)</param>
-    /// <param name="jumpHeld">whether the jump button is currently held (continuous, not edge).
-    /// The Player tracks the previous frame's value to derive the press edge internally — this
-    /// way variable-jump-height (hold = full apex / tap = short hop) works without the caller
-    /// having to think about it.</param>
-    /// <param name="jetHeld">whether the jetpack button (Space) is held. Separate from jump
-    /// now: W jumps, Space (while airborne) burns the jetpack — a W does NOT light the pack.</param>
+    /// <param name="jumpHeld">whether the jump button (Space) is currently held (continuous,
+    /// not edge). The Player tracks the previous frame's value to derive the press edge
+    /// internally — this way variable-jump-height (hold = full apex / tap = short hop) works
+    /// without the caller having to think about it. Space is ALSO the jetpack throttle,
+    /// Noita-style: a grounded press jumps, and keeping it held past the tap window lights
+    /// the pack; an airborne press lights the pack immediately.</param>
     /// <param name="verticalAxis">-1 down, 0 idle, +1 up (along local up). Used in fly mode and
     /// when the player is overlapping a ladder tile (climb up/down).</param>
-    public void Update(float dt, Planet planet, int moveAxis, bool jumpHeld, bool jetHeld, int verticalAxis = 0)
+    public void Update(float dt, Planet planet, int moveAxis, bool jumpHeld, int verticalAxis = 0)
     {
         var up = Up(planet);
         var right = new Vector2(-up.Y, up.X);
@@ -373,9 +379,13 @@ public sealed class Player
         // mode toggles don't accidentally trigger a buffered jump.
         var jumpEdge = jumpHeld && !_jumpHeldPrev;
         _jumpHeldPrev = jumpHeld;
-        // How long jump has been held continuously — the jet only lights after a real
-        // hold, so a tapped jump is just a jump and never sputters the pack.
+        // How long jump has been held continuously — a grounded press only lights the jet
+        // after a real hold, so a tapped jump is just a jump and never sputters the pack.
         _jumpHoldTime = jumpHeld ? _jumpHoldTime + dt : 0f;
+        // Remember whether this hold began in the air: an airborne press is a hover request
+        // (Noita levitation — the pack answers instantly), a grounded press is a jump first
+        // and only becomes a burn once held past JetHoldDelay.
+        if (jumpEdge) _jetPressAirborne = !Grounded && _coyoteTimer <= 0f;
 
         // A build under construction survives only while placement attempts keep arriving
         // (TryPlace/TryPlaceBuildId set the flag every held frame) — letting go abandons it.
@@ -414,10 +424,11 @@ public sealed class Player
         var onRail = ProbeTileKind(planet, Position - up * (Radius + 1.5f)) == TileKind.Rail;
         var moveSpeed = onRail ? MoveSpeed * 1.65f : MoveSpeed;
 
-        // Ladder overlap: gravity is heavily reduced and the vertical axis directly drives
-        // up/down motion, so the player can climb without jumping. Detected by sampling the
-        // tile under the player's centre — ladders span a tile, so any centre-overlap counts.
-        var onLadder = ProbeTileKind(planet, Position) == TileKind.Ladder;
+        // Ladder/rope overlap: gravity is heavily reduced and the vertical axis directly
+        // drives up/down motion, so the player can climb without jumping. Detected by
+        // sampling the tile under the player's centre — climbables span a tile, so any
+        // centre-overlap counts.
+        var onLadder = Tiles.IsClimbable(ProbeTileKind(planet, Position));
 
         var targetTangent = moveAxis * moveSpeed;
         var accel = Grounded ? 900f : 220f;   // snappy ground accel; floatier Noita-ish air control
@@ -450,7 +461,7 @@ public sealed class Player
         if (InWater && !onLadder)
         {
             var strokeN = verticalAxis != 0 ? verticalAxis * SwimSpeed
-                : (jumpHeld || jetHeld) ? SwimSpeed * 0.9f
+                : jumpHeld ? SwimSpeed * 0.9f
                 : -20f;
             vNormal = MoveToward(vNormal, strokeN, 500f * dt);
             vTangent = MoveToward(vTangent, moveAxis * SwimSpeed, 500f * dt);
@@ -459,16 +470,18 @@ public sealed class Player
         if (EmpTimer > 0f) EmpTimer -= dt;
         if (HurtFlash > 0f) HurtFlash = MathF.Max(0f, HurtFlash - dt * 2.2f);
 
-        // Jetpack: SPACE is a straight on/off thruster, Noita-style — hold it and the pack
-        // burns, lifting you straight off the GROUND (no W-jump needed first; W plays no part
-        // in flying anymore), release and you fall. Worn in the Back slot only (owning it isn't
-        // enough). Thrust is a boost pop the frame it lights plus a gentle gravity-cancelling
-        // lift; the burn drains JetCharge (one second at tier I) and only refills once you're
-        // grounded and off the throttle. Gated off ladders/water and EMP.
+        // Jetpack: SPACE doubles as the throttle, Noita-style — tap to jump, keep holding
+        // and the pack lights once the hold outlives the tap window (an airborne press
+        // lights it immediately: falling + Space = hover). Release and you fall. Worn in
+        // the Back slot only (owning it isn't enough). Thrust is a boost pop the frame it
+        // lights plus a gentle gravity-cancelling lift; the burn drains JetCharge (one
+        // second at tier I) and only refills once you're grounded and off the throttle.
+        // Gated off ladders/water and EMP.
+        var jetWanted = jumpHeld && (_jetPressAirborne || _jumpHoldTime >= JetHoldDelay);
         IsJetting = false;
         if (HasJetpack && Equipment.Get(EquipSlot.Back) == "jetpack" && EmpTimer <= 0f)
         {
-            if (jetHeld && !onLadder && !InWater && JetCharge > 0f)
+            if (jetWanted && !onLadder && !InWater && JetCharge > 0f)
             {
                 // Boost pop the frame the burn first lights (lifts you clear of the ground),
                 // then the steady lift acceleration. Above the rise cap thrust adds nothing —

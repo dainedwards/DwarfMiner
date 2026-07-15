@@ -17,7 +17,11 @@ public static class RunSave
 {
     // Bump when the format or the planet/cell geometry changes — old saves are discarded.
     // v8: 4-px tiles (doubled ring geometry) + Conglomerate composition table.
+<<<<<<< HEAD
     private const int Version = 24;  // 24: Density-8 cell grid — cell state dims changed (23 reserved by the titan-siege pass on noita-sim)
+=======
+    private const int Version = 23;  // 23: player HasGrapple (grappling hook)
+>>>>>>> noita-sim
                                      // 22: skyscraper facade frames (straight-tower lattice)
                                      // 21: titan carcass + soul-claim flag
                                      // 9: planet gem-overlay section
@@ -90,6 +94,7 @@ public static class RunSave
             w.Write(p.HasLaserCannon); w.Write(p.HasRocketLauncher); w.Write(p.HasMiningLaser);
             // v16: the elemental arms (flamethrower / acid spewer / lightning gun).
             w.Write(p.HasFlamethrower); w.Write(p.HasAcidSpewer); w.Write(p.HasLightningGun);
+            w.Write(p.HasGrapple);    // v23
             w.Write(p.ScannerTier);   // v20
             w.Write(p.FlyMode);
             w.Write(p.BeaconWorld.HasValue);
@@ -214,6 +219,7 @@ public static class RunSave
                 HasMiningLaser = r.ReadBoolean(),
                 HasFlamethrower = r.ReadBoolean(), HasAcidSpewer = r.ReadBoolean(),
                 HasLightningGun = r.ReadBoolean(),
+                HasGrapple = r.ReadBoolean(),  // v23
                 ScannerTier = r.ReadInt32(),   // v20
                 FlyMode = r.ReadBoolean(),
             };

@@ -93,6 +93,8 @@ public enum CreatureKind : byte
     Quillwing,    // barbed cave flyer — flutters in and looses a fan of THREE bone quills at once
     Warpwisp,     // drifting eldritch caster — lobs slow, wall-piercing violet hex bolts that hunt you through cover
     Thornback,    // squat spine-beetle grenadier — arcs clustered barb-mortars over walls, then trundles to a new firing spot
+    // The water world's apex monster (census-seeded into the deepest basins, ocean biome only):
+    Kraken,       // hulking deep-sea cephalopod — tentacle flurries in the water, brine-jet volleys at anyone taunting it from the shore
 }
 
 public sealed class Creature
@@ -343,6 +345,12 @@ public sealed class Creature
             case CreatureKind.Thornback:
                 Radius = 4.4f; Health = 30f; MoveSpeed = 22f; ContactDamage = 9f;
                 break;
+            case CreatureKind.Kraken:
+                // A basin boss, not an ambient fish: shrugs off small arms like the city's
+                // command saucer, and its tentacle flurry hits like a titan's backhand.
+                Radius = 12f; Health = 620f; MoveSpeed = 80f; ContactDamage = 22f;
+                _cd = 1.5f + (float)Random.Shared.NextDouble();  // first flurry is never instant
+                break;
         }
     }
 
@@ -390,15 +398,36 @@ public sealed class Creature
     /// <summary>Aquatic-only kinds — spawned into water by the director's lake spawner and
     /// budgeted separately from every land habitat.</summary>
     public bool IsWaterKind => Kind is CreatureKind.AlienWhale or CreatureKind.AlienCrab
-        or CreatureKind.AlienShark or CreatureKind.Gulper or CreatureKind.Brinespitter;
+        or CreatureKind.AlienShark or CreatureKind.Gulper or CreatureKind.Brinespitter
+        or CreatureKind.Kraken;
     public bool IsCaveKind => !IsSkyKind && !IsSurfaceKind && !IsWaterKind;
+
+    /// <summary>Breather rig: rolled at spawn on some humanoid bandits (SpawnDirector — a
+    /// coin-flip on the water world, a rarity elsewhere). A breather-equipped bandit swims
+    /// (see <see cref="Swims"/>) and never drowns; its mates without one sink, thrash out
+    /// their air reserve, and die like anyone else who breathes (the drown tick in Update).
+    /// Drawn as a visible mask pod + air flask so the player can read who will follow them
+    /// into the sea.</summary>
+    public bool HasBreather;
 
     /// <summary>Land kinds that can also swim: submerged, buoyancy replaces the plummet
     /// (see the swim block in <see cref="Update"/>). Amphibians paddle by nature; lizardmen
     /// swim like the reptiles they are — a lake is no moat against the warren; grubs are
-    /// sealed, buoyant sacks. Everything else sinks and walks the bottom.</summary>
+    /// sealed, buoyant sacks; a breather rig turns a bandit into a swimmer. Everything else
+    /// sinks and walks the bottom.</summary>
     public bool Swims => Kind is CreatureKind.TidePuddler or CreatureKind.Lizardman
-        or CreatureKind.Grub or CreatureKind.AlienWhale;
+        or CreatureKind.Grub or CreatureKind.AlienWhale || HasBreather;
+
+    /// <summary>Air-breathing kinds — the ones the drown tick applies to when they end up
+    /// fully submerged. Water natives and swimmers are exempt at the call site (they pass
+    /// <see cref="ImmuneTo"/>(Water)); this excludes the rest of the never-breathed set:
+    /// machines (saucers), the void phantom, living stone, and every vacuum native (the
+    /// belt/moon roster whose whole identity is that nothing there ever needed air).</summary>
+    public bool Breathes => Kind is not (CreatureKind.Saucer or CreatureKind.BigSaucer
+        or CreatureKind.VoidWraith or CreatureKind.RockMimic
+        or CreatureKind.Moonlet or CreatureKind.VacLeech or CreatureKind.Glimmermaw
+        or CreatureKind.StarJelly or CreatureKind.VoidBarnacle
+        or CreatureKind.Selenite or CreatureKind.DustDevil);
 
     /// <summary>Whether this kind can live inside a hazard cell — the gate the spawner uses so a
     /// creature is never dropped into a material that would drown/burn/dissolve it, and the
@@ -425,6 +454,13 @@ public sealed class Creature
     private const float LavaDps = 26f;
     private const float AcidDps = 12f;
     private const float FireDps = 5f;
+    // Drowning: a fully submerged air-breather holds out for the grace window, then takes
+    // steady damage until it surfaces or dies. Tuned so a bandit gunman (22-38 HP) who
+    // sinks into the sea is dead in a handful of seconds, while a big brute caught in a
+    // flash-flooded tunnel still has time to wade clear.
+    private const float DrownGraceSeconds = 4f;
+    private const float DrownDps = 9f;
+    private float _airT;   // seconds spent continuously submerged
     /// <summary>Seconds between hazard probes. SampleHazardsNear walks a body-sized cell
     /// window, so ticking it every frame for every creature near a pool adds up; damage is
     /// applied per-period at the same per-second rates. Started at a random phase so a herd
@@ -491,6 +527,28 @@ public sealed class Creature
                 if (WetSeconds <= 0f)
                     BurnSeconds = MathF.Max(BurnSeconds, OilySeconds > 0f ? 5f : 1.5f);
             }
+
+            // Drowning: air-breathers with their HEAD underwater (wading chest-deep is
+            // safe) run down the grace reserve, then take steady damage. Swimmers, water
+            // natives and breather-equipped bandits pass ImmuneTo(Water) and never reach
+            // this; machines and the vacuum kinds fail Breathes. The design counterweight
+            // lives in WorldGen: the ocean world's caves sit behind an obsidian seabed,
+            // so drowning a cave full of gunmen takes real mining, not a casual breach.
+            if (Breathes && !ImmuneTo(Material.Water))
+            {
+                var upHead = planet.UpAt(Position);
+                var submerged = cells.CountWaterNear(Position + upHead * Radius, 2.5f) >= 3
+                    && cells.CountWaterNear(Position, Radius + 1f) >= 4;
+                if (submerged)
+                {
+                    _airT += HazardProbePeriod;
+                    if (_airT > DrownGraceSeconds) Health -= DrownDps * HazardProbePeriod;
+                }
+                else
+                {
+                    _airT = 0f;
+                }
+            }
         }
 
         // A shot digger holds a grudge — the pain flash doubles as the provocation signal.
@@ -517,7 +575,7 @@ public sealed class Creature
                 var beside = Position + right * (side * (Radius + 5f));
                 var (bx, by) = planet.WorldToTile(beside);
                 if (planet.Get(bx, by) != TileKind.DoorOpen) continue;
-                SetDoorRun(planet, up, beside, TileKind.DoorClosed);
+                planet.SetDoorRun(bx, by, TileKind.DoorClosed);
                 break;
             }
 
@@ -576,6 +634,7 @@ public sealed class Creature
             case CreatureKind.AlienShark: TickShark(dt, planet, cells, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.Gulper:     TickGulper(dt, planet, cells, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.Brinespitter: TickBrinespitter(dt, planet, cells, up, right, toPlayer, dist, speedMul, shots); break;
+            case CreatureKind.Kraken:     TickKraken(dt, planet, cells, up, right, toPlayer, dist, speedMul, shots); break;
             // Belt natives. The moonlet and glimmermaw run bespoke brains below; the leech
             // hunts on the skitterer's pounce brain (its air siphon lives in the contact
             // block, not the tick).
@@ -1995,6 +2054,75 @@ public sealed class Creature
         }
     }
 
+    /// <summary>Kraken: the water world's apex monster. In the deep it cruises its basin
+    /// like a slow storm front; prey in the water gets run down and met with a tentacle
+    /// FLURRY (a committed lunge burst — the shark's rush with a leviathan's mass behind
+    /// it); prey taunting it from the shore gets a fan of pressurised brine jets lobbed
+    /// out of the water instead. It never leaves the sea — the obsidian seabed keeps its
+    /// hunting ground from draining, and dry land keeps you from its arms.</summary>
+    private void TickKraken(float dt, Planet planet, Cells cells, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul, List<TitanProjectile>? shots)
+    {
+        _cd -= dt;
+        _burstT -= dt;
+        if (_swing > 0f) _swing -= dt;
+        var inWater = cells.CountWaterNear(Position, 3f) >= 3;
+        var preyWet = cells.CountWaterNear(Position + toPlayer, 3f) >= 3;
+
+        // Tentacle flurry: a committed lunge along the prey's bearing while the window is
+        // live. Contact damage does the hurting; the burst is what makes it land.
+        if (_swing > 0f && dist > 0.01f)
+        {
+            SwimToward(dt, planet, cells, up, right, Position + toPlayer,
+                MoveSpeed * 2.4f * speedMul, 520f);
+            return;
+        }
+
+        if (inWater && preyWet && dist < 420f && dist > 0.01f)
+        {
+            // Run the prey down; inside arm's reach, open the flurry.
+            if (dist < Radius + 30f && _cd <= 0f)
+            {
+                _swing = 0.6f;
+                _cd = 2.8f;
+            }
+            SwimToward(dt, planet, cells, up, right, Position + toPlayer,
+                MoveSpeed * speedMul, 260f);
+            return;
+        }
+
+        // Shore bombardment: prey out of the water but close — rise and lob a fan of
+        // brine jets (the brinespitter's glob physics, three at once and harder).
+        if (inWater && !preyWet && dist is > 30f and < 320f && _burstT <= 0f
+            && shots is not null && dist > 0.01f && HasLineOfSight(planet, toPlayer, dist))
+        {
+            var dir = toPlayer / dist;
+            for (var i = -1; i <= 1; i++)
+            {
+                var aim = Vector2.Normalize(dir + up * (0.30f + i * 0.14f));
+                shots.Add(new TitanProjectile(Position + aim * (Radius + 3f), aim * 250f,
+                    TitanShotKind.Acid, damage: 11f));   // brine jet on the water-glob physics
+            }
+            _burstT = 3.4f + (float)Random.Shared.NextDouble() * 0.9f;
+            _swing = 0.35f;
+        }
+
+        // Idle: lap the deep basin near the bottom, a slow dark bulk under the waves.
+        Wander += dt;
+        var laneAhead = Position + right * (_orbitSign * (Radius + 22f));
+        if (planet.IsSolidAt(laneAhead) || cells.CountWaterNear(laneAhead, 3f) < 2)
+            _orbitSign = -_orbitSign;
+        var bob = MathF.Sin(Wander * 0.5f + _phase) * 6f;
+        if (cells.CountWaterNear(Position + up * (Radius + 4f), 3f) < 2) bob = -16f;
+        else if (planet.IsSolidAt(Position - up * (Radius + 6f))) bob = 12f;
+        // A shore-taunted kraken loiters under its target instead of wandering off.
+        var lane = !preyWet && dist < 320f && dist > 0.01f
+            ? Vector2.Dot(toPlayer, right) * 0.4f
+            : _orbitSign * 46f;
+        SwimToward(dt, planet, cells, up, right,
+            Position + right * lane + up * bob, MoveSpeed * 0.35f * speedMul, 90f);
+    }
+
     // ---------------------------------------------------------------- sky fauna
 
     private void TickFlyer(float dt, Planet planet, Vector2 up, Vector2 right,
@@ -2121,8 +2249,8 @@ public sealed class Creature
           or CreatureKind.Marauder or CreatureKind.Pyro;
 
     /// <summary>If the probed spot (or head height above it) is a closed door, swing the
-    /// whole contiguous vertical leaf open and report success — the walker strolls through
-    /// instead of turning around.</summary>
+    /// whole leaf open (Planet.SetDoorRun — one piece, drift-tolerant) and report success —
+    /// the walker strolls through instead of turning around.</summary>
     private bool TryOpenDoorAt(Planet planet, Vector2 up, Vector2 at)
     {
         for (var lift = 0f; lift <= 16f; lift += 8f)
@@ -2130,24 +2258,10 @@ public sealed class Creature
             var probe = at + up * lift;
             var (tx, ty) = planet.WorldToTile(probe);
             if (planet.Get(tx, ty) != TileKind.DoorClosed) continue;
-            SetDoorRun(planet, up, probe, TileKind.DoorOpen);
+            planet.SetDoorRun(tx, ty, TileKind.DoorOpen);
             return true;
         }
         return false;
-    }
-
-    /// <summary>Set every door tile in the contiguous vertical run through <paramref name="at"/>.</summary>
-    private static void SetDoorRun(Planet planet, Vector2 up, Vector2 at, TileKind to)
-    {
-        var (tx, ty) = planet.WorldToTile(at);
-        planet.Set(tx, ty, to);
-        foreach (var s in new[] { 1f, -1f })
-            for (var step = 1; step <= 6; step++)
-            {
-                var (nx, ny) = planet.WorldToTile(at + up * (Planet.TileSize * step * s));
-                if (planet.Get(nx, ny) is not (TileKind.DoorClosed or TileKind.DoorOpen)) break;
-                planet.Set(nx, ny, to);
-            }
     }
 
     /// <summary>Terrain sense for walkers: adjusts a desired walk axis so the creature
@@ -3004,6 +3118,15 @@ public sealed class Creature
                 r.DrawCircle(head, 2.3f, skin);
                 r.DrawRect(head - up * 0.4f, new Vector2(4.4f, 1.6f), rag, rot); // rag mask
                 r.DrawCircle(head + right * (facing * 1.0f) + up * 0.8f, 0.7f, Color.Black);
+                // Breather rig: a rimmed mask pod over the rag and a slim air flask on the
+                // hip — the tell that this one will follow you into the sea.
+                if (HasBreather)
+                {
+                    r.DrawCircle(head + right * (facing * 1.7f) - up * 0.3f, 1.4f, Tinted(new Color(120, 160, 185)));
+                    r.DrawCircle(head + right * (facing * 1.7f) - up * 0.3f, 0.7f, new Color(200, 235, 255));
+                    r.DrawRect(Position - right * (facing * 1.9f) + up * 0.4f, new Vector2(1.2f, 2.6f),
+                        Tinted(new Color(150, 160, 175)), rot);
+                }
                 // Pistol arm follows the last aim.
                 var aim = _gunAim.LengthSquared() > 0.01f ? _gunAim : right * facing;
                 var pAng = MathF.Atan2(aim.Y, aim.X);
@@ -3040,6 +3163,14 @@ public sealed class Creature
                 r.DrawCircle(head, 2.2f, skin);
                 r.DrawRect(head + up * 1.0f, new Vector2(4.0f, 1.3f), packC, rot); // goggle band
                 r.DrawCircle(head + right * (facing * 1.0f) + up * 1.0f, 0.8f, Tinted(new Color(190, 220, 240)));
+                // Breather rig — same tell as the marauder's: mask pod + hip flask.
+                if (HasBreather)
+                {
+                    r.DrawCircle(head + right * (facing * 1.6f) - up * 0.4f, 1.3f, Tinted(new Color(120, 160, 185)));
+                    r.DrawCircle(head + right * (facing * 1.6f) - up * 0.4f, 0.7f, new Color(200, 235, 255));
+                    r.DrawRect(Position + right * (facing * 1.9f) - up * 0.2f, new Vector2(1.1f, 2.4f),
+                        Tinted(new Color(150, 160, 175)), rot);
+                }
                 var aim = _gunAim.LengthSquared() > 0.01f ? _gunAim : right * facing;
                 var pAng = MathF.Atan2(aim.Y, aim.X);
                 var grip = Position + right * (facing * 2.0f) + up * 1.6f;
@@ -3310,6 +3441,47 @@ public sealed class Creature
                 r.DrawRect(Position - up * (Radius * 0.4f) - right * (Radius * 0.8f), new Vector2(1.8f, 1.0f), body, rot - 0.6f);
                 r.DrawCircle(Position + dir * (Radius * 0.3f) + up * (Radius * 0.5f), 0.8f, Color.Black);
                 r.DrawCircle(Position + dir * (Radius * 0.7f) + up * (Radius * 0.5f), 0.7f, Color.Black);
+                break;
+            }
+            case CreatureKind.Kraken:
+            {
+                // The water world's apex monster: a hulking wine-dark mantle over a skirt
+                // of six waving tentacles, huge lamp eyes, and a black beak that parts in
+                // the tentacle flurry. The tentacles whip hard while the flurry is live.
+                var mantle = Tinted(new Color(88, 42, 78));
+                var mantleHi = Tinted(new Color(126, 64, 104));
+                var tipC = Tinted(new Color(186, 116, 148));
+                var dir = right * facing;
+                var fury = _swing > 0f;
+                // Tentacle skirt first, under the mantle: chains of shrinking discs, each
+                // arm on its own phase; suckered pale tips.
+                for (var i = 0; i < 6; i++)
+                {
+                    var spread = (i - 2.5f) / 2.5f;   // -1 .. 1 across the skirt
+                    var p = Position - up * (Radius * 0.5f) + right * (spread * Radius * 0.7f);
+                    var arm = -up + right * (spread * 0.8f);
+                    for (var s = 0; s < 5; s++)
+                    {
+                        var sway = MathF.Sin(t * (fury ? 6f : 2.4f) + _phase + i * 1.3f + s * 0.9f)
+                            * (fury ? 0.9f : 0.35f);
+                        var step = Vector2.Normalize(arm + right * sway + (fury ? dir * 0.6f : Vector2.Zero));
+                        p += step * (Radius * 0.42f);
+                        r.DrawCircle(p, Radius * (0.30f - s * 0.045f), s == 4 ? tipC : mantle);
+                    }
+                }
+                // Mantle: a tall tapered hood, banded, with a pale crest.
+                r.DrawCircle(Position, Radius, mantle);
+                r.DrawCircle(Position + up * (Radius * 0.55f), Radius * 0.78f, mantle);
+                r.DrawCircle(Position + up * (Radius * 1.05f), Radius * 0.5f, mantleHi);
+                r.DrawRect(Position + up * (Radius * 0.25f), new Vector2(Radius * 1.6f, 2.2f), mantleHi, rot);
+                // Huge lamp eyes tracking the facing — gold in the deep, furnace-red in fury.
+                var eyeC = fury ? new Color(255, 120, 90) : new Color(255, 210, 120);
+                r.DrawCircle(Position + dir * (Radius * 0.45f) + up * (Radius * 0.12f), 2.6f, eyeC);
+                r.DrawCircle(Position - dir * (Radius * 0.28f) + up * (Radius * 0.12f), 1.9f, eyeC);
+                r.DrawCircle(Position + dir * (Radius * 0.52f) + up * (Radius * 0.12f), 1.1f, Color.Black);
+                r.DrawCircle(Position - dir * (Radius * 0.23f) + up * (Radius * 0.12f), 0.8f, Color.Black);
+                // Beak, parting wide in the flurry.
+                r.DrawRect(Position - up * (Radius * 0.5f), new Vector2(2.8f, fury ? 2.8f : 1.4f), Color.Black, rot);
                 break;
             }
             case CreatureKind.Moonlet:
@@ -3686,6 +3858,15 @@ public sealed class Creature
                 var up = planet?.UpAt(Position) ?? new Vector2(0f, -1f);
                 var lure = Position + up * (Radius * 1.7f) + new Vector2(-up.Y, up.X) * (Radius * 0.9f);
                 r.AddLight(lure, 20f + pulse * 8f, new Color(120, 220, 160));
+                break;
+            }
+            case CreatureKind.Kraken:
+            {
+                // The lamp eyes smoulder gold through the deep — the flurry flushes the
+                // whole basin furnace-red for its half-second.
+                var pulse = MathF.Sin(r.Time * 1.8f + _phase) * 5f;
+                r.AddLight(Position, (_swing > 0f ? 36f : 26f) + pulse,
+                    _swing > 0f ? new Color(255, 110, 70) : new Color(220, 170, 90));
                 break;
             }
         }

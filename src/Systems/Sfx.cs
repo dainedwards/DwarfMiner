@@ -38,6 +38,9 @@ public sealed class Sfx
         // Mothership: the ion-engine rumble is a short loopable burst re-triggered while
         // thrusting (min-gap keeps it continuous without stacking).
         "thrust",
+        // Kaiju voices — the movie-monster bellow when an attack starts, the shriller
+        // screech of the lighter/flying kinds, and the deep thud of a landed kick/fist.
+        "roar", "screech", "thud",
     };
 
     public void Build()
@@ -215,6 +218,35 @@ public sealed class Sfx
                     Tone(b, 74, 52, 0.5, Ar(0.06, 3.2), Wave.Saw);
                     Tone(b, 150, 118, 0.22, Ar(0.06, 3.2), Wave.Sine);
                     Noise(b, 0.16, Ar(0.05, 2.6), lp: 0.92);
+                });
+            case "roar":
+                // Godzilla-class bellow: two detuned saws diving together (the beat between
+                // them is the throaty growl), a sub-bass body, and a long snarling noise
+                // tail. Swells in, roars, dies slowly.
+                return Render(1.35, b =>
+                {
+                    Tone(b, 150, 58, 0.42, Ar(0.10, 2.2), Wave.Saw);
+                    Tone(b, 162, 63, 0.38, Ar(0.10, 2.2), Wave.Saw);
+                    Tone(b, 76, 34, 0.5, Ar(0.12, 1.9), Wave.Sine);
+                    Noise(b, 0.34, Ar(0.12, 2.0), lp: 0.82);
+                    // A cracked overtone that peaks mid-roar — the metallic skreonk edge.
+                    Tone(b, 640, 210, 0.16, Ar(0.25, 3.0), Wave.Square, from: 0.12, until: 0.7);
+                });
+            case "screech":
+                // The lighter kaiju and the flyers: a piercing falling shriek over a rasp.
+                return Render(0.9, b =>
+                {
+                    Tone(b, 1500, 420, 0.4, Ar(0.04, 3.6), Wave.Saw);
+                    Tone(b, 2300, 700, 0.22, Ar(0.03, 4.2), Wave.Square);
+                    Noise(b, 0.3, Ar(0.05, 3.4), lp: 0.5);
+                    Tone(b, 300, 130, 0.25, Ar(0.06, 3.0), Wave.Saw);
+                });
+            case "thud":
+                // A kaiju kick/fist landing: one deep percussive slam, all body, no ring.
+                return Render(0.3, b =>
+                {
+                    Tone(b, 95, 34, 0.85, Decay(11), Wave.Sine);
+                    Noise(b, 0.5, Decay(20), lp: 0.9);
                 });
             case "hatch":
                 // Rising monster growl — swept saw + snarling noise.

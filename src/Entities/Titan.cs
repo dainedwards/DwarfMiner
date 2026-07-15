@@ -100,6 +100,57 @@ public sealed class Titan
     /// damage/knock-back the player and spew debris, since the Titan has no Player reference.</summary>
     public (Vector2 pos, float radius, float damage)? PendingShockwave;
 
+    // ─── Siege: kick low, fist high ───────────────────────────────────────────
+    /// <summary>A kick in flight: the nearest leg's step has been driven onto the base of a
+    /// structure (the existing step machinery IS the animation) and the landing will run
+    /// <see cref="KickImpact"/> — a one-blow breach across the boot plus a debris-pulverising
+    /// shockwave. Every walker kicks; only the arm kinds (<see cref="HasArms"/>) also throw
+    /// the Kong-style hand smash at the UPPER storeys.</summary>
+    public float KickTimer;
+    public Vector2 KickTarget;
+    private float _kickCooldown;
+    private bool _kickPending;
+
+    /// <summary>Kinds with real arms — they get the hand smash (shared state machine:
+    /// <see cref="SmashTimer"/> and friends, animated per kind by the renderer).</summary>
+    public static bool HasArms(TitanKind k) =>
+        k is TitanKind.Godzilla or TitanKind.Mecha or TitanKind.Kong
+          or TitanKind.Leatherback or TitanKind.Slattern;
+
+    /// <summary>Titan attacks grind toppled rigid debris straight to dust — Game1 consumes
+    /// this into <see cref="World.RigidBodies.Pulverize"/> (the Titan has no Rigid reference).
+    /// Mirrors the PendingShockwave hand-off pattern.</summary>
+    public (Vector2 pos, float radius)? PendingPulverize;
+
+    // ─── Rider shake-off ──────────────────────────────────────────────────────
+    /// <summary>Seconds a dwarf has been clinging to the hide (riding or grapple-latched).
+    /// Game1 accrues it at 2×dt while attached; Update decays it at 1×dt — past the
+    /// tolerance the monster thrashes (<see cref="ShakeTimer"/>) and flings the rider
+    /// (<see cref="PendingShakeOff"/>, consumed by Game1). EVERY kind shakes.</summary>
+    public float RiderTime;
+    public float ShakeTimer;
+    public bool PendingShakeOff;
+    private float _shakeCooldown;
+    private bool _shakeFlung;
+
+    // ─── Voice ────────────────────────────────────────────────────────────────
+    /// <summary>Sfx name queued when an attack starts (smash windup, kick, special windup,
+    /// shake-off) — Game1 consumes and plays it at the body. Set with ??= so the first
+    /// event of a frame wins and the voice never stacks.</summary>
+    public string? PendingRoar;
+    /// <summary>The movie-monster register per kind: the big walkers bellow, the light
+    /// sprinters and the flyers screech.</summary>
+    public string RoarVoice =>
+        Flyer || Kind is TitanKind.Raiju or TitanKind.Otachi ? "screech" : "roar";
+    private float _prevSpecial;
+
+    // ─── Weakpoints ───────────────────────────────────────────────────────────
+    /// <summary>Radius of a shootable weakpoint — a projectile landing inside one deals
+    /// triple damage (see Systems.Combat) and lights <see cref="WeakpointFlash"/>.</summary>
+    public const float WeakpointRadius = 18f;
+    public float WeakpointFlash;
+    private readonly List<Vector2> _weakpoints = new();
+
     /// <summary>Knifehead mid-gore / Raiju mid-dash — the renderer leans the body into the
     /// sprint and Game1's HUD can read it. Cleared when the burst resolves.</summary>
     public bool Charging;
@@ -470,11 +521,39 @@ public sealed class Titan
             speedMul = Charging ? 4.4f : 0f;
         }
 
-        // Kong plants while a hand smash swings — the fist hammers a stationary target.
-        if (Kind == TitanKind.Kong && SmashTimer > 0f)
+        // Any arm kind plants while a hand smash swings — the fist hammers a stationary target.
+        if (SmashTimer > 0f)
         {
             moveAxis = 0;
             speedMul = 0f;
+        }
+
+        // ── Rider shake-off ───────────────────────────────────────────────────
+        // A dwarf clinging to the hide wears the monster's patience down (Game1 accrues
+        // RiderTime while attached; it decays here). Past the tolerance, EVERY kind stops
+        // and thrashes — a violent side-to-side convulsion that flings the rider off
+        // (PendingShakeOff, consumed by Game1) — then needs a breather before re-shaking.
+        RiderTime = MathF.Max(0f, RiderTime - dt);
+        _shakeCooldown -= dt;
+        if (ShakeTimer <= 0f && _shakeCooldown <= 0f && RiderTime > 2.2f)
+        {
+            ShakeTimer = 1.2f;
+            _shakeCooldown = 6f;
+            _shakeFlung = false;
+            RiderTime = 0f;
+            PendingRoar ??= RoarVoice;
+        }
+        if (ShakeTimer > 0f)
+        {
+            ShakeTimer -= dt;
+            moveAxis = 0;
+            speedMul = 0f;
+            // The fling fires mid-thrash, at the whip's peak.
+            if (!_shakeFlung && ShakeTimer < 0.7f)
+            {
+                _shakeFlung = true;
+                PendingShakeOff = true;
+            }
         }
 
         // Close the generic hunt-jump's airtime window (Kong's special manages its own
@@ -531,6 +610,8 @@ public sealed class Titan
         var targetTangent = moveAxis * MoveSpeed * speedMul * paceMul * (1f + Anger / 80f);
         var accel = Charging ? 900f : Grounded ? 260f : 100f;
         vTangent = MoveToward(vTangent, targetTangent, accel * dt);
+        // Mid-shake the body whips side to side — the convulsion the rider is flung by.
+        if (ShakeTimer > 0f) vTangent = MathF.Sin(ShakeTimer * 22f) * 150f;
 
         vNormal -= Gravity * dt;
 
@@ -663,6 +744,9 @@ public sealed class Titan
         StompCooldown -= dt;
         HurlCooldown -= dt;
         _smashCooldown -= dt;
+        _kickCooldown -= dt;
+
+        TickSiege(dt, planet, physics, cells, playerPos);
 
         // Stomp: earthquake centered at the kaiju's standing point. Only when aggroed and
         // grounded — a passive kaiju doesn't pound the ground, and a stomp mid-air looks
@@ -699,7 +783,139 @@ public sealed class Titan
         SpecialCooldown -= dt;
         UpdateSpecial(dt, planet, physics, cells, playerPos, shots);
 
+        // Voice the specials generically: the frame any special's windup arms (SpecialState
+        // crosses zero) the monster announces it — one hook covers all nine kinds.
+        if (SpecialState > 0f && _prevSpecial <= 0f) PendingRoar ??= RoarVoice;
+        _prevSpecial = SpecialState;
+
         if (HitFlash > 0) HitFlash -= dt;
+        if (WeakpointFlash > 0) WeakpointFlash -= dt;
+    }
+
+    /// <summary>City-siege instincts shared by every walker. LOW structure tiles get the
+    /// KICK: the nearest planted leg's step is driven onto the wall base and the landing
+    /// (see UpdateLegs) runs <see cref="KickImpact"/> — a one-blow breach. HIGH tiles get
+    /// the hand smash, for the kinds with arms: the same rear-and-hammer state machine Kong
+    /// always had, now aimed at the upper storeys (or the player, when aggroed and in
+    /// reach). Between the two, a titan working a tower crumbles it in a handful of attacks
+    /// where the passive lean-wreck alone took a march.</summary>
+    private void TickSiege(float dt, Planet planet, Physics physics, Cells cells, Vector2 playerPos)
+    {
+        if (Legs.Length == 0 || Digging || ShakeTimer > 0f) return;
+
+        if (KickTimer > 0f) KickTimer -= dt;
+        else if (_kickCooldown <= 0f && Grounded && !Leaping && FindStructure(low: true) is { } lowTgt)
+        {
+            foreach (var leg in Legs)
+            {
+                if (leg.StepT < 1f) continue;
+                leg.StepStart = leg.FootPos;
+                leg.StepTarget = lowTgt;
+                leg.StepT = 0f;
+                KickTarget = lowTgt;
+                KickTimer = 0.8f;
+                _kickPending = true;
+                _kickCooldown = 2.4f;
+                PendingRoar ??= RoarVoice;
+                break;
+            }
+        }
+
+        if (!HasArms(Kind)) return;
+        if (SmashTimer > 0f)
+        {
+            SmashTimer -= dt;
+            if (!_smashLanded && SmashTimer <= SmashImpactAt)
+            {
+                _smashLanded = true;
+                SmashImpact(physics, cells);
+            }
+            if (SmashTimer <= 0f) _smashCooldown = 1.4f;
+            return;
+        }
+        if (_smashCooldown > 0f || !Grounded || Leaping || !Standing()) return;
+        Vector2? target = null;
+        if (IsAggro && (playerPos - Position).Length() < SmashReach) target = playerPos;
+        else target = FindStructure(low: false);
+        if (target is { } tgt)
+        {
+            SmashTarget = tgt;
+            SmashHand = -SmashHand;
+            SmashTimer = SmashDuration;
+            _smashLanded = false;
+            PendingRoar ??= RoarVoice;
+        }
+    }
+
+    /// <summary>A landed kick: a one-blow breach across the boot's footprint (power 60 —
+    /// even alien alloy caves in a single hit), a quake, a short shockwave for anything
+    /// fleshy, and any rigid debris in range is ground straight to dust.</summary>
+    private void KickImpact(Planet planet, Physics physics, Cells cells, Vector2 at)
+    {
+        var (fx, fy) = planet.WorldToTile(at);
+        const int r = 2;
+        for (var dy = -r; dy <= r; dy++)
+        {
+            for (var dx = -r; dx <= r; dx++)
+            {
+                if (dx * dx + dy * dy > r * r) continue;
+                var x = fx + dx; var y = fy + dy;
+                if (!Tiles.IsSolid(planet.Get(x, y))) continue;
+                if (planet.Mine(x, y, 60) is { } broken)
+                {
+                    physics.MarkDirty(x, y);
+                    cells.SpawnDustInTile(x, y, broken);
+                }
+            }
+        }
+        physics.Earthquake(at, 120f, 2);
+        PendingShockwave = (at, 100f, 18f);
+        PendingPulverize = (at, 130f);
+    }
+
+    /// <summary>Nearest architecture tile ahead of the body — down at shin height for a
+    /// kick, or up at the tower's higher storeys for a fist. Samples a short fan in the
+    /// facing direction.</summary>
+    private Vector2? FindStructure(bool low)
+    {
+        var up = _planet.UpAt(Position);
+        var right = new Vector2(-up.Y, up.X);
+        var face = Facing >= 0f ? 1f : -1f;
+        var (h0, h1) = low ? (-120f, -50f) : (10f, 100f);
+        var maxD = low ? 140f : SmashReach;
+        for (var d = 60f; d <= maxD; d += 24f)
+        {
+            for (var h = h0; h <= h1; h += 30f)
+            {
+                var p = Position + right * (face * d) + up * h;
+                var (x, y) = _planet.WorldToTile(p);
+                if (_planet.Get(x, y) is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
+                    return _planet.TileToWorld(x, y);
+            }
+        }
+        return null;
+    }
+
+    /// <summary>Shootable weakpoints — soft glowing spots on the hide (nape, dorsal vent,
+    /// tail root; the worm's is the hinge behind its maw). A projectile landing inside
+    /// <see cref="WeakpointRadius"/> of one deals triple damage. Positions ride the body
+    /// frame so climbing the monster is how you hold your aim on them.</summary>
+    public IReadOnlyList<Vector2> WeakpointsWorld()
+    {
+        _weakpoints.Clear();
+        if (!Hatched || Health <= 0f || Submerged) return _weakpoints;
+        if (Kind == TitanKind.Sandworm)
+        {
+            if (TailNodes.Length > 1) _weakpoints.Add(TailNodes[1]);
+            return _weakpoints;
+        }
+        var up = _planet.UpAt(Position);
+        var right = new Vector2(-up.Y, up.X);
+        var face = Facing >= 0f ? 1f : -1f;
+        _weakpoints.Add(Position + up * (Radius * 0.62f) + right * (face * Radius * 0.18f));  // nape
+        _weakpoints.Add(Position + up * (Radius * 0.30f) - right * (face * Radius * 0.40f));  // dorsal vent
+        if (TailNodes.Length > 2) _weakpoints.Add(TailNodes[2]);                              // tail root
+        return _weakpoints;
     }
 
     /// <summary>Per-kind signature attack. Godzilla breathes fire, Mecha fires a mouth laser,
@@ -1094,18 +1310,9 @@ public sealed class Titan
     /// leap suppresses the leg-spring via <see cref="Leaping"/> so it launches).</summary>
     private void TickKong(float dt, Physics physics, Cells cells, Vector2 playerPos)
     {
-        // ── Hand smash in flight ─────────────────────────────────────────────
-        if (SmashTimer > 0f)
-        {
-            SmashTimer -= dt;
-            if (!_smashLanded && SmashTimer <= SmashImpactAt)
-            {
-                _smashLanded = true;
-                SmashImpact(physics, cells);
-            }
-            if (SmashTimer <= 0f) _smashCooldown = 1.4f;
-            return;   // a swinging Kong doesn't start a leap
-        }
+        // The hand smash itself lives in TickSiege now (every arm kind swings); a swinging
+        // Kong just doesn't start a leap.
+        if (SmashTimer > 0f) return;
 
         if (Leaping)
         {
@@ -1124,22 +1331,6 @@ public sealed class Titan
             return;
         }
 
-        // ── Start a smash ────────────────────────────────────────────────────
-        if (_smashCooldown <= 0f && Grounded && !Digging && Standing())
-        {
-            Vector2? target = null;
-            if (IsAggro && (playerPos - Position).Length() < SmashReach) target = playerPos;
-            else target = FindBuildingInReach();
-            if (target is { } tgt)
-            {
-                SmashTarget = tgt;
-                SmashHand = -SmashHand;
-                SmashTimer = SmashDuration;
-                _smashLanded = false;
-                return;
-            }
-        }
-
         // ── Leap — only for prey beyond the fists ────────────────────────────
         if (!IsAggro || SpecialCooldown > 0f || !Standing()) return;
         var dist = (playerPos - Position).Length();
@@ -1155,12 +1346,13 @@ public sealed class Titan
     /// <summary>The fist lands: heavy Mine damage across the fist's footprint plus a quake and
     /// a short shockwave (<see cref="PendingShockwave"/> — Game1 hurts/knocks back the player
     /// and creatures inside it). Building tiles are anchored but not fist-proof — Mine's own
-    /// hardness gate (≥99) is what protects true anchor-class tiles (core, supports), so city
-    /// glass shatters in one blow and alien alloy caves over a few.</summary>
+    /// hardness gate (≥99) is what protects true anchor-class tiles (core, supports). Power 48
+    /// over a 3-tile radius: alloy breaches in a single blow, so a working titan opens a tower
+    /// floor per swing, and any toppled debris in range is ground straight to dust.</summary>
     private void SmashImpact(Physics physics, Cells cells)
     {
         var (fx, fy) = _planet.WorldToTile(SmashTarget);
-        const int r = 2;
+        const int r = 3;
         for (var dy = -r; dy <= r; dy++)
         {
             for (var dx = -r; dx <= r; dx++)
@@ -1168,7 +1360,7 @@ public sealed class Titan
                 if (dx * dx + dy * dy > r * r) continue;
                 var x = fx + dx; var y = fy + dy;
                 if (!Tiles.IsSolid(_planet.Get(x, y))) continue;
-                if (_planet.Mine(x, y, 12) is { } broken)
+                if (_planet.Mine(x, y, 48) is { } broken)
                 {
                     physics.MarkDirty(x, y);
                     cells.SpawnDustInTile(x, y, broken);
@@ -1177,27 +1369,7 @@ public sealed class Titan
         }
         physics.Earthquake(SmashTarget, 110f, 2);
         PendingShockwave = (SmashTarget, 110f, 24f);
-    }
-
-    /// <summary>Nearest city-architecture tile within the fist's reach ahead of the body — the
-    /// demolition target for Kong's hand smash while it loiters in a district. Samples a short
-    /// fan of points in the facing direction across torso heights.</summary>
-    private Vector2? FindBuildingInReach()
-    {
-        var up = _planet.UpAt(Position);
-        var right = new Vector2(-up.Y, up.X);
-        var face = Facing >= 0f ? 1f : -1f;
-        for (var d = 70f; d <= SmashReach; d += 24f)
-        {
-            for (var h = -70f; h <= 70f; h += 35f)
-            {
-                var p = Position + right * (face * d) + up * h;
-                var (x, y) = _planet.WorldToTile(p);
-                if (_planet.Get(x, y) is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
-                    return _planet.TileToWorld(x, y);
-            }
-        }
-        return null;
+        PendingPulverize = (SmashTarget, 150f);
     }
 
     /// <summary>True if this planted foot can actually bear weight: it rests on solid ground
@@ -1258,7 +1430,7 @@ public sealed class Titan
         // soft ground loose, so a stroll leaves the landscape standing. The Sandworm chews at
         // a fraction of that AND only on its bite cadence — it bores slowly through the
         // planet instead of vaporising everything its long body sweeps.
-        var plowPow = (IsAggro ? 26 : 12) + (int)(Anger / 16f);
+        var plowPow = (IsAggro ? 34 : 14) + (int)(Anger / 12f);
         // The Starspawn swims through rock exactly like the worm bores it: throttled bite
         // cadence, reduced power, and no floor preservation (nothing walks on the abyss).
         var worm = Kind is TitanKind.Sandworm or TitanKind.CosmicOctopus;
@@ -1330,7 +1502,7 @@ public sealed class Titan
         }
 
         if (worm && canMine) _biteTimer = 0.36f;   // was 0.18 — the worm bores rock half as fast
-        if (wrecked) _wreckTimer = 0.12f;  // wrecking cadence — a leaning kaiju levels a wall in moments
+        if (wrecked) _wreckTimer = 0.09f;  // wrecking cadence — a leaning kaiju levels a wall in moments
     }
 
     /// <summary>Tangent sign (-1/0/+1) pointing the roam at the nearest city tower by
@@ -1517,6 +1689,11 @@ public sealed class Titan
                         _digPending = false;
                         DigCrater(planet, physics, cells);
                     }
+                    if (_kickPending)
+                    {
+                        _kickPending = false;
+                        KickImpact(planet, physics, cells, leg.FootPos);
+                    }
                 }
                 else
                 {
@@ -1562,6 +1739,10 @@ public sealed class Titan
                 if (!Tiles.IsSolid(k)) continue;
                 var edge = MathHelper.Clamp(1f - MathF.Sqrt(dx * dx + dy * dy) / (r + 0.5f), 0.2f, 1f);
                 var pow = Math.Max(1, (int)(centerPower * edge));
+                // Architecture underfoot takes a real battering — the lower storeys of a
+                // tower crumble under plain foot traffic, not just the dedicated kick.
+                if (k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
+                    pow = Math.Max(pow, 20);
                 var broken = planet.Mine(x, y, pow);
                 if (broken.HasValue)
                 {

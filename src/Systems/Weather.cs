@@ -12,13 +12,14 @@ public sealed class Cloud
 {
     public float Angle;        // bearing of the cloud centre
     public float HalfWidth;    // angular half-width of the bank
-    public float Alt;          // height above the surface, world units
+    public float Alt;          // cruising RADIUS from the planet centre, world px — fixed for life
     public float Drift;        // angular drift per second (downwind)
     public float Life;         // seconds before it dissipates
     public float Grow;         // 0..1 fade-in / fade-out
     public float RainTimer;    // >0 while actively raining
     public float RainCooldown; // gap before it can rain again
-    public float Phase;        // random phase for puff bob
+    public float Phase;        // random phase for per-puff outline wobble
+    public bool Dissipating;   // shredding against a peak/skyscraper — fading out for good
 }
 
 /// <summary>The sky half of the living ecosystem. Clouds form on every world, drift on the wind,
@@ -35,6 +36,18 @@ public static class Weather
     {
         var planet = run.Planet;
         if (planet is null) return;
+
+        // No atmosphere, no weather: airless rock (the Hollow, the cratered moon) has no
+        // air to hold a cloud up — the sky stays space-black and empty. Clear instead of
+        // letting stragglers fade so nothing ever drifts over the regolith. (The rest of
+        // this tick is moot too: airless worlds grow no trees and are never the frost
+        // biome, so leaves and lying snow have nothing to do.)
+        if (run.Def.Airless)
+        {
+            run.Clouds.Clear();
+            return;
+        }
+
         var kind = TreeEcology.RainFor(run.Def);
         var rng = Random.Shared;
 
@@ -79,9 +92,12 @@ public static class Weather
                 {
                     Angle = cAng,
                     HalfWidth = cHalf,
-                    // Sit well clear of the tallest thing beneath the band (peaks, giant trees)
-                    // plus a random extra height, so a cloud never spawns inside terrain.
-                    Alt = TargetAlt(planet, cAng, cHalf) + (float)rng.NextDouble() * 120f,
+                    // Fixed cruising radius, set ONCE at spawn: well clear of the tallest thing
+                    // beneath the band (peaks, giant trees) plus a random extra height. The
+                    // cloud holds this altitude for its whole life — no terrain-tracking, no
+                    // bobbing — and if the drift carries it into something taller it shreds
+                    // and dissipates instead of hopping over it.
+                    Alt = BandTopRadius(planet, cAng, cHalf) + 110f + (float)rng.NextDouble() * 120f,
                     Drift = ((float)rng.NextDouble() - 0.5f) * 0.05f,
                     Life = 45f + (float)rng.NextDouble() * 60f,
                     RainCooldown = 4f + (float)rng.NextDouble() * 10f,
@@ -95,10 +111,17 @@ public static class Weather
             var c = run.Clouds[i];
             c.Life -= dt;
             c.Angle += c.Drift * dt;
-            // Ride at a clearance above whatever's tallest beneath the band right now — as the
-            // cloud drifts over a mountain or a stand of giant trees it rises to clear them, and
-            // settles back down over open ground. Eased so it glides rather than snapping.
-            c.Alt = MathHelper.Lerp(c.Alt, TargetAlt(planet, c.Angle, c.HalfWidth), dt * 0.7f);
+            // Constant altitude — the bank never bobs or terrain-hops. Instead, when the
+            // drift has carried it into something that reaches up INTO its ride band (a
+            // mountain flank, a skyscraper), it starts shredding against the obstacle and
+            // slowly dissipates: the fade rides the existing last-seconds Grow ramp, so it
+            // thins out over several seconds rather than popping.
+            if (!c.Dissipating && BandTopRadius(planet, c.Angle, c.HalfWidth) + 24f > c.Alt)
+            {
+                c.Dissipating = true;
+                c.RainTimer = 0f;
+                c.Life = MathF.Min(c.Life, 5.5f);
+            }
             // Fade in over the life; fade back out in the last few seconds.
             var target = c.Life > 6f ? 1f : MathHelper.Clamp(c.Life / 6f, 0f, 1f);
             c.Grow = MathHelper.Lerp(c.Grow, target, dt * 0.5f);
@@ -111,7 +134,7 @@ public static class Weather
                 Rain(dt, run, c, kind, particles);
                 if (c.RainTimer <= 0f) c.RainCooldown = 10f + (float)rng.NextDouble() * 22f;
             }
-            else if (c.Grow > 0.7f && c.Life > 10f)
+            else if (c.Grow > 0.7f && c.Life > 10f && !c.Dissipating)
             {
                 c.RainCooldown -= dt;
                 if (c.RainCooldown <= 0f) c.RainTimer = 6f + (float)rng.NextDouble() * 10f;
@@ -119,11 +142,12 @@ public static class Weather
         }
     }
 
-    /// <summary>The altitude (offset above the baseline ground at <paramref name="angle"/>) a
-    /// cloud should ride at to sit SEVERAL tiles clear of the tallest object beneath its whole
-    /// band — peaks and giant trees included. Samples a few bearings across the band, finds the
-    /// topmost non-sky tile at each, and clears the highest by a comfortable margin.</summary>
-    private static float TargetAlt(Planet planet, float angle, float halfWidth)
+    /// <summary>Radius (world px from the planet centre) of the tallest object beneath the
+    /// whole band — peaks, skyscrapers and giant trees included. Samples a few bearings
+    /// across the band and takes the topmost non-sky tile. Used once at spawn to pick a
+    /// clear cruising altitude, and per-frame to notice when the drift has run the bank
+    /// into something tall enough to shred it.</summary>
+    private static float BandTopRadius(Planet planet, float angle, float halfWidth)
     {
         var baseR = (SpawnDirector.FindSurfaceSpawn(planet, angle, planet.Radius) - planet.Center).Length();
         // Water is cells, not tiles, so over a lake/ocean the topmost-solid scan below finds
@@ -149,7 +173,7 @@ public static class Weather
                 }
             }
         }
-        return maxTop - baseR + 130f;   // several tiles of clear air above the tallest thing
+        return maxTop;
     }
 
     /// <summary>One rain tick under a cloud: water the trees in its band, throw a few falling
@@ -194,7 +218,10 @@ public static class Weather
             var ang = c.Angle + ((float)rng.NextDouble() - 0.5f) * 2f * c.HalfWidth;
             var ground = SpawnDirector.FindSurfaceSpawn(planet, ang, planet.Radius);
             var up = planet.UpAt(ground);
-            var start = ground + up * (c.Alt * (0.5f + (float)rng.NextDouble() * 0.6f));
+            // Alt is the cloud's radius from the planet centre — convert to height above
+            // this bearing's ground so drops always start between cloud-base and ground.
+            var altAbove = MathF.Max(30f, c.Alt - (ground - planet.Center).Length());
+            var start = ground + up * (altAbove * (0.5f + (float)rng.NextDouble() * 0.6f));
             if (kind == RainKind.Snow) particles.EmitSnow(start, -up, color);
             else particles.EmitRain(start, -up, color);
         }

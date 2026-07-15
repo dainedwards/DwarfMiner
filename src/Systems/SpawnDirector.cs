@@ -147,11 +147,13 @@ public static class SpawnDirector
             }
         }
 
-        // Lake fauna: sweep the whole ring for open water and stock every find.
+        // Lake fauna: sweep the whole ring for open water and stock every find. Ocean
+        // worlds get a bigger stock — the sea IS the biome there.
         if (run.Def.HasWater)
         {
+            var aquaticCap = run.Def.Biome == "ocean" ? 20 : 12;
             var aquatics = 0;
-            for (var a = 0f; a < MathHelper.TwoPi && aquatics < 12; a += 0.22f)
+            for (var a = 0f; a < MathHelper.TwoPi && aquatics < aquaticCap; a += 0.22f)
             {
                 var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
                 for (var d = planet.Radius + 40; d > 20; d--)
@@ -164,6 +166,37 @@ public static class SpawnDirector
                     var kind = LakeKindFor(deep);
                     run.Creatures.Add(new Creature(splash, kind) { Resident = true });
                     aquatics++;
+                    break;
+                }
+            }
+        }
+
+        // THE KRAKEN — the water world's apex monster. Census-only, like the city's
+        // command saucer: sweep for the deepest basins and sink one into each of the
+        // biggest finds, spaced far apart so two never share a sea. Never rolled by the
+        // dynamic spawner — meeting one should mean you swam into ITS basin.
+        if (run.Def.Biome == "ocean")
+        {
+            var lairs = new List<Vector2>();
+            var want = run.Def.SizeScale >= 1f ? 2 : 1;
+            for (var a = 0f; a < MathHelper.TwoPi && lairs.Count < want; a += 0.13f)
+            {
+                var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+                for (var d = planet.Radius + 40; d > 20; d--)
+                {
+                    var p = planet.Center + dir * (d * Planet.TileSize);
+                    if (planet.IsSolidAt(p)) break;
+                    if (run.Cells.CountWaterNear(p, 3f) < 3) continue;
+                    // Deep-water gate: a fat column of water below the surface find — a
+                    // kraken in a puddle is a beached joke, not an apex monster.
+                    var lair = p - dir * 30f;
+                    if (run.Cells.CountWaterNear(lair, 6f) < 24) break;
+                    var spaced = true;
+                    foreach (var other in lairs)
+                        if ((other - lair).LengthSquared() < 700f * 700f) { spaced = false; break; }
+                    if (!spaced) break;
+                    lairs.Add(lair);
+                    run.Creatures.Add(new Creature(lair, CreatureKind.Kraken) { Resident = true });
                     break;
                 }
             }
@@ -578,6 +611,14 @@ public static class SpawnDirector
         }
 
         var c = new Creature(pos, kind) { Resident = resident };
+        // Breather rigs: some gunmen (marauders/raiders) carry one — they SWIM after prey
+        // instead of drowning, mask pod visible on the sprite. A coin-flip on the water
+        // world (its bandits learned or died), a rarity everywhere else. The pyro never
+        // gets one: that tank is ballast, and the hose is useless under the waves. Rolled
+        // BEFORE the hazard gate so a rigged bandit may legally start in the water.
+        if (kind is CreatureKind.Marauder or CreatureKind.Raider
+            && Random.Shared.NextDouble() < (run.Def.Biome == "ocean" ? 0.5 : 0.18))
+            c.HasBreather = true;
         if (HazardRejectsSpawn(run, pos, c)) return;   // don't hatch it inside lava/acid/water
         ClearSpawnSpace(run, pos, c.Radius);
         run.Creatures.Add(c);

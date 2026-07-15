@@ -77,6 +77,7 @@ public enum TileKind : byte
     Chest = 55,        // lizard-warren treasure chest — press E to loot gold / rare materials
     ChestOpen = 56,    // an already-looted chest (lid thrown back, empty)
     LilyPad = 57,      // alien lily pad floating on a lake surface (anchored, passable flora)
+    Rope = 58,         // deployed rope line — climbable like a ladder, hangs from an anchor
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
@@ -92,7 +93,7 @@ public static class Tiles
     // Tiles that never fall, even when unsupported.
     public static bool IsAnchored(TileKind k) =>
         k is TileKind.PlanetCore or TileKind.Core or TileKind.Support
-          or TileKind.ReinforcedSupport or TileKind.Ladder or TileKind.Rail
+          or TileKind.ReinforcedSupport or TileKind.Ladder or TileKind.Rope or TileKind.Rail
           or TileKind.Glowshroom or TileKind.Beacon
           // Built architecture: skyscraper hulls and lizard-city masonry never crumble —
           // mining one wall must not condemn the tower above it (they also shrug off acid,
@@ -150,7 +151,7 @@ public static class Tiles
     /// Ladders are passable so the dwarf can climb; small placed lights are passable too so the
     /// player doesn't bonk on torches in tight corridors.</summary>
     public static bool IsPassable(TileKind k) =>
-        k is TileKind.Ladder or TileKind.Glowshroom or TileKind.Beacon
+        k is TileKind.Ladder or TileKind.Rope or TileKind.Glowshroom or TileKind.Beacon
           // Open doors are doorways; furniture is stepped over/through (but still mineable
           // and smashable because it stays "solid" to everything but the walk check).
           or TileKind.DoorOpen
@@ -169,7 +170,7 @@ public static class Tiles
 
     /// <summary>Ladder-class climbable tile: while the player overlaps one, gravity is reduced
     /// and W/S directly drive vertical motion.</summary>
-    public static bool IsClimbable(TileKind k) => k == TileKind.Ladder;
+    public static bool IsClimbable(TileKind k) => k is TileKind.Ladder or TileKind.Rope;
 
     /// <summary>Gem-class minerals: shattering one pops a physical <c>Pickup</c> the player
     /// grabs by touch, instead of crumbling to vacuumable dust like ordinary tiles — and the
@@ -217,6 +218,7 @@ public static class Tiles
         TileKind.Support => 99,
         TileKind.ReinforcedSupport => 99,
         TileKind.Ladder => 1,
+        TileKind.Rope => 1,
         TileKind.Rail => 2,
         TileKind.Glowshroom => 1,
         TileKind.Beacon => 3,
@@ -280,6 +282,7 @@ public static class Tiles
         TileKind.Support => new Color(150, 110, 70),
         TileKind.ReinforcedSupport => new Color(120, 105, 95),
         TileKind.Ladder => new Color(140, 95, 55),
+        TileKind.Rope => new Color(196, 160, 96),   // hemp line
         TileKind.DoorClosed => new Color(88, 122, 132),
         TileKind.DoorOpen => new Color(50, 66, 74),
         TileKind.AlienPlant => new Color(90, 160, 110),
@@ -516,6 +519,7 @@ public static class Tiles
         // Player-built tiles drop their craft input back when mined — lets you reposition
         // a misplaced ladder / torch without losing the resource.
         TileKind.Ladder => ("ladder", 1),
+        TileKind.Rope => ("rope", 1),
         TileKind.DoorClosed => ("door", 1),
         TileKind.DoorOpen => ("door", 1),
         TileKind.Brick => ("brick", 1),

@@ -54,5 +54,22 @@ if (args.Length > 0 && args[0] == "--smokeprobe")
     return;
 }
 
+// Diagnostic: `--oceanprobe` verifies the water-world contract — mostly-sea surface with
+// islands, obsidian-armoured seabed, dry interconnected under-sea caves, no sea→cave leak
+// path, open island grotto mouths.
+if (args.Length > 0 && args[0] == "--oceanprobe")
+{
+    DwarfMiner.Systems.OceanProbe.Run();
+    return;
+}
+
+// Temporary diagnostic: `--toppleprobe` reproduces the SimTest street-level tower cut and
+// reports what keeps a severed section standing when it refuses to detach.
+if (args.Length > 0 && args[0] == "--toppleprobe")
+{
+    DwarfMiner.Systems.ToppleProbe.Run();
+    return;
+}
+
 using var game = new DwarfMinerGame();
 game.Run();

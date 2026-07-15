@@ -97,12 +97,52 @@ public static class TreeEcology
             if (p.Get(rr, col) == TileKind.Sky) p.Set(rr, col, TileKind.TreeTrunk);
         }
         if (!canopy) return;
+        StampBranches(p, s);
         foreach (var (dr, dt) in CanopyOffsets(s.Species))
         {
             var rr = s.GroundR + s.Height + dr;
             if (rr < 1 || rr >= p.Rings - 1) continue;
             var col = WrapCol(p, rr, s.Angle, dt);
             if (p.Get(rr, col) == TileKind.Sky) p.Set(rr, col, s.Canopy);
+        }
+    }
+
+    /// <summary>Side branches with leaf tufts along the bole — the tree reads as a tree, not
+    /// a bare pole with a blob on top. Stamped only on a full-grown tree (a regrowing trunk
+    /// earns its branches back when the crown tops out), and deterministic per site so the
+    /// regrown tree carries the same branches it grew the first time. Short trees stay bare;
+    /// the taller the trunk, the more boughs it carries. Branch wood is TreeTrunk (chops for
+    /// wood like the bole); tufts are the species' canopy leaf.</summary>
+    private static void StampBranches(Planet p, TreeSite s)
+    {
+        if (s.Height < 7) return;
+        var rng = new Random(s.GroundR * 92821 ^ (int)(s.Angle * 100000f));
+        var side = rng.Next(2) == 0 ? 1 : -1;
+        // From above head height to just under the crown, a bough every couple of rings,
+        // alternating sides up the bole.
+        for (var h = 3 + rng.Next(2); h <= s.Height - 2; h += 2 + rng.Next(2))
+        {
+            var rr = s.GroundR + h;
+            if (rr < 1 || rr >= p.Rings - 2) break;
+            var len = 1 + rng.Next(2);   // 1-2 tiles of bare bough before the leaves
+            for (var l = 1; l <= len; l++)
+            {
+                var col = WrapCol(p, rr, s.Angle, side * l);
+                if (p.Get(rr, col) != TileKind.Sky) { len = l - 1; break; }
+                p.Set(rr, col, TileKind.TreeTrunk);
+            }
+            if (len >= 1)
+            {
+                // Leaf tuft wrapping the bough's tip — above, beyond, and below it.
+                foreach (var (dr, dt) in new[] { (0, len + 1), (1, len), (1, len + 1), (-1, len + 1) })
+                {
+                    var lr = rr + dr;
+                    if (lr < 1 || lr >= p.Rings - 1) continue;
+                    var col = WrapCol(p, lr, s.Angle, side * dt);
+                    if (p.Get(lr, col) == TileKind.Sky) p.Set(lr, col, s.Canopy);
+                }
+            }
+            side = -side;
         }
     }
 

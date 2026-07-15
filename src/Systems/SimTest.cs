@@ -406,6 +406,22 @@ public static class SimTest
             Check("ecosystem: planting threads roots underground", RootCount(p, site) >= 1,
                 $"{RootCount(p, site)} root tiles");
 
+            // Branches: a full-grown tall tree carries boughs OFF the main trunk column
+            // (trunk wood in the side columns), so it reads as a tree, not a bare pole.
+            var boughs = 0;
+            for (var h = 2; h <= site.Height; h++)
+            {
+                var rr = site.GroundR + h;
+                var nn = p.TilesAt(rr);
+                var col = Col(p, rr, site.Angle);
+                for (var d = -2; d <= 2; d++)
+                {
+                    if (d == 0) continue;
+                    if (p.Get(rr, ((col + d) % nn + nn) % nn) == TileKind.TreeTrunk) boughs++;
+                }
+            }
+            Check("ecosystem: a tall tree grows side branches", boughs >= 1, $"{boughs} bough tiles");
+
             // Fell it: clear the standing tree, keep the roots. It stops being standing.
             ClearCrown(p, site);
             site.Standing = false;
@@ -680,6 +696,59 @@ public static class SimTest
                     Check("titan: Vitriodactyl rains acid on a bombing run", sawShot);
                     break;
             }
+        }
+
+        // --- Weakpoints pay triple, and a clinging rider gets shaken off ---
+        {
+            var p = WorldGen.Generate(61);
+            var c = new Cells(p);
+            var phys = new Physics(p, c);
+            var bo = new System.Collections.Generic.List<FallingBoulder>();
+            var sh = new System.Collections.Generic.List<TitanProjectile>();
+            var boss = new Titan(p, -MathF.PI / 2f, TitanKind.Godzilla);
+            boss.Hatch();
+            for (var i = 0; i < 120; i++) boss.Update(dt, p, phys, c, boss.Position, bo, sh);
+            var wps = boss.WeakpointsWorld();
+            Check("titan: weakpoints ride the hatched body", wps.Count >= 2);
+
+            // Fire one synthetic round through a chosen point and read the health bite.
+            float ShotThrough(Vector2 at)
+            {
+                var before = boss.Health;
+                var pr = new Projectile(at + new Vector2(0f, 30f), new Vector2(0f, -600f), 10f, 1f)
+                {
+                    PrevPosition = at + new Vector2(0f, 6f),
+                    Position = at - new Vector2(0f, 6f),
+                };
+                Combat.ResolveHits(pr, new System.Collections.Generic.List<Creature>(), boss, p, phys, c);
+                return before - boss.Health;
+            }
+            // A plain-hide point: on the body circle, at least a weakpoint-radius clear of
+            // every weakpoint (probe a few bearings; one always qualifies).
+            var plain = boss.Position;
+            for (var a = 0f; a < MathHelper.TwoPi; a += 0.4f)
+            {
+                var cand = boss.Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * (boss.Radius * 0.5f);
+                var clear = true;
+                foreach (var wp in wps)
+                    if ((cand - wp).Length() < Titan.WeakpointRadius + 8f) clear = false;
+                if (clear) { plain = cand; break; }
+            }
+            var plainBite = ShotThrough(plain);
+            var weakBite = ShotThrough(wps[0]);
+            Check($"titan: a weakpoint hit pays triple (plain {plainBite}, weak {weakBite})",
+                plainBite > 0f && MathF.Abs(weakBite - plainBite * 3f) < 0.01f);
+
+            // Shake-off: accrue rider-cling the way Game1 does (2×dt vs the titan's own
+            // 1×dt decay) — past its patience the monster thrashes and flings.
+            var flung = false;
+            for (var i = 0; i < 60 * 8 && !flung; i++)
+            {
+                boss.RiderTime += 2f * dt;
+                boss.Update(dt, p, phys, c, boss.Position, bo, sh);
+                if (boss.PendingShakeOff) { flung = true; boss.PendingShakeOff = false; }
+            }
+            Check("titan: a clinging rider gets shaken off", flung);
         }
 
         // --- Procedural campaigns: 7 generated worlds + the Rift finale ---
@@ -1234,15 +1303,20 @@ public static class SimTest
             }
         foreach (var (x, y) in nub) physics.MarkDirty(x, y);
 
-        // Settle runs every 0.05s, so tick a few frames for the first pass to condemn it.
-        var condemned = false;
-        for (var i = 0; i < 10 && !condemned; i++)
-        {
-            physics.Update(dt);
-            if (physics.NewlyCondemnedThisTick > 0) condemned = true;
-        }
-        Check("cave-in: unsupported rock is condemned into the tremble window",
-            condemned && physics.TremblingTiles.Count > 0);
+        // Cave-ins are QUAKE-driven now: breaking rock apart never condemns undercut
+        // underground regions on its own — the island must keep hanging through the
+        // ordinary settle passes the dirty marks trigger.
+        for (var i = 0; i < 20; i++) physics.Update(dt);
+        Check("cave-in: undercut rock hangs on break (no condemn without a quake)",
+            physics.TremblingTiles.Count == 0
+            && island.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
+
+        // The earthquake is what brings it down: strike the island's pocket and the
+        // condemnation (tremble window → creak + HUD banner) must fire.
+        var epi = planet.TileToWorld(ring + 1, Ti(ring + 1, af, islandW / 2));
+        physics.Earthquake(epi, 220f, 2);
+        Check("cave-in: the quake condemns it into the tremble window",
+            physics.TremblingTiles.Count > 0);
         Check("cave-in: condemned rock still stands during the warning window",
             island.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
 
@@ -1673,6 +1747,122 @@ public static class SimTest
             var spanFrac = span / MathHelper.TwoPi;
             Check($"city: districts span about a third of the surface (built {builtFrac:P0}, with streets {spanFrac:P0})",
                 builtFrac > 0.15f && spanFrac > 0.25f);
+        }
+
+        // Street decks: every narrow gap between neighbouring towers carries a continuous
+        // anchored alloy bridge at the surface ring, so citizens cross between buildings
+        // without falling into the rolling ground's dips — and being anchored alloy,
+        // disasters can't disintegrate the crossing.
+        {
+            var deckR = city.SurfaceRing;
+            var surfPx = (Planet.RingMin + deckR) * Planet.TileSize;
+            var facs = new List<(float ang, float w)>();
+            foreach (var (fAng, halfW, _, _) in city.CityFacades) facs.Add((fAng, halfW));
+            facs.Sort((a, b) => a.ang.CompareTo(b.ang));
+            int gaps = 0, bridged = 0;
+            for (var i = 1; i < facs.Count; i++)
+            {
+                var e0 = facs[i - 1].ang + facs[i - 1].w / surfPx;
+                var e1 = facs[i].ang - facs[i].w / surfPx;
+                var gapWorld = (e1 - e0) * surfPx;
+                if (gapWorld <= 8f || gapWorld > 120f) continue;   // mirrors the gen's bridging rule
+                gaps++;
+                var n = city.TilesAt(deckR);
+                var whole = true;
+                for (var a = e0; a <= e1; a += MathHelper.TwoPi / n)
+                {
+                    var t = (int)((a / MathHelper.TwoPi + 1f) % 1f * n);
+                    if (city.Get(deckR, t) != TileKind.AlienAlloy) { whole = false; break; }
+                }
+                if (whole) bridged++;
+            }
+            Check($"city: street decks bridge the tower gaps ({bridged}/{gaps})",
+                gaps > 0 && bridged == gaps);
+        }
+
+        // Tower interiors are ONE connected structure: walls, floor slabs and the ladder
+        // spine all lace together — no free-floating slab shelves (a wall-side stair gap
+        // used to sever every other floor's outer strip, breaking a toppling tower into
+        // loose pieces). Flood the first few tall towers from any solid tile and check
+        // nearly every solid in the hull extent is reachable.
+        {
+            var towersChecked = 0;
+            foreach (var (fAng, halfW, _, fTop) in city.CityFacades)
+            {
+                if (towersChecked >= 3) break;
+                var lo = city.SurfaceRing + 8;   // above the doors + transom
+                if (fTop - lo < 14) continue;    // shopfronts: too few storeys to say much
+                var inExtent = new HashSet<(int, int)>();
+                (int r, int t)? seed = null;
+                for (var r = lo; r <= fTop && r < city.Rings - 1; r++)
+                {
+                    var n = city.TilesAt(r);
+                    var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
+                    var halfTiles = (int)(halfW / (MathHelper.TwoPi * ringRadius / n)) + 1;
+                    var tC = (int)MathF.Round(fAng / (MathHelper.TwoPi / n) - 0.5f);
+                    for (var dtc = -halfTiles; dtc <= halfTiles; dtc++)
+                    {
+                        var t = ((tC + dtc) % n + n) % n;
+                        if (!Tiles.IsSolid(city.Get(r, t))) continue;
+                        inExtent.Add((r, t));
+                        seed ??= (r, t);
+                    }
+                }
+                if (seed is not { } s0 || inExtent.Count < 40) continue;
+                towersChecked++;
+                var reached = 0;
+                var seen = new HashSet<(int, int)>();
+                var stack = new Stack<(int, int)>();
+                stack.Push(s0);
+                while (stack.Count > 0)
+                {
+                    var (r, t) = stack.Pop();
+                    var n = city.TilesAt(r);
+                    t = ((t % n) + n) % n;
+                    if (!seen.Add((r, t))) continue;
+                    if (!Tiles.IsSolid(city.Get(r, t))) continue;
+                    if (inExtent.Contains((r, t))) reached++;
+                    if (r <= lo - 4) continue;   // grounded below the extent — deep enough
+                    var (ir, it) = city.InnerNeighbour(r, t);
+                    if (ir >= 0) stack.Push((ir, it));
+                    var oc = city.OuterNeighbourCount(r, t);
+                    for (var i = 0; i < oc; i++)
+                    {
+                        var (orr, ott) = city.OuterNeighbour(r, t, i);
+                        if (orr < city.Rings) stack.Push((orr, ott));
+                    }
+                    stack.Push((r, t - 1));
+                    stack.Push((r, t + 1));
+                }
+                Check($"city: tower interior is one connected structure ({reached}/{inExtent.Count} reachable)",
+                    reached >= inExtent.Count * 92 / 100);
+            }
+            Check($"city: interior connectivity checked on real towers ({towersChecked})",
+                towersChecked >= 2);
+        }
+
+        // One-piece doors: opening any tile of a leaf swings the WHOLE leaf — including
+        // the drifted tiles the old same-angle world-space walk stranded closed.
+        {
+            var (doorR, dtile) = (-1, -1);
+            foreach (var (x, y) in city.AllTiles())
+                if (city.Get(x, y) == TileKind.DoorClosed) { (doorR, dtile) = (x, y); break; }
+            Check("city: found a street door to swing", doorR >= 0);
+            if (doorR >= 0)
+            {
+                city.SetDoorRun(doorR, dtile, TileKind.DoorOpen);
+                var angD = (dtile + 0.5f) / city.TilesAt(doorR) * MathHelper.TwoPi;
+                var stranded = 0;
+                for (var r = Math.Max(1, doorR - 6); r <= Math.Min(city.Rings - 2, doorR + 6); r++)
+                {
+                    var n = city.TilesAt(r);
+                    var t0 = (int)((angD / MathHelper.TwoPi + 1f) % 1f * n);
+                    for (var d = -2; d <= 2; d++)
+                        if (city.Get(r, ((t0 + d) % n + n) % n) == TileKind.DoorClosed) stranded++;
+                }
+                Check($"city: a door leaf opens as ONE piece ({stranded} tiles left closed)",
+                    stranded == 0);
+            }
         }
 
         // Warren world: ember (the lava homeland) carries the buried lizard city now — the
@@ -2283,6 +2473,22 @@ public static class SimTest
         }
         Check($"spawn: nobody hatches inside lava/acid they can't survive ({trapped} trapped of {slag.Creatures.Count})",
             trapped == 0);
+
+        // Ocean world: the kraken census — the deepest basins hold their apex monster
+        // from minute zero (census-only, like the city's command saucer).
+        PlanetDef? oceanDef = null;
+        foreach (var d in PlanetGen.Campaign(21)) if (d.Biome == "ocean") { oceanDef = d; break; }
+        var sea = new Session(oceanDef!) { Planet = WorldGen.Generate(148, oceanDef!) };
+        sea.Cells = new Cells(sea.Planet);
+        sea.Physics = new Physics(sea.Planet, sea.Cells);
+        sea.Player = new Player(SpawnDirector.FindSurfaceSpawn(sea.Planet, -MathF.PI / 2f, sea.Planet.Radius));
+        foreach (var (wx, wy) in sea.Planet.WaterSeeds) sea.Cells.FillTile(wx, wy, Material.Water);
+        for (var i = 0; i < 5; i++) sea.Cells.Update(1f / 60f);
+        SpawnDirector.PopulateWorld(sea);
+        var krakens = 0;
+        foreach (var c in sea.Creatures)
+            if (c is { Kind: CreatureKind.Kraken, Resident: true }) krakens++;
+        Check($"census: the water world's deep holds its kraken ({krakens} seeded)", krakens >= 1);
     }
 
     /// <summary>The aquatics: player swimming (strokes rise, idle sinks gently, fins are
@@ -2320,12 +2526,12 @@ public static class SimTest
         // --- Player swimming ---
         {
             var swimmer = new Player(poolCentre) { InWater = true };
-            for (var i = 0; i < 60; i++) swimmer.Update(dt, planet, 0, false, false, +1);
+            for (var i = 0; i < 60; i++) swimmer.Update(dt, planet, 0, false, +1);
             var rose = Vector2.Dot(swimmer.Position - poolCentre, upP);
             Check($"swim: stroking up rises ({rose:0}px in 1s)", rose > 8f);
 
             var idler = new Player(poolCentre) { InWater = true };
-            for (var i = 0; i < 60; i++) idler.Update(dt, planet, 0, false, false);
+            for (var i = 0; i < 60; i++) idler.Update(dt, planet, 0, false);
             var sank = Vector2.Dot(idler.Position - poolCentre, upP);
             Check($"swim: idle sink is gentle ({sank:0}px in 1s)", sank < 0f && sank > -35f);
 
@@ -2333,8 +2539,8 @@ public static class SimTest
             var slow = new Player(poolCentre) { InWater = true };
             for (var i = 0; i < 45; i++)
             {
-                finned.Update(dt, planet, +1, false, false);
-                slow.Update(dt, planet, +1, false, false);
+                finned.Update(dt, planet, +1, false);
+                slow.Update(dt, planet, +1, false);
             }
             var upF = planet.UpAt(poolCentre);
             var rF = new Vector2(-upF.Y, upF.X);
@@ -2393,6 +2599,57 @@ public static class SimTest
             }
             Check($"aquatic: shark hunts a swimmer ({startGap:0} -> {minGap:0}px closest)",
                 minGap < startGap - 6f && !EmbeddedInRock(planet, shark.Position));
+        }
+
+        // --- Drowning + breathers: a submerged gunman thrashes out his air and dies; his
+        // breather-rigged mate swims and lives; nothing that never breathed cares. ---
+        {
+            var nobody = new Player(poolCentre + upP * 900f);
+            var bare = new Creature(poolCentre - upP * 12f, CreatureKind.Marauder);
+            var rigged = new Creature(poolCentre - upP * 12f, CreatureKind.Marauder) { HasBreather = true };
+            var vortex = new Creature(poolCentre - upP * 12f, CreatureKind.DustDevil);
+            var hp0 = bare.Health;
+            var hpV0 = vortex.Health;
+            for (var i = 0; i < 60 * 9; i++)
+            {
+                bare.Update(dt, planet, physics, cells, nobody);
+                rigged.Update(dt, planet, physics, cells, nobody);
+                vortex.Update(dt, planet, physics, cells, nobody);
+            }
+            Check($"drown: submerged gunman drowns ({hp0:0} -> {bare.Health:0} HP)",
+                bare.Health < hp0 - 8f);
+            Check($"drown: breather bandit survives the same water ({rigged.Health:0} HP)",
+                rigged.Health > 20f);
+            Check($"drown: never-breathed kinds don't drown ({hpV0:0} -> {vortex.Health:0} HP)",
+                vortex.Health > hpV0 - 0.5f);
+            Check("drown: breather rig makes a bandit a swimmer",
+                rigged.Swims && rigged.ImmuneTo(Material.Water)
+                && !bare.Swims && !bare.ImmuneTo(Material.Water));
+        }
+
+        // --- Kraken: runs a swimmer down in its water; brine-jets a shore taunter. ---
+        {
+            var rP = new Vector2(-upP.Y, upP.X);
+            var prey = new Player(poolCentre + rP * 24f) { HeadInWater = true, InWater = true };
+            var kraken = new Creature(poolCentre - rP * 24f, CreatureKind.Kraken);
+            var g0 = (kraken.Position - prey.Position).Length();
+            var gMin = g0;
+            for (var i = 0; i < 60 * 5; i++)
+            {
+                kraken.Update(dt, planet, physics, cells, prey);
+                cells.Update(dt);
+                gMin = MathF.Min(gMin, (kraken.Position - prey.Position).Length());
+            }
+            Check($"kraken: runs a swimmer down ({g0:0} -> {gMin:0}px closest)",
+                gMin < g0 - 6f && !EmbeddedInRock(planet, kraken.Position));
+
+            var shots = new List<TitanProjectile>();
+            var taunter = new Player(poolCentre + upP * 44f);   // dry, above the pool
+            var lurker = new Creature(poolCentre - upP * 8f, CreatureKind.Kraken);
+            for (var i = 0; i < 60 * 5 && shots.Count == 0; i++)
+                lurker.Update(dt, planet, physics, cells, taunter, shots);
+            Check($"kraken: brine-jets a shore taunter ({shots.Count} jets in the volley)",
+                shots.Count >= 3);
         }
     }
 
@@ -2849,7 +3106,7 @@ public static class SimTest
             var platTop = (Planet.RingMin + pr + 1) * Planet.TileSize;
 
             var lander = new Player(platCentre + up * 22f);
-            for (var i = 0; i < 150; i++) lander.Update(1f / 60f, pl, 0, false, false);
+            for (var i = 0; i < 150; i++) lander.Update(1f / 60f, pl, 0, false);
             var landedR = (lander.Position - pl.Center).Length();
             Check($"platform: a falling dwarf lands on top ({landedR - platTop:0.0}px above face)",
                 landedR >= platTop - 1f && landedR <= platTop + lander.Radius + 4f);
@@ -2859,7 +3116,7 @@ public static class SimTest
             var maxR = startR;
             for (var i = 0; i < 40; i++)
             {
-                riser.Update(1f / 60f, pl, 0, false, false);
+                riser.Update(1f / 60f, pl, 0, false);
                 maxR = MathF.Max(maxR, (riser.Position - pl.Center).Length());
             }
             Check($"platform: a rising dwarf passes through ({maxR - platTop:0}px past top)",

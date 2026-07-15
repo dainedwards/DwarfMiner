@@ -160,7 +160,7 @@ public sealed class Renderer
     /// ladders, rails, glowing placeables) rather than sampled from the texture atlas.</summary>
     private static bool UsesAuthoredArt(TileKind k) => k is
         TileKind.Core or TileKind.Support or TileKind.ReinforcedSupport or
-        TileKind.Ladder or TileKind.Rail or TileKind.Glowshroom or TileKind.Beacon or
+        TileKind.Ladder or TileKind.Rope or TileKind.Rail or TileKind.Glowshroom or TileKind.Beacon or
         TileKind.DoorClosed or TileKind.DoorOpen or
         TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp or
         TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom or
@@ -818,6 +818,22 @@ public sealed class Renderer
                         DrawDeco(centre, right, up, rotation, chord, 6, 0, 1, 8, rail2);
                         DrawDeco(centre, right, up, rotation, chord, 2, 1, 4, 1, rung);
                         DrawDeco(centre, right, up, rotation, chord, 2, 4, 4, 1, rung);
+                        break;
+                    }
+                    case TileKind.Rope:
+                    {
+                        // A deployed rope line: one gently swaying strand with a knot at the
+                        // waist — reads as cordage, not woodwork, next to the ladder.
+                        var strand = new Color(196, 160, 96);
+                        var knotC = new Color(150, 118, 66);
+                        var sway = MathF.Sin(Time * 1.3f + (hash & 0xFF) * 0.02f) * 0.9f;
+                        for (var hy = 0; hy < 8; hy++)
+                        {
+                            var fr = hy / 7f;
+                            var bx = 3 + (int)MathF.Round(sway * fr * fr);
+                            DrawDeco(centre, right, up, rotation, chord, bx, hy, 1, 1, strand);
+                        }
+                        DrawDeco(centre, right, up, rotation, chord, 2, 3, 3, 1, knotC);
                         break;
                     }
                     case TileKind.Rail:

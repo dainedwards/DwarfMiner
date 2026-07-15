@@ -559,6 +559,10 @@ public sealed partial class DwarfMinerGame
     /// DM_ZOOM may have overridden the default).</summary>
     private float _playZoom = 4.0f;
 
+    /// <summary>0..1 blend into the pulled-back titan-fight framing (see the zoom block in
+    /// UpdatePlaying) — smoothed so entering/leaving the titan's range never pops the camera.</summary>
+    private float _fightZoomBlend;
+
     /// <summary>The atmosphere-entry overlay: heat streaks rushing past, a pulsing shield
     /// glow at the screen edges, and the destination callout — the show that covers the
     /// last of the world bake. Streaks are hash-positioned and driven by the entry clock,

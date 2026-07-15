@@ -288,22 +288,27 @@ public static class WorldGen
                     }
                 }
 
+                // How deep the sea reaches at this bearing (0 = dry land). Hoisted out of the
+                // basin carve (like acidDepth) so the layered-ground pass below can armour the
+                // seabed on ocean worlds: an obsidian shell plus a cave-free buffer under every
+                // deep basin, keeping the under-sea cave network dry and the sea overhead.
+                var lakeDepth = 0f;
+                foreach (var l in lakes)
+                {
+                    var angDiff = MathF.Abs(ang - l.ang);
+                    if (angDiff > MathF.PI) angDiff = MathHelper.TwoPi - angDiff;
+                    if (angDiff < l.w)
+                    {
+                        var f = angDiff / l.w;
+                        var d = (1f - f * f) * l.depth;
+                        if (d > lakeDepth) lakeDepth = d;
+                    }
+                }
+
                 // Lake basin: carve the bowl out of the surface and seed it with water. The
                 // top course (depth < 1) stays air so the waterline sits just below the shore.
                 if (mountainHeight <= 0.5f)
                 {
-                    var lakeDepth = 0f;
-                    foreach (var l in lakes)
-                    {
-                        var angDiff = MathF.Abs(ang - l.ang);
-                        if (angDiff > MathF.PI) angDiff = MathHelper.TwoPi - angDiff;
-                        if (angDiff < l.w)
-                        {
-                            var f = angDiff / l.w;
-                            var d = (1f - f * f) * l.depth;
-                            if (d > lakeDepth) lakeDepth = d;
-                        }
-                    }
                     if (lakeDepth > 0.5f && depth < lakeDepth)
                     {
                         planet.SetWall(r, t, TileKind.Dirt);
@@ -347,6 +352,20 @@ public static class WorldGen
                 // never find a cave to pour down into. LineAcidReservoirs skins this buffer in
                 // obsidian afterwards.
                 var acidBuffer = acidDepth > 0.5f && depth < acidDepth + 12f;
+
+                // Ocean worlds (LakeScale > 2.5, same marker as the deep-water bonus above)
+                // armour their seabeds: an obsidian SHELL under every real basin (nothing
+                // upper-crust may bite obsidian — worms detour, noise caves are suppressed
+                // by the buffer), and a solid cave-free BUFFER a few tiles thicker, so the
+                // sea can never find a passage into the dry cave network below. Gameplay
+                // contract: the caves under the ocean stay dry, and flooding them takes
+                // deliberate obsidian mining — you can't casually drown what lives there.
+                // The shell starts a shade inside the bowl edge (lakeDepth > 1.5) so island
+                // beaches keep a diggable sand-and-dirt shoreline.
+                var oceanWorld = def.LakeScale > 2.5f;
+                var seaShell = oceanWorld && lakeDepth > 1.5f
+                    && depth >= lakeDepth && depth < lakeDepth + 5f;
+                var seaBuffer = oceanWorld && lakeDepth > 0.5f && depth < lakeDepth + 11f;
 
                 var pos = planet.TileToWorld(r, t);
                 var wx = (pos.X - planet.Center.X) / (Planet.TileSize * S);
@@ -407,19 +426,26 @@ public static class WorldGen
                     else if (pN > 0.78f) k = TileKind.Gravel;
                 }
 
+                // The seabed shell wins over every softer layer choice above: hardness 6
+                // glass rock between the sea and the caves — mineable with intent, never
+                // crumbled through by accident (and no worm can bite it).
+                if (seaShell) k = TileKind.Obsidian;
+
                 // Wall captures the structural material before caves/ores override the foreground.
                 planet.SetWall(r, t, k);
 
                 var bigN = SampleNoise(bigCave, wx * 0.05f, wy * 0.05f);
                 var smallN = SampleNoise(smallCave, wx * 0.18f, wy * 0.18f);
-                if (!acidBuffer && !inSeam && depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
+                if (!acidBuffer && !seaBuffer && !inSeam && depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
                 {
                     k = TileKind.Sky;
                     // Reservoirs: a slow water-noise channel floods whole cave pockets in the
                     // crust band (below the dirt, above the lava zone that Game1 fills at
                     // ~45% radius) so some caverns are found brimming rather than dry. Water
                     // is seeded as cells and settles to each pocket's floor on its own.
-                    if (def.HasWater && depth > 10f && depth < 44f
+                    // Ocean worlds skip them: their design promise is DRY caves under a wet
+                    // surface — all the water lives in the seas above the obsidian floor.
+                    if (def.HasWater && !oceanWorld && depth > 10f && depth < 44f
                         && SampleNoise(waterNoise, wx * 0.05f, wy * 0.05f) > 0.62f)
                     {
                         planet.WaterSeeds.Add((r, t));
@@ -454,7 +480,9 @@ public static class WorldGen
                     if (mN > 0.70f && mN < 0.78f) k = TileKind.MossStone;
                 }
 
-                if (IsOreHost(k))
+                // No ore seams inside the seabed shell: an ore tile is softer than obsidian,
+                // and one soft tile in the armour is all a flooding shortcut needs.
+                if (IsOreHost(k) && !seaShell)
                 {
                     var baseRock = k;
                     var oreN = SampleNoise(oreNoise, wx * 0.31f, wy * 0.31f);
@@ -546,7 +574,7 @@ public static class WorldGen
             planet.SurfaceProfile = profile;
         }
 
-        SeedBiomePockets(planet, def, rng);
+        SeedBiomePockets(planet, def, rng, lakes);
         if (def.GreatGeode) CarveGreatGeode(planet, rng);
 
         // Volcanoes stamp last so their plumbing (throat lining, chamber shell) wins over
@@ -571,6 +599,13 @@ public static class WorldGen
         // not a future change re-tunes the worms. LineAcidReservoirs runs after, re-skinning
         // anything a worm grazed.
         CarveWormTunnels(planet, def, new Random(seed ^ 0x5EED));
+
+        // Island grotto mouths (ocean worlds): a few natural cave entrances opening on dry
+        // land, winding down into the worm band — the under-sea network is meant to be
+        // EXPLORED, so the islands offer a way in that isn't mining blind through the
+        // beach. Isolated rng (ocean-only anyway) for the usual stream-stability reason.
+        if (def.LakeScale > 2.5f)
+            CarveIslandGrottoes(planet, new Random(seed ^ 0x0CEA), lakes, mountains);
 
         // Seams enforced LAST, as a hard pass over the final tile state: every carver above
         // (noise caves, worms, biome pockets, the geode) is also seam-aware or band-clamped,
@@ -1040,10 +1075,19 @@ public static class WorldGen
             // Dense enough that neighbouring walks intersect constantly — the underground
             // should read as one connected Noita warren, not isolated corridors.
             var worms = 30 + rng.Next(11);
+            // Ocean worlds honeycomb the crust harder: the surface is nearly all sea, so
+            // the explorable real estate lives underground — extra walks below, plus the
+            // vaulted chambers after the loop. The obsidian seabed shell (stamped in the
+            // tile pass, unbiteable by these worms) is what keeps all of it dry.
+            var ocean = def.LakeScale > 2.5f;
+            if (ocean) worms += 20;
             // Stay above THIS world's lava zone (crossing the flood line turns tunnels into
             // permanent lava plumbing) and below the dirt band. The hard floor passed to
             // CarveWorm stops drifting walks from ever biting the stratum seam below.
-            var minFrac = MathF.Max(0.38f, def.LavaFillFrac + 0.08f);
+            // Ocean worlds run the band DEEPER (0.30 vs 0.38): their seas plunge far below
+            // the ordinary worm floor, and the quiet 0.22 lava fill leaves the room — the
+            // +0.08 flood-line margin still holds.
+            var minFrac = MathF.Max(ocean ? 0.30f : 0.38f, def.LavaFillFrac + 0.08f);
             var (upperSeams, _, _) = CaveStrata(planet, def);
             var hardFloorPx = upperSeams[0].lo * Planet.TileSize;
             var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
@@ -1055,7 +1099,48 @@ public static class WorldGen
                 var start = planet.Center
                     + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
                 CarveWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
-                    260 + rng.Next(300), branchBudget: 2, minFrac, hardFloorPx);
+                    260 + rng.Next(300), branchBudget: 2, minFrac, hardFloorPx,
+                    localCeiling: ocean);
+            }
+
+            // Ocean chambers: vaulted halls strung along the worm band — the destination
+            // rooms the corridors run between (ore walls, spawn floors, room to fight).
+            // Rolled AFTER the worm loop so the extra draws can't shift worm layouts on
+            // other-world seeds; ocean-only, so non-ocean streams are untouched anyway.
+            if (ocean)
+            {
+                var chambers = 9 + rng.Next(5);
+                for (var i = 0; i < chambers; i++)
+                {
+                    var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+                    // Mid-crust band, held clear of both the stratum seam below and the
+                    // deepest possible seabed above (a chamber may nudge the shell — it
+                    // can't bite obsidian — but shouldn't waste half its volume on it).
+                    var radiusTiles = MathHelper.Lerp(planet.Radius * minFrac + 8f,
+                        maxTiles - 14f, (float)rng.NextDouble());
+                    if (radiusTiles <= planet.Radius * minFrac + 8f) continue;
+                    var centre = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
+                        * radiusTiles * Planet.TileSize;
+                    if (NearDenOrCity(planet, centre)) continue;
+                    // Local-surface clearance: the global cap can't see valleys — a hall
+                    // vaulting up under a low-lying shallow shore would breach it.
+                    if (radiusTiles > planet.SurfaceRadiusAt(centre) - 36f) continue;
+                    // A hall is a clutch of overlapping bites around the centre.
+                    var lobes = 3 + rng.Next(3);
+                    for (var b = 0; b < lobes; b++)
+                    {
+                        var off = new Vector2(
+                            ((float)rng.NextDouble() - 0.5f) * 26f,
+                            ((float)rng.NextDouble() - 0.5f) * 18f);
+                        CarveWormDisk(planet, centre + off, 10f + (float)rng.NextDouble() * 5f);
+                    }
+                    // Every hall sends out a connector worm: a hall nobody's corridors
+                    // happen to cross is a sealed pocket, and the whole point down here
+                    // is one travellable network.
+                    CarveWorm(planet, rng, centre, (float)rng.NextDouble() * MathHelper.TwoPi,
+                        130 + rng.Next(90), branchBudget: 1, minFrac, hardFloorPx,
+                        localCeiling: true);
+                }
             }
         }
 
@@ -1166,8 +1251,14 @@ public static class WorldGen
         }
     }
 
+    /// <param name="localCeiling">Ocean worlds: bites must also stay 14 legacy tiles below
+    /// the LOCAL surface line (SurfaceProfile), not just the global cap — the rolling
+    /// channel digs valleys deep enough that a globally-legal bite can surface inside a
+    /// shallow shore basin and turn the sea into a drain. Other worlds keep the historical
+    /// global-only rule so their layouts stay byte-identical.</param>
     private static void CarveWorm(Planet planet, Random rng, Vector2 pos, float heading,
-        int length, int branchBudget, float minFrac, float hardFloorPx)
+        int length, int branchBudget, float minFrac, float hardFloorPx,
+        bool localCeiling = false)
     {
         var minRad = planet.Radius * (minFrac - 0.02f) * Planet.TileSize;
         var maxRad = (Planet.RingMin + planet.SurfaceRing - 14f * Planet.LegacyTileScale)
@@ -1193,8 +1284,12 @@ public static class WorldGen
             // seam: soft steering lets a walk DRIFT below its band, which was harmless when
             // everything below was solid, but must never puncture the seam now that sealed
             // strata live under it.
+            // NOTE: the radius roll stays INSIDE the guarded call — on non-ocean worlds the
+            // guard set is unchanged, so the rng stream (and every seeded layout) is too.
             if ((pos - planet.Center).LengthSquared() >= hardFloorPx * hardFloorPx
-                && !NearDenOrCity(planet, pos))
+                && !NearDenOrCity(planet, pos)
+                && (!localCeiling || (pos - planet.Center).Length()
+                    <= (planet.SurfaceRadiusAt(pos) - 28f) * Planet.TileSize))
                 CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 11f : 8f);
             if (branchBudget > 0 && s > length / 4 && rng.Next(55) == 0)
             {
@@ -1203,7 +1298,54 @@ public static class WorldGen
                 // stitch neighbouring worm systems into one continuous warren.
                 CarveWorm(planet, rng, pos,
                     heading + (rng.Next(2) == 0 ? 1f : -1f) * (0.8f + (float)rng.NextDouble()),
-                    length / 2, length > 80 ? 1 : 0, minFrac, hardFloorPx);
+                    length / 2, length > 80 ? 1 : 0, minFrac, hardFloorPx, localCeiling);
+            }
+        }
+    }
+
+    /// <summary>Ocean worlds: open a few natural grotto mouths on the islands — winding
+    /// entrance shafts from the surface down into the worm band, so the dry under-sea cave
+    /// network has walk-in doors on dry land. Bearings must be genuinely dry (any sea
+    /// coverage disqualifies — a mouth on a seabed is just a drain) and keep off the
+    /// mountain cores; mouths spread out so different islands get different doors.</summary>
+    private static void CarveIslandGrottoes(Planet planet, Random rng,
+        (float ang, float depth, float w)[] lakes, (float ang, float h, float w)[] mountains)
+    {
+        var want = 3 + rng.Next(2);
+        var mouths = new List<float>();
+        for (var attempt = 0; attempt < 240 && mouths.Count < want; attempt++)
+        {
+            var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+            // The +0.06 margin covers the shaft's own sideways drift: a mouth a hair past
+            // a lake's rim could otherwise wander under the bowl and become a drain.
+            var wet = false;
+            foreach (var l in lakes)
+                if (MathF.Abs(MathHelper.WrapAngle(ang - l.ang)) < l.w + 0.06f) { wet = true; break; }
+            if (wet) continue;
+            if (NearMountain(mountains, ang, 0.03f)) continue;
+            var apart = true;
+            foreach (var m in mouths)
+                if (MathF.Abs(MathHelper.WrapAngle(ang - m)) < 0.35f) { apart = false; break; }
+            if (!apart) continue;
+            mouths.Add(ang);
+
+            // Winding descent: open at the local ground line, then bite mostly inward with
+            // a lazy side-sway until the shaft reaches worm-band depth (~35-48 tiles) — a
+            // grotto, not a drilled bore.
+            var dir = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
+            var pos = planet.Center + dir
+                * (planet.SurfaceRadiusAt(planet.Center + dir) * Planet.TileSize);
+            var heading = MathF.Atan2(-dir.Y, -dir.X) + ((float)rng.NextDouble() - 0.5f) * 0.5f;
+            var steps = 34 + rng.Next(14);
+            for (var s = 0; s < steps; s++)
+            {
+                var toCore = planet.Center - pos;
+                var inward = MathF.Atan2(toCore.Y, toCore.X);
+                heading += MathHelper.WrapAngle(inward - heading) * 0.22f
+                    + ((float)rng.NextDouble() - 0.5f) * 0.5f;
+                pos += new Vector2(MathF.Cos(heading), MathF.Sin(heading)) * Planet.TileSize;
+                if (!NearDenOrCity(planet, pos))
+                    CarveWormDisk(planet, pos, s < 4 ? 6f : 7.5f);
             }
         }
     }
@@ -1509,38 +1651,45 @@ public static class WorldGen
         // District centres: bearings clear of mountains, basins, volcanoes, the rover
         // drop, and each other. Layout is ONE CAPITAL plus one or two satellite towns —
         // most of the skyline concentrates in a single sprawling metropolis, with the
-        // wide mutual spacing keeping the towns from merging into its edges.
+        // wide mutual spacing keeping the towns from merging into its edges. Lot shares
+        // are planned up front so each district can demand mountain clearance for its
+        // WHOLE row — the wider towers make rows long enough that a mountain mid-row
+        // used to split the capital into fragments. If no bearing offers the full-row
+        // clearance, the district settles for the old centre-only margin.
         var districtCount = def.CityLots >= 24 ? 2 + rng.Next(2) : 2;
+        var lotsPlan = new int[districtCount];
+        lotsPlan[0] = districtCount == 1 ? def.CityLots : (int)(def.CityLots * 0.6f);
+        for (var i = 0; i < def.CityLots - lotsPlan[0]; i++)
+            lotsPlan[1 + i % Math.Max(1, districtCount - 1)]++;
+
         var centres = new List<float>();
+        var lotsOf = new List<int>();
         for (var d = 0; d < districtCount; d++)
         {
+            // ~96 px per lot (hull + street) — the row's angular half-length.
+            var rowHalfAng = MathF.Min(0.6f, lotsPlan[d] * 96f * 0.5f / surfRadiusPx);
             var cAng = 0f;
             var ok = false;
-            for (var tries = 0; tries < 90 && !ok; tries++)
+            for (var tries = 0; tries < 180 && !ok; tries++)
             {
+                // First half of the tries insists the whole row clears the mountains,
+                // the rover drop AND every stamped landmark — anything mid-row skips
+                // lots and splits the district. The fallback half relaxes to the old
+                // centre-only margins.
+                var rowPad = tries < 90 ? rowHalfAng : 0f;
                 cAng = (float)(rng.NextDouble() * MathHelper.TwoPi);
-                ok = !NearMountain(mountains, cAng, 0.16f)
-                     && AngDist(cAng, MathF.PI * 1.5f) > 0.3f;
+                ok = !NearMountain(mountains, cAng, rowPad + (tries < 90 ? 0.04f : 0.16f))
+                     && AngDist(cAng, MathF.PI * 1.5f) > 0.3f + rowPad;
                 for (var i = 0; ok && i < avoid.Count; i++)
-                    ok = AngDist(cAng, avoid[i].ang) > avoid[i].w + 0.14f;
+                    ok = AngDist(cAng, avoid[i].ang) > avoid[i].w + 0.14f + rowPad;
                 for (var i = 0; ok && i < centres.Count; i++)
                     ok = AngDist(cAng, centres[i]) > 0.95f;
             }
-            if (ok) centres.Add(cAng);
+            if (!ok) continue;
+            centres.Add(cAng);
+            lotsOf.Add(lotsPlan[d]);
         }
         if (centres.Count == 0) return;
-        // The capital takes ~60% of every lot; the towns split the remainder.
-        var lotsOf = new int[centres.Count];
-        if (centres.Count == 1)
-        {
-            lotsOf[0] = def.CityLots;
-        }
-        else
-        {
-            lotsOf[0] = (int)(def.CityLots * 0.6f);
-            var rest = def.CityLots - lotsOf[0];
-            for (var i = 0; i < rest; i++) lotsOf[1 + i % (centres.Count - 1)]++;
-        }
 
         for (var d = 0; d < centres.Count; d++)
         {
@@ -1558,28 +1707,38 @@ public static class WorldGen
                 var classRoll = rng.NextDouble();
                 float halfWidthPx;
                 int height;
+                // Widths sized so interiors hold real ROOMS: past the 3-wide ladder shaft
+                // and the wall columns, every class keeps several tiles of open floor per
+                // side for furniture and pacing civilians (the old widths left mid-rises
+                // ~2 usable tiles a side — the apartments read as empty corridors).
                 if (classRoll < 0.18)         // small building: a squat shopfront
                 {
-                    halfWidthPx = 22f + (float)rng.NextDouble() * 10f;
+                    halfWidthPx = 30f + (float)rng.NextDouble() * 12f;
                     height = (int)((6f + (float)rng.NextDouble() * 6f) * S);
                 }
                 else if (classRoll < 0.60)    // mid-rise block
                 {
-                    halfWidthPx = 20f + (float)rng.NextDouble() * 12f;
+                    halfWidthPx = 30f + (float)rng.NextDouble() * 16f;
                     height = (int)((18f + (float)rng.NextDouble() * 16f) * S);
                 }
-                else                          // spire: thin and tall
+                else                          // spire: thinner and tall
                 {
-                    halfWidthPx = 15f + (float)rng.NextDouble() * 9f;
+                    halfWidthPx = 22f + (float)rng.NextDouble() * 10f;
                     height = (int)((30f + (float)rng.NextDouble() * 26f) * S);
                 }
                 height = Math.Min(height, (int)(Planet.SkyHeadroom - 16 * S));
-                var gapPx = 12f + (float)rng.NextDouble() * 12f;   // a narrow street between hulls
+                // A narrow street between hulls — never under 16px: each hull quantizes up
+                // to a whole column (+≤2px per side) and slab rows carry a 1-tile exterior
+                // ledge, so a 12px street could leave neighbouring LEDGES angularly adjacent
+                // — structurally fusing the towers, so a tower severed at the street hung
+                // off its neighbour instead of toppling.
+                var gapPx = 16f + (float)rng.NextDouble() * 12f;
                 specs.Add((classRoll, halfWidthPx, height, gapPx));
                 rowPx += halfWidthPx * 2f + gapPx;
             }
 
             var cursor = centres[d] - rowPx / surfRadiusPx * 0.5f;
+            var rowTowers = new List<(float ang, float halfW)>();   // this row, west-to-east
             foreach (var (classRoll, halfWidthPx, height, gapPx) in specs)
             {
                 var footAng = halfWidthPx / surfRadiusPx;
@@ -1599,14 +1758,63 @@ public static class WorldGen
                 if (!clear) continue;
                 placed.Add((ang, footAng));
 
-                BuildTower(ang, classRoll, halfWidthPx, height);
+                BuildTower(ang, classRoll, halfWidthPx, height, rowTowers);
+            }
+
+            // Street bridges: an anchored alloy deck at the baseline surface ring spanning
+            // every street gap between neighbouring hulls (and the odd skipped lot), with
+            // standing headroom cleared above. The ground between towers rolls and dips,
+            // which stranded citizens (and the dwarf) in the hollows — and because the
+            // deck is anchored alloy, meteors, acid and quakes can't disintegrate the
+            // crossing. Doors, hulls and furniture are all anchored too, so the clearing
+            // pass can't harm them.
+            for (var i = 1; i < rowTowers.Count; i++)
+            {
+                var (a0, w0) = rowTowers[i - 1];
+                var (a1, w1) = rowTowers[i];
+                var e0 = a0 + w0 / surfRadiusPx;
+                var e1 = a1 - w1 / surfRadiusPx;
+                var gapWorld = (e1 - e0) * surfRadiusPx;
+                if (gapWorld <= 0f || gapWorld > 120f) continue;
+                BuildBridge(e0, e1);
             }
         }
 
         avoid.AddRange(placed);
         return;
 
-        void BuildTower(float ang, double classRoll, float halfWidthPx, int height)
+        void BuildBridge(float a0, float a1)
+        {
+            // Deck at the baseline surface ring (its top face is the towers' door
+            // threshold level), padded just over half a tile into each hull so it meets
+            // the pilings without a seam; the rings above are cleared for headroom.
+            var deckR = surfaceR;
+            var topClear = Math.Min(planet.Rings - 2, deckR + (int)(4 * S));
+            for (var r = deckR; r <= topClear; r++)
+            {
+                var n = planet.TilesAt(r);
+                var chord = MathHelper.TwoPi / n;
+                var t0 = (int)MathF.Floor((a0 - chord * 0.6f) / chord);
+                var t1 = (int)MathF.Ceiling((a1 + chord * 0.6f) / chord);
+                for (var ti = t0; ti <= t1; ti++)
+                {
+                    var t = (ti % n + n) % n;
+                    if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                    if (r == deckR)
+                    {
+                        planet.Set(r, t, TileKind.AlienAlloy);
+                        planet.SetWall(r, t, TileKind.AlienAlloy);
+                    }
+                    else
+                    {
+                        planet.Set(r, t, TileKind.Sky);
+                    }
+                }
+            }
+        }
+
+        void BuildTower(float ang, double classRoll, float halfWidthPx, int height,
+            List<(float ang, float halfW)> rowTowers)
         {
             var baseR = surfaceR + 1;
             var topR = Math.Min(planet.Rings - 2, baseR + height);
@@ -1630,6 +1838,7 @@ public static class WorldGen
             var cols = Math.Max(6, (int)MathF.Round(halfWidthPx * 2f / Planet.TileSize));
             var halfW = cols * Planet.TileSize * 0.5f;
             var midJ = cols / 2;                     // ladder spine column
+            rowTowers.Add((ang, halfW));             // the street-bridge pass spans these
             planet.CityFacades.Add((ang, halfW, footingR,
                 Math.Min(planet.Rings - 1, topR + (int)(7 * S))));
 
@@ -1689,29 +1898,35 @@ public static class WorldGen
                         }
 
                         // Interior: floor slab at the base of every storey above the ground
-                        // floor (the plinth is street level's floor), with a stair gap
-                        // hugging alternating walls so the shaft zig-zags up the tower.
+                        // floor (the plinth is street level's floor). The stair gap is a
+                        // two-column hole in the slab BESIDE the climb channel, alternating
+                        // sides per floor so the open shaft zig-zags — never against the
+                        // wall: a wall-side gap severed the slab's outer strip from the hull,
+                        // leaving every other floor a free-floating shelf that broke the
+                        // tower into loose pieces the moment it toppled (or anything woke
+                        // the settle physics under it).
                         var dt = j - midJ;
                         var span = cols / 2;
-                        var slab = slabRow && dt * gapSide < span - 4;
+                        var inGap = slabRow && dt * gapSide is 2 or 3;
+                        var slab = slabRow && !inGap;
 
                         // Climbing spine: a full-height ladder shaft dead-centre in the
-                        // tower — always reachable from the ground floor and clear of the
-                        // slab, so every storey connects. The stair-gap beside it lets you
-                        // step off each level.
+                        // tower — always reachable from the ground floor, so every storey
+                        // connects. The stair-gap beside it lets you step off each level.
                         if (dt == 0 && storey >= 0 && storey < height - 2)
                         {
                             planet.Set(r, t, TileKind.Ladder);
                             continue;
                         }
-                        // Keep the two columns flanking the ladder open its full height, so
-                        // the climb shaft is a clean 3-wide channel: floor slabs stop short
-                        // of it and never seal over the ladder, and the dwarf's body clears
-                        // each storey. (A 1-tile ladder hole through a 2-tile-thick slab
-                        // used to wall you in.)
+                        // The two columns flanking the ladder stay a clear climb channel
+                        // (a 1-tile ladder hole through a 2-tile-thick slab used to wall
+                        // you in) — but at slab rows they carry LADDER landings instead of
+                        // open sky: still climb-through (ladders are passable), and they
+                        // lace the spine to every floor slab, so the tower is one connected
+                        // structure instead of a loose ladder strand between floating floors.
                         if (Math.Abs(dt) <= 1 && storey >= 0 && storey < height - 2)
                         {
-                            planet.Set(r, t, TileKind.Sky);
+                            planet.Set(r, t, slab ? TileKind.Ladder : TileKind.Sky);
                             continue;
                         }
                         if (slab) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
@@ -1719,12 +1934,12 @@ public static class WorldGen
                         // Apartment furniture on the row sitting directly on each slab:
                         // potted tentacle-plants, levitating egg-chairs, orb lamps — placed
                         // by a position hash (no rng draws, so downstream worldgen streams
-                        // hold).
+                        // hold). Skipped over the stair gap — nothing floats over the hole.
                         if (storey >= floorEvery && storey % floorEvery == 2
-                            && Math.Abs(dt) < span - 2 && dt * gapSide < span - 4)
+                            && Math.Abs(dt) < span - 2 && dt * gapSide is not (2 or 3))
                         {
                             var h = (r * 7919 + t * 104729) & 1023;
-                            if (h < 150)
+                            if (h < 260)
                             {
                                 planet.Set(r, t, (h % 3) switch
                                 {
@@ -2165,8 +2380,10 @@ public static class WorldGen
         }
     }
 
-    private static void SeedBiomePockets(Planet planet, PlanetDef def, Random rng)
+    private static void SeedBiomePockets(Planet planet, PlanetDef def, Random rng,
+        (float ang, float depth, float w)[] lakes)
     {
+        var ocean = def.LakeScale > 2.5f;
         void Carve(int count, bool crystal)
         {
             for (var i = 0; i < count; i++)
@@ -2176,6 +2393,18 @@ public static class WorldGen
                 var depth = (int)((crystal ? 30 + rng.Next(40) : 8 + rng.Next(22)) * S);
                 var cr = planet.SurfaceRing - depth;
                 if (cr < 8 * S) continue;
+                // Ocean worlds: pockets keep off the sea bearings entirely. Their basins
+                // plunge past the grove band, and this carve eats ANYTHING unanchored —
+                // obsidian shell included — so one grove under a sea is a drain into the
+                // dry network. (The skip comes after the rolls, so the shared rng stream
+                // is unmoved; other worlds don't reach this branch at all.)
+                if (ocean)
+                {
+                    var wet = false;
+                    foreach (var l in lakes)
+                        if (MathF.Abs(MathHelper.WrapAngle(ang - l.ang)) < l.w + 0.05f) { wet = true; break; }
+                    if (wet) continue;
+                }
                 var radius = (int)((crystal ? 4 + rng.Next(4) : 3 + rng.Next(3)) * S);
                 var n = planet.TilesAt(cr);
                 var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);

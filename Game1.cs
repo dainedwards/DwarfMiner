@@ -44,6 +44,20 @@ public sealed partial class DwarfMinerGame : Game
     private float _gravityWellTimer;
     private float _gravityWellRadius;
 
+    /// <summary>Titan-climbing: while riding, the dwarf clings to a bearing on the monster's
+    /// body circle and moves with it — A/D walks around the hull, Space jumps off, and the
+    /// monster's shake-off thrash flings the rider (see TickTitanRiding).</summary>
+    private bool _riding;
+    private float _rideAngle;
+
+    /// <summary>Grappling-hook line: latched to terrain (<see cref="_grapAnchor"/>) or to the
+    /// titan's hide (<see cref="_grapOnTitan"/> + body-local offset). While latched the rope
+    /// is a hard length constraint — hold LMB to reel in, S pays line out, W cuts it.</summary>
+    private Vector2? _grapAnchor;
+    private bool _grapOnTitan;
+    private Vector2 _grapLocal;
+    private float _ropeLen;
+
     /// <summary>The current planet visit. Everything per-run lives here — swapped atomically
     /// when the player lands on a planet from space. Null only while flying in space before
     /// the first run; Playing/GameOver screens always have one.</summary>
@@ -803,7 +817,8 @@ public sealed partial class DwarfMinerGame : Game
                                 CreatureKind.AlienWhale, CreatureKind.AlienCrab,
                                 CreatureKind.Moonlet, CreatureKind.VacLeech, CreatureKind.Glimmermaw,
                                 CreatureKind.StarJelly, CreatureKind.VoidBarnacle,
-                                CreatureKind.Selenite, CreatureKind.DustDevil };
+                                CreatureKind.Selenite, CreatureKind.DustDevil,
+                                CreatureKind.Kraken };
             for (var i = 0; i < kinds.Length; i++)
                 _run.Creatures.Add(new Creature(
                     _run.Player.Position + fRight * (26f + i * 22f) + fUp * 8f, kinds[i]));
@@ -1512,12 +1527,11 @@ public sealed partial class DwarfMinerGame : Game
         var moveAxis = 0;
         if (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left)) moveAxis -= 1;
         if (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right)) moveAxis += 1;
-        // Jump vs jet are separate keys now: W (or Up) JUMPS off the ground, Space burns the
-        // JETPACK while airborne. Player.Update derives the jump press edge itself and uses
-        // the held state for variable jump height (hold for full apex, tap for short). W does
-        // NOT light the pack; Space does nothing on the ground.
-        var jumpHeld = keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up);
-        var jetHeld = keys.IsKeyDown(Keys.Space);
+        // Space is the one flight key, Noita-style: tap to jump, keep holding and the
+        // jetpack lights (Player.Update gates the burn on hold time so a tap never sputters
+        // the pack; an airborne press hovers immediately). W/Up no longer jump — they only
+        // climb ladders and steer fly mode via verticalAxis below.
+        var jumpHeld = keys.IsKeyDown(Keys.Space);
 
         // DM_JETTEST=<1-4>: tooling hook — grants+equips that jetpack tier and holds jump
         // forever, so headless runs can screenshot the hover physics and each tier's
@@ -1530,10 +1544,10 @@ public sealed partial class DwarfMinerGame : Game
             p.JetTier2 = jetTier >= 2; p.JetTier3 = jetTier >= 3; p.JetTier4 = jetTier >= 4;
             if (p.Inventory.Count("jetpack") == 0) p.Inventory.Add("jetpack", 1);
             p.Equipment.AutoEquip("jetpack");
-            // Pulse jump to hop off the ground, and hold the jet — so the headless hover
-            // test both leaves the ground and burns the pack.
-            jumpHeld = _totalTime % 4.0f < 0.15f;
-            jetHeld = true;
+            // Hold jump continuously: the press edge hops off the ground and the sustained
+            // hold lights the pack once past the tap window — so the headless hover test
+            // both leaves the ground and burns the jet.
+            jumpHeld = true;
         }
 
         // Vertical input for fly mode: W/Up = ascend, S/Down = descend along local up.
@@ -1579,7 +1593,7 @@ public sealed partial class DwarfMinerGame : Game
         };
         _meleeAnim = MathF.Max(0f, _meleeAnim - dt);
 
-        _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, jetHeld, verticalAxis);
+        _run.Player.Update(dt, _run.Planet, moveAxis, jumpHeld, verticalAxis);
 
         // Jetpack exhaust: a tier-coloured jet stream from the worn pack's nozzles — red
         // stub burner up through orange and yellow to the tier-IV blue jet. The origin
@@ -1598,6 +1612,7 @@ public sealed partial class DwarfMinerGame : Game
         TickAir(dt);
         TickHazardContact(dt);
 
+<<<<<<< HEAD
         // Zoom control: "-" steps the camera out, "+"/"=" steps it in (numpad +/- too).
         // Steps are locked to EVEN zoom factors (2/4/6/8) so the pixel-grid world target
         // (see DrawFrame) upscales by an exact integer — every world pixel stays an
@@ -1609,6 +1624,26 @@ public sealed partial class DwarfMinerGame : Game
         if (zoomInKey && !(_prevKeys.IsKeyDown(Keys.OemPlus) || _prevKeys.IsKeyDown(Keys.Add)))
             _playZoom = MathF.Min(8f, _playZoom + 2f);
         _camera.Zoom = _playZoom;
+=======
+        // Zoom control: hold "-" to pull the camera out and "+"/"=" to push it back in (numpad
+        // +/- too). The chosen zoom sticks as the play zoom, so it persists frame to frame.
+        if (keys.IsKeyDown(Keys.OemMinus) || keys.IsKeyDown(Keys.Subtract))
+            _playZoom = MathHelper.Clamp(_playZoom * (1f - 1.6f * dt), 2.2f, 8f);
+        if (keys.IsKeyDown(Keys.OemPlus) || keys.IsKeyDown(Keys.Add))
+            _playZoom = MathHelper.Clamp(_playZoom * (1f + 1.6f * dt), 2.2f, 8f);
+        // Kaiju-scale framing: fighting near the titan eases the camera out so the whole
+        // monster fits the fight, then eases back in once the player breaks away. The blend
+        // is smoothed so crossing the range boundary never pops the zoom.
+        {
+            var tt = _run.Titan;
+            var titanNear = tt.Hatched && tt.Health > 0 && tt.Targetable
+                && (tt.Position - _run.Player.Position).Length() < 760f;
+            _fightZoomBlend = MathHelper.Clamp(
+                _fightZoomBlend + (titanNear ? dt * 1.6f : -dt * 1.1f), 0f, 1f);
+            var fightZoom = MathF.Max(2.2f, _playZoom * 0.68f);
+            _camera.Zoom = MathHelper.Lerp(_playZoom, fightZoom, _fightZoomBlend);
+        }
+>>>>>>> noita-sim
 
         // Camera follows player, rotating so up = away from planet center. DM_BOSSCAM frames
         // the boss instead (testing hook for screenshotting the variants).
@@ -2345,6 +2380,50 @@ public sealed partial class DwarfMinerGame : Game
                     _particles.EmitDust(_run.Player.Position - toWell / wd * 8f, 2f);
             }
         }
+        // Kaiju voice — attack windups queue a movie-monster bellow/screech; play it at the
+        // body with a little screen weight so the roar lands physically too.
+        if (_run.Titan.PendingRoar is { } roar)
+        {
+            _run.Titan.PendingRoar = null;
+            var rpitch = _run.Titan.Kind switch
+            {
+                TitanKind.Slattern or TitanKind.Leatherback => -0.25f,
+                TitanKind.Raiju => 0.2f,
+                _ => 0f,
+            };
+            PlayAt(roar, _run.Titan.Position, 1f, pitch: rpitch, minGap: 0.7f);
+            _run.Shake = MathF.Max(_run.Shake, 0.3f);
+        }
+        // A kick or fist meeting toppled debris grinds it straight to dust and punches any
+        // corpses away; the thud is the impact's bass note under the shockwave's boom.
+        if (_run.Titan.PendingPulverize is { } pulv)
+        {
+            _run.Titan.PendingPulverize = null;
+            _run.Rigid?.Pulverize(pulv.pos, pulv.radius);
+            KickCorpses(pulv.pos, pulv.radius, 190f);
+            _particles.EmitDust(pulv.pos, 16f);
+            PlayAt("thud", pulv.pos, 1f, minGap: 0.15f);
+        }
+        // Shake-off: the mid-thrash fling throws a clinging dwarf — riding the hide or
+        // grapple-latched to it — clear of the monster.
+        if (_run.Titan.PendingShakeOff)
+        {
+            _run.Titan.PendingShakeOff = false;
+            if (_riding || _grapOnTitan)
+            {
+                var tUp = _run.Planet.UpAt(_run.Titan.Position);
+                var tRight = new Vector2(-tUp.Y, tUp.X);
+                var fling = Random.Shared.Next(2) == 0 ? -1f : 1f;
+                _riding = false;
+                ReleaseGrapple();
+                _run.Player.Velocity = tUp * 240f + tRight * (fling * 300f);
+                _run.Player.TakeDamage(6f);
+                _toast = "SHAKEN OFF!";
+                _toastTimer = 2f;
+            }
+        }
+        TickTitanRiding(dt, keys);
+        TickGrapple(dt, keys, mouse);
         // Slaying the titan no longer ends the visit — the rocket is the only way off-world.
         // Nor does it bank the soul any more: the kill drops a CARCASS where the kaiju fell,
         // and the soul is claimed by carving it for 7 seconds (see the harvest block below).
@@ -2556,6 +2635,7 @@ public sealed partial class DwarfMinerGame : Game
         p.HasDrill = p.HasHammer = p.HasMiningLaser = p.HasCoreDrill = true;
         p.HasPistol = p.HasMachineGun = p.HasLaser = p.HasLaserCannon = p.HasRocketLauncher = true;
         p.HasFlamethrower = p.HasAcidSpewer = p.HasLightningGun = true;
+        p.HasGrapple = true;
         _run.HasCannon = true;
         p.PickaxeTier = 4;
         p.ScannerTier = 4;
@@ -2574,8 +2654,12 @@ public sealed partial class DwarfMinerGame : Game
             "band_regen", "magnet_ring", "miners_charm", "aegis_pendant",
             "sword", "mace", "warhammer", "shield",
             "great_sword", "great_mace", "great_hammer", "tower_shield",
+            "grapple",
         })
             if (p.Inventory.Count(id) == 0) p.Inventory.Add(id, 1);
+        if (p.Inventory.Count("rope") < 8) p.Inventory.Add("rope", 8);
+        p.Toolbelt.AutoEquip("grapple");
+        p.Toolbelt.AutoEquip("rope");
         p.Equipment.AutoEquip("jetpack");
         if (p.Equipment.Get(EquipSlot.Torch) is null) p.Equipment.Set(EquipSlot.Torch, "sun_crystal");
     }
@@ -2915,20 +2999,30 @@ public sealed partial class DwarfMinerGame : Game
         foreach (var c in _run.Clouds)
         {
             if (c.Grow < 0.03f) continue;
-            var up = new Vector2(MathF.Cos(c.Angle), MathF.Sin(c.Angle));
-            var right = new Vector2(-up.Y, up.X);
-            var ground = SpawnDirector.FindSurfaceSpawn(_run.Planet, c.Angle, _run.Planet.Radius);
-            var centre = ground + up * c.Alt;
             var raining = c.RainTimer > 0f;
-            const int puffs = 5;
-            for (var i = -puffs; i <= puffs; i++)
+            var bodyCol = raining ? body : Color.Lerp(body, bodyLt, 0.35f);
+            // A slim connected bank: many small puffs packed tightly along the ARC at the
+            // cloud's one fixed radius from the planet centre — flat-bottomed, no gaps, and
+            // dead-steady altitude (the old version bobbed on a sine and spaced fat puffs
+            // wider than their radii, which read as disconnected bouncing balls). The only
+            // per-puff variation is a deterministic outline wobble, so the silhouette is
+            // organic but motionless.
+            var arcLen = c.HalfWidth * 2f * c.Alt;
+            var puffs = Math.Max(4, (int)(arcLen / 11f));
+            for (var i = 0; i <= puffs; i++)
             {
-                var f = 1f - MathF.Abs(i) / (float)(puffs + 1);
-                var bob = MathF.Sin(_renderer.Time * 1.1f + c.Phase + i) * 5f;
-                var p = centre + right * (i * c.HalfWidth * 240f) + up * bob;
-                var rad = (16f + f * 26f) * c.Grow;
-                _renderer.DrawCircle(p, rad, raining ? body : Color.Lerp(body, bodyLt, 0.35f));
-                _renderer.DrawCircle(p + up * (rad * 0.4f), rad * 0.66f, bodyLt);
+                var fi = i / (float)puffs;
+                var envelope = MathF.Sin(fi * MathF.PI);          // thick middle, thin tips
+                var wob = MathF.Sin(c.Phase + i * 2.17f);
+                var rad = (6f + envelope * 11f + wob * 1.5f) * c.Grow;
+                if (rad < 1.5f) continue;
+                var a = c.Angle + (fi - 0.5f) * 2f * c.HalfWidth;
+                var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+                // Base row rides the exact cruise radius (a flat underside); the highlight
+                // puff sits on the sunlit top of the bank.
+                var p = _run.Planet.Center + dir * (c.Alt + wob * 1.2f);
+                _renderer.DrawCircle(p, rad, bodyCol);
+                _renderer.DrawCircle(p + dir * (rad * 0.45f), rad * 0.62f, bodyLt);
             }
         }
     }
@@ -3214,6 +3308,158 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.ShootCooldown = 0.35f;
     }
 
+    /// <summary>Climbing the monster: an airborne dwarf touching the titan's hull latches to
+    /// a bearing on its body circle and moves WITH it — the platform is the monster. A/D walk
+    /// around the hide (all the way over the back, to hold aim on a weakpoint), a Space tap
+    /// hops off, lighting the jetpack pulls free, and the shake-off thrash flings the rider.</summary>
+    private void TickTitanRiding(float dt, KeyboardState keys)
+    {
+        var t = _run.Titan;
+        var p = _run.Player;
+        if (!t.Hatched || t.Health <= 0 || !t.Targetable || p.FlyMode) { _riding = false; return; }
+
+        var surfR = t.BodyRadius + p.Radius + 2f;
+        if (!_riding)
+        {
+            // Latch on hull contact — airborne only, so the monster walking into a dwarf
+            // standing on the ground doesn't glue them to it.
+            var rel = p.Position - t.Position;
+            if (p.Grounded || p.IsJetting || rel.Length() > t.BodyRadius + p.Radius + 5f) return;
+            _riding = true;
+            _rideAngle = MathF.Atan2(rel.Y, rel.X);
+        }
+
+        if (Pressed(keys, _prevKeys, Keys.Space) || p.IsJetting)
+        {
+            _riding = false;
+            var off = new Vector2(MathF.Cos(_rideAngle), MathF.Sin(_rideAngle));
+            p.Velocity = t.Velocity + off * 90f + _run.Planet.UpAt(p.Position) * 120f;
+            return;
+        }
+
+        var move = 0;
+        if (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left)) move -= 1;
+        if (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right)) move += 1;
+        _rideAngle += move * dt * (48f / surfR);
+        var dir = new Vector2(MathF.Cos(_rideAngle), MathF.Sin(_rideAngle));
+        p.Position = t.Position + dir * surfR;
+        p.Velocity = t.Velocity;
+        // The monster feels the rider and thrashes once its patience runs out (2×dt beats
+        // the titan's own 1×dt decay); mid-shake the grip visibly rattles.
+        t.RiderTime += 2f * dt;
+        if (t.ShakeTimer > 0f) p.Position += dir * (MathF.Sin(t.ShakeTimer * 40f) * 2f);
+    }
+
+    /// <summary>The grapple line as a hard length constraint on the player: swing inside it,
+    /// never stretch past it. Hold LMB (with the hook selected) to reel in, S to pay line
+    /// out, Space to cut it. A line latched to the titan rides its hide — the boarding route —
+    /// and counts as clinging for the monster's shake-off patience.</summary>
+    private void TickGrapple(float dt, KeyboardState keys, MouseState mouse)
+    {
+        if (_grapAnchor is null && !_grapOnTitan) return;
+        var t = _run.Titan;
+        var p = _run.Player;
+        if (_grapOnTitan && (t.Health <= 0 || !t.Targetable)) { ReleaseGrapple(); return; }
+        if (_riding) { ReleaseGrapple(); return; }   // boarded — the line's done its job
+        var anchor = _grapOnTitan ? t.Position + _grapLocal : _grapAnchor!.Value;
+        if (!_grapOnTitan)
+        {
+            // The anchor tile got mined/blown away — the hook falls free.
+            var (ax, ay) = _run.Planet.WorldToTile(anchor);
+            if (!Tiles.IsSolid(_run.Planet.Get(ax, ay))) { ReleaseGrapple(); return; }
+        }
+        if (Pressed(keys, _prevKeys, Keys.Space)) { ReleaseGrapple(); return; }
+        if (p.Toolbelt.Current == "grapple" && mouse.LeftButton == ButtonState.Pressed)
+            _ropeLen = MathF.Max(10f, _ropeLen - 130f * dt);
+        if (keys.IsKeyDown(Keys.S))
+            _ropeLen = MathF.Min(420f, _ropeLen + 100f * dt);
+
+        var d = p.Position - anchor;
+        var len = d.Length();
+        if (len > 480f) { ReleaseGrapple(); return; }
+        if (len > _ropeLen && len > 0.01f)
+        {
+            var n = d / len;
+            p.Position = anchor + n * _ropeLen;
+            var vOut = Vector2.Dot(p.Velocity, n);
+            if (vOut > 0f) p.Velocity -= n * vOut;   // taut line: keep the swing, kill the stretch
+        }
+        if (_grapOnTitan) t.RiderTime += 2f * dt;
+    }
+
+    private void ReleaseGrapple()
+    {
+        _grapAnchor = null;
+        _grapOnTitan = false;
+    }
+
+    /// <summary>Cast the grappling hook at the cursor: an instant line march that latches to
+    /// the first player-blocking tile — or the titan's hide, the climbing-aid route onto the
+    /// monster. One line at a time; W cuts it (see TickGrapple).</summary>
+    private void FireGrapple(Vector2 worldCursor)
+    {
+        if (_grapAnchor is not null || _grapOnTitan) return;
+        var from = _run.Player.Position;
+        var dir = worldCursor - from;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        _run.Player.ShootCooldown = 0.45f;
+        var t = _run.Titan;
+        for (var d = 8f; d <= 400f; d += 4f)
+        {
+            var probe = from + dir * d;
+            if (t.Hatched && t.Health > 0 && t.Targetable
+                && (probe - t.Position).Length() < t.BodyRadius + 4f)
+            {
+                _grapOnTitan = true;
+                _grapLocal = probe - t.Position;
+                _ropeLen = d;
+                PlayAt("harpoon", from, 0.8f);
+                return;
+            }
+            var (px, py) = _run.Planet.WorldToTile(probe);
+            if (Tiles.BlocksPlayer(_run.Planet.Get(px, py)))   // no purchase on foliage
+            {
+                _grapAnchor = probe;
+                _ropeLen = d;
+                PlayAt("harpoon", from, 0.8f);
+                return;
+            }
+        }
+        PlayAt("ui", from, 0.3f, pitch: -0.4f);   // dry cast — nothing in range
+    }
+
+    /// <summary>Deploy a rope coil at the cursor: anchored under any non-sky tile, it unrolls
+    /// straight down as climbable Rope segments (10 max) until it meets ground — the cheap
+    /// way up a tower flank, a cliff, or into a shaft. One coil per use.</summary>
+    private void PlaceRope(Vector2 worldCursor)
+    {
+        var p = _run.Player;
+        if (p.Inventory.Count("rope") <= 0 && !p.FlyMode) return;
+        if ((worldCursor - p.Position).Length() > 70f) return;
+        var (cx, cy) = _run.Planet.WorldToTile(worldCursor);
+        if (_run.Planet.Get(cx, cy) != TileKind.Sky) return;
+        // Needs something to hang from directly above the top segment.
+        var up = _run.Planet.UpAt(worldCursor);
+        var (ax, ay) = _run.Planet.WorldToTile(worldCursor + up * Planet.TileSize);
+        if (_run.Planet.Get(ax, ay) == TileKind.Sky) return;
+
+        var placed = 0;
+        var pos = worldCursor;
+        for (var i = 0; i < 10; i++)
+        {
+            var (tx, ty) = _run.Planet.WorldToTile(pos);
+            if (_run.Planet.Get(tx, ty) != TileKind.Sky) break;
+            _run.Planet.Set(tx, ty, TileKind.Rope);
+            placed++;
+            pos -= _run.Planet.UpAt(pos) * Planet.TileSize;   // per-step up: follow curvature
+        }
+        if (placed == 0) return;
+        if (!p.FlyMode) p.Inventory.TryConsume("rope", 1);
+        p.ShootCooldown = 0.3f;
+        PlayAt("throw", worldCursor, 0.5f);
+    }
+
     private void FireHarpoon(Vector2 worldCursor)
     {
         var dir = worldCursor - _run.Player.Position;
@@ -3333,20 +3579,9 @@ public sealed partial class DwarfMinerGame : Game
             var k = _run.Planet.Get(tx, ty);
             if (k is not (TileKind.DoorClosed or TileKind.DoorOpen)) return false;
             var to = k == TileKind.DoorClosed ? TileKind.DoorOpen : TileKind.DoorClosed;
-            _run.Planet.Set(tx, ty, to);
-            // The whole leaf swings together: walk the contiguous vertical run of door
-            // tiles both ways (city doors are several tiles tall).
-            var up = _run.Planet.UpAt(at);
-            foreach (var s in new[] { 1f, -1f })
-            {
-                for (var step = 1; step <= 6; step++)
-                {
-                    var (nx, ny) = _run.Planet.WorldToTile(at + up * (Planet.TileSize * step * s));
-                    if (_run.Planet.Get(nx, ny) is not (TileKind.DoorClosed or TileKind.DoorOpen))
-                        break;
-                    _run.Planet.Set(nx, ny, to);
-                }
-            }
+            // The whole leaf swings together — Planet.SetDoorRun walks the run ring by
+            // ring with column slack, so the drifted upper tiles come along too.
+            _run.Planet.SetDoorRun(tx, ty, to);
             PlayAt("creak", at, 0.5f, pitch: to == TileKind.DoorOpen ? 0.3f : -0.2f);
             return true;
         }
@@ -6095,6 +6330,22 @@ public sealed partial class DwarfMinerGame : Game
             && (_run.Titan.Position - _camera.Target).LengthSquared() < 400f * 400f;
         if (titanOnScreen)
             TitanRenderer.Draw(_renderer, _run.Titan, _run.Planet, _run.Player.Position, _renderer.Time);
+
+        // Grapple line — a taut hemp strand from the dwarf to its hook (terrain point or a
+        // spot on the titan's hide), with the hook drawn as a bright claw at the anchor.
+        if (_grapAnchor is not null || _grapOnTitan)
+        {
+            var anchor = _grapOnTitan ? _run.Titan.Position + _grapLocal : _grapAnchor!.Value;
+            var span = anchor - _run.Player.Position;
+            var segLen = span.Length();
+            if (segLen > 1f)
+            {
+                var mid = _run.Player.Position + span * 0.5f;
+                var lineRot = MathF.Atan2(span.Y, span.X);
+                _renderer.DrawRect(mid, new Vector2(segLen, 1.2f), new Color(196, 160, 96), lineRot);
+                _renderer.DrawCircle(anchor, 2.2f, new Color(220, 220, 230));
+            }
+        }
 
         // Particles drawn last so chips and sparks pop over creatures and the player.
         _particles.Draw(_renderer);

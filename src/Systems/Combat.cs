@@ -65,7 +65,7 @@ public static class Combat
         foreach (var (t, victim) in _hits)
         {
             p.HitVictims.Add(victim);
-            ApplyDirectDamage(p, victim);
+            ApplyDirectDamage(p, victim, p.PrevPosition + seg * t);
 
             if (p.DetonatesOnContact)
             {
@@ -83,8 +83,10 @@ public static class Combat
         }
     }
 
-    /// <summary>Full-damage strike on a single body, with the projectile's elemental debuffs.</summary>
-    private static void ApplyDirectDamage(Projectile p, object victim)
+    /// <summary>Full-damage strike on a single body, with the projectile's elemental debuffs.
+    /// <paramref name="hitPos"/> is where along the flight path the round landed — a titan
+    /// strike inside one of its glowing weakpoints deals triple damage.</summary>
+    private static void ApplyDirectDamage(Projectile p, object victim, Vector2 hitPos)
     {
         switch (victim)
         {
@@ -101,7 +103,20 @@ public static class Combat
                 // Before hatching, hits chip the egg (and can crack it open early); after,
                 // they wound the boss.
                 if (!t.Hatched) t.DamageEgg(p.Damage);
-                else { t.Health -= p.Damage; t.HitFlash = 0.15f; }
+                else
+                {
+                    var dmg = p.Damage;
+                    foreach (var wp in t.WeakpointsWorld())
+                    {
+                        if ((hitPos - wp).LengthSquared() >= Titan.WeakpointRadius * Titan.WeakpointRadius)
+                            continue;
+                        dmg *= 3f;
+                        t.WeakpointFlash = 0.3f;
+                        break;
+                    }
+                    t.Health -= dmg;
+                    t.HitFlash = 0.15f;
+                }
                 break;
         }
     }

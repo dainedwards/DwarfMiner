@@ -281,6 +281,9 @@ public sealed class Corpse
         CreatureKind.Quillwing    => new[] { ("chitin", 1), ("meat", 1) },
         CreatureKind.Warpwisp     => new[] { ("crystal", 1) },
         CreatureKind.Thornback    => new[] { ("chitin", 2) },
+        // The kraken is a hunt trophy: a feast of meat, leviathan hide — and the gold of
+        // whoever tried the crossing before you, still in its gut.
+        CreatureKind.Kraken       => new[] { ("meat", 6), ("hide", 3), ("gold", 2) },
         _                         => new[] { ("meat", 1) },
     };
 
@@ -322,6 +325,7 @@ public sealed class Corpse
         CreatureKind.Saucer       => new Color(96, 106, 124),
         CreatureKind.AlienWhale   => new Color(48, 68, 96),
         CreatureKind.AlienCrab    => new Color(118, 66, 58),
+        CreatureKind.Kraken       => new Color(70, 38, 62),
         _                         => new Color(110, 90, 90),
     };
 }

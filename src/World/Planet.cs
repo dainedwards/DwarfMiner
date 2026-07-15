@@ -178,12 +178,27 @@ public sealed class Planet
             if (ring < footR || ring > topR) continue;
             var lat = MathHelper.WrapAngle(angle - fAng) * ringRadius;
             if (MathF.Abs(lat) > halfW + TileSize * 1.9f) continue;   // slab ledges included
-            var slot = MathF.Round((lat + halfW) / TileSize - 0.5f);
-            var snapped = -halfW + (slot + 0.5f) * TileSize;
-            // A tile too far from any slot isn't this tower's (or the map degenerated) —
-            // leave it where the grid put it.
-            if (MathF.Abs(snapped - lat) > TileSize * 0.62f) return angle;
-            return fAng + snapped / ringRadius;
+            // Exact inversion of the generator's column→tile map: candidate slots around
+            // the nearest one, snapped to whichever FORWARD-maps onto this very tile. A
+            // plain nearest-slot round drifts off by one near the edges of WIDE hulls
+            // (ring chords run a hair off TileSize, and the error grows with |lat|),
+            // which re-introduced the 4px sawtooth the snap exists to erase.
+            var n = TilesAt(ring);
+            var chordAng = MathHelper.TwoPi / n;
+            var norm = (angle % MathHelper.TwoPi + MathHelper.TwoPi) % MathHelper.TwoPi;
+            var tile = (int)MathF.Floor(norm / chordAng) % n;
+            var slot0 = (int)MathF.Round((lat + halfW) / TileSize - 0.5f);
+            foreach (var d in _doorSlack)   // {0, +1, -1} — reused nearest-first probe order
+            {
+                var slat = -halfW + (slot0 + d + 0.5f) * TileSize;
+                if (MathF.Abs(slat - lat) > TileSize * 1.1f) continue;
+                var tj = (int)MathF.Round((fAng + slat / ringRadius) / chordAng - 0.5f);
+                if (((tj % n) + n) % n != tile) continue;
+                return fAng + slat / ringRadius;
+            }
+            // No slot owns this tile (a backfill filler, or the map degenerated) — leave
+            // it where the grid put it.
+            return angle;
         }
         return angle;
     }
@@ -328,6 +343,44 @@ public sealed class Planet
         TrackKindChange(_tiles[i], k);
         _tiles[i] = k;
         _damage[i] = 0;
+    }
+
+    /// <summary>Set the WHOLE door leaf through tile (x, y) — every contiguous door tile
+    /// above and below it — so a tall door opens and closes as ONE piece. The polar lattice
+    /// drifts a column between rings (towers stamp each ring's door at the tile nearest
+    /// their straight facade line), so the old same-angle world-space walk missed drifted
+    /// tiles and stranded parts of the leaf closed; this walks ring by ring, re-matching
+    /// the door column with a one-tile slack each step.</summary>
+    private static readonly int[] _doorSlack = { 0, 1, -1 };
+
+    public void SetDoorRun(int x, int y, TileKind to)
+    {
+        static bool IsDoor(TileKind k) => k is TileKind.DoorClosed or TileKind.DoorOpen;
+        if (!IsDoor(Get(x, y))) return;
+        Set(x, y, to);
+        for (var dir = -1; dir <= 1; dir += 2)
+        {
+            var (cx, cy) = (x, y);
+            for (var step = 0; step < 8; step++)
+            {
+                var r = cx + dir;
+                if (r < 1 || r >= Rings) break;
+                var n = TilesAt(cx);
+                var nn = TilesAt(r);
+                var t0 = (int)(((cy % n + n) % n + 0.5f) / n * nn);
+                var found = false;
+                foreach (var d in _doorSlack)
+                {
+                    var t = ((t0 + d) % nn + nn) % nn;
+                    if (!IsDoor(Get(r, t))) continue;
+                    Set(r, t, to);
+                    (cx, cy) = (r, t);
+                    found = true;
+                    break;
+                }
+                if (!found) break;
+            }
+        }
     }
 
     public byte Damage(int x, int y) =>
