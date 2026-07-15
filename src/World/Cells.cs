@@ -429,6 +429,29 @@ public sealed class Cells
         Place(cx, cy, Material.Water, (TileKind)RainWaterSrc);
     }
 
+    /// <summary>Whether resting snow lies for good (frost worlds) or sublimates away.
+    /// Refreshed by Weather each frame from the biome, so headless worlds default to
+    /// melting-out — no test can strand an ever-awake snowfield.</summary>
+    public bool SnowPersists;
+
+    /// <summary>Spawn one falling snow cell — the accumulating half of a snowfall (the
+    /// drifting flakes are particles). Piles like sand where it lands.</summary>
+    public void SpawnSnow(Vector2 worldPos)
+    {
+        var (cx, cy) = WorldToCell(worldPos);
+        Place(cx, cy, Material.Snow);
+    }
+
+    /// <summary>World positions where the sim just made bubbles (steam popping off a quench,
+    /// a flame gout dying in a pool). Game1 drains this into bubble particles; headless
+    /// callers just leave it. Capped so a cataclysm can't flood it.</summary>
+    public readonly List<Vector2> PendingBubbles = new();
+    private const int MaxPendingBubbles = 200;
+    private void QueueBubble(Vector2 pos)
+    {
+        if (PendingBubbles.Count < MaxPendingBubbles) PendingBubbles.Add(pos);
+    }
+
     /// <summary>Spawn dust cells filling the whole polar tile, tagged with the source TileKind
     /// so the cells render in that tile's colours and pay out that tile's drop on pickup.
     /// Deterministic count (DustCellsPerTile = Density²) so the debris occupies exactly the
