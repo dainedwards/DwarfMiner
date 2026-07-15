@@ -1145,8 +1145,12 @@ public sealed partial class DwarfMinerGame : Game
         // The station keeps drifting while the pod falls.
         _run.MothershipAngle += Session.StationDriftRate * dt;
 
+        var tPerf = FramePerf.Now();
         _run.Physics.Update(dt);
+        FramePerf.Add("phys", tPerf);
+        tPerf = FramePerf.Now();
         _run.Cells.Update(dt);
+        FramePerf.Add("cells", tPerf);
         _particles.Update(dt, _run.Planet, _run.Cells);
         _run.RunTime += dt;
         _toastTimer -= dt;
