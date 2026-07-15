@@ -94,6 +94,35 @@ public static class Weather
         }
     }
 
+    /// <summary>The altitude (offset above the baseline ground at <paramref name="angle"/>) a
+    /// cloud should ride at to sit SEVERAL tiles clear of the tallest object beneath its whole
+    /// band — peaks and giant trees included. Samples a few bearings across the band, finds the
+    /// topmost non-sky tile at each, and clears the highest by a comfortable margin.</summary>
+    private static float TargetAlt(Planet planet, float angle, float halfWidth)
+    {
+        var baseR = (SpawnDirector.FindSurfaceSpawn(planet, angle, planet.Radius) - planet.Center).Length();
+        var maxTop = baseR;
+        // Scan from well above the tallest possible feature down to the first solid/flora tile.
+        var hi = Math.Min(planet.Rings - 2, planet.SurfaceRing + 60);
+        var lo = Math.Max(2, planet.SurfaceRing - 20);
+        for (var i = -2; i <= 2; i++)
+        {
+            var a = angle + i / 2f * halfWidth;
+            for (var r = hi; r > lo; r--)
+            {
+                var n = planet.TilesAt(r);
+                var t = (int)((a / MathHelper.TwoPi + 1f) % 1f * n);
+                if (planet.Get(r, t) != TileKind.Sky)
+                {
+                    var topR = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
+                    if (topR > maxTop) maxTop = topR;
+                    break;
+                }
+            }
+        }
+        return maxTop - baseR + 130f;   // several tiles of clear air above the tallest thing
+    }
+
     /// <summary>One rain tick under a cloud: water the trees in its band, throw a few falling
     /// raindrop particles, and — on the harsh worlds — puff off the odd gas (acid) or smoke
     /// (fire) cell. Deliberately light on real cells so acid rain never dissolves the ground.</summary>
