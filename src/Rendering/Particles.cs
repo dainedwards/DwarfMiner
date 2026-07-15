@@ -1345,13 +1345,22 @@ public sealed class Particles
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            // Three liquid inks like Noita's acid: neon highlight, bright body, and the
+            // occasional DEEP green — a liquid rope needs dark grains for depth, where
+            // fire wants none.
+            var tone = i < 7 ? 0 : _rng.Next(4);
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f,
                 Velocity = d * (jetSpeed * (0.75f + (float)_rng.NextDouble() * 0.5f)),
                 Life = 0.18f + (float)_rng.NextDouble() * 0.2f,
                 MaxLife = 0.4f,
-                Color = i < 7 ? new Color(210, 255, 130) : new Color(120, 220, 60),
+                Color = tone switch
+                {
+                    0 => new Color(215, 255, 100),
+                    1 or 2 => new Color(130, 225, 55),
+                    _ => new Color(70, 150, 35),
+                },
                 FadeColor = new Color(40, 90, 25),
                 Size = i < 7 ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
                 GravityScale = HoseArcGravity,   // same arc as the acid cells
