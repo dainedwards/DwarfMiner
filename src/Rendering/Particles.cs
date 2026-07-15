@@ -1355,9 +1355,10 @@ public sealed class Particles
     /// payload is real Acid cells launched by Game1 — this is the visible mist around it.</summary>
     public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach)
     {
-        // Slow rope, long lives — same retune as EmitFlameJet (and Game1's cell launch):
-        // the stream flows rather than sprays.
-        var jetSpeed = reach * 1.9f;
+        // Constant slow rope — same retune as EmitFlameJet (and Game1's cell launch):
+        // flow speed pinned to the tap-fire start, hold-ramp lengthens via grain life.
+        const float jetSpeed = 80f;
+        var lifeScale = reach / 42f;
         // Many TINY droplets — a granular liquid rope, not fat green puffs. Lights on the
         // bright leading droplets only (see EmitFlameJet).
         for (var i = 0; i < 22; i++)
