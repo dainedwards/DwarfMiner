@@ -3296,7 +3296,7 @@ public sealed partial class DwarfMinerGame : Game
     }
 
     // ── Throw-charge system ───────────────────────────────────────────────────────────
-    // Thrown items (dynamite, dynamite pack, TNT, TNT pack, torches) charge a strength gauge
+    // Thrown items (dynamite, dynamite pack, torches) charge a strength gauge
     // while LMB is held and release the throw on button-up. _throwCharge (0..1) drives the
     // launch speed via ThrowSpeed and the gauge ring on the reticle.
     private float _throwCharge;
