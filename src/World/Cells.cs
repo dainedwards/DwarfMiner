@@ -1998,9 +1998,11 @@ public sealed class Cells
                 case Material.Oil:
                 case Material.Gas:
                     fuelled = true;
-                    // Flame front: catch the neighbouring fuel cell alight. Probabilistic so
-                    // a pool burns across its surface over a second, not in one frame.
-                    if (_rng.Next(3) == 0)
+                    // Flame front: catch the neighbouring fuel cell alight. Probabilistic
+                    // so a pool burns across its surface over seconds, not in one frame —
+                    // rate halved (3→6) so fuel is CONSUMED slower and a burning pool
+                    // lasts twice as long (the released fused fire keeps the front alive).
+                    if (_rng.Next(6) == 0)
                     {
                         var (fcx, fcy) = UnIdx(ni);
                         IgniteCell(fcx, fcy);
@@ -2044,7 +2046,10 @@ public sealed class Cells
             // middle path: 28 ate whole trees in moments once fuse fire stood on them for
             // 6-9s, 90 made the jet's touch feel inert — at 45 a touched surface visibly
             // catches within a beat but a structure still burns DOWN over a while.
-            if (_rng.Next(45) != 0) return;
+            // 60 (was 45): burnable TILES are consumed slower too — a burning structure
+            // stays aflame longer instead of being eaten through; the fuse's dwell keeps
+            // the initial catch reliable.
+            if (_rng.Next(60) != 0) return;
             if (!SpendFire()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
@@ -2099,7 +2104,9 @@ public sealed class Cells
         // strays) sample themselves into the flame queue; Game1 turns each entry into a
         // rising flame tongue. Because the source is the live fire population, the
         // visible flames grow with jet dwell and spread wherever fuel carries the fire.
-        if ((_srcTile[i] > 0 || fuelled) && _rng.Next(5) == 0
+        // FUELLED fire burns visibly hotter: 2.5× the licking-flame emission of a bare
+        // fused burn — a fire that found fuel rages, one on rock just burns.
+        if ((_srcTile[i] > 0 || fuelled) && _rng.Next(fuelled ? 2 : 5) == 0
             && PendingFlames.Count < MaxPendingFlames)
             PendingFlames.Add((CellToWorld(cx, cy),
                 fuelled ? (byte)Math.Max((int)_srcTile[i], 55) : _srcTile[i]));
