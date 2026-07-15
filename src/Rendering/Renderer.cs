@@ -675,20 +675,24 @@ public sealed class Renderer
                     }
                     case TileKind.DoorClosed:
                     {
-                        // Ordinary panelled door leaf: dark side stiles, a warm timber body, a
-                        // recessed rectangular panel and a full-height brass pull on the latch
-                        // side. Every element runs the full tile height (or sits inset from it),
-                        // so a door built two or three tiles tall reads as one continuous leaf.
+                        // ONE continuous panelled leaf, however many tiles tall: side stiles and
+                        // vertical panel lines run the full height so tiles blend seamlessly, and
+                        // the single brass pull is drawn ONCE — on the bottom tile of the run (the
+                        // one whose inner neighbour isn't a door) at hand height — so a tall door
+                        // reads as a single door, not a stack of little ones each with its own knob.
                         var wood  = new Color(124, 84, 48);
                         var dark  = new Color(78, 50, 28);
                         var lite  = new Color(152, 110, 68);
                         var brass = new Color(205, 178, 112);
+                        var doorBelow = innerK is TileKind.DoorClosed or TileKind.DoorOpen;
                         DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, dark);  // hinge stile
                         DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, dark);  // latch stile
                         DrawDeco(centre, right, up, rotation, chord, 1, 0, 6, 8, wood);  // leaf body
-                        DrawDeco(centre, right, up, rotation, chord, 2, 1, 3, 6, dark);  // panel groove
-                        DrawDeco(centre, right, up, rotation, chord, 2, 2, 2, 4, lite);  // raised panel face
-                        DrawDeco(centre, right, up, rotation, chord, 6, 0, 1, 8, brass); // pull handle
+                        DrawDeco(centre, right, up, rotation, chord, 2, 0, 1, 8, dark);  // panel line (continuous)
+                        DrawDeco(centre, right, up, rotation, chord, 5, 0, 1, 8, dark);  // panel line (continuous)
+                        DrawDeco(centre, right, up, rotation, chord, 3, 0, 2, 8, lite);  // raised panel face
+                        if (!doorBelow)
+                            DrawDeco(centre, right, up, rotation, chord, 6, 2, 1, 3, brass); // one pull, at hand height
                         break;
                     }
                     case TileKind.DoorOpen:
