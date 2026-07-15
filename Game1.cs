@@ -701,6 +701,9 @@ public sealed partial class DwarfMinerGame : Game
         // A prefetched world (built in the background while flying nearby) makes this
         // near-instant; otherwise build it here and eat the pause.
         _run = TakePrefetchedSession(def) ?? BuildSessionWorld(def);
+        // Sky heightmap for the lighting pass builds now, in the load, instead of lazily
+        // on the already-overloaded first live frame.
+        _lightGrid.PrewarmSky(_run.Planet);
         // Ship-stage recipes (nav core cost) vary per planet — rebuild the crafting table.
         Crafting.SetPlanet(def);
 
