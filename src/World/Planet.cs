@@ -156,6 +156,38 @@ public sealed class Planet
     /// state so resumed runs keep their citizens.</summary>
     public readonly List<(int x, int y)> CitySpawns = new();
 
+    /// <summary>Skyscraper facade frames — bearing, half-width in px (a whole multiple of
+    /// half a tile), and the ring range including rooftop furniture. WorldGen.RaiseCity
+    /// records one per tower; the renderer snaps engineered tiles onto each frame's column
+    /// lattice (<see cref="FacadeSnapAngle"/>) so machined hulls draw dead straight instead
+    /// of inheriting the polar grid's per-ring lattice drift. Persisted with the tile
+    /// state.</summary>
+    public readonly List<(float ang, float halfW, int footR, int topR)> CityFacades = new();
+
+    /// <summary>Draw-time-only lattice snap for machined structures. The polar grid's
+    /// tiles-per-ring drifts every ring, so a tower's tile centres jitter laterally by up to
+    /// half a tile ring-to-ring and its facade renders as a leaning staircase. Towers are
+    /// GENERATED column-by-column against their own lateral lattice (see WorldGen), so each
+    /// tile sits within half a tile of its intended column slot: this maps a tile's bearing
+    /// back to that slot. Collision and the grid never move — the shift is ≤ ~½ tile, the
+    /// same order the crust shader displaces natural silhouettes.</summary>
+    public float FacadeSnapAngle(int ring, float angle, float ringRadius)
+    {
+        foreach (var (fAng, halfW, footR, topR) in CityFacades)
+        {
+            if (ring < footR || ring > topR) continue;
+            var lat = MathHelper.WrapAngle(angle - fAng) * ringRadius;
+            if (MathF.Abs(lat) > halfW + TileSize * 1.9f) continue;   // slab ledges included
+            var slot = MathF.Round((lat + halfW) / TileSize - 0.5f);
+            var snapped = -halfW + (slot + 0.5f) * TileSize;
+            // A tile too far from any slot isn't this tower's (or the map degenerated) —
+            // leave it where the grid put it.
+            if (MathF.Abs(snapped - lat) > TileSize * 0.62f) return angle;
+            return fAng + snapped / ringRadius;
+        }
+        return angle;
+    }
+
     /// <summary>Lizardman den sites — the chamber hearts of each underground lizard city
     /// (WorldGen.CarveLizardCities). SpawnDirector spawns warren guards near these, so the
     /// warrens stay garrisoned however often the player clears them. Persisted with the
