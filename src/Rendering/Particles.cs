@@ -580,6 +580,25 @@ public sealed class Particles
         });
     }
 
+    /// <summary>A single snowflake: drifts down slowly, wafting side to side, barely pulled by
+    /// gravity — fluffy and light, the ice world's answer to rain.</summary>
+    public void EmitSnow(Vector2 pos, Vector2 down, Color color)
+    {
+        var side = new Vector2(-down.Y, down.X);
+        _list.Add(new Particle
+        {
+            Position = pos,
+            Velocity = down * (26f + (float)_rng.NextDouble() * 20f) + side * (((float)_rng.NextDouble() - 0.5f) * 24f),
+            Life = 1.4f + (float)_rng.NextDouble() * 1.4f,
+            MaxLife = 2.8f,
+            Color = color,
+            FadeColor = color * 0.6f,
+            Size = 1.3f + (float)_rng.NextDouble() * 1.4f,
+            GravityScale = 0.12f,
+            Drag = 0.6f,
+        });
+    }
+
     private void EmitExplosion(Vector2 pos, float strength, int sparkCount, int smokeCount, Color sparkColor)
     {
         // Flash core — one big, near-instant blob of light at the epicentre. Sells the "bang"
