@@ -228,11 +228,12 @@ public static class TitanRenderer
             r.DrawRect(Vector2.Lerp(pelvis + f.Up * 24f, chest, i / 3f) + f.Right * (f.Face * 20f),
                 new Vector2(34f - i * 3f, 12f), f.Belly, f.Rot);
 
-        // Forearms — short, clawed, held forward.
+        // Forearms — short, clawed, held forward; the committed arm hammers a smash.
         for (var s = -1; s <= 1; s += 2)
         {
             var shoulder = chest + f.Right * (s * 26f) + f.Up * 6f;
             var hand = shoulder + f.Right * (f.Face * 34f) - f.Up * (20f + MathF.Sin(f.Pulse + s) * 4f);
+            hand = SmashFist(t, f, s, shoulder, hand);
             Seg(r, shoulder, hand, 12f, f.HideDark);
             Seg(r, hand, hand + f.Right * (f.Face * 12f) - f.Up * 6f, 7f, f.Hide);
             for (var c = -1; c <= 1; c++)
