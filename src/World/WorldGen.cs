@@ -319,15 +319,17 @@ public static class WorldGen
                 // seabed on ocean worlds: an obsidian shell plus a cave-free buffer under every
                 // deep basin, keeping the under-sea cave network dry and the sea overhead.
                 var lakeDepth = 0f;
-                foreach (var l in lakes)
+                var lakeIdx = -1;
+                for (var li = 0; li < lakes.Length; li++)
                 {
+                    var l = lakes[li];
                     var angDiff = MathF.Abs(ang - l.ang);
                     if (angDiff > MathF.PI) angDiff = MathHelper.TwoPi - angDiff;
                     if (angDiff < l.w)
                     {
                         var f = angDiff / l.w;
                         var d = (1f - f * f) * l.depth;
-                        if (d > lakeDepth) lakeDepth = d;
+                        if (d > lakeDepth) { lakeDepth = d; lakeIdx = li; }
                     }
                 }
 
@@ -337,9 +339,13 @@ public static class WorldGen
                 {
                     if (lakeDepth > 0.5f && depth < lakeDepth)
                     {
-                        planet.SetWall(r, t, TileKind.Dirt);
+                        // The pair's second basin is the LAVA lake: basalt-walled crucible,
+                        // seeded through LavaSeeds — the same fill path as volcano plumbing.
+                        var lavaLake = def.LakePair && lakeIdx == 1;
+                        planet.SetWall(r, t, lavaLake ? TileKind.Basalt : TileKind.Dirt);
                         planet.Set(r, t, TileKind.Sky);
-                        if (depth >= 1f) planet.WaterSeeds.Add((r, t));
+                        if (depth >= 1f)
+                            (lavaLake ? planet.LavaSeeds : planet.WaterSeeds).Add((r, t));
                         continue;
                     }
 
