@@ -19,7 +19,9 @@ namespace DwarfMiner.World;
 ///     Anchored kinds never move. The size budget only saves regions that touch the crust
 ///     (underground, the backdrop wall is inferred to carry big spans); fully airborne
 ///     regions — an undercut mountain, a sky-built platform — have nothing behind them
-///     and collapse no matter how big.
+///     and collapse no matter how big. At the other end, regions under MinCollapseSize
+///     never collapse at all — small player builds and mining leftovers float rather
+///     than dusting when one of their blocks is broken.
 ///
 /// Driven by a dirty queue so we only revisit recently disturbed tiles. Within a single
 /// settle pass, anchored regions are cached so repeated floods short-circuit.
