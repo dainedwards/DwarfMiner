@@ -4202,21 +4202,14 @@ public sealed partial class DwarfMinerGame : Game
         };
         for (var y = 0; y < mapH; y++)
         {
+            // Clean solid bands — no dithered/jagged edge between colours, just a straight
+            // colour change at each band boundary.
             var band = (int)(y / 13.5f);
             var c = bandCols[band % bandCols.Length];
-            var next = bandCols[(band + 1) % bandCols.Length];
-            var inBand = y - band * 13.5f;
             for (var x = 0; x < mapPeriod; x++)
-            {
-                var cc = c;
-                // Dithered band edge: the last rows checker toward the next band.
-                if (inBand > 11f && ((x + y) & 1) == 0) cc = next;
-                // Lazy longitudinal waviness so bands aren't dead-straight.
-                if (inBand < 2f && MathF.Sin(x * 0.1f + y * 0.5f) > 0.55f) cc = next;
-                map[y * mapW + x] = cc;
-            }
+                map[y * mapW + x] = c;
         }
-        // Storm oval — a pale swirl in the southern band.
+        // Storm oval — a pale swirl in the southern band, solid (no dithered rim).
         for (var dy = -6; dy <= 6; dy++)
             for (var dx = -10; dx <= 10; dx++)
             {
@@ -4224,9 +4217,7 @@ public sealed partial class DwarfMinerGame : Game
                 if (dd > 1f) continue;
                 var x = (70 + dx + mapPeriod) % mapPeriod;
                 var y = 70 + dy;
-                var cc = dd < 0.4f ? new Color(238, 208, 170) : new Color(216, 168, 128);
-                if (((x + y) & 1) == 0 && dd > 0.6f) continue;   // dithered rim
-                map[y * mapW + x] = cc;
+                map[y * mapW + x] = dd < 0.4f ? new Color(238, 208, 170) : new Color(216, 168, 128);
             }
         // Copy the leading 108 columns to the tail for wrap-free windows.
         for (var y = 0; y < mapH; y++)
