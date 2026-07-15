@@ -73,6 +73,13 @@ public static class WorldGen
             : (AngularSample(lumpLobes, a) * 1.5f + AngularSample(lumpDents!, a) * 0.5f - 0.3f)
               * def.Lumpiness * S;
 
+        // Local terrain height at a bearing — the ONE definition of the ground line, shared
+        // by the tile loop and the SurfaceProfile stamp so oxygen depth / sun heightmap /
+        // disc preview all follow the same rolling ground.
+        float ElevAt(float a) => AngularSample(surfA, a) * 2f * S
+            + (AngularSample(surfB, a) - 0.1f) * 7f * S
+            + LumpAt(a);
+
         // Explicit mountain placements — each roll is a massif: a main peak flanked by 1-3
         // shoulder peaks at offset angles and reduced heights, so ranges read as ridgelines
         // stepping down into foothills rather than isolated spikes. Peaks flatten into one
