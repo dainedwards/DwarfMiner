@@ -450,7 +450,6 @@ public static class Tiles
         "ammo_sapphire"      => "SAPPHIRE SHELL",
         "ammo_diamond"       => "DIAMOND SHELL",
         "machine_gun"        => "MACHINE GUN",
-        "tnt_pack"           => "TNT PACK",
         "dynamite_pack"      => "DYNAMITE PACK",
         "glass_block"        => "GLASS BLOCK",
         "rocket_launcher"    => "ROCKET LAUNCHER",
