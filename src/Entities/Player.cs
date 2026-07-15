@@ -14,14 +14,15 @@ public sealed class Player
     public float MaxHealth = 100f;
     public bool Grounded;
 
-    /// <summary>Breathable air supply. Refills fast at the surface, drains with depth (faster
-    /// the deeper you dig; scaled per-planet by <see cref="World.PlanetDef.OxygenDrainScale"/>).
-    /// At zero the dwarf suffocates — HP bleeds until they climb back toward the surface. The
-    /// air-tank upgrade raises the ceiling via <see cref="EffectiveMaxOxygen"/>.</summary>
+    /// <summary>The unified AIR supply — one meter for both breathing underwater and on
+    /// airless worlds. It drains while the head is underwater (unless gills breathe the
+    /// water) or while standing on an airless world without a helmet; otherwise it refills.
+    /// At zero the dwarf suffocates — HP bleeds (bypasses armor). Air-tank / recycler / lung
+    /// upgrades all raise the ceiling via <see cref="EffectiveMaxOxygen"/>.</summary>
     public float Oxygen = 100f;
     public const float BaseMaxOxygen = 100f;
 
-    /// <summary>Crafted air-tank upgrade — one-time, raises the oxygen ceiling so deep dives
+    /// <summary>Crafted air-tank upgrade — one-time, raises the air ceiling so deep dives
     /// last roughly twice as long before you must surface.</summary>
     public bool HasAirTank;
     /// <summary>Mothership-foundry upgrades (meta gear, re-applied on every entry like the
@@ -30,30 +31,34 @@ public sealed class Player
     public bool HasO2Recycler;
     public bool O2Tier2;
 
+    /// <summary>The pressure suit's sealed helmet (the vacsuit). While worn, an airless
+    /// world (no atmosphere) is breathable — the air meter doesn't drain from vacuum. Set
+    /// from the vacsuit upgrade in Game1. Underwater still drains regardless.</summary>
+    public bool HasHelmet;
+
+    /// <summary>Air ceiling: base 100, multiplied by the air tank, the foundry recycler
+    /// tiers, and the lung tiers (which used to raise the old breath meter — now that both
+    /// are one bar, lungs give a bigger reserve for long dives / long airless stints).</summary>
     public float EffectiveMaxOxygen =>
-        BaseMaxOxygen * (HasAirTank ? 2f : 1f) * (O2Tier2 ? 2f : HasO2Recycler ? 1.5f : 1f);
+        BaseMaxOxygen
+        * (HasAirTank ? 2f : 1f)
+        * (O2Tier2 ? 2f : HasO2Recycler ? 1.5f : 1f)
+        * (LungTier >= 2 ? 2f : LungTier == 1 ? 1.5f : 1f);
 
     // ── Swimming ──────────────────────────────────────────────────────────────
     /// <summary>Immersion state, set each frame by Game1 from the cell sim (Player.Update
     /// has no Cells reference): body submerged flips the movement model to swimming; head
-    /// submerged drains the breath meter.</summary>
+    /// submerged drains the air meter.</summary>
     public bool InWater;
     public bool HeadInWater;
 
-    /// <summary>Seconds of breath while the head is underwater. Refills fast in air; at zero
-    /// the dwarf drowns (HP bleed, bypasses armor — see Game1.TickBreath). Lung upgrades
-    /// raise the ceiling; the gill graft capstone stops the drain entirely.</summary>
-    public float Breath = BaseMaxBreath;
-    public const float BaseMaxBreath = 12f;
-
     /// <summary>Foundry aquatics (meta gear, re-applied on every entry like the jetpack):
-    /// fins double swim speed; lung tiers 1/2 double/triple the breath ceiling; the gill
-    /// graft breathes water — the meter never drains.</summary>
+    /// fins double swim speed; lung tiers raise the air ceiling (see EffectiveMaxOxygen);
+    /// the gill graft breathes water — the air meter never drains while submerged.</summary>
     public bool HasFins;
     public int LungTier;
     public bool HasGills;
 
-    public float EffectiveMaxBreath => BaseMaxBreath * (LungTier >= 2 ? 3f : LungTier == 1 ? 2f : 1f);
     private float SwimSpeed => MoveSpeed * (HasFins ? 1.3f : 0.65f);
 
     /// <summary>Pickaxe tier 1..4. Drives base mining power and reach. Replaces the older
