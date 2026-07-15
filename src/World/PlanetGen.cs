@@ -236,9 +236,9 @@ public static class PlanetGen
         // thin; the real payday is a rich vein (WorldGen.StampRichVeins).
         var rare = new List<(TileKind ore, float bias)>();
         if (goldVein || (biome == Biome.Slag && rng.Next(2) == 0))
-            rare.Add((TileKind.GoldOre, J(0.07f, 0.09f)));
+            rare.Add((TileKind.GoldOre, J(0.03f, 0.045f)));
         if (silverVein || biome == Biome.Frost)
-            rare.Add((TileKind.SilverOre, J(0.12f, 0.15f)));
+            rare.Add((TileKind.SilverOre, J(0.045f, 0.06f)));
         (TileKind, float)[] WithRare(params (TileKind ore, float bias)[] biases)
         {
             var all = new List<(TileKind, float)>(biases);
