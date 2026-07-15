@@ -2283,9 +2283,12 @@ public sealed class Cells
                 var col = ColorFor((Material)f.Mat, (int)f.Pos.X, (int)f.Pos.Y, f.Src);
                 var speed = f.Vel.Length();
                 var len = MathHelper.Clamp(speed * 0.016f, PxPerCell, PxPerCell * 3f);
+                // Area-conserving smear: a stretched streak thins so it stays one grain's
+                // worth of ink — motion blur of a pixel, not a growing rectangle.
+                var wid = MathF.Max(0.55f, PxPerCell * PxPerCell / len);
                 var rot = speed > 1f ? MathF.Atan2(f.Vel.Y, f.Vel.X) : 0f;
                 r.Batch.Draw(r.Pixel, f.Pos, null, col, rot,
-                    new Vector2(0.5f, 0.5f), new Vector2(len, PxPerCell), SpriteEffects.None, 0f);
+                    new Vector2(0.5f, 0.5f), new Vector2(len, wid), SpriteEffects.None, 0f);
             }
         }
     }
