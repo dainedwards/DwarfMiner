@@ -604,8 +604,10 @@ public sealed class Cells
     /// Game1 drains this into licking-flame particles, so the visible flame body lives
     /// exactly where the sim's fire lives: it grows with dwell (more/refreshed fuse
     /// cells), and when fuel lets the fire spread, the flames visibly spread with it.
+    /// Each entry carries the cell's REMAINING FUSE so the flame visual dies down in
+    /// sequence — tall tongues first, then the body, ending as base smolder.
     /// Sampled (not exhaustive) and capped like PendingBubbles.</summary>
-    public readonly List<Vector2> PendingFlames = new();
+    public readonly List<(Vector2 Pos, byte Fuse)> PendingFlames = new();
     private const int MaxPendingFlames = 200;
 
     /// <summary>Spawn dust cells filling the whole polar tile, tagged with the source TileKind
@@ -2092,7 +2094,8 @@ public sealed class Cells
         // visible flames grow with jet dwell and spread wherever fuel carries the fire.
         if ((_srcTile[i] > 0 || fuelled) && _rng.Next(5) == 0
             && PendingFlames.Count < MaxPendingFlames)
-            PendingFlames.Add(CellToWorld(cx, cy));
+            PendingFlames.Add((CellToWorld(cx, cy),
+                fuelled ? (byte)Math.Max((int)_srcTile[i], 55) : _srcTile[i]));
         // Gutter out: half to a smoke wisp, half to nothing (all-smoke fires read as grey
         // soup over a burning pool). A fuelled flame lives ~0.9s; a STARVED one now pools
         // ~0.8s before dying (was ~0.27s) — flame dropped on bare rock visibly burns as a

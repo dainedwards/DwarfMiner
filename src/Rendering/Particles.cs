@@ -1427,44 +1427,66 @@ public sealed class Particles
     /// and nowhere else, by construction. Buoyant puffs can never arc back down, so
     /// firing straight up is structurally incapable of raining fire on the shooter.
     /// DELIBERATELY INDEPENDENT of EmitAcidJet.</summary>
-    /// <summary>One licking flame PIXEL rising off a burning cell (see
-    /// Cells.PendingFlames) — Noita-style: a crisp discrete grain flickering up through
-    /// the stepped fire ramp, NOT part of the metaball fluid body (per user, the ground
-    /// flame is pixel fire like the game's own burning cells, only the JET is a fluid).
-    /// No world interaction of its own — the burning cell it rises from is the real
-    /// fire.</summary>
-    public void EmitLickingFlame(Vector2 pos, Vector2 up)
+    /// <summary>One licking flame PIXEL off a burning cell (see Cells.PendingFlames) —
+    /// Noita-style crisp grains, NOT part of the metaball fluid body. The flame is a
+    /// three-layer pyramid ROOTED to the surface, and <paramref name="fuse"/> (the
+    /// source cell's remaining burn) drives its die-down sequence:
+    ///  - BASE CHURN (most licks): near-stationary white-hot grains boiling at the
+    ///    surface — the strongest part of the flame STAYS at its origin.
+    ///  - BODY: mid licks rising and converging (the taper).
+    ///  - TALL TONGUES: only while the burn is strong (fuse > half) — first thing lost
+    ///    as the fire dies; below a quarter fuse the flame is just SMOLDER: dim ember
+    ///    reds crawling at the surface.</summary>
+    public void EmitLickingFlame(Vector2 pos, Vector2 up, byte fuse)
     {
         var side = new Vector2(-up.Y, up.X);
-        // Real flame SHAPE: born across a wide base, every lick's sideways velocity
-        // opposes its own base offset (drag then bleeds it off) so paths angle inward
-        // as they rise — wide at the bottom, converging toward the axis: the taper.
-        // Outer licks live shorter (they only exist low on the flame), and 1-in-4 is a
-        // TALL tongue that shoots past the rest — the dancing tip licking the air.
+        var strength = MathHelper.Clamp(fuse / 80f, 0f, 1f);
         var s0 = ((float)_rng.NextDouble() - 0.5f) * 4f;
-        var tall = _rng.Next(4) == 0;
-        // MaxLife == initial Life: every lick is born at the TOP of the colour ramp
-        // (white-hot at the flame base) and cools across its own full rise. A fixed
-        // MaxLife had most licks spawning mid-ramp — already dimmed at the base, which
-        // read as the flame fading out far too low.
-        var life = ((tall ? 0.55f : 0.35f) + (float)_rng.NextDouble() * 0.2f)
+        // Smolder: the burn's last quarter — no flame body left, just ember-red flickers
+        // hugging the surface.
+        if (strength < 0.25f)
+        {
+            var emberLife = 0.25f + (float)_rng.NextDouble() * 0.2f;
+            _list.Add(new Particle
+            {
+                Position = pos + side * s0,
+                Velocity = up * (2f + (float)_rng.NextDouble() * 5f),
+                Life = emberLife,
+                MaxLife = emberLife,
+                Color = _rng.Next(2) == 0 ? new Color(200, 70, 20) : new Color(150, 45, 18),
+                FadeColor = new Color(70, 30, 15),
+                Size = 0.5f,
+                GravityScale = 0f,
+                Drag = 2f,
+                JetSpark = true,
+                SmearMax = 1f,
+            });
+            return;
+        }
+        // Layer pick: 55% base churn / 30% rising body / 15% tall tongue (tongues only
+        // while the burn is strong — they're the first loss as the fuse drains).
+        var roll = _rng.Next(20);
+        var tall = roll < 3 && strength > 0.5f;
+        var baseChurn = roll >= 9;
+        var life = ((tall ? 0.55f : baseChurn ? 0.3f : 0.4f) + (float)_rng.NextDouble() * 0.18f)
                  * (1f - MathF.Abs(s0) * 0.12f);
+        var rise = baseChurn ? 3f + (float)_rng.NextDouble() * 7f
+                 : (tall ? 34f : 16f) + (float)_rng.NextDouble() * (tall ? 30f : 14f) * strength;
         _list.Add(new Particle
         {
             Position = pos + side * s0,
-            Velocity = up * ((tall ? 34f : 18f) + (float)_rng.NextDouble() * (tall ? 30f : 18f))
-                     - side * (s0 * 5f),
+            Velocity = up * rise - side * (s0 * (baseChurn ? 1.5f : 5f)),
             Life = life,
-            MaxLife = life,
-            Color = FlameTones[_rng.Next(3)],
+            MaxLife = life,   // born white-hot, cools over its own full path
+            Color = FlameTones[baseChurn ? _rng.Next(2) : _rng.Next(3)],
             FadeColor = new Color(205, 75, 15),
             Size = 0.5f + (float)_rng.NextDouble() * 0.3f,
-            GravityScale = -0.35f,   // flame rises
+            GravityScale = baseChurn ? 0f : -0.35f,
             Drag = 1.6f,
             LightRadius = _rng.Next(4) == 0 ? 24f : 0f,
             LightColor = new Color(255, 160, 55),
-            // Rides the jet's turbulence pattern so the pixel tongues waver as they
-            // rise, without joining the fluid coverage or shedding sparks.
+            // Rides the jet's turbulence pattern so the tongues waver as they rise,
+            // without joining the fluid coverage or shedding sparks.
             JetSpark = true,
             SmearMax = 1.2f,
         });
