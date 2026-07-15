@@ -86,10 +86,49 @@ public sealed class Particles
     /// fall back to ordinary strand quads.</summary>
     public bool FluidMode;
 
+    /// <summary>Guaranteed contact flame: everywhere the jet TOUCHES plants (or, within
+    /// 4 px, refreshes) a site that emits licking pixel flames for 3 seconds — the burn
+    /// visual is a promise of the touch itself, independent of whether the cell-sim fire
+    /// stamp found an open cell. Cosmetic only; not serialized.</summary>
+    private struct FlameSite { public Vector2 Pos; public float Ttl; }
+    private readonly List<FlameSite> _flameSites = new();
+    private const int MaxFlameSites = 48;
+    private const float FlameSiteTtl = 3f;
+
+    private void AddFlameSite(Vector2 pos)
+    {
+        for (var i = 0; i < _flameSites.Count; i++)
+            if (Vector2.DistanceSquared(_flameSites[i].Pos, pos) < 16f)
+            {
+                var s = _flameSites[i];
+                s.Ttl = FlameSiteTtl;
+                _flameSites[i] = s;
+                return;
+            }
+        if (_flameSites.Count < MaxFlameSites)
+            _flameSites.Add(new FlameSite { Pos = pos, Ttl = FlameSiteTtl });
+    }
+
     public int Count => _list.Count;
 
     public void Update(float dt, Planet planet, Cells? cells = null)
     {
+        // Contact flame sites: each emits a licking pixel tongue every few ticks until
+        // its 3 s runs out (refreshed while the jet keeps hitting nearby).
+        for (var i = _flameSites.Count - 1; i >= 0; i--)
+        {
+            var site = _flameSites[i];
+            site.Ttl -= dt;
+            if (site.Ttl <= 0f)
+            {
+                _flameSites[i] = _flameSites[^1];
+                _flameSites.RemoveAt(_flameSites.Count - 1);
+                continue;
+            }
+            _flameSites[i] = site;
+            if (_rng.Next(3) == 0)
+                EmitLickingFlame(site.Pos + Jitter(1.5f), planet.UpAt(site.Pos));
+        }
         for (var i = _list.Count - 1; i >= 0; i--)
         {
             var p = _list[i];
