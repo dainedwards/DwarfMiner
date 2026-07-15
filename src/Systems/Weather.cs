@@ -70,6 +70,10 @@ public static class Weather
             var c = run.Clouds[i];
             c.Life -= dt;
             c.Angle += c.Drift * dt;
+            // Ride at a clearance above whatever's tallest beneath the band right now — as the
+            // cloud drifts over a mountain or a stand of giant trees it rises to clear them, and
+            // settles back down over open ground. Eased so it glides rather than snapping.
+            c.Alt = MathHelper.Lerp(c.Alt, TargetAlt(planet, c.Angle, c.HalfWidth), dt * 0.7f);
             // Fade in over the life; fade back out in the last few seconds.
             var target = c.Life > 6f ? 1f : MathHelper.Clamp(c.Life / 6f, 0f, 1f);
             c.Grow = MathHelper.Lerp(c.Grow, target, dt * 0.5f);
