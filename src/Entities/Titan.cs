@@ -1603,6 +1603,15 @@ public sealed class Titan
     /// boss springs out of holes after airborne prey but doesn't pogo across open plains.</summary>
     private bool BelowLocalTerrain(Planet planet, Vector2 up, Vector2 right)
     {
+        // Buried by the book: the stamped terrain line says the surface is well above us.
+        // This is what makes the burst-up trigger robust to WIDE dig craters — an enraged
+        // dig on rolling ground wanders, sweeping a crater broader than the flank-column
+        // scan below, which then stares straight up open sky and never fires (the boss
+        // stood at the bottom of its own pit for good).
+        var dist = (Position - planet.Center).Length();
+        if (planet.SurfaceRadiusAt(Position) * Planet.TileSize - dist > 60f) return true;
+        // ...or roofed: solid rock above both flanking columns — catches "buried under a
+        // mountain", which the mountain-less terrain profile can't see.
         for (var s = -1; s <= 1; s += 2)
         {
             var col = Position + right * (s * 90f);
