@@ -300,7 +300,7 @@ void main()
 
         // --- techniques ---
         w.Write(1);
-        w.Write("TerrainCarve");
+        w.Write(technique);
         w.Write(0);                     // annotations
         w.Write(1);                     // passes
         w.Write("P0");
