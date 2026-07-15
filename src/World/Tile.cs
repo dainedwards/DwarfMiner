@@ -119,14 +119,15 @@ public static class Tiles
     /// cave-in connectivity flood treats them as ordinary load-bearing tiles, so a tower
     /// section cut free topples as rigid debris instead of hanging in the sky. Ladders are
     /// included ONLY so a city tower's centre ladder can't anchor the floors above a
-    /// breach; placeables that exist to hold things up (Support/ReinforcedSupport/Platform/
-    /// Rail/Beacon/Glowshroom), loot chests, and lily pads keep full anchor semantics.</summary>
+    /// breach, and Beacons ONLY so a spire's beacon-tipped antenna mast can't anchor the
+    /// whole skyscraper; placeables that exist to hold things up (Support/ReinforcedSupport/
+    /// Platform/Rail/Glowshroom), loot chests, and lily pads keep full anchor semantics.</summary>
     public static bool Topples(TileKind k) =>
         k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick
           or TileKind.Brick or TileKind.Plating or TileKind.GlassBlock
           or TileKind.DoorClosed or TileKind.DoorOpen
           or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp
-          or TileKind.Ladder;
+          or TileKind.Ladder or TileKind.Beacon;
 
     /// <summary>A tile the cave-in physics may move: solid, not flora (those crush, never
     /// fall), and not anchored — except toppling architecture, which is anchored against
