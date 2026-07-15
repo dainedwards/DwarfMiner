@@ -118,7 +118,7 @@ public sealed class Player
     private const float JetLift = 110f;
     /// <summary>One-shot upward velocity kick applied the frame a burn first lights — the
     /// "more initial thrust" pop, on top of the steady lift acceleration.</summary>
-    private const float JetInitialKick = 55f;
+    private const float JetInitialKick = 35f;
     private bool _jetPrev;   // was the jet burning last frame (for the initial-kick edge)
     private float _prevRadial;   // player-centre radius at frame start (one-way platform check)
     /// <summary>Seconds a grounded refill takes, whatever the tier's cap.</summary>
