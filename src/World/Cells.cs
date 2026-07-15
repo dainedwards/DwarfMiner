@@ -185,6 +185,25 @@ public sealed class Cells
         return true;
     }
 
+    // CONSUMPTION budget — separate from the spread budget above. Charring rolls scale
+    // with the adjacent flame POPULATION, and budding grows that population, so no char
+    // constant could keep an engulfed tree from eating itself in moments (and chars
+    // fought buds over one budget, making burn-through contention-erratic). This budget
+    // makes total tile consumption population-INDEPENDENT by construction: ~2.5 tiles/s
+    // planet-wide, however furiously things burn. Engulfment (~2 s via budding) therefore
+    // always beats burn-through — a small tree stands fully aflame long before its
+    // first-lit tile gives out — and a forest fire smoulders epically instead of
+    // deleting itself.
+    private float _charBudget = CharBudgetMax;
+    private const float CharBudgetMax = 6f;
+    private const float CharBudgetRegen = 2.5f;   // tile-chars per second, planet-wide
+    private bool SpendChar()
+    {
+        if (_charBudget < 1f) return false;
+        _charBudget -= 1f;
+        return true;
+    }
+
     // --- Compaction: buried, undisturbed grains re-form into Conglomerate tiles. ---
     // Per-cell timers would keep every resting grain awake, so the mechanic is tile-level
     // and sweep-based instead: TickSand records the owning tile whenever a grain comes to
