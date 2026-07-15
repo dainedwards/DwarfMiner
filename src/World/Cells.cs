@@ -2107,9 +2107,19 @@ public sealed class Cells
         // seconds without consuming anything. Charring alone could never deliver "fully
         // aflame before the first part burns out" — charring IS consumption, so spread
         // and burn-through were the same clock; budding decouples them.
-        if (fuelled && _rng.Next(12) == 0 && SpendFire())
+        if (fuelled && _rng.Next(7) == 0 && SpendFire())
         {
-            var bd = _rng.Next(4);
+            // FUEL-SEEKING buds: travel ALONG the burning surface (perpendicular to
+            // where the fuel is) instead of a blind random direction — fuel above or
+            // below → bud sideways; fuel beside → bud vertically. Flames wick across
+            // the fuel like a fuse instead of wasting buds on open air, which both
+            // speeds the spread and stops concave corners being skipped.
+            int bd;
+            var vertFuel = (fuelMask & 0b1100) != 0;
+            var latFuel = (fuelMask & 0b0011) != 0;
+            if (vertFuel && (!latFuel || _rng.Next(2) == 0)) bd = _rng.Next(2);
+            else if (latFuel) bd = 2 + _rng.Next(2);
+            else bd = _rng.Next(4);
             var (bx, by) = bd switch
             {
                 0 => (cx + 1, cy),
