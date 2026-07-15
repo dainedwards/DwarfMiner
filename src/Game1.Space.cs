@@ -358,18 +358,27 @@ public sealed partial class DwarfMinerGame
         (4, TileKind.Diamond), (4, TileKind.Crystal), (4, TileKind.Voidstone),
     };
 
-    /// <summary>Re-fix the nearest deposit of every material the current scanner rung can
-    /// detect. Kept out of Draw so the sweep runs on its own timer.</summary>
-    private void RefreshGeoScan()
+    /// <summary>Fire a scan PULSE (the scanner's Use action). Snapshots the nearest deposit
+    /// of every material the current rung detects WITHIN a tier-scaled radius, and marks each
+    /// find for a tier-scaled lifetime (15/30/45/60s). On a short cooldown so it can't be
+    /// spammed. A dud (no scanner owned, or still cooling) does nothing.</summary>
+    private void DoScanPulse()
     {
-        _geoScanHits.Clear();
         var tier = _run.Player.ScannerTier;
+        if (tier <= 0 || _scanCooldown > 0f) return;
+        _scanCooldown = 2.5f;
+        _scanPulseT = 0f;   // restart the expanding-ring animation
+
+        var radius = 200f + (tier - 1) * 120f;        // 200 → 560 px area by rung
+        var lifetime = 15f * tier;                    // 15 → 60 s mark lifetime by rung
+        var expiry = _run.RunTime + lifetime;
         foreach (var (need, kind) in GeoScanTargets)
         {
             if (need > tier) continue;
-            if (Scanner.FindNearest(_run.Planet, _run.Player.Position, kind, 520f) is { } pos)
-                _geoScanHits.Add((kind, pos));
+            if (Scanner.FindNearest(_run.Planet, _run.Player.Position, kind, radius) is { } pos)
+                _geoScanHits.Add((kind, pos, expiry));
         }
+        _sfx.Play("shoot_beam", 0.5f, pitch: 0.4f);
     }
 
     /// <summary>Draw the crafted scanner's finds as arrows RADIATING from the player: each
