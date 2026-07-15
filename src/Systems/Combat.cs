@@ -23,7 +23,7 @@ public static class Combat
     public static void ResolveHits(Projectile p, List<Creature> creatures, Titan? titan,
         Planet planet, Physics physics, Cells cells, Particles? particles = null)
     {
-        // Fuse explosives (dynamite/TNT) are lobbed charges — they tumble past bodies without
+        // Fuse explosives (dynamite) are lobbed charges — they tumble past bodies without
         // touching them; all their damage comes from the blast. A contact explosive that
         // already died on terrain this frame has spent its blast there; the AoE below covers
         // anything it flew past on the way in.
