@@ -128,10 +128,12 @@ public sealed class Physics
     public int NewlyCondemnedThisTick { get; private set; }
 
     /// <summary>When set, condemned stone regions small enough to hold together hand their
-    /// tiles here after the tremble instead of dusting. Returns false to decline (disabled /
-    /// over budget), in which case the legacy crumble runs. Wired by Game1; headless probes
-    /// and old tests leave it null and keep pure-dust behaviour.</summary>
-    public Func<List<int>, bool>? DetachToRigid;
+    /// tiles here after the tremble instead of dusting. The bool argument is the region's
+    /// <see cref="PendingCollapse.Sky"/> flag — fully above-ground regions convert whole,
+    /// with no size cap. Returns false to decline (disabled / over budget), in which case
+    /// the legacy crumble runs. Wired by Game1; headless probes and old tests leave it null
+    /// and keep pure-dust behaviour.</summary>
+    public Func<List<int>, bool, bool>? DetachToRigid;
 
     /// <summary>Tiles that left the grid as rigid chunks this Update — Game1's cue for the
     /// crack-and-groan of a slab shearing free (distinct from the dust-crumble boom).</summary>
