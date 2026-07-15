@@ -4215,11 +4215,11 @@ public sealed partial class DwarfMinerGame : Game
                 var idx = (dy + plR) * plS + dx + plR;
                 if (d > 1f)
                 {
-                    // Thin cyan atmosphere rim just outside the disc.
-                    if (d < 1.12f)
+                    // Thin cyan atmosphere halo just outside the disc.
+                    if (d < 1.07f)
                     {
-                        var falloff = 1f - (d - 1f) / 0.12f;
-                        var a = (int)(falloff * 120f);
+                        var falloff = 1f - (d - 1f) / 0.07f;
+                        var a = (int)(falloff * 90f);
                         planet[idx] = new Color(120, 180, 220, a);
                     }
                     continue;
@@ -4237,7 +4237,11 @@ public sealed partial class DwarfMinerGame : Game
                         col = ld < rad * 0.55f ? a : (((dx + dy) & 1) == 0 ? a : b);
                     }
                 }
-                if (ny < -0.72f || ny > 0.74f) col = ice;   // polar caps
+                // Polar caps: a jittered, dithered latitude edge so they read as frosted
+                // caps hugging the poles, not a ruler-straight band across the disc.
+                var capEdge = 0.80f + (((dx * 7 + dy * 13) & 3) - 1.5f) * 0.02f;
+                if (ny < -capEdge || ny > capEdge)
+                    col = ((dx + dy) & 1) == 0 ? ice : Color.Lerp(ice, sea, 0.25f);
 
                 // Directional light from the upper-left + limb darkening, quantised into a
                 // few flat cels with a dithered boundary — the moon's exact shading school.
