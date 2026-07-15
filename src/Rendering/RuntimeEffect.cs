@@ -138,6 +138,17 @@ float vnoise(vec2 x)
     return mix(mix(vhash(i),                  vhash(i + vec2(1.0, 0.0)), f.x),
                mix(vhash(i + vec2(0.0, 1.0)), vhash(i + vec2(1.0, 1.0)), f.x), f.y);
 }
+float carve(vec2 w, vec2 off)
+{
+    // Two octaves: a dominant long swell (~8 px at the base frequency) that bends the
+    // coastline coherently across whole runs of tiles, plus fine grain at 3.5x so the
+    // swell's surface stays rough. Mild pow shaping leaves stretches near depth zero, so
+    // the edge still touches the nominal tile line here and there instead of shrinking
+    // the whole silhouette uniformly.
+    float n = 0.7 * vnoise(w + off)
+            + 0.3 * vnoise(w * 3.5 + off * 1.7 + vec2(53.0, 29.0));
+    return pow(n, 1.3);
+}
 void main()
 {
     vec4 tex = texture2D(s0, vTexCoord);
