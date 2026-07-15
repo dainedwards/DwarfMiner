@@ -134,10 +134,6 @@ public sealed class Projectile
     /// (12) so a fully-charged shot breaks alien metal in ~4 detonations.</summary>
     public int AlloyMinePower = 2;
 
-    /// <summary>Drawn-size multiplier for the energy ball — set by FireEnergyBall from the
-    /// charge so a fully-wound shot renders as a bigger orb. 1 = default for everything else.</summary>
-    public float ChargeScale = 1f;
-
     public Projectile(Vector2 pos, Vector2 vel, float damage, float life, ProjectileKind kind = ProjectileKind.Bullet)
     {
         Position = pos;
