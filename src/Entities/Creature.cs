@@ -517,7 +517,7 @@ public sealed class Creature
                 var beside = Position + right * (side * (Radius + 5f));
                 var (bx, by) = planet.WorldToTile(beside);
                 if (planet.Get(bx, by) != TileKind.DoorOpen) continue;
-                SetDoorRun(planet, up, beside, TileKind.DoorClosed);
+                planet.SetDoorRun(bx, by, TileKind.DoorClosed);
                 break;
             }
 
