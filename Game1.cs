@@ -5503,6 +5503,8 @@ public sealed partial class DwarfMinerGame : Game
             // DM_FPSLOG=1 → per-second console FPS line, for headless perf comparisons.
             if (Environment.GetEnvironmentVariable("DM_FPSLOG") is { Length: > 0 })
                 Console.WriteLine($"[fps] {_fps}  upd {_updateMs:0.0}  drw {_drawMs:0.0}");
+            // DM_PERF=1 → companion per-phase attribution line (mean/worst ms per system).
+            FramePerf.Report();
         }
         var fpsText = $"FPS {_fps}  UPD {_updateMs:0.0}  DRW {_drawMs:0.0}";
         _renderer.DrawText(fpsText,
