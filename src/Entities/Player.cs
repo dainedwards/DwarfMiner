@@ -457,6 +457,7 @@ public sealed class Player
         }
 
         if (EmpTimer > 0f) EmpTimer -= dt;
+        if (HurtFlash > 0f) HurtFlash = MathF.Max(0f, HurtFlash - dt * 2.2f);
 
         // Jetpack: SPACE is a straight on/off thruster, Noita-style — hold it and the pack
         // burns, lifting you straight off the GROUND (no W-jump needed first; W plays no part
