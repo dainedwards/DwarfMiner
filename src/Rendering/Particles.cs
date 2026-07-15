@@ -111,6 +111,11 @@ public sealed class Particles
         foreach (var p in _list)
         {
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
+            // Noita palette rule: colours cool in FOUR HARD STEPS, not a smooth ramp — a
+            // spark is white, then orange, then red, then a dark ember, each a distinct
+            // ink. Smooth lerps read as soft/airbrushed; the stepped ramp is what makes a
+            // flame stream look like burning pixels. Ceil keeps fresh grains at full tone.
+            t = MathF.Ceiling(t * 4f) * 0.25f;
             var c = Color.Lerp(p.FadeColor, p.Color, t);
             // The Noita rule, enforced at the one choke point every emitter passes through:
             // a particle is a PIXEL — capped at 0.55 world px, one sim cell at Density 8
