@@ -2058,6 +2058,26 @@ public sealed class Cells
             return;
         }
 
+        // BUDDING: fuelled flame MULTIPLIES along the fuel surface — now and then it
+        // births a new flame into a random free cardinal neighbour (SpendFire-gated so
+        // the budget still caps planet-scale blazes). This is the ENGULFMENT mechanism,
+        // and it's direction-neutral: it wraps a small tree in fire within a couple of
+        // seconds without consuming anything. Charring alone could never deliver "fully
+        // aflame before the first part burns out" — charring IS consumption, so spread
+        // and burn-through were the same clock; budding decouples them.
+        if (fuelled && _rng.Next(25) == 0 && SpendFire())
+        {
+            var bd = _rng.Next(4);
+            var (bx, by) = bd switch
+            {
+                0 => (cx + 1, cy),
+                1 => (cx - 1, cy),
+                2 => cy > 0 ? InnerCell(cx, cy) : (cx, cy),
+                _ => cy < Height - 1 ? OuterCell(cx, cy, 0) : (cx, cy),
+            };
+            if ((bx, by) != (cx, cy) && !IsBlocked(bx, by)) Place(bx, by, Material.Fire);
+        }
+
         // Ember spit: a rare glowing mote arcs off a fuelled blaze and can start a spot
         // fire where it lands. Emitted, not launched — flame isn't conserved matter. Gated by
         // the spread budget so a windborne ember can't seed an unstoppable second front.
