@@ -245,7 +245,7 @@ public sealed class Particles
         // Beam body: a mote every ~3 px, drifting toward the strike point so the stream reads
         // as flowing. Only every fourth mote glows — a full-beam light string would flood the
         // lighting pass.
-        const float step = 3f;
+        const float step = 2f;
         var n = (int)(len / step);
         for (var i = 0; i <= n; i++)
         {
@@ -258,15 +258,15 @@ public sealed class Particles
                 MaxLife = 0.08f,
                 Color = hotCore ? new Color(255, 240, 200) : new Color(255, 150, 40),
                 FadeColor = new Color(180, 50, 10),
-                Size = hotCore ? 1f : 1.5f,
+                Size = hotCore ? 0.8f : 1.1f,
                 GravityScale = 0f,
-                LightRadius = i % 4 == 0 ? 7f : 0f,
+                LightRadius = i % 6 == 0 ? 7f : 0f,
                 LightColor = new Color(255, 160, 60),
             });
         }
         if (!hitting) return;
         // Molten spatter at the strike point — sprays back toward the emitter side.
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 4; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 1.6f;
             var back = -dir;
@@ -281,10 +281,10 @@ public sealed class Particles
                 MaxLife = 0.30f,
                 Color = new Color(255, 200, 90),
                 FadeColor = new Color(120, 30, 10),
-                Size = 1f,
+                Size = 0.8f,
                 GravityScale = 0.6f,
                 Drag = 1.5f,
-                LightRadius = 5f,
+                LightRadius = i % 2 == 0 ? 5f : 0f,
                 LightColor = new Color(255, 150, 60),
                 CollideTiles = true,
             });
