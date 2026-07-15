@@ -622,12 +622,12 @@ public static class WorldGen
         var flora = FloraFor(def.Biome);
         if (flora == TileKind.Sky) return;
 
-        // One roll per bearing across the whole circumference; density ~35% so the surface
-        // reads as dotted with plants, not carpeted.
+        // One roll per bearing across the whole circumference; density ~48% so the surface
+        // reads as generously planted without being carpeted.
         var bearings = 360 + rng.Next(120);
         for (var b = 0; b < bearings; b++)
         {
-            if (rng.Next(100) >= 35) continue;
+            if (rng.Next(100) >= 48) continue;
             var ang = (b + (float)rng.NextDouble()) / bearings * MathHelper.TwoPi;
             var dir = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
             // Walk down from well above the surface to the first solid tile.
