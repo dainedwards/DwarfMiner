@@ -694,32 +694,17 @@ public static class WorldGen
     /// that has water — rooted on the solid floor just under the surface of a pool.</summary>
     private static void ScatterWaterPlants(Planet planet, PlanetDef def, Random rng)
     {
-        if (!def.HasWater) return;
-        var bearings = 500 + rng.Next(160);
-        for (var b = 0; b < bearings; b++)
+        if (!def.HasWater || planet.WaterSeeds.Count == 0) return;
+        var basin = new System.Collections.Generic.HashSet<(int, int)>(planet.WaterSeeds);
+        // For each basin tile that sits on the floor (solid below, water/basin here), root a
+        // frond with a small chance. Cheap: one pass over the seeds, no per-bearing walk.
+        foreach (var (x, y) in planet.WaterSeeds)
         {
-            if (rng.Next(100) >= 22) continue;
-            var ang = (b + (float)rng.NextDouble()) / bearings * MathHelper.TwoPi;
-            // Walk down until the first solid tile that has a WaterSeed just above it (a
-            // lakebed), then plant a frond in that water tile.
-            for (var r = planet.SurfaceRing + 6; r > planet.SurfaceRing - 30; r--)
-            {
-                var n = planet.TilesAt(r);
-                var t = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
-                if (planet.Get(r, t) == TileKind.Sky)
-                {
-                    // Is this a water column? (the lake carver marks the basin as WaterSeeds)
-                    if (!planet.HasWaterSeed(r, t)) continue;
-                    // Root the frond just above the floor: the tile above the first solid.
-                    continue;
-                }
-                // Hit the floor — the tile above must be a water column to plant here.
-                var an = planet.TilesAt(r + 1);
-                var at = (int)((ang / MathHelper.TwoPi + 1f) % 1f * an);
-                if (planet.Get(r + 1, at) == TileKind.Sky && planet.HasWaterSeed(r + 1, at))
-                    planet.Set(r + 1, at, TileKind.SeaFrond);
-                break;
-            }
+            if (rng.Next(100) >= 8) continue;                    // sparse
+            if (planet.Get(x, y) != TileKind.Sky) continue;      // must be an open water column
+            if (basin.Contains((x - 1, y))) continue;            // not on the very floor → skip
+            if (Tiles.IsSolid(planet.Get(x - 1, y)))             // solid lakebed directly below
+                planet.Set(x, y, TileKind.SeaFrond);
         }
     }
 
