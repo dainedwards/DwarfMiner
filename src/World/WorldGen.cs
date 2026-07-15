@@ -1719,9 +1719,16 @@ public static class WorldGen
                 }
                 else if (dist <= (radius + 1) * Planet.TileSize)
                 {
-                    // Inner shell: crystal facing, glowshrooms sprouting from the floor side.
-                    planet.Set(r, t, dr < 0 && rng.Next(4) == 0
-                        ? TileKind.Glowshroom : TileKind.Crystal);
+                    // Inner shell: a rock face densely STUDDED with embedded crystals (they sit
+                    // inside the wall rock as gem overlays, not solid crystal blocks), with
+                    // glowshrooms sprouting from the floor side.
+                    if (dr < 0 && rng.Next(4) == 0)
+                        planet.Set(r, t, TileKind.Glowshroom);
+                    else
+                    {
+                        planet.Set(r, t, TileKind.Stone);
+                        planet.SetGem(r, t, TileKind.Crystal);
+                    }
                 }
                 else if (k != TileKind.Sky)
                 {
