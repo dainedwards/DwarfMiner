@@ -1535,6 +1535,14 @@ public sealed partial class DwarfMinerGame : Game
         TickAir(dt);
         TickHazardContact(dt);
 
+        // Zoom control: hold "-" to pull the camera out and "+"/"=" to push it back in (numpad
+        // +/- too). The chosen zoom sticks as the play zoom, so it persists frame to frame.
+        if (keys.IsKeyDown(Keys.OemMinus) || keys.IsKeyDown(Keys.Subtract))
+            _playZoom = MathHelper.Clamp(_playZoom * (1f - 1.6f * dt), 2.2f, 8f);
+        if (keys.IsKeyDown(Keys.OemPlus) || keys.IsKeyDown(Keys.Add))
+            _playZoom = MathHelper.Clamp(_playZoom * (1f + 1.6f * dt), 2.2f, 8f);
+        _camera.Zoom = _playZoom;
+
         // Camera follows player, rotating so up = away from planet center. DM_BOSSCAM frames
         // the boss instead (testing hook for screenshotting the variants).
         var camFocus = _bossCam && _run.Titan.Hatched ? _run.Titan.Position : _run.Player.Position;
