@@ -2000,6 +2000,7 @@ public sealed class Cells
             }
             if (!IsFlammable(k)) return;
             fuelled = true;
+            if (dirBit >= 0) fuelMask |= 1 << dirBit;
             if (below) burningFloor = true;
             // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke.
             // The roll is RESPONSIVE (40, floor-biased 20) but the actual consumption
