@@ -13,12 +13,13 @@ public sealed class Cloud
     public float Angle;        // bearing of the cloud centre
     public float HalfWidth;    // angular half-width of the bank
     public float Alt;          // cruising RADIUS from the planet centre, world px — fixed for life
-    public float Drift;        // angular drift per second (downwind)
+    public float Drift;        // angular drift per second — the planet's prevailing wind / Alt
     public float Life;         // seconds before it dissipates
     public float Grow;         // 0..1 fade-in / fade-out
     public float RainTimer;    // >0 while actively raining
     public float RainCooldown; // gap before it can rain again
     public float Phase;        // random phase for per-puff outline wobble
+    public float Shape;        // 0..1 silhouette hash — skews the bank so no two look alike
     public bool Dissipating;   // shredding against a peak/skyscraper — fading out for good
     public RainKind? KindOverride; // debug-spawned clouds rain THIS regardless of biome
 }
