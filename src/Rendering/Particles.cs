@@ -131,7 +131,11 @@ public sealed class Particles
                 // full stream / 60 ≈ 5-6 sparks per frame. JetSpark gives them the same
                 // turbulence pattern as the jet (clause above) WITHOUT joining the fluid
                 // coverage or shedding recursively.
-                if (!p.JetSpark && _rng.Next(20) == 0)
+                // Only FLYING flame sheds sparks (speed gate ~60 px/s): plume grains
+                // resting at the ground surface in their last frames were spawning
+                // sparks right on the terrain — the other half of the phantom
+                // "sparks interacting with the ground".
+                if (!p.JetSpark && sp > 3600f && _rng.Next(20) == 0)
                     _list.Add(new Particle
                     {
                         Position = p.Position + Jitter(1f),
@@ -1414,7 +1418,10 @@ public sealed class Particles
                 LandMat = CellFx ? (byte)Material.Fire : (byte)0,
                 // 6-9s burn fuse — the standing ground fire (see Cells.TickFire).
                 LandFuse = (byte)(120 + _rng.Next(60)),
-                LandSparks = true,
+                // NO touchdown spark splash (per user): sparks must never appear to
+                // interact with the ground — the stream's contact effect is the fire
+                // stamp above, full stop. (The splash was a 3-fleck burst kicked up at
+                // every carrier landing — literally sparks born at ground contact.)
             });
         }
         // 2) Plume puffs (6/frame — THE visible fire): launched with the stream but under
