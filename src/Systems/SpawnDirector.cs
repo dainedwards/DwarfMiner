@@ -810,7 +810,9 @@ public static class SpawnDirector
     /// push on its first frame, which reads as teleporting/clipping through the world.
     /// Overlap uses the same polar-rect math as the collider; anchored tiles are left alone
     /// and physics is dirty-marked so any overhang this opens up settles normally.</summary>
-    private static void ClearSpawnSpace(Session run, Vector2 pos, float radius)
+    /// <summary>Internal for the debug menu's creature tab — its on-demand spawns carve
+    /// the same free pocket a census spawn gets.</summary>
+    internal static void ClearSpawnSpace(Session run, Vector2 pos, float radius)
     {
         var planet = run.Planet;
         var (tx, _) = planet.WorldToTile(pos);
