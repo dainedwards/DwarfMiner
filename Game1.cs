@@ -6679,6 +6679,7 @@ public sealed partial class DwarfMinerGame : Game
         // surface readable but adds depth at the screen edges.
         _renderer.VignetteScene(new Point(VirtualWidth, VirtualHeight));
         _renderer.GradeScene(new Point(VirtualWidth, VirtualHeight), new Color(245, 245, 255));
+        FramePerf.Add("post", tDraw);
 
         _camera.Target = oldTarget;
 
