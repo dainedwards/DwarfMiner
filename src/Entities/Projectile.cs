@@ -235,22 +235,6 @@ public sealed class Projectile
                 ExplosionRadius = 42f;
                 CreaturePierces = -1;
                 break;
-            case ProjectileKind.Tnt:
-                Radius = 3f;
-                CraterTiles = 6;
-                ExplosionRadius = 70f;
-                ExplodesOnFuse = true;
-                CreaturePierces = -1;
-                break;
-            case ProjectileKind.TntPack:
-                // The sticky charge: same blast as the loose satchel, but it cements to the
-                // first wall it touches and rides the same fuse there.
-                Radius = 3f;
-                CraterTiles = 6;
-                ExplosionRadius = 70f;
-                ExplodesOnFuse = true;
-                CreaturePierces = -1;
-                break;
             case ProjectileKind.CivicBolt:
                 Radius = 1.3f;
                 FriendlyToNeutrals = true;
