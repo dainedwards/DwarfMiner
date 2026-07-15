@@ -58,6 +58,11 @@ public struct Particle
     /// <summary>Spark shed by the flame plume: rides the SAME turbulence pattern as the
     /// jet body (without joining the fluid coverage or shedding recursively).</summary>
     public bool JetSpark;
+    /// <summary>Weather-backdrop layer: drawn in the early pass BEFORE the cloud banks
+    /// (see Game1's weather-backdrop Draw call), so rain/snow spawned inside a cloud has
+    /// its origin hidden behind the puffs and visibly falls OUT of the bank. Everything
+    /// else keeps the normal late pass, in front of the clouds.</summary>
+    public bool Backdrop;
 }
 
 /// <summary>
