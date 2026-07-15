@@ -1343,11 +1343,11 @@ public sealed class Particles
                 LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
                 LightColor = new Color(255, 170, 70),
                 LandMat = CellFx && _rng.Next(2) == 0 ? (byte)Material.Fire : (byte)0,
-                // Long-burning ground fire: the stamped flame carries a ~3s burn fuse
-                // (60 × ~3 ticks) before normal guttering — it stands and burns even on
+                // Long-burning ground fire: the stamped flame carries a 6-9s burn fuse
+                // (fuse × ~3 ticks) before normal guttering — it stands and burns even on
                 // bare rock, it just can't spread there (charring stays flammability-
-                // gated). Fuse varies a little so a burn line dies out raggedly.
-                LandFuse = (byte)(50 + _rng.Next(30)),
+                // gated). Fuse varies so a burn line dies out raggedly.
+                LandFuse = (byte)(120 + _rng.Next(60)),
                 LandSparks = true,
                 SmearMax = smearCap,
                 SmearScale = 2f,
