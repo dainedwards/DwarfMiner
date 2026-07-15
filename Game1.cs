@@ -1663,11 +1663,17 @@ public sealed partial class DwarfMinerGame : Game
         if (_run.Player.ShootCooldown > shootCdBefore + 0.001f)
         {
             var shot = "shoot";
-            if (_run.Player.Toolbelt.Current is { } cur
-                && _items.TryGetValue(cur, out var cdef) && cdef.ShotSound is { } snd)
+            var cur = _run.Player.Toolbelt.Current;
+            if (cur is not null && _items.TryGetValue(cur, out var cdef) && cdef.ShotSound is { } snd)
                 shot = snd;
-            PlayAt(shot, _run.Player.Position, 0.5f,
-                pitch: MathHelper.Clamp(0.4f - _run.Player.ShootCooldown, -0.3f, 0.4f), minGap: 0.03f);
+            // The hoses (flamethrower / acid spewer) fire ~20×/s to keep a smooth stream — but a
+            // per-shot sound at that rate rattles like a machine gun. Play their voice on a big
+            // minGap instead so it reads as ONE sustained low roar; other guns keep the snappy
+            // per-shot report.
+            var isHose = cur is "flamethrower" or "acid_spewer";
+            PlayAt(shot, _run.Player.Position, isHose ? 0.4f : 0.5f,
+                pitch: isHose ? -0.2f : MathHelper.Clamp(0.4f - _run.Player.ShootCooldown, -0.3f, 0.4f),
+                minGap: isHose ? 0.32f : 0.03f);
         }
 
         // DM_AUTOFIRE=<belt id>: tooling hook — equips that weapon and holds fire along the
