@@ -1314,11 +1314,11 @@ public sealed class Particles
             // ballistic range scales with speed², so the band is the falloff spread at
             // long distance, far more than the cone angle is. Tightened 30% per user.
             var vel = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f));
-            // Outward (skyward) speed cap, kept from the payload era: without it a
-            // skyward stream rocketed unnaturally compared to every other flying thing.
-            // Applied to the LAUNCH component only, before momentum inheritance.
-            var outward = Vector2.Dot(vel, up);
-            if (outward > 170f) vel -= up * (outward - 170f);
+            // NO outward cap any more: clamping only the skyward component bent the
+            // launch off the aim, and the ±speed band meant some grains clamped while
+            // others didn't — two arc families braiding whenever the hose fired upward.
+            // (The cap mirrored the launched payload cells, which are gone; grains live
+            // ≤1.35s, so the old floating-ember hazard can't occur.)
             // Ejected fluid carries the shooter's momentum: without this, a flying player
             // paints the muzzle's flight path in fire ("shooting spaghetti") — grains
             // launched world-relative lag every turn the player makes. With it the stream
