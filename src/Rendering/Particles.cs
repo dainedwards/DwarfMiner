@@ -755,11 +755,11 @@ public sealed class Particles
                 }
                 break;
             case ProjectileKind.Dynamite:
-                EmitExplosion(pos, strength: 20f, sparkCount: 26, smokeCount: 18, sparkColor: new Color(255, 170, 60));
+                EmitExplosion(pos, strength: 12f, sparkCount: 16, smokeCount: 11, sparkColor: new Color(255, 170, 60));
                 break;
             case ProjectileKind.DynamitePack:
-                EmitExplosion(pos, strength: 34f, sparkCount: 44, smokeCount: 30, sparkColor: new Color(255, 165, 55));
-                EmitEmbers(pos, count: 16);
+                EmitExplosion(pos, strength: 17f, sparkCount: 22, smokeCount: 15, sparkColor: new Color(255, 165, 55));
+                EmitEmbers(pos, count: 8);
                 break;
             case ProjectileKind.Laser:
             case ProjectileKind.LaserCannon:
