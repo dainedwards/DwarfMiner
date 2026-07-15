@@ -1585,7 +1585,12 @@ public static class WorldGen
                     height = (int)((30f + (float)rng.NextDouble() * 26f) * S);
                 }
                 height = Math.Min(height, (int)(Planet.SkyHeadroom - 16 * S));
-                var gapPx = 12f + (float)rng.NextDouble() * 12f;   // a narrow street between hulls
+                // A narrow street between hulls — never under 16px: each hull quantizes up
+                // to a whole column (+≤2px per side) and slab rows carry a 1-tile exterior
+                // ledge, so a 12px street could leave neighbouring LEDGES angularly adjacent
+                // — structurally fusing the towers, so a tower severed at the street hung
+                // off its neighbour instead of toppling.
+                var gapPx = 16f + (float)rng.NextDouble() * 12f;
                 specs.Add((classRoll, halfWidthPx, height, gapPx));
                 rowPx += halfWidthPx * 2f + gapPx;
             }
