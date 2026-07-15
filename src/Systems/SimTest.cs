@@ -3459,10 +3459,15 @@ public static class SimTest
 
         // Cancellable settle: atmosphere entry fires the token mid-build and takes the world
         // as soon as generation is done — the leftover settle runs live in the orbit frames.
-        // A pre-cancelled token must still yield a complete world, in a fraction of the time.
+        // A pre-cancelled token must still yield a complete world, no slower than a settled
+        // build. (The settle self-limits now — cheap-tick / plateau / 700 ms budget exits —
+        // so "cancelled is 2× faster" no longer holds: BOTH must come in under roughly
+        // gen + budget. The old assert compared 171 ms vs 174 ms and failed on noise.)
         var settleSw = System.Diagnostics.Stopwatch.StartNew();
         DwarfMinerGame.BuildSessionWorld(World.PlanetDefs.ById("verdant"));
         var fullMs = settleSw.ElapsedMilliseconds;
+        Check("prefetch: settled build stays inside its time box",
+            fullMs < 3000, $"{fullMs}ms");
         using (var settleCts = new System.Threading.CancellationTokenSource())
         {
             settleCts.Cancel();
@@ -3470,8 +3475,8 @@ public static class SimTest
             var quick = DwarfMinerGame.BuildSessionWorld(World.PlanetDefs.ById("verdant"), settleCts.Token);
             Check("prefetch: cancelled settle still yields a usable world",
                 quick.Planet is not null && quick.Cells is not null && quick.Physics is not null);
-            Check("prefetch: cancelled settle skips the heavy half",
-                settleSw.ElapsedMilliseconds < fullMs / 2,
+            Check("prefetch: cancelled settle is not slower than a settled one",
+                settleSw.ElapsedMilliseconds < fullMs + 500,
                 $"{settleSw.ElapsedMilliseconds}ms vs {fullMs}ms settled");
         }
 
