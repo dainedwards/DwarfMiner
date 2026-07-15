@@ -1336,57 +1336,74 @@ public sealed class Particles
     private static readonly Color[] AcidTones =
         { new(215, 255, 100), new(130, 225, 55), new(130, 225, 55), new(70, 150, 35) };
 
-    /// <summary>Flamethrower stream — DELIBERATELY INDEPENDENT of EmitAcidJet (they were
-    /// briefly one shared core; split back per user, tune each weapon on its own). The
-    /// grains ARE the weapon (no launched payload cells): they render as the metaball
-    /// fluid body when the composite is live, half of them stamp real Fire on landing,
-    /// and they throw the touchdown spark splash. NO secondary populations — soot,
-    /// cinders and licks all read as stray stream effects and are gone.</summary>
+    /// <summary>Flamethrower — the 3D-game construction (per user, after the Blender-
+    /// tutorial reference): an INVISIBLE carrier stream delivers the gameplay — the arc,
+    /// the long-fuse fire stamps, the touchdown licks — while the visible fire is PLUME
+    /// PUFFS born at the muzzle that ride the stream, stall under drag, then billow
+    /// upward and EXPAND, cooling through the fire ramp into smoke grey. Young puffs
+    /// form a brief tight jet core at the barrel; downstream the core dissolves into
+    /// roiling rising flame — the stream disappears into its own effects.
+    /// DELIBERATELY INDEPENDENT of EmitAcidJet.</summary>
     public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
     {
-        var jetSpeed = reach * 1.35f;       // ~half the original spray speed
-        const float coneArc = 0.041f;       // tight cone (round 23)
-        const float smearCap = 17.6f;       // private smear cap (strand fallback only)
-        // 8 grains EVERY FRAME (ShootCooldown 0) minus a 1-in-5 skip (round 28): emission
-        // is continuous by construction, so waves can't form even while moving.
-        for (var i = 0; i < 8; i++)
+        var jetSpeed = reach * 1.35f;
+        const float coneArc = 0.041f;
+        // 1) Carriers (3/frame, NEVER drawn — Size 0): the gameplay stream, unchanged
+        // physics. Their own fire tones exist only so the touchdown spark splash has ink.
+        for (var i = 0; i < 3; i++)
         {
-            if (_rng.Next(5) == 0) continue;
             var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            var hot = i < 3;
-            var tone = FlameTones[hot ? _rng.Next(2) : _rng.Next(FlameTones.Length)];
-            // ±10.5% speed band = the LANDING scatter (range ∝ v²); momentum inheritance
-            // keeps the stream coherent in the shooter's frame while flying.
-            var vel = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)) + shooterVel;
             _list.Add(new Particle
             {
-                // Births back-filled along the muzzle's last-frame travel so a moving
-                // muzzle leaves a continuous origin line, not stair rows.
                 Position = pos - shooterVel * ((float)_rng.NextDouble() * 0.016f)
                          + d * (float)_rng.NextDouble() * 1.5f,
-                Velocity = vel,
+                Velocity = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)) + shooterVel,
                 Life = 0.8f + (float)_rng.NextDouble() * 0.55f,
                 MaxLife = 1.35f,
-                Color = tone,
+                Color = new Color(255, 180, 60),
                 FadeColor = new Color(120, 35, 15),
-                Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
+                Size = 0f,
                 GravityScale = HoseArcGravity,
                 Drag = 1.2f,
                 CollideTiles = true,
-                LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
-                LightColor = new Color(255, 170, 70),
-                LandMat = CellFx && _rng.Next(2) == 0 ? (byte)Material.Fire : (byte)0,
-                // Long-burning ground fire: the stamped flame carries a 6-9s burn fuse
-                // (fuse × ~3 ticks) before normal guttering — it stands and burns even on
-                // bare rock, it just can't spread there (charring stays flammability-
-                // gated). Fuse varies so a burn line dies out raggedly.
+                LandMat = CellFx ? (byte)Material.Fire : (byte)0,
+                // 6-9s burn fuse — the standing ground fire (see Cells.TickFire).
                 LandFuse = (byte)(120 + _rng.Next(60)),
                 LandSparks = true,
-                SmearMax = smearCap,
-                SmearScale = 2f,
+            });
+        }
+        // 2) Plume puffs (6/frame — THE visible fire): launched with the stream but under
+        // heavy drag and BUOYANT, so each puff follows the jet a way, falls behind, and
+        // rises off the arc while expanding (blob width grows with age in DrawFluid) and
+        // cooling flame→smoke. The chain of puffs traces the stream's recent path and
+        // billows up off it — and it follows the aim/shooter automatically because every
+        // puff inherits the launch and shooter velocity at birth.
+        for (var i = 0; i < 6; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * (coneArc * 2.2f);
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            var hot = i < 2;
+            var tone = FlameTones[hot ? _rng.Next(2) : _rng.Next(FlameTones.Length)];
+            _list.Add(new Particle
+            {
+                Position = pos - shooterVel * ((float)_rng.NextDouble() * 0.016f)
+                         + d * (float)_rng.NextDouble() * 2f,
+                Velocity = d * (jetSpeed * (0.9f + (float)_rng.NextDouble() * 0.2f)) + shooterVel,
+                Life = 0.55f + (float)_rng.NextDouble() * 0.4f,
+                MaxLife = 0.95f,
+                Color = tone,
+                FadeColor = new Color(75, 60, 55),   // flame gutters into SMOKE, not embers
+                Size = hot ? 0.7f : 1f,
+                GravityScale = -0.3f,                // buoyant: the plume lifts off the arc
+                Drag = 1.5f,                         // stalls late in life, then billows
+                CollideTiles = true,
+                LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
+                LightColor = new Color(255, 170, 70),
                 Fluid = (byte)Material.Fire,
             });
         }
