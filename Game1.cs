@@ -5089,8 +5089,23 @@ public sealed partial class DwarfMinerGame : Game
                     _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 140, 60));
                     break;
                 case ProjectileKind.Nuke:
-                    _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 80, 200));
+                {
+                    // Energy ball: a pulsing violet orb with a white-hot core and a crackling
+                    // corona — bigger the harder it was charged.
+                    var rr = p.Radius;
+                    var pulse = MathF.Sin(_run.RunTime * 22f) * 0.15f + 1f;
+                    _renderer.DrawCircle(p.Position, rr * 1.5f * pulse, new Color(150, 90, 240, 90));
+                    _renderer.DrawCircle(p.Position, rr, new Color(200, 120, 255));
+                    _renderer.DrawCircle(p.Position, rr * 0.55f, new Color(240, 220, 255));
+                    // A couple of orbiting sparks.
+                    for (var s = 0; s < 3; s++)
+                    {
+                        var a = _run.RunTime * 9f + s * MathF.Tau / 3f;
+                        _renderer.DrawRect(p.Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * rr * 1.3f,
+                            new Vector2(1.4f, 1.4f), new Color(220, 180, 255));
+                    }
                     break;
+                }
                 case ProjectileKind.CannonSilver:
                     _renderer.DrawCircle(p.Position, p.Radius, new Color(220, 230, 250));
                     _renderer.DrawCircle(p.Position, p.Radius * 0.5f, Color.White);
