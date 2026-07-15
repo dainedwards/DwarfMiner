@@ -425,6 +425,18 @@ public sealed class Cells
                 Place(c0x + dx, c0y + dy, Material.Dust, src);
     }
 
+    /// <summary>Spawn dust filling only a fraction of the tile, tagged with the source kind —
+    /// used for airy debris like felled foliage, which sheds a thin 30%-of-a-tile puff of dust
+    /// rather than a solid block's worth. Still pays that tile's drop on pickup, pro-rated.</summary>
+    public void SpawnDustFraction(int tx, int ty, TileKind src, float frac)
+    {
+        var count = Math.Max(1, (int)(frac * Density * Density));
+        var c0y = tx * Density;
+        var c0x = ty * Density;
+        for (var i = 0; i < count; i++)
+            Place(c0x + _rng.Next(Density), c0y + _rng.Next(Density), Material.Dust, src);
+    }
+
     /// <summary>Fill every sub-cell of the polar tile with material — used for water seeding
     /// at world start, where the random scatter of <see cref="SpawnInTile"/> would leave
     /// lakes visibly frothy with holes.</summary>
