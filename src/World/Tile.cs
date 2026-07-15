@@ -266,6 +266,7 @@ public static class Tiles
         TileKind.MossStone => new Color(80, 100, 80),
         TileKind.Granite => new Color(140, 110, 110),
         TileKind.Basalt => new Color(60, 58, 70),
+        TileKind.LavaRock => new Color(64, 46, 42),   // warm charred scoria — reads "cooled lava"
         TileKind.Obsidian => new Color(28, 24, 38),
         TileKind.PlanetCore => new Color(60, 60, 70),
         TileKind.CoalOre => new Color(55, 55, 62),
