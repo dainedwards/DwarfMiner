@@ -153,6 +153,12 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>This frame's dt, captured at the top of UpdateFrame — for the item-table
     /// actions (Action&lt;Vector2&gt; lambdas) that need real time, e.g. held-build placement.</summary>
     private float _frameDt;
+    /// <summary>Flamethrower / acid spewer: how long fire has been held (seconds, capped), and
+    /// the run-time of the last stream tick. The stream starts short and grows to full reach the
+    /// longer it's held; a gap in firing resets it. Shared by both hoses (only one fires at once).</summary>
+    private float _streamHold;
+    private float _streamLast;
+    private const float StreamHoldMax = 1.1f;
     private readonly bool _bossCam = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 };
     private float _autoShotAt =
         float.TryParse(Environment.GetEnvironmentVariable("DM_AUTOSHOT"), out var s)
