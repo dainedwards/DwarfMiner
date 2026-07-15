@@ -1739,6 +1739,10 @@ public sealed class Titan
                 if (!Tiles.IsSolid(k)) continue;
                 var edge = MathHelper.Clamp(1f - MathF.Sqrt(dx * dx + dy * dy) / (r + 0.5f), 0.2f, 1f);
                 var pow = Math.Max(1, (int)(centerPower * edge));
+                // Architecture underfoot takes a real battering — the lower storeys of a
+                // tower crumble under plain foot traffic, not just the dedicated kick.
+                if (k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
+                    pow = Math.Max(pow, 20);
                 var broken = planet.Mine(x, y, pow);
                 if (broken.HasValue)
                 {
