@@ -765,11 +765,12 @@ public static class TitanRenderer
             }
         }
 
-        // Column arms planted on rocky knuckles (broader than Kong's).
+        // Column arms planted on rocky knuckles (broader than Kong's); they hammer too.
         for (var s = -1; s <= 1; s += 2)
         {
             var shoulder = chest + f.Right * (s * 60f) + f.Up * 12f;
             var fist = shoulder + f.Right * (s * 16f) - f.Up * (62f + MathF.Sin(f.Pulse + s) * 4f);
+            fist = SmashFist(t, f, s, shoulder, fist);
             var elbow = Vector2.Lerp(shoulder, fist, 0.5f) + f.Right * (s * 18f);
             Seg(r, shoulder, elbow, 30f, f.HideDark);
             Seg(r, elbow, fist, 26f, f.Hide);
