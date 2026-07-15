@@ -78,6 +78,11 @@ public sealed class Renderer
     /// everywhere (save-compatible); only the paint differs per world.</summary>
     public string TreeBiome = "";
 
+    /// <summary>The live cell grid, set by Game1 alongside <see cref="TreeBiome"/> — the tile
+    /// pass probes it for water resting on a tile's outer face so wet ground draws damp.
+    /// Null (menus, orbit, tests) simply skips the effect.</summary>
+    public Cells? WorldCells;
+
     /// <summary>Per-biome bark palette (body, shade, highlight) — each world's forest gets its
     /// own species of trunk: warm forest timber, salt-bleached driftwood, frozen pine, glassy
     /// crystal stalk, bile-stained acid wood, charred ember coal, rusted slag scrap, groomed
