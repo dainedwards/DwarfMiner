@@ -2559,6 +2559,46 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
+    /// <summary>Draw the ambient weather clouds — soft drifting banks of puffs parked at each
+    /// cloud's altitude, tinted by the biome's rain (grey water, olive acid, ember fire) and
+    /// darkening while they rain. Falling rain is drawn by the particle system.</summary>
+    private void DrawWeather()
+    {
+        if (_run.Clouds.Count == 0) return;
+        var kind = TreeEcology.RainFor(_run.Def);
+        var body = kind switch
+        {
+            RainKind.Acid => new Color(96, 120, 70),
+            RainKind.Fire => new Color(122, 84, 72),
+            _             => new Color(120, 130, 150),
+        };
+        var bodyLt = kind switch
+        {
+            RainKind.Acid => new Color(150, 176, 104),
+            RainKind.Fire => new Color(178, 128, 100),
+            _             => new Color(182, 192, 210),
+        };
+        foreach (var c in _run.Clouds)
+        {
+            if (c.Grow < 0.03f) continue;
+            var up = new Vector2(MathF.Cos(c.Angle), MathF.Sin(c.Angle));
+            var right = new Vector2(-up.Y, up.X);
+            var ground = SpawnDirector.FindSurfaceSpawn(_run.Planet, c.Angle, _run.Planet.Radius);
+            var centre = ground + up * c.Alt;
+            var raining = c.RainTimer > 0f;
+            const int puffs = 5;
+            for (var i = -puffs; i <= puffs; i++)
+            {
+                var f = 1f - MathF.Abs(i) / (float)(puffs + 1);
+                var bob = MathF.Sin(_renderer.Time * 1.1f + c.Phase + i) * 5f;
+                var p = centre + right * (i * c.HalfWidth * 240f) + up * bob;
+                var rad = (16f + f * 26f) * c.Grow;
+                _renderer.DrawCircle(p, rad, raining ? body : Color.Lerp(body, bodyLt, 0.35f));
+                _renderer.DrawCircle(p + up * (rad * 0.4f), rad * 0.66f, bodyLt);
+            }
+        }
+    }
+
     /// <summary>Advance an in-flight pickaxe/hammer swing and land its strike. Runs every
     /// frame (not just while LMB is held) so a started swing always completes. Contact that
     /// only damages — or clinks off something unbreakable — still gets the pick-tick and a
