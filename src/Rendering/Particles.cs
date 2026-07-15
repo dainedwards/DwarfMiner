@@ -135,7 +135,7 @@ public sealed class Particles
                 // resting at the ground surface in their last frames were spawning
                 // sparks right on the terrain — the other half of the phantom
                 // "sparks interacting with the ground".
-                if (!p.JetSpark && sp > 3600f && _rng.Next(20) == 0)
+                if (!p.JetSpark && sp > 3600f && _rng.Next(7) == 0)
                     _list.Add(new Particle
                     {
                         Position = p.Position + Jitter(1f),
@@ -1405,10 +1405,12 @@ public sealed class Particles
     /// and nowhere else, by construction. Buoyant puffs can never arc back down, so
     /// firing straight up is structurally incapable of raining fire on the shooter.
     /// DELIBERATELY INDEPENDENT of EmitAcidJet.</summary>
-    /// <summary>One licking flame tongue rising off a burning cell (see
-    /// Cells.PendingFlames): joins the fire metaball body, so a burn site reads as a
-    /// standing, writhing FLAME — not smouldering sparks. No world interaction of its
-    /// own (the burning cell it rises from is the real fire).</summary>
+    /// <summary>One licking flame PIXEL rising off a burning cell (see
+    /// Cells.PendingFlames) — Noita-style: a crisp discrete grain flickering up through
+    /// the stepped fire ramp, NOT part of the metaball fluid body (per user, the ground
+    /// flame is pixel fire like the game's own burning cells, only the JET is a fluid).
+    /// No world interaction of its own — the burning cell it rises from is the real
+    /// fire.</summary>
     public void EmitLickingFlame(Vector2 pos, Vector2 up)
     {
         var side = new Vector2(-up.Y, up.X);
@@ -1421,12 +1423,15 @@ public sealed class Particles
             MaxLife = 0.6f,
             Color = FlameTones[_rng.Next(3)],
             FadeColor = new Color(205, 75, 15),
-            Size = 0.8f,
+            Size = 0.5f + (float)_rng.NextDouble() * 0.3f,
             GravityScale = -0.35f,   // flame rises
             Drag = 1.6f,
             LightRadius = _rng.Next(4) == 0 ? 24f : 0f,
             LightColor = new Color(255, 160, 55),
-            Fluid = (byte)Material.Fire,
+            // Rides the jet's turbulence pattern so the pixel tongues waver as they
+            // rise, without joining the fluid coverage or shedding sparks.
+            JetSpark = true,
+            SmearMax = 1.2f,
         });
     }
 
