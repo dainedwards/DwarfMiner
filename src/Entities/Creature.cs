@@ -3163,6 +3163,14 @@ public sealed class Creature
                 r.DrawCircle(head, 2.2f, skin);
                 r.DrawRect(head + up * 1.0f, new Vector2(4.0f, 1.3f), packC, rot); // goggle band
                 r.DrawCircle(head + right * (facing * 1.0f) + up * 1.0f, 0.8f, Tinted(new Color(190, 220, 240)));
+                // Breather rig — same tell as the marauder's: mask pod + hip flask.
+                if (HasBreather)
+                {
+                    r.DrawCircle(head + right * (facing * 1.6f) - up * 0.4f, 1.3f, Tinted(new Color(120, 160, 185)));
+                    r.DrawCircle(head + right * (facing * 1.6f) - up * 0.4f, 0.7f, new Color(200, 235, 255));
+                    r.DrawRect(Position + right * (facing * 1.9f) - up * 0.2f, new Vector2(1.1f, 2.4f),
+                        Tinted(new Color(150, 160, 175)), rot);
+                }
                 var aim = _gunAim.LengthSquared() > 0.01f ? _gunAim : right * facing;
                 var pAng = MathF.Atan2(aim.Y, aim.X);
                 var grip = Position + right * (facing * 2.0f) + up * 1.6f;
