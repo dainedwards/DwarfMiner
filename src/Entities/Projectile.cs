@@ -450,12 +450,20 @@ public sealed class Projectile
                         }
                     }
                 }
-                else if (dust && Random.Shared.Next(2) == 0)
+                else if (dust)
                 {
-                    // Vaporised core: seed a few flame cells in the flash — they torch any
+                    // Vaporised core: the rock leaves as smoke and flame in the sim. Smoke
+                    // cells rise out of the crater as a real plume; flame seeds torch any
                     // gas pocket or oil sump the blast just breached, then gutter out on
                     // bare rock in a fraction of a second.
-                    cells.SpawnInTile(r, t, Material.Fire, 2);
+                    if (smokeBudget > 0)
+                    {
+                        var n = Math.Min(smokeBudget, 3);
+                        cells.SpawnInTile(r, t, Material.Smoke, n);
+                        smokeBudget -= n;
+                    }
+                    if (Random.Shared.Next(2) == 0)
+                        cells.SpawnInTile(r, t, Material.Fire, 2);
                 }
                 physics.MarkDirty(r, t);
                 if (particles is not null && chipBudget > 0)
