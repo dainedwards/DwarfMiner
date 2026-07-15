@@ -2267,7 +2267,11 @@ public sealed class Cells
     /// the zoomed-out LOD (orbit/high descent): sample every Nth cell on both axes at N×
     /// size and skip rows buried deep in the crust — at orbital view radii the full scan
     /// touches millions of cells, and a 3-px tile can't show sub-tile grains anyway.</summary>
-    public void Draw(Renderer r, Vector2 viewCentre, float viewRadius, int stride = 1)
+    /// <summary><paramref name="skipLiquids"/>: Water/Acid/Oil grid cells are being drawn
+    /// by the dedicated liquid RT pass (<see cref="DrawLiquids"/>) this frame — skip them
+    /// here. Flying liquid cells stay in this pass either way: they're airborne streaks,
+    /// not part of a pool body.</summary>
+    public void Draw(Renderer r, Vector2 viewCentre, float viewRadius, int stride = 1, bool skipLiquids = false)
     {
         var radial = (float)Planet.TileSize / Density;
         var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
