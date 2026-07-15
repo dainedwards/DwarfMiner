@@ -307,7 +307,10 @@ public sealed class Particles
                 // scales with coverage: tips go dim and dark together, as flame does.)
                 var age = 1f - t;
                 wid = MathHelper.Lerp(3f, 11f, age);   // plume billow: puffs EXPAND with age
-                c *= MathHelper.Lerp(1f, 0.5f, age * age);
+                // Dim floor raised 0.5→0.72: with the fade now ending on deep flame red,
+                // heavier dimming pushed tips toward brown-black — user wants NO black,
+                // so the tips tatter mostly via coverage, less via darkening.
+                c *= MathHelper.Lerp(1f, 0.72f, age * age);
                 // ~12 Hz whole-body flicker (item 4): each blob's brightness oscillates
                 // on its own phase, so the fused tongue boils visually. The per-grain
                 // phase key `Life + Time` is CONSTANT for a given grain (birth time +
