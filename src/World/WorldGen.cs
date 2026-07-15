@@ -121,10 +121,14 @@ public static class WorldGen
                 tries++;
             } while (tries < 40 && NearMountain(mountains, ang, 0.14f));
             // LakeScale > 1 (ocean worlds) makes every basin wider and deeper — at 3× with
-            // 8+ lakes the shoreline is mostly sea and dry land the exception.
+            // 8+ lakes the shoreline is mostly sea and dry land the exception. Ocean worlds
+            // (LakeScale > 2.5) get an extra ×1.6 DEPTH so the seas plunge into real deep
+            // water — a genuine dive, home to the big sea monsters — without flooding more
+            // of the surface (width still scales only with LakeScale).
+            var deepMul = def.LakeScale > 2.5f ? 1.6f : 1f;
             lakes[i] = (
                 ang,
-                depth: (3.5f + (float)rng.NextDouble() * 3.5f) * def.LakeScale,  // 3.5–7 tiles at scale 1
+                depth: (3.5f + (float)rng.NextDouble() * 3.5f) * def.LakeScale * deepMul,  // 3.5–7 tiles at scale 1
                 w: (0.055f + (float)rng.NextDouble() * 0.05f) * def.LakeScale);  // ≈ 3°–6° half-width at scale 1
         }
 
