@@ -1641,25 +1641,30 @@ public sealed class Creature
         if (_aggroT > 0f)
         {
             var tDist = Vector2.Dot(toPlayer, right);
-            // It's a DART HUNTER, not a brawler: it holds a comfortable throwing distance and
-            // shoots, rather than charging in and leaping. Back off if the dwarf closes, ease
-            // in if he's too far, otherwise plant its feet and aim. No lunge — it never jumps
-            // at the player.
-            var moveAxis = 0f;
-            if (dist > 190f) moveAxis = MathF.Sign(tDist);       // too far — close the gap
-            else if (dist < 90f) moveAxis = -MathF.Sign(tDist);  // too close — give ground
+            var hasLos = dist > 0.01f && HasLineOfSight(planet, toPlayer, dist);
+            // Always keep the snout on the prey so the guard faces where it's shooting.
+            if (dist > 0.01f) _gunAim = toPlayer / dist;
+            // A dart HUNTER that keeps working for a shot: it holds a fairly tight ~130px band
+            // (so it's usually moving to keep station, not frozen), gives ground if crowded,
+            // and — crucially — if its line is BLOCKED it moves to get an angle instead of
+            // standing there uselessly. Still no lunge; it never jumps at the player.
+            float moveAxis;
+            if (!hasLos) moveAxis = MathF.Sign(tDist);           // blocked — go get an angle
+            else if (dist > 150f) moveAxis = MathF.Sign(tDist);  // too far — close in
+            else if (dist < 105f) moveAxis = -MathF.Sign(tDist); // too close — give ground
+            else moveAxis = 0f;                                  // in the pocket — hold and shoot
             GroundMove(dt, planet, up, right,
                 NavAxis(planet, up, right, moveAxis, avoidCliffs: false), speedMul);
 
-            // Blowdart volley: when it holds a good line at range, it looses THREE small darts
-            // in quick succession, each lofted well above the line so it ARCS up high and drops
-            // onto the target (Dart is ballistic). Between volleys it cools down and repositions.
-            if (_burst <= 0 && dist > 60f && dist < 230f && _cd <= 0f && shots is not null
-                && HasLineOfSight(planet, toPlayer, dist))
+            // Blowdart volley: THREE small darts in quick succession. It now shoots even at
+            // point-blank and at targets on its own level — the aim POINTS AT the dwarf with a
+            // distance-scaled loft (nearly flat up close so a level/in-your-face shot connects,
+            // a high arc only at range) and the throw gets more zip the farther the target is.
+            if (_burst <= 0 && dist > 25f && dist < 240f && _cd <= 0f && shots is not null && hasLos)
             {
                 _burst = 3;
                 _burstT = 0f;
-                _cd = 2.8f + (float)Random.Shared.NextDouble() * 1.0f;
+                _cd = 2.6f + (float)Random.Shared.NextDouble() * 1.0f;
             }
             if (_burst > 0 && shots is not null && dist > 0.01f)
             {
@@ -1667,8 +1672,10 @@ public sealed class Creature
                 if (_burstT <= 0f)
                 {
                     var dir = toPlayer / dist;
-                    var aim = Vector2.Normalize(dir + up * (0.42f + dist * 0.0026f));  // big arc
-                    shots.Add(new TitanProjectile(Position + aim * (Radius + 2f), aim * 200f,
+                    var loft = MathHelper.Clamp(dist * 0.0022f, 0.05f, 0.55f);
+                    var aim = Vector2.Normalize(dir + up * loft);
+                    var speed = 190f + dist * 0.4f;   // carry to the target before it drops
+                    shots.Add(new TitanProjectile(Position + aim * (Radius + 2f), aim * speed,
                         TitanShotKind.Dart, damage: 5f));
                     _burst--;
                     _burstT = 0.13f;    // quick succession
