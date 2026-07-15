@@ -1211,6 +1211,79 @@ public sealed class Renderer
         _sb.Draw(_pixel, world, null, color, rotation, new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
     }
 
+    /// <summary>Noita-style silhouette crust. Along each air-facing edge of a natural tile,
+    /// scatter 1-px terrain pixels a cell or two out into the void, kept/skipped by a
+    /// CONTINUOUS world-space value-noise field so neighbouring tiles form one wandering
+    /// coastline instead of a tile-quantised staircase — this is what dissolves the grid.
+    /// Purely additive: it only ever paints terrain-coloured pixels over the already-drawn
+    /// background, so it can never open a concave gap the sand sim doesn't know about. The
+    /// tile stays a full solid square to physics; only the drawn outline turns organic.</summary>
+    private void DrawCrust(Vector2 centre, Vector2 right, Vector2 up, float rotation, float chord,
+        bool outerSky, bool innerSky, bool leftSky, bool rightSky, Color col)
+    {
+        const int d = World.Cells.Density;       // cells per tile edge (1-px cells)
+        var cellR = (float)Planet.TileSize / d;  // radial px per cell (≈1)
+        var cellC = chord / d;                   // angular px per cell
+        var halfC = chord * 0.5f;
+        var halfR = Planet.TileSize * 0.5f;
+        var cellSize = new Vector2(cellC + 0.4f, cellR + 0.4f);
+        const float nf = 0.32f;                  // noise frequency (~3-px wavelength)
+        // Present-probability thins with each layer outward: layer 0 mostly there, 1 sparse.
+        Span<float> thresh = stackalloc float[] { 0.40f, 0.66f };
+
+        // outDir = which way is "into the void" past this edge; along = the edge's tangent.
+        void Edge(Vector2 outDir, Vector2 along, float edgeDist, float alongHalf, float alongStep)
+        {
+            for (var i = 0; i < d; i++)
+            {
+                var a = (i + 0.5f) * alongStep - alongHalf;
+                for (var l = 0; l < thresh.Length; l++)
+                {
+                    var p = centre + along * a + outDir * (edgeDist + (l + 0.5f) * cellR);
+                    if (Noise2(p.X * nf, p.Y * nf) <= thresh[l]) continue;
+                    var s = -6 * (l + 1);        // tips read a touch darker than the tile body
+                    var c = new Color(
+                        Math.Clamp(col.R + s, 0, 255),
+                        Math.Clamp(col.G + s, 0, 255),
+                        Math.Clamp(col.B + s, 0, 255));
+                    _sb.Draw(_pixel, p, null, c, rotation, new Vector2(0.5f, 0.5f),
+                        cellSize, SpriteEffects.None, 0f);
+                }
+            }
+        }
+
+        if (outerSky) Edge(up,     right, halfR, halfC, cellC);
+        if (innerSky) Edge(-up,    right, halfR, halfC, cellC);
+        if (leftSky)  Edge(-right, up,    halfC, halfR, cellR);
+        if (rightSky) Edge(right,  up,    halfC, halfR, cellR);
+    }
+
+    /// <summary>Smooth 2-D value noise in [0,1] — integer-lattice hashes bilerped with a
+    /// smoothstep fade. Sampled in world space so the crust is continuous across tile seams.</summary>
+    private static float Noise2(float x, float y)
+    {
+        var x0 = (int)MathF.Floor(x);
+        var y0 = (int)MathF.Floor(y);
+        var fx = x - x0;
+        var fy = y - y0;
+        fx = fx * fx * (3f - 2f * fx);
+        fy = fy * fy * (3f - 2f * fy);
+        float a = Hash01(x0, y0), b = Hash01(x0 + 1, y0);
+        float c = Hash01(x0, y0 + 1), e = Hash01(x0 + 1, y0 + 1);
+        return MathHelper.Lerp(MathHelper.Lerp(a, b, fx), MathHelper.Lerp(c, e, fx), fy);
+    }
+
+    private static float Hash01(int x, int y)
+    {
+        unchecked
+        {
+            var h = x * 374761393 + y * 668265263;
+            h = (h ^ (h >> 13)) * 1274126177;
+            h ^= h >> 16;
+            return (h & 0x7FFFFFFF) / 2147483647f;
+        }
+    }
+
     public void BeginEntities(Camera cam)
     {
         _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: cam.View);
