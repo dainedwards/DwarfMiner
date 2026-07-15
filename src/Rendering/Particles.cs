@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DwarfMiner.Entities;
 using DwarfMiner.World;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace DwarfMiner.Rendering;
 
@@ -44,6 +45,12 @@ public struct Particle
     /// <summary>Multiplier on the motion-smear length (0 = 1×). The hoses use 2× so their
     /// strands read as long ribbons without touching the shared smear factor.</summary>
     public float SmearScale;
+    /// <summary>Fluid-body tag (a <see cref="Material"/>; 0 = none): hose grains render as
+    /// soft coverage blobs through the liquid metaball composite instead of as individual
+    /// strand quads — one connected tongue that absorbs per-grain arc differences (the
+    /// "spaghetti" of firing while accelerating). Only honoured while the composite is
+    /// live (see Particles.FluidMode); otherwise the grain draws as a normal strand.</summary>
+    public byte Fluid;
 }
 
 /// <summary>
@@ -65,6 +72,12 @@ public sealed class Particles
 
     private readonly List<Particle> _list = new(2048);
     private readonly Random _rng = new();
+
+    /// <summary>True while the liquid metaball composite runs this frame (Game1 sets it):
+    /// Fluid-tagged grains are then drawn by <see cref="DrawFluid"/> into a coverage RT
+    /// and SKIPPED by the normal Draw. Off (shader unavailable / zoomed-out LOD), they
+    /// fall back to ordinary strand quads.</summary>
+    public bool FluidMode;
 
     public int Count => _list.Count;
 
@@ -190,6 +203,7 @@ public sealed class Particles
     {
         foreach (var p in _list)
         {
+            if (FluidMode && p.Fluid != 0) continue;   // rendered by DrawFluid instead
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             // Noita palette rule: colours cool in FOUR HARD STEPS, not a smooth ramp — a
             // spark is white, then orange, then red, then a dark ember, each a distinct
@@ -223,6 +237,34 @@ public sealed class Particles
                 }
             }
             r.DrawRect(p.Position, new Vector2(s, s), c);
+        }
+    }
+
+    /// <summary>Draw the Fluid-tagged grains of one material as soft coverage blobs into
+    /// the CURRENTLY-BEGUN liquid fill batch (LiquidFillBlend: colour replaces, alpha
+    /// accumulates). The metaball composite then thresholds them into one connected
+    /// tongue with a rim — the "water shooting out" body that absorbs the per-grain arc
+    /// spread of firing under acceleration. Blob colour is the grain's own stepped-fade
+    /// tone, so the tongue still cools white→orange→red along its length (neon→deep
+    /// green for acid).</summary>
+    public void DrawFluid(Renderer r, Material which)
+    {
+        var tex = r.LiquidBlob;
+        var org = new Vector2(tex.Width / 2f, tex.Height / 2f);
+        foreach (var p in _list)
+        {
+            if (p.Fluid != (byte)which) continue;
+            var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
+            var c = Color.Lerp(p.FadeColor, p.Color, MathF.Ceiling(t * 4f) * 0.25f);
+            // CAPSULES, not discs: each frame's grain batch fuses into one blob, but
+            // round blobs don't bridge the ~4 px gap to the next frame's batch — the
+            // stream read as a meatball chain. Stretched ~2 frames of travel along the
+            // velocity, consecutive batches overlap and threshold into ONE ribbon.
+            var speed = p.Velocity.Length();
+            var len = MathF.Max(5f, speed * 0.033f);
+            var rot = speed > 1f ? MathF.Atan2(p.Velocity.Y, p.Velocity.X) : 0f;
+            r.Batch.Draw(tex, p.Position, null, c, rot, org,
+                new Vector2(len / tex.Width, 4f / tex.Height), SpriteEffects.None, 0f);
         }
     }
 
@@ -1280,11 +1322,11 @@ public sealed class Particles
             // ballistic range scales with speed², so the band is the falloff spread at
             // long distance, far more than the cone angle is. Tightened 30% per user.
             var vel = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f));
-            // Outward (skyward) speed cap, kept from the payload era: without it a
-            // skyward stream rocketed unnaturally compared to every other flying thing.
-            // Applied to the LAUNCH component only, before momentum inheritance.
-            var outward = Vector2.Dot(vel, up);
-            if (outward > 170f) vel -= up * (outward - 170f);
+            // NO outward cap any more: clamping only the skyward component bent the
+            // launch off the aim, and the ±speed band meant some grains clamped while
+            // others didn't — two arc families braiding whenever the hose fired upward.
+            // (The cap mirrored the launched payload cells, which are gone; grains live
+            // ≤1.35s, so the old floating-ember hazard can't occur.)
             // Ejected fluid carries the shooter's momentum: without this, a flying player
             // paints the muzzle's flight path in fire ("shooting spaghetti") — grains
             // launched world-relative lag every turn the player makes. With it the stream
@@ -1317,6 +1359,7 @@ public sealed class Particles
                 LandSparks = true,
                 SmearMax = hoseSmear,
                 SmearScale = 2f,
+                Fluid = (byte)landMat,
             });
         }
     }
