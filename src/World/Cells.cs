@@ -824,6 +824,15 @@ public sealed class Cells
             SweepCompaction();
         }
 
+        // Ambient trickle effects (ceiling drips, moss creep) sample randomly around the
+        // player — cheap, bounded, and they only happen where someone can see them. Headless
+        // contexts never set CompactionExclusion, so tests are untouched.
+        if (CompactionExclusion is { } eye && _time >= _ambientSweepAt)
+        {
+            _ambientSweepAt = _time + AmbientSweepPeriod;
+            SweepAmbient(eye);
+        }
+
         (_active, _next) = (_next, _active);
         _next.Clear();
         if (_active.Count == 0) return;
