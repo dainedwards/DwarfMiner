@@ -521,11 +521,39 @@ public sealed class Titan
             speedMul = Charging ? 4.4f : 0f;
         }
 
-        // Kong plants while a hand smash swings — the fist hammers a stationary target.
-        if (Kind == TitanKind.Kong && SmashTimer > 0f)
+        // Any arm kind plants while a hand smash swings — the fist hammers a stationary target.
+        if (SmashTimer > 0f)
         {
             moveAxis = 0;
             speedMul = 0f;
+        }
+
+        // ── Rider shake-off ───────────────────────────────────────────────────
+        // A dwarf clinging to the hide wears the monster's patience down (Game1 accrues
+        // RiderTime while attached; it decays here). Past the tolerance, EVERY kind stops
+        // and thrashes — a violent side-to-side convulsion that flings the rider off
+        // (PendingShakeOff, consumed by Game1) — then needs a breather before re-shaking.
+        RiderTime = MathF.Max(0f, RiderTime - dt);
+        _shakeCooldown -= dt;
+        if (ShakeTimer <= 0f && _shakeCooldown <= 0f && RiderTime > 2.2f)
+        {
+            ShakeTimer = 1.2f;
+            _shakeCooldown = 6f;
+            _shakeFlung = false;
+            RiderTime = 0f;
+            PendingRoar ??= RoarVoice;
+        }
+        if (ShakeTimer > 0f)
+        {
+            ShakeTimer -= dt;
+            moveAxis = 0;
+            speedMul = 0f;
+            // The fling fires mid-thrash, at the whip's peak.
+            if (!_shakeFlung && ShakeTimer < 0.7f)
+            {
+                _shakeFlung = true;
+                PendingShakeOff = true;
+            }
         }
 
         // Close the generic hunt-jump's airtime window (Kong's special manages its own
