@@ -1409,9 +1409,10 @@ public sealed class Particles
             fade: new Color(40, 90, 25), landMat: Material.Acid,
             lightColor: new Color(150, 240, 80), hotLight: 16f, bodyLight: 7f, drag: 1.0f);
         var jetSpeed = reach * 1.35f;
-        // A few caustic vapour wisps riding the rope FROM THE MUZZLE (never seeded
-        // mid-air along the stream — that materialised droplets in space that fell like rain).
-        for (var i = 0; i < 3; i++)
+        // A caustic vapour wisp riding the rope FROM THE MUZZLE (never seeded mid-air
+        // along the stream — that materialised droplets in space that fell like rain).
+        // Per-frame emission now, so one wisp per frame matches the old 3-per-puff rate.
+        for (var i = 0; i < 1; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
             var c = MathF.Cos(spread);
