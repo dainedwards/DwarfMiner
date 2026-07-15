@@ -175,6 +175,19 @@ public sealed class LightGrid
         }
     }
 
+    /// <summary>Build the sky heightmap for a new planet — all 2048 bearing descents at
+    /// once (~10 ms). Begin does this lazily on the FIRST frame of a new world, which is
+    /// exactly the frame already stacked with every other first-use warmup; run starts
+    /// call it during the load instead so arrival doesn't stutter.</summary>
+    public void PrewarmSky(Planet planet)
+    {
+        if (ReferenceEquals(_profilePlanet, planet)) return;
+        _profilePlanet = planet;
+        _skyR = new float[SkyBearings];
+        for (var b = 0; b < SkyBearings; b++) ScanSkyBearing(planet, b);
+        RecalcSkyBounds();
+    }
+
     /// <summary>Radial descent for one sky-heightmap bearing: from just above the tile grid
     /// down to the first solid tile. Water/acid cells don't stop it — a lake floor counts
     /// as open sky and the seeded light dims through the liquid via propagation.</summary>
