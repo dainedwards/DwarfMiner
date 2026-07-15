@@ -2241,8 +2241,8 @@ public sealed class Cells
                 // Neighbour-aware padding (stride 1 only): bleed an axis by the seam pad
                 // ONLY where something abuts it — into a pool neighbour (hides the hairline
                 // cracks between rotated polar quads) or into solid ground (invisible, the
-                // terrain is behind). Toward open air the quad stays crisp.
-                var exposed = false;
+                // terrain is behind). Toward open air the quad stays a crisp single grain.
+                // Pads are FRACTIONS of the cell so the proportions survive Density changes.
                 if (stride == 1)
                 {
                     var chordPad = IsBlocked(cx - 1, cy) || IsBlocked(cx + 1, cy) ? 0.5f : 0.1f;
@@ -2257,8 +2257,19 @@ public sealed class Cells
                         var (pcx, pcy) = OuterCell(cx, cy, 0);
                         if (IsBlocked(pcx, pcy)) radialPad = 0.5f;
                     }
-                    exposed = chordPad < 0.5f || radialPad < 0.5f;
-                    size = new Vector2(chord + chordPad, radial + radialPad);
+                    size = new Vector2(chord * (1f + chordPad), radial * (1f + radialPad));
+                    // Rising flame dances: each fire grain jitters around its lattice site
+                    // on its own ~12 Hz hash phase, so a column of flame licks and wavers
+                    // grain-by-grain (the loose scattered look, kept for FIRE only — on
+                    // liquids and powders it read as weird per user).
+                    if (m == Material.Fire)
+                    {
+                        var tb = (int)(_time * 12f);
+                        var fh = (cx * 73856093) ^ (cy * 19349663) ^ (tb * 48271);
+                        var right = new Vector2(-up.Y, up.X);
+                        centre += right * ((((fh >> 3) & 7) - 3.5f) * radial * 0.22f)
+                                + up * ((((fh >> 9) & 7) - 3.5f) * radial * 0.22f);
+                    }
                 }
                 // Waterline: water open to air above draws as a brighter band that bobs with
                 // a travelling wave, so pools get a live surface instead of a flat blue slab.
@@ -2272,32 +2283,8 @@ public sealed class Cells
                         centre += up * (wave * 0.35f);
                     }
                 }
-                // EXPOSED cells (any open-air side) split into 2×2 half-px sub-grains with
-                // hashed shading. The terrain's atlas texture gives the WORLD an apparent
-                // grain of ~0.25-0.5 px, so a flat 1-px cell quad reads 2-4× chunkier than
-                // the ground it sits on — the "big square" the eye catches on every droplet,
-                // flame flick, and sand grain. Splitting only the exposed skin keeps the
-                // quad budget sane: pool/pile INTERIORS (the overwhelming majority of a
-                // lake) stay single seam-padded quads, where sub-grain texture would be
-                // invisible anyway. Sim resolution untouched — this is pure draw.
-                if (exposed)
-                {
-                    var right = new Vector2(-up.Y, up.X);
-                    var sub = new Vector2(chord * 0.5f + 0.12f, radial * 0.5f + 0.12f);
-                    for (var sy = 0; sy < 2; sy++)
-                        for (var sx = 0; sx < 2; sx++)
-                        {
-                            var sc = centre + right * ((sx - 0.5f) * chord * 0.5f)
-                                            + up * ((sy - 0.5f) * radial * 0.5f);
-                            var h = ((cx * 2 + sx) * 73856093) ^ ((cy * 2 + sy) * 19349663);
-                            var shade = 0.82f + ((h >> 6) & 15) / 83f;   // 0.82..1.0
-                            r.Batch.Draw(r.Pixel, sc, null, col * shade, rotation,
-                                new Vector2(0.5f, 0.5f), sub, SpriteEffects.None, 0f);
-                        }
-                }
-                else
-                    r.Batch.Draw(r.Pixel, centre, null, col, rotation,
-                        new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
+                r.Batch.Draw(r.Pixel, centre, null, col, rotation,
+                    new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
             }
         }
 
