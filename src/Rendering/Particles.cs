@@ -1145,14 +1145,14 @@ public sealed class Particles
 
     public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach)
     {
-        // Particle speed tuned so a blob travels roughly `reach` before its life ends, so the
-        // visible tongue matches the stream's current length. Blobs COLLIDE with tiles and fall
-        // on the same arc as the launched fuel cells — the Noita look: a dense bright throat
-        // that stretches into a drooping, smoking tongue. Deliberately SLOW (with longer
-        // grain lives holding the same tongue length): a fast stream reads as stretched
-        // pixels spraying past; a slow one reads as flowing flame. Game1's payload launch
-        // speed (reach*1.7) is retuned alongside — the two must share an arc.
-        var jetSpeed = reach * 1.9f;
+        // CONSTANT flow speed — the hold-ramp used to scale speed with reach (80→250 px/s
+        // by full stream), which read as pixels spraying ever faster. Per user, the flow
+        // now stays at the tap-fire STARTING speed for the whole hold; holding longer only
+        // lengthens the tongue (grain LIFE scales with reach below). Game1's payload
+        // launch is pinned to the same constant — the two must share an arc, so the
+        // stream's effective range is now the old tap-fire range at every hold length.
+        const float jetSpeed = 80f;
+        var lifeScale = reach / 42f;   // 1 at tap-fire reach → ~3 at full hold
         // Many TINY grains rather than a few fat blobs — the stream reads as granular burning
         // fluid (Noita's pixel-fire) instead of soft puffballs. Grain colours pick from a
         // FOUR-TONE fire ramp (white-yellow → gold → orange → red-orange) so the stream body
