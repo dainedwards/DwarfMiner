@@ -2404,12 +2404,7 @@ public sealed class Cells
         }
     }
 
-    /// <summary><paramref name="skin"/> = the cell is EXPOSED (open-air side) or airborne:
-    /// liquids drop their see-through body translucency and draw as opaque droplets — the
-    /// same ink they had flying out of the hose — so a stream that lands doesn't suddenly
-    /// dim into a darker glassy slab. Pool interiors keep the translucency (that's where
-    /// tiles ghosting through reads as depth).</summary>
-    private Color ColorFor(Material m, int cx, int cy, byte srcByte, bool skin = false)
+    private Color ColorFor(Material m, int cx, int cy, byte srcByte)
     {
         var hash = (cx * 73856093) ^ (cy * 19349663);
         var jitter = ((hash >> 4) & 31) - 16;
