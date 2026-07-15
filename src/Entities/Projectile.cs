@@ -163,6 +163,7 @@ public sealed class Projectile
                 CraterTiles = 6;
                 ExplosionRadius = 90f;
                 CreaturePierces = -1;
+                AlloyMinePower = 12;   // the energy ball tears through alien metal (~4 hits)
                 break;
             case ProjectileKind.CannonSilver:
                 Radius = 2.5f;
