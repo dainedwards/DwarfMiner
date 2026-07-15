@@ -783,7 +783,139 @@ public sealed class Titan
         SpecialCooldown -= dt;
         UpdateSpecial(dt, planet, physics, cells, playerPos, shots);
 
+        // Voice the specials generically: the frame any special's windup arms (SpecialState
+        // crosses zero) the monster announces it — one hook covers all nine kinds.
+        if (SpecialState > 0f && _prevSpecial <= 0f) PendingRoar ??= RoarVoice;
+        _prevSpecial = SpecialState;
+
         if (HitFlash > 0) HitFlash -= dt;
+        if (WeakpointFlash > 0) WeakpointFlash -= dt;
+    }
+
+    /// <summary>City-siege instincts shared by every walker. LOW structure tiles get the
+    /// KICK: the nearest planted leg's step is driven onto the wall base and the landing
+    /// (see UpdateLegs) runs <see cref="KickImpact"/> — a one-blow breach. HIGH tiles get
+    /// the hand smash, for the kinds with arms: the same rear-and-hammer state machine Kong
+    /// always had, now aimed at the upper storeys (or the player, when aggroed and in
+    /// reach). Between the two, a titan working a tower crumbles it in a handful of attacks
+    /// where the passive lean-wreck alone took a march.</summary>
+    private void TickSiege(float dt, Planet planet, Physics physics, Cells cells, Vector2 playerPos)
+    {
+        if (Legs.Length == 0 || Digging || ShakeTimer > 0f) return;
+
+        if (KickTimer > 0f) KickTimer -= dt;
+        else if (_kickCooldown <= 0f && Grounded && !Leaping && FindStructure(low: true) is { } lowTgt)
+        {
+            foreach (var leg in Legs)
+            {
+                if (leg.StepT < 1f) continue;
+                leg.StepStart = leg.FootPos;
+                leg.StepTarget = lowTgt;
+                leg.StepT = 0f;
+                KickTarget = lowTgt;
+                KickTimer = 0.8f;
+                _kickPending = true;
+                _kickCooldown = 2.4f;
+                PendingRoar ??= RoarVoice;
+                break;
+            }
+        }
+
+        if (!HasArms(Kind)) return;
+        if (SmashTimer > 0f)
+        {
+            SmashTimer -= dt;
+            if (!_smashLanded && SmashTimer <= SmashImpactAt)
+            {
+                _smashLanded = true;
+                SmashImpact(physics, cells);
+            }
+            if (SmashTimer <= 0f) _smashCooldown = 1.4f;
+            return;
+        }
+        if (_smashCooldown > 0f || !Grounded || Leaping || !Standing()) return;
+        Vector2? target = null;
+        if (IsAggro && (playerPos - Position).Length() < SmashReach) target = playerPos;
+        else target = FindStructure(low: false);
+        if (target is { } tgt)
+        {
+            SmashTarget = tgt;
+            SmashHand = -SmashHand;
+            SmashTimer = SmashDuration;
+            _smashLanded = false;
+            PendingRoar ??= RoarVoice;
+        }
+    }
+
+    /// <summary>A landed kick: a one-blow breach across the boot's footprint (power 60 —
+    /// even alien alloy caves in a single hit), a quake, a short shockwave for anything
+    /// fleshy, and any rigid debris in range is ground straight to dust.</summary>
+    private void KickImpact(Planet planet, Physics physics, Cells cells, Vector2 at)
+    {
+        var (fx, fy) = planet.WorldToTile(at);
+        const int r = 2;
+        for (var dy = -r; dy <= r; dy++)
+        {
+            for (var dx = -r; dx <= r; dx++)
+            {
+                if (dx * dx + dy * dy > r * r) continue;
+                var x = fx + dx; var y = fy + dy;
+                if (!Tiles.IsSolid(planet.Get(x, y))) continue;
+                if (planet.Mine(x, y, 60) is { } broken)
+                {
+                    physics.MarkDirty(x, y);
+                    cells.SpawnDustInTile(x, y, broken);
+                }
+            }
+        }
+        physics.Earthquake(at, 120f, 2);
+        PendingShockwave = (at, 100f, 18f);
+        PendingPulverize = (at, 130f);
+    }
+
+    /// <summary>Nearest architecture tile ahead of the body — down at shin height for a
+    /// kick, or up at the tower's higher storeys for a fist. Samples a short fan in the
+    /// facing direction.</summary>
+    private Vector2? FindStructure(bool low)
+    {
+        var up = _planet.UpAt(Position);
+        var right = new Vector2(-up.Y, up.X);
+        var face = Facing >= 0f ? 1f : -1f;
+        var (h0, h1) = low ? (-120f, -50f) : (10f, 100f);
+        var maxD = low ? 140f : SmashReach;
+        for (var d = 60f; d <= maxD; d += 24f)
+        {
+            for (var h = h0; h <= h1; h += 30f)
+            {
+                var p = Position + right * (face * d) + up * h;
+                var (x, y) = _planet.WorldToTile(p);
+                if (_planet.Get(x, y) is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
+                    return _planet.TileToWorld(x, y);
+            }
+        }
+        return null;
+    }
+
+    /// <summary>Shootable weakpoints — soft glowing spots on the hide (nape, dorsal vent,
+    /// tail root; the worm's is the hinge behind its maw). A projectile landing inside
+    /// <see cref="WeakpointRadius"/> of one deals triple damage. Positions ride the body
+    /// frame so climbing the monster is how you hold your aim on them.</summary>
+    public IReadOnlyList<Vector2> WeakpointsWorld()
+    {
+        _weakpoints.Clear();
+        if (!Hatched || Health <= 0f || Submerged) return _weakpoints;
+        if (Kind == TitanKind.Sandworm)
+        {
+            if (TailNodes.Length > 1) _weakpoints.Add(TailNodes[1]);
+            return _weakpoints;
+        }
+        var up = _planet.UpAt(Position);
+        var right = new Vector2(-up.Y, up.X);
+        var face = Facing >= 0f ? 1f : -1f;
+        _weakpoints.Add(Position + up * (Radius * 0.62f) + right * (face * Radius * 0.18f));  // nape
+        _weakpoints.Add(Position + up * (Radius * 0.30f) - right * (face * Radius * 0.40f));  // dorsal vent
+        if (TailNodes.Length > 2) _weakpoints.Add(TailNodes[2]);                              // tail root
+        return _weakpoints;
     }
 
     /// <summary>Per-kind signature attack. Godzilla breathes fire, Mecha fires a mouth laser,
