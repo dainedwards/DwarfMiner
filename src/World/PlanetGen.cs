@@ -280,8 +280,12 @@ public static class PlanetGen
                 // ground tiles). The real estate moved underground: WorldGen honeycombs
                 // the crust below the obsidian seabed with a dry, interconnected cave
                 // network (extra worms + vaulted chambers + island grotto mouths).
-                LakeMin: 13, LakeExtra: 5, MountainMin: 3, MountainExtra: 2,
-                MountainHeightScale: J(0.8f, 1.1f), LavaFillFrac: 0.35f, HasWater: true,
+                // A water world's core is QUIET (0.22 lava fill vs the old 0.35): the seas
+                // now plunge deep enough that a tall lava interior would lick their basin
+                // floors — and the dry crust freed up is exactly where the under-sea cave
+                // network lives (CarveWormTunnels runs its worm band deeper here too).
+                LakeMin: 15, LakeExtra: 5, MountainMin: 3, MountainExtra: 2,
+                MountainHeightScale: J(0.8f, 1.1f), LavaFillFrac: 0.22f, HasWater: true,
                 OreBias: WithRare((oreKind, sigBias), (TileKind.IronOre, 0.03f), (TileKind.Emerald, 0.032f),
                     (TileKind.GoldOre, 0.014f), (TileKind.Sapphire, 0.022f)),
                 QuakeScale: quake, CaveSpawnCap: caveCap + 3,
