@@ -979,6 +979,7 @@ public sealed class Cells
     {
         _time += dt;
         if (_fireBudget < FireBudgetMax) _fireBudget = MathF.Min(FireBudgetMax, _fireBudget + FireBudgetRegen * dt);
+        if (_charBudget < CharBudgetMax) _charBudget = MathF.Min(CharBudgetMax, _charBudget + CharBudgetRegen * dt);
 
         UpdateFlying(dt);
 
