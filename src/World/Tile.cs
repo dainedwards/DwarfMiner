@@ -203,6 +203,7 @@ public static class Tiles
         TileKind.MossStone => 2,
         TileKind.Granite => 3,
         TileKind.Basalt => 4,
+        TileKind.LavaRock => 4,
         TileKind.Obsidian => 6,
         TileKind.CoalOre => 2,
         TileKind.IronOre => 3,
