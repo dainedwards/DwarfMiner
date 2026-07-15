@@ -285,7 +285,7 @@ public static class Tiles
         TileKind.IronOre => new Color(230, 200, 170),
         TileKind.SilverOre => new Color(245, 248, 255),
         TileKind.GoldOre => new Color(255, 230, 110),
-        TileKind.PlatinumOre => new Color(255, 255, 255),
+        TileKind.PlatinumOre => new Color(255, 246, 210),   // warm pearl sparkle
         TileKind.Ruby => new Color(255, 120, 140),
         TileKind.Sapphire => new Color(140, 180, 255),
         TileKind.Diamond => new Color(255, 255, 255),
