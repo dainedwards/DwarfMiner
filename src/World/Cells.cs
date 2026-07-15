@@ -2638,6 +2638,27 @@ public sealed class Cells
     /// scan, drawn as one overlapping band strip after the bodies.</summary>
     private readonly List<(int cx, int cy, byte m)> _surface = new();
 
+    /// <summary>Deferred lava draw op. Lava rides the SAME <see cref="DrawLiquids"/> scan as
+    /// the cold liquids (one pass over the visible cells serves both — a second scan would
+    /// re-walk hundreds of thousands of cells on a sea view), but it must land in the HOT
+    /// coverage field (the flame RT): compositing lava with water's translucency would show
+    /// cave walls through the lava sea, and sharing water's coverage field would metaball-
+    /// fuse the two bodies at the very edge where they're reacting. The scan batches into
+    /// the cold RT, so lava ops are collected here and replayed by <see cref="DrawHotLiquids"/>
+    /// once Game1 has switched targets. Blob-mode only — the plain fallback keeps lava in
+    /// the main cell draw.</summary>
+    private struct HotOp
+    {
+        public Vector2 Pos;
+        public Vector2 Scale;
+        public float Rot;
+        public Color Col;
+        public bool Blob;
+    }
+
+    private readonly List<HotOp> _hotOps = new();
+    private readonly List<(int cx, int cy)> _hotSurface = new();
+
     /// <summary>The LIQUID PASS: Water/Acid/Oil grid cells rasterized into the dedicated
     /// liquid render target (Game1 owns the target + batch state and composites the result
     /// over the world in ONE blend — see Renderer.CompositeLiquids). Two fill modes:
