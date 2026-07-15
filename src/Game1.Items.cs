@@ -186,6 +186,23 @@ public sealed partial class DwarfMinerGame
             ["tnt"]      = new() { Weapon = true, NeedsCooldown = true, Ammo = "tnt",      ShotSound = "throw",        Use = FireTnt },
             ["tnt_pack"] = new() { Weapon = true, NeedsCooldown = true, Ammo = "tnt_pack", ShotSound = "throw",        Use = FireTntPack },
             ["harpoon"]  = new() { Weapon = true, NeedsCooldown = true, Ammo = "harpoon",  ShotSound = "harpoon",      Use = FireHarpoon },
+
+            // ─── Mobility gear ────────────────────────────────────────────────────
+            // Grappling hook: LMB casts a line that latches to terrain or the titan's hide;
+            // holding LMB reels in, S pays line out, W cuts it (see TickGrapple). Ropes are
+            // deployable climbable lines that unroll down from an anchor tile.
+            ["grapple"] = new()
+            {
+                NeedsCooldown = true,
+                Owned = () => _run.Player.HasGrapple,
+                Use = FireGrapple,
+                OnCraft = Own("grapple", () => _run.Player.HasGrapple = true),
+            },
+            ["rope"] = new()
+            {
+                NeedsCooldown = true, Use = PlaceRope,
+                OnCraft = Stock("rope", 8),
+            },
             ["nuke"]     = new() { Weapon = true, NeedsCooldown = true, Ammo = "nuke",     ShotSound = null, Use = FireEnergyBall },
 
             // ─── Consumables ──────────────────────────────────────────────────────
