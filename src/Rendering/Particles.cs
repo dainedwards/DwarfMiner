@@ -1180,10 +1180,10 @@ public sealed class Particles
     /// shadows while it roars. Called every puff, so held fire reads as one continuous
     /// jet. (The burning FUEL is real Fire cells launched by Game1 — these are the glow
     /// around it.)</summary>
-    /// <summary>Gravity multiplier that gives a hose particle the SAME ballistic arc as the
-    /// flying fuel cells it rides with: cells pull ~450 px/s² toward the core (FlyGravity),
-    /// particles pull GravityStrength(200) × scale — so 2.25 matches, and the visible tongue
-    /// droops along exactly the trajectory the real fire/acid lands on.</summary>
+    /// <summary>The hose arc: 2.25 × GravityStrength(200) = the sim's FlyGravity (450
+    /// px/s²), so the stream droops exactly like flying cell matter does. The launched
+    /// payload cells are gone (the grains stamp their material on landing instead), but
+    /// the arc keeps matching the rest of the world's ballistics.</summary>
     private const float HoseArcGravity = 2.25f;
 
     private static readonly Color[] FlameTones =
