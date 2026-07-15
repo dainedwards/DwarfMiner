@@ -189,6 +189,17 @@ public sealed partial class DwarfMinerGame : Game
     /// (aspect-fit, letterboxed) to whatever the real window/display size is. All UI code
     /// keeps its hardcoded virtual coordinates; Screen maps the mouse back.</summary>
     private RenderTarget2D _sceneRt = null!;
+    /// <summary>Pixel-grid world target (DM_PIXELRT=0 disables): the whole world layer —
+    /// tiles, cells, entities, particles — renders into this low-res target at one texel
+    /// per HALF world pixel (one texel per sim cell at Density 8), then reaches the scene
+    /// through a single point-sampled INTEGER upscale. That is Noita's discipline: every
+    /// grain quantises to the same uniform screen grid instead of rasterising at its own
+    /// sub-pixel phase/rotation, which is what made dynamic matter read as ragged unequal
+    /// squares. Sized per zoom step (gameplay zoom is locked to even factors); cinematic
+    /// zooms (landing 1.5×, orbit) fall back to the direct full-res path.</summary>
+    private RenderTarget2D? _worldRt;
+    /// <summary>Integer upscale factor of the pixel-grid path this frame; 0 = direct path.</summary>
+    private int _pixelK;
     /// <summary>Reentrancy guard for the ClientSizeChanged → ApplyChanges round-trip.</summary>
     private bool _resizing;
 
