@@ -6720,12 +6720,16 @@ public sealed partial class DwarfMinerGame : Game
         // fullbright toggle does the same interactively — the underground renders as if lit.
         var noLight = _fullbright
             || Environment.GetEnvironmentVariable("DM_NOLIGHT") is { Length: > 0 };
+        FramePerf.Add("lgSeed", tDraw);
         if (!noLight)
         {
+            tDraw = FramePerf.Now();
             _renderer.RenderLightGrid(_camera, _run.Planet);
+            FramePerf.Add("lgRender", tDraw);
+            tDraw = FramePerf.Now();
             _renderer.CompositeLighting(new Point(VirtualWidth, VirtualHeight));
+            FramePerf.Add("lgComp", tDraw);
         }
-        FramePerf.Add("light", tDraw);
         tDraw = FramePerf.Now();
         // Multi-tap separable Gaussian bloom — bright spots (lava, projectiles, headlamp core)
         // bleed a soft glow over the scene through real downsample + 9-tap blur passes.
