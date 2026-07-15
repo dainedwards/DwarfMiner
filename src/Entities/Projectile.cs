@@ -254,10 +254,9 @@ public sealed class Projectile
                 CarveCrater(planet, physics, cells, CraterTiles, particles);
                 return;
             }
-            if (_stuck) return;
 
-            // Substepped move; on terrain contact bounce (or, for the pack, cement) — but
-            // keep counting down and never detonate on the hit itself.
+            // Substepped move; on terrain contact bounce — but keep counting down and never
+            // detonate on the hit itself.
             var mv = Velocity * dt;
             var st = Math.Max(1, (int)MathF.Ceiling(mv.Length() / (Planet.TileSize * 0.5f)));
             var stp = mv / st;
@@ -265,12 +264,6 @@ public sealed class Projectile
             {
                 if (planet.IsSolidAt(Position + stp))
                 {
-                    if (Kind == ProjectileKind.TntPack)
-                    {
-                        Velocity = Vector2.Zero;
-                        _stuck = true;
-                        return;
-                    }
                     // Reflect off the local surface normal, bleeding energy so it tumbles
                     // into ever-smaller hops and keeps bouncing until the fuse ends.
                     var n = planet.UpAt(Position);
