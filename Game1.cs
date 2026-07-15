@@ -2574,12 +2574,14 @@ public sealed partial class DwarfMinerGame : Game
         {
             RainKind.Acid => new Color(96, 120, 70),
             RainKind.Fire => new Color(122, 84, 72),
+            RainKind.Snow => new Color(150, 160, 178),
             _             => new Color(120, 130, 150),
         };
         var bodyLt = kind switch
         {
             RainKind.Acid => new Color(150, 176, 104),
             RainKind.Fire => new Color(178, 128, 100),
+            RainKind.Snow => new Color(226, 234, 246),
             _             => new Color(182, 192, 210),
         };
         foreach (var c in _run.Clouds)
