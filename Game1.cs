@@ -1582,12 +1582,16 @@ public sealed partial class DwarfMinerGame : Game
         TickAir(dt);
         TickHazardContact(dt);
 
-        // Zoom control: hold "-" to pull the camera out and "+"/"=" to push it back in (numpad
-        // +/- too). The chosen zoom sticks as the play zoom, so it persists frame to frame.
-        if (keys.IsKeyDown(Keys.OemMinus) || keys.IsKeyDown(Keys.Subtract))
-            _playZoom = MathHelper.Clamp(_playZoom * (1f - 1.6f * dt), 2.2f, 8f);
-        if (keys.IsKeyDown(Keys.OemPlus) || keys.IsKeyDown(Keys.Add))
-            _playZoom = MathHelper.Clamp(_playZoom * (1f + 1.6f * dt), 2.2f, 8f);
+        // Zoom control: "-" steps the camera out, "+"/"=" steps it in (numpad +/- too).
+        // Steps are locked to EVEN zoom factors (2/4/6/8) so the pixel-grid world target
+        // (see DrawFrame) upscales by an exact integer — every world pixel stays an
+        // identical crisp block. The chosen zoom sticks as the play zoom.
+        var zoomOutKey = keys.IsKeyDown(Keys.OemMinus) || keys.IsKeyDown(Keys.Subtract);
+        var zoomInKey = keys.IsKeyDown(Keys.OemPlus) || keys.IsKeyDown(Keys.Add);
+        if (zoomOutKey && !(_prevKeys.IsKeyDown(Keys.OemMinus) || _prevKeys.IsKeyDown(Keys.Subtract)))
+            _playZoom = MathF.Max(2f, _playZoom - 2f);
+        if (zoomInKey && !(_prevKeys.IsKeyDown(Keys.OemPlus) || _prevKeys.IsKeyDown(Keys.Add)))
+            _playZoom = MathF.Min(8f, _playZoom + 2f);
         _camera.Zoom = _playZoom;
 
         // Camera follows player, rotating so up = away from planet center. DM_BOSSCAM frames
