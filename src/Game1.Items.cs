@@ -186,7 +186,7 @@ public sealed partial class DwarfMinerGame
             ["tnt"]      = new() { Weapon = true, NeedsCooldown = true, Ammo = "tnt",      ShotSound = "throw",        Use = FireTnt },
             ["tnt_pack"] = new() { Weapon = true, NeedsCooldown = true, Ammo = "tnt_pack", ShotSound = "throw",        Use = FireTntPack },
             ["harpoon"]  = new() { Weapon = true, NeedsCooldown = true, Ammo = "harpoon",  ShotSound = "harpoon",      Use = FireHarpoon },
-            ["nuke"]     = new() { Weapon = true, NeedsCooldown = true, Ammo = "nuke",     ShotSound = "shoot_rocket", Use = FireNuke },
+            ["nuke"]     = new() { Weapon = true, NeedsCooldown = true, Ammo = "nuke",     ShotSound = null, Use = FireEnergyBall },
 
             // ─── Consumables ──────────────────────────────────────────────────────
             ["poultice"] = new() { Ammo = "poultice", Use = _ => UseHealPotion() },
