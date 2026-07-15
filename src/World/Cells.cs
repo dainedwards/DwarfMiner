@@ -2472,7 +2472,7 @@ public sealed class Cells
         WakeFreeSurfaces(minRing * Density, maxRing * Density);
     }
 
-    private Color ColorFor(Material m, int cx, int cy, byte srcByte)
+    private Color ColorFor(Material m, int cx, int cy, byte srcByte, bool airborne = false)
     {
         var hash = (cx * 73856093) ^ (cy * 19349663);
         var jitter = ((hash >> 4) & 31) - 16;
