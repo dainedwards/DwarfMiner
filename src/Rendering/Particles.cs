@@ -1348,8 +1348,9 @@ public sealed class Particles
             // Mid-bolt wanders hardest; the endpoints stay pinned to source and victim.
             var wander = MathF.Sin(t * MathF.PI) * ((float)_rng.NextDouble() * 2f - 1f) * len * 0.14f;
             var node = from + span * t + perp * wander;
-            // Nodes along the segment so the bolt reads as a line, not dots.
-            var steps = Math.Max(1, (int)((node - prev).Length() / 2.5f));
+            // Nodes along the segment so the bolt reads as a line, not dots — 1-px nodes at
+            // a tighter pitch keep the line solid; light on alternate nodes only.
+            var steps = Math.Max(1, (int)((node - prev).Length() / 1.8f));
             for (var sIdx = 0; sIdx <= steps; sIdx++)
             {
                 var p = Vector2.Lerp(prev, node, sIdx / (float)steps);
@@ -1361,10 +1362,10 @@ public sealed class Particles
                     MaxLife = 0.12f,
                     Color = new Color(235, 235, 255),
                     FadeColor = new Color(120, 90, 220),
-                    Size = 1.4f,
+                    Size = 1.1f,
                     GravityScale = 0f,
                     Drag = 0f,
-                    LightRadius = 12f,
+                    LightRadius = sIdx % 2 == 0 ? 12f : 0f,
                     LightColor = new Color(180, 160, 255),
                 });
             }
