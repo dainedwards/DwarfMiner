@@ -93,7 +93,7 @@ public static class Tiles
     // Tiles that never fall, even when unsupported.
     public static bool IsAnchored(TileKind k) =>
         k is TileKind.PlanetCore or TileKind.Core or TileKind.Support
-          or TileKind.ReinforcedSupport or TileKind.Ladder or TileKind.Rail
+          or TileKind.ReinforcedSupport or TileKind.Ladder or TileKind.Rope or TileKind.Rail
           or TileKind.Glowshroom or TileKind.Beacon
           // Built architecture: skyscraper hulls and lizard-city masonry never crumble —
           // mining one wall must not condemn the tower above it (they also shrug off acid,
