@@ -40,11 +40,13 @@ public sealed class Renderer
     private readonly EffectParameter? _fxCol0, _fxCol1, _fxCol2, _fxCol3, _fxPs;
 
     /// <summary>Carve amplitude as a fraction of a tile edge. DM_CARVE=&lt;px&gt; overrides the
-    /// max carve depth in world pixels. Default 2.0: deep enough that the long-wavelength
-    /// swell visibly bends a flat run of tiles, shallow enough (half a tile) that the sand
-    /// sim's square-tile collision stays a non-issue in practice.</summary>
+    /// max carve depth in world pixels. Default 1.3: the physics bound, not an aesthetic
+    /// one — sand rests on the SQUARE tile, so carve depth is exactly how far a grain can
+    /// visibly hover above a carved surface. 2.0 was tried and read as gaps sand wouldn't
+    /// fill; ~1.3 matches the old baked erosion's depth, which years of sand-on-terrain
+    /// never showed. The organic look must come from the WAVELENGTH (CarveFreq), not depth.</summary>
     private static readonly float CarveAmp =
-        (float.TryParse(Environment.GetEnvironmentVariable("DM_CARVE"), out var cpx) ? cpx : 2.0f)
+        (float.TryParse(Environment.GetEnvironmentVariable("DM_CARVE"), out var cpx) ? cpx : 1.3f)
         / Planet.TileSize;
     /// <summary>Base carve noise frequency per world px — ~8 px swells, so the coastline
     /// undulates coherently ACROSS tiles instead of reading as per-pixel fuzz (the fuzz is
