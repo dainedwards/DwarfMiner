@@ -574,7 +574,7 @@ public static class WorldGen
             planet.SurfaceProfile = profile;
         }
 
-        SeedBiomePockets(planet, def, rng);
+        SeedBiomePockets(planet, def, rng, lakes);
         if (def.GreatGeode) CarveGreatGeode(planet, rng);
 
         // Volcanoes stamp last so their plumbing (throat lining, chamber shell) wins over
