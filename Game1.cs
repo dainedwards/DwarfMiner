@@ -1739,6 +1739,10 @@ public sealed partial class DwarfMinerGame : Game
         // Ambient events — meteors on their own cadence, disasters off the shared clock
         // (see AmbientDirector).
         ApplyAmbient(AmbientDirector.Update(dt, _run, _particles));
+        // Living ecosystem — drifting clouds shed biome rain, and felled trees regrow from
+        // their roots the more that rain (or a nearby pool) waters them.
+        Weather.Update(dt, _run, _particles);
+        TreeEcology.Update(dt, _run);
         // Exposure: both disasters punish standing in surface air; underground is safe.
         var exposed = DepthBelowSurface() < OxygenRules.AirDepth;
         if (exposed && _run.FlareActive > 0f)
