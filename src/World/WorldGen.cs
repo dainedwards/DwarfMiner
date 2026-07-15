@@ -1068,6 +1068,12 @@ public static class WorldGen
             // Dense enough that neighbouring walks intersect constantly — the underground
             // should read as one connected Noita warren, not isolated corridors.
             var worms = 30 + rng.Next(11);
+            // Ocean worlds honeycomb the crust harder: the surface is nearly all sea, so
+            // the explorable real estate lives underground — extra walks below, plus the
+            // vaulted chambers after the loop. The obsidian seabed shell (stamped in the
+            // tile pass, unbiteable by these worms) is what keeps all of it dry.
+            var ocean = def.LakeScale > 2.5f;
+            if (ocean) worms += 16;
             // Stay above THIS world's lava zone (crossing the flood line turns tunnels into
             // permanent lava plumbing) and below the dirt band. The hard floor passed to
             // CarveWorm stops drifting walks from ever biting the stratum seam below.
@@ -1084,6 +1090,37 @@ public static class WorldGen
                     + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
                 CarveWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
                     260 + rng.Next(300), branchBudget: 2, minFrac, hardFloorPx);
+            }
+
+            // Ocean chambers: vaulted halls strung along the worm band — the destination
+            // rooms the corridors run between (ore walls, spawn floors, room to fight).
+            // Rolled AFTER the worm loop so the extra draws can't shift worm layouts on
+            // other-world seeds; ocean-only, so non-ocean streams are untouched anyway.
+            if (ocean)
+            {
+                var chambers = 9 + rng.Next(5);
+                for (var i = 0; i < chambers; i++)
+                {
+                    var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+                    // Mid-crust band, held clear of both the stratum seam below and the
+                    // deepest possible seabed above (a chamber may nudge the shell — it
+                    // can't bite obsidian — but shouldn't waste half its volume on it).
+                    var radiusTiles = MathHelper.Lerp(planet.Radius * minFrac + 8f,
+                        maxTiles - 14f, (float)rng.NextDouble());
+                    if (radiusTiles <= planet.Radius * minFrac + 8f) continue;
+                    var centre = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
+                        * radiusTiles * Planet.TileSize;
+                    if (NearDenOrCity(planet, centre)) continue;
+                    // A hall is a clutch of overlapping bites around the centre.
+                    var lobes = 3 + rng.Next(3);
+                    for (var b = 0; b < lobes; b++)
+                    {
+                        var off = new Vector2(
+                            ((float)rng.NextDouble() - 0.5f) * 26f,
+                            ((float)rng.NextDouble() - 0.5f) * 18f);
+                        CarveWormDisk(planet, centre + off, 10f + (float)rng.NextDouble() * 5f);
+                    }
+                }
             }
         }
 
