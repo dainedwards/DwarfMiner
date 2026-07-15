@@ -1376,11 +1376,14 @@ public sealed class Particles
             // occasional DEEP green — a liquid rope needs dark grains for depth, where
             // fire wants none.
             var tone = i < 7 ? 0 : _rng.Next(4);
+            var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
+            // De-pulse — see EmitFlameJet: random emission-time head start interleaves puffs.
+            var lead = (float)_rng.NextDouble() * 0.06f;
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 5f,
-                Velocity = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f)),
-                Life = 0.5f + (float)_rng.NextDouble() * 0.32f,
+                Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
+                Velocity = vel,
+                Life = 0.5f + (float)_rng.NextDouble() * 0.32f - lead,
                 MaxLife = 0.82f,
                 Color = tone switch
                 {
