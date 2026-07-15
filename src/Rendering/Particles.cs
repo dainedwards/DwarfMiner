@@ -655,6 +655,10 @@ public sealed class Particles
                 GravityScale = 1.1f,
                 Drag = 0.02f,
                 CollideTiles = true,
+                // Pinned to the original short streak (~3.3 px, the first smear tuning):
+                // the shared smear has since been lengthened twice for the hose streams,
+                // and rain shouldn't ride along — decoupled per user.
+                SmearMax = 3.3f,
             });
         }
     }
