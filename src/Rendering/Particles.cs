@@ -1281,7 +1281,7 @@ public sealed class Particles
             _list.Add(new Particle
             {
                 Position = pos + d * (8f + (float)_rng.NextDouble() * (reach * 0.35f)),
-                Velocity = d * (jetSpeed * 0.45f),
+                Velocity = d * (jetSpeed * 0.45f) + shooterVel,
                 Life = 0.4f + (float)_rng.NextDouble() * 0.45f,
                 MaxLife = 0.9f,
                 Color = new Color(95, 62, 45),
