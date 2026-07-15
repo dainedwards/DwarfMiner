@@ -1585,11 +1585,10 @@ public static class SimTest
                     bestRough = rough / (samples - 1);   // px of edge movement per storey row
                 }
             }
-            Check($"city: tower facades run straight ({bestSamples} storeys, "
-                + $"wobble {(bestDev == float.MaxValue ? -1 : bestDev):0.0}px, "
-                + $"roughness {(bestRough == float.MaxValue ? -1 : bestRough):0.00}px/row)",
-                bestSamples >= 10 && bestDev <= Planet.TileSize * 1.75f
-                && bestRough <= Planet.TileSize * 0.45f);
+            Check($"city: tower facades draw dead straight ({bestSamples} storeys, "
+                + $"wobble {(bestDev == float.MaxValue ? -1 : bestDev):0.00}px, "
+                + $"roughness {(bestRough == float.MaxValue ? -1 : bestRough):0.000}px/row)",
+                bestSamples >= 10 && bestDev <= 1.2f && bestRough <= 0.12f);
         }
         Check($"city: NO lizard warren under the metropolis (brick {cityBrick}, dens {city.LizardDens.Count})",
             cityBrick == 0 && city.LizardDens.Count == 0);
