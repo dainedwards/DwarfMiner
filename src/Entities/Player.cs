@@ -465,16 +465,18 @@ public sealed class Player
         if (EmpTimer > 0f) EmpTimer -= dt;
         if (HurtFlash > 0f) HurtFlash = MathF.Max(0f, HurtFlash - dt * 2.2f);
 
-        // Jetpack: SPACE is a straight on/off thruster, Noita-style — hold it and the pack
-        // burns, lifting you straight off the GROUND (no W-jump needed first; W plays no part
-        // in flying anymore), release and you fall. Worn in the Back slot only (owning it isn't
-        // enough). Thrust is a boost pop the frame it lights plus a gentle gravity-cancelling
-        // lift; the burn drains JetCharge (one second at tier I) and only refills once you're
-        // grounded and off the throttle. Gated off ladders/water and EMP.
+        // Jetpack: SPACE doubles as the throttle, Noita-style — tap to jump, keep holding
+        // and the pack lights once the hold outlives the tap window (an airborne press
+        // lights it immediately: falling + Space = hover). Release and you fall. Worn in
+        // the Back slot only (owning it isn't enough). Thrust is a boost pop the frame it
+        // lights plus a gentle gravity-cancelling lift; the burn drains JetCharge (one
+        // second at tier I) and only refills once you're grounded and off the throttle.
+        // Gated off ladders/water and EMP.
+        var jetWanted = jumpHeld && (_jetPressAirborne || _jumpHoldTime >= JetHoldDelay);
         IsJetting = false;
         if (HasJetpack && Equipment.Get(EquipSlot.Back) == "jetpack" && EmpTimer <= 0f)
         {
-            if (jetHeld && !onLadder && !InWater && JetCharge > 0f)
+            if (jetWanted && !onLadder && !InWater && JetCharge > 0f)
             {
                 // Boost pop the frame the burn first lights (lifts you clear of the ground),
                 // then the steady lift acceleration. Above the rise cap thrust adds nothing —
