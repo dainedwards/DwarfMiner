@@ -1188,24 +1188,25 @@ public sealed class Particles
                 LightColor = new Color(150, 240, 80),
             });
         }
-        // Caustic vapour wisps shed along the rope — arcing off it, then hanging.
-        for (var i = 0; i < 4; i++)
+        // A couple of caustic vapour wisps riding the rope FROM THE MUZZLE (never seeded
+        // mid-air along the stream — that materialised droplets in space that fell like rain).
+        for (var i = 0; i < 2; i++)
         {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.28f;
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             _list.Add(new Particle
             {
-                Position = pos + d * (8f + (float)_rng.NextDouble() * (reach * 0.35f)),
-                Velocity = d * (jetSpeed * 0.4f),
-                Life = 0.4f + (float)_rng.NextDouble() * 0.4f,
-                MaxLife = 0.9f,
+                Position = pos + d * (4f + (float)_rng.NextDouble() * 6f),
+                Velocity = d * (jetSpeed * (0.55f + (float)_rng.NextDouble() * 0.25f)),
+                Life = 0.35f + (float)_rng.NextDouble() * 0.3f,
+                MaxLife = 0.65f,
                 Color = new Color(90, 150, 55),
                 FadeColor = new Color(30, 55, 25),
                 Size = 1.1f + (float)_rng.NextDouble() * 0.5f,
-                GravityScale = -0.06f,
-                Drag = 2.4f,
+                GravityScale = HoseArcGravity * 0.8f,   // rides (nearly) the rope's own arc
+                Drag = 1.6f,
                 CollideTiles = true,
             });
         }
