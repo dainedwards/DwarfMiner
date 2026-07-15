@@ -36,6 +36,18 @@ public static class Weather
     {
         var planet = run.Planet;
         if (planet is null) return;
+
+        // No atmosphere, no weather: airless rock (the Hollow, the cratered moon) has no
+        // air to hold a cloud up — the sky stays space-black and empty. Clear instead of
+        // letting stragglers fade so nothing ever drifts over the regolith. (The rest of
+        // this tick is moot too: airless worlds grow no trees and are never the frost
+        // biome, so leaves and lying snow have nothing to do.)
+        if (run.Def.Airless)
+        {
+            run.Clouds.Clear();
+            return;
+        }
+
         var kind = TreeEcology.RainFor(run.Def);
         var rng = Random.Shared;
 
