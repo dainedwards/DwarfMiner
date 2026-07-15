@@ -1885,7 +1885,28 @@ public static class SimTest
                 }
                 if (flat) { aAng = a; flatFound = true; }
             }
-            Check("defense: flat rally runway found", flatFound);
+            if (!flatFound)
+            {
+                // Rolling worldgen (2026-07-15) means a naturally flat 0.4-rad stretch may
+                // simply not exist any more. Grade one — the same idiom as the scenarios
+                // that carve their own test pockets: level rock at the local surface height,
+                // clear sky above, so the march still runs on deterministic ground.
+                aAng = 0.2f;
+                var g0 = SpawnDirector.FindSurfaceSpawn(planet, aAng, planet.Radius);
+                var groundRing = (int)((g0 - planet.Center).Length() / Planet.TileSize)
+                                 - Planet.RingMin - 2;
+                for (var r = groundRing - 3; r <= Math.Min(planet.Rings - 1, groundRing + 40); r++)
+                {
+                    var n = planet.TilesAt(r);
+                    var t0 = (int)(aAng / MathHelper.TwoPi * n) - 2;
+                    var t1 = (int)((aAng + 0.45f) / MathHelper.TwoPi * n) + 2;
+                    for (var t = t0; t <= t1; t++)
+                        planet.Set(r, ((t % n) + n) % n,
+                            r <= groundRing ? TileKind.Stone : TileKind.Sky);
+                }
+                flatFound = true;
+            }
+            Check("defense: flat rally runway found (or graded)", flatFound);
             var allyPos = SpawnDirector.FindSurfaceSpawn(planet, aAng, planet.Radius);
             var runR = (allyPos - planet.Center).Length();
             var farPrey = new Player(SpawnDirector.FindSurfaceSpawn(
