@@ -2052,8 +2052,14 @@ public sealed class Cells
                 up * (50f + _rng.Next(60)) + tan * (_rng.Next(140) - 70), Material.Fire);
         }
 
-        // Flicker upward sometimes so flames lick and dance instead of squatting.
-        if (_rng.Next(3) == 0 && cy < Height - 1)
+        // Flicker upward sometimes so flames lick and dance instead of squatting —
+        // UNLESS the cell carries a burn fuse: fused fire is the flamethrower's GROUND
+        // fire and stays ANCHORED to the surface it ignited. Un-anchored, the fuse rode
+        // the upward drift and the long burn finished mid-air above a dark ignition
+        // point (with the licking-flame emission following it up) — the origin must be
+        // the last thing burning, and now it structurally is. Transient unfused fire
+        // (explosion seeds, gas fronts, charring) keeps the dance.
+        if (_srcTile[i] == 0 && _rng.Next(3) == 0 && cy < Height - 1)
         {
             var oc2 = OuterCellCount(cx, cy);
             var (ux, uy) = OuterCell(cx, cy, _rng.Next(oc2));
