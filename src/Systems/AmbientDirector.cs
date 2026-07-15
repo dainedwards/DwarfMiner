@@ -95,7 +95,7 @@ public static class AmbientDirector
 
         // The shared disaster clock: it only runs while the world is quiet, so disasters
         // can never overlap, and the spacing between them is the difficulty interval.
-        if (!DisasterActive(run))
+        if (!run.Def.NoDisasters && !DisasterActive(run))
         {
             run.DisasterTimer -= dt;
             if (run.DisasterTimer <= 0f)
