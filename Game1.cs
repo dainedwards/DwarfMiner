@@ -2222,7 +2222,11 @@ public sealed partial class DwarfMinerGame : Game
                 _particles.EmitDust(shot.Position, 2f);
             if (shot.Dead)
             {
-                _particles.EmitImpact(shot.Position, ProjectileKind.Cannon);
+                // Small shots — darts, slugs, bone spikes — land with a tiny puff, NOT the
+                // cannon-blast burst the heavy titan ordnance (flame/acid/lava/void) throws.
+                var impact = shot.Kind is TitanShotKind.Dart or TitanShotKind.Slug or TitanShotKind.Spike
+                    ? ProjectileKind.Bullet : ProjectileKind.Cannon;
+                _particles.EmitImpact(shot.Position, impact);
                 _run.TitanShots.RemoveAt(i);
             }
         }
