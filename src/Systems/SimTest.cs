@@ -18,6 +18,9 @@ public static class SimTest
 
     public static void Run()
     {
+        // Mechanic tests run on a clean surface — decorative flora/trees aren't what they
+        // exercise, and dense forest cover perturbs titan digs, flame breath, and runway scans.
+        WorldGen.ScatterVegetation = false;
         var planet = WorldGen.Generate(42);
         var cells = new Cells(planet);
         var physics = new Physics(planet, cells);
