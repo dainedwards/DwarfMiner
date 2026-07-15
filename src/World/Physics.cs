@@ -282,7 +282,7 @@ public sealed class Physics
             if (_anchorStamp[idx] == _anchorGen) continue;
             if (IsRegionAnchored(x, y)) continue;
 
-            CollapseRegion(_floodRegion);
+            CollapseRegion(_floodRegion, sky: !_regionTouchesCrust);
         }
         _dirtyWork.Clear();
     }
