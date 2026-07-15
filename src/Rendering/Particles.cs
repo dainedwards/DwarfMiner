@@ -929,6 +929,7 @@ public sealed class Particles
                 // Rain's own streak length, decoupled from the hose smear tuning
                 // (was pinned 3.3 — lengthened to 6 per user); far drops streak shorter.
                 SmearMax = 3.5f + depth * 3.5f,
+                Backdrop = true,
             });
         }
     }
