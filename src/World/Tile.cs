@@ -485,6 +485,9 @@ public static class Tiles
         TileKind.GlassBlock => ("glass_block", 1),
         TileKind.Platform => ("platform", 1),
         TileKind.TreeTrunk => ("wood", 2),   // chopping a trunk yields wood
+        TileKind.TreeCanopy => ("wood", 1),  // foliage dust still pays a little wood on pickup
+        TileKind.TreeCanopy2 => ("wood", 1),
+        TileKind.TreeRoot => ("wood", 1),    // grubbed-out roots give a scrap of wood
         TileKind.Rail => ("rail", 1),
         TileKind.ReinforcedSupport => ("reinforced_support", 1),
         TileKind.Glowshroom => ("glowshroom", 1),
