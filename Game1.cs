@@ -3663,7 +3663,10 @@ public sealed partial class DwarfMinerGame : Game
         {
             p.Health -= LavaBurnDps * dt;
             _run.Shake = MathF.Max(_run.Shake, 0.3f);
-            if (Random.Shared.NextDouble() < dt * 20f) _particles.EmitImpact(p.Position, ProjectileKind.Cannon);
+            p.HurtFlash = MathF.Max(p.HurtFlash, 0.25f);   // the damage read, not a spark storm
+            // Only the rare cinder now — the old shower of sparks was 99% cut; the hurt flash
+            // and shake carry the "you're burning" signal instead.
+            if (Random.Shared.NextDouble() < dt * 0.2f) _particles.EmitImpact(p.Position, ProjectileKind.Cannon);
         }
         if (acid > 0)
         {
