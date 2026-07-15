@@ -1272,6 +1272,20 @@ public sealed partial class DwarfMinerGame : Game
             SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
         _renderer.SceneTarget = _sceneRt;
         _renderer.Grid = _lightGrid;
+        // Pre-warm the liquid pass: create both coverage targets at their descent-time size
+        // and push one composite through the metaball shader so the driver compiles its
+        // GLSL now. Untouched, all of that happened lazily on the FIRST frame the descent
+        // camera reached close-up LOD — an ~80 ms hitch right at the "ground rushing up"
+        // moment of every landing.
+        _liquidRt = new RenderTarget2D(GraphicsDevice, VirtualWidth, VirtualHeight, false,
+            SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+        _flameRt = new RenderTarget2D(GraphicsDevice, VirtualWidth, VirtualHeight, false,
+            SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+        GraphicsDevice.SetRenderTarget(_liquidRt);
+        GraphicsDevice.Clear(Color.Transparent);
+        GraphicsDevice.SetRenderTarget(_sceneRt);
+        _renderer.CompositeLiquids(_liquidRt);
+        GraphicsDevice.SetRenderTarget(null);
         _sfx.Build();
         Icons.Build(GraphicsDevice);
         // Slot icons for the melee arsenal escalate with the live run's upgrade rungs.
