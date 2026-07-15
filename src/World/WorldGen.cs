@@ -405,7 +405,7 @@ public static class WorldGen
 
                 var bigN = SampleNoise(bigCave, wx * 0.05f, wy * 0.05f);
                 var smallN = SampleNoise(smallCave, wx * 0.18f, wy * 0.18f);
-                if (!acidBuffer && depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
+                if (!acidBuffer && !inSeam && depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
                 {
                     k = TileKind.Sky;
                     // Reservoirs: a slow water-noise channel floods whole cave pockets in the
