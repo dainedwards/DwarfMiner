@@ -2643,6 +2643,64 @@ public sealed class Cells
         // Waterline: one wide band per surface cell, overlapping its neighbours, bobbing
         // on a wave whose count divides the ring — a continuous line, drawn after every
         // body quad so its colour wins the replace blend.
+        DrawWaterline(r, radial);
+    }
+
+    private bool IsBlockedAt((int cx, int cy) c) => IsBlocked(c.cx, c.cy);
+
+    /// <summary>One liquid cell through the full per-cell path (blob at edges, padded quad
+    /// otherwise, waterline collection) — the non-merged remainder of <see cref="DrawLiquids"/>:
+    /// pool surfaces and edges, run boundaries, falling cells.</summary>
+    private void DrawLiquidCell(Renderer r, Texture2D blob, Vector2 blobOrigin, bool blobMode,
+        int d, int cx0, int cy, int n, float ringRadius, float chord, float radial, float angStep)
+    {
+        var cx = cx0 + d;
+        var idx = Idx(cx, cy);
+        var m = (Material)_mat[idx];
+        if (m is not (Material.Water or Material.Acid or Material.Oil)) return;
+        var cellAng = (cx + 0.5f) * angStep;
+        var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
+        var centre = Planet.Center + up * ringRadius;
+        var rotation = cellAng + MathHelper.PiOver2;
+        // Sub-cell fall offset, same as Draw — streams glide between rows.
+        var frac = MathF.Min(_travel[idx], 1f);
+        if (frac > 0f) centre -= up * (frac * radial);
+        var openOut = false;
+        if (cy < Height - 1)
+        {
+            var (ocx, ocy) = OuterCell(cx, cy, 0);
+            openOut = !IsBlocked(ocx, ocy);
+        }
+        var openIn = false;
+        if (cy > 0)
+        {
+            var (icx, icy) = InnerCell(cx, cy);
+            openIn = !IsBlocked(icx, icy);
+        }
+        var body = LiquidBody(m, cx, cy);
+        var col = new Color(body.R, body.G, body.B, (byte)(MatAlpha(m) * 255f));
+        var interior = !openOut && !openIn && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy);
+        if (blobMode && !interior)
+        {
+            r.Batch.Draw(blob, centre, null, col, rotation, blobOrigin,
+                new Vector2(chord * 3f / blob.Width, radial * 3f / blob.Height),
+                SpriteEffects.None, 0f);
+        }
+        else
+        {
+            // Neighbour-aware padding as in Draw: bleed only into occupied sides so
+            // pools stay seamless while a lone droplet keeps its own grain size.
+            var chordPad = IsBlocked(cx - 1, cy) || IsBlocked(cx + 1, cy) ? 0.5f : 0.1f;
+            var radialPad = !openIn || !openOut ? 0.5f : 0.1f;
+            r.Batch.Draw(r.Pixel, centre, null, col, rotation, new Vector2(0.5f, 0.5f),
+                new Vector2(chord * (1f + chordPad), radial * (1f + radialPad)),
+                SpriteEffects.None, 0f);
+        }
+        if (openOut && _surface.Count < 4096) _surface.Add((cx, cy, (byte)m));
+    }
+
+    private void DrawWaterline(Renderer r, float radial)
+    {
         foreach (var (cx, cy, mb) in _surface)
         {
             var m = (Material)mb;
