@@ -519,9 +519,17 @@ public sealed class Player
         // flicker the grounded state — any solid contact counts.
         var feetCentre = Position - up * (Radius + 1.5f);
         var footOff = right * (Radius * 0.7f);
-        Grounded = ProbeSolid(planet, feetCentre)
-                || ProbeSolid(planet, feetCentre + footOff)
-                || ProbeSolid(planet, feetCentre - footOff);
+        // A platform only grounds a dwarf settling onto its top — never one rising up through
+        // it — so passing up through a platform doesn't get snagged as "standing on it".
+        bool Ground(Vector2 p)
+        {
+            var (gx, gy) = planet.WorldToTile(p);
+            var gk = planet.Get(gx, gy);
+            if (!Tiles.BlocksPlayer(gk)) return false;
+            if (gk == TileKind.Platform && Vector2.Dot(Velocity, up) > 1f) return false;
+            return true;
+        }
+        Grounded = Ground(feetCentre) || Ground(feetCentre + footOff) || Ground(feetCentre - footOff);
 
         // Walked off an edge (not a jump): seed a little downward velocity so the fall arc
         // begins this frame instead of hovering while gravity accumulates from zero. The old
