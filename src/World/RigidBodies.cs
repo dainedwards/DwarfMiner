@@ -131,11 +131,14 @@ public sealed class RigidBodies
             }
             var inertia = 0f;
             var maxSq = 0f;
-            foreach (var c in Cells)
+            SurfaceIdx.Clear();
+            for (var i = 0; i < Cells.Count; i++)
             {
+                var c = Cells[i];
                 var d = c.Local.LengthSquared();
                 inertia += d + Planet.TileSize * Planet.TileSize / 6f;
                 maxSq = MathF.Max(maxSq, d);
+                if (c.Surface) SurfaceIdx.Add(i);
             }
             InvMass = 1f / n;
             InvInertia = 1f / MathF.Max(1f, inertia);
