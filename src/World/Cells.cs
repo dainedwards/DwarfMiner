@@ -2437,7 +2437,8 @@ public sealed class Cells
             {
                 // Sickly green with a slow toxic shimmer, semi-translucent like water.
                 var shimmer = (int)(MathF.Sin(_time * 2.0f + ((hash >> 3) & 7) * 0.7f + cy * 0.3f) * 12f);
-                return Tint(new Color(120, 200, 40), jitter / 5 + shimmer) * 0.82f;
+                var body = Tint(new Color(120, 200, 40), jitter / 5 + shimmer);
+                return skin ? Tint(body, 20) : body * 0.82f;
             }
             case Material.Gas:
             {
