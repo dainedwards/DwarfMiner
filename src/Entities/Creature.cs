@@ -2974,6 +2974,94 @@ public sealed class Creature
                 r.DrawCircle(Position + up * (Radius + 1.8f) - right * 0.8f, 0.6f, Color.Black);
                 break;
             }
+            case CreatureKind.AlienShark:
+            {
+                // Sleek torpedo predator: a tapered slate body, tall dorsal + tail fins, a
+                // pale belly, a cold eye, and a gash of a mouth that gnashes open while it
+                // charges (_swing).
+                var hide = Tinted(new Color(70, 92, 112));
+                var bellyC = Tinted(new Color(150, 170, 185));
+                var dir = right * facing;
+                for (var s = 0; s < 4; s++)
+                {
+                    var f = s / 3f;
+                    var seg = Position - dir * (f * Radius * 1.5f)
+                              + up * MathF.Sin(t * 5f + _phase + f * 1.6f) * 1.0f;
+                    r.DrawCircle(seg, Radius * (1f - f * 0.6f), hide);
+                }
+                r.DrawCircle(Position + dir * (Radius * 0.4f) - up * (Radius * 0.35f), Radius * 0.5f, bellyC);
+                // Snout, mouth (open + teeth while charging), eye.
+                var snout = Position + dir * (Radius * 1.0f);
+                var mouthOpen = _swing > 0f ? 1.4f : 0.6f;
+                r.DrawRect(snout - up * 0.6f, new Vector2(3.2f, mouthOpen), Color.Black, rot);
+                if (_swing > 0f)
+                    r.DrawRect(snout - up * 0.6f, new Vector2(3.0f, 0.6f), new Color(220, 220, 230), rot);
+                r.DrawCircle(Position + dir * (Radius * 0.6f) + up * (Radius * 0.35f), 0.9f, new Color(230, 60, 50));
+                // Tall dorsal + swept tail.
+                r.DrawRect(Position + up * (Radius * 0.9f), new Vector2(2.0f, 4.2f), hide, rot + facing * 0.55f);
+                var tail = Position - dir * (Radius * 1.5f);
+                var sweep = MathF.Sin(t * 5f + _phase) * 0.6f;
+                var tAng = MathF.Atan2(dir.Y, dir.X);
+                r.DrawRect(tail, new Vector2(5.5f, 1.6f), hide, tAng + sweep + 1.0f);
+                r.DrawRect(tail, new Vector2(4.0f, 1.4f), hide, tAng - sweep - 1.0f);
+                // Pectoral fin.
+                r.DrawRect(Position + dir * 0.6f - up * (Radius * 0.5f), new Vector2(2.6f, 1.1f), hide, rot + facing * 0.9f);
+                break;
+            }
+            case CreatureKind.Gulper:
+            {
+                // Deep-water anglerfish: a bulbous dark body dominated by a cavernous toothy
+                // maw (yawning wide on the lunge, _swing), tiny fins, and a glowing lure on a
+                // thin stalk dangling out front — the light in the dark that's actually bait.
+                var body = Tinted(new Color(46, 60, 74));
+                var bodyDk = Tinted(new Color(30, 40, 52));
+                var dir = right * facing;
+                r.DrawCircle(Position, Radius, body);
+                r.DrawCircle(Position - dir * (Radius * 0.7f), Radius * 0.7f, bodyDk);
+                // Cavernous maw at the front, hinging wide on the lunge.
+                var maw = Position + dir * (Radius * 0.6f);
+                var gape = _swing > 0f ? Radius * 1.1f : Radius * 0.5f;
+                r.DrawCircle(maw, gape, Color.Black);
+                // A ring of pale teeth around the maw.
+                for (var i = 0; i < 6; i++)
+                {
+                    var a = (i / 6f) * MathF.Tau;
+                    r.DrawRect(maw + new Vector2(MathF.Cos(a), MathF.Sin(a)) * gape * 0.8f,
+                        new Vector2(1.2f, 1.2f), new Color(210, 210, 200), rot + a);
+                }
+                // Eye.
+                r.DrawCircle(Position - dir * (Radius * 0.1f) + up * (Radius * 0.6f), 1.0f, new Color(255, 220, 120));
+                // Lure: a thin stalk arcing over the maw with a pulsing glowing bulb.
+                var pulse = MathF.Sin(t * 3f + _phase) * 0.5f + 0.5f;
+                var lure = maw + dir * (Radius * 0.9f) + up * (Radius * 1.3f);
+                r.DrawRect(Position + up * (Radius * 1.1f), new Vector2(0.6f, Radius * 1.2f), body, rot + facing * 0.5f);
+                r.DrawCircle(lure, 1.2f + pulse * 0.8f, Color.Lerp(new Color(120, 200, 150), new Color(200, 255, 210), pulse));
+                // Little tail fin.
+                r.DrawRect(Position - dir * (Radius * 1.2f), new Vector2(3.0f, 1.4f),
+                    body, MathF.Atan2(dir.Y, dir.X) + MathF.Sin(t * 4f + _phase) * 0.4f);
+                break;
+            }
+            case CreatureKind.Brinespitter:
+            {
+                // Reef lurker: a squat mottled dome with a puckered spout snout, stubby fins,
+                // and beady eyes. The spout flashes pale when it fires a water-glob (_swing).
+                var body = Tinted(new Color(70, 110, 96));
+                var bodyHi = Tinted(new Color(104, 150, 128));
+                var dir = right * facing;
+                r.DrawCircle(Position, Radius, body);
+                r.DrawRect(Position + up * (Radius * 0.7f), new Vector2(Radius * 1.4f, 1.4f), bodyHi, rot);
+                // Spout snout, aimed toward the facing.
+                var spout = Position + dir * (Radius * 0.9f);
+                r.DrawRect(spout, new Vector2(2.6f, 2.0f), bodyHi, rot);
+                r.DrawCircle(spout + dir * 1.4f, _swing > 0f ? 1.8f : 0.8f,
+                    _swing > 0f ? new Color(180, 220, 255) : new Color(60, 90, 110));
+                // Stubby fins + eyes.
+                r.DrawRect(Position - up * (Radius * 0.4f) + right * (Radius * 0.8f), new Vector2(1.8f, 1.0f), body, rot + 0.6f);
+                r.DrawRect(Position - up * (Radius * 0.4f) - right * (Radius * 0.8f), new Vector2(1.8f, 1.0f), body, rot - 0.6f);
+                r.DrawCircle(Position + dir * (Radius * 0.3f) + up * (Radius * 0.5f), 0.8f, Color.Black);
+                r.DrawCircle(Position + dir * (Radius * 0.7f) + up * (Radius * 0.5f), 0.7f, Color.Black);
+                break;
+            }
             case CreatureKind.Moonlet:
             {
                 // A boulder that shouldn't float: cratered grey rock with its own ring of
