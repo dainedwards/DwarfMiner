@@ -183,16 +183,18 @@ public static class Weather
         var rel = run.Player.Position - planet.Center;
         var cAng = MathF.Atan2(rel.Y, rel.X);
         const float cHalf = 0.14f;
+        var alt = BandTopRadius(planet, cAng, cHalf) + 110f + (float)Random.Shared.NextDouble() * 60f;
         run.Clouds.Add(new Cloud
         {
             Angle = cAng,
             HalfWidth = cHalf,
-            Alt = BandTopRadius(planet, cAng, cHalf) + 110f + (float)Random.Shared.NextDouble() * 60f,
-            Drift = ((float)Random.Shared.NextDouble() - 0.5f) * 0.03f,
+            Alt = alt,
+            Drift = WindFor(run.Def) * 0.9f / alt,
             Life = 50f,
             Grow = 1f,
             RainTimer = 16f,
             Phase = (float)Random.Shared.NextDouble() * MathHelper.TwoPi,
+            Shape = (float)Random.Shared.NextDouble(),
             KindOverride = kind,
         });
     }
