@@ -68,6 +68,11 @@ public sealed record PlanetDef(
     float LakeScale = 1f,
     int AcidPools = 0,
     bool AcidRain = false,
+    // LakePair (the QA rig): the first two lakes are re-placed as a unit, side by side on
+    // one shoreline, and the SECOND fills with lava instead of water — every
+    // liquid-vs-liquid interaction (quench, steam, the separate metaball fields) sits a
+    // ten-second walk apart. Wants LakeMin 2 / LakeExtra 0 so the pair is ALL the lakes.
+    bool LakePair = false,
     // ── Volcano knobs ──────────────────────────────────────────────────────────
     // Volcanoes raises that many basalt cones on the surface, each with an open crater
     // pool and a primed throat running down to a deep magma chamber (WorldGen
