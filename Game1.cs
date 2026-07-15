@@ -3717,7 +3717,7 @@ public sealed partial class DwarfMinerGame : Game
         // burn is delivered by the visible grains themselves now: every flame grain
         // stamps a real Fire cell where it lands (Particles.LandMat), and the cone
         // ignition below burns creatures directly.
-        _particles.EmitFlameJet(muzzle, dir, reach, _run.Planet.UpAt(muzzle));
+        _particles.EmitFlameJet(muzzle, dir, reach, _run.Planet.UpAt(muzzle), _run.Player.Velocity);
         // Near-cone ignition out to the current reach — a tight cone.
         foreach (var c in _run.Creatures)
         {
@@ -3761,7 +3761,7 @@ public sealed partial class DwarfMinerGame : Game
         // arc. Every visible droplet stamps a real Acid cell where it lands
         // (Particles.LandMat), which IS the corrosion mechanic; the near cone below
         // sickens creatures directly.
-        _particles.EmitAcidJet(muzzle, dir, reach, _run.Planet.UpAt(muzzle));
+        _particles.EmitAcidJet(muzzle, dir, reach, _run.Planet.UpAt(muzzle), _run.Player.Velocity);
         foreach (var c in _run.Creatures)
         {
             var to = c.Position - _run.Player.Position;
