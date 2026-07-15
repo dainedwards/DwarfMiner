@@ -1220,7 +1220,10 @@ public sealed class Particles
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             var hot = i < 7;
             var tone = tones[hot ? _rng.Next(hotTones) : _rng.Next(tones.Length)];
-            var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
+            // Speed band ±10.5% (was ±15%): this is what governs the LANDING scatter —
+            // ballistic range scales with speed², so the band is the falloff spread at
+            // long distance, far more than the cone angle is. Tightened 30% per user.
+            var vel = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f));
             // Outward (skyward) speed cap, kept from the payload era: without it a
             // skyward stream rocketed unnaturally compared to every other flying thing.
             var outward = Vector2.Dot(vel, up);
