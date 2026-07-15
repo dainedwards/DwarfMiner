@@ -457,9 +457,9 @@ public sealed class RigidBodies
     {
         _contacts.Clear();
         _normals.Clear();
-        foreach (var c in b.Cells)
+        foreach (var si in b.SurfaceIdx)
         {
-            if (!c.Surface) continue;
+            var c = b.Cells[si];
             var wp = b.Position + Rotate(c.Local, b.Angle);
             var (tx, ty) = _planet.WorldToTile(wp);
             var k = _planet.Get(tx, ty);
