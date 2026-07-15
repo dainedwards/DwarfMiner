@@ -1969,12 +1969,22 @@ public sealed class Cells
             return;
         }
 
+        // BURN FUSE: fire never uses its source-tile slot, so it carries an optional fuse
+        // there (flamethrower-lit flames stamp with one — see StampAtWorld). While the
+        // fuse burns down (~3 ticks per unit) the flame is immune to guttering: it stands
+        // and burns for seconds even on bare rock. It still can't SPREAD anywhere the
+        // normal rules forbid — charring stays flammability- and budget-gated — so a
+        // non-flammable surface just hosts a long-lived flame that eventually dies.
+        if (_srcTile[i] > 0)
+        {
+            if (_rng.Next(3) == 0) _srcTile[i]--;
+        }
         // Gutter out: half to a smoke wisp, half to nothing (all-smoke fires read as grey
         // soup over a burning pool). A fuelled flame lives ~0.9s; a STARVED one now pools
         // ~0.8s before dying (was ~0.27s) — flame dropped on bare rock visibly burns as a
         // fire for a beat instead of blinking out, per user. Spread stays budget-gated, so
         // longer-lived starved flame can't creep further, it just LOOKS alive longer.
-        if (_rng.Next(fuelled ? 56 : 48) == 0)
+        else if (_rng.Next(fuelled ? 56 : 48) == 0)
         {
             _mat[i] = _rng.Next(2) == 0 ? (byte)Material.Smoke : (byte)0;
             _srcTile[i] = 0;
