@@ -57,6 +57,7 @@ public static class RuntimeEffect
             // try) rather than mid-frame on first use.
             _ = fx.Parameters["MatrixCol0"];
             _ = fx.Parameters["PsParams"];
+            _ = fx.Parameters["PsParams2"];
             // GLSL compiles LAZILY at the first draw (glShaderSource/link happen inside
             // ApplyState) — so force one degenerate draw through the effect now. A driver
             // that rejects the GLSL throws here, inside the guard, instead of crashing the
