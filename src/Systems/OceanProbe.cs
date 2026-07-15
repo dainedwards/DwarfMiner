@@ -174,15 +174,19 @@ public static class OceanProbe
         return maxDepth;
     }
 
-    /// <summary>Sky-tile count in a radial band plus the size of the largest air-connected
-    /// component inside it (connectivity measured within the band only).</summary>
+    /// <summary>CAVE-tile count in a radial band plus the size of the largest air-connected
+    /// component (both counting only rock-walled cave tiles — the sea basins in the band
+    /// are Dirt-walled by the bowl carve and mustn't pollute the network numbers; the BFS
+    /// still walks through everything so a corridor crossing a dirt seam doesn't split).</summary>
     private static (int air, int largest) BandAirAndLargestComponent(Planet planet,
         float loTiles, float hiTiles)
     {
         var visited = new HashSet<long>();
         long Key(int r, int t) => (long)r * 4_000_000L + (uint)t;
         bool InBand(int r) => Planet.RingMin + r + 0.5f >= loTiles && Planet.RingMin + r + 0.5f < hiTiles;
+        bool IsCave(int r, int t) => planet.GetWall(r, t) != TileKind.Dirt;
 
+        var caves = 0;
         var largest = 0;
         var r0 = Math.Max(0, (int)(loTiles - Planet.RingMin));
         var r1 = Math.Min(planet.Rings - 1, (int)(hiTiles - Planet.RingMin) + 1);
@@ -193,9 +197,10 @@ public static class OceanProbe
             for (var t = 0; t < n; t++)
             {
                 if (planet.Get(r, t) != TileKind.Sky) continue;
+                if (IsCave(r, t)) caves++;
                 if (!visited.Add(Key(r, t))) continue;
-                // BFS this component.
-                var size = 1;
+                // BFS this component; size counts cave tiles only.
+                var size = IsCave(r, t) ? 1 : 0;
                 var frontier = new Queue<(int r, int t)>();
                 frontier.Enqueue((r, t));
                 while (frontier.Count > 0)
@@ -217,13 +222,17 @@ public static class OceanProbe
                     {
                         if (rr < 0 || rr >= planet.Rings || !InBand(rr)) return;
                         if (planet.Get(rr, tt) != TileKind.Sky) return;
-                        if (visited.Add(Key(rr, tt))) { size++; frontier.Enqueue((rr, tt)); }
+                        if (visited.Add(Key(rr, tt)))
+                        {
+                            if (IsCave(rr, tt)) size++;
+                            frontier.Enqueue((rr, tt));
+                        }
                     }
                 }
                 largest = Math.Max(largest, size);
             }
         }
-        return (visited.Count, largest);
+        return (caves, largest);
     }
 
     /// <summary>BFS through air from the open atmosphere; returns the deepest
