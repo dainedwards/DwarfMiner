@@ -2422,8 +2422,7 @@ public sealed class Cells
                 // ghost through, and pools read as liquid even while the sim has them
                 // asleep (colour is computed at draw time, not sim time).
                 var shimmer = (int)(MathF.Sin(_time * 1.6f + ((hash >> 3) & 7) * 0.8f + cy * 0.3f) * 9f);
-                var body = Tint(new Color(46, 90, 178), jitter / 5 + shimmer);
-                return skin ? Tint(body, 24) : body * 0.78f;
+                return Tint(new Color(46, 90, 178), jitter / 5 + shimmer) * 0.78f;
             }
             case Material.Lava:
             {
