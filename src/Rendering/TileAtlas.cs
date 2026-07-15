@@ -94,6 +94,12 @@ public static class TileAtlas
     private static void BlitEroded(Color[] px, int stride, int ox, int oy,
         Color[] tile, TileKind k, int variant, int mask)
     {
+        // Engineered structures (alien hull plating, its window glass, lizard-city masonry)
+        // are machined, not geological — their walls must read as dead-straight. Force the
+        // interior (mask 0) frame so they never grow the ragged silhouette erosion or corner
+        // chamfers that the natural rock kinds use; a mined breach in a wall stays crisp.
+        if (k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick) mask = 0;
+
         Span<int> top = stackalloc int[Res];
         Span<int> bot = stackalloc int[Res];
         Span<int> lft = stackalloc int[Res];
