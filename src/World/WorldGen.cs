@@ -1278,12 +1278,13 @@ public static class WorldGen
             // seam: soft steering lets a walk DRIFT below its band, which was harmless when
             // everything below was solid, but must never puncture the seam now that sealed
             // strata live under it.
-            var radius2 = rng.Next(3) == 0 ? 11f : 8f;   // rolled unconditionally: bite gating must not shift the rng stream
+            // NOTE: the radius roll stays INSIDE the guarded call — on non-ocean worlds the
+            // guard set is unchanged, so the rng stream (and every seeded layout) is too.
             if ((pos - planet.Center).LengthSquared() >= hardFloorPx * hardFloorPx
                 && !NearDenOrCity(planet, pos)
                 && (!localCeiling || (pos - planet.Center).Length()
                     <= (planet.SurfaceRadiusAt(pos) - 28f) * Planet.TileSize))
-                CarveWormDisk(planet, pos, radius2);
+                CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 11f : 8f);
             if (branchBudget > 0 && s > length / 4 && rng.Next(55) == 0)
             {
                 branchBudget--;
