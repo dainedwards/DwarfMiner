@@ -131,7 +131,11 @@ public sealed class Particles
                 // full stream / 60 ≈ 5-6 sparks per frame. JetSpark gives them the same
                 // turbulence pattern as the jet (clause above) WITHOUT joining the fluid
                 // coverage or shedding recursively.
-                if (!p.JetSpark && _rng.Next(20) == 0)
+                // Only FLYING flame sheds sparks (speed gate ~60 px/s): plume grains
+                // resting at the ground surface in their last frames were spawning
+                // sparks right on the terrain — the other half of the phantom
+                // "sparks interacting with the ground".
+                if (!p.JetSpark && sp > 3600f && _rng.Next(20) == 0)
                     _list.Add(new Particle
                     {
                         Position = p.Position + Jitter(1f),
