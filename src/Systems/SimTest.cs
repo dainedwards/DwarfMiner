@@ -328,6 +328,7 @@ public static class SimTest
         TestAquatics();
         TestPopulateWorld();
         TestTreeEcology();
+        TestRigidBodies();
         TestSpaceSim();
         // These two run last on purpose: both Activate a chain (appending the Hollow +
         // debug rig to PlanetDefs.All), and there is no way to un-append.
@@ -3311,6 +3312,102 @@ public static class SimTest
         Check("hollow: starspawn spits void volleys",
             octoShots.Exists(s => s.Kind == Entities.TitanShotKind.Void));
         Check("hollow: starspawn arms its gravity well", sawWell);
+    }
+
+    /// <summary>Rigid debris: a free-floating sky slab must condemn, shear off as ONE body
+    /// (its tiles leaving the grid), fall, come to rest, and stamp back mass-conserved —
+    /// the detach→fly→stamp round trip that keeps terrain matter honest.</summary>
+    private static void TestRigidBodies()
+    {
+        Console.WriteLine("rigid body debris:");
+        var planet = WorldGen.Generate(1234);
+        var cells = new Cells(planet);
+        var physics = new Physics(planet, cells);
+        var rigid = new RigidBodies(planet, cells, physics);
+        physics.DetachToRigid = rigid.TryDetach;
+
+        // Hang the slab over a clear column: high enough that no mountain reaches it (which
+        // would anchor the region), scanning bearings for open sky through the drop corridor.
+        var slabR = planet.SurfaceRing + 30;
+        var n = planet.TilesAt(slabR);
+        var slabT0 = -1;
+        for (var t = 0; t < n && slabT0 < 0; t += 4)
+        {
+            var clear = true;
+            for (var dr = -2; dr <= 9 && clear; dr++)
+                for (var dtc = -2; dtc <= 18 && clear; dtc++)
+                    clear = planet.Get(slabR + dr, t + dtc) == TileKind.Sky;
+            if (clear) slabT0 = t;
+        }
+        Check("rigid: found open sky for the slab", slabT0 >= 0);
+        if (slabT0 < 0) return;
+
+        const int slabH = 7, slabW = 16;   // 112 tiles ≥ MinCollapseSize, ≤ MaxChunkTiles
+        for (var dr = 0; dr < slabH; dr++)
+            for (var dtc = 0; dtc < slabW; dtc++)
+            {
+                planet.Set(slabR + dr, slabT0 + dtc, TileKind.Stone);
+                physics.MarkDirty(slabR + dr, slabT0 + dtc);
+            }
+        const int slabTiles = slabH * slabW;
+        var solidBefore = CountSolidPlanet(planet);
+
+        const float dt = 1f / 60f;
+        var detachTicks = 0;
+        while (rigid.Bodies.Count == 0 && detachTicks++ < 120)
+        {
+            physics.Update(dt);
+            rigid.Update(dt);
+        }
+        Check("rigid: unsupported sky slab detaches as one body", rigid.Bodies.Count == 1,
+            $"{rigid.Bodies.Count} bodies after {detachTicks} ticks");
+        Check("rigid: body carries the whole slab", rigid.CellCount == slabTiles,
+            $"{rigid.CellCount}/{slabTiles} cells");
+        Check("rigid: detached tiles left the grid",
+            CountSolidPlanet(planet) == solidBefore - slabTiles,
+            $"{solidBefore - CountSolidPlanet(planet)} gone");
+
+        // Let it fall ~30 rings, bounce, settle, and stamp. Generous window; the loop exits
+        // the moment the last body stamps.
+        var fellTicks = 0;
+        while (rigid.Bodies.Count > 0 && fellTicks++ < 60 * 25)
+        {
+            physics.Update(dt);
+            rigid.Update(dt);
+            cells.Update(dt);
+            if (Environment.GetEnvironmentVariable("DM_RIGIDDBG") is { Length: > 0 }
+                && fellTicks % 30 == 0 && rigid.Bodies.Count > 0)
+            {
+                var bd = rigid.Bodies[0];
+                var alt = (bd.Position - planet.Center).Length() / Planet.TileSize - Planet.RingMin;
+                Console.WriteLine($"    t={fellTicks} ring={alt:0.0} v=({bd.Velocity.X:0.0},{bd.Velocity.Y:0.0})|{bd.Velocity.Length():0.0}| spin={bd.Spin:0.00} sleep={bd.SleepTimer:0.00} cells={bd.Cells.Count}");
+            }
+        }
+        Check("rigid: body comes to rest and stamps back", rigid.Bodies.Count == 0,
+            $"still {rigid.Bodies.Count} after {fellTicks} ticks");
+
+        // Mass conservation: stamped tiles plus dust spill must account for the slab. Other
+        // terrain can shift during the window (the landing wakes local physics), so allow a
+        // modest tolerance rather than an exact equality.
+        var stamped = CountSolidPlanet(planet) - (solidBefore - slabTiles);
+        Check("rigid: stamped mass accounts for the slab", stamped >= (int)(slabTiles * 0.75f)
+            && stamped <= slabTiles + 8, $"{stamped}/{slabTiles} tiles back");
+
+        // StampAll (the pre-save sweep): a mid-air body must return its matter immediately.
+        var log = new System.Collections.Generic.List<(int x, int y)>();
+        for (var dtc = 0; dtc < 10; dtc++)
+        {
+            planet.Set(slabR, slabT0 + dtc, TileKind.Granite);
+            log.Add((slabR, slabT0 + dtc));
+        }
+        var preSpawn = CountSolidPlanet(planet);
+        Check("rigid: SpawnFromTiles lifts explicit tiles",
+            rigid.SpawnFromTiles(log, Vector2.Zero, 0.5f)
+            && CountSolidPlanet(planet) == preSpawn - 10);
+        rigid.StampAll();
+        Check("rigid: StampAll returns matter before a save",
+            rigid.Bodies.Count == 0 && CountSolidPlanet(planet) >= preSpawn - 2,
+            $"{CountSolidPlanet(planet) - (preSpawn - 10)}/10 back");
     }
 
     private static void Check(string name, bool ok, string detail = "")

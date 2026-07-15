@@ -160,6 +160,8 @@ public sealed partial class DwarfMinerGame : Game
     private float _streamLast;
     private const float StreamHoldMax = 0.35f;   // reaches full length fast — a quick throttle-up
     private readonly bool _bossCam = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 };
+    private readonly bool _rigidDbg = Environment.GetEnvironmentVariable("DM_RIGIDDBG") is { Length: > 0 };
+    private int _prevRigidCount;
     private float _autoShotAt =
         float.TryParse(Environment.GetEnvironmentVariable("DM_AUTOSHOT"), out var s)
             ? s : float.PositiveInfinity;
@@ -589,6 +591,11 @@ public sealed partial class DwarfMinerGame : Game
             run.Cells.Update(1f / 60f);
             run.Physics.Update(1f / 60f);
         }
+        // Rigid debris comes online only now: the census/settle churn above must digest as
+        // plain dust (bodies spawned during a build nobody is watching would just hang in
+        // the air waiting for the first live frame, and could exhaust the body budget).
+        run.Rigid = new RigidBodies(run.Planet, run.Cells, run.Physics);
+        run.Physics.DetachToRigid = run.Rigid.TryDetach;
         return run;
     }
 
@@ -774,6 +781,27 @@ public sealed partial class DwarfMinerGame : Game
             for (var i = 0; i < kinds.Length; i++)
                 _run.Creatures.Add(new Creature(
                     _run.Player.Position + fRight * (26f + i * 22f) + fUp * 8f, kinds[i]));
+        }
+        // DM_RIGIDTEST=1 hangs a few free-floating stone slabs in the sky beside the spawn —
+        // they condemn on the first settle pass, shear off as rigid chunks, and tumble down
+        // in front of the tester (pairs with DM_RIGID=0 to compare the legacy dust path).
+        if (Environment.GetEnvironmentVariable("DM_RIGIDTEST") is { Length: > 0 })
+        {
+            var (sx, sy) = _run.Planet.WorldToTile(_run.Player.Position);
+            for (var slab = 0; slab < 3; slab++)
+            {
+                // Parked beside the spawn column, not over it — the demo shouldn't open
+                // with 112 tiles of rock landing on the tester's head.
+                var baseR = Math.Min(sx + 22 + slab * 14, _run.Planet.Rings - 12);
+                var baseT = sy + 12 + slab * 20;
+                for (var dr = 0; dr < 7; dr++)
+                    for (var dtc = 0; dtc < 16; dtc++)
+                    {
+                        _run.Planet.Set(baseR + dr, baseT + dtc,
+                            slab == 1 ? TileKind.Granite : TileKind.Stone);
+                        _run.Physics.MarkDirty(baseR + dr, baseT + dtc);
+                    }
+            }
         }
         _run.SpawnTimer = 6f;
         _run.FaunaTimer = 8f;
@@ -1119,6 +1147,9 @@ public sealed partial class DwarfMinerGame : Game
         _run = run;
         Crafting.SetPlanet(run.Def);
         _prevTitanHealth = run.Titan.Health;
+        // Rigid debris system (not serialized — bodies were stamped into the grid at save).
+        run.Rigid = new RigidBodies(run.Planet, run.Cells, run.Physics);
+        run.Physics.DetachToRigid = run.Rigid.TryDetach;
         // Foundry gear isn't in the run save — it's meta state, re-applied on every entry.
         // (Drill Rig and the Armory/Supply kits aren't: the saved tier/inventory carry them.)
         run.Player.HasJetpack = Upgrades.Owned(_meta, "jetpack");
@@ -1710,6 +1741,11 @@ public sealed partial class DwarfMinerGame : Game
 
         // Physics + particles + cells update.
         _run.Physics.Update(dt);
+        // A slab shearing free gets its own crack — deeper than the dust-crumble boom.
+        if (_run.Physics.RigidDetachesThisTick > 0)
+            _sfx.Play("collapse", MathHelper.Clamp(_run.Physics.RigidDetachesThisTick / 120f, 0.3f, 0.9f),
+                pitch: -0.45f, pan: 0f, minGap: 0.25f);
+        UpdateRigidBodies(dt);
         _particles.Update(dt, _run.Planet);
 
         // Thrown torches: fly, stick, and stay. A soft thunk marks the plant.
@@ -1813,6 +1849,7 @@ public sealed partial class DwarfMinerGame : Game
                 _particles.EmitImpact(m.Position, ProjectileKind.Rocket);
                 _run.Shake = MathF.Max(_run.Shake, 0.9f);
                 PlayAt("explode", m.Position, 1f, pitch: -0.2f);
+                _run.Rigid?.NoteBlast(m.Position, 90f, 200f);
                 _run.Meteors.RemoveAt(i);
             }
         }
@@ -2093,6 +2130,10 @@ public sealed partial class DwarfMinerGame : Game
                     _run.Shake = MathF.Max(_run.Shake, MathF.Min(1.5f, p.ExplosionRadius / 60f));
                     PlayAt("explode", p.Position, MathHelper.Clamp(p.ExplosionRadius / 60f, 0.4f, 1f),
                         pitch: MathHelper.Clamp(0.3f - p.ExplosionRadius / 200f, -0.4f, 0.3f), minGap: 0.05f);
+                    // Rigid debris: chunks already in flight get kicked, and any region this
+                    // blast just carved free launches outward when it detaches a tick later.
+                    _run.Rigid?.NoteBlast(p.Position, p.ExplosionRadius * 1.6f,
+                        MathF.Min(260f, p.ExplosionRadius * 2.4f));
                     // Explosions do not care whose they are: the dwarf standing inside the
                     // blast eats real damage with the same center-weighted falloff creatures
                     // get. Own bombs are lethal at arm's length now — take cover or take the hit.
@@ -2152,6 +2193,8 @@ public sealed partial class DwarfMinerGame : Game
             _run.Shake = MathF.Max(_run.Shake, 1.0f);
             _particles.EmitDust(sw.pos, 24f);
             PlayAt("explode", sw.pos, 1f, pitch: -0.3f);
+            // A slam under a loose overhang sends the shards flying, not slumping.
+            _run.Rigid?.NoteBlast(sw.pos, sw.radius, 170f);
             var toPlayer = _run.Player.Position - sw.pos;
             var d = toPlayer.Length();
             if (d < sw.radius)
@@ -2567,14 +2610,75 @@ public sealed partial class DwarfMinerGame : Game
             pitch: -0.1f + (float)Random.Shared.NextDouble() * 0.25f, minGap: 0.05f);
     }
 
-    /// <summary>Fell a tree from a cut trunk tile: everything above the break (the rest of the
-    /// trunk and the whole canopy) collapses into settling dust — trunk tiles shed a full block
-    /// of wood dust, canopy tiles a thin 30%-of-a-tile foliage puff. The stump and the roots are
-    /// left standing, and the matching <see cref="TreeSite"/> is marked felled so it regrows.</summary>
+    /// <summary>Tick the rigid debris and couple it to the actors. Hard landings shake the
+    /// screen and puff dust; a chunk moving fast enough clobbers the dwarf or a creature
+    /// (scaled by closing speed and chunk size), while a slow one just shoulders them aside.</summary>
+    private void UpdateRigidBodies(float dt)
+    {
+        if (_run.Rigid is not { } rigid) return;
+        rigid.Update(dt);
+        // DM_RIGIDDBG=1: one console line per lifecycle change (detach/stamp), so headless
+        // tooling can confirm the detach→fly→stamp round trip without frame-perfect shots.
+        if (_rigidDbg && rigid.Bodies.Count != _prevRigidCount)
+        {
+            Console.WriteLine($"[rigid] bodies {_prevRigidCount} -> {rigid.Bodies.Count}, cells {rigid.CellCount}");
+            _prevRigidCount = rigid.Bodies.Count;
+        }
+
+        foreach (var (pos, force) in rigid.Impacts)
+        {
+            _particles.EmitDust(pos, MathF.Min(14f, 4f + force / 30f));
+            _run.Shake = MathF.Max(_run.Shake, MathF.Min(0.8f, force / 450f));
+            PlayAt("collapse", pos, MathHelper.Clamp(force / 400f, 0.2f, 0.8f),
+                pitch: -0.15f, minGap: 0.15f);
+        }
+
+        foreach (var b in rigid.Bodies)
+        {
+            // The dwarf: push-out plus a real hit when the closing speed says "falling slab",
+            // scaled by the chunk's size — a pebble stings, a wall section crushes.
+            if (RigidBodies.Overlap(b, _run.Player.Position, _run.Player.Radius, out var n, out var cv))
+            {
+                _run.Player.Position += n * 1.5f;
+                var closing = Vector2.Dot(cv - _run.Player.Velocity, n);
+                if (closing > 80f)
+                {
+                    var heft = MathHelper.Clamp(b.Cells.Count / 60f, 0.4f, 2f);
+                    _run.Player.TakeDamage(MathF.Min(40f, (closing - 80f) * 0.12f * heft));
+                    _run.Player.Velocity += n * MathF.Min(260f, closing);
+                }
+                else if (closing > 0f)
+                {
+                    _run.Player.Velocity += n * closing * 0.5f;
+                }
+            }
+            // Creatures: falling debris is indiscriminate — militia under a toppling wall
+            // section fare no better than the dwarf would.
+            foreach (var c in _run.Creatures)
+            {
+                if (!RigidBodies.Overlap(b, c.Position, c.Radius, out var cn, out var ccv)) continue;
+                c.Position += cn * 1.5f;
+                var closing = Vector2.Dot(ccv - c.Velocity, cn);
+                if (closing > 80f)
+                {
+                    c.Health -= MathF.Min(60f, (closing - 80f) * 0.2f
+                        * MathHelper.Clamp(b.Cells.Count / 60f, 0.4f, 2f));
+                    c.Velocity += cn * MathF.Min(260f, closing);
+                }
+            }
+        }
+    }
+
+    /// <summary>Fell a tree from a cut trunk tile: the trunk above the break shears off as a
+    /// rigid log that topples sideways and tumbles down the slope (chop it where it lands for
+    /// the wood), while the airy canopy puffs into foliage dust. Falls back to the legacy
+    /// all-dust fell when the body budget is full. The stump and the roots are left standing,
+    /// and the matching <see cref="TreeSite"/> is marked felled so it regrows.</summary>
     private void ToppleTree(int baseRing, int baseCol)
     {
         var planet = _run.Planet;
         var centerFrac = (baseCol + 0.5f) / planet.TilesAt(baseRing);
+        var trunk = new List<(int x, int y)>();
         for (var rr = baseRing + 1; rr < planet.Rings - 1; rr++)
         {
             var n = planet.TilesAt(rr);
@@ -2586,8 +2690,7 @@ public sealed partial class DwarfMinerGame : Game
                 var k = planet.Get(rr, t);
                 if (k == TileKind.TreeTrunk)
                 {
-                    planet.Set(rr, t, TileKind.Sky);
-                    _run.Cells.SpawnDustInTile(rr, t, TileKind.TreeTrunk);
+                    trunk.Add((rr, t));
                     found = true;
                 }
                 else if (k is TileKind.TreeCanopy or TileKind.TreeCanopy2)
@@ -2598,6 +2701,20 @@ public sealed partial class DwarfMinerGame : Game
                 }
             }
             if (!found) break;   // cleared the top of the crown
+        }
+        // Tip the log over: a sideways shove at the base plus matching spin, so it keels
+        // over and rolls rather than dropping straight down its own shaft.
+        var tipSide = Random.Shared.Next(2) == 0 ? -1f : 1f;
+        var baseWorld = planet.TileToWorld(baseRing, baseCol);
+        var up = planet.UpAt(baseWorld);
+        var side = new Vector2(-up.Y, up.X) * tipSide;
+        if (_run.Rigid is null || !_run.Rigid.SpawnFromTiles(trunk, side * 30f + up * 8f, tipSide * 1.1f))
+        {
+            foreach (var (rr, tt) in trunk)
+            {
+                planet.Set(rr, tt, TileKind.Sky);
+                _run.Cells.SpawnDustInTile(rr, tt, TileKind.TreeTrunk);
+            }
         }
         // Mark the felled site so the ecosystem regrows it from the surviving roots. Growth
         // resumes from whatever trunk is left standing below the cut.
@@ -5498,6 +5615,29 @@ public sealed partial class DwarfMinerGame : Game
         foreach (var b in _run.Boulders)
         {
             _renderer.DrawCircle(b.Position, b.Radius, new Color(80, 70, 60));
+        }
+
+        // Rigid debris: each payload cell as a rotated quad in its tile's colour, with a
+        // per-cell brightness wobble so a chunk keeps the grain of the rock it came from
+        // instead of reading as a flat cardboard cutout. Slightly oversized quads hide the
+        // hairline seams the rotation would otherwise open between cells.
+        if (_run.Rigid is { } rigidDraw)
+        {
+            foreach (var b in rigidDraw.Bodies)
+            {
+                var cellSize = new Vector2(Planet.TileSize + 0.7f);
+                for (var ci = 0; ci < b.Cells.Count; ci++)
+                {
+                    var c = b.Cells[ci];
+                    var wp = b.Position + RigidBodies.Rotate(c.Local, b.Angle);
+                    var col = Tiles.BaseColor(c.Kind);
+                    var shade = 0.88f + 0.24f * (((ci * 2654435761u) >> 7 & 15) / 15f);
+                    _renderer.DrawRect(wp, cellSize,
+                        new Color((byte)MathF.Min(255f, col.R * shade),
+                                  (byte)MathF.Min(255f, col.G * shade),
+                                  (byte)MathF.Min(255f, col.B * shade)), b.Angle);
+                }
+            }
         }
 
         // Toxic cloud — the acid-rain storm's source, a roiling olive bank parked above the

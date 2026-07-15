@@ -48,6 +48,12 @@ public static class RunSave
     {
         try
         {
+            // Rigid debris isn't serialized (kinetics drop, same policy as flying cells) —
+            // but a chunk's tiles already left the grid, so unlike a few grains of dust it
+            // would be real missing terrain. Stamp every live body into the grid first; a
+            // mid-air chunk simply re-condemns and resumes falling after the save.
+            run.Rigid?.StampAll();
+
             // Gzip shrinks the save ~50×: the payload is dominated by the cell grid, which
             // is overwhelmingly zero bytes.
             using var w = new BinaryWriter(new System.IO.Compression.GZipStream(
