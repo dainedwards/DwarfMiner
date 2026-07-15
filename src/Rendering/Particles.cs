@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DwarfMiner.Entities;
 using DwarfMiner.World;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace DwarfMiner.Rendering;
 
