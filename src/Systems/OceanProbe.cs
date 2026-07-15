@@ -105,19 +105,26 @@ public static class OceanProbe
             Report(ref allOk, floodMax <= deepestSeed + 7f,
                 $"no leak path (flood bottoms at {floodMax:0.0}t vs deepest basin {deepestSeed:0.0}t)");
 
-            // 5. The under-sea band holds a real, interconnected network. Band: below the
-            //    deepest possible seabed buffer, above the stratum seam.
-            var (seams, _, _) = WorldGen.CaveStrata(planet, def);
-            var bandHi = planet.SurfaceRadiusAt(planet.Center + Vector2.UnitX) - (deepestSeed + 11f) * S;
-            var bandLo = seams[0].hi;
+            // 4b. The deepest basin floor must clear the lava flood line with room to
+            //     spare — a sea bottom inside the fill band would be poured full of lava.
+            var baseline = Planet.RingMin + planet.SurfaceRing;
+            var deepestFloorRing = baseline - deepestSeed * S;
+            var lavaTop = def.LavaFillFrac * planet.Radius;
+            Report(ref allOk, deepestFloorRing > lavaTop + 8f,
+                $"seas clear the lava fill (floor ring {deepestFloorRing:0} vs lava top {lavaTop:0})");
+
+            // 5. The ocean worm band (CarveWormTunnels: 0.30 floor, 16-legacy-tile ceiling)
+            //    holds a real, interconnected network.
+            var bandLo = planet.Radius * MathF.Max(0.30f, def.LavaFillFrac + 0.08f) + 2f;
+            var bandHi = baseline - 16f * S;
             var (air, largest) = BandAirAndLargestComponent(planet, bandLo, bandHi);
-            Report(ref allOk, air > 800, $"network exists ({air} cave tiles in band {bandLo:0}-{bandHi:0}t)");
+            Report(ref allOk, air > 2000, $"network exists ({air} cave tiles in band {bandLo:0}-{bandHi:0}t)");
             Report(ref allOk, air > 0 && largest >= air * 0.5f,
                 $"network interconnected (largest component {largest}/{air})");
 
-            // 6. Grotto mouths: atmosphere-connected air on a DRY bearing reaching well
-            //    below the surface (the sea basins are air at gen time too, so wet
-            //    bearings are excluded from the measurement).
+            // 6. Grotto mouths: atmosphere-connected air on a solidly DRY bearing (±3
+            //    columns, so a crag poking out of a sea can't fake it) reaching well below
+            //    the surface — the sea basins are air at gen time, hence the exclusion.
             var dryReach = AtmosphereDryReach(planet, colWet, cols);
             Report(ref allOk, dryReach >= 10f,
                 $"grotto mouths open (dry-land air reaches {dryReach:0.0}t below surface)");
