@@ -2019,7 +2019,12 @@ public sealed class Cells
         // non-flammable surface just hosts a long-lived flame that eventually dies.
         if (_srcTile[i] > 0)
         {
-            if (_rng.Next(3) == 0) _srcTile[i]--;
+            // The fuse is fuel-soaked RESIDUE CLINGING TO A SURFACE: mid-air with no fuel
+            // there's nothing to cling to, so it drains fast (~0.1s) and the flame
+            // gutters like any starved tongue instead of hovering as a long burn.
+            if (!grounded && !fuelled)
+                _srcTile[i] = (byte)Math.Max(0, _srcTile[i] - 3);
+            else if (_rng.Next(3) == 0) _srcTile[i]--;
         }
         // Licking-flame sites: burning cells (fused or fuelled — NOT bare guttering
         // strays) sample themselves into the flame queue; Game1 turns each entry into a
