@@ -106,18 +106,21 @@ public sealed class Particles
                 p.Velocity += planet.GravityAt(p.Position) * GravityStrength * p.GravityScale * dt;
             if (p.Drag > 0)
                 p.Velocity *= MathF.Max(0f, 1f - p.Drag * dt);
-            // Flame turbulence: a bounded lateral wander that grows down the stream (age)
-            // — the jet's body writhes like fire instead of flying a glassy arc. Phased
-            // off each grain's own Life clock (grains are born with random lives, so the
-            // phases scatter for free), and it's ±jitter AROUND the arc, never a separate
-            // trajectory — it cannot recreate the stray-strand problem.
+            // Flame plume dynamics (Fluid==Fire only — carriers are exempt, gameplay arc
+            // untouched):
+            // (a) AGE-GROWING BUOYANCY: young puffs carry stream gravity and track the
+            //     drooping arc; old ones tear upward — fire/smoke diverges from the
+            //     stream hardest at its end, like a real flamethrower's rising wash.
+            // (b) Bounded lateral turbulence, phased off each grain's own Life clock —
+            //     writhe around the arc, never a separate trajectory.
             if (p.Fluid == (byte)Material.Fire)
             {
+                var age = 1f - MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
+                p.Velocity -= planet.GravityAt(p.Position) * (GravityStrength * 4.5f * age * dt);
                 var sp = p.Velocity.LengthSquared();
                 if (sp > 100f)
                 {
                     var inv = 1f / MathF.Sqrt(sp);
-                    var age = 1f - MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
                     p.Velocity += new Vector2(-p.Velocity.Y * inv, p.Velocity.X * inv)
                         * (MathF.Sin(p.Life * 55f) * 90f * age * dt);
                 }
