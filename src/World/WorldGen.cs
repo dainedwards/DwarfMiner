@@ -1564,6 +1564,36 @@ public static class WorldGen
                     }
                 }
             }
+
+            // Cave exits: from each hall, bore a short brick corridor OUT into the surrounding
+            // cave-riddled crust, gated by a door at the mouth. Lizardmen open doors, so the
+            // guards can slip out of the warren and range through the nearby caves — the
+            // village isn't a sealed box, its people come and go.
+            foreach (var hall in centres)
+            {
+                var hUp = planet.UpAt(hall);
+                var hRight = new Vector2(-hUp.Y, hUp.X);
+                var side = rng.Next(2) == 0 ? 1f : -1f;
+                var reach = 120f + (float)rng.NextDouble() * 90f;
+                CarveTunnel(planet, hall, hall + hRight * side * reach);
+                // Hang a 3-tall door across the corridor mouth, ~30px out from the hall centre.
+                var doorPos = hall + hRight * side * 30f;
+                var rel = doorPos - planet.Center;
+                var doorAng = MathF.Atan2(rel.Y, rel.X);
+                var (doorR, _) = planet.WorldToTile(doorPos);
+                for (var dr = -1; dr <= 1; dr++)
+                {
+                    var r = doorR + dr;
+                    if (r < 2 || r >= planet.Rings) continue;
+                    var n = planet.TilesAt(r);
+                    var t = (int)((doorAng / MathHelper.TwoPi + 1f) % 1f * n);
+                    if (planet.Get(r, t) == TileKind.Sky)
+                    {
+                        planet.Set(r, t, TileKind.DoorClosed);
+                        planet.SetWall(r, t, TileKind.LizardBrick);
+                    }
+                }
+            }
         }
     }
 
