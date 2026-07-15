@@ -1739,10 +1739,35 @@ public sealed partial class DwarfMinerGame : Game
         {
             _run.EruptionLeft -= dt;
             var (vx, vy, vAcid) = _run.Planet.VolcanoVents[_run.EruptionVent];
-            _run.Cells.SpawnInTile(vx, vy + Random.Shared.Next(-1, 2),
-                vAcid ? Material.Acid : Material.Lava, 12);
-            if (Random.Shared.Next(4) == 0)
-                _run.Cells.SpawnInTile(Math.Min(vx + 3, _run.Planet.Rings - 1), vy, Material.Smoke, 3);
+            var mat = vAcid ? Material.Acid : Material.Lava;
+            var ventPos = _run.Planet.TileToWorld(vx, vy);
+            var ventUp = _run.Planet.UpAt(ventPos);
+            var ventRight = new Vector2(-ventUp.Y, ventUp.X);
+
+            // Magma bumbles up from the deep conduit — a fat surge that fills the crater and
+            // overflows the rim to run down the flanks (far more than the old 12-cell trickle).
+            for (var i = 0; i < 3; i++)
+                _run.Cells.SpawnInTile(
+                    Math.Clamp(vx + Random.Shared.Next(-1, 2), 1, _run.Planet.Rings - 1),
+                    vy + Random.Shared.Next(-1, 2), mat, Cells.Density * Cells.Density);
+
+            // ...and SPEWS: a fountain of molten gobs hurled up and out of the crater mouth,
+            // arcing over and raining lava down the slopes.
+            var gobs = 9 + Random.Shared.Next(7);
+            for (var i = 0; i < gobs; i++)
+            {
+                var spread = (float)(Random.Shared.NextDouble() - 0.5) * 1.0f;
+                var dir = ventUp * MathF.Cos(spread) + ventRight * MathF.Sin(spread);
+                var speed = 150f + (float)Random.Shared.NextDouble() * 60f;
+                _run.Cells.LaunchAtWorld(ventPos + ventUp * 6f, dir * speed, mat);
+            }
+
+            // Ash plume, glowing cinders spat from the fountain, and a rolling rumble.
+            if (Random.Shared.Next(2) == 0)
+                _run.Cells.SpawnInTile(Math.Min(vx + 4, _run.Planet.Rings - 1), vy, Material.Smoke, 8);
+            _particles.EmitCinders(ventPos + ventUp * 10f, ventUp * 70f, 5, 110f);
+            _run.Shake = MathF.Max(_run.Shake, 0.4f);
+            PlayAt("collapse", ventPos, 0.4f, pitch: -0.5f, minGap: 0.5f);
         }
 
         // Population upkeep — cave dwellers, surface herds, sky flyers (see SpawnDirector).
