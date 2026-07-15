@@ -3426,6 +3426,47 @@ public sealed class Creature
                 r.DrawCircle(Position + dir * (Radius * 0.7f) + up * (Radius * 0.5f), 0.7f, Color.Black);
                 break;
             }
+            case CreatureKind.Kraken:
+            {
+                // The water world's apex monster: a hulking wine-dark mantle over a skirt
+                // of six waving tentacles, huge lamp eyes, and a black beak that parts in
+                // the tentacle flurry. The tentacles whip hard while the flurry is live.
+                var mantle = Tinted(new Color(88, 42, 78));
+                var mantleHi = Tinted(new Color(126, 64, 104));
+                var tipC = Tinted(new Color(186, 116, 148));
+                var dir = right * facing;
+                var fury = _swing > 0f;
+                // Tentacle skirt first, under the mantle: chains of shrinking discs, each
+                // arm on its own phase; suckered pale tips.
+                for (var i = 0; i < 6; i++)
+                {
+                    var spread = (i - 2.5f) / 2.5f;   // -1 .. 1 across the skirt
+                    var p = Position - up * (Radius * 0.5f) + right * (spread * Radius * 0.7f);
+                    var arm = -up + right * (spread * 0.8f);
+                    for (var s = 0; s < 5; s++)
+                    {
+                        var sway = MathF.Sin(t * (fury ? 6f : 2.4f) + _phase + i * 1.3f + s * 0.9f)
+                            * (fury ? 0.9f : 0.35f);
+                        var step = Vector2.Normalize(arm + right * sway + (fury ? dir * 0.6f : Vector2.Zero));
+                        p += step * (Radius * 0.42f);
+                        r.DrawCircle(p, Radius * (0.30f - s * 0.045f), s == 4 ? tipC : mantle);
+                    }
+                }
+                // Mantle: a tall tapered hood, banded, with a pale crest.
+                r.DrawCircle(Position, Radius, mantle);
+                r.DrawCircle(Position + up * (Radius * 0.55f), Radius * 0.78f, mantle);
+                r.DrawCircle(Position + up * (Radius * 1.05f), Radius * 0.5f, mantleHi);
+                r.DrawRect(Position + up * (Radius * 0.25f), new Vector2(Radius * 1.6f, 2.2f), mantleHi, rot);
+                // Huge lamp eyes tracking the facing — gold in the deep, furnace-red in fury.
+                var eyeC = fury ? new Color(255, 120, 90) : new Color(255, 210, 120);
+                r.DrawCircle(Position + dir * (Radius * 0.45f) + up * (Radius * 0.12f), 2.6f, eyeC);
+                r.DrawCircle(Position - dir * (Radius * 0.28f) + up * (Radius * 0.12f), 1.9f, eyeC);
+                r.DrawCircle(Position + dir * (Radius * 0.52f) + up * (Radius * 0.12f), 1.1f, Color.Black);
+                r.DrawCircle(Position - dir * (Radius * 0.23f) + up * (Radius * 0.12f), 0.8f, Color.Black);
+                // Beak, parting wide in the flurry.
+                r.DrawRect(Position - up * (Radius * 0.5f), new Vector2(2.8f, fury ? 2.8f : 1.4f), Color.Black, rot);
+                break;
+            }
             case CreatureKind.Moonlet:
             {
                 // A boulder that shouldn't float: cratered grey rock with its own ring of
