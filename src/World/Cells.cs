@@ -877,6 +877,7 @@ public sealed class Cells
     private static int SlipChance(Material m) => m switch
     {
         Material.Sand => 80,
+        Material.Snow => 70,    // fluffy — drifts smooth out almost like sand
         Material.Gravel => 35,
         _ => 55, // Dirt, Dust
     };
