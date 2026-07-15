@@ -1232,8 +1232,15 @@ public sealed class Particles
             var vel = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f));
             // Outward (skyward) speed cap, kept from the payload era: without it a
             // skyward stream rocketed unnaturally compared to every other flying thing.
+            // Applied to the LAUNCH component only, before momentum inheritance.
             var outward = Vector2.Dot(vel, up);
             if (outward > 170f) vel -= up * (outward - 170f);
+            // Ejected fluid carries the shooter's momentum: without this, a flying player
+            // paints the muzzle's flight path in fire ("shooting spaghetti") — grains
+            // launched world-relative lag every turn the player makes. With it the stream
+            // stays a coherent straight tongue in the SHOOTER'S frame; standing still is
+            // by definition unchanged.
+            vel += shooterVel;
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 1.5f,
