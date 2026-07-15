@@ -292,7 +292,7 @@ public static class Tiles
     public static readonly string[] ResourceOrder =
     {
         "voidstone", "emerald", "diamond", "ruby", "sapphire", "platinum", "gold", "silver",
-        "crystal", "iron", "coal", "fuel",
+        "crystal", "iron", "coal", "fuel", "wood",
         "nuke", "harpoon",
         "ammo_diamond", "ammo_sapphire", "ammo_ruby", "ammo_silver",
         "rocket", "tnt", "tnt_pack", "dynamite", "dynamite_pack", "poultice",
