@@ -4905,14 +4905,35 @@ public sealed partial class DwarfMinerGame : Game
         return n;
     }
 
+    /// <summary>Next-frame deadline for the manual limiter, in Stopwatch ticks.</summary>
+    private long _nextFrameAt;
+
     /// <summary>Times the platform Present (the backbuffer swap) — GPU saturation and
-    /// driver sync stalls surface HERE, invisible to the Update/Draw CPU timers. Shows up
-    /// as the "swap" phase in the DM_PERF report.</summary>
+    /// driver sync stalls surface HERE, invisible to the Update/Draw CPU timers ("swap"
+    /// phase in the DM_PERF report). Then paces the loop to 60 Hz: coarse Thread.Sleep
+    /// down to the last ~3 ms, spin the remainder — the precision MonoGame's fixed-step
+    /// sleep lacks (see the timestep note in the constructor).</summary>
     protected override void EndDraw()
     {
         var t0 = FramePerf.Now();
         base.EndDraw();
         FramePerf.Add("swap", t0);
+        if (IsFixedTimeStep) return;   // DM_FIXEDSTEP A/B: MonoGame paces itself
+        var step = System.Diagnostics.Stopwatch.Frequency / 60;
+        var now = System.Diagnostics.Stopwatch.GetTimestamp();
+        // Re-anchor after a stall instead of racing to repay it — the dt clamp in
+        // UpdateFrame already turned the stall into slow-motion.
+        if (_nextFrameAt == 0 || now > _nextFrameAt + step * 3) _nextFrameAt = now;
+        _nextFrameAt += step;
+        while (true)
+        {
+            var remain = _nextFrameAt - System.Diagnostics.Stopwatch.GetTimestamp();
+            if (remain <= 0) break;
+            if (remain * 1000 > System.Diagnostics.Stopwatch.Frequency * 3)
+                System.Threading.Thread.Sleep(1);
+            else
+                System.Threading.Thread.SpinWait(64);
+        }
     }
 
     protected override void Draw(GameTime gameTime)
