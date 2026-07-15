@@ -1172,8 +1172,8 @@ public sealed class Particles
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f,
                 Velocity = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f)),
-                Life = (0.3f + (float)_rng.NextDouble() * 0.3f) * lifeScale,
-                MaxLife = 0.6f * lifeScale,
+                Life = 0.5f + (float)_rng.NextDouble() * 0.35f,
+                MaxLife = 0.85f,
                 Color = tone switch
                 {
                     0 => new Color(255, 250, 200),
