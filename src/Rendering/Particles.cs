@@ -306,7 +306,7 @@ public sealed class Particles
                 // detaching tongues instead of ending in a rounded liquid cap. (Colour
                 // scales with coverage: tips go dim and dark together, as flame does.)
                 var age = 1f - t;
-                wid = MathHelper.Lerp(2.5f, 7f, age);
+                wid = MathHelper.Lerp(3f, 11f, age);   // plume billow: puffs EXPAND with age
                 c *= MathHelper.Lerp(1f, 0.5f, age * age);
                 // ~12 Hz whole-body flicker (item 4): each blob's brightness oscillates
                 // on its own phase, so the fused tongue boils visually. The per-grain
