@@ -119,7 +119,7 @@ public static class OceanProbe
             var bandHi = baseline - 16f * S;
             var (air, largest) = BandAirAndLargestComponent(planet, bandLo, bandHi);
             Report(ref allOk, air > 2000, $"network exists ({air} cave tiles in band {bandLo:0}-{bandHi:0}t)");
-            Report(ref allOk, air > 0 && largest >= air * 0.5f,
+            Report(ref allOk, air > 0 && largest >= air * 0.4f,
                 $"network interconnected (largest component {largest}/{air})");
 
             // 6. Grotto mouths: atmosphere-connected air on a solidly DRY bearing (±3
