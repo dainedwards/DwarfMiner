@@ -1977,7 +1977,10 @@ public sealed class Cells
             // middle path: 28 ate whole trees in moments once fuse fire stood on them for
             // 6-9s, 90 made the jet's touch feel inert — at 45 a touched surface visibly
             // catches within a beat but a structure still burns DOWN over a while.
-            if (_rng.Next(45) != 0) return;
+            // 60 (was 45): burnable TILES are consumed slower too — a burning structure
+            // stays aflame longer instead of being eaten through; the fuse's dwell keeps
+            // the initial catch reliable.
+            if (_rng.Next(60) != 0) return;
             if (!SpendFire()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
