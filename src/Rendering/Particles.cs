@@ -32,6 +32,10 @@ public struct Particle
     /// instead of a light that fades. Cleared after stamping (a resting particle may live
     /// on visually but only hands off once).</summary>
     public byte LandMat;
+    /// <summary>Per-particle cap on the motion-smear length (world px); 0 = the shared
+    /// default (16× grain size). Rain pins this to its own short streak so hose smear
+    /// tuning stops dragging the weather along with it.</summary>
+    public float SmearMax;
 }
 
 /// <summary>
@@ -133,7 +137,8 @@ public sealed class Particles
             var sp2 = p.Velocity.LengthSquared();
             if (sp2 > 3600f)
             {
-                var len = MathF.Min(s * 16f, MathF.Sqrt(sp2) * 0.045f);
+                var len = MathF.Min(p.SmearMax > 0f ? p.SmearMax : s * 16f,
+                    MathF.Sqrt(sp2) * 0.045f);
                 if (len > s)
                 {
                     r.DrawRect(p.Position, new Vector2(len, s), c,
@@ -650,6 +655,10 @@ public sealed class Particles
                 GravityScale = 1.1f,
                 Drag = 0.02f,
                 CollideTiles = true,
+                // Pinned to the original short streak (~3.3 px, the first smear tuning):
+                // the shared smear has since been lengthened twice for the hose streams,
+                // and rain shouldn't ride along — decoupled per user.
+                SmearMax = 3.3f,
             });
         }
     }
