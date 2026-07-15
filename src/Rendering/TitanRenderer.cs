@@ -871,11 +871,12 @@ public static class TitanRenderer
             r.DrawRect(Vector2.Lerp(f.Tp + f.Up * 34f, chest, i / 3f) + f.Right * (f.Face * (14f - i * 3f)),
                 new Vector2(5f, 16f), Color.Lerp(f.Glow, f.Belly, 0.4f), f.Rot + 0.2f);
 
-        // Twin heavy arms with talon fans.
+        // Twin heavy arms with talon fans — the committed one hammers a smash.
         for (var s = -1; s <= 1; s += 2)
         {
             var shoulder = chest + f.Right * (s * 48f) + f.Up * 8f;
             var hand = shoulder + f.Right * (f.Face * 30f) - f.Up * (44f + MathF.Sin(f.Pulse + s) * 5f);
+            hand = SmashFist(t, f, s, shoulder, hand);
             var elbow = Vector2.Lerp(shoulder, hand, 0.5f) + f.Right * (s * 14f);
             Seg(r, shoulder, elbow, 20f, f.HideDark);
             Seg(r, elbow, hand, 16f, f.Hide);
