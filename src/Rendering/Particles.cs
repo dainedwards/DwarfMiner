@@ -1284,113 +1284,53 @@ public sealed class Particles
     private static readonly Color[] AcidTones =
         { new(215, 255, 100), new(130, 225, 55), new(130, 225, 55), new(70, 150, 35) };
 
-    /// <summary>The shared hose-stream core: the flamethrower and the acid spewer are ONE
-    /// effect with different inks — COUPLED deliberately, so any stream-feel tuning here
-    /// (flow speed, cone, lives, de-pulse, outward cap, smear) lands on both weapons at
-    /// once. Equally deliberately DECOUPLED from everything else: the grains carry their
-    /// own SmearMax so the shared fast-particle smear can move without dragging the hoses
-    /// (and vice versa), and no other emitter may borrow these constants.
-    /// The grains ARE the weapon now (no launched payload cells — they could never share
-    /// the particle arc exactly): every grain stamps its material where it lands and
-    /// throws the touchdown spark splash. Lights ride the hot minority only.</summary>
-    private void EmitJetCore(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel,
-        Color[] tones, int hotTones, Color fade, Material landMat,
-        Color lightColor, float hotLight, float bodyLight, float drag)
+    /// <summary>Flamethrower stream — DELIBERATELY INDEPENDENT of EmitAcidJet (they were
+    /// briefly one shared core; split back per user, tune each weapon on its own). The
+    /// grains ARE the weapon (no launched payload cells): they render as the metaball
+    /// fluid body when the composite is live, half of them stamp real Fire on landing,
+    /// and they throw the touchdown spark splash. NO secondary populations — soot,
+    /// cinders and licks all read as stray stream effects and are gone.</summary>
+    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
     {
-        // Flow speed reach*1.35 (~half the original spray); lives sized so travel spans
-        // the reach at every hold length.
-        var jetSpeed = reach * 1.35f;
-        // Hose cone — tightened 40% per user (round 23).
-        const float coneArc = 0.041f;
-        // The hoses' PRIVATE smear: cap and 2× length scale (strands read as long ribbons).
-        const float hoseSmear = 17.6f;
-        // 8 grains EVERY FRAME (the hoses fire per-frame now, ShootCooldown 0): emission
-        // is naturally continuous — grains sit ~4 px apart along the stream at full speed
-        // — so the old de-pulse lead machinery is gone, waves can't form even while the
-        // player runs and fires, and every grain is BORN AT THE MUZZLE.
+        var jetSpeed = reach * 1.35f;       // ~half the original spray speed
+        const float coneArc = 0.041f;       // tight cone (round 23)
+        const float smearCap = 17.6f;       // private smear cap (strand fallback only)
+        // 8 grains EVERY FRAME (ShootCooldown 0) minus a 1-in-5 skip (round 28): emission
+        // is continuous by construction, so waves can't form even while moving.
         for (var i = 0; i < 8; i++)
         {
-            // ~20% thinner stream per user (expected 6.4 grains/frame).
             if (_rng.Next(5) == 0) continue;
             var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             var hot = i < 3;
-            var tone = tones[hot ? _rng.Next(hotTones) : _rng.Next(tones.Length)];
-            // Speed band ±10.5% (was ±15%): this is what governs the LANDING scatter —
-            // ballistic range scales with speed², so the band is the falloff spread at
-            // long distance, far more than the cone angle is. Tightened 30% per user.
-            var vel = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f));
-            // NO outward cap any more: clamping only the skyward component bent the
-            // launch off the aim, and the ±speed band meant some grains clamped while
-            // others didn't — two arc families braiding whenever the hose fired upward.
-            // (The cap mirrored the launched payload cells, which are gone; grains live
-            // ≤1.35s, so the old floating-ember hazard can't occur.)
-            // Ejected fluid carries the shooter's momentum: without this, a flying player
-            // paints the muzzle's flight path in fire ("shooting spaghetti") — grains
-            // launched world-relative lag every turn the player makes. With it the stream
-            // stays a coherent straight tongue in the SHOOTER'S frame; standing still is
-            // by definition unchanged.
-            vel += shooterVel;
+            var tone = FlameTones[hot ? _rng.Next(2) : _rng.Next(FlameTones.Length)];
+            // ±10.5% speed band = the LANDING scatter (range ∝ v²); momentum inheritance
+            // keeps the stream coherent in the shooter's frame while flying.
+            var vel = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)) + shooterVel;
             _list.Add(new Particle
             {
-                // Births are BACK-FILLED along the muzzle's last-frame travel: even at
-                // per-frame emission a fast-moving muzzle (jetpack up/down) steps 2-3 px
-                // per frame, and grains all born at the new spot read as chunky stair
-                // rows. Spreading them across the frame's motion makes the origin line
-                // continuous whatever the player is doing.
+                // Births back-filled along the muzzle's last-frame travel so a moving
+                // muzzle leaves a continuous origin line, not stair rows.
                 Position = pos - shooterVel * ((float)_rng.NextDouble() * 0.016f)
                          + d * (float)_rng.NextDouble() * 1.5f,
                 Velocity = vel,
                 Life = 0.8f + (float)_rng.NextDouble() * 0.55f,
                 MaxLife = 1.35f,
                 Color = tone,
-                FadeColor = fade,
+                FadeColor = new Color(120, 35, 15),
                 Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
                 GravityScale = HoseArcGravity,
-                Drag = drag,
+                Drag = 1.2f,
                 CollideTiles = true,
-                LightRadius = hot ? hotLight : i % 3 == 0 ? bodyLight : 0f,
-                LightColor = lightColor,
-                // Half the grains stamp their material on landing (was every grain) —
-                // the ground still catches/corrodes, at a gentler rate per user.
-                LandMat = CellFx && _rng.Next(2) == 0 ? (byte)landMat : (byte)0,
+                LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
+                LightColor = new Color(255, 170, 70),
+                LandMat = CellFx && _rng.Next(2) == 0 ? (byte)Material.Fire : (byte)0,
                 LandSparks = true,
-                SmearMax = hoseSmear,
+                SmearMax = smearCap,
                 SmearScale = 2f,
-                Fluid = (byte)landMat,
-            });
-        }
-    }
-
-    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
-    {
-        EmitJetCore(pos, dir, reach, up, shooterVel, FlameTones, hotTones: 2,
-            fade: new Color(120, 35, 15), landMat: Material.Fire,
-            lightColor: new Color(255, 170, 70), hotLight: 60f, bodyLight: 30f, drag: 1.2f);
-        var jetSpeed = reach * 1.35f;
-        // Sooty flecks shed along the tongue — they inherit the arc, then buoy upward as they
-        // cool (weak net gravity), so spent flame rolls off the stream like Noita's smoke.
-        // (Counts here are PER FRAME now — the hoses fire every frame.)
-        for (var i = 0; i < 2; i++)
-        {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.3f;
-            var c = MathF.Cos(spread);
-            var s = MathF.Sin(spread);
-            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _list.Add(new Particle
-            {
-                Position = pos + d * (8f + (float)_rng.NextDouble() * (reach * 0.35f)),
-                Velocity = d * (jetSpeed * 0.45f) + shooterVel,
-                Life = 0.4f + (float)_rng.NextDouble() * 0.45f,
-                MaxLife = 0.9f,
-                Color = new Color(95, 62, 45),
-                FadeColor = new Color(35, 28, 30),
-                Size = 0.9f + (float)_rng.NextDouble() * 0.4f,
-                GravityScale = -0.18f,
-                Drag = 2.2f,
-                CollideTiles = true,
+                Fluid = (byte)Material.Fire,
             });
         }
         // Hero flicker riding a third of the way down the tongue: the shadow-casting part
@@ -1506,38 +1446,48 @@ public sealed class Particles
         }
     }
 
-    /// <summary>Acid spewer spray: the liquid twin of the flamethrower — same stream core
-    /// (see <see cref="EmitJetCore"/>), acid inks, and every droplet that lands stamps a
-    /// real Acid cell (the corrosion mechanic itself now; acid self-depletes as it eats,
-    /// which keeps the spray from melting the planet). Neon leading droplets, bright
-    /// body, occasional deep green — a liquid rope needs dark grains for depth.</summary>
+    /// <summary>Acid spewer spray — DELIBERATELY INDEPENDENT of EmitFlameJet (split back
+    /// from the shared core per user; tune each weapon on its own). Droplets render as
+    /// the metaball liquid body (joining the pool coverage RT, so the spray fuses into
+    /// what it lands in); half stamp real Acid on landing — the corrosion mechanic itself
+    /// (acid self-depletes as it eats). NO secondary populations — the vapour wisps read
+    /// as stray stream effects and are gone.</summary>
     public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
     {
-        EmitJetCore(pos, dir, reach, up, shooterVel, AcidTones, hotTones: 1,
-            fade: new Color(40, 90, 25), landMat: Material.Acid,
-            lightColor: new Color(150, 240, 80), hotLight: 16f, bodyLight: 7f, drag: 1.0f);
-        var jetSpeed = reach * 1.35f;
-        // A caustic vapour wisp riding the rope FROM THE MUZZLE (never seeded mid-air
-        // along the stream — that materialised droplets in space that fell like rain).
-        // Per-frame emission now, so one wisp per frame matches the old 3-per-puff rate.
-        for (var i = 0; i < 1; i++)
+        var jetSpeed = reach * 1.35f;       // ~half the original spray speed
+        const float coneArc = 0.041f;       // tight cone (round 23)
+        const float smearCap = 17.6f;       // private smear cap (strand fallback only)
+        // 8 droplets EVERY FRAME minus a 1-in-5 skip — continuous rope, see EmitFlameJet.
+        for (var i = 0; i < 8; i++)
         {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
+            if (_rng.Next(5) == 0) continue;
+            var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            var hot = i < 3;   // neon leading droplets
+            var tone = AcidTones[hot ? 0 : _rng.Next(AcidTones.Length)];
+            var vel = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)) + shooterVel;
             _list.Add(new Particle
             {
-                Position = pos + d * (4f + (float)_rng.NextDouble() * 6f),
-                Velocity = d * (jetSpeed * (0.55f + (float)_rng.NextDouble() * 0.25f)) + shooterVel,
-                Life = 0.35f + (float)_rng.NextDouble() * 0.3f,
-                MaxLife = 0.65f,
-                Color = new Color(90, 150, 55),
-                FadeColor = new Color(30, 55, 25),
-                Size = 0.9f + (float)_rng.NextDouble() * 0.4f,
-                GravityScale = HoseArcGravity * 0.8f,   // rides (nearly) the rope's own arc
-                Drag = 1.6f,
+                Position = pos - shooterVel * ((float)_rng.NextDouble() * 0.016f)
+                         + d * (float)_rng.NextDouble() * 1.5f,
+                Velocity = vel,
+                Life = 0.8f + (float)_rng.NextDouble() * 0.55f,
+                MaxLife = 1.35f,
+                Color = tone,
+                FadeColor = new Color(40, 90, 25),
+                Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
+                GravityScale = HoseArcGravity,
+                Drag = 1.0f,
                 CollideTiles = true,
+                LightRadius = hot ? 16f : i % 3 == 0 ? 7f : 0f,
+                LightColor = new Color(150, 240, 80),
+                LandMat = CellFx && _rng.Next(2) == 0 ? (byte)Material.Acid : (byte)0,
+                LandSparks = true,
+                SmearMax = smearCap,
+                SmearScale = 2f,
+                Fluid = (byte)Material.Acid,
             });
         }
     }
