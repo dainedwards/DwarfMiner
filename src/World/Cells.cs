@@ -1451,6 +1451,27 @@ public sealed class Cells
         Planet.Set(tx, ty, TileKind.Sky);
         SpawnInTile(tx, ty, Material.Fire, Density);
         SpawnInTile(tx, ty, Material.Smoke, Density / 2);
+        ShedBurningLeaves(tx, ty, k);
+    }
+
+    /// <summary>Leafy tiles don't just vanish into a stationary flame — the burning foliage
+    /// sheds a few glowing embers that tumble down out of the crown (flying fire cells, so
+    /// they arc, can spot-fire what they land on, and die in steam over water). This is what
+    /// makes a canopy fire read pixel-by-pixel instead of tile-by-tile. Fire isn't conserved
+    /// matter, so the embers are emitted freely; count is small and the flying list is capped.</summary>
+    private void ShedBurningLeaves(int tx, int ty, TileKind k)
+    {
+        if (k is not (TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.Fernleaf
+            or TileKind.SeaFrond or TileKind.Grass)) return;
+        var pos = Planet.TileToWorld(tx, ty);
+        var up = pos - Planet.Center;
+        if (up.LengthSquared() < 1f) return;
+        up.Normalize();
+        var tan = new Vector2(-up.Y, up.X);
+        var count = 2 + _rng.Next(2);
+        for (var e = 0; e < count && _flying.Count < MaxFlying; e++)
+            LaunchAtWorld(pos + tan * (_rng.Next(5) - 2) + up * (_rng.Next(5) - 2),
+                -up * (10f + _rng.Next(50)) + tan * (_rng.Next(120) - 60), Material.Fire);
     }
 
     private static bool IsMeltable(TileKind k) => k is
