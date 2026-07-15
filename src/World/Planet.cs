@@ -336,6 +336,8 @@ public sealed class Planet
     /// their straight facade line), so the old same-angle world-space walk missed drifted
     /// tiles and stranded parts of the leaf closed; this walks ring by ring, re-matching
     /// the door column with a one-tile slack each step.</summary>
+    private static readonly int[] _doorSlack = { 0, 1, -1 };
+
     public void SetDoorRun(int x, int y, TileKind to)
     {
         static bool IsDoor(TileKind k) => k is TileKind.DoorClosed or TileKind.DoorOpen;
