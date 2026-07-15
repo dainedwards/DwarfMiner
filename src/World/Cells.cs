@@ -2846,9 +2846,13 @@ public sealed class Cells
         var interior = !openOut && !openIn && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy);
         if (blobMode && !interior)
         {
-            r.Batch.Draw(blob, centre, null, col, rotation, blobOrigin,
-                new Vector2(chord * 3f / blob.Width, radial * 3f / blob.Height),
-                SpriteEffects.None, 0f);
+            var scale = new Vector2(chord * 3f / blob.Width, radial * 3f / blob.Height);
+            if (hot)
+                _hotOps.Add(new HotOp
+                    { Pos = centre, Scale = scale, Rot = rotation, Col = col, Blob = true });
+            else
+                r.Batch.Draw(blob, centre, null, col, rotation, blobOrigin, scale,
+                    SpriteEffects.None, 0f);
         }
         else
         {
@@ -2856,11 +2860,18 @@ public sealed class Cells
             // pools stay seamless while a lone droplet keeps its own grain size.
             var chordPad = IsBlocked(cx - 1, cy) || IsBlocked(cx + 1, cy) ? 0.5f : 0.1f;
             var radialPad = !openIn || !openOut ? 0.5f : 0.1f;
-            r.Batch.Draw(r.Pixel, centre, null, col, rotation, new Vector2(0.5f, 0.5f),
-                new Vector2(chord * (1f + chordPad), radial * (1f + radialPad)),
-                SpriteEffects.None, 0f);
+            var scale = new Vector2(chord * (1f + chordPad), radial * (1f + radialPad));
+            if (hot)
+                _hotOps.Add(new HotOp { Pos = centre, Scale = scale, Rot = rotation, Col = col });
+            else
+                r.Batch.Draw(r.Pixel, centre, null, col, rotation, new Vector2(0.5f, 0.5f),
+                    scale, SpriteEffects.None, 0f);
         }
-        if (openOut && _surface.Count < 4096) _surface.Add((cx, cy, (byte)m));
+        if (openOut)
+        {
+            if (hot) { if (_hotSurface.Count < 4096) _hotSurface.Add((cx, cy)); }
+            else if (_surface.Count < 4096) _surface.Add((cx, cy, (byte)m));
+        }
     }
 
     private void DrawWaterline(Renderer r, float radial)
