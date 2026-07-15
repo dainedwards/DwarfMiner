@@ -255,6 +255,10 @@ public static class Crafting
             new Dictionary<string, int> { ["coal"] = 6, ["gravel"] = 6, ["iron"] = 2 }),
         new("tnt_pack", "TNT pack — sticks to walls, same fuse",
             new Dictionary<string, int> { ["coal"] = 6, ["gravel"] = 4, ["iron"] = 2, ["hide"] = 1 }),
+        new("grapple", "Grappling hook — latch terrain or the titan, LMB reels, W lets go",
+            new Dictionary<string, int> { ["iron"] = 5, ["hide"] = 2, ["wood"] = 2 }),
+        new("rope", "Rope coil (8×) — unrolls a climbable line down from an anchor",
+            new Dictionary<string, int> { ["wood"] = 2, ["hide"] = 1 }),
 
         // ─── Late-game ────────────────────────────────────────────────────────
         new("nuke", "Energy blaster — charge-up alien cannon (hold to power up)",
