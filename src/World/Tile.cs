@@ -109,7 +109,9 @@ public static class Tiles
     /// can treat them as one family.</summary>
     public static bool IsFlora(TileKind k) =>
         k is TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
-          or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom;
+          or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom
+          or TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2
+          or TileKind.SeaFrond;
 
     /// <summary>Tiles the player walks through (climb / pass through) instead of colliding with.
     /// Ladders are passable so the dwarf can climb; small placed lights are passable too so the
