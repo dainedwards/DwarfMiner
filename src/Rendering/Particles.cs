@@ -1397,7 +1397,9 @@ public sealed class Particles
                 Life = 0.55f + (float)_rng.NextDouble() * 0.4f,
                 MaxLife = 0.95f,
                 Color = tone,
-                FadeColor = new Color(75, 60, 55),   // flame gutters into SMOKE, not embers
+                // Fades to a deep flame red — FIRE colours end to end, no sooty grey/black
+                // in the jet (per user).
+                FadeColor = new Color(205, 75, 15),
                 Size = hot ? 0.7f : 1f,
                 GravityScale = -0.3f,                // buoyant: the plume lifts off the arc
                 Drag = 1.5f,                         // stalls late in life, then billows
@@ -1405,6 +1407,31 @@ public sealed class Particles
                 LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
                 LightColor = new Color(255, 170, 70),
                 Fluid = (byte)Material.Fire,
+            });
+        }
+        // 3) Spark pixels: LOTS of tiny crisp flecks boiling OFF the jet along its whole
+        // length — bright fire tones scattered outward, dying fast. Plain grains, not
+        // part of the fluid body, so they read as distinct pixels over the plume. Seeded
+        // throat-biased (f²) where the jet is tight; jitter hides the straight-ray vs
+        // drooped-arc gap further out.
+        for (var i = 0; i < 5; i++)
+        {
+            var f = (float)_rng.NextDouble();
+            _list.Add(new Particle
+            {
+                Position = pos + dir * (f * f * reach * 0.8f) + Jitter(2.5f),
+                Velocity = dir * (jetSpeed * (0.5f + 0.4f * (float)_rng.NextDouble()))
+                         + Jitter(45f) + shooterVel,
+                Life = 0.2f + (float)_rng.NextDouble() * 0.25f,
+                MaxLife = 0.45f,
+                Color = _rng.Next(2) == 0 ? new Color(255, 245, 190) : new Color(255, 205, 90),
+                FadeColor = new Color(255, 120, 30),
+                Size = 0.5f,
+                GravityScale = HoseArcGravity * 0.7f,
+                Drag = 1.4f,
+                CollideTiles = true,
+                LightRadius = i == 0 ? 14f : 0f,
+                LightColor = new Color(255, 190, 80),
             });
         }
         // Hero flicker riding a third of the way down the tongue: the shadow-casting part
