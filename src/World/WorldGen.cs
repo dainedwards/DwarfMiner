@@ -430,7 +430,12 @@ public static class WorldGen
                     // surface pools, the acid volcano's plumbing, and acid-rain storms.)
                     var isReservoir = planet.WaterSeeds.Count > 0
                         && planet.WaterSeeds[^1] == (r, t);
-                    if (!isReservoir && def.SeedsGas && depth > 34f
+                    // Gas keeps to its authored home — the hot caves near (above) the lava —
+                    // and stays OUT of the new deep strata below the sea floor: thousands of
+                    // fresh dry cave tiles down there would otherwise all roll gas seeds,
+                    // and wandering gas is exactly the kind of never-sleeping cell load the
+                    // strata design promises not to add.
+                    if (!isReservoir && def.SeedsGas && depth > 34f && radTiles > seaFloorTiles
                         && SampleNoise(pocketNoise, wx * 0.06f + 21f, wy * 0.06f + 21f) > 0.80f)
                         planet.GasSeeds.Add((r, t));
 
