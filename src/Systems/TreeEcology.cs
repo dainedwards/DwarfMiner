@@ -54,16 +54,34 @@ public static class TreeEcology
     /// felling and are what regrowth reads to know the tree can come back.</summary>
     public static void PlantRoots(Planet p, TreeSite s)
     {
+        // Central taproot: a vertical run straight down the trunk column. This is the root
+        // signature RootsAlive and RebuildSites key off (a run of ≥2 stacked roots).
         for (var d = 1; d <= MaxRootDepth; d++)
         {
             var rr = s.GroundR - d;
             if (rr < 1) break;
-            var col = ColAt(p, rr, s.Angle);
-            var here = p.Get(rr, col);
-            if (here is TileKind.Dirt or TileKind.Grass or TileKind.Snow or TileKind.MossStone
-                or TileKind.Gravel or TileKind.Basalt)
-                p.Set(rr, col, TileKind.TreeRoot);
+            TrySetRoot(p, rr, ColAt(p, rr, s.Angle));
         }
+        // Spreading lateral roots: a shallow flare reaching OUT to either side (single tiles
+        // at depth 2, thinning toward the tips) so the root system spreads sideways instead of
+        // just plunging — you grub it out over a wider patch of ground.
+        var lr = s.GroundR - 2;
+        if (lr >= 1)
+            for (var side = -1; side <= 1; side += 2)
+                for (var lat = 1; lat <= 3; lat++)
+                {
+                    if (Random.Shared.Next(lat + 1) == 0) continue;   // sparser toward the tips
+                    var n = p.TilesAt(lr);
+                    var col = ((ColAt(p, lr, s.Angle) + side * lat) % n + n) % n;
+                    TrySetRoot(p, lr, col);
+                }
+    }
+
+    private static void TrySetRoot(Planet p, int rr, int col)
+    {
+        if (p.Get(rr, col) is TileKind.Dirt or TileKind.Grass or TileKind.Snow
+            or TileKind.MossStone or TileKind.Gravel or TileKind.Basalt)
+            p.Set(rr, col, TileKind.TreeRoot);
     }
 
     /// <summary>Build the trunk up to <paramref name="tiles"/> tiles tall (only over open sky,
