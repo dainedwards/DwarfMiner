@@ -2913,12 +2913,20 @@ public sealed class Cells
             SpriteEffects.None, 0f);
     }
 
+    /// <summary>Sim-time of the last hot-liquids draw — the window for detecting a bubble
+    /// cycle wrap (the POP). Sim time, not wall time, so a paused game never pops.</summary>
+    private float _hotFxTime;
+
     /// <summary>Replay the lava ops collected by <see cref="DrawLiquids"/> into the HOT
     /// coverage field. Game1 calls this inside the flame-RT batch (blob mode only), so lava
     /// and the flamethrower stream threshold into one fire-family surface and composite
     /// opaque with the hot bright rim — while staying a separate field from water/acid/oil,
-    /// which lava must never metaball-fuse with.</summary>
-    public void DrawHotLiquids(Renderer r)
+    /// which lava must never metaball-fuse with. The surface also BUBBLES: a hashed subset
+    /// of surface cells host swelling domes drawn into the same coverage field (the
+    /// composite rim outlines each blister), and a dome's cycle wrap is its pop — a few
+    /// spark flecks spat upward, budgeted per frame so a sea view can't flood the
+    /// particle list.</summary>
+    public void DrawHotLiquids(Renderer r, Particles particles)
     {
         var radial = (float)Planet.TileSize / Density;
         var blob = r.LiquidBlob;
@@ -2930,6 +2938,36 @@ public sealed class Cells
         // Lava's own surface line: the slow bright molten crest, after the bodies so its
         // colour wins the replace blend.
         foreach (var (cx, cy) in _hotSurface) DrawSurfaceBand(r, radial, cx, cy, Material.Lava);
+
+        // Bubbles ride on top of the crest line (their colour wins where they overlap it).
+        // Site selection, size and rhythm all hash off the cell, so a resting sea keeps
+        // stable, individually-phased bubblers with zero per-bubble state.
+        var dtFx = MathF.Max(0f, _time - _hotFxTime);
+        _hotFxTime = _time;
+        var sparks = 0;
+        foreach (var (cx, cy) in _hotSurface)
+        {
+            var hash = (cx * 73856093) ^ (cy * 19349663);
+            if ((hash & 15) != 0) continue;           // ~1 in 16 surface cells bubbles
+            var period = 1.2f + ((hash >> 8) & 255) / 255f * 1.8f;
+            var cycle = (_time + ((hash >> 16) & 255) / 255f * period) % period;
+            // Fast swell, slow finish, gone at the wrap — the dome bursts, never deflates.
+            var w = radial * (5f + ((hash >> 5) & 7) * 1.2f) * MathF.Sqrt(cycle / period);
+            var n = _cellsAt[cy];
+            var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
+            var cellAng = (WrapX(cx, n) + 0.5f) * (MathHelper.TwoPi / n);
+            var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
+            var pos = Planet.Center + up * (ringRadius + w * 0.22f);
+            r.Batch.Draw(blob, pos, null, new Color(255, 132, 36), cellAng + MathHelper.PiOver2,
+                blobOrigin, new Vector2(w / blob.Width, w * 0.8f / blob.Height),
+                SpriteEffects.None, 0f);
+            // The wrap happened inside this sim step: pop. Sparks arc up and cool.
+            if (cycle < dtFx && sparks < 6)
+            {
+                particles.EmitLavaSparks(pos + up * radial, up);
+                sparks++;
+            }
+        }
     }
 
     /// <summary>Lava/acid glow emitters. Same LOD contract as <see cref="Draw"/> — the
