@@ -898,22 +898,25 @@ public sealed class Renderer
                     case TileKind.TreeCanopy:
                     case TileKind.TreeCanopy2:
                     {
-                        // Leafy alien foliage — a soft blob of two-tone leaves swaying on the
-                        // clock. Teal or violet depending on the canopy variant.
+                        // Leafy alien foliage — a layered, dappled leaf mass swaying on the
+                        // clock: a dark under-shadow, the main leaf body, a sunlit crown, and a
+                        // scatter of individual leaf clusters for texture. Teal or violet.
                         var teal = k == TileKind.TreeCanopy;
                         var leaf = teal ? new Color(78, 150, 130) : new Color(150, 120, 190);
                         var leafDk = teal ? new Color(52, 110, 96) : new Color(112, 86, 150);
                         var leafHi = teal ? new Color(120, 200, 170) : new Color(196, 168, 228);
+                        var leafMd = teal ? new Color(96, 176, 148) : new Color(172, 144, 210);
                         var sway = (int)(MathF.Sin(Time * 1.3f + (hash & 63) * 0.1f) * 1.2f);
-                        DrawDeco(centre, right, up, rotation, chord, 0, 1, 8, 6, leaf);
-                        DrawDeco(centre, right, up, rotation, chord, 1 + sway, 0, 6, 2, leafHi);
-                        for (var i = 0; i < 5; i++)
+                        DrawDeco(centre, right, up, rotation, chord, 0, 1, 8, 7, leafDk);        // under-shadow mass
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 7, 6, leaf);          // main body
+                        DrawDeco(centre, right, up, rotation, chord, 1 + sway, 0, 5, 2, leafHi); // sunlit crown
+                        for (var i = 0; i < 9; i++)
                         {
                             var hh = ((i * 2654435761u) ^ (uint)hash) & 63;
-                            var lx = (int)(hh % 7);
-                            var ly = (int)((hh >> 3) % 6) + 1;
-                            DrawDeco(centre, right, up, rotation, chord, lx, ly, 1, 1,
-                                (hh & 1) == 0 ? leafDk : leafHi);
+                            var lx = (int)(hh % 8);
+                            var ly = (int)((hh >> 3) % 7) + 1;
+                            var lc = (hh & 3) switch { 0u => leafDk, 1u => leafHi, 2u => leafMd, _ => leaf };
+                            DrawDeco(centre, right, up, rotation, chord, lx, ly, 1, 1, lc);
                         }
                         break;
                     }
