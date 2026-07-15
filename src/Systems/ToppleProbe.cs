@@ -113,6 +113,10 @@ public static class ToppleProbe
         {
             cPhysics.Update(1f / 60f);
             cRigid.Update(1f / 60f);
+            if (cPhysics.NewlyCondemnedThisTick > 0 || cPhysics.RigidDetachesThisTick > 0
+                || cPhysics.CollapsesThisTick > 0)
+                Console.WriteLine($"  tick {ticks}: condemned {cPhysics.NewlyCondemnedThisTick} "
+                    + $"rigid {cPhysics.RigidDetachesThisTick} crumbled {cPhysics.CollapsesThisTick}");
         }
         Console.WriteLine($"bodies {cRigid.Bodies.Count}, cells {cRigid.CellCount}, ticks {ticks}");
     }
