@@ -1581,6 +1581,20 @@ public sealed class Cells
                         IgniteCell(fcx, fcy);
                     }
                     return;
+                case Material.Snow:
+                    // Fire licking a snow GRAIN melts it to a droplet of rain-tagged
+                    // meltwater — which then douses the flame naturally, exactly like the
+                    // snow-tile melt below.
+                    if (_rng.Next(2) == 0)
+                    {
+                        _srcTile[ni] = RainWaterSrc;
+                        _mat[ni] = (byte)Material.Water;
+                        _velR[ni] = 0f; _travel[ni] = 0f; _flow[ni] = 0;
+                        Enqueue(ni);
+                        var (mcx, mcy) = UnIdx(ni);
+                        WakeNeighbors(mcx, mcy);
+                    }
+                    return;
             }
             var k = TileAt(ncx, ncy);
             // Fire MELTS snow: the tile flashes to meltwater and steam. Not budget-gated —
