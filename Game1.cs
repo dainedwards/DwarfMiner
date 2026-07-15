@@ -4931,6 +4931,22 @@ public sealed partial class DwarfMinerGame : Game
                     // the stock, so the weapon reads as held rather than floating at his hip.
                     _renderer.DrawRect(_run.Player.Position + aim * 3.4f, new Vector2(1.7f, 1.7f),
                         new Color(230, 180, 140), wrot);
+
+                    // Energy ball charging orb: a violet sphere growing at the muzzle as the
+                    // cannon winds up, brightest core when full — the visual power meter.
+                    if (heldId == "nuke" && _energyCharge > 0.01f)
+                    {
+                        var muzzle = _run.Player.Position + aim * 9f;
+                        var f = EnergyPower(_energyCharge);
+                        var rad = 1.2f + f * 5.5f;
+                        var jit = MathF.Sin(_totalTime * 30f) * 0.4f * f;
+                        _renderer.DrawCircle(muzzle, (rad + jit) * 1.5f, new Color(150, 90, 240, 90));
+                        _renderer.DrawCircle(muzzle, rad + jit, Color.Lerp(new Color(150, 110, 235), new Color(255, 120, 240), f));
+                        _renderer.DrawCircle(muzzle, (rad + jit) * 0.5f, new Color(240, 220, 255));
+                        if (_energyCharge >= 0.999f)   // fully charged: a bright pulsing ring
+                            _renderer.DrawCircle(muzzle, rad * (1.6f + MathF.Sin(_totalTime * 18f) * 0.2f),
+                                new Color(255, 255, 255, 70));
+                    }
                 }
             }
         }
