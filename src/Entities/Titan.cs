@@ -1346,7 +1346,7 @@ public sealed class Titan
     /// <summary>The fist lands: heavy Mine damage across the fist's footprint plus a quake and
     /// a short shockwave (<see cref="PendingShockwave"/> — Game1 hurts/knocks back the player
     /// and creatures inside it). Building tiles are anchored but not fist-proof — Mine's own
-    /// hardness gate (≥99) is what protects true anchor-class tiles (core, supports). Power 34
+    /// hardness gate (≥99) is what protects true anchor-class tiles (core, supports). Power 48
     /// over a 3-tile radius: alloy breaches in a single blow, so a working titan opens a tower
     /// floor per swing, and any toppled debris in range is ground straight to dust.</summary>
     private void SmashImpact(Physics physics, Cells cells)
