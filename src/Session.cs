@@ -67,6 +67,17 @@ public sealed class Session
     public float AcidRainActive;
     public float AcidRainAngle;
 
+    /// <summary>Ambient weather: drifting clouds that gather and shed rain (water, thin acid,
+    /// or ember-rain by biome). Gentler than the acid-rain disaster — it waters the tree
+    /// ecosystem and adds atmosphere rather than threatening the dwarf. Driven by
+    /// <see cref="Systems.Weather"/>. Transient (not saved).</summary>
+    public readonly List<Systems.Cloud> Clouds = new();
+    public float CloudTimer = 12f;
+
+    /// <summary>Shortcut to this run's living trees (they live on the planet). Regrown and
+    /// watered by <see cref="Systems.TreeEcology"/>.</summary>
+    public List<TreeSite> Trees => Planet.Trees;
+
     /// <summary>Eruption in progress: which vent is erupting and how long it keeps spewing.
     /// Vent sites live on <see cref="World.Planet.VolcanoVents"/>.</summary>
     public float EruptionLeft;
