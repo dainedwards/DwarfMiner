@@ -1844,12 +1844,13 @@ public sealed class TitanProjectile
 
         if (planet.IsSolidAt(Position))
         {
-            if (Ballistic)
+            if (Splashes)
             {
                 Dead = true;
                 Splash(planet, cells);
                 return;
             }
+            if (Kind == TitanShotKind.Dart) { Dead = true; return; }   // a dart just sticks and stops
             if (Kind is TitanShotKind.Laser or TitanShotKind.Void && _drill > 0)
             {
                 // Drill the wall: vaporise the tile and keep going until the pierce budget runs
