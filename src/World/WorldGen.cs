@@ -592,12 +592,13 @@ public static class WorldGen
     private static TileKind FloraFor(string biome) => biome switch
     {
         "verdant" => TileKind.Fernleaf,
+        "ocean"   => TileKind.Fernleaf,   // lush shore growth between the seas
         "frost"   => TileKind.Frostcap,
         "ember"   => TileKind.Emberbloom,
         "slag"    => TileKind.Rustbramble,
         "acid"    => TileKind.Vitrilily,
         "crystal" => TileKind.Geobloom,
-        _         => TileKind.Sky,   // ocean/city/rift/belt/moon/debug: no scattered flora
+        _         => TileKind.Sky,   // city/rift/belt/moon/debug: no scattered flora
     };
 
     /// <summary>Scatter the biome's signature plant across the open surface: for a spread of
