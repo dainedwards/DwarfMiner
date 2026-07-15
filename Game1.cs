@@ -568,7 +568,7 @@ public sealed partial class DwarfMinerGame : Game
         // fill with lava so every volcano stands primed — a continuous column from the deep
         // chamber up to the crater. (Acid volcanoes seed via AcidSeeds below instead.)
         foreach (var (lx, ly) in run.Planet.LavaSeeds)
-            run.Cells.FillTile(lx, ly, Material.Lava);
+            run.Cells.FillTileSilent(lx, ly, Material.Lava);
 
         // Water seeding: world gen recorded lake-basin and reservoir tiles; pour the cells in
         // now. Water is always sim cells (never solid tiles), so it settles, flows into player
