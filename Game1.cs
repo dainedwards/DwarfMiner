@@ -623,6 +623,12 @@ public sealed partial class DwarfMinerGame : Game
         foreach (var (lx, ly) in run.Planet.LavaSeeds)
             run.Cells.FillTileSilent(lx, ly, Material.Lava);
 
+        // Every lava body is born jacketed: a two-tile lava-rock shell around the sea, the
+        // volcano plumbing, and the demo lake — fireproof and meltproof, so no world spawns
+        // with lava already chewing into soil or torching the shoreline. Runs BEFORE water
+        // pours so the shell also stands between the lava and any adjacent lake.
+        run.Cells.ShellLavaBodies();
+
         // Water seeding: world gen recorded lake-basin and reservoir tiles; pour the cells in
         // now. Water is always sim cells (never solid tiles), so it settles, flows into player
         // tunnels, and quenches lava per the cell rules.
