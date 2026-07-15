@@ -155,6 +155,21 @@ public sealed class Cells
     private readonly Dictionary<string, float> _dustAccum = new();
     private float _time;
 
+    // Fire-spread throttle: catching a NEW tile alight, and spitting a fresh ember, each draw
+    // one point from a budget that refills slowly. A blaze can still sweep a grove or a grass
+    // field (that's a lot of tiles, but bounded — burnt tiles turn to sky and stop feeding it),
+    // yet a lava tongue can never cascade fire clear across a whole planet: once the budget is
+    // dry, existing flames keep burning out but nothing new ignites until it recovers.
+    private float _fireBudget = FireBudgetMax;
+    private const float FireBudgetMax = 90f;
+    private const float FireBudgetRegen = 22f;   // points per second
+    private bool SpendFire()
+    {
+        if (_fireBudget < 1f) return false;
+        _fireBudget -= 1f;
+        return true;
+    }
+
     // --- Compaction: buried, undisturbed grains re-form into Conglomerate tiles. ---
     // Per-cell timers would keep every resting grain awake, so the mechanic is tile-level
     // and sweep-based instead: TickSand records the owning tile whenever a grain comes to
