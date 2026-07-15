@@ -5553,7 +5553,8 @@ public sealed partial class DwarfMinerGame : Game
                 var g0 = GC.CollectionCount(0);
                 var g2 = GC.CollectionCount(2);
                 Console.WriteLine($"[cnt] active {_run.Cells.ActiveCellCount}  fly {_run.Cells.FlyingCellCount}" +
-                    $"  parts {_particles.Count}  crit {_run.Creatures.Count}  gc0 {g0 - _gc0}  gc2 {g2 - _gc2}");
+                    $"  parts {_particles.Count}  crit {_run.Creatures.Count}  gc0 {g0 - _gc0}  gc2 {g2 - _gc2}" +
+                    $"  [{_run.Cells.ActiveBreakdown()}]");
                 _gc0 = g0; _gc2 = g2;
             }
         }
