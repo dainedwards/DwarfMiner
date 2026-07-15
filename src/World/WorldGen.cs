@@ -1050,6 +1050,32 @@ public static class WorldGen
         CarveDeepStrata(planet, def, rng);
     }
 
+    /// <summary>Plug every Sky tile inside a stratum seam back to solid rock — the final,
+    /// authoritative enforcement of the seam contract (see the call site in Generate). The
+    /// wall layer captured the structural material before any carver ran, so the plug is
+    /// whatever rock genuinely belonged there.</summary>
+    private static void SealSeams(Planet planet, PlanetDef def)
+    {
+        var (seams, _, _) = CaveStrata(planet, def);
+        foreach (var (lo, hi) in seams)
+        {
+            var r0 = Math.Max(0, (int)(lo - Planet.RingMin));
+            var r1 = Math.Min(planet.Rings - 1, (int)(hi - Planet.RingMin) + 1);
+            for (var r = r0; r <= r1; r++)
+            {
+                var radTiles = Planet.RingMin + r + 0.5f;
+                if (radTiles < lo || radTiles >= hi) continue;
+                var n = planet.TilesAt(r);
+                for (var t = 0; t < n; t++)
+                {
+                    if (planet.Get(r, t) != TileKind.Sky) continue;
+                    var wall = planet.GetWall(r, t);
+                    planet.Set(r, t, wall != TileKind.Sky ? wall : TileKind.Basalt);
+                }
+            }
+        }
+    }
+
     /// <summary>The deep cave strata: worm networks BELOW the lava sea (or below the upper
     /// network on lava-less worlds), reaching all the way down to the core shell. Each
     /// stratum is internally connected but sealed off from everything above by CaveStrata's
