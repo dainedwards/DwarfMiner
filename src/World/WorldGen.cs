@@ -452,13 +452,12 @@ public static class WorldGen
                     // noise splits the deep crust into gold country vs silver country, so a given
                     // region tends to hold one metal, not both — gold and silver rarely mix. The
                     // def bias still fattens the signature worlds' veins on top of this baseline.
-                    // Precious metals are DEEP finds: higher base thresholds + a deeper minimum
-                    // depth keep them scarce in the upper layers, while a stronger depth boost
-                    // keeps them properly findable down in the crust — so gold/silver reward
-                    // digging rather than littering the shallows.
+                    // Precious metals: mostly a DEEP find (rich down in the crust), some through
+                    // the mid layers, and only very rarely in the shallows — the shallow penalty
+                    // is what thins them out up top rather than a hard depth wall.
                     var metalSel = SampleNoise(oreNoise, wx * 0.031f, wy * 0.031f);
-                    if (metalSel < 0.5f && oreN > 0.955f - boost * 0.85f - Bias(TileKind.SilverOre) && depth > 46f) k = TileKind.SilverOre;
-                    if (metalSel >= 0.5f && oreN > 0.962f - boost * 0.85f - Bias(TileKind.GoldOre) && depth > 56f) k = TileKind.GoldOre;
+                    if (metalSel < 0.5f && oreN > 0.948f + shallowMetal - boost * 0.4f - Bias(TileKind.SilverOre) && depth > 12f) k = TileKind.SilverOre;
+                    if (metalSel >= 0.5f && oreN > 0.955f + shallowMetal - boost * 0.4f - Bias(TileKind.GoldOre) && depth > 14f) k = TileKind.GoldOre;
                     // Platinum rides its OWN noise field (offset + different frequency) so its
                     // veins are decorrelated from the common-ore noise — platinum no longer
                     // shares a seam with iron/gold/silver, it forms its own isolated pockets.
