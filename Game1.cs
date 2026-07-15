@@ -5288,8 +5288,14 @@ public sealed partial class DwarfMinerGame : Game
                     break;
                 }
                 case ProjectileKind.Pistol:
-                    _renderer.DrawCircle(p.Position, p.Radius, new Color(255, 240, 180));
+                {
+                    // Heavier gold round — a touch longer and fatter than the basic bullet.
+                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
+                    var nose = p.Position + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * 1.7f;
+                    _renderer.DrawRect(p.Position, new Vector2(3.6f, 1.4f), new Color(228, 200, 120), ang);
+                    _renderer.DrawRect(nose, new Vector2(1.5f, 1.4f), new Color(255, 245, 210), ang);
                     break;
+                }
                 case ProjectileKind.CivicBolt:
                 {
                     // Militia stun-bolt: a short cyan dash, visibly not the player's ammo.
