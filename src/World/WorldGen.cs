@@ -1157,14 +1157,15 @@ public static class WorldGen
                             ? storey >= floorEvery && !slabRow
                             : storey >= floorEvery && storey % floorEvery >= 3
                                                    && storey % floorEvery <= floorEvery - 3;
-                        if (storey < doorH && Math.Sign(dt) == doorSide)
-                            // Outer column gets a real working door (closed at gen time —
-                            // residents and the dwarf pop it open with E / by walking up);
-                            // the inner column stays open as the lobby behind it.
+                        if (storey < doorH)
+                            // Doorway on BOTH sides at street level: the outer column is a
+                            // real working door (closed at gen time — residents and the dwarf
+                            // pop it open with E / by walking up), the inner column is open
+                            // lobby behind it. Both left and right edges get one now.
                             planet.Set(r, t, Math.Abs(dt) >= spanHere ? TileKind.DoorClosed
                                                                       : TileKind.Sky);
-                        else if (storey == doorH && Math.Sign(dt) == doorSide)
-                            planet.Set(r, t, TileKind.CityGlass);
+                        else if (storey == doorH)
+                            planet.Set(r, t, TileKind.CityGlass);   // glass transom over both doors
                         else
                             planet.Set(r, t, window ? TileKind.CityGlass : TileKind.AlienAlloy);
                         continue;
