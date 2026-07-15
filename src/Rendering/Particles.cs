@@ -1208,35 +1208,11 @@ public sealed class Particles
                 LandMat = CellFx ? (byte)Material.Fire : (byte)0,
             });
         }
-        // Fire is BUOYANT: tongues lick UP off the stream as it travels — the Noita curl.
-        // A few short-lived grains seeded along the tongue with negative gravity slow,
-        // detach, and flick upward before dying to a dark ember (mid-air seeding is right
-        // here, unlike the acid wisps: rising flame, not falling rain).
-        for (var i = 0; i < 5; i++)
-        {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.3f;
-            var c = MathF.Cos(spread);
-            var s = MathF.Sin(spread);
-            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _list.Add(new Particle
-            {
-                // Seed only the near two-fifths of the tongue with a strong stall (high
-                // drag, short life): licks flick up and die WITHIN the stream's length —
-                // they were riding above the drooping tongue and past its tip, reading as
-                // stray yellow strands out-ranging the fire.
-                Position = pos + d * (6f + (float)_rng.NextDouble() * (reach * 0.4f)) + Jitter(1.2f),
-                Velocity = d * (jetSpeed * 0.25f),
-                Life = 0.18f + (float)_rng.NextDouble() * 0.17f,
-                MaxLife = 0.35f,
-                Color = _rng.Next(2) == 0 ? new Color(255, 220, 110) : new Color(255, 160, 55),
-                FadeColor = new Color(120, 35, 15),
-                Size = 0.5f,
-                GravityScale = -0.5f,
-                Drag = 3.2f,
-                CollideTiles = true,
-                LandMat = CellFx ? (byte)Material.Fire : (byte)0,
-            });
-        }
+        // NO off-trajectory populations: the buoyant "lick" grains and the hose-shed
+        // cinders both flew arcs of their own (rising / ember-gravity-flat) and kept
+        // reading as stray yellow embers out of step with the stream — removed per user.
+        // Everything visible in the tongue now rides the SAME arc as the fuel cells, and
+        // "keeps burning where it lands" is covered by every grain's Fire stamp.
         // Sooty flecks shed along the tongue — they inherit the arc, then buoy upward as they
         // cool (weak net gravity), so spent flame rolls off the stream like Noita's smoke.
         for (var i = 0; i < 6; i++)
