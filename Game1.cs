@@ -1811,8 +1811,12 @@ public sealed partial class DwarfMinerGame : Game
         if (_run.Physics.RigidDetachesThisTick > 0)
             _sfx.Play("collapse", MathHelper.Clamp(_run.Physics.RigidDetachesThisTick / 120f, 0.3f, 0.9f),
                 pitch: -0.45f, pan: 0f, minGap: 0.25f);
+        tPerf = FramePerf.Now();
         UpdateRigidBodies(dt);
+        FramePerf.Add("rigid", tPerf);
+        tPerf = FramePerf.Now();
         _particles.Update(dt, _run.Planet, _run.Cells);
+        FramePerf.Add("parts", tPerf);
 
         // Thrown torches: fly, stick, and stay. A soft thunk marks the plant.
         foreach (var torch in _run.Torches)
