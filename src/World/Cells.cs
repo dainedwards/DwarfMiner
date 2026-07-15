@@ -1996,9 +1996,12 @@ public sealed class Cells
             fuelled = true;
             // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke,
             // which is what walks a grass fire along the surface. Throttled by the spread
-            // budget so the front advances but can't blanket the planet. Rate raised (was
-            // 1-in-50) so flame licking a flammable surface reliably takes hold.
-            if (_rng.Next(28) != 0) return;
+            // budget so the front advances but can't blanket the planet. Rate SLOWED
+            // ~3× (28→90): with long-fuse flamethrower fire standing on wood for 6-9s,
+            // the old rate ate whole trees in moments — a burning structure should burn
+            // DOWN over a while, not vaporise. Ignition reliability now comes from the
+            // fuse's dwell time, not a hot char roll.
+            if (_rng.Next(90) != 0) return;
             if (!SpendFire()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
