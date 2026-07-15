@@ -353,6 +353,20 @@ public static class WorldGen
                 // obsidian afterwards.
                 var acidBuffer = acidDepth > 0.5f && depth < acidDepth + 12f;
 
+                // Ocean worlds (LakeScale > 2.5, same marker as the deep-water bonus above)
+                // armour their seabeds: an obsidian SHELL under every real basin (nothing
+                // upper-crust may bite obsidian — worms detour, noise caves are suppressed
+                // by the buffer), and a solid cave-free BUFFER a few tiles thicker, so the
+                // sea can never find a passage into the dry cave network below. Gameplay
+                // contract: the caves under the ocean stay dry, and flooding them takes
+                // deliberate obsidian mining — you can't casually drown what lives there.
+                // The shell starts a shade inside the bowl edge (lakeDepth > 1.5) so island
+                // beaches keep a diggable sand-and-dirt shoreline.
+                var oceanWorld = def.LakeScale > 2.5f;
+                var seaShell = oceanWorld && lakeDepth > 1.5f
+                    && depth >= lakeDepth && depth < lakeDepth + 5f;
+                var seaBuffer = oceanWorld && lakeDepth > 0.5f && depth < lakeDepth + 11f;
+
                 var pos = planet.TileToWorld(r, t);
                 var wx = (pos.X - planet.Center.X) / (Planet.TileSize * S);
                 var wy = (pos.Y - planet.Center.Y) / (Planet.TileSize * S);
