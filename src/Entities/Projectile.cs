@@ -192,16 +192,17 @@ public sealed class Projectile
                 break;
             case ProjectileKind.Dynamite:
                 Radius = 2.2f;
-                CraterTiles = 4;
-                ExplosionRadius = 50f;
+                CraterTiles = 2;
+                ExplosionRadius = 30f;
                 ExplodesOnFuse = true;
                 CreaturePierces = -1;
                 break;
             case ProjectileKind.DynamitePack:
-                // 3× the stick's blast — a bundled charge for clearing a whole chamber.
+                // A bundled charge for clearing a chamber — bigger than the stick, but no
+                // longer the map-eraser it once was.
                 Radius = 3f;
-                CraterTiles = 12;
-                ExplosionRadius = 150f;
+                CraterTiles = 6;
+                ExplosionRadius = 75f;
                 ExplodesOnFuse = true;
                 CreaturePierces = -1;
                 break;
