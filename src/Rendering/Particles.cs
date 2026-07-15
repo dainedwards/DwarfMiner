@@ -1351,6 +1351,7 @@ public sealed class Particles
                 LandSparks = true,
                 SmearMax = hoseSmear,
                 SmearScale = 2f,
+                Fluid = (byte)landMat,
             });
         }
     }
