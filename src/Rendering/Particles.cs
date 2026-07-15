@@ -1263,7 +1263,9 @@ public sealed class Particles
                 CollideTiles = true,
                 LightRadius = hot ? hotLight : i % 3 == 0 ? bodyLight : 0f,
                 LightColor = lightColor,
-                LandMat = CellFx ? (byte)landMat : (byte)0,
+                // Half the grains stamp their material on landing (was every grain) —
+                // the ground still catches/corrodes, at a gentler rate per user.
+                LandMat = CellFx && _rng.Next(2) == 0 ? (byte)landMat : (byte)0,
                 LandSparks = true,
                 SmearMax = hoseSmear,
                 SmearScale = 2f,
