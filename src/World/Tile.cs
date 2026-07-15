@@ -256,6 +256,10 @@ public static class Tiles
         TileKind.Plating => new Color(120, 132, 150),
         TileKind.GlassBlock => new Color(150, 200, 220),
         TileKind.Platform => new Color(140, 110, 74),
+        TileKind.TreeTrunk => new Color(96, 70, 92),      // alien mauve bark
+        TileKind.TreeCanopy => new Color(78, 150, 130),   // teal foliage
+        TileKind.TreeCanopy2 => new Color(150, 120, 190), // violet foliage
+        TileKind.SeaFrond => new Color(70, 160, 140),
         TileKind.Rail => new Color(70, 60, 55),
         TileKind.Glowshroom => new Color(60, 110, 70),
         TileKind.Beacon => new Color(100, 60, 150),
