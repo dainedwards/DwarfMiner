@@ -183,7 +183,10 @@ public sealed class RigidBodies
         if (dist > radius + b.BoundRadius) return;
         var dir = dist > 0.5f ? d / dist : new Vector2(0, -1);
         var falloff = 1f - MathHelper.Clamp(dist / (radius + b.BoundRadius), 0f, 1f);
-        b.Velocity += dir * power * falloff;
+        // Heft: chunks up to boulder size take the full launch (tuned there), but a whole
+        // skyscraper or mountain barely shrugs — the same charge can't hurl both alike.
+        var heft = MathF.Min(1f, MaxChunkTiles * b.InvMass);
+        b.Velocity += dir * power * falloff * heft;
         // Off-centre kick: torque from the blast reaching one side of the body first.
         b.Spin += (dir.X * d.Y - dir.Y * d.X) * power * falloff * b.InvInertia * 0.5f;
         b.SleepTimer = 0f;
