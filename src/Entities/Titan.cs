@@ -1360,7 +1360,7 @@ public sealed class Titan
                 if (dx * dx + dy * dy > r * r) continue;
                 var x = fx + dx; var y = fy + dy;
                 if (!Tiles.IsSolid(_planet.Get(x, y))) continue;
-                if (_planet.Mine(x, y, 34) is { } broken)
+                if (_planet.Mine(x, y, 48) is { } broken)
                 {
                     physics.MarkDirty(x, y);
                     cells.SpawnDustInTile(x, y, broken);
