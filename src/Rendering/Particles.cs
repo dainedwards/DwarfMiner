@@ -1411,14 +1411,17 @@ public sealed class Particles
             // fire wants none.
             var tone = i < 7 ? 0 : _rng.Next(4);
             var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
+            // Same FlyMaxOutward mirror as EmitFlameJet — glow and payload share one arc.
+            var outward = Vector2.Dot(vel, up);
+            if (outward > 170f) vel -= up * (outward - 170f);
             // De-pulse — see EmitFlameJet: random emission-time head start interleaves puffs.
             var lead = (float)_rng.NextDouble() * 0.06f;
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
                 Velocity = vel,
-                Life = 0.5f + (float)_rng.NextDouble() * 0.32f - lead,
-                MaxLife = 0.82f,
+                Life = 0.55f + (float)_rng.NextDouble() * 0.37f - lead,
+                MaxLife = 0.92f,
                 Color = tone switch
                 {
                     0 => new Color(215, 255, 100),
