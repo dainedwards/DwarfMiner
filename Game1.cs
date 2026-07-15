@@ -1283,6 +1283,10 @@ public sealed partial class DwarfMinerGame : Game
             SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
         GraphicsDevice.SetRenderTarget(_liquidRt);
         GraphicsDevice.Clear(Color.Transparent);
+        // One blob through the fill blend so the driver also builds that pipeline state.
+        _renderer.Batch.Begin(SpriteSortMode.Deferred, Renderer.LiquidFillBlend, SamplerState.LinearClamp);
+        _renderer.Batch.Draw(_renderer.LiquidBlob, Vector2.Zero, Color.White);
+        _renderer.Batch.End();
         GraphicsDevice.SetRenderTarget(_sceneRt);
         _renderer.CompositeLiquids(_liquidRt);
         GraphicsDevice.SetRenderTarget(null);
