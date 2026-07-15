@@ -1775,16 +1775,16 @@ public static class SimTest
         // One-piece doors: opening any tile of a leaf swings the WHOLE leaf — including
         // the drifted tiles the old same-angle world-space walk stranded closed.
         {
-            var (dr, dtile) = (-1, -1);
+            var (doorR, dtile) = (-1, -1);
             foreach (var (x, y) in city.AllTiles())
-                if (city.Get(x, y) == TileKind.DoorClosed) { (dr, dtile) = (x, y); break; }
-            Check("city: found a street door to swing", dr >= 0);
-            if (dr >= 0)
+                if (city.Get(x, y) == TileKind.DoorClosed) { (doorR, dtile) = (x, y); break; }
+            Check("city: found a street door to swing", doorR >= 0);
+            if (doorR >= 0)
             {
-                city.SetDoorRun(dr, dtile, TileKind.DoorOpen);
-                var angD = (dtile + 0.5f) / city.TilesAt(dr) * MathHelper.TwoPi;
+                city.SetDoorRun(doorR, dtile, TileKind.DoorOpen);
+                var angD = (dtile + 0.5f) / city.TilesAt(doorR) * MathHelper.TwoPi;
                 var stranded = 0;
-                for (var r = Math.Max(1, dr - 6); r <= Math.Min(city.Rings - 2, dr + 6); r++)
+                for (var r = Math.Max(1, doorR - 6); r <= Math.Min(city.Rings - 2, doorR + 6); r++)
                 {
                     var n = city.TilesAt(r);
                     var t0 = (int)((angD / MathHelper.TwoPi + 1f) % 1f * n);
