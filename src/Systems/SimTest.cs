@@ -2391,7 +2391,7 @@ public static class SimTest
             Check($"swim: stroking up rises ({rose:0}px in 1s)", rose > 8f);
 
             var idler = new Player(poolCentre) { InWater = true };
-            for (var i = 0; i < 60; i++) idler.Update(dt, planet, 0, false, false);
+            for (var i = 0; i < 60; i++) idler.Update(dt, planet, 0, false);
             var sank = Vector2.Dot(idler.Position - poolCentre, upP);
             Check($"swim: idle sink is gentle ({sank:0}px in 1s)", sank < 0f && sank > -35f);
 
