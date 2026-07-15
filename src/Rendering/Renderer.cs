@@ -445,6 +445,14 @@ public sealed class Renderer
                             }
                         }
                     }
+
+                    // Noita crust: rough the air-facing silhouette into a continuous per-pixel
+                    // coastline (world-space noise → grid dissolves across tile seams). Skip
+                    // engineered city tiles — machined hull/glass/brick shouldn't grow a fringe.
+                    if (_noita && (outerSky || innerSky || leftSky || rightSky)
+                        && k is not (TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick))
+                        DrawCrust(centre, right, up, rotation, chord,
+                            outerSky, innerSky, leftSky, rightSky, col);
                 }
 
                 // Grass hugs exposed edges, Terraria-style: the green wraps down exposed
