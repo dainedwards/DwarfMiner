@@ -992,6 +992,7 @@ public sealed class Particles
             Size = 1f + (float)_rng.NextDouble() * 0.5f,
             GravityScale = 0.12f,
             Drag = 0.6f,
+            Backdrop = true,
         });
     }
 
