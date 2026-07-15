@@ -1771,9 +1771,10 @@ public static class WorldGen
                         var r = topR + dr;
                         if (r >= planet.Rings - 1) break;
                         var n = planet.TilesAt(r);
-                        var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
-                        var sw = (int)(stepW / ((Planet.RingMin + r + 0.5f) * Planet.TileSize)
-                                       / MathHelper.TwoPi * n) + 1;
+                        var t0 = (int)MathF.Round(ang / (MathHelper.TwoPi / n) - 0.5f);
+                        var sw = Math.Max(1, (int)MathF.Round(
+                            stepW / ((Planet.RingMin + r + 0.5f) * Planet.TileSize)
+                            / MathHelper.TwoPi * n));
                         for (var dt = -sw; dt <= sw; dt++)
                         {
                             var t = ((t0 + dt) % n + n) % n;
