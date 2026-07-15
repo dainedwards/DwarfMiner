@@ -4063,34 +4063,77 @@ public sealed partial class DwarfMinerGame : Game
 
     /// <summary>The developer spawn menu's rows — bosses plus the two rocket shortcuts. Rebuilt
     /// each time the menu opens so the delegates close over the current run.</summary>
-    private DebugMenu.Entry[] BuildDebugEntries() => new DebugMenu.Entry[]
+    private (string, DebugMenu.Entry[])[] BuildDebugTabs() => new (string, DebugMenu.Entry[])[]
     {
-        new("Cinderwyrm  (fire breath)",  () => SpawnDebugTitan(TitanKind.Godzilla)),
-        new("Mecha-Titan (drill laser)",  () => SpawnDebugTitan(TitanKind.Mecha)),
-        new("Shai-Hulud  (slither/bite)", () => SpawnDebugTitan(TitanKind.Sandworm)),
-        new("Stone Ape   (leap slam)",    () => SpawnDebugTitan(TitanKind.Kong)),
-        new("Knifehead   (gore charge)",  () => SpawnDebugTitan(TitanKind.Knifehead)),
-        new("Otachi      (acid spray)",   () => SpawnDebugTitan(TitanKind.Otachi)),
-        new("Leatherback (EMP burst)",    () => SpawnDebugTitan(TitanKind.Leatherback)),
-        new("Raiju       (dash chain)",   () => SpawnDebugTitan(TitanKind.Raiju)),
-        new("Slattern    (spike barrage)",() => SpawnDebugTitan(TitanKind.Slattern)),
-        new("Pyrodactyl  (lava rain)",    () => SpawnDebugTitan(TitanKind.Pyrodactyl)),
-        new("Vitriodactyl (acid rain)",   () => SpawnDebugTitan(TitanKind.Vitriodactyl)),
-        new("Starspawn   (void volley/gravity well)", () => SpawnDebugTitan(TitanKind.CosmicOctopus)),
-        new("Rocket — fuelled, launch-ready", () => SpawnDebugShip(fuelled: true)),
-        new("Rocket — dry (mine fuel first)", () => SpawnDebugShip(fuelled: false)),
-        new("Disaster — solar flare",   () => TriggerDebugDisaster(DisasterKind.Flare)),
-        new("Disaster — blizzard",      () => TriggerDebugDisaster(DisasterKind.Blizzard)),
-        new("Disaster — acid rain",     () => TriggerDebugDisaster(DisasterKind.AcidRain)),
-        new("Disaster — magma surge",   () => TriggerDebugDisaster(DisasterKind.MagmaSurge)),
-        new("Disaster — eruption",      () => TriggerDebugDisaster(DisasterKind.Eruption)),
-        new("Disaster — earthquake",    () => TriggerDebugDisaster(DisasterKind.Earthquake)),
-        new("Meteor strike (ambient)",  () => AmbientDirector.SpawnMeteor(_run)),
-        new("Cloud — rain shower (starts now)", () => Weather.SpawnDebugCloud(_run, RainKind.Water)),
-        new("Cloud — acid drizzle (starts now)", () => Weather.SpawnDebugCloud(_run, RainKind.Acid)),
-        new("Toggle fullbright (light up the underground)", () => _fullbright = !_fullbright),
-        new("Return to mothership (suspends run)", DebugReturnToShip),
+        ("TITANS", new DebugMenu.Entry[]
+        {
+            new("Cinderwyrm  (fire breath)",  () => SpawnDebugTitan(TitanKind.Godzilla)),
+            new("Mecha-Titan (drill laser)",  () => SpawnDebugTitan(TitanKind.Mecha)),
+            new("Shai-Hulud  (slither/bite)", () => SpawnDebugTitan(TitanKind.Sandworm)),
+            new("Stone Ape   (leap slam)",    () => SpawnDebugTitan(TitanKind.Kong)),
+            new("Knifehead   (gore charge)",  () => SpawnDebugTitan(TitanKind.Knifehead)),
+            new("Otachi      (acid spray)",   () => SpawnDebugTitan(TitanKind.Otachi)),
+            new("Leatherback (EMP burst)",    () => SpawnDebugTitan(TitanKind.Leatherback)),
+            new("Raiju       (dash chain)",   () => SpawnDebugTitan(TitanKind.Raiju)),
+            new("Slattern    (spike barrage)",() => SpawnDebugTitan(TitanKind.Slattern)),
+            new("Pyrodactyl  (lava rain)",    () => SpawnDebugTitan(TitanKind.Pyrodactyl)),
+            new("Vitriodactyl (acid rain)",   () => SpawnDebugTitan(TitanKind.Vitriodactyl)),
+            new("Starspawn   (void volley/gravity well)", () => SpawnDebugTitan(TitanKind.CosmicOctopus)),
+        }),
+        ("CREATURES", BuildCreatureEntries()),
+        ("EVENTS", new DebugMenu.Entry[]
+        {
+            new("Disaster — solar flare",   () => TriggerDebugDisaster(DisasterKind.Flare)),
+            new("Disaster — blizzard",      () => TriggerDebugDisaster(DisasterKind.Blizzard)),
+            new("Disaster — acid rain",     () => TriggerDebugDisaster(DisasterKind.AcidRain)),
+            new("Disaster — magma surge",   () => TriggerDebugDisaster(DisasterKind.MagmaSurge)),
+            new("Disaster — eruption",      () => TriggerDebugDisaster(DisasterKind.Eruption)),
+            new("Disaster — earthquake",    () => TriggerDebugDisaster(DisasterKind.Earthquake)),
+            new("Meteor strike (ambient)",  () => AmbientDirector.SpawnMeteor(_run)),
+            new("Cloud — rain shower (starts now)", () => Weather.SpawnDebugCloud(_run, RainKind.Water)),
+            new("Cloud — acid drizzle (starts now)", () => Weather.SpawnDebugCloud(_run, RainKind.Acid)),
+        }),
+        ("MISC", new DebugMenu.Entry[]
+        {
+            new("Rocket — fuelled, launch-ready", () => SpawnDebugShip(fuelled: true)),
+            new("Rocket — dry (mine fuel first)", () => SpawnDebugShip(fuelled: false)),
+            new("Toggle fullbright (light up the underground)", () => _fullbright = !_fullbright),
+            new("Return to mothership (suspends run)", DebugReturnToShip),
+        }),
     };
+
+    /// <summary>One row per CreatureKind, straight off the enum so new species appear here
+    /// without upkeep. Spawns at the mouse cursor (the debug world carries no census, so
+    /// this tab is how test subjects get into it).</summary>
+    private DebugMenu.Entry[] BuildCreatureEntries()
+    {
+        var kinds = Enum.GetValues<CreatureKind>();
+        var entries = new DebugMenu.Entry[kinds.Length];
+        for (var i = 0; i < kinds.Length; i++)
+        {
+            var kind = kinds[i];
+            entries[i] = new DebugMenu.Entry(kind.ToString(), () => SpawnDebugCreature(kind));
+        }
+        return entries;
+    }
+
+    /// <summary>Debug: spawn one creature at the mouse cursor, nudged up out of solid rock
+    /// and given the same carved spawn pocket a census spawn gets. No hazard veto — if the
+    /// tester points a shark at dry land, that's their experiment to run.</summary>
+    private void SpawnDebugCreature(CreatureKind kind)
+    {
+        var mouse = Screen.Mouse();
+        var pos = _camera.ScreenToWorld(new Vector2(mouse.X, mouse.Y));
+        if ((pos - _run.Planet.Center).LengthSquared() < 1f)
+            pos = _run.Player.Position + _run.Planet.UpAt(_run.Player.Position) * 24f;
+        var up = _run.Planet.UpAt(pos);
+        for (var i = 0; i < 120 && _run.Planet.IsSolidAt(pos); i++) pos += up * 2f;
+        var c = new Creature(pos, kind);
+        SpawnDirector.ClearSpawnSpace(_run, pos, c.Radius);
+        _run.Creatures.Add(c);
+        _toast = $"SPAWNED {kind.ToString().ToUpperInvariant()}";
+        _toastTimer = 2f;
+    }
 
     /// <summary>Debug: hop straight back aboard the mothership. The run is suspend-saved
     /// exactly like the quit path, so it stays resumable from the star map.</summary>
