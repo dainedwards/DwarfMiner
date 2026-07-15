@@ -1170,10 +1170,13 @@ public sealed class Cells
         TryMelt(InnerCell(cx, cy));
         TryMelt((cx + 1, cy));
         TryMelt((cx - 1, cy));
+        TryIgniteTile(InnerCell(cx, cy));
+        TryIgniteTile((cx + 1, cy));
+        TryIgniteTile((cx - 1, cy));
         if (cy < Height - 1)
         {
             var oc = OuterCellCount(cx, cy);
-            for (var i = 0; i < oc; i++) TryMelt(OuterCell(cx, cy, i));
+            for (var i = 0; i < oc; i++) { TryMelt(OuterCell(cx, cy, i)); TryIgniteTile(OuterCell(cx, cy, i)); }
         }
 
         if (_rng.Next(2) == 0) { Enqueue(Idx(cx, cy)); return; }
