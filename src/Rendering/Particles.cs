@@ -498,7 +498,7 @@ public sealed class Particles
                 break;
             case ProjectileKind.Harpoon:
                 // Pierce trail end — sharp metallic flecks, light shockwave.
-                for (var i = 0; i < 8; i++)
+                for (var i = 0; i < 14; i++)
                 {
                     var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
                     _list.Add(new Particle
@@ -509,10 +509,10 @@ public sealed class Particles
                         MaxLife = 0.5f,
                         Color = new Color(220, 200, 160),
                         FadeColor = new Color(80, 60, 30),
-                        Size = 1.2f,
+                        Size = 0.9f,
                         GravityScale = 0.3f,
                         Drag = 1.5f,
-                        LightRadius = 7f,
+                        LightRadius = i % 2 == 0 ? 7f : 0f,
                         LightColor = new Color(255, 200, 130),
                         CollideTiles = true,
                     });
