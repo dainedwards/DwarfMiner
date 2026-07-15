@@ -1385,8 +1385,8 @@ public sealed class Cells
         var srcB = _srcTile[i];
         var rainFed = self == Material.Water && (srcB == RainWaterSrc || srcB == DripWaterSrc);
         // Rain JOINS bodies of water: an atmospheric rain cell touching permanent water —
-        // or sandwiched mid-column in a pool ≥3 deep — sheds its tag and becomes lake water
-        // for good, so showers raise lakes and seas, and a hard rain filling a hollow
+        // or buried under a full tile of pooled water — sheds its tag and becomes lake
+        // water for good, so showers raise lakes and seas, and a hard rain filling a basin
         // leaves a real pond. The wake lets the untag spread through a connected puddle via
         // this same contact rule. Thin films still evaporate; ceiling-drip water never
         // converts (see DripWaterSrc — its mass is duplicated, evaporation is its sink).
