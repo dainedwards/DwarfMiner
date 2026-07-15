@@ -3421,8 +3421,9 @@ public sealed partial class DwarfMinerGame : Game
         var dist = dir.Length();
         dir /= dist;
         // Lob speed scales with throw distance up to a cap. Plus a small upward kick along
-        // planet-up so the stick arcs visibly instead of skimming the floor.
-        var speed = ThrowSpeed(110f, 240f);
+        // planet-up so the stick arcs visibly instead of skimming the floor. At zero charge
+        // it barely leaves the hand — the stick drops right at your feet.
+        var speed = ThrowSpeed(25f, 240f);
         var up = _run.Planet.UpAt(_run.Player.Position);
         var velocity = dir * speed + up * 60f;
         _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, velocity, 50f, 3.0f, ProjectileKind.Dynamite));
