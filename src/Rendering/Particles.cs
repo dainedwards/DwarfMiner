@@ -43,12 +43,20 @@ public sealed class Particles
 {
     private const float GravityStrength = 200f;
 
+    /// <summary>Effects-as-materials switch (DM_CELLFX=0 reverts): when on, the persistent
+    /// half of an effect lives in the CELL SIM — explosion smoke is real Smoke cells rising
+    /// out of the crater, landed cinders stamp real Fire cells — and the particle system
+    /// keeps only the light-and-energy half (sparks, flashes, glows). When off, everything
+    /// stays cosmetic particle quads as before.</summary>
+    public static readonly bool CellFx =
+        Environment.GetEnvironmentVariable("DM_CELLFX") != "0";
+
     private readonly List<Particle> _list = new(2048);
     private readonly Random _rng = new();
 
     public int Count => _list.Count;
 
-    public void Update(float dt, Planet planet)
+    public void Update(float dt, Planet planet, Cells? cells = null)
     {
         for (var i = _list.Count - 1; i >= 0; i--)
         {
