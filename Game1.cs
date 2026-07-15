@@ -4867,7 +4867,7 @@ public sealed partial class DwarfMinerGame : Game
                         {
                             var tp = MathF.Max(0f, p - s * 0.12f);
                             _renderer.Batch.Draw(heldTex, _run.Player.Position + aim * 3.2f, null,
-                                new Color(255, 255, 255, (byte)(50 - s * 10)),
+                                new Color(255, 255, 255, 50 - s * 10),
                                 Arc(tp), org, scale, flip, 0f);
                         }
                         wrot = Arc(p);
