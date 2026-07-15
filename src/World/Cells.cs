@@ -651,6 +651,16 @@ public sealed class Cells
         return Tiles.IsSolid(Planet.Get(tx, ty));
     }
 
+    /// <summary>Whether the cell at a world position holds water — the particle pass keys
+    /// surface behaviour off it (rain crowns, flame fizzles, acid settles on top) so
+    /// colliding effects stop at a pool's surface instead of sailing through the body.</summary>
+    public bool WaterAtWorld(Vector2 worldPos)
+    {
+        var (cx, cy) = WorldToCell(worldPos);
+        if (cy < 0 || cy >= Height) return false;
+        return Get(cx, cy) == Material.Water;
+    }
+
     /// <summary>Whether the cell at a world position holds settled powder (sand/dirt/gravel/
     /// dust). Pickups treat these as ground so a dropped gem rests on a pile, not under it.</summary>
     public bool PowderAtWorld(Vector2 worldPos)
