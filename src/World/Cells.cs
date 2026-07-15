@@ -2519,16 +2519,37 @@ public sealed class Cells
             }
             case Material.Fire:
             {
-                // Fast per-cell flicker cycling white-hot → orange → deep red, so even a
-                // static flame cell dances. Brighter than lava — this is open flame.
+                // Fast per-cell flicker over a hard fire ramp, TIERED BY BODY POSITION the
+                // way a real flame (and Noita's) shades: the BASE — nothing burning below
+                // it — rolls white-hot tones; the middle body burns gold-orange; the TIPS
+                // (fire below, open above) cool to deep red, so a burning pool reads as
+                // licking tongues bright at the root and dark at the crown instead of
+                // uniform orange noise. Flying embers land here with world coords (hash
+                // duty only) — the bounds guard keeps their tier probe safe, and a random
+                // tier on an airborne mote is invisible anyway.
                 var t = (int)(_time * 14f);
                 var h2 = (uint)(hash ^ (t * 48271));
-                return (h2 % 5) switch
+                var tier = 0;
+                if (cy > 0 && cy < Height - 1)
                 {
-                    0 => new Color(255, 245, 180),
-                    1 => new Color(255, 200, 90),
-                    2 or 3 => new Color(255, 140, 40),
-                    _ => new Color(220, 70, 20),
+                    var (icx, icy) = InnerCell(cx, cy);
+                    if (Get(icx, icy) == Material.Fire)
+                    {
+                        var (ocx, ocy) = OuterCell(cx, cy, 0);
+                        tier = Get(ocx, ocy) == Material.Fire ? 1 : 2;
+                    }
+                }
+                return (tier, h2 & 3) switch
+                {
+                    (0, 0) => new Color(255, 252, 210),
+                    (0, 1) => new Color(255, 240, 150),
+                    (0, _) => new Color(255, 210, 90),
+                    (1, 0) => new Color(255, 220, 110),
+                    (1, 1 or 2) => new Color(255, 165, 50),
+                    (1, _) => new Color(255, 120, 30),
+                    (2, 0) => new Color(255, 140, 40),
+                    (2, 1 or 2) => new Color(225, 90, 22),
+                    _ => new Color(160, 45, 18),
                 };
             }
             case Material.Oil:
