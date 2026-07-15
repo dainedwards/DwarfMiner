@@ -2184,15 +2184,6 @@ public sealed class Cells
         //     keeps the dance for its last moments rather than freezing in the air.
         // Unfused transient fire (explosions, gas fronts, charring) always dances.
         var anchored = _srcTile[i] > 0 && !fuelled && grounded;
-        // CLING: flame standing on the fuel it's eating mostly refuses to leave (mobility
-        // ÷3) — this is what repairs the up/down residence asymmetry: fire piles against
-        // its ceiling for free because it rises, but only clinging cells stay at the
-        // floor long enough for the downward char rolls to accumulate.
-        if (burningFloor && _rng.Next(3) != 0)
-        {
-            Enqueue(Idx(cx, cy));
-            return;
-        }
         if (!anchored && _rng.Next(3) == 0 && cy < Height - 1)
         {
             // FUELLED fire crawls in ANY direction, not just up: a third of its moves go
