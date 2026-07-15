@@ -1003,7 +1003,7 @@ public static class WorldGen
     }
 
     private static void CarveWorm(Planet planet, Random rng, Vector2 pos, float heading,
-        int length, int branchBudget, float minFrac)
+        int length, int branchBudget, float minFrac, float hardFloorPx)
     {
         var minRad = planet.Radius * (minFrac - 0.02f) * Planet.TileSize;
         var maxRad = (Planet.RingMin + planet.SurfaceRing - 14f * Planet.LegacyTileScale)
@@ -1025,8 +1025,12 @@ public static class WorldGen
             pos += new Vector2(MathF.Cos(heading), MathF.Sin(heading)) * Planet.TileSize;
             // Hand-built places keep their architecture: no worm bites inside a warren
             // hall's halo or under a city district — the worm keeps walking and leaves a
-            // natural plug where it crossed.
-            if (!NearDenOrCity(planet, pos))
+            // natural plug where it crossed. The hard floor is the top of the first stratum
+            // seam: soft steering lets a walk DRIFT below its band, which was harmless when
+            // everything below was solid, but must never puncture the seam now that sealed
+            // strata live under it.
+            if ((pos - planet.Center).LengthSquared() >= hardFloorPx * hardFloorPx
+                && !NearDenOrCity(planet, pos))
                 CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 11f : 8f);
             if (branchBudget > 0 && s > length / 4 && rng.Next(55) == 0)
             {
@@ -1035,7 +1039,7 @@ public static class WorldGen
                 // stitch neighbouring worm systems into one continuous warren.
                 CarveWorm(planet, rng, pos,
                     heading + (rng.Next(2) == 0 ? 1f : -1f) * (0.8f + (float)rng.NextDouble()),
-                    length / 2, length > 80 ? 1 : 0, minFrac);
+                    length / 2, length > 80 ? 1 : 0, minFrac, hardFloorPx);
             }
         }
     }
