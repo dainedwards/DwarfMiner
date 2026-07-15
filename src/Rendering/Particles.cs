@@ -55,6 +55,9 @@ public struct Particle
     /// Cells.StampAtWorld) — the flamethrower's long-burning ground fire. 0 = normal
     /// short-lived flame. Meaningless for non-Fire LandMat.</summary>
     public byte LandFuse;
+    /// <summary>Spark shed by the flame plume: rides the SAME turbulence pattern as the
+    /// jet body (without joining the fluid coverage or shedding recursively).</summary>
+    public bool JetSpark;
 }
 
 /// <summary>
