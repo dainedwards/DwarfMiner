@@ -1391,10 +1391,10 @@ public sealed class Particles
 
     /// <summary>Acid spewer spray: caustic green droplets with a sickly glow. The corrosive
     /// payload is real Acid cells launched by Game1 — this is the visible mist around it.</summary>
-    public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach)
+    public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
     {
         // Speed matches Game1's payload launch exactly — see EmitFlameJet.
-        var jetSpeed = reach * 1.7f;
+        var jetSpeed = reach * 1.35f;
         // Many TINY droplets — a granular liquid rope, not fat green puffs. Lights on the
         // bright leading droplets only (see EmitFlameJet).
         for (var i = 0; i < 22; i++)
