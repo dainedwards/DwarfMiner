@@ -116,11 +116,6 @@ public sealed partial class DwarfMinerGame
             "....m",
             "RRRR.",
             "RRRR.");
-        _weaponTex["tnt"] = T(
-            ".m...",
-            "RRRRR",
-            "RRRRR",
-            "RRRRR");
         // Energy ball: an alien cannon — dark shell over a glowing energy core, flaring to a
         // wide emitter muzzle (right) where the charged orb forms.
         _weaponTex["nuke"] = T(
