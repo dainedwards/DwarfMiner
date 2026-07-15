@@ -3711,18 +3711,12 @@ public sealed partial class DwarfMinerGame : Game
         }
         var reach = StreamReach();
 
-        // A jet of fire cells fired down the aim — speed scaled so the flame carries just to
-        // the current reach, then gutters. Spread matches the particle fan so the payload
-        // lands where the visible tongue points.
-        for (var i = 0; i < 3; i++)
-        {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.072f;
-            var c = MathF.Cos(spread);
-            var s = MathF.Sin(spread);
-            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 1.35f + (float)Random.Shared.NextDouble() * 24f),
-                Material.Fire);
-        }
+        // NO launched fire cells any more: the flying payload obeyed different physics
+        // (FlyMaxOutward, its own launch jitter) and kept reading as stray streaks off
+        // the stream's arc no matter how the two were matched — removed per user. The
+        // burn is delivered by the visible grains themselves now: every flame grain
+        // stamps a real Fire cell where it lands (Particles.LandMat), and the cone
+        // ignition below burns creatures directly.
         _particles.EmitFlameJet(muzzle, dir, reach, _run.Planet.UpAt(muzzle));
         // Near-cone ignition out to the current reach — a tight cone.
         foreach (var c in _run.Creatures)
