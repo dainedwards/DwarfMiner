@@ -1186,7 +1186,7 @@ public sealed class Particles
     /// droops along exactly the trajectory the real fire/acid lands on.</summary>
     private const float HoseArcGravity = 2.25f;
 
-    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach)
+    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
     {
         // Flow speed EXACTLY matches Game1's payload launch (reach*1.35): any gap between
         // the two puts the landing fire beyond (or short of) the visible tongue tip — the
