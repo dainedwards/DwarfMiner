@@ -98,8 +98,9 @@ public static class Weather
             }
         }
 
-        // Form new clouds on a slow clock, biased to drift into view near the player so the
-        // weather reads as a moving system, not a fixed backdrop.
+        // Form new clouds on a slow clock, biased UPWIND of the player so the prevailing
+        // wind carries them into view — the weather reads as a moving system, not a fixed
+        // backdrop that pops in overhead.
         run.CloudTimer -= dt;
         if (ForceRain && run.CloudTimer > 1.5f) run.CloudTimer = 1.5f;
         if (run.CloudTimer <= 0f)
@@ -107,24 +108,28 @@ public static class Weather
             run.CloudTimer = 14f + (float)rng.NextDouble() * 22f;
             if (run.Clouds.Count < MaxClouds)
             {
+                var wind = WindFor(run.Def);
                 var rel = run.Player.Position - planet.Center;
                 var near = MathF.Atan2(rel.Y, rel.X);
-                var cAng = near + ((float)rng.NextDouble() - 0.5f) * 1.6f;
+                var cAng = near - MathF.Sign(wind) * 0.45f
+                         + ((float)rng.NextDouble() - 0.5f) * 1.6f;
                 var cHalf = 0.10f + (float)rng.NextDouble() * 0.14f;
+                // Fixed cruising radius, set ONCE at spawn: well clear of the tallest thing
+                // beneath the band (peaks, giant trees) plus a random extra height. The
+                // cloud holds this altitude for its whole life — no terrain-tracking, no
+                // bobbing — and if the drift carries it into something taller it shreds
+                // and dissipates instead of hopping over it.
+                var alt = BandTopRadius(planet, cAng, cHalf) + 110f + (float)rng.NextDouble() * 120f;
                 run.Clouds.Add(new Cloud
                 {
                     Angle = cAng,
                     HalfWidth = cHalf,
-                    // Fixed cruising radius, set ONCE at spawn: well clear of the tallest thing
-                    // beneath the band (peaks, giant trees) plus a random extra height. The
-                    // cloud holds this altitude for its whole life — no terrain-tracking, no
-                    // bobbing — and if the drift carries it into something taller it shreds
-                    // and dissipates instead of hopping over it.
-                    Alt = BandTopRadius(planet, cAng, cHalf) + 110f + (float)rng.NextDouble() * 120f,
-                    Drift = ((float)rng.NextDouble() - 0.5f) * 0.05f,
+                    Alt = alt,
+                    Drift = wind * (0.8f + (float)rng.NextDouble() * 0.4f) / alt,
                     Life = 45f + (float)rng.NextDouble() * 60f,
                     RainCooldown = 4f + (float)rng.NextDouble() * 10f,
                     Phase = (float)rng.NextDouble() * MathHelper.TwoPi,
+                    Shape = (float)rng.NextDouble(),
                 });
             }
         }
