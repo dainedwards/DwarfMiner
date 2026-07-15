@@ -69,36 +69,6 @@ public static class RuntimeEffect
                 sb.Draw(px, Microsoft.Xna.Framework.Vector2.Zero, Microsoft.Xna.Framework.Color.White);
                 sb.End();
             }
-            // DEBUG: dump the GL uniform locations the constant buffers resolved during the
-            // self-test draw — location -1 means the upload silently no-ops (zero matrix →
-            // degenerate geometry → the whole batch vanishes).
-            var cbsProp = typeof(Effect).GetProperty("ConstantBuffers",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (cbsProp?.GetValue(fx) is Array cbs)
-                foreach (var cb in cbs)
-                {
-                    var ct = cb.GetType();
-                    var loc = ct.GetField("_location", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(cb);
-                    var nm = ct.GetField("_name", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(cb)
-                          ?? ct.GetProperty("Name", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(cb);
-                    Console.WriteLine($"[shader] cbuffer {nm} uniformLoc={loc}");
-                }
-            // DEBUG: dump the post-link attribute locations the GL runtime resolved, so a
-            // silent bind failure (location -1 → attribute feeds a constant) is visible.
-            var shadersField = typeof(Effect).GetField("_shaders",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (shadersField?.GetValue(fx) is Array shaders)
-                foreach (var sh in shaders)
-                {
-                    var attrs = sh.GetType().GetProperty("Attributes",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(sh);
-                    if (attrs is not Array arr) continue;
-                    foreach (var a in arr)
-                    {
-                        var t = a.GetType();
-                        Console.WriteLine($"[shader] attr {t.GetField("name")?.GetValue(a)} usage={t.GetField("usage")?.GetValue(a)} loc={t.GetField("location")?.GetValue(a)}");
-                    }
-                }
             return fx;
         }
         catch (Exception e)
