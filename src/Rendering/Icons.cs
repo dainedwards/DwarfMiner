@@ -120,6 +120,8 @@ public static class Icons
         _icons["acid_spewer"]   = BuildAcidSpewer(gd);
         _icons["lightning_gun"] = BuildLightningGun(gd);
         _icons["jetpack"]       = BuildJetpack(gd);
+        _icons["grapple"]       = BuildGrapple(gd);
+        _icons["rope"]          = BuildRope(gd);
 
         // Melee arsenal: one icon per weapon per upgrade rung (iron → steel → gilded →
         // energy edge). The two-handed versions share their family's silhouette.
