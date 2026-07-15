@@ -979,34 +979,6 @@ public static class Icons
         ['f'] = new Color(255, 170, 70),
     });
 
-    private static Texture2D BuildTnt(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
-    {
-        "................",
-        "......y.........",
-        ".....y..........",
-        "....ww..........",
-        "...RRRRRRRRR....",
-        "...RrrRrrRrr....",
-        "...RRRRRRRRR....",
-        "...BBBBBBBBB....",
-        "...RRRRRRRRR....",
-        "...RrrRrrRrr....",
-        "...RRRRRRRRR....",
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-    }, new Dictionary<char, Color>
-    {
-        ['.'] = Color.Transparent,
-        ['R'] = new Color(190, 50, 45),
-        ['r'] = new Color(130, 28, 26),
-        ['B'] = new Color(95, 70, 45),
-        ['w'] = new Color(200, 190, 170),
-        ['y'] = new Color(255, 225, 120),
-    });
-
     private static Texture2D BuildScanner(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
     {
         "................",
