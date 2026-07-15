@@ -50,7 +50,8 @@ public sealed class Renderer
         TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom or
         TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom or
         TileKind.Brick or TileKind.Plating or TileKind.GlassBlock or TileKind.Platform or
-        TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond;
+        TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond or
+        TileKind.TreeRoot;
 
     public Texture2D Pixel => _pixel;
     public SpriteBatch Batch => _sb;
