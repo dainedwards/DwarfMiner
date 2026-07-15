@@ -48,11 +48,15 @@ public static class Weather
             {
                 var rel = run.Player.Position - planet.Center;
                 var near = MathF.Atan2(rel.Y, rel.X);
+                var cAng = near + ((float)rng.NextDouble() - 0.5f) * 1.6f;
+                var cHalf = 0.10f + (float)rng.NextDouble() * 0.14f;
                 run.Clouds.Add(new Cloud
                 {
-                    Angle = near + ((float)rng.NextDouble() - 0.5f) * 1.6f,
-                    HalfWidth = 0.10f + (float)rng.NextDouble() * 0.14f,
-                    Alt = 220f + (float)rng.NextDouble() * 180f,
+                    Angle = cAng,
+                    HalfWidth = cHalf,
+                    // Sit well clear of the tallest thing beneath the band (peaks, giant trees)
+                    // plus a random extra height, so a cloud never spawns inside terrain.
+                    Alt = TargetAlt(planet, cAng, cHalf) + (float)rng.NextDouble() * 120f,
                     Drift = ((float)rng.NextDouble() - 0.5f) * 0.05f,
                     Life = 45f + (float)rng.NextDouble() * 60f,
                     RainCooldown = 4f + (float)rng.NextDouble() * 10f,
