@@ -1915,6 +1915,7 @@ public sealed partial class DwarfMinerGame : Game
         // Keep the compaction sweep away from the dwarf — never solidify the pile they're
         // standing in / vacuuming (headless contexts leave this null and compact freely).
         _run.Cells.CompactionExclusion = _run.Player.Position;
+        _run.Cells.SimFocus = _run.Player.Position;
         tPerf = FramePerf.Now();
         _run.Cells.Update(dt);
         FramePerf.Add("cells", tPerf);
