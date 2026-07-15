@@ -1367,8 +1367,10 @@ public sealed class Cells
             if (!IsFlammable(k)) return;
             fuelled = true;
             // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke,
-            // which is what walks a grass fire along the surface.
+            // which is what walks a grass fire along the surface. Throttled by the spread
+            // budget so the front advances but can't blanket the planet.
             if (_rng.Next(50) != 0) return;
+            if (!SpendFire()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
             Planet.TakeGem(tx, ty);
