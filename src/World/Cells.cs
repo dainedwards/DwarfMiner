@@ -1799,7 +1799,7 @@ public sealed class Cells
         var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
         var k = Planet.Get(tx, ty);
         if (!IsFlammable(k)) return;
-        if (!SpendFire()) return;
+        if (!SpendChar()) return;   // tile DESTRUCTION draws the consumption budget
         Planet.TakeGem(tx, ty);
         Planet.Set(tx, ty, TileKind.Sky);
         SpawnInTile(tx, ty, Material.Fire, Density);
