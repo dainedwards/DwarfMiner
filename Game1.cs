@@ -3305,7 +3305,7 @@ public sealed partial class DwarfMinerGame : Game
 
     /// <summary>True for the belt ids that use the charge-up throw (gauge on the reticle).</summary>
     private static bool IsThrowable(string id) =>
-        id is "dynamite" or "dynamite_pack" or "tnt" or "tnt_pack" or "torch";
+        id is "dynamite" or "dynamite_pack" or "torch";
 
     /// <summary>Launch speed for a thrown item: lerps from a soft lob to a hard throw across
     /// the current charge. Read by every Fire*/ThrowTorch method so they share one gauge.</summary>
