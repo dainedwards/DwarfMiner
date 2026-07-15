@@ -1080,7 +1080,7 @@ public static class WorldGen
             // vaulted chambers after the loop. The obsidian seabed shell (stamped in the
             // tile pass, unbiteable by these worms) is what keeps all of it dry.
             var ocean = def.LakeScale > 2.5f;
-            if (ocean) worms += 16;
+            if (ocean) worms += 20;
             // Stay above THIS world's lava zone (crossing the flood line turns tunnels into
             // permanent lava plumbing) and below the dirt band. The hard floor passed to
             // CarveWorm stops drifting walks from ever biting the stratum seam below.
