@@ -32,6 +32,11 @@ public static class Weather
 {
     private const int MaxClouds = 4;
 
+    /// <summary>DM_RAIN=1 forces the weather on: clouds form fast and shower continuously —
+    /// verification hook for rain pooling/splash work, useless in real play.</summary>
+    private static readonly bool ForceRain =
+        Environment.GetEnvironmentVariable("DM_RAIN") is { Length: > 0 };
+
     public static void Update(float dt, Session run, Particles particles)
     {
         var planet = run.Planet;
