@@ -1430,7 +1430,7 @@ public sealed class Titan
         // soft ground loose, so a stroll leaves the landscape standing. The Sandworm chews at
         // a fraction of that AND only on its bite cadence — it bores slowly through the
         // planet instead of vaporising everything its long body sweeps.
-        var plowPow = (IsAggro ? 26 : 12) + (int)(Anger / 16f);
+        var plowPow = (IsAggro ? 34 : 14) + (int)(Anger / 12f);
         // The Starspawn swims through rock exactly like the worm bores it: throttled bite
         // cadence, reduced power, and no floor preservation (nothing walks on the abyss).
         var worm = Kind is TitanKind.Sandworm or TitanKind.CosmicOctopus;
