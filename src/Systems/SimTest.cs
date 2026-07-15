@@ -696,6 +696,59 @@ public static class SimTest
             }
         }
 
+        // --- Weakpoints pay triple, and a clinging rider gets shaken off ---
+        {
+            var p = WorldGen.Generate(61);
+            var c = new Cells(p);
+            var phys = new Physics(p, c);
+            var bo = new System.Collections.Generic.List<FallingBoulder>();
+            var sh = new System.Collections.Generic.List<TitanProjectile>();
+            var boss = new Titan(p, -MathF.PI / 2f, TitanKind.Godzilla);
+            boss.Hatch();
+            for (var i = 0; i < 120; i++) boss.Update(dt, p, phys, c, boss.Position, bo, sh);
+            var wps = boss.WeakpointsWorld();
+            Check("titan: weakpoints ride the hatched body", wps.Count >= 2);
+
+            // Fire one synthetic round through a chosen point and read the health bite.
+            float ShotThrough(Vector2 at)
+            {
+                var before = boss.Health;
+                var pr = new Projectile(at + new Vector2(0f, 30f), new Vector2(0f, -600f), 10f, 1f)
+                {
+                    PrevPosition = at + new Vector2(0f, 6f),
+                    Position = at - new Vector2(0f, 6f),
+                };
+                Combat.ResolveHits(pr, new System.Collections.Generic.List<Creature>(), boss, p, phys, c);
+                return before - boss.Health;
+            }
+            // A plain-hide point: on the body circle, at least a weakpoint-radius clear of
+            // every weakpoint (probe a few bearings; one always qualifies).
+            var plain = boss.Position;
+            for (var a = 0f; a < MathHelper.TwoPi; a += 0.4f)
+            {
+                var cand = boss.Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * (boss.Radius * 0.5f);
+                var clear = true;
+                foreach (var wp in wps)
+                    if ((cand - wp).Length() < Titan.WeakpointRadius + 8f) clear = false;
+                if (clear) { plain = cand; break; }
+            }
+            var plainBite = ShotThrough(plain);
+            var weakBite = ShotThrough(wps[0]);
+            Check($"titan: a weakpoint hit pays triple (plain {plainBite}, weak {weakBite})",
+                plainBite > 0f && MathF.Abs(weakBite - plainBite * 3f) < 0.01f);
+
+            // Shake-off: accrue rider-cling the way Game1 does (2×dt vs the titan's own
+            // 1×dt decay) — past its patience the monster thrashes and flings.
+            var flung = false;
+            for (var i = 0; i < 60 * 8 && !flung; i++)
+            {
+                boss.RiderTime += 2f * dt;
+                boss.Update(dt, p, phys, c, boss.Position, bo, sh);
+                if (boss.PendingShakeOff) { flung = true; boss.PendingShakeOff = false; }
+            }
+            Check("titan: a clinging rider gets shaken off", flung);
+        }
+
         // --- Procedural campaigns: 7 generated worlds + the Rift finale ---
         {
             var chainA = PlanetGen.Campaign(1234);
