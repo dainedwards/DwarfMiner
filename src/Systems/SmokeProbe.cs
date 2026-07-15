@@ -49,13 +49,16 @@ public static class SmokeProbe
         Check(peakAlt > 6f, $"plume rises (peak mean altitude {peakAlt:F1}px, want >6)");
         Check(smokeEnd < Math.Max(1, t180), $"plume decays ({t180} at 3s -> {smokeEnd} at 8s)");
 
-        // --- 2. Airburst: same shell detonated high above the surface. ---
+        // --- 2. Airburst: same shell detonated high above the surface. Counted as a DELTA
+        // over what already drifted there — the ground burst's plume has had 8 sim-seconds
+        // to rise into this patch of sky, and counting it flaked the bound. ---
         var airPos = surface + up * 120f;
+        var airBase = cells.CountNear(airPos, 30f, Material.Smoke);
         var air = new Projectile(airPos, Vector2.Zero, 0f, 1f, ProjectileKind.Cannon);
         air.Explode(planet, physics, cells, particles: null);
-        var airSmoke = cells.CountNear(airPos, 30f, Material.Smoke);
-        Console.WriteLine($"[smokeprobe] airburst: {airSmoke} smoke cells at epicentre");
-        Check(airSmoke is > 0 and <= 10, $"airburst leaves a small puff (got {airSmoke}, want 1..10)");
+        var airSmoke = cells.CountNear(airPos, 30f, Material.Smoke) - airBase;
+        Console.WriteLine($"[smokeprobe] airburst: +{airSmoke} smoke cells at epicentre (bg {airBase})");
+        Check(airSmoke is > 0 and <= 10, $"airburst leaves a small puff (got +{airSmoke}, want 1..10)");
 
         // --- 3. Cinder handoff: coals scattered over open ground stamp Fire cells. ---
         var particles = new Particles();
