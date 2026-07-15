@@ -345,6 +345,12 @@ public sealed class Creature
             case CreatureKind.Thornback:
                 Radius = 4.4f; Health = 30f; MoveSpeed = 22f; ContactDamage = 9f;
                 break;
+            case CreatureKind.Kraken:
+                // A basin boss, not an ambient fish: shrugs off small arms like the city's
+                // command saucer, and its tentacle flurry hits like a titan's backhand.
+                Radius = 12f; Health = 620f; MoveSpeed = 80f; ContactDamage = 22f;
+                _cd = 1.5f + (float)Random.Shared.NextDouble();  // first flurry is never instant
+                break;
         }
     }
 
