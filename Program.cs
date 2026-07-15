@@ -63,6 +63,14 @@ if (args.Length > 0 && args[0] == "--oceanprobe")
     return;
 }
 
+// Temporary diagnostic: `--lavaprobe` audits the lava-rock jacket around every lava body
+// on a built session world (shell holes reported by direction from the lava).
+if (args.Length > 0 && args[0] == "--lavaprobe")
+{
+    DwarfMiner.Systems.LavaProbe.Run();
+    return;
+}
+
 // Temporary diagnostic: `--toppleprobe` reproduces the SimTest street-level tower cut and
 // reports what keeps a severed section standing when it refuses to detach.
 if (args.Length > 0 && args[0] == "--toppleprobe")
