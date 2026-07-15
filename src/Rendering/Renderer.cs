@@ -62,6 +62,13 @@ public sealed class Renderer
         TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond or
         TileKind.TreeRoot or TileKind.Chest or TileKind.ChestOpen;
 
+    /// <summary>Machined city structures — alien hull plating, its window glass, lizard-city
+    /// masonry. They read as engineered walls: no silhouette erosion, no organic crust, no
+    /// scattered surface crumbs — every one of those roughens an edge that should stay dead
+    /// straight. (Their atlas rows also force mask 0 in <see cref="TileAtlas"/>.)</summary>
+    private static bool IsEngineered(TileKind k) =>
+        k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick;
+
     public Texture2D Pixel => _pixel;
     public SpriteBatch Batch => _sb;
 
