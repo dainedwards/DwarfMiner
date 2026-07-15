@@ -115,6 +115,7 @@ public sealed class Player
     /// "more initial thrust" pop, on top of the steady lift acceleration.</summary>
     private const float JetInitialKick = 55f;
     private bool _jetPrev;   // was the jet burning last frame (for the initial-kick edge)
+    private float _prevRadial;   // player-centre radius at frame start (one-way platform check)
     /// <summary>Seconds a grounded refill takes, whatever the tier's cap.</summary>
     private const float JetRefillTime = 2.4f;
     /// <summary>True on frames the jet actually burned — Game1 reads it to emit the
