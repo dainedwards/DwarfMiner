@@ -447,7 +447,11 @@ public static class WorldGen
                     var metalSel = SampleNoise(oreNoise, wx * 0.031f, wy * 0.031f);
                     if (metalSel < 0.5f && oreN > 0.945f - boost * 0.6f - Bias(TileKind.SilverOre) && depth > 30f) k = TileKind.SilverOre;
                     if (metalSel >= 0.5f && oreN > 0.955f - boost * 0.6f - Bias(TileKind.GoldOre) && depth > 40f) k = TileKind.GoldOre;
-                    if (oreN > 0.965f - boost * 0.6f - Bias(TileKind.PlatinumOre) && depth > 55f) k = TileKind.PlatinumOre;
+                    // Platinum rides its OWN noise field (offset + different frequency) so its
+                    // veins are decorrelated from the common-ore noise — platinum no longer
+                    // shares a seam with iron/gold/silver, it forms its own isolated pockets.
+                    var platN = SampleNoise(oreNoise, wx * 0.53f + 1234.5f, wy * 0.53f - 987.6f);
+                    if (platN > 0.978f - boost * 0.5f - Bias(TileKind.PlatinumOre) && depth > 55f) k = TileKind.PlatinumOre;
 
                     // Gems are not blocks: a gem site keeps its host tile (whatever common
                     // rock/ore the cascade above chose) and seats a gem overlay inside it —
