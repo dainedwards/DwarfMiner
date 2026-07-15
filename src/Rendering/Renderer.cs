@@ -64,6 +64,18 @@ public sealed class Renderer
         _lighting = new Lighting(gd);
         TileAtlas.Build(gd);
         _tileAtlas = TileAtlas.Texture;
+        // Runtime-built Noita carve shader — DM_SHADER=0 disables; any build/parse/compile
+        // failure returns null and the baked-erosion frames carry the silhouette instead.
+        if (Environment.GetEnvironmentVariable("DM_SHADER") != "0")
+            _tileFx = RuntimeEffect.BuildTerrainCarve(gd);
+        if (_tileFx != null)
+        {
+            _fxCol0 = _tileFx.Parameters["MatrixCol0"];
+            _fxCol1 = _tileFx.Parameters["MatrixCol1"];
+            _fxCol2 = _tileFx.Parameters["MatrixCol2"];
+            _fxCol3 = _tileFx.Parameters["MatrixCol3"];
+            _fxPs = _tileFx.Parameters["PsParams"];
+        }
         _stars = MakeStarfield(gd, 256);
         _atmoTex = MakeAtmosphere(gd, 512);
         _wispTex = MakeSoftBlob(gd, 64);
