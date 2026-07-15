@@ -1434,31 +1434,9 @@ public sealed class Particles
                 Fluid = (byte)Material.Fire,
             });
         }
-        // 3) Spark pixels: LOTS of tiny crisp flecks boiling OFF the jet along its whole
-        // length — bright fire tones scattered outward, dying fast. Plain grains, not
-        // part of the fluid body, so they read as distinct pixels over the plume. Seeded
-        // throat-biased (f²) where the jet is tight; jitter hides the straight-ray vs
-        // drooped-arc gap further out.
-        for (var i = 0; i < 5; i++)
-        {
-            var f = (float)_rng.NextDouble();
-            _list.Add(new Particle
-            {
-                Position = pos + dir * (f * f * reach * 0.8f) + Jitter(2.5f),
-                Velocity = dir * (jetSpeed * (0.5f + 0.4f * (float)_rng.NextDouble()))
-                         + Jitter(45f) + shooterVel,
-                Life = 0.2f + (float)_rng.NextDouble() * 0.25f,
-                MaxLife = 0.45f,
-                Color = _rng.Next(2) == 0 ? new Color(255, 245, 190) : new Color(255, 205, 90),
-                FadeColor = new Color(255, 120, 30),
-                Size = 0.5f,
-                GravityScale = HoseArcGravity * 0.7f,
-                Drag = 1.4f,
-                CollideTiles = true,
-                LightRadius = i == 0 ? 14f : 0f,
-                LightColor = new Color(255, 190, 80),
-            });
-        }
+        // (Spark pixels are shed by the plume grains THEMSELVES — see the Fluid==Fire
+        // clause in Update — so they're born on the actual burning body rather than
+        // along the nominal aim ray.)
         // Hero flicker riding a third of the way down the tongue: the shadow-casting part
         // of the fire, jittered so the whole cave breathes with the hose. Gated to every
         // 3rd frame — per-frame hero lights would triple the ray-cast budget.
