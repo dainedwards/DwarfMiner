@@ -3766,7 +3766,7 @@ public sealed partial class DwarfMinerGame : Game
         // of through them). Reach grows the longer fire is held; spread matches the visible fan.
         for (var i = 0; i < 3; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.16f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.064f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
