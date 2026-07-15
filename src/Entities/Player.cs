@@ -121,6 +121,11 @@ public sealed class Player
     /// "boost when used" pop off the ground, on top of the steady lift acceleration.</summary>
     private const float JetInitialKick = 62f;
     private bool _jetPrev;   // was the jet burning last frame (for the initial-kick edge)
+    /// <summary>How long a grounded Space press must be HELD before the pack lights — the
+    /// tap window. Shorter than that is a plain jump; longer turns the jump into a burn.
+    /// (Airborne presses skip the wait — see _jetPressAirborne.)</summary>
+    private const float JetHoldDelay = 0.18f;
+    private bool _jetPressAirborne;   // current hold began in the air → jet lights instantly
     private float _prevRadial;   // player-centre radius at frame start (one-way platform check)
     /// <summary>Seconds a grounded refill takes, whatever the tier's cap.</summary>
     private const float JetRefillTime = 2.4f;
