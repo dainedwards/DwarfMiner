@@ -3372,7 +3372,7 @@ public sealed class Creature
                 // The anglerfish lure casts a small pulsing green glow — a false beacon in
                 // the black deep water.
                 var pulse = MathF.Sin(r.Time * 3f + _phase) * 0.5f + 0.5f;
-                var up = planet.UpAt(Position);
+                var up = planet?.UpAt(Position) ?? new Vector2(0f, -1f);
                 var lure = Position + up * (Radius * 1.7f) + new Vector2(-up.Y, up.X) * (Radius * 0.9f);
                 r.AddLight(lure, 20f + pulse * 8f, new Color(120, 220, 160));
                 break;
