@@ -835,7 +835,11 @@ public static class WorldGen
         // LavaFillFrac×radius (ember-class worlds run 0.55-0.70), and tunnels crossing
         // that line become permanent lava plumbing that wrecks the steady-state cell
         // budget — and below the dirt band.
-        var minFrac = MathF.Max(0.50f, def.LavaFillFrac + 0.10f);
+        // Reach much deeper than before — the cave network now threads the LOWER crust too,
+        // not just the upper shell — but still stop a safe margin ABOVE this world's lava fill
+        // line (crossing it turns tunnels into permanent lava plumbing that wrecks the cell
+        // budget). On a low-lava world that opens the deep half of the crust to caving.
+        var minFrac = MathF.Max(0.30f, def.LavaFillFrac + 0.08f);
         var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
         for (var i = 0; i < worms; i++)
         {
