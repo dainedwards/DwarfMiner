@@ -164,6 +164,22 @@ public sealed class Cells
     /// near zero once seeded liquids settle; a persistently high count means something (e.g.
     /// acid still eating tiles) never goes to sleep. Diagnostics/perf only.</summary>
     public int ActiveCellCount => _next.Count;
+
+    /// <summary>Material histogram of the wake set, e.g. "Lava:41k Water:9k" — the DM_PERF
+    /// [cnt] line prints it so a runaway active count names its own culprit.</summary>
+    public string ActiveBreakdown()
+    {
+        Span<int> counts = stackalloc int[16];
+        foreach (var idx in _next) counts[_mat[idx]]++;
+        var sb = new System.Text.StringBuilder();
+        for (var m = 0; m < counts.Length; m++)
+        {
+            if (counts[m] < 100) continue;
+            if (sb.Length > 0) sb.Append(' ');
+            sb.Append((Material)m).Append(':').Append(counts[m]);
+        }
+        return sb.ToString();
+    }
     /// <summary>True while the cell index is already queued in <see cref="_next"/>.</summary>
     private readonly bool[] _queued;
     private readonly Random _rng = new();
