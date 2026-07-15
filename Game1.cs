@@ -172,7 +172,7 @@ public sealed partial class DwarfMinerGame : Game
     /// longer it's held; a gap in firing resets it. Shared by both hoses (only one fires at once).</summary>
     private float _streamHold;
     private float _streamLast;
-    private const float StreamHoldMax = 0.35f;   // reaches full length fast — a quick throttle-up
+    private const float StreamHoldMax = 0.245f;  // reaches full length fast — a quick throttle-up
     private readonly bool _bossCam = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 };
     private readonly bool _rigidDbg = Environment.GetEnvironmentVariable("DM_RIGIDDBG") is { Length: > 0 };
     private int _prevRigidCount;
