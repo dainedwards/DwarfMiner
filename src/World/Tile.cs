@@ -78,6 +78,12 @@ public enum TileKind : byte
     ChestOpen = 56,    // an already-looted chest (lid thrown back, empty)
     LilyPad = 57,      // alien lily pad floating on a lake surface (anchored, passable flora)
     Rope = 58,         // deployed rope line — climbable like a ladder, hangs from an anchor
+    /// <summary>Cooled volcanic crust. Every lava body generates jacketed in a two-tile
+    /// shell of it (Cells.ShellLavaBodies), and a water-quenched lava front hardens back
+    /// into it via compaction (QuenchIfWet tags the crust gravel). Fireproof by omission:
+    /// it appears in neither IsMeltable nor IsFlammable, so lava can never burn through
+    /// its own jacket.</summary>
+    LavaRock = 59,
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
