@@ -267,6 +267,7 @@ public sealed class Particles
     {
         var tex = r.LiquidBlob;
         var org = new Vector2(tex.Width / 2f, tex.Height / 2f);
+        var fire = which == Material.Fire;
         foreach (var p in _list)
         {
             if (p.Fluid != (byte)which) continue;
@@ -279,8 +280,21 @@ public sealed class Particles
             var speed = p.Velocity.Length();
             var len = MathF.Max(5f, speed * 0.033f);
             var rot = speed > 1f ? MathF.Atan2(p.Velocity.Y, p.Velocity.X) : 0f;
+            var wid = 4f;
+            if (fire)
+            {
+                // Fire is a JET, not a hose: age maps to distance down the stream, so a
+                // narrow blinding throat swells into a wide blooming end (taper/bloom),
+                // and old grains draw FAINT blobs — near the tip the coverage field
+                // hovers around the metaball threshold, so the silhouette tatters into
+                // detaching tongues instead of ending in a rounded liquid cap. (Colour
+                // scales with coverage: tips go dim and dark together, as flame does.)
+                var age = 1f - t;
+                wid = MathHelper.Lerp(2.5f, 7f, age);
+                c *= MathHelper.Lerp(1f, 0.5f, age * age);
+            }
             r.Batch.Draw(tex, p.Position, null, c, rot, org,
-                new Vector2(len / tex.Width, 4f / tex.Height), SpriteEffects.None, 0f);
+                new Vector2(len / tex.Width, wid / tex.Height), SpriteEffects.None, 0f);
         }
     }
 
