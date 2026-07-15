@@ -257,7 +257,7 @@ public static class Crafting
             new Dictionary<string, int> { ["coal"] = 6, ["gravel"] = 4, ["iron"] = 2, ["hide"] = 1 }),
 
         // ─── Late-game ────────────────────────────────────────────────────────
-        new("nuke", "Energy ball — charge-up alien cannon (hold to power up)",
+        new("nuke", "Energy blaster — charge-up alien cannon (hold to power up)",
             new Dictionary<string, int> { ["crystal"] = 3, ["gold"] = 10 }),
         new("harpoon", "Anti-Titan harpoon (press Y to fire)",
             new Dictionary<string, int> { ["platinum"] = 4, ["ruby"] = 4 }),
