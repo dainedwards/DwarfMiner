@@ -1641,30 +1641,39 @@ public sealed class Creature
         if (_aggroT > 0f)
         {
             var tDist = Vector2.Dot(toPlayer, right);
-            var moveAxis = MathF.Abs(tDist) > 8f ? MathF.Sign(tDist) : 0f;
-            // A tall wall stops the charge (no endless hopping) — the spear arm takes over.
+            // It's a DART HUNTER, not a brawler: it holds a comfortable throwing distance and
+            // shoots, rather than charging in and leaping. Back off if the dwarf closes, ease
+            // in if he's too far, otherwise plant its feet and aim. No lunge — it never jumps
+            // at the player.
+            var moveAxis = 0f;
+            if (dist > 190f) moveAxis = MathF.Sign(tDist);       // too far — close the gap
+            else if (dist < 90f) moveAxis = -MathF.Sign(tDist);  // too close — give ground
             GroundMove(dt, planet, up, right,
                 NavAxis(planet, up, right, moveAxis, avoidCliffs: false), speedMul);
 
-            // Blowdart: mid-range, sighted, off cooldown. A hunter's dart, not a straight
-            // bolt — it's lofted well above the line so it ARCS up and drops back onto the
-            // target under gravity (TitanShotKind.Dart is ballistic), the more loft the
-            // farther the throw.
-            if (dist > 70f && dist < 210f && _cd <= 0f && shots is not null
+            // Blowdart volley: when it holds a good line at range, it looses THREE small darts
+            // in quick succession, each lofted well above the line so it ARCS up high and drops
+            // onto the target (Dart is ballistic). Between volleys it cools down and repositions.
+            if (_burst <= 0 && dist > 60f && dist < 230f && _cd <= 0f && shots is not null
                 && HasLineOfSight(planet, toPlayer, dist))
             {
-                var dir = toPlayer / dist;
-                var aim = Vector2.Normalize(dir + up * (0.28f + dist * 0.0022f));
-                shots.Add(new TitanProjectile(Position + aim * (Radius + 2f), aim * 220f,
-                    TitanShotKind.Dart, damage: 9f));
-                _cd = 2.2f + (float)Random.Shared.NextDouble() * 0.9f;
-                _swing = 0.35f;
+                _burst = 3;
+                _burstT = 0f;
+                _cd = 2.8f + (float)Random.Shared.NextDouble() * 1.0f;
             }
-            // Lunge: a short leap into bite range when the spear arm is spent.
-            else if (dist < 60f && dist > 0.01f && _retarget <= 0f && IsGrounded(planet, up))
+            if (_burst > 0 && shots is not null && dist > 0.01f)
             {
-                Velocity = toPlayer / dist * 115f * speedMul + up * 65f;
-                _retarget = 1.5f;
+                _burstT -= dt;
+                if (_burstT <= 0f)
+                {
+                    var dir = toPlayer / dist;
+                    var aim = Vector2.Normalize(dir + up * (0.42f + dist * 0.0026f));  // big arc
+                    shots.Add(new TitanProjectile(Position + aim * (Radius + 2f), aim * 200f,
+                        TitanShotKind.Dart, damage: 5f));
+                    _burst--;
+                    _burstT = 0.13f;    // quick succession
+                    _swing = 0.25f;
+                }
             }
         }
         else
