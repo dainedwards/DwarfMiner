@@ -513,6 +513,9 @@ public sealed class Creature
             case CreatureKind.Marauder:   TickMarauder(dt, planet, up, right, toPlayer, dist, speedMul, shots); break;
             case CreatureKind.Raider:     TickRaider(dt, planet, up, right, toPlayer, dist, speedMul, shots); break;
             case CreatureKind.Pyro:       TickPyro(dt, planet, cells, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.Quillwing:  TickQuillwing(dt, planet, toPlayer, dist, speedMul, shots); break;
+            case CreatureKind.Warpwisp:   TickWarpwisp(dt, planet, toPlayer, dist, speedMul, shots); break;
+            case CreatureKind.Thornback:  TickThornback(dt, planet, up, right, toPlayer, dist, speedMul, shots); break;
             case CreatureKind.BomberBeetle: TickBomber(dt, planet, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.SnapperVine: TickVine(dt, planet, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.RockMimic:  TickMimic(dt, planet, up, right, toPlayer, dist, speedMul); break;
