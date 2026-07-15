@@ -575,19 +575,19 @@ public sealed class Particles
     /// <summary>Generic dust burst — used for boulder slams.</summary>
     public void EmitDust(Vector2 pos, float strength = 10f)
     {
-        for (var i = 0; i < 14; i++)
+        for (var i = 0; i < 30; i++)
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
             var spd = strength * 1.5f + (float)_rng.NextDouble() * strength * 1.5f;
             _list.Add(new Particle
             {
-                Position = pos,
+                Position = pos + Jitter(2f),
                 Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * spd,
                 Life = 0.7f + (float)_rng.NextDouble() * 0.5f,
                 MaxLife = 1.2f,
                 Color = new Color(120, 105, 95),
                 FadeColor = new Color(30, 25, 28),
-                Size = 2f + (float)_rng.NextDouble() * 1.5f,
+                Size = 1f + (float)_rng.NextDouble() * 0.6f,
                 GravityScale = -0.1f,
                 Drag = 0.7f,
             });
