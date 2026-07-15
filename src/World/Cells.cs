@@ -2035,9 +2035,10 @@ public sealed class Cells
         // strays) sample themselves into the flame queue; Game1 turns each entry into a
         // rising flame tongue. Because the source is the live fire population, the
         // visible flames grow with jet dwell and spread wherever fuel carries the fire.
-        // FUELLED fire burns visibly hotter: 2.5× the licking-flame emission of a bare
-        // fused burn — a fire that found fuel rages, one on rock just burns.
-        if ((_srcTile[i] > 0 || fuelled) && _rng.Next(fuelled ? 2 : 5) == 0
+        // FUELLED fire burns visibly hottest: EVERY sampled tick queues a lick (vs 1-in-5
+        // for a bare fused burn) — a fire that found fuel rages, one on rock just burns.
+        // The queue cap bounds a fully-engulfed forest.
+        if ((_srcTile[i] > 0 || fuelled) && (fuelled || _rng.Next(5) == 0)
             && PendingFlames.Count < MaxPendingFlames)
             PendingFlames.Add((CellToWorld(cx, cy),
                 fuelled ? (byte)Math.Max((int)_srcTile[i], 55) : _srcTile[i]));
