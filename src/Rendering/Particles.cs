@@ -167,6 +167,7 @@ public sealed class Particles
                         SmearMax = 1.5f,
                         JetSpark = true,
                     });
+                }
             }
 
             var next = p.Position + p.Velocity * dt;
