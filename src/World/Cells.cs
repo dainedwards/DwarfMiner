@@ -553,6 +553,14 @@ public sealed class Cells
         if (PendingBubbles.Count < MaxPendingBubbles) PendingBubbles.Add(pos);
     }
 
+    /// <summary>World positions of cells actively BURNING this tick (fused or fuelled) —
+    /// Game1 drains this into licking-flame particles, so the visible flame body lives
+    /// exactly where the sim's fire lives: it grows with dwell (more/refreshed fuse
+    /// cells), and when fuel lets the fire spread, the flames visibly spread with it.
+    /// Sampled (not exhaustive) and capped like PendingBubbles.</summary>
+    public readonly List<Vector2> PendingFlames = new();
+    private const int MaxPendingFlames = 200;
+
     /// <summary>Spawn dust cells filling the whole polar tile, tagged with the source TileKind
     /// so the cells render in that tile's colours and pay out that tile's drop on pickup.
     /// Deterministic count (DustCellsPerTile = Density²) so the debris occupies exactly the
