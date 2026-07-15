@@ -177,10 +177,14 @@ public static class AmbientDirector
             case DisasterKind.Earthquake:
             {
                 if (run.Physics is null) return false;
-                var ang = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
-                var epi = run.Planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
-                    * run.Planet.Radius * Planet.TileSize * 0.5f;
-                run.Physics.Earthquake(epi, 200f, 2);
+                // Strike the player's neighbourhood, not a random bearing at half-radius:
+                // quakes are now the ONLY thing that brings down undercut rock (see
+                // Physics.QuakeShaking), so the epicentre must land where the mining
+                // actually happened — a cave-in nobody is near is one nobody experiences.
+                var off = (float)Random.Shared.NextDouble() * MathHelper.TwoPi;
+                var epi = run.Player.Position + new Vector2(MathF.Cos(off), MathF.Sin(off))
+                    * (120f + (float)Random.Shared.NextDouble() * 280f);
+                run.Physics.Earthquake(epi, 300f, 2);
                 result.QuakeStruck = true;
                 return true;
             }
