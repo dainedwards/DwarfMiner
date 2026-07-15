@@ -674,7 +674,8 @@ public static class WorldGen
                 3 => 8 + rng.Next(5),    // weeping  — tall, draping crown
                 _ => 6 + rng.Next(5),    // broad    — shortest, still a proper trunk
             };
-            trunkH = Math.Min(trunkH, maxRing - (groundR - planet.SurfaceRing) - 5);
+            // Keep the crown (up to ~5 rings of canopy) inside the sky.
+            trunkH = Math.Min(trunkH, planet.Rings - 6 - groundR);
             if (trunkH < 4) continue;
 
             // The trunk column must be clear sky all the way up (canopy may overlap terrain).
