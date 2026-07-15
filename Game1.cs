@@ -3321,31 +3321,6 @@ public sealed partial class DwarfMinerGame : Game
         return true;
     }
 
-    /// <summary>TNT: a heavy satchel charge. Barely throwable — a short weighty lob with a
-    /// long fuse — but the biggest non-nuke blast in the game. Placement tool, not artillery.</summary>
-    private void FireTnt(Vector2 worldCursor)
-    {
-        var dir = worldCursor - _run.Player.Position;
-        if (dir.LengthSquared() < 0.01f) return;
-        dir.Normalize();
-        var up = _run.Planet.UpAt(_run.Player.Position);
-        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 5f,
-            dir * ThrowSpeed(70f, 210f) + up * 50f, 120f, 3.0f, ProjectileKind.Tnt));
-        _run.Player.ShootCooldown = 0.6f;
-    }
-
-    /// <summary>TNT pack: the sticky charge. A real throw (it has to reach a ceiling), and
-    /// it cements to the first wall it touches, burning the same fuse as the satchel.</summary>
-    private void FireTntPack(Vector2 worldCursor)
-    {
-        var dir = worldCursor - _run.Player.Position;
-        if (dir.LengthSquared() < 0.01f) return;
-        dir.Normalize();
-        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 5f,
-            dir * ThrowSpeed(150f, 320f), 120f, 3.0f, ProjectileKind.TntPack));
-        _run.Player.ShootCooldown = 0.6f;
-    }
-
     /// <summary>Fire the cannon. Consumes the highest-tier shell in inventory before falling
     /// back to the regular cannon round. Per-shell stats are kept here so the dispatch stays
     /// declarative.</summary>
