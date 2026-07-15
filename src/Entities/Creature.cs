@@ -1707,6 +1707,118 @@ public sealed class Creature
         GroundMove(dt, planet, up, right, moveAxis, speedMul);
     }
 
+    /// <summary>Swim toward a target point inside the water: accelerate along the direction
+    /// to it, kept inside the basin (a shore or the air line above turns the swimmer back).
+    /// Shared by the hunting sea monsters. Beached (no water around), it just sinks so it
+    /// can't thrash across dry land.</summary>
+    private void SwimToward(float dt, Planet planet, Cells cells, Vector2 up, Vector2 right,
+        Vector2 target, float speed, float accel)
+    {
+        if (cells.CountWaterNear(Position, Radius) < 3)
+        {
+            // Out of water — sink and coast, don't flop across the ground.
+            var vT0 = MoveToward(Vector2.Dot(Velocity, right), 0f, 150f * dt);
+            var vN0 = MathF.Max(Vector2.Dot(Velocity, up) - Grav(planet) * dt, -180f);
+            Velocity = right * vT0 + up * vN0;
+            Position += Velocity * dt;
+            return;
+        }
+        var to = target - Position;
+        if (to.LengthSquared() > 0.01f) to.Normalize();
+        // Don't swim out of the water: if the step ahead leaves the basin, cancel that push.
+        var ahead = Position + to * (Radius + 8f);
+        if (planet.IsSolidAt(ahead) || cells.CountWaterNear(ahead + up * (Radius + 2f), 2f) < 1)
+            to -= up * Vector2.Dot(to, up);   // strip the outward/vertical component near a wall/surface
+        var desired = to * speed;
+        Velocity = MoveTowardV(Velocity, desired, accel * dt);
+        Position += Velocity * dt;
+    }
+
+    /// <summary>Alien shark: a torpedo predator. When the dwarf is in its water it accelerates
+    /// straight at them for a bite; otherwise it laps the basin like the whale. Fast and
+    /// relentless, but it can only get you in the water — climb out and it can't follow.</summary>
+    private void TickShark(float dt, Planet planet, Cells cells, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul)
+    {
+        // Hunt when the prey is in the water and within scent range; else patrol.
+        var hunt = dist < 340f && cells.CountWaterNear(Position + toPlayer * 0f, 3f) >= 3
+                   && cells.CountWaterNear(Position + (dist > 0.01f ? toPlayer / dist : right) * 12f, 2f) >= 1;
+        if (hunt && dist > 0.01f)
+        {
+            SwimToward(dt, planet, cells, up, right, Position + toPlayer, MoveSpeed * speedMul, 220f);
+            _swing = 0.2f;   // gnashing animation while charging
+            if (_swing > 0f) _swing -= dt;
+            return;
+        }
+        // Patrol: lap the basin, turning at shores/surface.
+        Wander += dt;
+        var laneAhead = Position + right * (_orbitSign * (Radius + 16f));
+        if (planet.IsSolidAt(laneAhead) || cells.CountWaterNear(laneAhead, 3f) < 2)
+            _orbitSign = -_orbitSign;
+        var bob = MathF.Sin(Wander * 0.7f + _phase) * 8f;
+        if (cells.CountWaterNear(Position + up * (Radius + 3f), 3f) < 2) bob = -14f;
+        else if (planet.IsSolidAt(Position - up * (Radius + 5f))) bob = 14f;
+        SwimToward(dt, planet, cells, up, right,
+            Position + right * (_orbitSign * 40f) + up * bob, MoveSpeed * 0.5f * speedMul, 90f);
+    }
+
+    /// <summary>Gulper (deep-water anglerfish): drifts slowly near the bottom trailing a
+    /// glowing lure; when prey strays inside striking range it LUNGES — a short, fast dart
+    /// with a huge bite — then coasts and resets. Slow to reposition, deadly up close.</summary>
+    private void TickGulper(float dt, Planet planet, Cells cells, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul)
+    {
+        _cd -= dt;
+        if (_swing > 0f) _swing -= dt;
+        var preyInWater = cells.CountWaterNear(Position, 3f) >= 3;
+        if (preyInWater && dist < 130f && dist > 0.01f && _cd <= 0f)
+        {
+            _lungeDir = toPlayer / dist;
+            _swing = 0.5f;      // maw-open + lunge window
+            _cd = 2.2f;
+        }
+        if (_swing > 0f && dist > 0.01f)
+        {
+            // Lunge: a fast committed dart along the locked direction.
+            SwimToward(dt, planet, cells, up, right, Position + _lungeDir * 60f,
+                MoveSpeed * 3.2f * speedMul, 400f);
+            return;
+        }
+        // Idle drift: hang near the floor, sway gently.
+        Wander += dt;
+        var sway = MathF.Sin(Wander * 0.5f + _phase) * 10f;
+        var wantN = planet.IsSolidAt(Position - up * (Radius + 6f)) ? 10f : -6f;   // hug the bottom
+        SwimToward(dt, planet, cells, up, right,
+            Position + right * sway + up * wantN, MoveSpeed * speedMul, 60f);
+    }
+
+    /// <summary>Brinespitter: a rooted-ish reef lurker that fires pressurised water-globs at
+    /// swimmers from range — aquatic artillery. It holds a loose station and lobs the shared
+    /// projectiles (borrowing the acid-glob physics but as a plain water slug).</summary>
+    private void TickBrinespitter(float dt, Planet planet, Cells cells, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul, List<TitanProjectile>? shots)
+    {
+        _cd -= dt;
+        if (_swing > 0f) _swing -= dt;
+        // Keep a loose depth station near the floor; drift a little.
+        Wander += dt;
+        var sway = MathF.Sin(Wander * 0.6f + _phase) * 6f;
+        var wantN = planet.IsSolidAt(Position - up * (Radius + 6f)) ? 8f : -5f;
+        SwimToward(dt, planet, cells, up, right,
+            Position + right * sway + up * wantN, MoveSpeed * 0.4f * speedMul, 50f);
+
+        if (dist is > 20f and < 240f && _cd <= 0f && shots is not null
+            && cells.CountWaterNear(Position, 3f) >= 3 && HasLineOfSight(planet, toPlayer, dist))
+        {
+            var dir = toPlayer / dist;
+            var aim = Vector2.Normalize(dir + up * 0.15f);
+            shots.Add(new TitanProjectile(Position + aim * (Radius + 2f), aim * 210f,
+                TitanShotKind.Acid, damage: 9f));   // reuses the glob physics as a water slug
+            _cd = 2.0f + (float)Random.Shared.NextDouble() * 0.8f;
+            _swing = 0.3f;
+        }
+    }
+
     // ---------------------------------------------------------------- sky fauna
 
     private void TickFlyer(float dt, Planet planet, Vector2 up, Vector2 right,
