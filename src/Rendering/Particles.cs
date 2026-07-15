@@ -106,6 +106,22 @@ public sealed class Particles
                 p.Velocity += planet.GravityAt(p.Position) * GravityStrength * p.GravityScale * dt;
             if (p.Drag > 0)
                 p.Velocity *= MathF.Max(0f, 1f - p.Drag * dt);
+            // Flame turbulence: a bounded lateral wander that grows down the stream (age)
+            // — the jet's body writhes like fire instead of flying a glassy arc. Phased
+            // off each grain's own Life clock (grains are born with random lives, so the
+            // phases scatter for free), and it's ±jitter AROUND the arc, never a separate
+            // trajectory — it cannot recreate the stray-strand problem.
+            if (p.Fluid == (byte)Material.Fire)
+            {
+                var sp = p.Velocity.LengthSquared();
+                if (sp > 100f)
+                {
+                    var inv = 1f / MathF.Sqrt(sp);
+                    var age = 1f - MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
+                    p.Velocity += new Vector2(-p.Velocity.Y * inv, p.Velocity.X * inv)
+                        * (MathF.Sin(p.Life * 55f) * 90f * age * dt);
+                }
+            }
 
             var next = p.Position + p.Velocity * dt;
             if (p.CollideTiles && planet.IsSolidAt(next))
@@ -267,6 +283,7 @@ public sealed class Particles
     {
         var tex = r.LiquidBlob;
         var org = new Vector2(tex.Width / 2f, tex.Height / 2f);
+        var fire = which == Material.Fire;
         foreach (var p in _list)
         {
             if (p.Fluid != (byte)which) continue;
@@ -279,8 +296,21 @@ public sealed class Particles
             var speed = p.Velocity.Length();
             var len = MathF.Max(5f, speed * 0.033f);
             var rot = speed > 1f ? MathF.Atan2(p.Velocity.Y, p.Velocity.X) : 0f;
+            var wid = 4f;
+            if (fire)
+            {
+                // Fire is a JET, not a hose: age maps to distance down the stream, so a
+                // narrow blinding throat swells into a wide blooming end (taper/bloom),
+                // and old grains draw FAINT blobs — near the tip the coverage field
+                // hovers around the metaball threshold, so the silhouette tatters into
+                // detaching tongues instead of ending in a rounded liquid cap. (Colour
+                // scales with coverage: tips go dim and dark together, as flame does.)
+                var age = 1f - t;
+                wid = MathHelper.Lerp(2.5f, 7f, age);
+                c *= MathHelper.Lerp(1f, 0.5f, age * age);
+            }
             r.Batch.Draw(tex, p.Position, null, c, rot, org,
-                new Vector2(len / tex.Width, 4f / tex.Height), SpriteEffects.None, 0f);
+                new Vector2(len / tex.Width, wid / tex.Height), SpriteEffects.None, 0f);
         }
     }
 
