@@ -511,6 +511,13 @@ public sealed class Cells
             StampAtWorld(worldPos + new Vector2(
                 ((float)_rng.NextDouble() - 0.5f) * 5f,
                 ((float)_rng.NextDouble() - 0.5f) * 5f), Material.Fire, fireFuse);
+        // The jet's touch hands adjacent flammable tiles straight to the burning-tile
+        // lifecycle — the direct, reliable catch at the contact point (IgniteTile
+        // silently ignores anything non-flammable).
+        var (ctx, cty) = Planet.WorldToTile(worldPos);
+        for (var dr = -1; dr <= 1; dr++)
+            for (var da = -1; da <= 1; da++)
+                IgniteTile(ctx + dr, cty + da);
     }
 
     /// <summary>Spawn cells inside the polar tile (tx = ring, ty = angle). Picks random sub-cells.</summary>
