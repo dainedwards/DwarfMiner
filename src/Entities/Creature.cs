@@ -727,10 +727,10 @@ public sealed class Creature
         {
             if (_cd <= 0f)
             {
-                _cd = 1.1f + (float)Random.Shared.NextDouble() * 1.6f;
+                _cd = 1.35f + (float)Random.Shared.NextDouble() * 0.7f;   // a steadier rhythm
                 var s = dist < 60f
                     ? -MathF.Sign(Vector2.Dot(toPlayer, right))          // hop away from danger
-                    : (Random.Shared.Next(2) == 0 ? 1f : -1f);           // hop wherever
+                    : IdleHopDir();                                       // coherent wander
                 Velocity = right * (s * 45f * speedMul) + up * 105f;
                 return;
             }
