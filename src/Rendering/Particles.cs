@@ -474,7 +474,7 @@ public sealed class Particles
             case ProjectileKind.Laser:
             case ProjectileKind.LaserCannon:
                 // Energy scorch — a hot flash of ionised flecks in the beam's colour.
-                for (var i = 0; i < (kind == ProjectileKind.LaserCannon ? 10 : 5); i++)
+                for (var i = 0; i < (kind == ProjectileKind.LaserCannon ? 18 : 9); i++)
                 {
                     var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
                     var col = kind == ProjectileKind.LaserCannon
@@ -488,10 +488,10 @@ public sealed class Particles
                         MaxLife = 0.3f,
                         Color = col,
                         FadeColor = new Color(40, 30, 60),
-                        Size = 1f,
+                        Size = 0.8f,
                         GravityScale = 0.1f,
                         Drag = 2.5f,
-                        LightRadius = 6f,
+                        LightRadius = i % 2 == 0 ? 6f : 0f,
                         LightColor = col,
                     });
                 }
