@@ -2915,7 +2915,7 @@ public static class SimTest
             var platTop = (Planet.RingMin + pr + 1) * Planet.TileSize;
 
             var lander = new Player(platCentre + up * 22f);
-            for (var i = 0; i < 150; i++) lander.Update(1f / 60f, pl, 0, false, false);
+            for (var i = 0; i < 150; i++) lander.Update(1f / 60f, pl, 0, false);
             var landedR = (lander.Position - pl.Center).Length();
             Check($"platform: a falling dwarf lands on top ({landedR - platTop:0.0}px above face)",
                 landedR >= platTop - 1f && landedR <= platTop + lander.Radius + 4f);
