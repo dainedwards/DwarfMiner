@@ -658,6 +658,15 @@ public sealed class Cells
             if (dist > 1f) f.Vel += toCore * (FlyGravity * dt / dist);
             var speed = f.Vel.Length();
             if (speed > FlyMaxSpeed) f.Vel *= FlyMaxSpeed / speed;
+            // Bleed off any excess OUTWARD speed so ejecta can't launch off into the sky and
+            // hang there as a stray floating pixel (runs every tick before the move, so even a
+            // huge explosion impulse is capped on its first step). Lateral/inward motion kept.
+            if (dist > 1f)
+            {
+                var outUnit = -toCore / dist;
+                var vOut = Vector2.Dot(f.Vel, outUnit);
+                if (vOut > FlyMaxOutward) f.Vel -= outUnit * (vOut - FlyMaxOutward);
+            }
 
             var move = f.Vel * dt;
             var steps = Math.Clamp((int)(move.Length() / PxPerCell) + 1, 1, 12);
