@@ -2321,6 +2321,8 @@ public sealed class Creature
             if (HitFlash > 0) return Color.White;
             if (FreezeSeconds > 0) return new Color(150, 200, 240);
             if (BurnSeconds > 0) return new Color(220, 110, 70);
+            if (OilySeconds > 0) return Color.Lerp(baseCol, new Color(30, 25, 20), 0.4f);
+            if (WetSeconds > 0) return Color.Lerp(baseCol, new Color(60, 90, 150), 0.25f);
             return baseCol;
         }
 
