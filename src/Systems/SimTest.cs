@@ -1874,29 +1874,37 @@ public static class SimTest
             // flank or lake pit between guard and prey) so a wedge can't fake a failure.
             var aAng = 0.2f;
             var flatFound = false;
+            var bestA = 0.2f;
+            var bestVar = float.MaxValue;
             for (var a = 0.2f; a < MathHelper.TwoPi && !flatFound; a += 0.13f)
             {
                 var p0 = SpawnDirector.FindSurfaceSpawn(planet, a, planet.Radius);
                 var r0 = (p0 - planet.Center).Length();
                 var flat = true;
+                var worst = 0f;
                 for (var off = 0.05f; off <= 0.4f && flat; off += 0.05f)
                 {
                     var p = SpawnDirector.FindSurfaceSpawn(planet, a + off, planet.Radius);
-                    flat = MathF.Abs((p - planet.Center).Length() - r0) < 10f;
+                    var dev = MathF.Abs((p - planet.Center).Length() - r0);
+                    worst = MathF.Max(worst, dev);
+                    flat = dev < 10f;
                 }
                 if (flat) { aAng = a; flatFound = true; }
+                else if (worst < bestVar) { bestVar = worst; bestA = a; }
             }
             if (!flatFound)
             {
                 // Rolling worldgen (2026-07-15) means a naturally flat 0.4-rad stretch may
-                // simply not exist any more. Grade one — the same idiom as the scenarios
-                // that carve their own test pockets: level rock at the local surface height,
-                // clear sky above, so the march still runs on deterministic ground.
-                aAng = 0.2f;
+                // simply not exist any more. Grade one at the FLATTEST scanned bearing — the
+                // same idiom as the scenarios that carve their own test pockets: level rock
+                // at the local surface height, sky cleared to the world top (a partial
+                // clearance once left a mountain remnant hovering over the strip, and the
+                // prey spawn walked down onto the floating island instead of the runway).
+                aAng = bestA;
                 var g0 = SpawnDirector.FindSurfaceSpawn(planet, aAng, planet.Radius);
                 var groundRing = (int)((g0 - planet.Center).Length() / Planet.TileSize)
                                  - Planet.RingMin - 2;
-                for (var r = groundRing - 3; r <= Math.Min(planet.Rings - 1, groundRing + 40); r++)
+                for (var r = groundRing - 3; r < planet.Rings; r++)
                 {
                     var n = planet.TilesAt(r);
                     var t0 = (int)(aAng / MathHelper.TwoPi * n) - 2;
