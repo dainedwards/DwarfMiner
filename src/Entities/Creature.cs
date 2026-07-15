@@ -270,6 +270,15 @@ public sealed class Creature
             case CreatureKind.AlienCrab:
                 Radius = 4.5f; Health = 34f; MoveSpeed = 26f; ContactDamage = 10f;
                 break;
+            case CreatureKind.AlienShark:
+                Radius = 6f; Health = 46f; MoveSpeed = 96f; ContactDamage = 18f;
+                break;
+            case CreatureKind.Gulper:
+                Radius = 5.5f; Health = 60f; MoveSpeed = 38f; ContactDamage = 24f;
+                break;
+            case CreatureKind.Brinespitter:
+                Radius = 4.5f; Health = 40f; MoveSpeed = 30f; ContactDamage = 8f;
+                break;
             case CreatureKind.Moonlet:
                 Radius = 4f; Health = 26f; MoveSpeed = 40f; ContactDamage = 11f;
                 _cd = 2f + (float)Random.Shared.NextDouble() * 1.5f; // first slingshot is never instant
