@@ -1545,15 +1545,17 @@ public static class SimTest
 
             var bestSamples = 0;
             var bestDev = float.MaxValue;
+            var bestRough = float.MaxValue;
             foreach (var (rd, td) in city.CitySpawns)
             {
                 if (rd != baseR + 1) continue;   // doorway addresses only — one per tower
                 var bearing = (td + 0.5f) / city.TilesAt(rd) * MathHelper.TwoPi;
-                var devMax = 0f;
                 var samples = 0;
                 float firstR = float.NaN, firstL = float.NaN;
+                float prevR = float.NaN, prevL = float.NaN;
                 float minR = float.MaxValue, maxR = float.MinValue;
                 float minL = float.MaxValue, maxL = float.MinValue;
+                var rough = 0f;   // summed ring-to-ring edge movement — the sawtooth measure
                 for (var r = baseR + 6; r < baseR + 120; r++)
                 {
                     var storey = r - baseR;
@@ -1567,15 +1569,25 @@ public static class SimTest
                     if (latR < firstR - 6f || latL < firstL - 6f) break;
                     minR = MathF.Min(minR, latR.Value); maxR = MathF.Max(maxR, latR.Value);
                     minL = MathF.Min(minL, latL.Value); maxL = MathF.Max(maxL, latL.Value);
+                    if (!float.IsNaN(prevR))
+                        rough += MathF.Abs(latR.Value - prevR) + MathF.Abs(latL.Value - prevL);
+                    prevR = latR.Value; prevL = latL.Value;
                     samples++;
                 }
                 if (samples < 10) continue;
-                devMax = MathF.Max(maxR - minR, maxL - minL);
-                if (samples > bestSamples) { bestSamples = samples; bestDev = devMax; }
+                var devMax = MathF.Max(maxR - minR, maxL - minL);
+                if (samples > bestSamples)
+                {
+                    bestSamples = samples;
+                    bestDev = devMax;
+                    bestRough = rough / (samples - 1);   // px of edge movement per storey row
+                }
             }
-            Check($"city: tower facades run straight ({bestSamples} storeys sampled, "
-                + $"edge wobble {(bestDev == float.MaxValue ? -1 : bestDev):0.0}px)",
-                bestSamples >= 10 && bestDev <= Planet.TileSize * 1.75f);
+            Check($"city: tower facades run straight ({bestSamples} storeys, "
+                + $"wobble {(bestDev == float.MaxValue ? -1 : bestDev):0.0}px, "
+                + $"roughness {(bestRough == float.MaxValue ? -1 : bestRough):0.00}px/row)",
+                bestSamples >= 10 && bestDev <= Planet.TileSize * 1.75f
+                && bestRough <= Planet.TileSize * 0.45f);
         }
         Check($"city: NO lizard warren under the metropolis (brick {cityBrick}, dens {city.LizardDens.Count})",
             cityBrick == 0 && city.LizardDens.Count == 0);
