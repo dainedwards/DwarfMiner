@@ -414,10 +414,11 @@ public sealed class Player
         var onRail = ProbeTileKind(planet, Position - up * (Radius + 1.5f)) == TileKind.Rail;
         var moveSpeed = onRail ? MoveSpeed * 1.65f : MoveSpeed;
 
-        // Ladder overlap: gravity is heavily reduced and the vertical axis directly drives
-        // up/down motion, so the player can climb without jumping. Detected by sampling the
-        // tile under the player's centre — ladders span a tile, so any centre-overlap counts.
-        var onLadder = ProbeTileKind(planet, Position) == TileKind.Ladder;
+        // Ladder/rope overlap: gravity is heavily reduced and the vertical axis directly
+        // drives up/down motion, so the player can climb without jumping. Detected by
+        // sampling the tile under the player's centre — climbables span a tile, so any
+        // centre-overlap counts.
+        var onLadder = Tiles.IsClimbable(ProbeTileKind(planet, Position));
 
         var targetTangent = moveAxis * moveSpeed;
         var accel = Grounded ? 900f : 220f;   // snappy ground accel; floatier Noita-ish air control
