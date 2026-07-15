@@ -1932,9 +1932,9 @@ public sealed class Cells
                     fuelled = true;
                     // Flame front: catch the neighbouring fuel cell alight. Probabilistic
                     // so a pool burns across its surface over seconds, not in one frame —
-                    // rate halved (3→6) so fuel is CONSUMED slower and a burning pool
-                    // lasts twice as long (the released fused fire keeps the front alive).
-                    if (_rng.Next(6) == 0)
+                    // rate 10 (was 3): fuel is CONSUMED slowly and a burning pool lasts
+                    // several times longer (the released fused fire keeps the front alive).
+                    if (_rng.Next(10) == 0)
                     {
                         var (fcx, fcy) = UnIdx(ni);
                         IgniteCell(fcx, fcy);
@@ -1973,15 +1973,14 @@ public sealed class Cells
             if (!IsFlammable(k)) return;
             fuelled = true;
             if (below) burningFloor = true;
-            // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke,
-            // which is what walks a grass fire along the surface. Throttled by the spread
-            // budget so the front advances but can't blanket the planet. Base rate 60
-            // (structures burn slowly; the fuse's dwell keeps the initial catch
-            // reliable); the DOWNWARD probe chars at 30 — embers settle against a fire's
-            // floor, and fire naturally accumulates far fewer cell-ticks at its floor
-            // than against its ceiling (it rises), so the hotter per-contact rate is
-            // what lets a tree burn DOWN the trunk at all.
-            if (_rng.Next(below ? 30 : 60) != 0) return;
+            // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke.
+            // CHARRING IS CONSUMPTION, and it's deliberately SLOW (base 110, floor 55 —
+            // the 2× floor bias keeps down-consumption pacing up-consumption despite fire
+            // piling against ceilings): the target contract is that a small tree is
+            // engulfed — every tile wreathed in flame via BUDDING below — well before
+            // the first-lit part burns through. Spread lives in the flames; charring is
+            // just the fuel slowly giving out underneath them.
+            if (_rng.Next(below ? 55 : 110) != 0) return;
             if (!SpendFire()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
