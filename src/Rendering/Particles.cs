@@ -602,27 +602,35 @@ public sealed class Particles
         }
     }
 
-    /// <summary>A single falling raindrop: a short streak that starts high under a cloud and
-    /// accelerates toward the ground under planet gravity. <paramref name="down"/> is the
-    /// toward-surface direction; the drop is tinted by the rain kind. Drops collide with the
-    /// terrain — they die in a brief splash on the surface instead of streaking on through
-    /// the ground — so the life is generous; impact ends it early.</summary>
+    /// <summary>A single raindrop as a STREAMLET — the hose grammar pointed down: a bright
+    /// leading droplet with a couple of dimmer tail grains strung behind it along the fall,
+    /// the tail running fractionally slower so the string visibly stretches as it drops.
+    /// A shower then reads as streaming granular water (the flamethrower/acid-spewer look)
+    /// instead of lone specks. <paramref name="down"/> is the toward-surface direction; the
+    /// drop is tinted by the rain kind. Grains collide with the terrain — they die in a
+    /// brief splash on the surface instead of streaking on through the ground — so the
+    /// life is generous; impact ends it early.</summary>
     public void EmitRain(Vector2 pos, Vector2 down, Color color)
     {
         var jitter = new Vector2(-down.Y, down.X) * (((float)_rng.NextDouble() - 0.5f) * 12f);
-        _list.Add(new Particle
+        var speed = 140f + (float)_rng.NextDouble() * 90f;
+        for (var i = 0; i < 3; i++)
         {
-            Position = pos,
-            Velocity = down * (140f + (float)_rng.NextDouble() * 90f) + jitter,
-            Life = 1.0f + (float)_rng.NextDouble() * 0.6f,
-            MaxLife = 1.6f,
-            Color = color,
-            FadeColor = color * 0.4f,
-            Size = 1f + (float)_rng.NextDouble() * 0.4f,
-            GravityScale = 1.1f,
-            Drag = 0.02f,
-            CollideTiles = true,
-        });
+            var head = i == 0;
+            _list.Add(new Particle
+            {
+                Position = pos - down * (i * 2.2f),
+                Velocity = down * (speed * (head ? 1f : 0.94f - i * 0.04f)) + jitter,
+                Life = 1.0f + (float)_rng.NextDouble() * 0.6f,
+                MaxLife = 1.6f,
+                Color = head ? Color.Lerp(color, Color.White, 0.35f) : color,
+                FadeColor = color * 0.4f,
+                Size = head ? 0.55f : 0.45f,
+                GravityScale = 1.1f,
+                Drag = 0.02f,
+                CollideTiles = true,
+            });
+        }
     }
 
     /// <summary>A single air bubble underwater: a pale speck that wobbles upward (negative
