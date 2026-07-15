@@ -45,7 +45,7 @@ public sealed partial class DwarfMinerGame : Game
     private float _gravityWellRadius;
 
     /// <summary>Titan-climbing: while riding, the dwarf clings to a bearing on the monster's
-    /// body circle and moves with it — A/D walks around the hull, W jumps off, and the
+    /// body circle and moves with it — A/D walks around the hull, Space jumps off, and the
     /// monster's shake-off thrash flings the rider (see TickTitanRiding).</summary>
     private bool _riding;
     private float _rideAngle;
