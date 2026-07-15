@@ -1225,8 +1225,10 @@ public sealed class Particles
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
                 Velocity = vel,
-                Life = 0.55f + (float)_rng.NextDouble() * 0.4f - lead,
-                MaxLife = 0.95f,
+                // Longer-lived (was 0.55-0.95): with the launched payload gone, the grains
+                // ARE the flame — they linger, droop with the arc, and burn out slowly.
+                Life = 0.8f + (float)_rng.NextDouble() * 0.55f - lead,
+                MaxLife = 1.35f,
                 Color = tone switch
                 {
                     0 => new Color(255, 250, 200),
