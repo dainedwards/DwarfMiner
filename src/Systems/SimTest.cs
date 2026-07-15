@@ -1508,6 +1508,75 @@ public static class SimTest
             if (x > city.SurfaceRing + 20 && city.Get(x, y) == TileKind.AlienAlloy)
             { towersAboveSurface = true; break; }
         Check("city: towers rise well above the surface", towersAboveSurface);
+
+        // Facade straightness: for the tallest doorway-addressed tower, walk each sampled
+        // storey outward from the spine and record the outer wall face's lateral offset in
+        // world pixels. Machined hulls must hold each edge within ~1.5 tiles over the whole
+        // height — the old floor-based rasterizer re-quantised centre and span per ring and
+        // sawtoothed 2-3 tiles.
+        {
+            var baseR = city.SurfaceRing + 1;
+            var floorEvery = (int)(4 * Planet.LegacyTileScale);
+
+            // Lateral offset (px) of the outer face of the wall band in direction dir, or
+            // null when the walk finds no wall (past the roof / not a tower row).
+            float? EdgeLat(int r, float bearing, int dir)
+            {
+                var n = city.TilesAt(r);
+                var chordAng = MathHelper.TwoPi / n;
+                var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
+                var tC = ((int)MathF.Round(bearing / chordAng - 0.5f) % n + n) % n;
+                var inWall = false;
+                var edge = float.NaN;
+                for (var step = 0; step <= 24; step++)
+                {
+                    var t = ((tC + dir * step) % n + n) % n;
+                    var k = city.Get(r, t);
+                    var engineered = k is TileKind.AlienAlloy or TileKind.CityGlass;
+                    if (engineered)
+                    {
+                        inWall = true;
+                        edge = MathHelper.WrapAngle((t + 0.5f) * chordAng - bearing) * ringRadius;
+                    }
+                    else if (inWall) break;   // walked out the far side of the wall band
+                }
+                return inWall ? MathF.Abs(edge) : null;
+            }
+
+            var bestSamples = 0;
+            var bestDev = float.MaxValue;
+            foreach (var (rd, td) in city.CitySpawns)
+            {
+                if (rd != baseR + 1) continue;   // doorway addresses only — one per tower
+                var bearing = (td + 0.5f) / city.TilesAt(rd) * MathHelper.TwoPi;
+                var devMax = 0f;
+                var samples = 0;
+                float firstR = float.NaN, firstL = float.NaN;
+                float minR = float.MaxValue, maxR = float.MinValue;
+                float minL = float.MaxValue, maxL = float.MinValue;
+                for (var r = baseR + 6; r < baseR + 120; r++)
+                {
+                    var storey = r - baseR;
+                    if (storey % floorEvery < 2) continue;   // slab-ledge rows: wider by design
+                    var latR = EdgeLat(r, bearing, +1);
+                    var latL = EdgeLat(r, bearing, -1);
+                    if (latR is null || latL is null) break;             // above the roof
+                    if (float.IsNaN(firstR)) { firstR = latR.Value; firstL = latL.Value; }
+                    // Rooftop furniture (stepped crown, dome shell) is much narrower than
+                    // the hull on purpose — stop sampling when the silhouette steps inward.
+                    if (latR < firstR - 6f || latL < firstL - 6f) break;
+                    minR = MathF.Min(minR, latR.Value); maxR = MathF.Max(maxR, latR.Value);
+                    minL = MathF.Min(minL, latL.Value); maxL = MathF.Max(maxL, latL.Value);
+                    samples++;
+                }
+                if (samples < 10) continue;
+                devMax = MathF.Max(maxR - minR, maxL - minL);
+                if (samples > bestSamples) { bestSamples = samples; bestDev = devMax; }
+            }
+            Check($"city: tower facades run straight ({bestSamples} storeys sampled, "
+                + $"edge wobble {(bestDev == float.MaxValue ? -1 : bestDev):0.0}px)",
+                bestSamples >= 10 && bestDev <= Planet.TileSize * 1.75f);
+        }
         Check($"city: NO lizard warren under the metropolis (brick {cityBrick}, dens {city.LizardDens.Count})",
             cityBrick == 0 && city.LizardDens.Count == 0);
 
