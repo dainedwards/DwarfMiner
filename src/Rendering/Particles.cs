@@ -51,6 +51,10 @@ public struct Particle
     /// "spaghetti" of firing while accelerating). Only honoured while the composite is
     /// live (see Particles.FluidMode); otherwise the grain draws as a normal strand.</summary>
     public byte Fluid;
+    /// <summary>Burn fuse handed to the stamped Fire cell when this grain lands (see
+    /// Cells.StampAtWorld) — the flamethrower's long-burning ground fire. 0 = normal
+    /// short-lived flame. Meaningless for non-Fire LandMat.</summary>
+    public byte LandFuse;
 }
 
 /// <summary>
@@ -120,7 +124,7 @@ public sealed class Particles
                     // (a landed cinder becomes real fire). Once only.
                     if (p.LandMat != 0 && cells != null)
                     {
-                        cells.StampAtWorld(p.Position, (Material)p.LandMat);
+                        cells.StampAtWorld(p.Position, (Material)p.LandMat, p.LandFuse);
                         p.LandMat = 0;
                     }
                     // Touchdown splash: a pinch of sparks in the lander's own colour,
@@ -1327,6 +1331,11 @@ public sealed class Particles
                 LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
                 LightColor = new Color(255, 170, 70),
                 LandMat = CellFx && _rng.Next(2) == 0 ? (byte)Material.Fire : (byte)0,
+                // Long-burning ground fire: the stamped flame carries a ~3s burn fuse
+                // (60 × ~3 ticks) before normal guttering — it stands and burns even on
+                // bare rock, it just can't spread there (charring stays flammability-
+                // gated). Fuse varies a little so a burn line dies out raggedly.
+                LandFuse = (byte)(50 + _rng.Next(30)),
                 LandSparks = true,
                 SmearMax = smearCap,
                 SmearScale = 2f,
