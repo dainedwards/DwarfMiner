@@ -1279,8 +1279,9 @@ public sealed class Particles
     public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach)
     {
         var jetSpeed = reach * 2.6f;
-        // Many TINY droplets — a granular liquid rope, not fat green puffs.
-        for (var i = 0; i < 14; i++)
+        // Many TINY droplets — a granular liquid rope, not fat green puffs. Lights on the
+        // bright leading droplets only (see EmitFlameJet).
+        for (var i = 0; i < 22; i++)
         {
             // Caustic rope — droplets COLLIDE with tiles and fall on the SAME arc as the acid
             // cells, so the visible spray lands exactly where the corrosive payload pools.
@@ -1294,19 +1295,19 @@ public sealed class Particles
                 Velocity = d * (jetSpeed * (0.75f + (float)_rng.NextDouble() * 0.5f)),
                 Life = 0.18f + (float)_rng.NextDouble() * 0.2f,
                 MaxLife = 0.4f,
-                Color = i < 5 ? new Color(210, 255, 130) : new Color(120, 220, 60),
+                Color = i < 7 ? new Color(210, 255, 130) : new Color(120, 220, 60),
                 FadeColor = new Color(40, 90, 25),
-                Size = i < 5 ? 0.8f : 0.9f + (float)_rng.NextDouble() * 0.5f,
+                Size = i < 7 ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
                 GravityScale = HoseArcGravity,   // same arc as the acid cells
                 Drag = 1.0f,
                 CollideTiles = true,
-                LightRadius = i < 5 ? 16f : 7f,
+                LightRadius = i < 7 ? 16f : i % 3 == 0 ? 7f : 0f,
                 LightColor = new Color(150, 240, 80),
             });
         }
-        // A couple of caustic vapour wisps riding the rope FROM THE MUZZLE (never seeded
+        // A few caustic vapour wisps riding the rope FROM THE MUZZLE (never seeded
         // mid-air along the stream — that materialised droplets in space that fell like rain).
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 3; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
             var c = MathF.Cos(spread);
@@ -1320,7 +1321,7 @@ public sealed class Particles
                 MaxLife = 0.65f,
                 Color = new Color(90, 150, 55),
                 FadeColor = new Color(30, 55, 25),
-                Size = 1.1f + (float)_rng.NextDouble() * 0.5f,
+                Size = 0.9f + (float)_rng.NextDouble() * 0.4f,
                 GravityScale = HoseArcGravity * 0.8f,   // rides (nearly) the rope's own arc
                 Drag = 1.6f,
                 CollideTiles = true,
