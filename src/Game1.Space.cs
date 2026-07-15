@@ -672,6 +672,10 @@ public sealed partial class DwarfMinerGame
 
         // Start the nearest world building now, during the rest of boot — by the time the
         // player has oriented and burned back across the park distance, entry is instant.
+        // Not under DM_AUTOSTART: that hook builds its own target synchronously at this
+        // very moment, and a parallel bake of a world the tester will never visit just
+        // slows the load it's racing (both showed up interleaved in the [load] log).
+        if (Environment.GetEnvironmentVariable("DM_AUTOSTART") is { Length: > 0 }) return;
         var (nearP, _) = _space.NearestPlanet();
         if (nearP is not null) EnsurePrefetch(nearP.Def);
     }
