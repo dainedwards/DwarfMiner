@@ -107,7 +107,7 @@ public sealed class Player
     public bool JetTier3;
     public bool JetTier4;
     public float JetCharge = JetChargeMax;
-    public const float JetChargeMax = 0.75f;  // seconds of burn (tier I) — short pop
+    public const float JetChargeMax = 1.0f;   // seconds of burn (tier I) — a one-second lift
     public float JetChargeCap => JetTier4 ? 5f : JetTier3 ? 3f : JetTier2 ? 2f : JetChargeMax;
     /// <summary>1-4 while owned (drives the exhaust flame colour: red→orange→yellow→blue),
     /// 0 without the pack.</summary>
