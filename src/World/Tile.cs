@@ -218,6 +218,7 @@ public static class Tiles
         TileKind.TreeCanopy => 1,
         TileKind.TreeCanopy2 => 1,
         TileKind.SeaFrond => 1,
+        TileKind.LilyPad => 1,
         TileKind.TreeRoot => 3,        // grubbing a root out takes real digging (kills regrowth)
         _ => 0,
     };
