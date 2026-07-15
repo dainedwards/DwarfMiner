@@ -277,6 +277,7 @@ public static class Tiles
         TileKind.TreeCanopy => new Color(78, 150, 130),   // teal foliage
         TileKind.TreeCanopy2 => new Color(150, 120, 190), // violet foliage
         TileKind.SeaFrond => new Color(70, 160, 140),
+        TileKind.LilyPad => new Color(88, 178, 120),      // alien pad-green afloat on the lake
         TileKind.TreeRoot => new Color(74, 54, 60),       // dark woody root in the soil
         TileKind.Chest => new Color(150, 100, 52),        // banded wood + brass treasure chest
         TileKind.ChestOpen => new Color(96, 66, 40),      // looted, lid thrown back
