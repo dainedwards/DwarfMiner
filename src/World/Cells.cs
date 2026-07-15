@@ -1994,14 +1994,13 @@ public sealed class Cells
             fuelled = true;
             if (below) burningFloor = true;
             // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke.
-            // CHARRING IS CONSUMPTION, and it's deliberately SLOW (base 110, floor 55 —
-            // the 2× floor bias keeps down-consumption pacing up-consumption despite fire
-            // piling against ceilings): the target contract is that a small tree is
-            // engulfed — every tile wreathed in flame via BUDDING below — well before
-            // the first-lit part burns through. Spread lives in the flames; charring is
-            // just the fuel slowly giving out underneath them.
-            if (_rng.Next(below ? 55 : 110) != 0) return;
-            if (!SpendFire()) return;
+            // The roll is RESPONSIVE (40, floor-biased 20) but the actual consumption
+            // pace is governed by the dedicated char budget below — population-
+            // independent, ~2.5 tiles/s planet-wide — so an engulfed tree burns as a
+            // standing bonfire and only gradually gives out underneath, first-lit tile
+            // included. The 2× floor bias keeps down-consumption pacing up-consumption.
+            if (_rng.Next(below ? 20 : 40) != 0) return;
+            if (!SpendChar()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
             Planet.TakeGem(tx, ty);
