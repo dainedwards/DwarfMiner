@@ -6092,6 +6092,20 @@ public sealed partial class DwarfMinerGame : Game
 
         _renderer.EndEntities();
 
+        // Pixel-grid pipeline: the finished world layer reaches the scene in ONE integer
+        // point-sampled upscale, then the camera returns to native so the lighting pass
+        // composites smooth light over the quantised world at full resolution.
+        if (_pixelK > 0)
+        {
+            GraphicsDevice.SetRenderTarget(_sceneRt);
+            _camera.ViewportSize = new Point(VirtualWidth, VirtualHeight);
+            _camera.Zoom = _pixelK * 2f;
+            _renderer.Batch.Begin(samplerState: SamplerState.PointClamp);
+            _renderer.Batch.Draw(_worldRt, new Rectangle(0, 0,
+                _worldRt!.Width * _pixelK, _worldRt.Height * _pixelK), Color.White);
+            _renderer.Batch.End();
+        }
+
         // === Lighting pass: Terraria-style propagated light. The grid samples occlusion
         // and sunlight from the planet (open sky = full daylight, bleeding a few tiles
         // into cave mouths before rock eats it), every AddLight below seeds it, and the
