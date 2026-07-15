@@ -2046,7 +2046,9 @@ public sealed class Cells
         // ~0.8s before dying (was ~0.27s) — flame dropped on bare rock visibly burns as a
         // fire for a beat instead of blinking out, per user. Spread stays budget-gated, so
         // longer-lived starved flame can't creep further, it just LOOKS alive longer.
-        else if (_rng.Next(fuelled ? 56 : 48) == 0)
+        // Fuelled flame lives ~2.2s (was ~0.9): the front PERSISTS — the first-lit part
+        // of a tree is still flaming when the engulfment reaches the last part.
+        else if (_rng.Next(fuelled ? 130 : 48) == 0)
         {
             _mat[i] = _rng.Next(2) == 0 ? (byte)Material.Smoke : (byte)0;
             _srcTile[i] = 0;
