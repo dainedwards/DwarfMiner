@@ -2332,6 +2332,8 @@ public sealed partial class DwarfMinerGame : Game
         _run.HasCannon = true;
         p.PickaxeTier = 4;
         p.ScannerTier = 4;
+        if (p.Inventory.Count("scanner") == 0) p.Inventory.Add("scanner", 1);
+        p.Toolbelt.AutoEquip("scanner");
         p.LightTier = 4;
         p.HeadlampTier = 4;
         p.HasJetpack = p.JetTier2 = p.JetTier3 = p.JetTier4 = true;
