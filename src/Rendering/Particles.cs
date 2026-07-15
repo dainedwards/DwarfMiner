@@ -1384,8 +1384,8 @@ public sealed class Particles
                         MaxLife = 0.06f,
                         Color = new Color(190, 180, 255),
                         FadeColor = new Color(70, 50, 140),
-                        Size = 1f,
-                        LightRadius = 6f,
+                        Size = 0.8f,
+                        LightRadius = bi == 1 ? 6f : 0f,
                         LightColor = new Color(160, 140, 255),
                     });
                 }
