@@ -1188,11 +1188,11 @@ public sealed class Particles
 
     public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach)
     {
-        // Flow speed EXACTLY matches Game1's payload launch (reach*1.7): any gap between
+        // Flow speed EXACTLY matches Game1's payload launch (reach*1.35): any gap between
         // the two puts the landing fire beyond (or short of) the visible tongue tip — the
-        // "mismatch" read. Still ~35% slower than the original 2.6 spray; grain lives are
+        // "mismatch" read. Roughly half the original 2.6 spray speed; grain lives are
         // sized so travel ≈ reach at every hold length.
-        var jetSpeed = reach * 1.7f;
+        var jetSpeed = reach * 1.35f;
         // Many TINY grains rather than a few fat blobs — the stream reads as granular burning
         // fluid (Noita's pixel-fire) instead of soft puffballs. Grain colours pick from a
         // FOUR-TONE fire ramp (white-yellow → gold → orange → red-orange) so the stream body
