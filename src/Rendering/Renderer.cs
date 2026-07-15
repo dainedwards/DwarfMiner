@@ -176,6 +176,16 @@ public sealed class Renderer
     private static bool IsEngineered(TileKind k) =>
         k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick;
 
+    /// <summary>Tile kinds that ride a skyscraper's facade lattice at draw time (see
+    /// Planet.FacadeSnapAngle): the machined hull kinds plus the tower fittings — doors,
+    /// the ladder spine, apartment furniture, the mast beacon. Anything else inside a
+    /// tower footprint (stamped debris, player blocks) keeps its true grid position.</summary>
+    private static bool SnapsToFacade(TileKind k) =>
+        IsEngineered(k)
+        || k is TileKind.DoorClosed or TileKind.DoorOpen or TileKind.Ladder
+             or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp
+             or TileKind.Beacon;
+
     public Texture2D Pixel => _pixel;
     public SpriteBatch Batch => _sb;
 
