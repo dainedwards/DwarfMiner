@@ -1656,7 +1656,10 @@ public sealed class Cells
 
         var i = Idx(cx, cy);
         _mat[i] = (byte)Material.Gravel;
-        _srcTile[i] = 0;
+        // The crust remembers what it is: quench rubble carries the LavaRock source tag,
+        // so it draws as dark fresh-cooled rock and — once it settles and compacts —
+        // HARDENS into solid LavaRock tiles instead of pale gravel (see MajorityKind).
+        _srcTile[i] = (byte)TileKind.LavaRock;
         ClearKinetics(i);
         Enqueue(i);
         WakeNeighbors(cx, cy);
