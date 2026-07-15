@@ -117,6 +117,17 @@ public static class Crafting
         new("door", "Door (2×) — pops open and shut (E to use)",
             new Dictionary<string, int> { ["stone"] = 3, ["iron"] = 1 }),
 
+        // ─── Base-building blocks (Terraria-lite) ─────────────────────────────
+        // Neat crafted tiles for making proper bases — tidier than raw mined rock.
+        new("brick", "Brick (4×) — tidy stone masonry",
+            new Dictionary<string, int> { ["stone"] = 2 }),
+        new("plating", "Iron plating (4×) — sturdy metal wall",
+            new Dictionary<string, int> { ["iron"] = 1, ["stone"] = 2 }),
+        new("glass_block", "Glass block (4×) — a clear window pane",
+            new Dictionary<string, int> { ["gravel"] = 3 }),
+        new("platform", "Platform (6×) — stand on top, jump up through",
+            new Dictionary<string, int> { ["stone"] = 1 }),
+
         // ─── Combat ───────────────────────────────────────────────────────────
         new("armor", "Iron plate armor — chest (−40% damage taken)",
             new Dictionary<string, int> { ["iron"] = 8 }),
