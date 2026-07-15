@@ -1303,32 +1303,39 @@ public static class SimTest
             }
         foreach (var (x, y) in nub) physics.MarkDirty(x, y);
 
-        // Cave-ins are QUAKE-driven now: breaking rock apart never condemns undercut
-        // underground regions on its own — the island must keep hanging through the
-        // ordinary settle passes the dirty marks trigger.
+        // Breaking rock apart never condemns undercut underground regions — the island
+        // must keep hanging through the ordinary settle passes the dirty marks trigger.
         for (var i = 0; i < 20; i++) physics.Update(dt);
         Check("cave-in: undercut rock hangs on break (no condemn without a quake)",
             physics.TremblingTiles.Count == 0
             && island.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
 
-        // The earthquake is what brings it down: strike the island's pocket and the
-        // condemnation (tremble window → creak + HUD banner) must fire.
+        // A quake shakes a few DISCRETE chunks loose (size-rolled: single blocks common,
+        // slabs rare) — it does NOT condemn the hanging region wholesale. Roof probes are
+        // random, so give the strike a few tries to connect.
         var epi = planet.TileToWorld(ring + 1, Ti(ring + 1, af, islandW / 2));
-        physics.Earthquake(epi, 220f, 2);
-        Check("cave-in: the quake condemns it into the tremble window",
-            physics.TremblingTiles.Count > 0);
-        Check("cave-in: condemned rock still stands during the warning window",
-            island.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
+        var shaken = 0;
+        for (var q = 0; q < 40 && shaken == 0; q++)
+        {
+            physics.Earthquake(epi, 80f, 2);
+            shaken = physics.TremblingTiles.Count;
+        }
+        Check($"cave-in: a quake shakes a few chunks loose ({shaken} tiles condemned)",
+            shaken is > 0 and < 150);
 
-        // Run past the tremble + ring cascade; the island must crumble away to cells.
+        // The chunks crumble after their tremble — and the island as a whole survives:
+        // a quake rattles rocks out of the roof, it doesn't demolish the roof.
         var crumbled = false;
         for (var i = 0; i < 120; i++)
         {
             physics.Update(dt);
             if (physics.CollapsesThisTick > 0) crumbled = true;
         }
-        Check("cave-in: condemned rock crumbles after the warning window",
-            crumbled && island.TrueForAll(t => !Tiles.IsSolid(planet.Get(t.x, t.y))));
+        var solidLeft = 0;
+        foreach (var (x, y) in island) if (Tiles.IsSolid(planet.Get(x, y))) solidLeft++;
+        Check("cave-in: shaken chunks fall after the warning window", crumbled);
+        Check($"cave-in: the quake does NOT bring everything down ({solidLeft}/{island.Count} island tiles stand)",
+            solidLeft > island.Count / 3);
         Check("cave-in: sub-threshold cluster floats instead of dusting",
             nub.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
     }
