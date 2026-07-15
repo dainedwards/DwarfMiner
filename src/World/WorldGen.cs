@@ -43,10 +43,16 @@ public static class WorldGen
         };
         var rng = new Random(seed);
 
-        // Subtle surface elevation noise — kept very low so the planet reads as a smooth
-        // round circle except where mountain spikes rise. The ridge channel is much finer
-        // (≈0.7° per sample) and crags the mountain profiles below.
+        // Surface elevation noise. surfA is the old broad, subtle channel; surfB is the
+        // ROLLING-HILL channel (Noita-style worldgen relief): ~5–11° swells of ±3-4 legacy
+        // tiles, in real tiles, so flat runs become gently rolling ground that the sim,
+        // collision and sand all agree on — the organic large-scale shape the edge shader's
+        // 1-px carve budget can't provide. Downward-biased like the asteroid lumps (valleys
+        // have the whole crust below; crests share the fixed sky headroom with mountains).
+        // NOTE: the extra noise draw shifts every downstream roll — same-seed worlds lay
+        // out differently than before this change (no cross-version seed promise exists).
         var surfA = MakeAngularNoise(rng, 8);
+        var surfB = MakeAngularNoise(rng, 64);
         var surfC = MakeAngularNoise(rng, 128);
         var ridge = MakeAngularNoise(rng, 512);
 
