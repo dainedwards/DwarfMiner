@@ -1362,12 +1362,20 @@ public sealed partial class DwarfMinerGame : Game
         });
     }
 
+    /// <summary>Fixed-step catch-up diagnostics: updates MonoGame ran since the last drawn
+    /// frame, and whether the loop reported falling behind. 2+ updates per draw sustained =
+    /// the catch-up spiral — FPS collapses while the per-call CPU timers still look cheap.</summary>
+    private int _updatesSinceDraw, _updatesPerDrawMax;
+    private bool _runningSlowly;
+
     protected override void Update(GameTime gameTime)
     {
         _updSw.Restart();
         UpdateFrame(gameTime);
         _updSw.Stop();
         _updateMs = _updateMs * 0.9f + (float)_updSw.Elapsed.TotalMilliseconds * 0.1f;
+        _updatesSinceDraw++;
+        if (gameTime.IsRunningSlowly) _runningSlowly = true;
     }
 
     private void UpdateFrame(GameTime gameTime)
