@@ -3973,8 +3973,34 @@ public static class SimTest
         Console.WriteLine($"  [{(ok ? "PASS" : "FAIL")}] {name}{(detail.Length > 0 ? $" ({detail})" : "")}");
     }
 
+    /// <summary>Spawn point for a FEATURE-TEST subject: on the surface at this bearing,
+    /// guaranteed floating in open air with body clearance. New feature tests must place
+    /// their subjects through THIS (or carve their own verified pocket) — spawning at a
+    /// raw tile centre or a probed underground point starts the body embedded in rock,
+    /// and the test then measures the unstick physics instead of the feature.
+    /// <paramref name="clearance"/> is the subject's radius (default covers creatures).</summary>
+    internal static Vector2 SurfaceSpawnAbove(Planet planet, float angle, float clearance = 6f)
+    {
+        var pos = SpawnDirector.FindSurfaceSpawn(planet, angle, planet.Radius);
+        var up = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+        // Lift until the whole body circle is clear of ground — cheap probe ring.
+        for (var lift = 0; lift < 40; lift++)
+        {
+            var clear = !planet.IsSolidAt(pos)
+                && !planet.IsSolidAt(pos + new Vector2(clearance, 0))
+                && !planet.IsSolidAt(pos - new Vector2(clearance, 0))
+                && !planet.IsSolidAt(pos + new Vector2(0, clearance))
+                && !planet.IsSolidAt(pos - new Vector2(0, clearance));
+            if (clear) break;
+            pos += up * 2f;
+        }
+        return pos;
+    }
+
     /// <summary>Deterministic hunt for a cave tile (Sky with rock wall behind it) in the
-    /// mid-depth band, away from the lava zone.</summary>
+    /// mid-depth band, away from the lava zone. For collision/digging tests that NEED a
+    /// cave; feature tests should use <see cref="SurfaceSpawnAbove"/> instead — a 4-px
+    /// tile centre can't clear a body radius and the subject starts embedded.</summary>
     private static Vector2? FindCavePos(Planet planet, int seedOffset)
     {
         var rng = new Random(1000 + seedOffset);
