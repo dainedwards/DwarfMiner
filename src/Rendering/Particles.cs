@@ -41,6 +41,9 @@ public struct Particle
     /// One-shot (cleared after the burst); the spawned sparks never carry the flag, so a
     /// splash can't cascade.</summary>
     public bool LandSparks;
+    /// <summary>Multiplier on the motion-smear length (0 = 1×). The hoses use 2× so their
+    /// strands read as long ribbons without touching the shared smear factor.</summary>
+    public float SmearScale;
 }
 
 /// <summary>
@@ -210,7 +213,7 @@ public sealed class Particles
             if (sp2 > 3600f)
             {
                 var len = MathF.Min(p.SmearMax > 0f ? p.SmearMax : s * 16f,
-                    MathF.Sqrt(sp2) * 0.045f);
+                    MathF.Sqrt(sp2) * 0.045f * (p.SmearScale > 0f ? p.SmearScale : 1f));
                 if (len > s)
                 {
                     r.DrawRect(p.Position, new Vector2(len, s), c,
@@ -1248,16 +1251,19 @@ public sealed class Particles
         var jetSpeed = reach * 1.35f;
         // Hose cone — tightened 40% per user (round 23).
         const float coneArc = 0.041f;
-        // The hoses' PRIVATE smear cap: equals today's shared-default look (16 × 0.55px),
-        // frozen here so it's now hose-owned.
-        const float hoseSmear = 8.8f;
-        for (var i = 0; i < 22; i++)
+        // The hoses' PRIVATE smear: cap and 2× length scale (strands read as long ribbons).
+        const float hoseSmear = 17.6f;
+        // 8 grains EVERY FRAME (the hoses fire per-frame now, ShootCooldown 0): emission
+        // is naturally continuous — grains sit ~4 px apart along the stream at full speed
+        // — so the old de-pulse lead machinery is gone, waves can't form even while the
+        // player runs and fires, and every grain is BORN AT THE MUZZLE.
+        for (var i = 0; i < 8; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            var hot = i < 7;
+            var hot = i < 3;
             var tone = tones[hot ? _rng.Next(hotTones) : _rng.Next(tones.Length)];
             // Speed band ±10.5% (was ±15%): this is what governs the LANDING scatter —
             // ballistic range scales with speed², so the band is the falloff spread at
@@ -1267,21 +1273,11 @@ public sealed class Particles
             // skyward stream rocketed unnaturally compared to every other flying thing.
             var outward = Vector2.Dot(vel, up);
             if (outward > 170f) vel -= up * (outward - 170f);
-            // De-pulse: every grain starts with a random fraction of one puff interval
-            // already travelled, so consecutive puffs interleave into one continuous flow
-            // instead of reading as discrete waves marching down the stream. The position
-            // advance is CAPPED at 6 px: uncapped it scaled with the ramping stream speed
-            // (vel×lead ≈ 15 px at full hold), so the visible stream detached from the gun
-            // as it ramped up. The temporal stagger (Life −= lead) keeps its full range.
-            var lead = (float)_rng.NextDouble() * 0.06f;
-            var adv = vel * lead;
-            var advSq = adv.LengthSquared();
-            if (advSq > 36f) adv *= 6f / MathF.Sqrt(advSq);
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 1.5f + adv,
+                Position = pos + d * (float)_rng.NextDouble() * 1.5f,
                 Velocity = vel,
-                Life = 0.8f + (float)_rng.NextDouble() * 0.55f - lead,
+                Life = 0.8f + (float)_rng.NextDouble() * 0.55f,
                 MaxLife = 1.35f,
                 Color = tone,
                 FadeColor = fade,
@@ -1294,6 +1290,7 @@ public sealed class Particles
                 LandMat = CellFx ? (byte)landMat : (byte)0,
                 LandSparks = true,
                 SmearMax = hoseSmear,
+                SmearScale = 2f,
             });
         }
     }
@@ -1306,7 +1303,8 @@ public sealed class Particles
         var jetSpeed = reach * 1.35f;
         // Sooty flecks shed along the tongue — they inherit the arc, then buoy upward as they
         // cool (weak net gravity), so spent flame rolls off the stream like Noita's smoke.
-        for (var i = 0; i < 6; i++)
+        // (Counts here are PER FRAME now — the hoses fire every frame.)
+        for (var i = 0; i < 2; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.3f;
             var c = MathF.Cos(spread);
@@ -1327,7 +1325,9 @@ public sealed class Particles
             });
         }
         // Hero flicker riding a third of the way down the tongue: the shadow-casting part
-        // of the fire, jittered per puff so the whole cave breathes with the hose.
+        // of the fire, jittered so the whole cave breathes with the hose. Gated to every
+        // 3rd frame — per-frame hero lights would triple the ray-cast budget.
+        if (_rng.Next(3) != 0) return;
         _list.Add(new Particle
         {
             Position = pos + dir * (reach * (0.3f + (float)_rng.NextDouble() * 0.25f)),
@@ -1448,9 +1448,10 @@ public sealed class Particles
             fade: new Color(40, 90, 25), landMat: Material.Acid,
             lightColor: new Color(150, 240, 80), hotLight: 16f, bodyLight: 7f, drag: 1.0f);
         var jetSpeed = reach * 1.35f;
-        // A few caustic vapour wisps riding the rope FROM THE MUZZLE (never seeded
-        // mid-air along the stream — that materialised droplets in space that fell like rain).
-        for (var i = 0; i < 3; i++)
+        // A caustic vapour wisp riding the rope FROM THE MUZZLE (never seeded mid-air
+        // along the stream — that materialised droplets in space that fell like rain).
+        // Per-frame emission now, so one wisp per frame matches the old 3-per-puff rate.
+        for (var i = 0; i < 1; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
             var c = MathF.Cos(spread);

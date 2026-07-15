@@ -172,7 +172,7 @@ public sealed partial class DwarfMinerGame : Game
     /// longer it's held; a gap in firing resets it. Shared by both hoses (only one fires at once).</summary>
     private float _streamHold;
     private float _streamLast;
-    private const float StreamHoldMax = 0.245f;  // reaches full length fast — a quick throttle-up
+    private const float StreamHoldMax = 0.735f;  // REAL seconds now: StreamReach adds _frameDt per call and hoses fire per-frame — 0.245 at the old every-3rd-frame cadence = this
     private readonly bool _bossCam = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 };
     private readonly bool _rigidDbg = Environment.GetEnvironmentVariable("DM_RIGIDDBG") is { Length: > 0 };
     private int _prevRigidCount;
@@ -3733,7 +3733,7 @@ public sealed partial class DwarfMinerGame : Game
             if (Vector2.Dot(to / dist, dir) < 0.9f) continue;
             if (c.ImmuneTo(Material.Fire)) continue;
             c.BurnSeconds = MathF.Max(c.BurnSeconds, 3f);
-            c.Health -= 42f * _frameDt;
+            c.Health -= 14f * _frameDt;
             c.HitFlash = 0.1f;
         }
         // The hose roasts titans too — except the fire-blooded (Godzilla's breath, the
@@ -3745,11 +3745,11 @@ public sealed partial class DwarfMinerGame : Game
             var dist = to.Length();
             if (dist is > 1f && dist < reach + 24f && Vector2.Dot(to / dist, dir) > 0.8f)
             {
-                _run.Titan.Health -= 62f * _frameDt;
+                _run.Titan.Health -= 21f * _frameDt;
                 _run.Titan.HitFlash = 0.1f;
             }
         }
-        _run.Player.ShootCooldown = 0.05f;
+        _run.Player.ShootCooldown = 0f;   // per-frame: the stream is continuous, damage is dt-scaled /3 to hold the old dps
     }
 
     /// <summary>Acid spewer: sprays REAL Acid cells that pool where they land and eat
@@ -3775,7 +3775,7 @@ public sealed partial class DwarfMinerGame : Game
             if (dist > reach + 10f || dist < 1f) continue;
             if (Vector2.Dot(to / dist, dir) < 0.9f) continue;
             if (c.ImmuneTo(Material.Acid)) continue;
-            c.Health -= 50f * _frameDt;
+            c.Health -= 17f * _frameDt;
             c.HitFlash = 0.1f;
         }
         // Caustic against titans too — except the acid-blooded (Otachi's spit, the
@@ -3787,11 +3787,11 @@ public sealed partial class DwarfMinerGame : Game
             var dist = to.Length();
             if (dist is > 1f && dist < reach + 22f && Vector2.Dot(to / dist, dir) > 0.8f)
             {
-                _run.Titan.Health -= 70f * _frameDt;
+                _run.Titan.Health -= 23f * _frameDt;
                 _run.Titan.HitFlash = 0.1f;
             }
         }
-        _run.Player.ShootCooldown = 0.05f;
+        _run.Player.ShootCooldown = 0f;   // per-frame: the stream is continuous, damage is dt-scaled /3 to hold the old dps
     }
 
     /// <summary>Lightning gun: instant chain arc. The bolt seeks the closest creature (or
