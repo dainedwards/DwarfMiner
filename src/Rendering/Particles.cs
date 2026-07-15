@@ -368,7 +368,7 @@ public sealed class Particles
             case ProjectileKind.Pistol:
             case ProjectileKind.MachineGun:
             case ProjectileKind.CannonSilver:   // silver shells leave a small spark trail too
-                for (var i = 0; i < 4; i++)
+                for (var i = 0; i < 8; i++)
                 {
                     var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
                     var col = kind == ProjectileKind.CannonSilver
@@ -385,10 +385,10 @@ public sealed class Particles
                         MaxLife = 0.35f,
                         Color = col,
                         FadeColor = fade,
-                        Size = 1f,
+                        Size = 0.8f,
                         GravityScale = 0.3f,
                         Drag = 2f,
-                        LightRadius = 4f,
+                        LightRadius = i % 2 == 0 ? 4f : 0f,
                         LightColor = col,
                     });
                 }
