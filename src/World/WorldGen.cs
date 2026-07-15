@@ -471,11 +471,16 @@ public static class WorldGen
                     // fresh dry cave tiles down there would otherwise all roll gas seeds,
                     // and wandering gas is exactly the kind of never-sleeping cell load the
                     // strata design promises not to add.
-                    // One legacy tile of clearance above the flood: gas stays in its
-                    // authored home hugging the lava (ember's whole gas band lives there —
-                    // a fatter margin left that world with no gas at all), but never in
-                    // CONTACT with it, which ignited pockets during the load settle.
-                    if (!isReservoir && def.SeedsGas && depth > 34f
+                    // Gas lives deep (the classic >34 band) OR in the hot shell just above
+                    // the lava top — the latter is what keeps high-lava worlds gassed at
+                    // all: on ember the flood reaches ~12 legacy tiles below the surface,
+                    // so its ENTIRE deep band is drowned (historically those pockets were
+                    // seeded INTO the lava and burned off during the load settle — churn,
+                    // not gameplay). Either way one legacy tile of clearance above the
+                    // flood, so no pocket is born in contact with the sea.
+                    var gasBand = depth > 34f
+                        || (lavaTopTiles > 0f && depth > 10f && radTiles < lavaTopTiles + 12f * S);
+                    if (!isReservoir && def.SeedsGas && gasBand
                         && radTiles > MathF.Max(seaFloorTiles, lavaTopTiles + S)
                         && SampleNoise(pocketNoise, wx * 0.06f + 21f, wy * 0.06f + 21f) > 0.80f)
                         planet.GasSeeds.Add((r, t));
