@@ -225,6 +225,46 @@ public sealed class RigidBodies
         b.SleepTimer = 0f;
     }
 
+    /// <summary>A titan's kick or fist meeting toppled debris: every body cell inside the
+    /// radius is spilled straight to dust — the monster grinds fallen masonry to powder
+    /// instead of batting it around. What survives is re-surfaced, split, and killed off
+    /// exactly like hazard erosion (<see cref="Erode"/>) so partial hits stay Noita-true.</summary>
+    public void Pulverize(Vector2 pos, float radius)
+    {
+        var rSq = radius * radius;
+        for (var bi = Bodies.Count - 1; bi >= 0; bi--)
+        {
+            var b = Bodies[bi];
+            if ((b.Position - pos).Length() > radius + b.BoundRadius) continue;
+            var removed = false;
+            for (var i = b.Cells.Count - 1; i >= 0; i--)
+            {
+                var wp = b.Position + Rotate(b.Cells[i].Local, b.Angle);
+                if ((wp - pos).LengthSquared() > rSq) continue;
+                var (tx, ty) = _planet.WorldToTile(wp);
+                _cells.SpawnDustFraction(tx, ty, b.Cells[i].Kind, 0.6f);
+                b.Cells.RemoveAt(i);
+                removed = true;
+            }
+            if (!removed) continue;
+            if (b.Cells.Count < 3)
+            {
+                foreach (var c in b.Cells)
+                {
+                    var wp = b.Position + Rotate(c.Local, b.Angle);
+                    var (tx, ty) = _planet.WorldToTile(wp);
+                    _cells.SpawnDustFraction(tx, ty, c.Kind, 0.5f);
+                }
+                b.Dead = true;
+                Bodies.RemoveAt(bi);
+                continue;
+            }
+            RebuildSurface(b);
+            SplitIfDisconnected(b);
+            b.RecomputeMass();
+        }
+    }
+
     private readonly List<int> _detach = new();
 
     /// <summary>
