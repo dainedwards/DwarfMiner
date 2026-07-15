@@ -318,10 +318,16 @@ public sealed class Player
     /// (creature contact, boulder, falling chunk, sentry friendly-fire, boss attacks) honour
     /// armor. God mode (fly) is fully invulnerable — matches its no-collision/no-suffocation
     /// dev-tool intent and lets attacks be observed safely.</summary>
+    /// <summary>Rising when the dwarf is hurt, decaying each frame — Game1 reads it to paint a
+    /// red screen-edge vignette so a hit always registers even when the health bar is off the
+    /// eye's focus. Set by TakeDamage and by the burning hazards (lava/fire) directly.</summary>
+    public float HurtFlash;
+
     public void TakeDamage(float amount)
     {
         if (FlyMode) return;
         Health -= amount * DamageTakenMultiplier;
+        if (amount > 0f) HurtFlash = MathF.Min(1f, HurtFlash + MathHelper.Clamp(amount / 25f, 0.25f, 1f));
     }
 
     public readonly Inventory Inventory = new();
