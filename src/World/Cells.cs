@@ -768,6 +768,7 @@ public sealed class Cells
                     {
                         var (qx, qy) = WorldToCell(f.Pos);
                         if (!IsBlocked(qx, qy)) Place(qx, qy, Material.Smoke);
+                        QueueBubble(next);   // the gout dies with a burst of bubbles
                         done = true;
                         break;
                     }
