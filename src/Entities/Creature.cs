@@ -464,17 +464,32 @@ public sealed class Creature
         {
             _hazardProbeT += HazardProbePeriod;
             var (lava, acid, _, fire) = cells.SampleHazardsNear(Position, Radius + 1.5f);
+            // Liquid-soak statuses first, so a dip this very probe already protects (wet)
+            // or endangers (oily). Water rinses oil off; water-natives skip wet entirely
+            // (they'd read permanently stained). Same throttled cadence as the hazards.
+            if (!ImmuneTo(Material.Water) && cells.CountWaterNear(Position, Radius + 1.5f) >= 2)
+            {
+                WetSeconds = 3f;
+                OilySeconds = 0f;
+                BurnSeconds = 0f;
+            }
+            else if (cells.CountNear(Position, Radius + 1.5f, Material.Oil) >= 2)
+                OilySeconds = 8f;
             if (lava > 0 && !ImmuneTo(Material.Lava))
             {
                 Health -= LavaDps * HazardProbePeriod;
-                BurnSeconds = MathF.Max(BurnSeconds, 1.5f);
+                // Molten rock doesn't care how wet you are; oil-soak turns it into a pyre.
+                BurnSeconds = MathF.Max(BurnSeconds, OilySeconds > 0f ? 5f : 1.5f);
             }
             if (acid > 0 && !ImmuneTo(Material.Acid))
                 Health -= AcidDps * HazardProbePeriod;
             if (fire > 0 && !ImmuneTo(Material.Fire))
             {
-                Health -= FireDps * HazardProbePeriod;
-                BurnSeconds = MathF.Max(BurnSeconds, 1.5f);
+                // Soaked hide shrugs half the sting and refuses to catch; an oily one goes
+                // up like a wick.
+                Health -= FireDps * HazardProbePeriod * (WetSeconds > 0f ? 0.5f : 1f);
+                if (WetSeconds <= 0f)
+                    BurnSeconds = MathF.Max(BurnSeconds, OilySeconds > 0f ? 5f : 1.5f);
             }
         }
 
