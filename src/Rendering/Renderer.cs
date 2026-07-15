@@ -484,6 +484,23 @@ public sealed class Renderer
                     Math.Clamp(col.G + jitter / 4, 0, 255),
                     Math.Clamp(col.B + jitter / 4, 0, 255));
 
+                // Damp ground: a tile with water resting on its outer face draws darkened
+                // and cooled — rain-wet earth reads wet, shorelines ring their pools, and it
+                // dries the instant the water evaporates. Pure draw-time probe of the cell
+                // grid (two Gets on the face-adjacent cell row), no state anywhere.
+                if (WorldCells is { } wcells && !lowDetail)
+                {
+                    var wcy = (r + 1) * Cells.Density;
+                    if (wcy < wcells.Height)
+                    {
+                        var wcx = (int)(angle / MathHelper.TwoPi * wcells.CellsAt(wcy));
+                        if (wcells.Get(wcx, wcy) == Material.Water
+                            || wcells.Get(wcx + 1, wcy) == Material.Water)
+                            col = new Color((int)(col.R * 0.72f), (int)(col.G * 0.78f),
+                                (int)(col.B * 0.92f));
+                    }
+                }
+
                 // Low-detail: the jittered base colour IS the tile at this scale.
                 if (lowDetail)
                 {
