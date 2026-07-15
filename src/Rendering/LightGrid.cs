@@ -55,10 +55,13 @@ public sealed class LightGrid
     private int _side;
     private Vector2 _origin;
     private float _cell;
-    /// <summary>Double-buffered upload textures: SetData into a texture the GPU may still
-    /// be sampling from forces a full pipeline sync (the driver waits for the previous
-    /// frame's draws) — alternating two textures keeps the upload stall-free.</summary>
-    private readonly Texture2D?[] _tex = new Texture2D?[2];
+    /// <summary>Ring of upload textures: SetData into a texture the GPU may still be
+    /// sampling forces a full pipeline sync (the driver waits for the previous frame's
+    /// draws). TWO buffers were not enough — at 30 Hz uploads vs 60 Hz sampling the back
+    /// texture was sampled just one display frame ago, so whenever effect load kept the
+    /// GPU a frame behind, the stall came back and vsync-quantized the game to 20 fps
+    /// (the flamethrower collapse). Four deep, the written texture is 3+ frames cold.</summary>
+    private readonly Texture2D?[] _tex = new Texture2D?[4];
     private int _front;
     /// <summary>False on the skipped frames of the 30 Hz cadence — Seed/Propagate/Upload
     /// no-op and the previous texture keeps serving.</summary>
