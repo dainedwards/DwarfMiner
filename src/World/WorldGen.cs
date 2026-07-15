@@ -697,11 +697,12 @@ public static class WorldGen
             // Don't crowd trunks: keep a couple of tiles between neighbours.
             if (lastRing == groundR && Math.Abs(gt - lastT) < 3) continue;
 
-            // Species drives height and silhouette. Tall and thin across the board — even the
-            // "short" broad trees stand several tiles, spires/umbrellas soar, and roughly one in
-            // six of any species is a GIANT (a big height bonus) so the canopy line is ragged
-            // with the occasional towering old-growth alien among the ordinary trees.
-            var species = (byte)rng.Next(4);
+            // Species drives height and silhouette, and is chosen per BIOME so each world type
+            // grows its own kind of tree (frost = spires, verdant = broad/weeping, etc). Tall
+            // and thin across the board — even the "short" broad trees stand several tiles,
+            // spires/umbrellas soar, and roughly one in six of any species is a GIANT (a big
+            // height bonus) so the canopy line is ragged with the odd towering old-growth alien.
+            var species = TreeSpeciesFor(def.Biome, rng);
             var trunkH = species switch
             {
                 0 => 12 + rng.Next(10),  // spire   — the tallest, a thin plume on top
