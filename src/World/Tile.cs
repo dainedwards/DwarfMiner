@@ -137,7 +137,8 @@ public static class Tiles
           or TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
           or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom
           // Tree canopy and water plants are pushed through; the solid trunk is not.
-          or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond;
+          or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond
+          or TileKind.LilyPad;
 
     /// <summary>Tiles that should block-place but allow the player's collision body to pass —
     /// equivalent to "non-solid" for player physics, while staying solid for rendering and
