@@ -435,9 +435,14 @@ public sealed class Cells
     public bool SnowPersists;
 
     /// <summary>Spawn one falling snow cell — the accumulating half of a snowfall (the
-    /// drifting flakes are particles). Piles like sand where it lands.</summary>
+    /// drifting flakes are particles). Piles like sand where it lands. Saturation-capped:
+    /// fresh flakes stop sticking once a blanket ~2 grains deep already lies underneath, so
+    /// even the frost world's endless showers can't bury terrain without limit (rain has
+    /// evaporation as its mass counterweight; lying snow needs this cap instead — and it
+    /// also keeps the blanket too shallow for the compaction sweep to entomb it).</summary>
     public void SpawnSnow(Vector2 worldPos)
     {
+        if (CountNear(worldPos, 8f, Material.Snow) > 20) return;
         var (cx, cy) = WorldToCell(worldPos);
         Place(cx, cy, Material.Snow);
     }
