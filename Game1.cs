@@ -4786,7 +4786,9 @@ public sealed partial class DwarfMinerGame : Game
         {
             GraphicsDevice.SetRenderTarget(_sceneRt);
             DrawFrame(gameTime);
+            var tPresent = FramePerf.Now();
             PresentScene();
+            FramePerf.Add("present", tPresent);
         }
         _drawSw.Stop();
         _drawMs = _drawMs * 0.9f + (float)_drawSw.Elapsed.TotalMilliseconds * 0.1f;
