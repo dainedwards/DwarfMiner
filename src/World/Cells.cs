@@ -898,6 +898,22 @@ public sealed class Cells
             // instead of levelling out like a liquid.
             _velR[i] = 0f;
             _travel[i] = 0f;
+            // Snow off its home world doesn't keep: an exposed resting flake sublimates on a
+            // slow roll (~15s expected), staying awake only while exposed — a buried flake
+            // sleeps like any grain and is re-woken when the layer above it clears. Frost
+            // worlds set SnowPersists, so there drifts lie, bury, and press into Snow tiles
+            // through the ordinary compaction sweep.
+            if ((Material)_mat[i] == Material.Snow && !SnowPersists && ExposedAbove(cx, cy))
+            {
+                if (_rng.Next(900) == 0)
+                {
+                    _mat[i] = 0;
+                    ClearKinetics(i);
+                    WakeNeighbors(cx, cy);
+                    return;
+                }
+                Enqueue(i);
+            }
             var d = _rng.Next(2) == 0 ? 1 : -1;
             if (_rng.Next(100) < SlipChance((Material)_mat[i]) && !IsBlocked(cx + d, cy)
                 && TryMoveTo(cx, cy, icx + d, icy))
