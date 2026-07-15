@@ -336,7 +336,7 @@ public sealed class CharacterScreen
             if (UpgradeInfo?.Invoke(ctx.Id) is { } up)
                 // Always clickable — it opens the upgrade detail so you can SEE the cost even
                 // when you can't yet afford it. "MAXED" upgrades read as disabled.
-                rows.Add(("upgrade", up.label.StartsWith("UPGRADE:") ? "UPGRADE ▸" : up.label,
+                rows.Add(("upgrade", up.label.StartsWith("UPGRADE:") ? "UPGRADE >" : up.label,
                     !up.label.Contains("MAXED")));
             var count = player.Inventory.Count(ctx.Id);
             rows.Add(("drop1", "DROP ONE", count > 0));
