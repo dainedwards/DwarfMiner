@@ -723,7 +723,10 @@ public sealed class Particles
         // Fireball — a cluster of fat white-yellow→orange→red blobs boiling out of the
         // centre. Tinted slightly toward the shell's colour so elemental blasts keep their
         // identity, but the body of every explosion reads as fire.
-        var fireCount = (int)(strength * 0.6f);
+        // Fireball as GRAINS: the old few fat 2.5-5px blobs are now a boiling cloud of
+        // ~1px flecks (3x the count), so the body of the blast reads as granular burning
+        // gas — Noita's pixel-fire — instead of soft puffballs.
+        var fireCount = (int)(strength * 1.8f);
         for (var i = 0; i < fireCount; i++)
         {
             var hot = _rng.Next(3) switch
@@ -741,10 +744,10 @@ public sealed class Particles
                 MaxLife = 0.5f,
                 Color = Color.Lerp(hot, sparkColor, 0.3f),
                 FadeColor = new Color(120, 25, 10),
-                Size = 2.5f + (float)_rng.NextDouble() * 2.5f,
+                Size = 0.9f + (float)_rng.NextDouble() * 0.7f,
                 GravityScale = -0.1f,
                 Drag = 2.5f,
-                LightRadius = 12f,
+                LightRadius = i % 3 == 0 ? 12f : 0f,
                 LightColor = Color.Lerp(hot, sparkColor, 0.3f),
             });
         }
