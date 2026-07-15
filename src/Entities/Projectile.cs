@@ -73,7 +73,7 @@ public sealed class Projectile
     public readonly HashSet<object> HitVictims = new();
 
     /// <summary>Contact explosives (rocket, cannon shells, nuke) blow up on the first body
-    /// they touch. Fuse explosives (dynamite, TNT) tumble past bodies and only explode on
+    /// they touch. Fuse explosives (dynamite) tumble past bodies and only explode on
     /// terrain or fuse-out.</summary>
     public bool DetonatesOnContact => ExplosionRadius > 0f && !ExplodesOnFuse;
 
