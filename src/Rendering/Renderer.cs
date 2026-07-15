@@ -819,15 +819,26 @@ public sealed class Renderer
                     }
                     case TileKind.TreeTrunk:
                     {
-                        // Alien bark: a mauve trunk with darker grain streaks and a paler
-                        // sun-side highlight, filling the tile so a column reads as a solid bole.
+                        // Alien bark: a SLENDER mauve bole — a narrow bar centred in the tile
+                        // (about 3/8 wide) with a darker grain streak and a paler sun-side edge,
+                        // so a column reads as a thin, tall trunk rather than a fat post.
                         var bark = new Color(96, 70, 92);
                         var barkDk = new Color(66, 48, 66);
                         var barkHi = new Color(128, 96, 124);
-                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 6, 8, bark);
-                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 1, 8, barkHi);
-                        DrawDeco(centre, right, up, rotation, chord, 3, 0, 1, 8, barkDk);
-                        DrawDeco(centre, right, up, rotation, chord, 6, 0, 1, 8, barkDk);
+                        DrawDeco(centre, right, up, rotation, chord, 2.5f, 0, 3, 8, bark);
+                        DrawDeco(centre, right, up, rotation, chord, 2.5f, 0, 1, 8, barkHi);
+                        DrawDeco(centre, right, up, rotation, chord, 4.5f, 0, 1, 8, barkDk);
+                        break;
+                    }
+                    case TileKind.TreeRoot:
+                    {
+                        // Underground root: dark woody strands threading down through the soil,
+                        // mostly buried so it only reads where the ground is dug open.
+                        var root = new Color(74, 54, 60);
+                        var rootDk = new Color(52, 38, 44);
+                        DrawDeco(centre, right, up, rotation, chord, 3, 0, 2, 8, root);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 3, 2, 4, rootDk);
+                        DrawDeco(centre, right, up, rotation, chord, 5, 4, 2, 4, rootDk);
                         break;
                     }
                     case TileKind.TreeCanopy:
