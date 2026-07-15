@@ -3337,7 +3337,7 @@ public sealed partial class DwarfMinerGame : Game
             var (ax, ay) = _run.Planet.WorldToTile(anchor);
             if (!Tiles.IsSolid(_run.Planet.Get(ax, ay))) { ReleaseGrapple(); return; }
         }
-        if (Pressed(keys, _prevKeys, Keys.W)) { ReleaseGrapple(); return; }
+        if (Pressed(keys, _prevKeys, Keys.Space)) { ReleaseGrapple(); return; }
         if (p.Toolbelt.Current == "grapple" && mouse.LeftButton == ButtonState.Pressed)
             _ropeLen = MathF.Max(10f, _ropeLen - 130f * dt);
         if (keys.IsKeyDown(Keys.S))
