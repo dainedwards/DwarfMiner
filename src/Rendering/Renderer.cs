@@ -820,6 +820,22 @@ public sealed class Renderer
                         DrawDeco(centre, right, up, rotation, chord, 2, 4, 4, 1, rung);
                         break;
                     }
+                    case TileKind.Rope:
+                    {
+                        // A deployed rope line: one gently swaying strand with a knot at the
+                        // waist — reads as cordage, not woodwork, next to the ladder.
+                        var strand = new Color(196, 160, 96);
+                        var knotC = new Color(150, 118, 66);
+                        var sway = MathF.Sin(Time * 1.3f + (hash & 0xFF) * 0.02f) * 0.9f;
+                        for (var hy = 0; hy < 8; hy++)
+                        {
+                            var fr = hy / 7f;
+                            var bx = 3 + (int)MathF.Round(sway * fr * fr);
+                            DrawDeco(centre, right, up, rotation, chord, bx, hy, 1, 1, strand);
+                        }
+                        DrawDeco(centre, right, up, rotation, chord, 2, 3, 3, 1, knotC);
+                        break;
+                    }
                     case TileKind.Rail:
                     {
                         // Wooden ties under two iron rails. Ties run tangentially; rails are
