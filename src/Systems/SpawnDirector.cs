@@ -338,7 +338,16 @@ public static class SpawnDirector
             var (tx, ty) = planet.WorldToTile(p);
             var k = planet.Get(tx, ty);
             if (Tiles.IsSolid(k) && !Tiles.IsFlora(k))
-                return p - dir * (Planet.TileSize * 1.5f);
+            {
+                // The sample that HIT is up to a whole tile deep in the ground; back out to
+                // the last clear sample and float a body-sized clearance ABOVE it. The old
+                // fixed 1.5-tile lift off the buried sample could return a spot the surface
+                // still clipped — spawned bodies (and simtest subjects) began embedded.
+                p -= dir * Planet.TileSize;
+                for (var lift = 0; lift < 12 && planet.IsSolidAt(p); lift++)
+                    p += dir * (Planet.TileSize * 0.5f);
+                return p + dir * (Planet.TileSize * 1.5f);
+            }
         }
         return planet.Center + dir * ((radius + 24) * Planet.TileSize);
     }
