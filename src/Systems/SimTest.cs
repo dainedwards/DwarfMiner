@@ -1401,8 +1401,9 @@ public static class SimTest
             planet.Mine(r, t, 99) == TileKind.Stone);
     }
 
-    /// <summary>Gem tiles don't crumble to dust: shattering one queues a physical pickup
-    /// site (drained into Session.Pickups by Game1) and spawns no cells.</summary>
+    /// <summary>Gem tiles don't crumble to gem dust: shattering one queues a physical pickup
+    /// site (drained into Session.Pickups by Game1) plus a bed of HOST-rock dust so the gem
+    /// rests in sand of the material it was dug out of, never a bare black hole.</summary>
     private static void TestGemDrops()
     {
         var planet = WorldGen.Generate(13);
@@ -1414,11 +1415,18 @@ public static class SimTest
         planet.Set(r, t, TileKind.Sky);
         cells.SpawnDustInTile(r, t, TileKind.Ruby);
         var dust = 0;
+        var hostDust = true;
         for (var dy = 0; dy < Cells.Density; dy++)
             for (var dx = 0; dx < Cells.Density; dx++)
-                if (cells.Get(t * Cells.Density + dx, r * Cells.Density + dy) != Material.Empty)
-                    dust++;
-        Check("gems: shattered ruby spawns no dust cells", dust == 0);
+            {
+                var cx = t * Cells.Density + dx;
+                var cy = r * Cells.Density + dy;
+                if (cells.Get(cx, cy) == Material.Empty) continue;
+                dust++;
+                if (Tiles.IsGem(cells.SrcTileAt(cx, cy))) hostDust = false;
+            }
+        Check($"gems: shattered ruby leaves a bed of host-rock dust ({dust} cells)",
+            dust > 0 && hostDust);
         Check("gems: shattered ruby queues one physical drop site",
             cells.PendingGemDrops.Count == 1 && cells.PendingGemDrops[0].kind == TileKind.Ruby);
         Check("gems: ordinary stone still dusts", StoneStillDusts(planet, cells));
