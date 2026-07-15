@@ -5880,8 +5880,11 @@ public sealed partial class DwarfMinerGame : Game
             if (blobMode) _particles.DrawFluid(_renderer, Material.Acid);
             _renderer.Batch.End();
 
-            // Flame stream in its OWN coverage field: fire must never metaball-fuse with
-            // water/acid bodies it crosses. Same fill, same composite shader, fire inks.
+            // The HOT coverage field: lava bodies + the flame stream, in their OWN target —
+            // fire-family surfaces must never metaball-fuse with the water/acid bodies they
+            // cross, and they composite opaque with a hot rim, not with a pool's wet
+            // translucency. Lava's ops were collected during the DrawLiquids scan above
+            // (one scan feeds both fields); the flamethrower grains ink the same surface.
             if (blobMode)
             {
                 if (_flameRt == null || _flameRt.Width != lw || _flameRt.Height != lh)
@@ -5894,6 +5897,7 @@ public sealed partial class DwarfMinerGame : Game
                 GraphicsDevice.Clear(Color.Transparent);
                 _renderer.Batch.Begin(SpriteSortMode.Deferred, Renderer.LiquidFillBlend,
                     SamplerState.LinearClamp, null, null, null, _camera.View);
+                _run.Cells.DrawHotLiquids(_renderer);
                 _particles.DrawFluid(_renderer, Material.Fire);
                 _renderer.Batch.End();
             }
