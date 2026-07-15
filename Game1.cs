@@ -2498,6 +2498,10 @@ public sealed partial class DwarfMinerGame : Game
             _particles.EmitChips(_run.Planet.TileToWorld(x, y), bk);
         }
         _run.Cells.SpawnDustInTile(x, y, bk);
+        // Fell a trunk and the whole crown above the cut collapses into pick-up-able dust —
+        // wood from the trunk, a wispy 30%-of-a-tile foliage puff from the leaves — while the
+        // underground roots survive to regrow it.
+        if (bk == TileKind.TreeTrunk) ToppleTree(x, y);
         // Dig spray: a couple of the fresh dust grains kick out of the hole toward the dwarf
         // — real material in ballistic flight, not just cosmetic chips. They land nearby and
         // are vacuumable like the rest of the pile.
