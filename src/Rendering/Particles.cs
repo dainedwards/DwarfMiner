@@ -173,6 +173,18 @@ public sealed class Particles
                 var n = planet.UpAt(p.Position);
                 var dot = Vector2.Dot(p.Velocity, n);
                 p.Velocity = (p.Velocity - n * dot * 1.5f) * 0.4f;
+                // STREAM contact fires on FIRST TOUCH, not at rest: carriers hit at
+                // ~250 px/s and skitter through several bounces — many expired before
+                // ever "resting", so the jet visibly touched things without lighting
+                // them. Fuse-carrying grains (only the hose carriers have a LandFuse)
+                // deliver their fire stamp and the contact spark burst the moment they
+                // strike; everything else (cinders, debris) keeps the rest-based handoff.
+                if (p.LandFuse > 0 && p.LandMat != 0 && cells != null)
+                {
+                    cells.StampAtWorld(p.Position, (Material)p.LandMat, p.LandFuse);
+                    p.LandMat = 0;
+                    p.Life = MathF.Min(p.Life, 0.05f);   // delivered — done
+                }
                 if (p.Velocity.LengthSquared() < 4f)
                 {
                     // Flame grains DIE on touchdown (fire isn't matter — it can't lie on
