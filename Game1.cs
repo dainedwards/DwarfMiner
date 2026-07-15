@@ -5359,9 +5359,13 @@ public sealed partial class DwarfMinerGame : Game
 
         // Cells (sand/water/lava/smoke) draw above tiles but below entities so the dwarf walks
         // in front of his own debris pile.
-        // Zoomed-out views (orbit/high descent) sample the cell grid at a stride — the full
-        // scan is the single biggest cost at orbital view radii.
-        var cellStride = _camera.Zoom < 0.55f ? 6 : _camera.Zoom < 0.9f ? 3 : 1;
+        // Zoomed-out views (orbit/high descent/landing) sample the cell grid at a stride —
+        // the full scan is the single biggest cost at wide view radii. Stride is derived
+        // from SCREEN px per cell so it tracks Density: the old fixed ladder was tuned for
+        // 1-px cells, and at Density 8 it left descent views scanning 4× the cells (0 fps
+        // over the sea from overhead).
+        var cellPx = _camera.Zoom * ((float)Planet.TileSize / Cells.Density);
+        var cellStride = cellPx >= 0.9f ? 1 : Math.Min(8, (int)MathF.Ceiling(1.4f / cellPx));
         _run.Cells.Draw(_renderer, viewCentre, viewRadius, cellStride);
 
         // Pixel-art dwarf sprite — drawn rotated to align local-up with planet's outward radial.
