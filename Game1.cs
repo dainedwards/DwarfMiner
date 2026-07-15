@@ -2350,6 +2350,50 @@ public sealed partial class DwarfMinerGame : Game
                     _particles.EmitDust(_run.Player.Position - toWell / wd * 8f, 2f);
             }
         }
+        // Kaiju voice — attack windups queue a movie-monster bellow/screech; play it at the
+        // body with a little screen weight so the roar lands physically too.
+        if (_run.Titan.PendingRoar is { } roar)
+        {
+            _run.Titan.PendingRoar = null;
+            var rpitch = _run.Titan.Kind switch
+            {
+                TitanKind.Slattern or TitanKind.Leatherback => -0.25f,
+                TitanKind.Raiju => 0.2f,
+                _ => 0f,
+            };
+            PlayAt(roar, _run.Titan.Position, 1f, pitch: rpitch, minGap: 0.7f);
+            _run.Shake = MathF.Max(_run.Shake, 0.3f);
+        }
+        // A kick or fist meeting toppled debris grinds it straight to dust and punches any
+        // corpses away; the thud is the impact's bass note under the shockwave's boom.
+        if (_run.Titan.PendingPulverize is { } pulv)
+        {
+            _run.Titan.PendingPulverize = null;
+            _run.Rigid?.Pulverize(pulv.pos, pulv.radius);
+            KickCorpses(pulv.pos, pulv.radius, 190f);
+            _particles.EmitDust(pulv.pos, 16f);
+            PlayAt("thud", pulv.pos, 1f, minGap: 0.15f);
+        }
+        // Shake-off: the mid-thrash fling throws a clinging dwarf — riding the hide or
+        // grapple-latched to it — clear of the monster.
+        if (_run.Titan.PendingShakeOff)
+        {
+            _run.Titan.PendingShakeOff = false;
+            if (_riding || _grapOnTitan)
+            {
+                var tUp = _run.Planet.UpAt(_run.Titan.Position);
+                var tRight = new Vector2(-tUp.Y, tUp.X);
+                var fling = Random.Shared.Next(2) == 0 ? -1f : 1f;
+                _riding = false;
+                ReleaseGrapple();
+                _run.Player.Velocity = tUp * 240f + tRight * (fling * 300f);
+                _run.Player.TakeDamage(6f);
+                _toast = "SHAKEN OFF!";
+                _toastTimer = 2f;
+            }
+        }
+        TickTitanRiding(dt, keys);
+        TickGrapple(dt, keys, mouse);
         // Slaying the titan no longer ends the visit — the rocket is the only way off-world.
         // Nor does it bank the soul any more: the kill drops a CARCASS where the kaiju fell,
         // and the soul is claimed by carving it for 7 seconds (see the harvest block below).
