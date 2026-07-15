@@ -59,11 +59,14 @@ public static class Materials
 /// </summary>
 public sealed class Cells
 {
-    /// <summary>Cells per tile edge. Tiles are 4 px now, so 4 keeps 1-px grains (Noita-style
-    /// fine sand) and the same total cell count as the old 8-px/Density-8 grid; the sim and
-    /// draw loops are view-culled and hemmed liquids sleep, which is what makes this
-    /// resolution affordable.</summary>
-    public const int Density = 4;
+    /// <summary>Cells per tile edge. Tiles are 4 px, so 8 gives HALF-pixel grains — the
+    /// Noita-parity resolution: the dwarf (~9 world px) now spans ~18 grains, matching
+    /// Noita's ~16-px-tall player in a 1-px world, and grains sit at the same apparent
+    /// scale as the terrain atlas texture (~0.25-0.5 px texels). This is 4× the cell count
+    /// of the old 1-px grid — the sim and draw loops are view-culled and hemmed liquids
+    /// sleep, and `--perf` gates whether that stays affordable. All speed/count tuning
+    /// below is Density-relative, so world-space behaviour is unchanged.</summary>
+    public const int Density = 8;
     /// <summary>How many dust cells one broken tile spawns — a full Density² fill, so the
     /// loose debris occupies exactly the space the solid block did (mass conserves).</summary>
     public const int DustCellsPerTile = Density * Density;
