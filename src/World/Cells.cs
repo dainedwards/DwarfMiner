@@ -1380,9 +1380,22 @@ public sealed class Cells
         var self = (Material)_mat[i];
         // Rain water dries out: a rain-fed cell resting exposed to open air evaporates on a
         // slow per-tick roll (~10s expected once exposed), so puddles shrink top-down and a
-        // shower never leaves a permanent flood. Only rain-marked water — seeded lakes and
-        // oceans keep their mass forever.
-        var rainFed = self == Material.Water && _srcTile[i] == RainWaterSrc;
+        // shower never leaves a permanent flood. Only rain/drip-marked water — seeded lakes
+        // and oceans keep their mass forever.
+        var srcB = _srcTile[i];
+        var rainFed = self == Material.Water && (srcB == RainWaterSrc || srcB == DripWaterSrc);
+        // Rain JOINS bodies of water: an atmospheric rain cell touching permanent water —
+        // or sandwiched mid-column in a pool ≥3 deep — sheds its tag and becomes lake water
+        // for good, so showers raise lakes and seas, and a hard rain filling a hollow
+        // leaves a real pond. The wake lets the untag spread through a connected puddle via
+        // this same contact rule. Thin films still evaporate; ceiling-drip water never
+        // converts (see DripWaterSrc — its mass is duplicated, evaporation is its sink).
+        if (rainFed && srcB == RainWaterSrc && JoinsWaterBody(cx, cy))
+        {
+            _srcTile[i] = 0;
+            rainFed = false;
+            WakeNeighbors(cx, cy);
+        }
         if (rainFed && ExposedAbove(cx, cy) && _rng.Next(600) == 0)
         {
             _mat[i] = 0;
