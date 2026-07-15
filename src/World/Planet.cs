@@ -633,6 +633,12 @@ public sealed class Planet
         w.Write(SurfaceProfile?.Length ?? 0);
         if (SurfaceProfile is not null)
             foreach (var s in SurfaceProfile) w.Write(s);
+        // Skyscraper facade frames — the renderer's straight-tower lattice (RunSave v22).
+        w.Write(CityFacades.Count);
+        foreach (var (fa, fw, fr, ft) in CityFacades)
+        {
+            w.Write(fa); w.Write(fw); w.Write(fr); w.Write(ft);
+        }
     }
 
     /// <summary>Restore state written by <see cref="WriteState"/>. Throws on a geometry
