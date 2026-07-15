@@ -660,13 +660,22 @@ public sealed partial class DwarfMinerGame : Game
         run.Cells.SimFocus = SpawnDirector.FindSurfaceSpawn(run.Planet, -MathF.PI / 2f, run.Planet.Radius);
         var settleSw = System.Diagnostics.Stopwatch.StartNew();
         var settleTicks = 0;
+        var bestTick = double.MaxValue;
+        var sinceBest = 0;
         for (var i = 0; i < 120 && !settleToken.IsCancellationRequested; i++)
         {
             var tickStart = settleSw.Elapsed.TotalMilliseconds;
             run.Cells.Update(1f / 60f);
             run.Physics.Update(1f / 60f);
             settleTicks++;
-            if (settleSw.Elapsed.TotalMilliseconds - tickStart < 0.6) break;   // settled
+            var cost = settleSw.Elapsed.TotalMilliseconds - tickStart;
+            if (cost < 0.6) break;                                             // settled
+            // Plateau: ticks stopped getting cheaper, so what's left isn't a wake storm
+            // burning down — it's the world's steady simmer (the QA rig's lava sea, an
+            // ocean's shoreline), which no amount of pre-settling retires. Hand it to the
+            // live frames, where the far-field throttle already owns it.
+            if (cost < bestTick * 0.95) { bestTick = cost; sinceBest = 0; }
+            else if (++sinceBest >= 12) break;
             if (settleSw.ElapsedMilliseconds > 700) break;                     // budget
         }
         run.Cells.SimFocus = null;   // live frames re-set it every tick (or leave headless null)
