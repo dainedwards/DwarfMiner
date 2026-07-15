@@ -215,6 +215,7 @@ public static class RunSave
                 HasMiningLaser = r.ReadBoolean(),
                 HasFlamethrower = r.ReadBoolean(), HasAcidSpewer = r.ReadBoolean(),
                 HasLightningGun = r.ReadBoolean(),
+                HasGrapple = r.ReadBoolean(),  // v23
                 ScannerTier = r.ReadInt32(),   // v20
                 FlyMode = r.ReadBoolean(),
             };
