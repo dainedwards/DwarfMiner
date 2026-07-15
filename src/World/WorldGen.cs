@@ -1814,12 +1814,13 @@ public static class WorldGen
             // Civilian spawn sites: the doorway, and one apartment per second storey.
             {
                 var nD = planet.TilesAt(baseR + 1);
-                var tD = (int)((ang / MathHelper.TwoPi + 1f) % 1f * nD);
+                var tD = ((int)MathF.Round(ang / (MathHelper.TwoPi / nD) - 0.5f) % nD + nD) % nD;
                 planet.CitySpawns.Add((baseR + 1, tD));
                 for (var storey = floorEvery; storey < height - 4; storey += floorEvery * 2)
                 {
                     var r = baseR + storey + 2;
-                    var tA = (int)((ang / MathHelper.TwoPi + 1f) % 1f * planet.TilesAt(r));
+                    var nA = planet.TilesAt(r);
+                    var tA = ((int)MathF.Round(ang / (MathHelper.TwoPi / nA) - 0.5f) % nA + nA) % nA;
                     planet.CitySpawns.Add((r, tA));
                 }
             }
