@@ -4929,10 +4929,23 @@ public sealed partial class DwarfMinerGame : Game
         {
             var remain = _nextFrameAt - System.Diagnostics.Stopwatch.GetTimestamp();
             if (remain <= 0) break;
-            if (remain * 1000 > System.Diagnostics.Stopwatch.Frequency * 3)
+            // Sleep only while the measured cost of a Sleep(1) comfortably fits in the
+            // remaining wait; spin otherwise. The cost is TRACKED, not assumed: macOS
+            // timer coalescing (App Nap on an occluded window) silently stretches
+            // Sleep(1) to 25+ ms, which pinned the paced loop at 24 fps — when that
+            // happens the tracked cost balloons and the limiter shifts to pure spinning
+            // (correct pacing, one busy core), then drifts back once sleeps recover.
+            if (remain > _sleepCost * 2)
+            {
+                var s0 = System.Diagnostics.Stopwatch.GetTimestamp();
                 System.Threading.Thread.Sleep(1);
+                var took = System.Diagnostics.Stopwatch.GetTimestamp() - s0;
+                _sleepCost = Math.Max(took, _sleepCost - step / 100);
+            }
             else
+            {
                 System.Threading.Thread.SpinWait(64);
+            }
         }
     }
 
