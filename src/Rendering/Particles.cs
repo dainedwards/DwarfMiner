@@ -72,6 +72,12 @@ public sealed class Particles
     private readonly List<Particle> _list = new(2048);
     private readonly Random _rng = new();
 
+    /// <summary>True while the liquid metaball composite runs this frame (Game1 sets it):
+    /// Fluid-tagged grains are then drawn by <see cref="DrawFluid"/> into a coverage RT
+    /// and SKIPPED by the normal Draw. Off (shader unavailable / zoomed-out LOD), they
+    /// fall back to ordinary strand quads.</summary>
+    public bool FluidMode;
+
     public int Count => _list.Count;
 
     public void Update(float dt, Planet planet, Cells? cells = null)
