@@ -1258,7 +1258,7 @@ public sealed class Particles
                 MaxLife = 2.7f,
                 Color = hot ? new Color(255, 200, 90) : new Color(255, 140, 50),
                 FadeColor = new Color(90, 25, 10),   // cools to a dull coal
-                Size = 1.3f,
+                Size = 0.9f,
                 GravityScale = 0.55f,
                 Drag = 0.9f,
                 CollideTiles = true,
