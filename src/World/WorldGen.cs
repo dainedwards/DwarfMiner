@@ -471,14 +471,17 @@ public static class WorldGen
                     // now MUCH rarer — the thresholds are pushed high and only every 8th
                     // qualifying site actually seats one (below) — and CRYSTALS are rarer still
                     // than the cut gems, the scarcest thing in the crust bar voidstone.
+                    // Same depth gradient as the metals: gems are rich deep, occasional in the
+                    // mid crust, and only very rarely in the upper layers (the shallow penalty),
+                    // so the deeper you dig the better the finds.
                     var gem = TileKind.Sky;
-                    if (oreN > 0.985f - boost * 0.4f - Bias(TileKind.Ruby) && depth > 65f) gem = TileKind.Ruby;
-                    if (oreN > 0.988f - boost * 0.35f - Bias(TileKind.Sapphire) && depth > 75f) gem = TileKind.Sapphire;
-                    if (oreN > 0.990f - boost * 0.3f - Bias(TileKind.Emerald) && depth > 80f) gem = TileKind.Emerald;
-                    if (oreN > 0.992f - boost * 0.25f - Bias(TileKind.Diamond) && depth > 95f) gem = TileKind.Diamond;
-                    // Crystal is now the rarest of the ambient gems — its threshold sits above
+                    if (oreN > 0.982f + shallowGem - boost * 0.3f - Bias(TileKind.Ruby) && depth > 14f) gem = TileKind.Ruby;
+                    if (oreN > 0.986f + shallowGem - boost * 0.3f - Bias(TileKind.Sapphire) && depth > 16f) gem = TileKind.Sapphire;
+                    if (oreN > 0.988f + shallowGem - boost * 0.3f - Bias(TileKind.Emerald) && depth > 18f) gem = TileKind.Emerald;
+                    if (oreN > 0.991f + shallowGem - boost * 0.25f - Bias(TileKind.Diamond) && depth > 20f) gem = TileKind.Diamond;
+                    // Crystal is still the rarest of the ambient gems — its threshold sits above
                     // every cut gem, so a raw crystal is a scarcer find than a diamond.
-                    if (oreN > 0.994f - boost * 0.2f - Bias(TileKind.Crystal) && depth > 60f) gem = TileKind.Crystal;
+                    if (oreN > 0.994f + shallowGem - boost * 0.2f - Bias(TileKind.Crystal) && depth > 18f) gem = TileKind.Crystal;
                     // Voidstone's base threshold is unreachable — only the Rift's bias pulls it
                     // into existence, making it the campaign's endgame gem.
                     if (oreN > 1.05f - Bias(TileKind.Voidstone) && depth > 100f) gem = TileKind.Voidstone;
