@@ -2027,17 +2027,9 @@ public sealed class Cells
         var fuelled = false;
         var doused = false;
         var grounded = false;      // any solid-tile neighbour: a surface the fuse clings to
-        var burningFloor = false;  // the tile directly BELOW is flammable — fire clings to it
-        var fuelMask = 0;          // cardinal fuel directions (bit0 R / 1 L / 2 down / 3 up)
-                                   // — steers fuel-seeking buds along the burning surface
 
-        // dirBit 0-3 as in fuelMask; -1 = DIAGONAL probe. Diagonals ignite/char/fuel like
-        // any other direction — canopies and branches connect at corners, and cardinal-
-        // only probes left corner-connected fuel permanently unreachable ("the fire
-        // misses pieces it's touching") — but they don't steer the bud heuristic.
-        void Probe(int ncx, int ncy, int dirBit = -1)
+        void Probe(int ncx, int ncy)
         {
-            var below = dirBit == 2;
             if (ncy < 0 || ncy >= Height) return;
             var ni = Idx(ncx, ncy);
             switch ((Material)_mat[ni])
@@ -2048,7 +2040,6 @@ public sealed class Cells
                 case Material.Oil:
                 case Material.Gas:
                     fuelled = true;
-                    if (dirBit >= 0) fuelMask |= 1 << dirBit;
                     // Flame front: catch the neighbouring fuel cell alight. Probabilistic
                     // so a pool burns across its surface over seconds, not in one frame —
                     // rate 10 (was 3): fuel is CONSUMED slowly and a burning pool lasts
