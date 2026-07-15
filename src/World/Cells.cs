@@ -1394,6 +1394,83 @@ public sealed class Cells
         return true;
     }
 
+    // --- Ambient sweep: the slow, visible-world-only trickle effects. Random samples in a
+    // disc around the player each period; each sample either finds open air (and looks up
+    // for a dripping ceiling) or standing water (and looks down for a stone bed to moss).
+    private float _ambientSweepAt;
+    private const float AmbientSweepPeriod = 0.5f;
+    private const int AmbientSamples = 36;
+    private const float AmbientSweepRadius = 340f;
+
+    /// <summary>Porous kinds a pool can weep through — soils and rubble, not sealed rock.
+    /// This is what makes caves under wet ground drip after rain.</summary>
+    private static bool IsPorous(TileKind k) => k is
+        TileKind.Dirt or TileKind.Grass or TileKind.Gravel or TileKind.MossStone
+        or TileKind.Conglomerate;
+
+    private void SweepAmbient(Vector2 centre)
+    {
+        for (var s = 0; s < AmbientSamples; s++)
+        {
+            var ang = (float)_rng.NextDouble() * MathHelper.TwoPi;
+            var dist = MathF.Sqrt((float)_rng.NextDouble()) * AmbientSweepRadius;
+            var pos = centre + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * dist;
+            var (cx, cy) = WorldToCell(pos);
+            if (cy < 1 || cy >= Height - 1) continue;
+            var m = (Material)_mat[Idx(cx, cy)];
+            if (m == Material.Water)
+            {
+                // Moss creep: bare stone that has sat under standing water slowly greens
+                // over. Walk down through the pool (≤3 cells) to its bed; only plain Stone
+                // converts, ores and everything else are left alone. Very low per-hit odds —
+                // "long-standing" is approximated by how many sweeps a permanent pool eats.
+                var (wx, wy) = (cx, cy);
+                for (var k = 0; k < 3 && wy > 0; k++)
+                {
+                    (wx, wy) = InnerCell(wx, wy);
+                    if (!IsTileSolidAt(wx, wy))
+                    {
+                        if (_mat[Idx(wx, wy)] == 0) break;   // air gap under the pool — no bed
+                        continue;                            // deeper water — keep walking
+                    }
+                    var tx = wy / Density;
+                    var ty = WrapX(wx, _cellsAt[wy]) / Density;
+                    if (Planet.Get(tx, ty) == TileKind.Stone && _rng.Next(30) == 0)
+                        Planet.Set(tx, ty, TileKind.MossStone);
+                    break;
+                }
+            }
+            else if (m == Material.Empty && !SolidTileAtCell(cx, cy))
+            {
+                // Ceiling drip: open air under a porous tile with water pooled on top weeps
+                // the odd droplet through. The droplet is rain-tagged, so a dripping cave
+                // pools puddles that evaporate — never a slow flood — and the pool above is
+                // NOT drained (a real seep would empty every lake through its bed).
+                var (px, py) = (cx, cy);
+                for (var k = 0; k < 12 && py < Height - 1; k++)
+                {
+                    var (ox, oy) = OuterCell(px, py);
+                    if (_mat[Idx(ox, oy)] != 0) break;        // something hanging here already
+                    if (IsTileSolidAt(ox, oy))
+                    {
+                        var tx = oy / Density;
+                        var ty = WrapX(ox, _cellsAt[oy]) / Density;
+                        if (!IsPorous(Planet.Get(tx, ty))) break;
+                        var face = Planet.TileToWorld(tx, ty);
+                        var up = face - Planet.Center;
+                        if (up.LengthSquared() < 1f) break;
+                        up.Normalize();
+                        if (CountWaterNear(face + up * Planet.TileSize, 3.5f) >= 3
+                            && _rng.Next(4) == 0)
+                            Place(px, py, Material.Water, (TileKind)RainWaterSrc);
+                        break;
+                    }
+                    (px, py) = (ox, oy);
+                }
+            }
+        }
+    }
+
     /// <summary>Whether any cell in the row just outward is open air (no solid tile, no
     /// material) — the "exposed to the sky-side" test rain-water evaporation keys off.</summary>
     private bool ExposedAbove(int cx, int cy)
