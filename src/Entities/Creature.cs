@@ -3843,6 +3843,15 @@ public sealed class Creature
                 r.AddLight(lure, 20f + pulse * 8f, new Color(120, 220, 160));
                 break;
             }
+            case CreatureKind.Kraken:
+            {
+                // The lamp eyes smoulder gold through the deep — the flurry flushes the
+                // whole basin furnace-red for its half-second.
+                var pulse = MathF.Sin(r.Time * 1.8f + _phase) * 5f;
+                r.AddLight(Position, (_swing > 0f ? 36f : 26f) + pulse,
+                    _swing > 0f ? new Color(255, 110, 70) : new Color(220, 170, 90));
+                break;
+            }
         }
     }
 
