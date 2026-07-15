@@ -502,6 +502,7 @@ public static class Tiles
         TileKind.MossStone => ("moss_stone", 1),
         TileKind.Granite => ("granite", 1),
         TileKind.Basalt => ("basalt", 1),
+        TileKind.LavaRock => ("basalt", 1),   // same rock family — no new resource id to bank
         TileKind.Obsidian => ("obsidian", 1),
         TileKind.PlanetCore => ("stone", 3),
         TileKind.Support => ("stone", 2),
