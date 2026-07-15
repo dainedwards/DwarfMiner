@@ -3160,8 +3160,11 @@ public static class SimTest
             rLo = MathF.Min(rLo, s);
             rHi = MathF.Max(rHi, s);
         }
-        Check($"hollow: ordinary worlds stay round (verdant swings {rHi - rLo:0} rings)",
-            rHi - rLo < 10f);
+        // Ordinary worlds ROLL now (the 2026-07-15 surfB hill channel: gentle whole-tile
+        // relief for the Noita look) but stay planetary — well short of the asteroid's
+        // 45+-ring lobes. The old assertion was < 10 (near-flat), the old design intent.
+        Check($"hollow: ordinary worlds roll gently but stay round (verdant swings {rHi - rLo:0} rings)",
+            rHi - rLo is > 6f and < 30f);
         // The local terrain line is what depth reads against: sampling SurfaceRadiusAt
         // around the asteroid must reproduce the lobes (crests and valleys disagree about
         // where "the surface" is — that's what keeps a valley floor from draining air).
