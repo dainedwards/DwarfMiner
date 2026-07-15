@@ -6443,21 +6443,6 @@ public sealed partial class DwarfMinerGame : Game
                     _renderer.DrawCircle(p.Position - fwd * 5.5f, 1.6f + flick * 1.2f, new Color(255, 170, 70));
                     break;
                 }
-                case ProjectileKind.Tnt:
-                case ProjectileKind.TntPack:
-                {
-                    // Strapped bundle of three sticks with a sparking fuse. The fuse spark
-                    // strobes faster as the timer runs down — you can read the bang coming.
-                    var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
-                    _renderer.DrawRect(p.Position, new Vector2(6f, 5f), new Color(180, 45, 45), ang);
-                    _renderer.DrawRect(p.Position, new Vector2(6f, 1f), new Color(120, 25, 25), ang);
-                    _renderer.DrawRect(p.Position, new Vector2(1.4f, 5f), new Color(90, 70, 45), ang);
-                    var strobe = 30f + MathF.Max(0f, 2.5f - p.Life) * 40f;
-                    var spark = MathF.Sin(_run.RunTime * strobe) * 0.5f + 0.5f;
-                    var up2 = _run.Planet.UpAt(p.Position);
-                    _renderer.DrawCircle(p.Position + up2 * 3.5f, 1f + spark * 0.8f, new Color(255, 230, 130));
-                    break;
-                }
                 default:
                     _renderer.DrawCircle(p.Position, p.Radius, Color.White);
                     break;
