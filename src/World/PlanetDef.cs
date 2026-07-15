@@ -206,7 +206,7 @@ public static class PlanetDefs
         MountainHeightScale: 0.35f, LavaFillFrac: 0f, HasWater: false,
         OreBias: new[]
         {
-            (TileKind.PlatinumOre, 0.035f), (TileKind.GoldOre, 0.13f), (TileKind.SilverOre, 0.13f),
+            (TileKind.PlatinumOre, 0.035f), (TileKind.GoldOre, 0.06f), (TileKind.SilverOre, 0.06f),
             (TileKind.IronOre, 0.03f), (TileKind.Diamond, 0.02f), (TileKind.Emerald, 0.018f),
             (TileKind.Voidstone, 0.105f),
         },
