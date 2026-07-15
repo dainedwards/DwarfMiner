@@ -1296,9 +1296,11 @@ public static class WorldGen
         for (var attempt = 0; attempt < 240 && mouths.Count < want; attempt++)
         {
             var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+            // The +0.06 margin covers the shaft's own sideways drift: a mouth a hair past
+            // a lake's rim could otherwise wander under the bowl and become a drain.
             var wet = false;
             foreach (var l in lakes)
-                if (MathF.Abs(MathHelper.WrapAngle(ang - l.ang)) < l.w) { wet = true; break; }
+                if (MathF.Abs(MathHelper.WrapAngle(ang - l.ang)) < l.w + 0.06f) { wet = true; break; }
             if (wet) continue;
             if (NearMountain(mountains, ang, 0.03f)) continue;
             var apart = true;
