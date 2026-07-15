@@ -76,6 +76,7 @@ public enum TileKind : byte
     TreeRoot = 54,     // underground root — survives felling and regrows the tree (watered by rain)
     Chest = 55,        // lizard-warren treasure chest — press E to loot gold / rare materials
     ChestOpen = 56,    // an already-looted chest (lid thrown back, empty)
+    LilyPad = 57,      // alien lily pad floating on a lake surface (anchored, passable flora)
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
@@ -105,7 +106,9 @@ public static class Tiles
           // A placed platform is a fixed ledge — it never caves in.
           or TileKind.Platform
           // Treasure chests sit solid in the warren vault — they never crumble; you loot them.
-          or TileKind.Chest or TileKind.ChestOpen;
+          or TileKind.Chest or TileKind.ChestOpen
+          // Lily pads float on the water — with no rock under them they must never "fall".
+          or TileKind.LilyPad;
           // NOTE: trees & water plants are NOT anchored — an anchored plant reads as an
           // immovable wall to a walking titan (it walled the boss out of its dig shaft), so
           // they stay crushable. Hazard-immunity comes from IsFlora instead.
@@ -119,7 +122,7 @@ public static class Tiles
         k is TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
           or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom
           or TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2
-          or TileKind.SeaFrond;
+          or TileKind.SeaFrond or TileKind.LilyPad;
 
     /// <summary>Tiles the player walks through (climb / pass through) instead of colliding with.
     /// Ladders are passable so the dwarf can climb; small placed lights are passable too so the
@@ -134,7 +137,8 @@ public static class Tiles
           or TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
           or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom
           // Tree canopy and water plants are pushed through; the solid trunk is not.
-          or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond;
+          or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond
+          or TileKind.LilyPad;
 
     /// <summary>Tiles that should block-place but allow the player's collision body to pass —
     /// equivalent to "non-solid" for player physics, while staying solid for rendering and
@@ -214,6 +218,7 @@ public static class Tiles
         TileKind.TreeCanopy => 1,
         TileKind.TreeCanopy2 => 1,
         TileKind.SeaFrond => 1,
+        TileKind.LilyPad => 1,
         TileKind.TreeRoot => 3,        // grubbing a root out takes real digging (kills regrowth)
         _ => 0,
     };
@@ -272,6 +277,7 @@ public static class Tiles
         TileKind.TreeCanopy => new Color(78, 150, 130),   // teal foliage
         TileKind.TreeCanopy2 => new Color(150, 120, 190), // violet foliage
         TileKind.SeaFrond => new Color(70, 160, 140),
+        TileKind.LilyPad => new Color(88, 178, 120),      // alien pad-green afloat on the lake
         TileKind.TreeRoot => new Color(74, 54, 60),       // dark woody root in the soil
         TileKind.Chest => new Color(150, 100, 52),        // banded wood + brass treasure chest
         TileKind.ChestOpen => new Color(96, 66, 40),      // looted, lid thrown back

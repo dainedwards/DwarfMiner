@@ -146,7 +146,7 @@ public sealed class Renderer
         TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom or
         TileKind.Brick or TileKind.Plating or TileKind.GlassBlock or TileKind.Platform or
         TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond or
-        TileKind.TreeRoot or TileKind.Chest or TileKind.ChestOpen;
+        TileKind.TreeRoot or TileKind.Chest or TileKind.ChestOpen or TileKind.LilyPad;
 
     /// <summary>Machined city structures — alien hull plating, its window glass, lizard-city
     /// masonry. They read as engineered walls: no silhouette erosion, no organic crust, no
@@ -1141,6 +1141,28 @@ public sealed class Renderer
                             DrawDeco(centre, right, up, rotation, chord, fx, 1, 1, 3, frond);
                             DrawDeco(centre, right, up, rotation, chord, fx, 0.5f, 1, 1,
                                 new Color(140, 220, 190));
+                        }
+                        break;
+                    }
+                    case TileKind.LilyPad:
+                    {
+                        // Alien lily pad afloat on the lake: a flat pad bobbing on the swell
+                        // with a notch cut from its rim, a paler vein ring, and — on some pads
+                        // — a little luminous alien blossom with a glowing anther.
+                        var pad = new Color(88, 178, 120);
+                        var padDk = new Color(56, 132, 92);
+                        var padHi = new Color(130, 214, 150);
+                        var bob = MathF.Sin(Time * 1.4f + (hash & 63) * 0.3f) * 0.6f;
+                        DrawDeco(centre, right, up, rotation, chord, 0.5f, 5.5f + bob, 7, 1.6f, pad);   // the pad
+                        DrawDeco(centre, right, up, rotation, chord, 1.5f, 5.5f + bob, 4, 0.7f, padHi); // vein sheen
+                        DrawDeco(centre, right, up, rotation, chord, 6, 5.5f + bob, 1.5f, 1.6f, padDk); // rim notch shadow
+                        if ((hash & 3) == 0)
+                        {
+                            // Blossom: violet petals around a softly pulsing amber anther.
+                            var glow = MathF.Sin(Time * 2.1f + (hash & 31) * 0.4f) * 0.5f + 0.5f;
+                            DrawDeco(centre, right, up, rotation, chord, 3, 3.6f + bob, 2, 2, new Color(190, 120, 210));
+                            DrawDeco(centre, right, up, rotation, chord, 3.5f, 4.1f + bob, 1, 1,
+                                Color.Lerp(new Color(220, 170, 60), new Color(255, 235, 140), glow));
                         }
                         break;
                     }

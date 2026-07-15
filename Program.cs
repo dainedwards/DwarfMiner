@@ -38,5 +38,13 @@ if (args.Length > 0 && args[0] == "--acidprobe")
     return;
 }
 
+// Diagnostic: `--strataprobe` verifies the stratified underground — solid seams, sealed
+// deep cave layers below the lava sea, and the rolling surface channel.
+if (args.Length > 0 && args[0] == "--strataprobe")
+{
+    DwarfMiner.Systems.StrataProbe.Run();
+    return;
+}
+
 using var game = new DwarfMinerGame();
 game.Run();

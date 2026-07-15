@@ -1977,12 +1977,17 @@ public sealed class Cells
         }
     }
 
-    public void FillSkyTilesWithin(float radiusTilesFromCentre, Material m)
+    /// <summary>Fill every open (Sky) tile between two radii with a material — the lava
+    /// sea. <paramref name="floorTilesFromCentre"/> keeps the fill OFF the sealed deep cave
+    /// strata beneath (0 = the old fill-everything-below behaviour).</summary>
+    public void FillSkyTilesWithin(float radiusTilesFromCentre, Material m,
+        float floorTilesFromCentre = 0f)
     {
         var maxRing = (int)radiusTilesFromCentre - Planet.RingMin;
         if (maxRing <= 0) return;
         maxRing = Math.Min(maxRing, Planet.Rings);
-        for (var r = 0; r < maxRing; r++)
+        var minRing = Math.Max(0, (int)floorTilesFromCentre - Planet.RingMin);
+        for (var r = minRing; r < maxRing; r++)
         {
             var n = Planet.TilesAt(r);
             for (var t = 0; t < n; t++)

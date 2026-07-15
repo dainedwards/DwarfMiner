@@ -43,10 +43,16 @@ public static class WorldGen
         };
         var rng = new Random(seed);
 
-        // Subtle surface elevation noise — kept very low so the planet reads as a smooth
-        // round circle except where mountain spikes rise. The ridge channel is much finer
-        // (≈0.7° per sample) and crags the mountain profiles below.
+        // Surface elevation noise. surfA is the old broad, subtle channel; surfB is the
+        // ROLLING-HILL channel (Noita-style worldgen relief): ~5–11° swells of ±3-4 legacy
+        // tiles, in real tiles, so flat runs become gently rolling ground that the sim,
+        // collision and sand all agree on — the organic large-scale shape the edge shader's
+        // 1-px carve budget can't provide. Downward-biased like the asteroid lumps (valleys
+        // have the whole crust below; crests share the fixed sky headroom with mountains).
+        // NOTE: the extra noise draw shifts every downstream roll — same-seed worlds lay
+        // out differently than before this change (no cross-version seed promise exists).
         var surfA = MakeAngularNoise(rng, 8);
+        var surfB = MakeAngularNoise(rng, 64);
         var surfC = MakeAngularNoise(rng, 128);
         var ridge = MakeAngularNoise(rng, 512);
 
@@ -66,6 +72,19 @@ public static class WorldGen
         float LumpAt(float a) => lumpLobes is null ? 0f
             : (AngularSample(lumpLobes, a) * 1.5f + AngularSample(lumpDents!, a) * 0.5f - 0.3f)
               * def.Lumpiness * S;
+
+        // City worlds grade their land: a civilization that raises 1/3-of-the-surface
+        // megacities has flattened the hills first, so the rolling channel runs at 30%
+        // there — towers keep their footing and streets stay walkable (this also keeps the
+        // debug QA world near-flat, which the SimTest defense scenarios rely on).
+        var hillScale = def.CityLots > 0 ? 0.3f : 1f;
+
+        // Local terrain height at a bearing — the ONE definition of the ground line, shared
+        // by the tile loop and the SurfaceProfile stamp so oxygen depth / sun heightmap /
+        // disc preview all follow the same rolling ground.
+        float ElevAt(float a) => AngularSample(surfA, a) * 2f * S
+            + (AngularSample(surfB, a) - 0.1f) * 7f * S * hillScale
+            + LumpAt(a);
 
         // Explicit mountain placements — each roll is a massif: a main peak flanked by 1-3
         // shoulder peaks at offset angles and reduced heights, so ranges read as ridgelines
@@ -179,16 +198,26 @@ public static class WorldGen
 
         var baselineR = planet.SurfaceRing;
 
+        // Cave-strata seams: solid shells where NO noise cave may open, so each stratum
+        // stays sealed from the next (gameplay: the player mines between layers; perf: the
+        // lava sea can never drain into the dry caves below it). See CaveStrata.
+        var (strataSeams, _, seaFloorTiles) = CaveStrata(planet, def);
+
         for (var r = 0; r < planet.Rings; r++)
         {
             var n = planet.TilesAt(r);
+            // Seams are purely radial, so one check per ring covers every tile in it.
+            var radTiles = Planet.RingMin + r + 0.5f;
+            var inSeam = false;
+            foreach (var (lo, hi) in strataSeams)
+                if (radTiles >= lo && radTiles < hi) { inSeam = true; break; }
             for (var t = 0; t < n; t++)
             {
                 var ang = (t + 0.5f) / n * MathHelper.TwoPi;
 
-                // Very subtle surface variation — at most ±1.5 legacy tiles — plus, on
-                // lumpy worlds, the asteroid lobes (whole-percent radius swings).
-                var elev = AngularSample(surfA, ang) * 2f * S + LumpAt(ang);
+                // Rolling ground: broad subtle variation + the hill channel + (on lumpy
+                // worlds) the asteroid lobes. See ElevAt.
+                var elev = ElevAt(ang);
 
                 // Mountain height at this angle: max contribution across all peaks. The
                 // pow-1.7 falloff keeps a sharp summit but flares wider at the base than
@@ -382,7 +411,7 @@ public static class WorldGen
 
                 var bigN = SampleNoise(bigCave, wx * 0.05f, wy * 0.05f);
                 var smallN = SampleNoise(smallCave, wx * 0.18f, wy * 0.18f);
-                if (!acidBuffer && depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
+                if (!acidBuffer && !inSeam && depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
                 {
                     k = TileKind.Sky;
                     // Reservoirs: a slow water-noise channel floods whole cave pockets in the
@@ -401,7 +430,12 @@ public static class WorldGen
                     // surface pools, the acid volcano's plumbing, and acid-rain storms.)
                     var isReservoir = planet.WaterSeeds.Count > 0
                         && planet.WaterSeeds[^1] == (r, t);
-                    if (!isReservoir && def.SeedsGas && depth > 34f
+                    // Gas keeps to its authored home — the hot caves near (above) the lava —
+                    // and stays OUT of the new deep strata below the sea floor: thousands of
+                    // fresh dry cave tiles down there would otherwise all roll gas seeds,
+                    // and wandering gas is exactly the kind of never-sleeping cell load the
+                    // strata design promises not to add.
+                    if (!isReservoir && def.SeedsGas && depth > 34f && radTiles > seaFloorTiles
                         && SampleNoise(pocketNoise, wx * 0.06f + 21f, wy * 0.06f + 21f) > 0.80f)
                         planet.GasSeeds.Add((r, t));
 
@@ -506,7 +540,7 @@ public static class WorldGen
             for (var i = 0; i < samples; i++)
             {
                 var a = (i + 0.5f) / samples * MathHelper.TwoPi;
-                profile[i] = baselineR + AngularSample(surfA, a) * 2f * S + LumpAt(a);
+                profile[i] = baselineR + ElevAt(a);
             }
             planet.SurfaceProfile = profile;
         }
@@ -537,6 +571,14 @@ public static class WorldGen
         // anything a worm grazed.
         CarveWormTunnels(planet, def, new Random(seed ^ 0x5EED));
 
+        // Seams enforced LAST, as a hard pass over the final tile state: every carver above
+        // (noise caves, worms, biome pockets, the geode) is also seam-aware or band-clamped,
+        // but a disk radius poking one tile over a boundary is enough to let the lava sea
+        // drain into the deep strata — so anything that still opened a hole inside a seam is
+        // plugged back with its structural wall material here. The seam contract must hold
+        // ABSOLUTELY (perf + the mine-between-layers design), not just probabilistically.
+        SealSeams(planet, def);
+
         // The prospector's jackpot: the odd RICH gold/silver vein — a solid ribbon of ore
         // far denser than the ambient scatter (which runs deliberately lean, gold most of
         // all). Isolated rng for the same stream-stability reason as the worms.
@@ -554,6 +596,11 @@ public static class WorldGen
             // for stream stability, like the flora above.
             ScatterTrees(planet, def, new Random(seed ^ 0x77EE));
             ScatterWaterPlants(planet, def, new Random(seed ^ 0x5EA1));
+
+            // Gentle worlds grow OASES: a few spots of tightly packed vegetation — a huddle
+            // of trees with undergrowth carpeting every gap — little green sanctuaries you
+            // stumble on while crossing otherwise ordinary terrain. Isolated rng as above.
+            ScatterOases(planet, def, new Random(seed ^ 0x0A51));
         }
 
         // Skin every acid reservoir (surface pools, volcano plumbing, and the scattered crust
@@ -579,12 +626,13 @@ public static class WorldGen
     private static TileKind FloraFor(string biome) => biome switch
     {
         "verdant" => TileKind.Fernleaf,
+        "ocean"   => TileKind.Fernleaf,   // lush shore growth between the seas
         "frost"   => TileKind.Frostcap,
         "ember"   => TileKind.Emberbloom,
         "slag"    => TileKind.Rustbramble,
         "acid"    => TileKind.Vitrilily,
         "crystal" => TileKind.Geobloom,
-        _         => TileKind.Sky,   // ocean/city/rift/belt/moon/debug: no scattered flora
+        _         => TileKind.Sky,   // city/rift/belt/moon/debug: no scattered flora
     };
 
     /// <summary>Scatter the biome's signature plant across the open surface: for a spread of
@@ -598,12 +646,12 @@ public static class WorldGen
         var flora = FloraFor(def.Biome);
         if (flora == TileKind.Sky) return;
 
-        // One roll per bearing across the whole circumference; density ~35% so the surface
-        // reads as dotted with plants, not carpeted.
+        // One roll per bearing across the whole circumference; density ~48% so the surface
+        // reads as generously planted without being carpeted.
         var bearings = 360 + rng.Next(120);
         for (var b = 0; b < bearings; b++)
         {
-            if (rng.Next(100) >= 35) continue;
+            if (rng.Next(100) >= 48) continue;
             var ang = (b + (float)rng.NextDouble()) / bearings * MathHelper.TwoPi;
             var dir = new Vector2(MathF.Cos(ang), MathF.Sin(ang));
             // Walk down from well above the surface to the first solid tile.
@@ -663,15 +711,15 @@ public static class WorldGen
         if (def.Airless) return (0, TileKind.TreeCanopy);        // belt / moon: no wood
         return def.Biome switch
         {
-            "verdant" => (26, TileKind.TreeCanopy),
-            "ocean"   => (20, TileKind.TreeCanopy),
-            "frost"   => (12, TileKind.TreeCanopy2),
-            "crystal" => (12, TileKind.TreeCanopy2),
-            "acid"    => (7, TileKind.TreeCanopy2),
-            "ember"   => (5, TileKind.TreeCanopy2),
-            "slag"    => (4, TileKind.TreeCanopy),               // barren: far less wood
-            "city"    => (10, TileKind.TreeCanopy),
-            _         => (12, TileKind.TreeCanopy),
+            "verdant" => (34, TileKind.TreeCanopy),
+            "ocean"   => (30, TileKind.TreeCanopy),              // lush shorelines
+            "frost"   => (16, TileKind.TreeCanopy2),
+            "crystal" => (16, TileKind.TreeCanopy2),
+            "acid"    => (10, TileKind.TreeCanopy2),
+            "ember"   => (7, TileKind.TreeCanopy2),
+            "slag"    => (6, TileKind.TreeCanopy),               // barren: far less wood
+            "city"    => (14, TileKind.TreeCanopy),
+            _         => (16, TileKind.TreeCanopy),
         };
     }
 
@@ -760,21 +808,120 @@ public static class WorldGen
         }
     }
 
+    /// <summary>Oases on the GENTLE worlds (low difficulty, breathable): a few spots where
+    /// vegetation packs in tight — a huddle of trees planted nearly shoulder to shoulder with
+    /// undergrowth carpeting every ground tile between them. The harsher a world, the fewer
+    /// (hostile and airless worlds grow none), so an oasis reads as a found sanctuary.</summary>
+    private static void ScatterOases(Planet planet, PlanetDef def, Random rng)
+    {
+        if (def.Airless || def.Difficulty > 0.35f) return;
+        var (_, canopy) = TreePlanFor(def);
+        var flora = FloraFor(def.Biome);
+        if (flora == TileKind.Sky) flora = TileKind.Fernleaf;   // an oasis always has undergrowth
+        var surfRadiusPx = (Planet.RingMin + planet.SurfaceRing) * Planet.TileSize;
+        var oases = 2 + rng.Next(3);
+        for (var o = 0; o < oases; o++)
+        {
+            var centreAng = (float)rng.NextDouble() * MathHelper.TwoPi;
+            // Walk the site tile by tile: trees every ~3 tiles, undergrowth on everything else.
+            var halfSpanTiles = 6 + rng.Next(5);
+            for (var dt = -halfSpanTiles; dt <= halfSpanTiles; dt++)
+            {
+                var ang = centreAng + dt * Planet.TileSize / surfRadiusPx;
+                // Ground on this bearing (topmost solid).
+                var groundR = -1;
+                for (var r = planet.SurfaceRing + 30; r > planet.SurfaceRing - 24; r--)
+                {
+                    var n = planet.TilesAt(r);
+                    var t = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                    if (planet.Get(r, t) == TileKind.Sky) continue;
+                    groundR = r;
+                    break;
+                }
+                if (groundR < 0) continue;
+                var gn = planet.TilesAt(groundR);
+                var gt = (int)((ang / MathHelper.TwoPi + 1f) % 1f * gn);
+                if (planet.Get(groundR, gt) is not (TileKind.Grass or TileKind.Dirt or TileKind.Snow
+                    or TileKind.MossStone or TileKind.Gravel or TileKind.Basalt)) continue;
+                var an = planet.TilesAt(groundR + 1);
+                var at = (int)((ang / MathHelper.TwoPi + 1f) % 1f * an);
+                if (planet.Get(groundR + 1, at) != TileKind.Sky) continue;
+
+                // A tree every ~3rd tile (tight but not fused), undergrowth everywhere else.
+                if (((dt + halfSpanTiles) % 3) == 1)
+                {
+                    var trunkH = Math.Min(9 + rng.Next(8), planet.Rings - 6 - groundR);
+                    if (trunkH < 4) continue;
+                    var clear = true;
+                    for (var h = 1; h <= trunkH && clear; h++)
+                    {
+                        var rr = groundR + h;
+                        if (rr >= planet.Rings - 1) { clear = false; break; }
+                        var nn = planet.TilesAt(rr);
+                        if (planet.Get(rr, (int)((ang / MathHelper.TwoPi + 1f) % 1f * nn)) != TileKind.Sky)
+                            clear = false;
+                    }
+                    if (!clear) { planet.Set(groundR + 1, at, flora); continue; }
+                    var site = new TreeSite
+                    {
+                        Angle = ang,
+                        GroundR = groundR,
+                        Species = TreeSpeciesFor(def.Biome, rng),
+                        Height = (byte)trunkH,
+                        Canopy = rng.Next(4) == 0
+                            ? (canopy == TileKind.TreeCanopy ? TileKind.TreeCanopy2 : TileKind.TreeCanopy)
+                            : canopy,
+                    };
+                    Systems.TreeEcology.Plant(planet, site);
+                    planet.Trees.Add(site);
+                }
+                else
+                {
+                    planet.Set(groundR + 1, at, flora);
+                }
+            }
+        }
+    }
+
     /// <summary>Scatter waving water plants (SeaFrond) on the shallow lakebeds of any world
     /// that has water — rooted on the solid floor just under the surface of a pool.</summary>
     private static void ScatterWaterPlants(Planet planet, PlanetDef def, Random rng)
     {
         if (!def.HasWater || planet.WaterSeeds.Count == 0) return;
         var basin = new System.Collections.Generic.HashSet<(int, int)>(planet.WaterSeeds);
-        // For each basin tile that sits on the floor (solid below, water/basin here), root a
-        // frond with a small chance. Cheap: one pass over the seeds, no per-bearing walk.
+        // Ocean worlds are LUSH underwater — dense kelp beds and lily-padded surfaces; other
+        // wet worlds get a lighter dressing of both.
+        var ocean = def.Biome == "ocean";
+        var frondPct = ocean ? 24 : 12;
+        var padPct = ocean ? 22 : 10;
         foreach (var (x, y) in planet.WaterSeeds)
         {
-            if (rng.Next(100) >= 8) continue;                    // sparse
-            if (planet.Get(x, y) != TileKind.Sky) continue;      // must be an open water column
-            if (basin.Contains((x - 1, y))) continue;            // not on the very floor → skip
-            if (Tiles.IsSolid(planet.Get(x - 1, y)))             // solid lakebed directly below
-                planet.Set(x, y, TileKind.SeaFrond);
+            // Seabed: root a seaweed stalk on the lakebed floor — 1-3 fronds STACKED into a
+            // swaying kelp column (taller stands on the ocean world).
+            if (planet.Get(x, y) == TileKind.Sky
+                && !basin.Contains((x - 1, y)) && Tiles.IsSolid(planet.Get(x - 1, y))
+                && rng.Next(100) < frondPct)
+            {
+                var stalk = 1 + rng.Next(ocean ? 3 : 2);
+                for (var h = 0; h < stalk; h++)
+                {
+                    var rr = x + h;
+                    var n = planet.TilesAt(rr);
+                    var t = (int)((y + 0.5f) / planet.TilesAt(x) * n);
+                    if (planet.Get(rr, t) != TileKind.Sky) break;
+                    if (h > 0 && !basin.Contains((rr, t))) break;   // stay under the waterline
+                    planet.Set(rr, t, TileKind.SeaFrond);
+                }
+            }
+            // Surface: an alien lily pad floating on the topmost water row (a basin tile with
+            // open sky above it), blossoms and all.
+            if (!basin.Contains((x + 1, y)) && rng.Next(100) < padPct)
+            {
+                var n = planet.TilesAt(x + 1);
+                var t = (int)((y + 0.5f) / planet.TilesAt(x) * n);
+                if (x + 1 < planet.Rings - 1 && planet.Get(x + 1, t) == TileKind.Sky)
+                    planet.Set(x + 1, t, TileKind.LilyPad);
+            }
         }
     }
 
@@ -826,47 +973,200 @@ public static class WorldGen
         }
     }
 
+    /// <summary>Radial layout of the underground cave strata, shared by three consumers:
+    /// the noise-cave pass (suppresses carving inside <c>seams</c>), the deep worm pass
+    /// (each entry in <c>bands</c> gets its own sealed network), and Game1's lava flood
+    /// (<c>seaFloorTiles</c> turns the old fill-everything-below flood into a lava SEA with
+    /// a dry, explorable zone beneath). All values are radii in tiles-from-centre.
+    ///
+    /// The seams do two jobs at once. Gameplay: deep strata are deliberately NOT connected
+    /// to each other or to the crust network above — the player mines the last stretch
+    /// between layers. Perf: a stratum that never touches the lava sea can never become
+    /// lava plumbing (sealed lava sleeps; flowing lava keeps the cell sim awake — the
+    /// constraint that used to forbid ALL deep caves).</summary>
+    internal static (List<(float lo, float hi)> seams, List<(float lo, float hi)> bands, float seaFloorTiles)
+        CaveStrata(Planet planet, PlanetDef def)
+    {
+        var seams = new List<(float, float)>();
+        var bands = new List<(float, float)>();
+        float radius = planet.Radius;
+        // The lava sea keeps its historical TOP (LavaFillFrac×radius) but gains a floor —
+        // thick enough (14% of radius) to stay a real barrier layer you must cross.
+        var seaFloor = def.LavaFillFrac > 0f
+            ? MathF.Max(radius * (def.LavaFillFrac - 0.14f), Planet.RingMin + 30f)
+            : 0f;
+        // Ceiling of the deep zone: under the sea when the world has one, otherwise
+        // directly under the upper worm network's floor (same 0.38 as CarveWormTunnels).
+        var deepCeil = def.LavaFillFrac > 0f ? seaFloor : radius * 0.38f;
+        const float seamThick = 8f;              // 32 px of guaranteed solid rock per seam
+        var coreTop = Planet.RingMin + 2f;       // strata may reach the core shell face
+        seams.Add((deepCeil - seamThick, deepCeil));
+        var top = deepCeil - seamThick;
+        if (top - coreTop < 24f) return (seams, bands, seaFloor);   // too small for a deep zone
+        if (top - coreTop > 110f)
+        {
+            // Thick deep zones split into TWO strata around a mid seam — two mining
+            // frontiers on the way down instead of one.
+            var mid = coreTop + (top - coreTop) * 0.5f;
+            bands.Add((mid + seamThick * 0.5f, top));
+            seams.Add((mid - seamThick * 0.5f, mid + seamThick * 0.5f));
+            bands.Add((coreTop, mid - seamThick * 0.5f));
+        }
+        else
+        {
+            bands.Add((coreTop, top));
+        }
+        return (seams, bands, seaFloor);
+    }
+
     /// <summary>Noita-style interconnecting tunnels: a couple dozen "perlin worms" wander
     /// the crust carving narrow winding corridors, each with a chance to fork once. The
     /// noise caves give chambers; the worms give the paths BETWEEN them — the difference
     /// between isolated pockets you mine into and a cave system you can travel. Worms stay
-    /// below the dirt band (the surface keeps its skin) and above the deep core, never
-    /// carve anchored tiles or obsidian (acid/volcano linings stay sealed), and simply
-    /// leave those tiles standing as natural dead-ends when they meet one.</summary>
+    /// below the dirt band (the surface keeps its skin), never carve anchored tiles or
+    /// obsidian (acid/volcano linings stay sealed), and simply leave those tiles standing
+    /// as natural dead-ends when they meet one. Below the upper network, CarveDeepStrata
+    /// adds the sealed deep layers.</summary>
     private static void CarveWormTunnels(Planet planet, PlanetDef def, Random rng)
     {
-        // High-lava worlds skip the worms: their habitable band is a thin shell squeezed
-        // between the flood line and the surface (the warrens carry the underground feel
-        // there), and every tunnel that grazes the lava zone becomes permanent plumbing
-        // that keeps the cell sim awake — measured at 3× the steady update budget.
-        if (def.LavaFillFrac > 0.5f) return;
-        // Dense enough that neighbouring walks intersect constantly — the underground
-        // should read as one connected Noita warren, not isolated corridors.
-        var worms = 30 + rng.Next(11);
-        // Stay above THIS world's lava zone — StartNewRun floods every sky tile below
-        // LavaFillFrac×radius (ember-class worlds run 0.55-0.70), and tunnels crossing
-        // that line become permanent lava plumbing that wrecks the steady-state cell
-        // budget — and below the dirt band.
-        // Reach much deeper than before — the cave network now threads the LOWER crust too,
-        // not just the upper shell — but still stop a safe margin ABOVE this world's lava fill
-        // line (crossing it turns tunnels into permanent lava plumbing that wrecks the cell
-        // budget). On a low-lava world that opens the deep half of the crust to caving.
-        var minFrac = MathF.Max(0.38f, def.LavaFillFrac + 0.08f);
-        var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
-        for (var i = 0; i < worms; i++)
+        // High-lava worlds skip the UPPER worms: their habitable band is a thin shell
+        // squeezed between the flood line and the surface (the warrens carry the
+        // underground feel there), and every tunnel that grazes the lava zone becomes
+        // permanent plumbing that keeps the cell sim awake — measured at 3× the steady
+        // update budget. They still get the deep strata below the sea.
+        if (def.LavaFillFrac <= 0.5f)
         {
-            var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
-            var radiusTiles = MathHelper.Lerp(planet.Radius * minFrac, maxTiles,
-                (float)rng.NextDouble());
-            var start = planet.Center
-                + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
-            CarveWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
-                260 + rng.Next(300), branchBudget: 2, minFrac);
+            // Dense enough that neighbouring walks intersect constantly — the underground
+            // should read as one connected Noita warren, not isolated corridors.
+            var worms = 30 + rng.Next(11);
+            // Stay above THIS world's lava zone (crossing the flood line turns tunnels into
+            // permanent lava plumbing) and below the dirt band. The hard floor passed to
+            // CarveWorm stops drifting walks from ever biting the stratum seam below.
+            var minFrac = MathF.Max(0.38f, def.LavaFillFrac + 0.08f);
+            var (upperSeams, _, _) = CaveStrata(planet, def);
+            var hardFloorPx = upperSeams[0].lo * Planet.TileSize;
+            var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
+            for (var i = 0; i < worms; i++)
+            {
+                var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+                var radiusTiles = MathHelper.Lerp(planet.Radius * minFrac, maxTiles,
+                    (float)rng.NextDouble());
+                var start = planet.Center
+                    + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
+                CarveWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
+                    260 + rng.Next(300), branchBudget: 2, minFrac, hardFloorPx);
+            }
+        }
+
+        CarveDeepStrata(planet, def, rng);
+    }
+
+    /// <summary>Plug every Sky tile inside a stratum seam back to solid rock — the final,
+    /// authoritative enforcement of the seam contract (see the call site in Generate). The
+    /// wall layer captured the structural material before any carver ran, so the plug is
+    /// whatever rock genuinely belonged there.</summary>
+    private static void SealSeams(Planet planet, PlanetDef def)
+    {
+        var (seams, _, _) = CaveStrata(planet, def);
+        foreach (var (lo, hi) in seams)
+        {
+            var r0 = Math.Max(0, (int)(lo - Planet.RingMin));
+            var r1 = Math.Min(planet.Rings - 1, (int)(hi - Planet.RingMin) + 1);
+            for (var r = r0; r <= r1; r++)
+            {
+                var radTiles = Planet.RingMin + r + 0.5f;
+                if (radTiles < lo || radTiles >= hi) continue;
+                var n = planet.TilesAt(r);
+                for (var t = 0; t < n; t++)
+                {
+                    if (planet.Get(r, t) != TileKind.Sky) continue;
+                    var wall = planet.GetWall(r, t);
+                    planet.Set(r, t, wall != TileKind.Sky ? wall : TileKind.Basalt);
+                }
+            }
+        }
+    }
+
+    /// <summary>The deep cave strata: worm networks BELOW the lava sea (or below the upper
+    /// network on lava-less worlds), reaching all the way down to the core shell. Each
+    /// stratum is internally connected but sealed off from everything above by CaveStrata's
+    /// solid seams — enforced here as HARD carve bands (a drifting worm keeps walking but
+    /// bites nothing outside its stratum) and in Generate as noise-cave suppression. Deep
+    /// rock is mostly obsidian/basalt, so these worms MAY bite obsidian — but they detour
+    /// around volcano bearings (throat/chamber linings must stay sealed) and warren halls.</summary>
+    private static void CarveDeepStrata(Planet planet, PlanetDef def, Random rng)
+    {
+        var (_, bands, _) = CaveStrata(planet, def);
+        // Volcano plumbing bearings — an obsidian-biting worm must never breach a throat.
+        var vents = new float[planet.VolcanoVents.Count];
+        for (var i = 0; i < vents.Length; i++)
+        {
+            var (vx, vy, _) = planet.VolcanoVents[i];
+            var rel = planet.TileToWorld(vx, vy) - planet.Center;
+            vents[i] = MathF.Atan2(rel.Y, rel.X);
+        }
+        foreach (var (lo, hi) in bands)
+        {
+            // Deeper bands have less circumference, so scale count with band thickness.
+            var worms = 8 + (int)((hi - lo) * 0.22f) + rng.Next(5);
+            for (var i = 0; i < worms; i++)
+            {
+                var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+                var radiusTiles = MathHelper.Lerp(lo + 3f, hi - 3f, (float)rng.NextDouble());
+                var start = planet.Center
+                    + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
+                CarveDeepWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
+                    120 + rng.Next(200), branchBudget: 2, lo, hi, vents);
+            }
+        }
+    }
+
+    private static void CarveDeepWorm(Planet planet, Random rng, Vector2 pos, float heading,
+        int length, int branchBudget, float bandLoTiles, float bandHiTiles, float[] ventBearings)
+    {
+        // 4-tile inset: the walk point is clamped, but each bite is a disk of up to 10 px
+        // (2.5 tiles) around it — the inset keeps the disk EDGE inside the band, so no bite
+        // can nibble into a seam (SealSeams would plug it anyway; don't waste the carve).
+        var minPx = (bandLoTiles + 4f) * Planet.TileSize;
+        var maxPx = (bandHiTiles - 4f) * Planet.TileSize;
+        if (maxPx <= minPx) return;
+        for (var s = 0; s < length; s++)
+        {
+            heading += ((float)rng.NextDouble() - 0.5f) * 0.55f;
+            var rel = pos - planet.Center;
+            var dist = rel.Length();
+            if (dist > maxPx || dist < minPx)
+            {
+                var radial = MathF.Atan2(rel.Y, rel.X);
+                var desired = dist > maxPx ? radial + MathF.PI : radial;
+                heading += MathHelper.WrapAngle(desired - heading) * 0.25f;
+            }
+            pos += new Vector2(MathF.Cos(heading), MathF.Sin(heading)) * Planet.TileSize;
+            // HARD band clamp — steering is soft and drifts, but carving is what must never
+            // cross a stratum seam, so a worm outside its band walks without biting.
+            rel = pos - planet.Center;
+            dist = rel.Length();
+            var nearVent = false;
+            if (ventBearings.Length > 0)
+            {
+                var posAng = MathF.Atan2(rel.Y, rel.X);
+                foreach (var v in ventBearings)
+                    if (MathF.Abs(MathHelper.WrapAngle(posAng - v)) < 0.07f) { nearVent = true; break; }
+            }
+            if (dist >= minPx && dist <= maxPx && !nearVent && !NearDenOrCity(planet, pos))
+                CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 10f : 7f, biteObsidian: true);
+            if (branchBudget > 0 && s > length / 4 && rng.Next(50) == 0)
+            {
+                branchBudget--;
+                CarveDeepWorm(planet, rng, pos,
+                    heading + (rng.Next(2) == 0 ? 1f : -1f) * (0.8f + (float)rng.NextDouble()),
+                    length / 2, length > 80 ? 1 : 0, bandLoTiles, bandHiTiles, ventBearings);
+            }
         }
     }
 
     private static void CarveWorm(Planet planet, Random rng, Vector2 pos, float heading,
-        int length, int branchBudget, float minFrac)
+        int length, int branchBudget, float minFrac, float hardFloorPx)
     {
         var minRad = planet.Radius * (minFrac - 0.02f) * Planet.TileSize;
         var maxRad = (Planet.RingMin + planet.SurfaceRing - 14f * Planet.LegacyTileScale)
@@ -888,8 +1188,12 @@ public static class WorldGen
             pos += new Vector2(MathF.Cos(heading), MathF.Sin(heading)) * Planet.TileSize;
             // Hand-built places keep their architecture: no worm bites inside a warren
             // hall's halo or under a city district — the worm keeps walking and leaves a
-            // natural plug where it crossed.
-            if (!NearDenOrCity(planet, pos))
+            // natural plug where it crossed. The hard floor is the top of the first stratum
+            // seam: soft steering lets a walk DRIFT below its band, which was harmless when
+            // everything below was solid, but must never puncture the seam now that sealed
+            // strata live under it.
+            if ((pos - planet.Center).LengthSquared() >= hardFloorPx * hardFloorPx
+                && !NearDenOrCity(planet, pos))
                 CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 11f : 8f);
             if (branchBudget > 0 && s > length / 4 && rng.Next(55) == 0)
             {
@@ -898,7 +1202,7 @@ public static class WorldGen
                 // stitch neighbouring worm systems into one continuous warren.
                 CarveWorm(planet, rng, pos,
                     heading + (rng.Next(2) == 0 ? 1f : -1f) * (0.8f + (float)rng.NextDouble()),
-                    length / 2, length > 80 ? 1 : 0, minFrac);
+                    length / 2, length > 80 ? 1 : 0, minFrac, hardFloorPx);
             }
         }
     }
@@ -919,9 +1223,13 @@ public static class WorldGen
         return false;
     }
 
-    /// <summary>One worm step's bite: a small disk of soft tiles → Sky. Anchored tiles and
-    /// obsidian stay (containment linings, city foundations, the core).</summary>
-    private static void CarveWormDisk(Planet planet, Vector2 centre, float radius)
+    /// <summary>One worm step's bite: a small disk of soft tiles → Sky. Anchored tiles
+    /// always stay (city foundations, the core). Obsidian stays too UNLESS
+    /// <paramref name="biteObsidian"/> — the deep strata run mostly through obsidian/basalt
+    /// bedrock and would carve nothing without it; their volcano-bearing detour is what
+    /// protects the plumbing linings down there instead.</summary>
+    private static void CarveWormDisk(Planet planet, Vector2 centre, float radius,
+        bool biteObsidian = false)
     {
         var (er, _) = planet.WorldToTile(centre);
         var span = (int)(radius / Planet.TileSize) + 1;
@@ -940,7 +1248,8 @@ public static class WorldGen
                 var t = ((t0 + dt) % n + n) % n;
                 if ((planet.TileToWorld(r, t) - centre).LengthSquared() > radiusSq) continue;
                 var k = planet.Get(r, t);
-                if (k == TileKind.Sky || Tiles.IsAnchored(k) || k == TileKind.Obsidian) continue;
+                if (k == TileKind.Sky || Tiles.IsAnchored(k)
+                    || (!biteObsidian && k == TileKind.Obsidian)) continue;
                 planet.Set(r, t, TileKind.Sky);
             }
         }
