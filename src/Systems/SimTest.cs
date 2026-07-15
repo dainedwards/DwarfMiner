@@ -1241,6 +1241,8 @@ public static class SimTest
         }
         Check("cave-in: condemned rock crumbles after the warning window",
             crumbled && island.TrueForAll(t => !Tiles.IsSolid(planet.Get(t.x, t.y))));
+        Check("cave-in: sub-threshold cluster floats instead of dusting",
+            nub.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
     }
 
     /// <summary>Above-crust support rule: a floating slab in open sky far bigger than the
