@@ -84,6 +84,7 @@ public static class Weather
         // Form new clouds on a slow clock, biased to drift into view near the player so the
         // weather reads as a moving system, not a fixed backdrop.
         run.CloudTimer -= dt;
+        if (ForceRain && run.CloudTimer > 1.5f) run.CloudTimer = 1.5f;
         if (run.CloudTimer <= 0f)
         {
             run.CloudTimer = 14f + (float)rng.NextDouble() * 22f;
