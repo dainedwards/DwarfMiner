@@ -5275,12 +5275,14 @@ public sealed partial class DwarfMinerGame : Game
             var grot = MathF.Atan2(gup.X, -gup.Y);
             var body = Tiles.BaseColor(g.Kind);
             var facet = Tiles.OreSpeckle(g.Kind);
-            // Dark rim slightly larger than the body, so the cut edges read.
-            var edge = new Color(body.R / 2, body.G / 2, body.B / 2);
+            // THIN edge tone barely darker than the body — the old half-brightness rim drawn
+            // 0.7px proud read as a black square backing behind the jewel when it sat on a
+            // bright dust pile. Now it's just a sliver of outline.
+            var edge = Color.Lerp(body, Color.Black, 0.35f);
             // A small, clean DIAMOND (rotated square) for every loose stone — no protruding
             // point pieces, smaller than before, so it reads as a neat cut jewel.
             var d45 = grot + MathF.PI / 4f;
-            _renderer.DrawRect(g.Position, new Vector2(2.6f, 2.6f), edge, d45);   // dark rim
+            _renderer.DrawRect(g.Position, new Vector2(2.2f, 2.2f), edge, d45);   // thin outline
             _renderer.DrawRect(g.Position, new Vector2(1.9f, 1.9f), body, d45);   // bright body
             _renderer.DrawRect(g.Position - gright * 0.35f + gup * 0.35f,
                 new Vector2(0.9f, 0.9f), facet, d45);                            // facet
