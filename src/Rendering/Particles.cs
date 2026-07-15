@@ -51,6 +51,10 @@ public struct Particle
     /// "spaghetti" of firing while accelerating). Only honoured while the composite is
     /// live (see Particles.FluidMode); otherwise the grain draws as a normal strand.</summary>
     public byte Fluid;
+    /// <summary>Burn fuse handed to the stamped Fire cell when this grain lands (see
+    /// Cells.StampAtWorld) — the flamethrower's long-burning ground fire. 0 = normal
+    /// short-lived flame. Meaningless for non-Fire LandMat.</summary>
+    public byte LandFuse;
 }
 
 /// <summary>
