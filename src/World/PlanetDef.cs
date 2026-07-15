@@ -115,6 +115,10 @@ public sealed record PlanetDef(
     // not a circle. WorldGen stamps the resulting terrain line into Planet.SurfaceProfile
     // so depth-below-surface (oxygen, exposure) follows the local ground.
     float Lumpiness = 0f,
+    // True suppresses ALL creature population — no load-time census, no spawner trickle.
+    // The QA rig runs empty so it loads fast and perf/feature tests aren't confounded by
+    // wildlife; the debug menu's creature tab spawns subjects on demand instead.
+    bool NoFauna = false,
     // Non-null on MOONS: the id of the planet this world orbits. SpaceSim hangs it on a
     // tight, fast satellite orbit around that parent instead of a solar orbit. Moons come
     // in two kinds: with an atmosphere (the ocean moon — lands like any planet) and
