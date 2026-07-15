@@ -5917,8 +5917,9 @@ public sealed partial class DwarfMinerGame : Game
         // layer they occupied when they drew inside the cell batch. The flame stream
         // composites through the same metaball shader, right above the liquids.
         if (liquidPass) _renderer.CompositeLiquids(_liquidRt!);
-        // Flame body: full opacity + a hot bright rim — the flame's sheath, not a pool's
-        // translucent wet lip (which made the tongue read as glowing liquid).
+        // Hot bodies (lava pools + flame stream): full opacity + a hot bright rim — molten
+        // rock's yellow-white edge and the flame's sheath, not a pool's translucent wet lip
+        // (which made the tongue read as glowing liquid).
         if (_particles.FluidMode)
             _renderer.CompositeLiquids(_flameRt!, 0.40f, 1f, 1.85f, 0.15f);
 
