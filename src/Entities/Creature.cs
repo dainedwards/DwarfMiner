@@ -1527,16 +1527,18 @@ public sealed class Creature
             GroundMove(dt, planet, up, right,
                 NavAxis(planet, up, right, moveAxis, avoidCliffs: false), speedMul);
 
-            // Bone spear: mid-range, sighted, off cooldown. Slight loft so the cast drops
-            // onto the target rather than undershooting.
+            // Blowdart: mid-range, sighted, off cooldown. A hunter's dart, not a straight
+            // bolt — it's lofted well above the line so it ARCS up and drops back onto the
+            // target under gravity (TitanShotKind.Dart is ballistic), the more loft the
+            // farther the throw.
             if (dist > 70f && dist < 210f && _cd <= 0f && shots is not null
                 && HasLineOfSight(planet, toPlayer, dist))
             {
                 var dir = toPlayer / dist;
-                var aim = Vector2.Normalize(dir + up * (0.05f + dist * 0.001f));
-                shots.Add(new TitanProjectile(Position + aim * (Radius + 2f), aim * 230f,
-                    TitanShotKind.Spike, damage: 9f));
-                _cd = 2.4f + (float)Random.Shared.NextDouble() * 0.9f;
+                var aim = Vector2.Normalize(dir + up * (0.28f + dist * 0.0022f));
+                shots.Add(new TitanProjectile(Position + aim * (Radius + 2f), aim * 220f,
+                    TitanShotKind.Dart, damage: 9f));
+                _cd = 2.2f + (float)Random.Shared.NextDouble() * 0.9f;
                 _swing = 0.35f;
             }
             // Lunge: a short leap into bite range when the spear arm is spent.
