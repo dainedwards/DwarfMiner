@@ -1855,6 +1855,7 @@ public sealed partial class DwarfMinerGame : Game
                 _run.Shake = MathF.Max(_run.Shake, 0.9f);
                 PlayAt("explode", m.Position, 1f, pitch: -0.2f);
                 _run.Rigid?.NoteBlast(m.Position, 90f, 200f);
+                KickCorpses(m.Position, 90f, 200f);
                 _run.Meteors.RemoveAt(i);
             }
         }
@@ -1891,7 +1892,19 @@ public sealed partial class DwarfMinerGame : Game
                 // don't: those creatures just wandered out of the simulation bubble.
                 // (Bomber beetles leave a crater instead of a corpse.)
                 if (c.Kind != CreatureKind.BomberBeetle)
-                    _run.Corpses.Add(new Corpse(c.Position, c.Kind, c.Radius));
+                {
+                    // The corpse inherits the death momentum (combat knockback is already in
+                    // the creature's velocity) and tumbles from it — a shot grazer keels
+                    // over and rolls instead of freezing in place.
+                    var cUp = _run.Planet.UpAt(c.Position);
+                    _run.Corpses.Add(new Corpse(c.Position, c.Kind, c.Radius)
+                    {
+                        Velocity = c.Velocity,
+                        Angle = MathF.Atan2(cUp.X, -cUp.Y),
+                        Spin = ((float)Random.Shared.NextDouble() - 0.5f) * 4f
+                            * MathHelper.Clamp(c.Velocity.Length() / 100f, 0.3f, 1.5f),
+                    });
+                }
                 _particles.EmitDust(c.Position, 5f);
                 // Killing ANY alien turns the whole city on you at once — a single dead
                 // civilian, guard, saucer, or lizardman crosses the wrath threshold (unless
@@ -2139,6 +2152,8 @@ public sealed partial class DwarfMinerGame : Game
                     // blast just carved free launches outward when it detaches a tick later.
                     _run.Rigid?.NoteBlast(p.Position, p.ExplosionRadius * 1.6f,
                         MathF.Min(260f, p.ExplosionRadius * 2.4f));
+                    KickCorpses(p.Position, p.ExplosionRadius * 1.6f,
+                        MathF.Min(260f, p.ExplosionRadius * 2.4f));
                     // Explosions do not care whose they are: the dwarf standing inside the
                     // blast eats real damage with the same center-weighted falloff creatures
                     // get. Own bombs are lethal at arm's length now — take cover or take the hit.
@@ -2200,6 +2215,7 @@ public sealed partial class DwarfMinerGame : Game
             PlayAt("explode", sw.pos, 1f, pitch: -0.3f);
             // A slam under a loose overhang sends the shards flying, not slumping.
             _run.Rigid?.NoteBlast(sw.pos, sw.radius, 170f);
+            KickCorpses(sw.pos, sw.radius, 170f);
             var toPlayer = _run.Player.Position - sw.pos;
             var d = toPlayer.Length();
             if (d < sw.radius)
@@ -2613,6 +2629,20 @@ public sealed partial class DwarfMinerGame : Game
         // minGap: one strike now shatters up to 4 fine tiles in the same frame — one crack, not a burst.
         PlayAt("break", _run.Planet.TileToWorld(x, y), 0.6f,
             pitch: -0.1f + (float)Random.Shared.NextDouble() * 0.25f, minGap: 0.05f);
+    }
+
+    /// <summary>Shove every corpse in a blast radius — dead bodies fly with the explosion
+    /// (same falloff as the player knockback) instead of lying rigor-still inside it.</summary>
+    private void KickCorpses(Vector2 pos, float radius, float power)
+    {
+        foreach (var corpse in _run.Corpses)
+        {
+            var d = corpse.Position - pos;
+            var dist = d.Length();
+            if (dist > radius + corpse.Radius) continue;
+            var dir = dist > 0.5f ? d / dist : new Vector2(0f, -1f);
+            corpse.Kick(dir * power * (1f - MathHelper.Clamp(dist / (radius + corpse.Radius), 0f, 1f)));
+        }
     }
 
     /// <summary>Tick the rigid debris and couple it to the actors. Hard landings shake the
@@ -5399,11 +5429,13 @@ public sealed partial class DwarfMinerGame : Game
         foreach (var corpse in _run.Corpses)
         {
             if (corpse.Life < Corpse.BlinkTime && (int)(corpse.Life * 6f) % 2 == 0) continue;
-            var cup = _run.Planet.UpAt(corpse.Position);
-            var crot = MathF.Atan2(cup.X, -cup.Y);
+            // The slab tumbles with the ragdoll's own angle now (it eases flat on rest);
+            // the belly stripe rides the corpse's local "back" so it rotates along.
+            var crot = corpse.Angle;
+            var bodyUp = new Vector2(MathF.Sin(crot), -MathF.Cos(crot));
             var col = Corpse.BodyColor(corpse.Kind);
             _renderer.DrawRect(corpse.Position, new Vector2(corpse.Radius * 2.2f, corpse.Radius * 0.9f), col, crot);
-            _renderer.DrawRect(corpse.Position - cup * corpse.Radius * 0.2f,
+            _renderer.DrawRect(corpse.Position - bodyUp * corpse.Radius * 0.2f,
                 new Vector2(corpse.Radius * 1.6f, corpse.Radius * 0.4f),
                 Color.Lerp(col, Color.White, 0.18f), crot);
         }

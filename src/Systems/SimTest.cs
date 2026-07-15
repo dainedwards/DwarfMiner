@@ -293,7 +293,12 @@ public static class SimTest
             {
                 var corpse = new Corpse(drop, CreatureKind.Grub, 4f);
                 for (var step = 0; step < 60 * 5; step++)
+                {
                     corpse.Update(dt, cPlanet);
+                    if (Environment.GetEnvironmentVariable("DM_RIGIDDBG") is { Length: > 0 } && step % 15 == 0)
+                        Console.WriteLine($"    t={step} pos=({corpse.Position.X:0.0},{corpse.Position.Y:0.0}) " +
+                            $"v={corpse.Velocity.Length():0.00} spin={corpse.Spin:0.00} ang={corpse.Angle:0.00}");
+                }
                 Check("corpse: settles without embedding in rock",
                     !cPlanet.IsSolidAt(corpse.Position) && corpse.Velocity.LengthSquared() < 1f,
                     $"vel {corpse.Velocity.Length():0.00}");

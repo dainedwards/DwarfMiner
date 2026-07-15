@@ -22,6 +22,16 @@ public sealed class Corpse
     public readonly CreatureKind Kind;
     public float Life = DecayTime;
     public bool Harvested;
+    /// <summary>Ragdoll orientation — the corpse slab tumbles with real spin (same
+    /// mini-solver as RigidBodies, minus the payload/stamping) and eases flat along the
+    /// local tangent once it comes to rest.</summary>
+    public float Angle;
+    public float Spin;
+    private bool _resting;
+    private float _sleepTimer;
+    // Same lesson as RigidBodies: a resting body alternates contact/free frames (the
+    // push-out separates it, gravity re-engages), so sleep gates on touched-recently.
+    private float _sinceContact = 10f;
 
     public bool Expired => Harvested || Life <= 0f;
 
@@ -32,18 +42,145 @@ public sealed class Corpse
         Radius = radius;
     }
 
+    /// <summary>Blast/impact kick: shove the body and set it tumbling again.</summary>
+    public void Kick(Vector2 impulse)
+    {
+        Velocity += impulse;
+        Spin += ((float)Random.Shared.NextDouble() - 0.5f) * 6f
+            * MathF.Min(1.5f, impulse.Length() / 150f);
+        _resting = false;
+        _sleepTimer = 0f;
+    }
+
     public void Update(float dt, Planet planet)
     {
         Life -= dt;
-        // Tumble to the floor: gravity toward the planet centre, killed on ground contact so
-        // the body comes to rest instead of jittering. No walking, no AI — it's dead.
+
+        if (_resting)
+        {
+            // Stay down while the floor holds; if it's mined/blasted out, resume falling.
+            var g = planet.GravityAt(Position);
+            if (planet.IsSolidAt(Position + g * (Radius * 0.9f)))
+            {
+                EaseFlat(dt, planet);
+                return;
+            }
+            _resting = false;
+        }
+
         Velocity += planet.GravityAt(Position) * 300f * dt;
-        Velocity *= MathF.Max(0f, 1f - 1.5f * dt);
-        var next = Position + Velocity * dt;
-        if (planet.IsSolidAt(next))
+        var speed = Velocity.Length();
+        if (speed > 400f) Velocity *= 400f / speed;
+        Position += Velocity * dt;
+        Angle += Spin * dt;
+
+        // Contact solve on a ring of sample points — the RigidBodies recipe scaled down to
+        // one circle: inelastic below a bounce threshold, friction spins the slab as it
+        // scrapes, contact damping bleeds the jitter, rest gates on touched-recently.
+        var push = Vector2.Zero;
+        var contacted = false;
+        var invI = 2f / MathF.Max(1f, Radius * Radius);   // unit mass, disc inertia
+        var cr = Radius * 0.75f;
+        // Below a crawl the rotational coupling only PUMPS motion: the sample ring turns
+        // with the body, so each frame's contacts land somewhere new and their impulse
+        // torques rock it forever (measured ±2 rad/s standing waves). A slow corpse is a
+        // particle: impulses hit velocity only, and spin chokes to zero.
+        var crawling = _sinceContact < 0.12f && Velocity.LengthSquared() < 30f * 30f;
+        for (var i = 0; i < 6; i++)
+        {
+            var a = Angle + i * (MathF.Tau / 6f);
+            var r = new Vector2(MathF.Cos(a), MathF.Sin(a)) * cr;
+            var p = Position + r;
+            var (tx, ty) = planet.WorldToTile(p);
+            var k = planet.Get(tx, ty);
+            if (!Tiles.IsSolid(k) || Tiles.IsPassable(k) || Tiles.IsFlora(k)) continue;
+            var n = ContactNormal(planet, p);
+            var vp = Velocity + new Vector2(-Spin * r.Y, Spin * r.X);
+            var vn = Vector2.Dot(vp, n);
+            if (vn < 0f)
+            {
+                if (crawling)
+                {
+                    Velocity -= n * vn;                       // inelastic, particle-style
+                    Velocity *= 0.9f;                         // scrape friction
+                }
+                else
+                {
+                    var rn = r.X * n.Y - r.Y * n.X;
+                    var invEff = 1f + rn * rn * invI;
+                    var e = vn < -90f ? 0.25f : 0f;
+                    var j = -(1f + e) * vn / invEff;
+                    Velocity += n * j;
+                    Spin += rn * j * invI;
+                    var t = new Vector2(-n.Y, n.X);
+                    vp = Velocity + new Vector2(-Spin * r.Y, Spin * r.X);
+                    var vt = Vector2.Dot(vp, t);
+                    var rt = r.X * t.Y - r.Y * t.X;
+                    var jt = MathHelper.Clamp(-vt / (1f + rt * rt * invI), -0.5f * j, 0.5f * j);
+                    Velocity += t * jt;
+                    Spin += rt * jt * invI;
+                }
+            }
+            push += n;
+            contacted = true;
+        }
+        if (crawling && contacted)
+        {
+            Spin *= 0.7f;
+            if (MathF.Abs(Spin) < 0.5f) Spin = 0f;
+        }
+        // ONE gentle push-out along the averaged normal — per-contact pushes stack up to
+        // several px a frame and pop the body airborne, so it never stops moving.
+        if (push.LengthSquared() > 0.001f)
+            Position += Vector2.Normalize(push) * 0.35f;
+        if (contacted)
+        {
+            Velocity *= 0.94f;
+            Spin *= 0.90f;
+        }
+        _sinceContact = contacted ? 0f : _sinceContact + dt;
+
+        // The slow window must clear the free-fall speed regained between contact frames
+        // (~15 px/s over the 0.1s hop the push-out causes) or the sleep timer flickers.
+        var slow = Velocity.LengthSquared() < 24f * 24f && MathF.Abs(Spin) < 0.6f;
+        _sleepTimer = _sinceContact < 0.12f && slow ? _sleepTimer + dt : 0f;
+        if (_sleepTimer >= 0.4f)
+        {
+            _resting = true;
             Velocity = Vector2.Zero;
-        else
-            Position = next;
+            Spin = 0f;
+        }
+    }
+
+    /// <summary>Once at rest, ease the slab onto the nearest lie-flat orientation (tangent
+    /// mod π) — the contact solve alone can leave a 2:1 slab propped on its nose, which
+    /// reads as a standing corpse.</summary>
+    private void EaseFlat(float dt, Planet planet)
+    {
+        var up = planet.UpAt(Position);
+        var flat = MathF.Atan2(up.X, -up.Y);
+        var d = MathHelper.WrapAngle(flat - Angle);
+        if (d > MathF.PI / 2f) d -= MathF.PI;
+        if (d < -MathF.PI / 2f) d += MathF.PI;
+        Angle += d * MathF.Min(1f, 6f * dt);
+    }
+
+    /// <summary>Open-direction probe around a penetrating point (RigidBodies' gradient
+    /// trick); radial up deep inside rock.</summary>
+    private static Vector2 ContactNormal(Planet planet, Vector2 wp)
+    {
+        var n = Vector2.Zero;
+        const float step = Planet.TileSize;
+        for (var dy = -1; dy <= 1; dy++)
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                if (dx == 0 && dy == 0) continue;
+                var off = new Vector2(dx * step, dy * step);
+                var (tx, ty) = planet.WorldToTile(wp + off);
+                var k = planet.Get(tx, ty);
+                if (!Tiles.IsSolid(k) || Tiles.IsPassable(k) || Tiles.IsFlora(k)) n += off;
+            }
+        return n.LengthSquared() > 0.001f ? Vector2.Normalize(n) : planet.UpAt(wp);
     }
 
     /// <summary>What harvesting this creature's corpse pays out. New organics (meat / hide /
