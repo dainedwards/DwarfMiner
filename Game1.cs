@@ -4839,27 +4839,41 @@ public sealed partial class DwarfMinerGame : Game
                 else
                 {
                     var wrot = MathF.Atan2(aim.Y, aim.X);
-                    // Mid-swing, melee sweeps a long deliberate arc around the aim — an
-                    // OVERHEAD chop: the sweep side is picked from local planet-up so the
-                    // blade always starts sky-side and comes down, whatever the facing or
-                    // where on the planet the dwarf stands.
+                    // Melee is 30% smaller now. Swing side picked from local planet-up so the
+                    // chop always starts sky-side and comes DOWN, whatever the facing.
+                    var scale = isMelee ? new Vector2(0.96f, 0.64f) : new Vector2(0.39f, 0.39f);
+                    var flip = aim.X < 0f ? SpriteEffects.FlipVertically : SpriteEffects.None;
+                    var org = new Vector2(1.5f, heldTex.Height / 2f);
                     if (isMelee && _meleeAnim > 0f)
                     {
-                        var swing = MathHelper.Lerp(-2.1f, 1.4f, 1f - _meleeAnim / _meleeAnimDur);
                         var upW = _run.Planet.UpAt(_run.Player.Position);
                         float StartUpness(float sgn)
                         {
                             var a = wrot + sgn * -2.1f;
                             return Vector2.Dot(new Vector2(MathF.Cos(a), MathF.Sin(a)), upW);
                         }
-                        wrot += (StartUpness(1f) >= StartUpness(-1f) ? 1f : -1f) * swing;
+                        var side = StartUpness(1f) >= StartUpness(-1f) ? 1f : -1f;
+                        // Eased progress: the blade whips through the strike fast (smootherstep)
+                        // so the swipe reads as a real slash, not a slow pan.
+                        var p = 1f - _meleeAnim / _meleeAnimDur;
+                        float Arc(float pp)
+                        {
+                            var e = pp * pp * pp * (pp * (pp * 6f - 15f) + 10f);   // smootherstep
+                            return wrot + side * MathHelper.Lerp(-2.1f, 1.4f, e);
+                        }
+                        // Motion-trail: a few fading afterimages along the arc already covered,
+                        // so the swing leaves a clear crescent slash behind the blade.
+                        for (var s = 3; s >= 1; s--)
+                        {
+                            var tp = MathF.Max(0f, p - s * 0.12f);
+                            _renderer.Batch.Draw(heldTex, _run.Player.Position + aim * 3.2f, null,
+                                new Color(255, 255, 255, (byte)(50 - s * 10)),
+                                Arc(tp), org, scale, flip, 0f);
+                        }
+                        wrot = Arc(p);
                     }
-                    // Melee reads big in hand: 30% larger overall, 50% longer down the
-                    // blade axis (X is the length axis — all weapon art points +X).
-                    var scale = isMelee ? new Vector2(1.37f, 0.91f) : new Vector2(0.55f, 0.55f);
                     _renderer.Batch.Draw(heldTex, _run.Player.Position + aim * 3.2f, null, Color.White,
-                        wrot, new Vector2(1.5f, heldTex.Height / 2f), scale,
-                        aim.X < 0f ? SpriteEffects.FlipVertically : SpriteEffects.None, 0f);
+                        wrot, org, scale, flip, 0f);
                     // The dwarf's fist wrapped around the grip — a small skin-tone knuckle over
                     // the stock, so the weapon reads as held rather than floating at his hip.
                     _renderer.DrawRect(_run.Player.Position + aim * 3.4f, new Vector2(1.7f, 1.7f),
