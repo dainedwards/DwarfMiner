@@ -1084,9 +1084,13 @@ public static class WorldGen
         return false;
     }
 
-    /// <summary>One worm step's bite: a small disk of soft tiles → Sky. Anchored tiles and
-    /// obsidian stay (containment linings, city foundations, the core).</summary>
-    private static void CarveWormDisk(Planet planet, Vector2 centre, float radius)
+    /// <summary>One worm step's bite: a small disk of soft tiles → Sky. Anchored tiles
+    /// always stay (city foundations, the core). Obsidian stays too UNLESS
+    /// <paramref name="biteObsidian"/> — the deep strata run mostly through obsidian/basalt
+    /// bedrock and would carve nothing without it; their volcano-bearing detour is what
+    /// protects the plumbing linings down there instead.</summary>
+    private static void CarveWormDisk(Planet planet, Vector2 centre, float radius,
+        bool biteObsidian = false)
     {
         var (er, _) = planet.WorldToTile(centre);
         var span = (int)(radius / Planet.TileSize) + 1;
