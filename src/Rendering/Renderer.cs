@@ -1233,7 +1233,7 @@ public sealed class Renderer
     private void DrawCrust(Vector2 centre, Vector2 right, Vector2 up, float rotation, float chord,
         bool outerSky, bool innerSky, bool leftSky, bool rightSky, Color col)
     {
-        const int d = World.Cells.Density;       // cells per tile edge (1-px cells)
+        const int d = Cells.Density;             // cells per tile edge (1-px cells)
         var cellR = (float)Planet.TileSize / d;  // radial px per cell (≈1)
         var cellC = chord / d;                   // angular px per cell
         var halfC = chord * 0.5f;
