@@ -1523,8 +1523,7 @@ public sealed partial class DwarfMinerGame : Game
                 -jetUp, _run.Player.JetTier);
         }
         TickSwing(dt);
-        TickOxygen(dt);
-        TickBreath(dt);
+        TickAir(dt);
         TickHazardContact(dt);
 
         // Camera follows player, rotating so up = away from planet center. DM_BOSSCAM frames
