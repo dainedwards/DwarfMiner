@@ -2365,7 +2365,7 @@ public sealed class Cells
             foreach (var f in _flying)
             {
                 if (Vector2.DistanceSquared(f.Pos, viewCentre) > maxDistSq) continue;
-                var col = ColorFor((Material)f.Mat, (int)f.Pos.X, (int)f.Pos.Y, f.Src);
+                var col = ColorFor((Material)f.Mat, (int)f.Pos.X, (int)f.Pos.Y, f.Src, airborne: true);
                 var speed = f.Vel.Length();
                 // Streak length/width in CELL units so the smear scales with the grain:
                 // at least one full cell long (sub-cell quads flicker against the pixel-
