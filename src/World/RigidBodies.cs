@@ -254,6 +254,7 @@ public sealed class RigidBodies
                 var (x, y) = _planet.UnIndex(idx);
                 var k = _planet.Get(x, y);
                 _planet.Set(x, y, TileKind.Sky);
+                _planet.ClearStructureWall(x, y);
                 _cells.SpawnDustInTile(x, y, k);
                 _physics.MarkDirty(x, y);
             }
