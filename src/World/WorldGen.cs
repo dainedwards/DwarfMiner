@@ -849,7 +849,7 @@ public static class WorldGen
         // not just the upper shell — but still stop a safe margin ABOVE this world's lava fill
         // line (crossing it turns tunnels into permanent lava plumbing that wrecks the cell
         // budget). On a low-lava world that opens the deep half of the crust to caving.
-        var minFrac = MathF.Max(0.30f, def.LavaFillFrac + 0.08f);
+        var minFrac = MathF.Max(0.38f, def.LavaFillFrac + 0.08f);
         var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
         for (var i = 0; i < worms; i++)
         {
