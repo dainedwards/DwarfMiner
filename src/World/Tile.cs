@@ -99,6 +99,9 @@ public static class Tiles
           or TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick
           or TileKind.DoorClosed or TileKind.DoorOpen
           or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp
+          // Placed building blocks are architecture like platforms: a small free-standing
+          // cluster must not trip the connectivity flood and rain down as dust mid-build.
+          or TileKind.Brick or TileKind.Plating or TileKind.GlassBlock
           // A placed platform is a fixed ledge — it never caves in.
           or TileKind.Platform
           // Treasure chests sit solid in the warren vault — they never crumble; you loot them.
