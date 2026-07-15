@@ -5728,9 +5728,11 @@ public sealed partial class DwarfMinerGame : Game
                 TitanShotKind.Lava  => (16f, new Color(255, 130, 40)),
                 TitanShotKind.Spike => (8f, new Color(210, 200, 170)),
                 TitanShotKind.Void  => (16f, new Color(160, 100, 240)),
+                TitanShotKind.Dart  => (0f, new Color(0, 0, 0)),   // a wooden dart doesn't glow
+                TitanShotKind.Slug  => (0f, new Color(0, 0, 0)),   // nor a lead slug
                 _                   => (18f, new Color(120, 230, 255)),
             };
-            _renderer.AddLight(shot.Position, lr, lc);
+            if (lr > 0f) _renderer.AddLight(shot.Position, lr, lc);
         }
 
         // The live gravity well drowns its arena in violet while the pull runs.
