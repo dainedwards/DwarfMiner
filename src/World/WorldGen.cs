@@ -426,19 +426,26 @@ public static class WorldGen
                     else if (pN > 0.78f) k = TileKind.Gravel;
                 }
 
+                // The seabed shell wins over every softer layer choice above: hardness 6
+                // glass rock between the sea and the caves — mineable with intent, never
+                // crumbled through by accident (and no worm can bite it).
+                if (seaShell) k = TileKind.Obsidian;
+
                 // Wall captures the structural material before caves/ores override the foreground.
                 planet.SetWall(r, t, k);
 
                 var bigN = SampleNoise(bigCave, wx * 0.05f, wy * 0.05f);
                 var smallN = SampleNoise(smallCave, wx * 0.18f, wy * 0.18f);
-                if (!acidBuffer && !inSeam && depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
+                if (!acidBuffer && !seaBuffer && !inSeam && depth > 5f && ((bigN > 0.84f && depth > 8f) || smallN > 0.88f))
                 {
                     k = TileKind.Sky;
                     // Reservoirs: a slow water-noise channel floods whole cave pockets in the
                     // crust band (below the dirt, above the lava zone that Game1 fills at
                     // ~45% radius) so some caverns are found brimming rather than dry. Water
                     // is seeded as cells and settles to each pocket's floor on its own.
-                    if (def.HasWater && depth > 10f && depth < 44f
+                    // Ocean worlds skip them: their design promise is DRY caves under a wet
+                    // surface — all the water lives in the seas above the obsidian floor.
+                    if (def.HasWater && !oceanWorld && depth > 10f && depth < 44f
                         && SampleNoise(waterNoise, wx * 0.05f, wy * 0.05f) > 0.62f)
                     {
                         planet.WaterSeeds.Add((r, t));
