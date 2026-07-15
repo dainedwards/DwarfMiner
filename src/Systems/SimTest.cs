@@ -2011,11 +2011,12 @@ public static class SimTest
             var dSlow = Vector2.Dot(slow.Position - poolCentre, rF);
             Check($"swim: fins double the stroke ({dSlow:0} -> {dFin:0}px)", dFin > dSlow * 1.5f);
 
+            // Lung tiers now raise the unified AIR ceiling (breath + air are one bar).
             var lungs = new Player(Vector2.Zero);
-            var ok = lungs.EffectiveMaxBreath == Player.BaseMaxBreath;
-            lungs.LungTier = 1; ok &= lungs.EffectiveMaxBreath == Player.BaseMaxBreath * 2f;
-            lungs.LungTier = 2; ok &= lungs.EffectiveMaxBreath == Player.BaseMaxBreath * 3f;
-            Check("swim: lung tiers scale the breath ceiling x1/x2/x3", ok);
+            var ok = lungs.EffectiveMaxOxygen == Player.BaseMaxOxygen;
+            lungs.LungTier = 1; ok &= lungs.EffectiveMaxOxygen == Player.BaseMaxOxygen * 1.5f;
+            lungs.LungTier = 2; ok &= lungs.EffectiveMaxOxygen == Player.BaseMaxOxygen * 2f;
+            Check("swim: lung tiers raise the air ceiling x1/x1.5/x2", ok);
         }
 
         // --- Land swimmer buoyancy: a lizardman dropped to the pool floor strokes back up ---
