@@ -137,7 +137,8 @@ public sealed class Particles
             var sp2 = p.Velocity.LengthSquared();
             if (sp2 > 3600f)
             {
-                var len = MathF.Min(s * 16f, MathF.Sqrt(sp2) * 0.045f);
+                var len = MathF.Min(p.SmearMax > 0f ? p.SmearMax : s * 16f,
+                    MathF.Sqrt(sp2) * 0.045f);
                 if (len > s)
                 {
                     r.DrawRect(p.Position, new Vector2(len, s), c,
