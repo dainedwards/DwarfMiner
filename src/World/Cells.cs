@@ -1646,6 +1646,7 @@ public sealed class Cells
             Planet.Set(tx, ty, TileKind.Sky);
             SpawnInTile(tx, ty, Material.Fire, Density);
             SpawnInTile(tx, ty, Material.Smoke, Density / 2);
+            ShedBurningLeaves(tx, ty, k);
         }
 
         Probe(cx + 1, cy);
