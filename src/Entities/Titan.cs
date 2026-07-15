@@ -1795,20 +1795,24 @@ public sealed class TitanProjectile
         _drill = kind switch { TitanShotKind.Laser => 6, TitanShotKind.Void => 3, _ => 0 };
     }
 
-    /// <summary>Acid and Lava globs are the ballistic shots — they loft, arc, and rain down,
-    /// bursting into live cells of their material where they land.</summary>
-    private bool Ballistic => Kind is TitanShotKind.Acid or TitanShotKind.Lava;
+    /// <summary>Shots that fall under gravity — they loft, arc, and rain down instead of
+    /// flying dead straight: the Acid/Lava globs and the creatures' thrown blowdarts.</summary>
+    private bool Arcs => Kind is TitanShotKind.Acid or TitanShotKind.Lava or TitanShotKind.Dart;
+
+    /// <summary>Arcing shots that BURST into live cells of their material on landing (globs),
+    /// as opposed to the dart, which is a solid projectile that just expires.</summary>
+    private bool Splashes => Kind is TitanShotKind.Acid or TitanShotKind.Lava;
 
     public void Update(float dt, Planet planet, Physics physics, Cells cells, Player player)
     {
-        if (Ballistic)
+        if (Arcs)
             Velocity += planet.GravityAt(Position) * 240f * dt;
         Position += Velocity * dt;
         Life -= dt;
         if (Life <= 0f)
         {
             Dead = true;
-            if (Ballistic) Splash(planet, cells);
+            if (Splashes) Splash(planet, cells);
             return;
         }
 
