@@ -191,7 +191,7 @@ public static class PlanetGen
             MountainHeightScale: 0.5f, LavaFillFrac: 0f, HasWater: false,
             OreBias: new[]
             {
-                (TileKind.SilverOre, 0.14f), (TileKind.IronOre, 0.03f),
+                (TileKind.SilverOre, 0.055f), (TileKind.IronOre, 0.03f),
                 (TileKind.CoalOre, 0.02f), (TileKind.Crystal, 0.02f),
             },
             QuakeScale: 1.0f, CaveSpawnCap: 14,
