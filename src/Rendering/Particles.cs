@@ -848,7 +848,7 @@ public sealed class Particles
         var fade = Color.Multiply(baseColor, 0.35f);
         if (outward.LengthSquared() < 0.01f) outward = Jitter(1f);
         outward.Normalize();
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 4; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 1.1f;
             var c = MathF.Cos(spread);
@@ -862,7 +862,7 @@ public sealed class Particles
                 MaxLife = 1.3f,
                 Color = baseColor,
                 FadeColor = fade,
-                Size = 1.5f + (float)_rng.NextDouble(),
+                Size = 0.9f + (float)_rng.NextDouble() * 0.5f,
                 GravityScale = 1f,
                 Drag = 0.5f,
                 CollideTiles = true,
