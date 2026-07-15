@@ -1762,22 +1762,22 @@ public static class WorldGen
             }
             else if (roofStyle == 1)
             {
-                // Stepped crown: two shrinking alloy tiers, a little ziggurat cap.
+                // Stepped crown: two shrinking alloy tiers, a little ziggurat cap — laid on
+                // the tower's own column lattice so the tiers snap straight with the hull.
                 for (var step = 0; step < 2; step++)
                 {
                     var stepW = halfWidthPx * (0.65f - step * 0.28f);
+                    var swCols = Math.Max(1, (int)MathF.Round(stepW / Planet.TileSize));
                     for (var dr = 1 + step * (int)S; dr <= (1 + step) * (int)S; dr++)
                     {
                         var r = topR + dr;
                         if (r >= planet.Rings - 1) break;
                         var n = planet.TilesAt(r);
-                        var t0 = (int)MathF.Round(ang / (MathHelper.TwoPi / n) - 0.5f);
-                        var sw = Math.Max(1, (int)MathF.Round(
-                            stepW / ((Planet.RingMin + r + 0.5f) * Planet.TileSize)
-                            / MathHelper.TwoPi * n));
-                        for (var dt = -sw; dt <= sw; dt++)
+                        var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
+                        for (var j = midJ - swCols; j <= midJ + swCols; j++)
                         {
-                            var t = ((t0 + dt) % n + n) % n;
+                            var lat = -halfW + (j + 0.5f) * Planet.TileSize;
+                            var t = ((int)MathF.Round((ang + lat / ringRadius) / (MathHelper.TwoPi / n) - 0.5f) % n + n) % n;
                             if (Tiles.IsAnchored(planet.Get(r, t))) continue;
                             planet.Set(r, t, TileKind.AlienAlloy);
                             planet.SetWall(r, t, TileKind.AlienAlloy);
