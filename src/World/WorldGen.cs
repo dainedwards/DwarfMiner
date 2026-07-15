@@ -204,6 +204,14 @@ public static class WorldGen
         // lava sea can never drain into the dry caves below it). See CaveStrata.
         var (strataSeams, _, seaFloorTiles) = CaveStrata(planet, def);
 
+        // Top of the lava flood (BuildSessionWorld fills Sky tiles inside this radius).
+        // The liquid/gas pocket bands below are authored as ABSOLUTE depths, which sat
+        // safely above the lava on full-size worlds — but on small worlds (the 0.7× QA
+        // rig) the same depths reach INTO the flood band, and every water/oil pocket
+        // seeded there ignites against the sea on load: a quench-and-burn front that woke
+        // ~40k lava cells and simmered for minutes. All pocket seeding stays above this.
+        var lavaTopTiles = def.LavaFillFrac > 0f ? planet.Radius * def.LavaFillFrac : 0f;
+
         for (var r = 0; r < planet.Rings; r++)
         {
             var n = planet.TilesAt(r);
