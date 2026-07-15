@@ -1404,11 +1404,61 @@ public sealed class Particles
                 Color = tone,
                 FadeColor = new Color(75, 60, 55),   // flame gutters into SMOKE, not embers
                 Size = hot ? 0.7f : 1f,
-                GravityScale = -0.3f,                // buoyant: the plume lifts off the arc
-                Drag = 1.5f,                         // stalls late in life, then billows
+                // Stream gravity: YOUNG puffs droop with the carrier arc (the visible
+                // fire follows the stream down); the age-growing buoyancy in Update then
+                // tears the old ones upward — divergence peaks at the stream's end.
+                GravityScale = HoseArcGravity,
+                Drag = 1.2f,
                 CollideTiles = true,
                 LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
-                LightColor = new Color(255, 170, 70),
+                LightColor = new Color(255, 160, 55),
+                Fluid = (byte)Material.Fire,
+            });
+        }
+        // 3) Sparks: the odd white-hot fleck spat AHEAD of the flame — faster than the
+        // stream, same arc gravity (never off-trajectory), streaked, quick to die.
+        if (_rng.Next(2) == 0)
+        {
+            var sd = dir;
+            _list.Add(new Particle
+            {
+                Position = pos,
+                Velocity = sd * (jetSpeed * (1.1f + (float)_rng.NextDouble() * 0.3f)) + shooterVel,
+                Life = 0.25f + (float)_rng.NextDouble() * 0.25f,
+                MaxLife = 0.5f,
+                Color = new Color(255, 240, 180),
+                FadeColor = new Color(200, 80, 20),
+                Size = 0.5f,
+                GravityScale = HoseArcGravity,
+                Drag = 0.4f,
+                CollideTiles = true,
+                LightRadius = _rng.Next(3) == 0 ? 18f : 0f,
+                LightColor = new Color(255, 200, 90),
+                SmearMax = 12f,
+                SmearScale = 2f,
+            });
+        }
+        // 4) Smoke puffs: dedicated dark billows joining the plume's coverage body — they
+        // ride the stream briefly, then the age-lift carries them up as the black wash
+        // crowning the fire.
+        if (_rng.Next(2) == 0)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * (coneArc * 3f);
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            _list.Add(new Particle
+            {
+                Position = pos + d * (float)_rng.NextDouble() * 3f,
+                Velocity = d * (jetSpeed * (0.7f + (float)_rng.NextDouble() * 0.2f)) + shooterVel,
+                Life = 1.1f + (float)_rng.NextDouble() * 0.5f,
+                MaxLife = 1.6f,
+                Color = new Color(110, 95, 90),
+                FadeColor = new Color(45, 40, 42),
+                Size = 1f,
+                GravityScale = 0.6f,
+                Drag = 1.1f,
+                CollideTiles = true,
                 Fluid = (byte)Material.Fire,
             });
         }
