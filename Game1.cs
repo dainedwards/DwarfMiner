@@ -2624,8 +2624,12 @@ public sealed partial class DwarfMinerGame : Game
             "band_regen", "magnet_ring", "miners_charm", "aegis_pendant",
             "sword", "mace", "warhammer", "shield",
             "great_sword", "great_mace", "great_hammer", "tower_shield",
+            "grapple",
         })
             if (p.Inventory.Count(id) == 0) p.Inventory.Add(id, 1);
+        if (p.Inventory.Count("rope") < 8) p.Inventory.Add("rope", 8);
+        p.Toolbelt.AutoEquip("grapple");
+        p.Toolbelt.AutoEquip("rope");
         p.Equipment.AutoEquip("jetpack");
         if (p.Equipment.Get(EquipSlot.Torch) is null) p.Equipment.Set(EquipSlot.Torch, "sun_crystal");
     }
