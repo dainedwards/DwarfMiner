@@ -57,6 +57,7 @@ public static class RuntimeEffect
             // try) rather than mid-frame on first use.
             _ = fx.Parameters["MatrixCol0"];
             _ = fx.Parameters["PsParams"];
+            _ = fx.Parameters["PsParams2"];
             // GLSL compiles LAZILY at the first draw (glShaderSource/link happen inside
             // ApplyState) — so force one degenerate draw through the effect now. A driver
             // that rejects the GLSL throws here, inside the guard, instead of crashing the
@@ -116,12 +117,20 @@ void main()
     /// air-exposure mask and carve each exposed edge inward by a world-space value-noise
     /// depth, discarding carved fragments. Because the noise is sampled at WORLD position,
     /// the carved coastline runs continuously across tile seams — the actual Noita edge.
-    /// PsParams = (atlasFramesX, atlasFramesY, carve amplitude in frame fraction, noise
-    /// frequency per world px). Lattice hashes wrap at 289 px so sin() precision holds
-    /// far from the origin (the pattern repeat is invisible at 2–3 px feature size).</summary>
+    /// On top of the straight edge carve: convex CORNERS (two adjacent edges exposed — a
+    /// stair-step of the tile grid) are additionally cut back radially, dissolving the
+    /// 90° staircase on diagonal terrain, and the fragments just inside the resulting
+    /// coastline darken in two hard 1-px bands — the Noita rim crust, glued to the real
+    /// carved boundary instead of the nominal tile square.
+    /// PsParams  = (atlasFramesX, atlasFramesY, top-face carve amplitude in frame
+    /// fraction, noise frequency per world px).
+    /// PsParams2 = (ceiling amplitude, wall amplitude, crust band width in frame
+    /// fraction, unused) — the top face keeps the sand-resting physics bound while
+    /// walls/ceilings carve deeper. Lattice hashes wrap at 289 px so sin() precision
+    /// holds far from the origin (the repeat is invisible at 2–3 px feature size).</summary>
     private const string PixelGlsl = @"#version 110
 uniform sampler2D s0;
-uniform vec4 ps_uniforms_vec4[1];
+uniform vec4 ps_uniforms_vec4[2];
 varying vec4 vColor;
 varying vec2 vTexCoord;
 varying vec2 vWorld;
@@ -164,15 +173,42 @@ void main()
     float eI = step(2.0, m); m -= eI * 2.0;
     float eO = m;
     vec2 intra = fract(vTexCoord * ps_uniforms_vec4[0].xy);
-    float amp  = ps_uniforms_vec4[0].z;
-    float freq = ps_uniforms_vec4[0].w;
+    float ampO   = ps_uniforms_vec4[0].z;
+    float freq   = ps_uniforms_vec4[0].w;
+    float ampI   = ps_uniforms_vec4[1].x;
+    float ampS   = ps_uniforms_vec4[1].y;
+    float crustW = ps_uniforms_vec4[1].z;
     vec2 w = vWorld * freq;
-    float dO = eO * carve(w, vec2(0.0, 0.0))   * amp;
-    float dI = eI * carve(w, vec2(37.0, 17.0)) * amp;
-    float dL = eL * carve(w, vec2(91.0, 53.0)) * amp;
-    float dR = eR * carve(w, vec2(13.0, 71.0)) * amp;
-    if (intra.y < dO || 1.0 - intra.y < dI || intra.x < dL || 1.0 - intra.x < dR)
+    // Per-edge carve depth: the outer (top) face keeps the sand-resting physics bound;
+    // walls (ampS) and cave ceilings (ampI) carve deeper — nothing rests against them.
+    float dO = eO * carve(w, vec2(0.0, 0.0))   * ampO;
+    float dI = eI * carve(w, vec2(37.0, 17.0)) * ampI;
+    float dL = eL * carve(w, vec2(91.0, 53.0)) * ampS;
+    float dR = eR * carve(w, vec2(13.0, 71.0)) * ampS;
+    // Signed distance INSIDE the carved boundary (frame fraction), min over the exposed
+    // edges — 0 sits exactly on the coastline; unexposed edges contribute a sentinel.
+    float sd = 9.0;
+    sd = min(sd, mix(9.0, intra.y - dO,       eO));
+    sd = min(sd, mix(9.0, 1.0 - intra.y - dI, eI));
+    sd = min(sd, mix(9.0, intra.x - dL,       eL));
+    sd = min(sd, mix(9.0, 1.0 - intra.x - dR, eR));
+    // Convex corner rounding: where two ADJACENT edges are both exposed (a stair-step
+    // corner of the tile grid) the corner is cut back radially with a noise-modulated
+    // radius, so diagonal terrain reads as a wandering coastline instead of a 90-degree
+    // staircase. The radius scales off the same edge amps — DM_CARVE=0 kills this too.
+    float rO = max(ampO, ampS);
+    float rI = max(ampI, ampS);
+    sd = min(sd, mix(9.0, length(intra)                        - rO * (0.6 + 0.6 * vnoise(w * 1.3 + vec2( 7.0, 43.0))), eO * eL));
+    sd = min(sd, mix(9.0, length(vec2(1.0 - intra.x, intra.y)) - rO * (0.6 + 0.6 * vnoise(w * 1.3 + vec2(61.0, 23.0))), eO * eR));
+    sd = min(sd, mix(9.0, length(vec2(intra.x, 1.0 - intra.y)) - rI * (0.6 + 0.6 * vnoise(w * 1.3 + vec2(31.0, 79.0))), eI * eL));
+    sd = min(sd, mix(9.0, length(vec2(1.0, 1.0) - intra)       - rI * (0.6 + 0.6 * vnoise(w * 1.3 + vec2(97.0, 11.0))), eI * eR));
+    if (sd < 0.0)
         discard;
+    // Rim crust: two HARD darkening bands hugging the actual carved coastline (quantised
+    // steps, not a gradient, so the pixel-art read survives). Noise-gated so the rim is
+    // patchy grime along ~3/4 of the coastline, not a uniform sticker outline.
+    if (sd < crustW * 2.0 && vnoise(w * 2.2 + vec2(19.0, 87.0)) > 0.25)
+        tex.rgb *= sd < crustW ? 0.78 : 0.90;
     gl_FragColor = vec4(tex.rgb * vColor.rgb, tex.a);
 }
 ";
@@ -196,11 +232,12 @@ void main()
         w.Write((short)64);
         w.Write(4);
         for (var i = 0; i < 4; i++) { w.Write(i); w.Write((ushort)(i * 16)); } // params 0..3 at 0,16,32,48
-        // cbuffer 1 → PS: one packed vec4 of carve parameters.
+        // cbuffer 1 → PS: two packed vec4s of carve/crust parameters.
         w.Write("ps_uniforms_vec4");
-        w.Write((short)16);
-        w.Write(1);
+        w.Write((short)32);
+        w.Write(2);
         w.Write(4); w.Write((ushort)0);  // param 4 at offset 0
+        w.Write(5); w.Write((ushort)16); // param 5 at offset 16
 
         // --- shaders ---
         w.Write(2);
@@ -208,12 +245,13 @@ void main()
         WriteShader(w, isVertex: false, PixelGlsl, cbuffer: 1, withAttributes: false);
 
         // --- parameters (indices must match the cbuffer tables above) ---
-        w.Write(5);
+        w.Write(6);
         WriteVec4Param(w, "MatrixCol0");
         WriteVec4Param(w, "MatrixCol1");
         WriteVec4Param(w, "MatrixCol2");
         WriteVec4Param(w, "MatrixCol3");
         WriteVec4Param(w, "PsParams");
+        WriteVec4Param(w, "PsParams2");
 
         // --- techniques ---
         w.Write(1);

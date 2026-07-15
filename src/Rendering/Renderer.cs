@@ -37,16 +37,31 @@ public sealed class Renderer
     /// approximate. Everything else in the batch draws with normal alphas and passes through
     /// the shader untouched.</summary>
     private readonly Effect? _tileFx;
-    private readonly EffectParameter? _fxCol0, _fxCol1, _fxCol2, _fxCol3, _fxPs;
+    private readonly EffectParameter? _fxCol0, _fxCol1, _fxCol2, _fxCol3, _fxPs, _fxPs2;
 
-    /// <summary>Carve amplitude as a fraction of a tile edge. DM_CARVE=&lt;px&gt; overrides the
-    /// max carve depth in world pixels. Default 1.3: the physics bound, not an aesthetic
-    /// one — sand rests on the SQUARE tile, so carve depth is exactly how far a grain can
-    /// visibly hover above a carved surface. 2.0 was tried and read as gaps sand wouldn't
-    /// fill; ~1.3 matches the old baked erosion's depth, which years of sand-on-terrain
-    /// never showed. The organic look must come from the WAVELENGTH (CarveFreq), not depth.</summary>
+    /// <summary>TOP-FACE carve amplitude as a fraction of a tile edge. DM_CARVE=&lt;px&gt;
+    /// overrides the max carve depth in world pixels (0 disables carve, corner rounding
+    /// and all). Default 1.3: the physics bound, not an aesthetic one — sand rests on the
+    /// SQUARE tile, so carve depth is exactly how far a grain can visibly hover above a
+    /// carved surface. 2.0 was tried and read as gaps sand wouldn't fill; ~1.3 matches the
+    /// old baked erosion's depth, which years of sand-on-terrain never showed. The organic
+    /// look must come from the WAVELENGTH (CarveFreq), not depth. That bound only binds
+    /// the face sand rests ON, though — see the side/ceiling multipliers below.</summary>
     private static readonly float CarveAmp =
         (float.TryParse(Environment.GetEnvironmentVariable("DM_CARVE"), out var cpx) ? cpx : 1.3f)
+        / Planet.TileSize;
+    /// <summary>Wall / cave-ceiling carve depth as multiples of <see cref="CarveAmp"/>.
+    /// Nothing visibly RESTS against a vertical wall or a ceiling, so those faces can carve
+    /// past the top-face bound (≈1.8 px / ≈2.2 px at the default) — overhangs and cave
+    /// roofs go organic where the sand-hover tell can't appear. DM_CARVE scales all three.</summary>
+    private const float CarveSideMul = 1.4f;
+    private const float CarveCeilMul = 1.7f;
+    /// <summary>Width of one rim-crust band as a fraction of a tile edge — the in-shader
+    /// Noita rim: two hard darkening bands hugging the CARVED coastline (the retired
+    /// additive DrawCrust could only hug the nominal tile square — the moat problem).
+    /// DM_CRUST=&lt;px&gt; overrides in world pixels; 0 disables the rim.</summary>
+    private static readonly float CrustWidth =
+        (float.TryParse(Environment.GetEnvironmentVariable("DM_CRUST"), out var kpx) ? kpx : 1.0f)
         / Planet.TileSize;
     /// <summary>Base carve noise frequency per world px — ~8 px swells, so the coastline
     /// undulates coherently ACROSS tiles instead of reading as per-pixel fuzz (the fuzz is
@@ -129,6 +144,7 @@ public sealed class Renderer
             _fxCol2 = _tileFx.Parameters["MatrixCol2"];
             _fxCol3 = _tileFx.Parameters["MatrixCol3"];
             _fxPs = _tileFx.Parameters["PsParams"];
+            _fxPs2 = _tileFx.Parameters["PsParams2"];
         }
         _stars = MakeStarfield(gd, 256);
         _atmoTex = MakeAtmosphere(gd, 512);
@@ -365,6 +381,8 @@ public sealed class Renderer
                 _tileAtlas.Width / (float)TileAtlas.Res,
                 _tileAtlas.Height / (float)TileAtlas.Res,
                 CarveAmp, CarveFreq));
+            _fxPs2!.SetValue(new Vector4(
+                CarveAmp * CarveCeilMul, CarveAmp * CarveSideMul, CrustWidth, 0f));
         }
         _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view, effect: _tileFx);
 
