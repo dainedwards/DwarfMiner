@@ -1162,7 +1162,7 @@ public sealed class Particles
         {
             // Tighter cone + narrower speed band than the old fan: grains stay bunched
             // along the stream axis, so their motion-smears overlap into one rope.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.17f;
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.068f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
