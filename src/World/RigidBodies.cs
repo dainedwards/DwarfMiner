@@ -101,8 +101,15 @@ public sealed class RigidBodies
         public float ErodeTimer;
         public bool Dead;
 
-        /// <summary>Rebuild mass/inertia/bounds from the current payload — called at spawn
-        /// and again whenever erosion removes cells. Unit mass per cell.</summary>
+        /// <summary>Indices of the surface cells, rebuilt with the mass properties. The
+        /// contact solver runs per substep and the actor-overlap probe per creature — a
+        /// whole-structure body carries tens of thousands of cells, so those hot paths walk
+        /// this short list instead of scanning the full payload for the Surface flag.</summary>
+        public readonly List<int> SurfaceIdx = new();
+
+        /// <summary>Rebuild mass/inertia/bounds (and the surface index) from the current
+        /// payload — called at spawn and again whenever erosion removes cells, always after
+        /// surface flags are final. Unit mass per cell.</summary>
         public void RecomputeMass()
         {
             var n = Cells.Count;
