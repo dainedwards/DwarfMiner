@@ -221,7 +221,44 @@ void main()
 }
 ";
 
-    private static byte[] WriteMgfx()
+    /// <summary>Pixel shader for the LIQUID COMPOSITE pass. The sprite texture is the
+    /// liquid render target: cells were rasterized into it as soft-alpha blobs whose alpha
+    /// ACCUMULATES (colour replaces), so the alpha channel is a coverage field — a lone
+    /// droplet peaks at its own texel, two droplets a texel apart sum past the threshold in
+    /// the gap between them. Thresholding that field is the classic metaball cut: pool
+    /// edges round off, near droplets fuse, and everything below the cut vanishes instead
+    /// of ghosting at partial alpha. Texels whose 4-neighbourhood dips below the threshold
+    /// are the liquid's outline — they brighten into the Noita rim highlight. Output is
+    /// premultiplied at ONE uniform opacity, so the whole body composites over the world
+    /// in a single blend: no per-quad double-blend mottling, tiles ghost through evenly.
+    /// PsParams  = (texelW, texelH, coverage threshold, body opacity).
+    /// PsParams2 = (rim multiply, rim add, unused, unused).</summary>
+    private const string LiquidGlsl = @"#version 110
+uniform sampler2D s0;
+uniform vec4 ps_uniforms_vec4[2];
+varying vec4 vColor;
+varying vec2 vTexCoord;
+varying vec2 vWorld;
+void main()
+{
+    vec2 texel   = ps_uniforms_vec4[0].xy;
+    float thresh = ps_uniforms_vec4[0].z;
+    vec4 c = texture2D(s0, vTexCoord);
+    if (c.a < thresh)
+        discard;
+    float n =        texture2D(s0, vTexCoord + vec2(texel.x, 0.0)).a;
+    n = min(n, texture2D(s0, vTexCoord - vec2(texel.x, 0.0)).a);
+    n = min(n, texture2D(s0, vTexCoord + vec2(0.0, texel.y)).a);
+    n = min(n, texture2D(s0, vTexCoord - vec2(0.0, texel.y)).a);
+    vec3 rgb = c.rgb;
+    if (n < thresh)
+        rgb = min(rgb * ps_uniforms_vec4[1].x + vec3(ps_uniforms_vec4[1].y), vec3(1.0));
+    float a = ps_uniforms_vec4[0].w;
+    gl_FragColor = vec4(rgb * a, a) * vColor;
+}
+";
+
+    private static byte[] WriteMgfx(string pixelGlsl, string technique)
     {
         using var ms = new MemoryStream();
         using var w = new BinaryWriter(ms, Encoding.UTF8);
