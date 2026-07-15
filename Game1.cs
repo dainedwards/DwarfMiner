@@ -1612,7 +1612,6 @@ public sealed partial class DwarfMinerGame : Game
         TickAir(dt);
         TickHazardContact(dt);
 
-<<<<<<< HEAD
         // Zoom control: "-" steps the camera out, "+"/"=" steps it in (numpad +/- too).
         // Steps are locked to EVEN zoom factors (2/4/6/8) so the pixel-grid world target
         // (see DrawFrame) upscales by an exact integer — every world pixel stays an
@@ -1623,27 +1622,21 @@ public sealed partial class DwarfMinerGame : Game
             _playZoom = MathF.Max(2f, _playZoom - 2f);
         if (zoomInKey && !(_prevKeys.IsKeyDown(Keys.OemPlus) || _prevKeys.IsKeyDown(Keys.Add)))
             _playZoom = MathF.Min(8f, _playZoom + 2f);
-        _camera.Zoom = _playZoom;
-=======
-        // Zoom control: hold "-" to pull the camera out and "+"/"=" to push it back in (numpad
-        // +/- too). The chosen zoom sticks as the play zoom, so it persists frame to frame.
-        if (keys.IsKeyDown(Keys.OemMinus) || keys.IsKeyDown(Keys.Subtract))
-            _playZoom = MathHelper.Clamp(_playZoom * (1f - 1.6f * dt), 2.2f, 8f);
-        if (keys.IsKeyDown(Keys.OemPlus) || keys.IsKeyDown(Keys.Add))
-            _playZoom = MathHelper.Clamp(_playZoom * (1f + 1.6f * dt), 2.2f, 8f);
         // Kaiju-scale framing: fighting near the titan eases the camera out so the whole
         // monster fits the fight, then eases back in once the player breaks away. The blend
-        // is smoothed so crossing the range boundary never pops the zoom.
+        // is smoothed so crossing the range boundary never pops the zoom. While the blend
+        // is active the zoom is fractional, so the pixel-grid world target hands off to
+        // the direct render path for the fight and re-engages when the camera settles
+        // back onto its even step.
         {
             var tt = _run.Titan;
             var titanNear = tt.Hatched && tt.Health > 0 && tt.Targetable
                 && (tt.Position - _run.Player.Position).Length() < 760f;
             _fightZoomBlend = MathHelper.Clamp(
                 _fightZoomBlend + (titanNear ? dt * 1.6f : -dt * 1.1f), 0f, 1f);
-            var fightZoom = MathF.Max(2.2f, _playZoom * 0.68f);
+            var fightZoom = MathF.Max(2f, _playZoom * 0.68f);
             _camera.Zoom = MathHelper.Lerp(_playZoom, fightZoom, _fightZoomBlend);
         }
->>>>>>> noita-sim
 
         // Camera follows player, rotating so up = away from planet center. DM_BOSSCAM frames
         // the boss instead (testing hook for screenshotting the variants).
