@@ -151,7 +151,7 @@ public static class Tiles
     /// Ladders are passable so the dwarf can climb; small placed lights are passable too so the
     /// player doesn't bonk on torches in tight corridors.</summary>
     public static bool IsPassable(TileKind k) =>
-        k is TileKind.Ladder or TileKind.Glowshroom or TileKind.Beacon
+        k is TileKind.Ladder or TileKind.Rope or TileKind.Glowshroom or TileKind.Beacon
           // Open doors are doorways; furniture is stepped over/through (but still mineable
           // and smashable because it stays "solid" to everything but the walk check).
           or TileKind.DoorOpen
