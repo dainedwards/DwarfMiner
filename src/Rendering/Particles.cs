@@ -189,9 +189,9 @@ public sealed class Particles
     {
         var baseColor = Tiles.BaseColor(kind);
         var fade = Color.Multiply(baseColor, 0.3f);
-        // Orange spark jet along the direction of the drill bit. Two per frame, with slight
+        // Orange spark jet along the direction of the drill bit. A few per frame, with slight
         // angular spread so the jet reads as conical not a single beam.
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 4; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.6f;
             var rotated = new Vector2(
@@ -205,10 +205,10 @@ public sealed class Particles
                 MaxLife = 0.18f,
                 Color = new Color(255, 220, 120),
                 FadeColor = new Color(180, 60, 20),
-                Size = 1f,
+                Size = 0.8f,
                 GravityScale = 0.1f,
                 Drag = 3f,
-                LightRadius = 5f,
+                LightRadius = i % 2 == 0 ? 5f : 0f,
                 LightColor = new Color(255, 180, 80),
             });
         }
