@@ -476,10 +476,14 @@ public sealed class Cells
     /// solid tiles, because handoff positions come from the PARTICLE collision test (world-
     /// space float vs tile grid), which can rest a particle a hair inside a wall's cell
     /// footprint. A cinder that lands stamps fire where the fire can actually live.</summary>
-    public void StampAtWorld(Vector2 worldPos, Material m)
+    /// <summary><paramref name="fireFuse"/> (Fire only): a burn fuse carried in the fire
+    /// cell's otherwise-unused source slot — while it runs down the flame won't gutter
+    /// (~fuse×3 ticks of guaranteed burning; see the fuse clause in TickFire). Rides the
+    /// save like any src byte.</summary>
+    public void StampAtWorld(Vector2 worldPos, Material m, byte fireFuse = 0)
     {
         var (cx, cy) = WorldToCell(worldPos);
-        if (!IsBlocked(cx, cy)) Place(cx, cy, m);
+        if (!IsBlocked(cx, cy)) Place(cx, cy, m, (TileKind)fireFuse);
     }
 
     /// <summary>Spawn cells inside the polar tile (tx = ring, ty = angle). Picks random sub-cells.</summary>
