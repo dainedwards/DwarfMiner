@@ -2217,8 +2217,8 @@ public sealed partial class DwarfMinerGame : Game
         // scaling with how long the jet dwelt there and spreading with the fire itself.
         if (_run.Cells.PendingFlames.Count > 0)
         {
-            foreach (var fpos in _run.Cells.PendingFlames)
-                _particles.EmitLickingFlame(fpos, _run.Planet.UpAt(fpos));
+            foreach (var (fpos, ffuse) in _run.Cells.PendingFlames)
+                _particles.EmitLickingFlame(fpos, _run.Planet.UpAt(fpos), ffuse);
             _run.Cells.PendingFlames.Clear();
         }
 
