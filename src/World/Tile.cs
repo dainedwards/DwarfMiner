@@ -97,10 +97,10 @@ public static class Tiles
           or TileKind.DoorClosed or TileKind.DoorOpen
           or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp
           // A placed platform is a fixed ledge — it never caves in.
-          or TileKind.Platform
-          // Trees & water plants stand where they grew (never crumble/fall).
-          or TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2
-          or TileKind.SeaFrond;
+          or TileKind.Platform;
+          // NOTE: trees & water plants are NOT anchored — an anchored plant reads as an
+          // immovable wall to a walking titan (it walled the boss out of its dig shaft), so
+          // they stay crushable. Hazard-immunity comes from IsFlora instead.
 
     /// <summary>Biome flora — decorative surface plants. NOT anchored (so a walking titan
     /// tramples them and settling terrain drops them naturally), but hazard-immune via the
