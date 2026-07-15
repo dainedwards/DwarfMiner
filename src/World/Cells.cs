@@ -211,8 +211,8 @@ public sealed class Cells
     // first-lit tile gives out — and a forest fire smoulders epically instead of
     // deleting itself.
     private float _charBudget = CharBudgetMax;
-    private const float CharBudgetMax = 6f;
-    private const float CharBudgetRegen = 2.5f;   // tile-chars per second, planet-wide
+    private const float CharBudgetMax = 12f;
+    private const float CharBudgetRegen = 6f;     // tile-chars per second, planet-wide
     private bool SpendChar()
     {
         if (_charBudget < 1f) return false;
@@ -2029,7 +2029,7 @@ public sealed class Cells
                     // so a pool burns across its surface over seconds, not in one frame —
                     // rate 10 (was 3): fuel is CONSUMED slowly and a burning pool lasts
                     // several times longer (the released fused fire keeps the front alive).
-                    if (_rng.Next(10) == 0)
+                    if (_rng.Next(6) == 0)
                     {
                         var (fcx, fcy) = UnIdx(ni);
                         IgniteCell(fcx, fcy);
@@ -2160,7 +2160,7 @@ public sealed class Cells
         // seconds without consuming anything. Charring alone could never deliver "fully
         // aflame before the first part burns out" — charring IS consumption, so spread
         // and burn-through were the same clock; budding decouples them.
-        if (fuelled && _rng.Next(25) == 0 && SpendFire())
+        if (fuelled && _rng.Next(12) == 0 && SpendFire())
         {
             var bd = _rng.Next(4);
             var (bx, by) = bd switch
