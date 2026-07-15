@@ -49,7 +49,7 @@ public static class Materials
 
     /// <summary>Cell materials the compaction sweep may press into a Conglomerate tile.</summary>
     public static bool IsCompactable(Material m) => m is
-        Material.Sand or Material.Dirt or Material.Gravel or Material.Dust;
+        Material.Sand or Material.Dirt or Material.Gravel or Material.Dust or Material.Snow;
 }
 
 /// <summary>
