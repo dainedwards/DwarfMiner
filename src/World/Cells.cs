@@ -3059,6 +3059,7 @@ public sealed class Cells
     {
         Material.Water => 0.78f,
         Material.Acid => 0.82f,
+        Material.Lava => 1f,     // molten rock — the ground must never show through
         _ => 0.94f,
     };
 
@@ -3067,6 +3068,7 @@ public sealed class Cells
     {
         Material.Water => new Color(110, 175, 230),
         Material.Acid => new Color(178, 235, 96),
+        Material.Lava => new Color(255, 190, 80),
         _ => new Color(84, 72, 58),
     };
 
