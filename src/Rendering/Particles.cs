@@ -25,6 +25,13 @@ public struct Particle
     /// ray-cast hero-light pass, so the flash throws crisp Noita-style shadows instead of
     /// only feeding the soft propagated grid.</summary>
     public bool HeroLight;
+    /// <summary>Particle→cell handoff: a <see cref="Material"/> stamped into the cell sim
+    /// where this particle comes to REST (requires CollideTiles). 0 = none. Emitters roll
+    /// their handoff chance once at spawn, so only the winning particles carry a stamp —
+    /// this is how a landed cinder becomes a real Fire cell that can catch the world alight
+    /// instead of a light that fades. Cleared after stamping (a resting particle may live
+    /// on visually but only hands off once).</summary>
+    public byte LandMat;
 }
 
 /// <summary>
