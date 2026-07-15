@@ -5315,13 +5315,41 @@ public sealed partial class DwarfMinerGame : Game
         _renderer.TrembleTiles = _run.Physics.TremblingTiles;
         _renderer.TreeBiome = _run.Def.Biome;   // trees paint in this world's own palette
         _renderer.WorldCells = _run.Cells;      // damp-ground probe (water on a tile face)
+
+        // Engage the pixel-grid world target (see _worldRt) when the zoom sits exactly on
+        // an even step: the world renders at camera zoom 2 (one texel per half world px)
+        // into a target 1/k the scene size, and the leftover ×k magnification happens in
+        // one point-sampled blit after EndEntities. DM_NORT (direct-to-backbuffer
+        // diagnostic) and non-step zooms (landing/orbit cinematics) skip it.
+        _pixelK = 0;
+        var pxK = (int)MathF.Round(_camera.Zoom * 0.5f);
+        if (pxK >= 1 && MathF.Abs(_camera.Zoom - pxK * 2f) < 0.01f
+            && Environment.GetEnvironmentVariable("DM_PIXELRT") != "0"
+            && Environment.GetEnvironmentVariable("DM_NORT") is not { Length: > 0 })
+        {
+            _pixelK = pxK;
+            var rw = (VirtualWidth + pxK - 1) / pxK;
+            var rh = (VirtualHeight + pxK - 1) / pxK;
+            if (_worldRt == null || _worldRt.Width != rw || _worldRt.Height != rh)
+            {
+                _worldRt?.Dispose();
+                _worldRt = new RenderTarget2D(GraphicsDevice, rw, rh, false,
+                    SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+            }
+            GraphicsDevice.SetRenderTarget(_worldRt);
+            _camera.ViewportSize = new Point(rw, rh);
+            _camera.Zoom = 2f;
+        }
+
         _renderer.DrawWorld(_run.Planet, _camera);
 
         _renderer.BeginEntities(_camera);
 
         // View circle for the culled cell passes: centre + a radius that covers the screen
         // corners at any camera rotation. The cell grid is far too fine to draw planet-wide.
-        var viewCentre = _camera.ScreenToWorld(new Vector2(VirtualWidth / 2f, VirtualHeight / 2f));
+        // Uses the camera's own viewport, which is the low-res target when the pixel-grid
+        // path is engaged.
+        var viewCentre = _camera.ScreenToWorld(new Vector2(_camera.ViewportSize.X / 2f, _camera.ViewportSize.Y / 2f));
         var viewRadius = (viewCentre - _camera.ScreenToWorld(Vector2.Zero)).Length() + Planet.TileSize * 2f;
 
         // Cells (sand/water/lava/smoke) draw above tiles but below entities so the dwarf walks
