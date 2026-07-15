@@ -2688,8 +2688,8 @@ public sealed partial class DwarfMinerGame : Game
         var s = MathF.Sin(spread);
         dir = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
         _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 210, 120));
-        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 460f, 4f, 1.2f, ProjectileKind.MachineGun));
-        _run.Player.ShootCooldown = 0.06f;
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 330f, 4f, 1.2f, ProjectileKind.MachineGun));
+        _run.Player.ShootCooldown = 0.10f;
     }
 
     /// <summary>Laser: near-instant energy bolt that pierces up to three creatures. No
