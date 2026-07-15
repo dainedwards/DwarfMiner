@@ -1309,33 +1309,49 @@ public sealed class Cells
     /// to eat (see the sleep clause in <see cref="TickLiquid"/>).</summary>
     private void TickAcid(int cx, int cy, float dt)
     {
-        TryCorrode(InnerCell(cx, cy));
-        TryCorrode((cx + 1, cy));
-        TryCorrode((cx - 1, cy));
+        var ate = TryCorrode(InnerCell(cx, cy));
+        ate |= TryCorrode((cx + 1, cy));
+        ate |= TryCorrode((cx - 1, cy));
         if (cy < Height - 1)
         {
             var oc = OuterCellCount(cx, cy);
-            for (var i = 0; i < oc; i++) TryCorrode(OuterCell(cx, cy, i));
+            for (var i = 0; i < oc; i++) ate |= TryCorrode(OuterCell(cx, cy, i));
+        }
+
+        // Acid SPENDS ITSELF eating: most bites neutralise the cell that took them (it fizzes
+        // to smoke), so a splash of spewer acid dissolves a couple of tiles and is gone rather
+        // than chewing an ever-deepening pit. (Contained world pools sit in obsidian with
+        // nothing to eat, so they keep their menace.)
+        if (ate && _rng.Next(3) != 0)
+        {
+            var i = Idx(cx, cy);
+            _mat[i] = (byte)Material.Smoke;
+            _srcTile[i] = 0;
+            ClearKinetics(i);
+            Enqueue(i);
+            WakeNeighbors(cx, cy);
+            return;
         }
 
         if (_rng.Next(2) == 0) { Enqueue(Idx(cx, cy)); return; }
         TickLiquid(cx, cy, dt);
     }
 
-    private void TryCorrode((int cx, int cy) c)
+    private bool TryCorrode((int cx, int cy) c)
     {
         // Halved from the old 1-in-45 melt rate: with the acid spewer putting player-aimed
         // acid everywhere, full-rate corrosion chewed terrain (and cities) far too fast.
-        if (_rng.Next(90) != 0) return;
-        if (c.cy < 0 || c.cy >= Height) return;
+        if (_rng.Next(90) != 0) return false;
+        if (c.cy < 0 || c.cy >= Height) return false;
         var tx = c.cy / Density;
         var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
         var k = Planet.Get(tx, ty);
-        if (!IsCorrodible(k)) return;
+        if (!IsCorrodible(k)) return false;
         Planet.TakeGem(tx, ty);   // acid dissolves the gem along with its host — the old
                                   // "spilled acid destroys a vein" hazard, kept intact
         Planet.Set(tx, ty, TileKind.Sky);
         SpawnInTile(tx, ty, Material.Smoke, Density / 2); // acrid fizz
+        return true;
     }
 
     /// <summary>Oil: inert dark liquid until lava touches it (fire-side ignition lives in
