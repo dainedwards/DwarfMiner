@@ -1499,9 +1499,17 @@ public static class WorldGen
                 cr -= (int)((8 + rng.Next(7)) * S);
             }
 
-            // Tunnels: brick-walled bores linking each hall to the next.
+            // Tunnels: brick-walled bores linking each hall to the next — plus a few
+            // cross-links skipping a hall (i to i+2) so the warren reads as a CONNECTED
+            // network of galleries with loops and shortcuts, not a single dead-end chain.
             for (var i = 0; i + 1 < centres.Count; i++)
                 CarveTunnel(planet, centres[i], centres[i + 1]);
+            for (var i = 0; i + 2 < centres.Count; i++)
+                if (rng.Next(2) == 0) CarveTunnel(planet, centres[i], centres[i + 2]);
+            // And a long spine tunnel from the entrance hall down to the deep vault, so there's
+            // always a direct through-route linking the whole village end to end.
+            if (centres.Count >= 3)
+                CarveTunnel(planet, centres[0], centres[^1]);
 
             // Entrance shaft: from the first hall's roof straight up through the surface,
             // brick-lined so the soft dirt band can't slump into it.
