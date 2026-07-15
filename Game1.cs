@@ -2554,7 +2554,7 @@ public sealed partial class DwarfMinerGame : Game
             if (MathF.Abs(MathHelper.WrapAngle(s.Angle - ang)) > 0.03f) continue;
             if (baseRing < s.GroundR || baseRing > s.GroundR + s.Height + 1) continue;
             s.Standing = false;
-            s.Growth = MathHelper.Clamp((baseRing - 1 - s.GroundR) / (float)Math.Max(1, s.Height), 0f, 1f);
+            s.Growth = MathHelper.Clamp((baseRing - 1 - s.GroundR) / (float)Math.Max(1, (int)s.Height), 0f, 1f);
             break;
         }
     }
