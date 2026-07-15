@@ -4327,16 +4327,33 @@ public sealed partial class DwarfMinerGame : Game
             sb.Draw(_renderer.Pixel, new Rectangle(0, 440, VirtualWidth, 160),
                 new Color(255, 140, 70) * lowGlow);
 
-        // Planet: a clean pixel-art ocean world drawn in the same painterly style as the
-        // drifting moon — a static sprite with a gentle drift, no busy bands or rings, so it
-        // sits with the other bodies instead of standing out. Point-sampled and scaled up so
-        // the pixels stay chunky like the moon.
-        var planetDrift = new Vector2(MathF.Sin(time * 0.05f) * 6f, MathF.Cos(time * 0.037f) * 4f);
-        var planetCentre = new Vector2(1010, 150) + planetDrift;
-        const float planetScale = 2.2f;
-        var half = _titlePlanetTex.Width * 0.5f;
-        sb.Draw(_titlePlanetTex, planetCentre, null, Color.White, 0f,
-            new Vector2(half, half), planetScale, SpriteEffects.None, 0f);
+        // Rotating gas giant, tilted 30°: each disc row samples a scrolling window of the
+        // cylinder map (period 160) — bands and storm drift across the face — and every row
+        // is drawn rotated about the planet's centre (origin trick), so the whole assembly
+        // leans without losing the row-scroll rotation. Its ring system splits around it:
+        // far half behind the disc, near half in front. Rings are drawn 30% larger than the
+        // disc scale; no shade overlay now (shading/shadows removed — flat bands).
+        const int pcx = 504, pcy = 84, pr = 27;   // half-res disc drawn at 4× = chunky pixels
+        var tilt = MathHelper.ToRadians(30f);
+        const float ringScale = 4f * 1.3f;         // rings 30% bigger than the disc's 4×
+        var planetCentre = new Vector2(pcx * 2, pcy * 2);
+        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 0, 86, 12), Color.White,
+            tilt, new Vector2(43f, 12f), ringScale, SpriteEffects.None, 0f);
+        var scroll = time * 2.5f;
+        for (var row = 0; row < pr * 2; row++)
+        {
+            var dy = row - pr;
+            var halfSq = pr * pr - dy * dy;
+            if (halfSq <= 0) continue;
+            var half = MathF.Sqrt(halfSq);
+            var rowW = Math.Max(1, (int)(half * 2f));
+            var srcX = (int)(scroll % 160);
+            sb.Draw(_titlePlanetMap, planetCentre,
+                new Rectangle(srcX, row, rowW, 1), Color.White,
+                tilt, new Vector2(rowW / 2f, pr - row), 4f, SpriteEffects.None, 0f);
+        }
+        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 12, 86, 12), Color.White,
+            tilt, new Vector2(43f, 0f), ringScale, SpriteEffects.None, 0f);
 
         // The titan: every so often a colossal silhouette rises past the far skyline and
         // lumbers off — drawn BEFORE the land layer, so only its head and shoulders show
