@@ -191,7 +191,7 @@ public sealed class Physics
             if (p.Rigid && p.Timer <= 0f && p.Next == 0)
             {
                 p.Rigid = false;
-                if (DetachToRigid is not null && DetachToRigid(p.Tiles))
+                if (DetachToRigid is not null && DetachToRigid(p.Tiles, p.Sky))
                 {
                     foreach (var t in p.Tiles) _pendingTiles.Remove(t);
                     _pendingCollapses.RemoveAt(i);
