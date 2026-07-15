@@ -3192,6 +3192,16 @@ public sealed partial class DwarfMinerGame : Game
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
         var muzzle = _run.Player.Position + dir * 8f;
+
+        // Underwater (or with the muzzle pressed into a pool), the burner can't light — it
+        // just belches steam bubbles and does nothing else.
+        var (mcx, mcy) = _run.Cells.WorldToCell(muzzle);
+        if (_run.Cells.Get(mcx, mcy) == Material.Water)
+        {
+            _run.Cells.PlaceAtWorld(muzzle, Material.Smoke);
+            _run.Player.ShootCooldown = 0.12f;
+            return;
+        }
         var reach = StreamReach();
 
         // A jet of fire cells fired down the aim — speed scaled so the flame carries just to
