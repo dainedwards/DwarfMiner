@@ -2732,9 +2732,11 @@ public static class SimTest
             $"rift {CountGem(riftWorld, TileKind.Voidstone)}");
         Check("content: gems never generate as their own tiles",
             CountKind(verdantWorld, TileKind.Emerald) == 0 && CountKind(riftWorld, TileKind.Voidstone) == 0);
-        Check("content: gold charted on verdant (nav core demands it), absent from the rift",
-            CountKind(verdantWorld, TileKind.GoldOre) > 0 && CountKind(riftWorld, TileKind.GoldOre) == 0,
-            $"verdant {CountKind(verdantWorld, TileKind.GoldOre)}");
+        // Gold and silver are now thin deep seams on EVERY world (the alien homeworld included),
+        // not confined to bias worlds — so both verdant and the rift carry gold now.
+        Check("content: gold seams reach every world (verdant AND the rift)",
+            CountKind(verdantWorld, TileKind.GoldOre) > 0 && CountKind(riftWorld, TileKind.GoldOre) > 0,
+            $"verdant {CountKind(verdantWorld, TileKind.GoldOre)}, rift {CountKind(riftWorld, TileKind.GoldOre)}");
         Check("content: fungal groves sprout wild glowshrooms",
             CountKind(verdantWorld, TileKind.Glowshroom) > 0,
             $"{CountKind(verdantWorld, TileKind.Glowshroom)} shrooms");
