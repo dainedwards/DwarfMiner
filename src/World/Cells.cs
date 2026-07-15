@@ -421,13 +421,27 @@ public sealed class Cells
         // into Session.Pickups (headless callers just leave it; the list is per-planet).
         if (Planet.TakeGem(tx, ty) is var embedded && embedded != TileKind.Sky)
             PendingGemDrops.Add((Planet.TileToWorld(tx, ty), embedded));
-        // Gem tiles (geode/cavern linings + old worlds' veins): no dust — each shattered
-        // crystal is its own find, so it pops a whole physical drop right where it broke.
-        // (Previously banked ¼ into a global accumulator, which made three out of four
-        // mined crystals visibly vanish with nothing to pick up.)
+        // Gem tiles (geode/cavern linings + old worlds' veins): each shattered crystal is its
+        // own find, so it pops a whole physical drop right where it broke — resting in a bed
+        // of dust from the SURROUNDING rock (the material it was dug out of), not in a bare
+        // black hole. The bed is tagged with a neighbouring host kind so it falls in that
+        // rock's colours.
         if (Tiles.IsGem(src))
         {
             PendingGemDrops.Add((Planet.TileToWorld(tx, ty), src));
+            var host = TileKind.Stone;
+            Span<(int x, int y)> nbrs = stackalloc[]
+                { Planet.InnerNeighbour(tx, ty), (tx, ty - 1), (tx, ty + 1) };
+            foreach (var (nx, ny) in nbrs)
+            {
+                var nk = Planet.Get(nx, ny);
+                if (Tiles.IsSolid(nk) && !Tiles.IsGem(nk) && !Tiles.IsAnchored(nk)) { host = nk; break; }
+            }
+            var b0y = tx * Density;
+            var b0x = ty * Density;
+            for (var dy = 0; dy < Density; dy++)
+                for (var dx = 0; dx < Density; dx++)
+                    Place(b0x + dx, b0y + dy, Material.Dust, host);
             return;
         }
         var c0y = tx * Density;
