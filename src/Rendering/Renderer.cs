@@ -667,31 +667,36 @@ public sealed class Renderer
                     }
                     case TileKind.DoorClosed:
                     {
-                        // Alloy door leaf: framed teal panel with a bright inset strip and a
-                        // little glowing latch stud — one tile of a taller leaf, so the art
-                        // tiles cleanly when doors stack.
-                        var frame = new Color(52, 70, 80);
-                        var panel = new Color(96, 132, 142);
-                        var inset = new Color(120, 162, 172);
-                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, frame);
-                        DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, frame);
-                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 6, 8, panel);
-                        DrawDeco(centre, right, up, rotation, chord, 2, 0, 1, 8, inset);
-                        DrawDeco(centre, right, up, rotation, chord, 5, 0, 1, 8, inset);
-                        DrawDeco(centre, right, up, rotation, chord, 3, 3, 2, 2, new Color(235, 210, 130));
+                        // Ordinary panelled door leaf: dark side stiles, a warm timber body, a
+                        // recessed rectangular panel and a full-height brass pull on the latch
+                        // side. Every element runs the full tile height (or sits inset from it),
+                        // so a door built two or three tiles tall reads as one continuous leaf.
+                        var wood  = new Color(124, 84, 48);
+                        var dark  = new Color(78, 50, 28);
+                        var lite  = new Color(152, 110, 68);
+                        var brass = new Color(205, 178, 112);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, dark);  // hinge stile
+                        DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, dark);  // latch stile
+                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 6, 8, wood);  // leaf body
+                        DrawDeco(centre, right, up, rotation, chord, 2, 1, 3, 6, dark);  // panel groove
+                        DrawDeco(centre, right, up, rotation, chord, 2, 2, 2, 4, lite);  // raised panel face
+                        DrawDeco(centre, right, up, rotation, chord, 6, 0, 1, 8, brass); // pull handle
                         break;
                     }
                     case TileKind.DoorOpen:
                     {
-                        // Open doorway: the leaf slid to one jamb — a dark passage with the
-                        // compressed panel hugging the edge and the latch light gone green.
-                        var frame = new Color(52, 70, 80);
-                        var panel = new Color(96, 132, 142);
-                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, frame);
-                        DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, frame);
-                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 6, 8, new Color(24, 30, 36));
-                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 2, 8, panel);
-                        DrawDeco(centre, right, up, rotation, chord, 1, 3, 1, 2, new Color(140, 230, 160));
+                        // Same leaf swung open: a dark doorway with the timber leaf folded back
+                        // against the hinge stile (its lit edge catching the light) and a warm
+                        // glow spilling from the room beyond.
+                        var wood = new Color(124, 84, 48);
+                        var dark = new Color(78, 50, 28);
+                        var lite = new Color(152, 110, 68);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 1, 8, dark);              // hinge stile
+                        DrawDeco(centre, right, up, rotation, chord, 7, 0, 1, 8, dark);              // far jamb
+                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 6, 8, new Color(30, 26, 30)); // doorway
+                        DrawDeco(centre, right, up, rotation, chord, 5, 1, 2, 6, new Color(54, 44, 38)); // warm glow beyond
+                        DrawDeco(centre, right, up, rotation, chord, 1, 0, 2, 8, wood);              // folded-back leaf
+                        DrawDeco(centre, right, up, rotation, chord, 2, 0, 1, 8, lite);              // lit leaf edge
                         break;
                     }
                     case TileKind.AlienPlant:
