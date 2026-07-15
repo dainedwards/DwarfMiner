@@ -451,6 +451,13 @@ public sealed class RigidBodies
         {
             var b = Bodies[i];
             Step(b, dt);
+            // Burning cells keep flaming while the chunk tumbles (their burn clocks are
+            // frozen until landing): each queues the odd licking-flame tongue at its
+            // current world position, so a falling burning log visibly stays on fire.
+            if (!b.Dead && Random.Shared.Next(4) == 0)
+                foreach (var c in b.Cells)
+                    if (c.Burn > 0f && Random.Shared.Next(3) == 0)
+                        _cells.QueueFlame(b.Position + Rotate(c.Local, b.Angle));
             if (b.Dead) Bodies.RemoveAt(i);
         }
     }
