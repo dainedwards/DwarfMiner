@@ -157,7 +157,7 @@ public sealed class Particles
         if (Tiles.IsOre(kind))
         {
             var spec = Tiles.OreSpeckle(kind);
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < 6; i++)
             {
                 var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
                 var spd = 50f + (float)_rng.NextDouble() * 70f;
@@ -169,10 +169,12 @@ public sealed class Particles
                     MaxLife = 0.6f,
                     Color = spec,
                     FadeColor = Color.Black,
-                    Size = 1f,
+                    Size = 0.8f,
                     GravityScale = 0.4f,
                     Drag = 1.2f,
-                    LightRadius = 6f,
+                    // Every other fleck glows — grain counts went up across this file, so
+                    // lights ride a SUBSET to keep the lighting pass at its old budget.
+                    LightRadius = i % 2 == 0 ? 6f : 0f,
                     LightColor = spec,
                     CollideTiles = true,
                 });
