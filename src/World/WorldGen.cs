@@ -1684,6 +1684,7 @@ public static class WorldGen
             var cols = Math.Max(6, (int)MathF.Round(halfWidthPx * 2f / Planet.TileSize));
             var halfW = cols * Planet.TileSize * 0.5f;
             var midJ = cols / 2;                     // ladder spine column
+            rowTowers.Add((ang, halfW));             // the street-bridge pass spans these
             planet.CityFacades.Add((ang, halfW, footingR,
                 Math.Min(planet.Rings - 1, topR + (int)(7 * S))));
 
