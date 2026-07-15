@@ -5569,14 +5569,9 @@ public sealed partial class DwarfMinerGame : Game
                 _worldRt = new RenderTarget2D(GraphicsDevice, rw, rh, false,
                     SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
             }
-            GraphicsDevice.SetRenderTarget(_worldRt);
             _camera.ViewportSize = new Point(rw, rh);
             _camera.Zoom = 2f;
         }
-
-        _renderer.DrawWorld(_run.Planet, _camera);
-
-        _renderer.BeginEntities(_camera);
 
         // View circle for the culled cell passes: centre + a radius that covers the screen
         // corners at any camera rotation. The cell grid is far too fine to draw planet-wide.
@@ -5585,19 +5580,62 @@ public sealed partial class DwarfMinerGame : Game
         var viewCentre = _camera.ScreenToWorld(new Vector2(_camera.ViewportSize.X / 2f, _camera.ViewportSize.Y / 2f));
         var viewRadius = (viewCentre - _camera.ScreenToWorld(Vector2.Zero)).Length() + Planet.TileSize * 2f;
 
-        // Cells (sand/water/lava/smoke) draw above tiles but below entities so the dwarf walks
-        // in front of his own debris pile.
-        // Zoomed-out views (orbit/descent/landing) sample the cell grid at a stride — the
-        // full scan is the single biggest cost at wide view radii. Stride is derived from
-        // SCREEN px per cell so it tracks Density. The pixel-grid path always runs stride 1
-        // (one cell per target texel is the whole point); the DIRECT path — every fractional
-        // zoom, i.e. the entire mothership-drop descent — strides as soon as cells shrink
-        // below ~1.6 screen px, because mid-descent zooms with stride 1 scanned over a
-        // million candidates a frame (the pod-drop lag).
+        // Cells LOD: zoomed-out views (orbit/descent/landing) sample the cell grid at a
+        // stride — the full scan is the single biggest cost at wide view radii. Stride is
+        // derived from SCREEN px per cell so it tracks Density. The pixel-grid path always
+        // runs stride 1 (one cell per target texel is the whole point); the DIRECT path —
+        // every fractional zoom, i.e. the entire mothership-drop descent — strides as soon
+        // as cells shrink below ~1.6 screen px, because mid-descent zooms with stride 1
+        // scanned over a million candidates a frame (the pod-drop lag).
         var cellPx = _camera.Zoom * ((float)Planet.TileSize / Cells.Density);
         var cellStride = _pixelK > 0 || cellPx >= 1.6f
             ? 1 : Math.Min(10, (int)MathF.Ceiling(2.2f / cellPx));
-        _run.Cells.Draw(_renderer, viewCentre, viewRadius, cellStride);
+
+        // Liquid RT pass (DM_LIQRT=0 reverts to in-batch liquid quads): water/acid/oil
+        // rasterize into their own transparent target, which then composites over the
+        // world in ONE alpha blend — see Renderer.CompositeLiquids. Filled FIRST, before
+        // the world target engages, so no mid-frame target switch can discard scene
+        // content. Close-up LOD only; the strided zoomed-out passes keep liquids in the
+        // main cell draw where the grain is sub-pixel anyway.
+        var liquidPass = cellStride == 1
+            && Environment.GetEnvironmentVariable("DM_LIQRT") != "0"
+            && Environment.GetEnvironmentVariable("DM_NORT") is not { Length: > 0 };
+        if (liquidPass)
+        {
+            var (lw, lh) = (_camera.ViewportSize.X, _camera.ViewportSize.Y);
+            if (_liquidRt == null || _liquidRt.Width != lw || _liquidRt.Height != lh)
+            {
+                _liquidRt?.Dispose();
+                _liquidRt = new RenderTarget2D(GraphicsDevice, lw, lh, false,
+                    SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+            }
+            GraphicsDevice.SetRenderTarget(_liquidRt);
+            GraphicsDevice.Clear(Color.Transparent);
+            // Shader mode fills soft coverage blobs (linear-sampled, colour replaces /
+            // alpha accumulates); fallback fills hard quads with material alpha in the A
+            // channel (opaque replace). Either way nothing here blends against the scene.
+            var blobMode = _renderer.LiquidShaderOn;
+            _renderer.Batch.Begin(SpriteSortMode.Deferred,
+                blobMode ? Renderer.LiquidFillBlend : BlendState.Opaque,
+                blobMode ? SamplerState.LinearClamp : SamplerState.PointClamp,
+                null, null, null, _camera.View);
+            _run.Cells.DrawLiquids(_renderer, viewCentre, viewRadius, blobMode);
+            _renderer.Batch.End();
+        }
+        if (_pixelK > 0) GraphicsDevice.SetRenderTarget(_worldRt);
+        else if (liquidPass) GraphicsDevice.SetRenderTarget(_sceneRt);
+
+        _renderer.DrawWorld(_run.Planet, _camera);
+
+        // Liquids sit above the terrain (and its crust) but below every entity — same
+        // layer they occupied when they drew inside the cell batch.
+        if (liquidPass) _renderer.CompositeLiquids(_liquidRt!);
+
+        _renderer.BeginEntities(_camera);
+
+        // Cells (sand/lava/smoke — liquids too when the RT pass is off) draw above tiles
+        // but below entities so the dwarf walks in front of his own debris pile.
+        _run.Cells.Draw(_renderer, viewCentre, viewRadius, cellStride, skipLiquids: liquidPass);
 
         // Pixel-art dwarf sprite — drawn rotated to align local-up with planet's outward radial.
         // Sprite head-at-top, feet-at-bottom; the rotation maps sprite-up to world-up.
