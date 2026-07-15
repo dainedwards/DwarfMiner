@@ -99,6 +99,11 @@ public sealed class Corpse
         // A whale carcass is a feast; a cracked crab is prime chitin.
         CreatureKind.AlienWhale   => new[] { ("meat", 6), ("hide", 2) },
         CreatureKind.AlienCrab    => new[] { ("chitin", 2), ("meat", 1) },
+        // Sea monsters: prime meat and tough hide off the shark, more meat off the deep
+        // gulper, a bit of chitin off the spitter's reef-plated shell.
+        CreatureKind.AlienShark   => new[] { ("meat", 3), ("hide", 2) },
+        CreatureKind.Gulper       => new[] { ("meat", 4), ("hide", 1) },
+        CreatureKind.Brinespitter => new[] { ("chitin", 1), ("meat", 2) },
         _                         => new[] { ("meat", 1) },
     };
 
