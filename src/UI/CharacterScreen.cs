@@ -109,14 +109,18 @@ public sealed class CharacterScreen
         if (!lmb && !rmb) return;
         var mx = mouse.X; var my = mouse.Y;
 
-        // An open context menu eats the next click: a button acts, anywhere else closes.
+        // An open context menu eats the next click. Most actions do their thing and close;
+        // "upgrade" instead opens the upgrade DETAIL (materials + Confirm) without applying,
+        // so you can SEE what an upgrade costs before committing. Clicking off the menu closes.
         if (_ctx is { } ctx)
         {
             if (lmb)
             {
+                var hitRow = false;
                 foreach (var (action, rect, enabled) in _ctxRects)
                 {
                     if (!enabled || !rect.Contains(mx, my)) continue;
+                    hitRow = true;
                     switch (action)
                     {
                         case "equip":
@@ -124,15 +128,18 @@ public sealed class CharacterScreen
                                 for (var s = 0; s < Equipment.SlotCount; s++)
                                     if (!HiddenSlot((EquipSlot)s) && Equipment.Fits(ctx.Id, (EquipSlot)s))
                                     { player.Equipment.Slots[s] = ctx.Id; break; }
+                            _ctx = null;
                             break;
-                        case "upgrade": DoUpgrade?.Invoke(ctx.Id); break;
-                        case "drop1": DropAction?.Invoke(ctx.Id, 1); break;
-                        case "dropall": DropAction?.Invoke(ctx.Id, int.MaxValue); break;
+                        case "upgrade": _ctxUpgrade = true; break;          // show the detail, stay open
+                        case "confirm": DoUpgrade?.Invoke(ctx.Id); _ctx = null; break;
+                        case "back": _ctxUpgrade = false; break;            // back to the action list
+                        case "drop1": DropAction?.Invoke(ctx.Id, 1); _ctx = null; break;
+                        case "dropall": DropAction?.Invoke(ctx.Id, int.MaxValue); _ctx = null; break;
                     }
                     break;
                 }
+                if (!hitRow) _ctx = null;   // clicked off the menu
             }
-            _ctx = null;
             return;
         }
 
