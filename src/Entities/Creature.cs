@@ -93,6 +93,8 @@ public enum CreatureKind : byte
     Quillwing,    // barbed cave flyer — flutters in and looses a fan of THREE bone quills at once
     Warpwisp,     // drifting eldritch caster — lobs slow, wall-piercing violet hex bolts that hunt you through cover
     Thornback,    // squat spine-beetle grenadier — arcs clustered barb-mortars over walls, then trundles to a new firing spot
+    // The water world's apex monster (census-seeded into the deepest basins, ocean biome only):
+    Kraken,       // hulking deep-sea cephalopod — tentacle flurries in the water, brine-jet volleys at anyone taunting it from the shore
 }
 
 public sealed class Creature
