@@ -990,48 +990,55 @@ public sealed class Particles
     /// shadows while it roars. Called every puff, so held fire reads as one continuous
     /// jet. (The burning FUEL is real Fire cells launched by Game1 — these are the glow
     /// around it.)</summary>
-    public void EmitFlameJet(Vector2 pos, Vector2 dir)
+    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach)
     {
-        for (var i = 0; i < 10; i++)
+        // Particle speed tuned so a blob travels roughly `reach` before its ~0.4s life ends,
+        // so the visible tongue matches the stream's current length. Blobs COLLIDE with tiles,
+        // so the flame splashes on walls instead of pouring straight through them.
+        var jetSpeed = reach * 2.6f;
+        for (var i = 0; i < 5; i++)
         {
-            // Wider cone, more droplets: with the slower trigger cadence each puff has to
-            // read as a fat tongue of fire, not a hiss.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.46f;
+            // Narrow, focused cone — a tight jet, not a fat fan.
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.16f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            var hot = i < 3;
+            var hot = i < 2;
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 8f,
-                Velocity = d * (230f + (float)_rng.NextDouble() * 150f),
-                Life = 0.24f + (float)_rng.NextDouble() * 0.26f,
-                MaxLife = 0.5f,
+                Position = pos + d * (float)_rng.NextDouble() * 4f,
+                Velocity = d * (jetSpeed * (0.8f + (float)_rng.NextDouble() * 0.4f)),
+                Life = 0.16f + (float)_rng.NextDouble() * 0.2f,
+                MaxLife = 0.4f,
                 Color = hot ? new Color(255, 240, 170) : new Color(255, 160, 60),
                 FadeColor = new Color(140, 40, 15),
                 Size = hot ? 1.4f : 2.1f,
-                GravityScale = -0.12f,   // heat rises
-                Drag = 1.6f,
-                LightRadius = hot ? 70f : 36f,
+                GravityScale = -0.1f,   // heat rises
+                Drag = 1.4f,
+                CollideTiles = true,
+                LightRadius = hot ? 64f : 34f,
                 LightColor = new Color(255, 170, 70),
             });
         }
-        // Sooty curls that outlive the flame — the lingering body of the thick stream.
+        // A sooty curl or two riding the tongue — also collides, so smoke doesn't ghost walls.
         for (var i = 0; i < 2; i++)
         {
-            var d = Vector2.Normalize(dir + new Vector2(
-                (float)(_rng.NextDouble() - 0.5) * 0.5f, (float)(_rng.NextDouble() - 0.5) * 0.5f));
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.16f;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             _list.Add(new Particle
             {
-                Position = pos + d * (14f + (float)_rng.NextDouble() * 14f),
-                Velocity = d * (60f + (float)_rng.NextDouble() * 50f),
-                Life = 0.5f + (float)_rng.NextDouble() * 0.4f,
+                Position = pos + d * (6f + (float)_rng.NextDouble() * 6f),
+                Velocity = d * (jetSpeed * 0.5f),
+                Life = 0.4f + (float)_rng.NextDouble() * 0.4f,
                 MaxLife = 0.9f,
                 Color = new Color(90, 60, 45),
                 FadeColor = new Color(35, 28, 30),
                 Size = 1.8f,
-                GravityScale = -0.25f,
+                GravityScale = -0.22f,
                 Drag = 2.4f,
+                CollideTiles = true,
             });
         }
         // Hero flicker riding a third of the way down the tongue: the shadow-casting part
