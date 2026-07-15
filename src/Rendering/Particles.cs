@@ -1230,11 +1230,17 @@ public sealed class Particles
             if (outward > 170f) vel -= up * (outward - 170f);
             // De-pulse: every grain starts with a random fraction of one puff interval
             // already travelled, so consecutive puffs interleave into one continuous flow
-            // instead of reading as discrete waves marching down the stream.
+            // instead of reading as discrete waves marching down the stream. The position
+            // advance is CAPPED at 6 px: uncapped it scaled with the ramping stream speed
+            // (vel×lead ≈ 15 px at full hold), so the visible stream detached from the gun
+            // as it ramped up. The temporal stagger (Life −= lead) keeps its full range.
             var lead = (float)_rng.NextDouble() * 0.06f;
+            var adv = vel * lead;
+            var advSq = adv.LengthSquared();
+            if (advSq > 36f) adv *= 6f / MathF.Sqrt(advSq);
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
+                Position = pos + d * (float)_rng.NextDouble() * 1.5f + adv,
                 Velocity = vel,
                 Life = 0.8f + (float)_rng.NextDouble() * 0.55f - lead,
                 MaxLife = 1.35f,

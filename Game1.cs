@@ -3698,7 +3698,7 @@ public sealed partial class DwarfMinerGame : Game
         var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        var muzzle = _run.Player.Position + dir * 8f;
+        var muzzle = _run.Player.Position + dir * 4f;
 
         // Underwater (or with the muzzle pressed into a pool), the burner can't light — it
         // just belches steam bubbles and does nothing else.
@@ -3754,7 +3754,7 @@ public sealed partial class DwarfMinerGame : Game
         var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        var muzzle = _run.Player.Position + dir * 8f;
+        var muzzle = _run.Player.Position + dir * 4f;
         var reach = StreamReach();
         // NO launched acid cells any more — same treatment as the flamethrower: the
         // launched payload rode its own physics and read as streaks off the stream's
