@@ -17,6 +17,11 @@ namespace DwarfMiner.World;
 /// </summary>
 public static class WorldGen
 {
+    /// <summary>Surface flora/trees/water-plants scatter. On by default; the headless SimTest
+    /// turns it OFF so the titan/defense mechanic tests run on a clean, tree-free surface
+    /// (decorative vegetation isn't part of what those tests exercise).</summary>
+    public static bool ScatterVegetation = true;
+
     /// <summary>Legacy overload — the starter planet's tuning (used by SimTest).</summary>
     public static Planet Generate(int seed) => Generate(seed, PlanetDefs.All[0]);
 
