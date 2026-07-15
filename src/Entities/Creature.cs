@@ -136,6 +136,7 @@ public sealed class Creature
     private float _aggroT;         // HornedDelver: seconds of aggro memory remaining
     private float _swing;          // HornedDelver: pickaxe swing / spit-maw / blink-shimmer timer
     private Vector2 _gunAim;       // bandits: last aim direction (drives the drawn weapon)
+    private Vector2 _lungeDir;     // gulper: locked lunge direction during a strike
     private int _burst;            // Raider: rounds left in the current SMG burst
     private float _burstT;         // Raider: delay until the next round in the burst
     private float _provokedT;      // MoleBeast: seconds of rage remaining after being hit
