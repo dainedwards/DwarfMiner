@@ -46,5 +46,13 @@ if (args.Length > 0 && args[0] == "--strataprobe")
     return;
 }
 
+// Temporary diagnostic: `--toppleprobe` reproduces the SimTest street-level tower cut and
+// reports what keeps a severed section standing when it refuses to detach.
+if (args.Length > 0 && args[0] == "--toppleprobe")
+{
+    DwarfMiner.Systems.ToppleProbe.Run();
+    return;
+}
+
 using var game = new DwarfMinerGame();
 game.Run();
