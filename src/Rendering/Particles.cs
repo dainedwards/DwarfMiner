@@ -937,7 +937,8 @@ public sealed class Particles
     /// every frame during the launch cinematic to build a continuous column of flame.</summary>
     public void EmitRocketExhaust(Vector2 pos, Vector2 dir)
     {
-        // Bright light at the nozzle sells the flare in the lighting pass.
+        // Bright light at the nozzle sells the flare in the lighting pass; the drawn core
+        // is small — the plume body below carries the visible mass as grains.
         _list.Add(new Particle
         {
             Position = pos,
@@ -946,29 +947,29 @@ public sealed class Particles
             MaxLife = 0.05f,
             Color = new Color(255, 240, 200),
             FadeColor = new Color(255, 150, 60),
-            Size = 7f,
+            Size = 2.5f,
             LightRadius = 60f,
             LightColor = new Color(255, 170, 90),
         });
-        for (var i = 0; i < 10; i++)
+        for (var i = 0; i < 26; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.9f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            var hot = i < 5;
+            var hot = i < 13;
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 3f,
+                Position = pos + d * (float)_rng.NextDouble() * 4f + Jitter(1.2f),
                 Velocity = d * (120f + (float)_rng.NextDouble() * 160f),
                 Life = 0.25f + (float)_rng.NextDouble() * 0.4f,
                 MaxLife = 0.65f,
                 Color = hot ? new Color(255, 230, 150) : new Color(200, 90, 50),
                 FadeColor = hot ? new Color(220, 100, 50) : new Color(70, 70, 75),
-                Size = hot ? 3.5f : 5f,
+                Size = hot ? 1f : 1.4f,
                 GravityScale = -0.05f,
                 Drag = 2.2f,
-                LightRadius = hot ? 24f : 0f,
+                LightRadius = hot && i % 3 == 0 ? 24f : 0f,
                 LightColor = new Color(255, 160, 80),
             });
         }
