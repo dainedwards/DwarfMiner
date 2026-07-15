@@ -974,30 +974,15 @@ public sealed class Renderer
         var pos = centre + perp * ((((hash >> 11) & 3) - 1.5f) * 0.3f)
                          + axis * ((((hash >> 13) & 3) - 1.5f) * 0.3f);
 
-        if (gem == TileKind.Crystal)
-        {
-            // Crystal reads as a DIAMOND: a rhombus (rotated square) with bright facets and
-            // a small tip past each point, seated at its hash angle — sharper and more
-            // gem-like than the elongated shard the other stones use.
-            DrawRect(pos, new Vector2(2.9f, 2.9f), edge, ang + MathF.PI / 4f);
-            DrawRect(pos, new Vector2(2.0f, 2.0f), body, ang + MathF.PI / 4f);
-            DrawRect(pos + axis * 2.1f, new Vector2(0.9f, 1.2f), body, ang);
-            DrawRect(pos - axis * 2.1f, new Vector2(0.9f, 1.2f), body, ang);
-            DrawRect(pos, new Vector2(1.0f, 1.0f), facet, ang + MathF.PI / 4f);
-            DrawRect(pos + perp * 0.5f + axis * 0.5f, new Vector2(0.5f, 0.5f), Color.White, ang);
-            return;
-        }
-
-        // The true gems: a dark-rimmed elongated body with diamond tips, a paler facet
-        // stripe, and a glint pixel — the stone reads as its own material colour.
-        DrawRect(pos, new Vector2(2.0f, 3.6f), edge, ang);
-        DrawRect(pos + axis * 1.9f, new Vector2(1.5f, 1.5f), edge, ang + MathF.PI / 4f);
-        DrawRect(pos - axis * 1.9f, new Vector2(1.5f, 1.5f), edge, ang + MathF.PI / 4f);
-        DrawRect(pos, new Vector2(1.3f, 3.0f), body, ang);
-        DrawRect(pos + axis * 1.7f, new Vector2(1.0f, 1.0f), body, ang + MathF.PI / 4f);
-        DrawRect(pos - axis * 1.7f, new Vector2(1.0f, 1.0f), body, ang + MathF.PI / 4f);
-        DrawRect(pos + perp * 0.35f, new Vector2(0.5f, 2.0f), facet, ang);   // facet stripe
-        DrawRect(pos + axis * 0.7f - perp * 0.3f, new Vector2(0.6f, 0.6f), Color.White, ang);
+        // Every gem/crystal is a small, clean DIAMOND now — a compact rotated square with a
+        // dark rim, a bright body, a facet, and a glint. No protruding shard tips (the old
+        // pieces that stuck out past the body are gone), and smaller overall so it reads as
+        // a neat jewel seated in the rock.
+        var d45 = ang + MathF.PI / 4f;
+        DrawRect(pos, new Vector2(2.2f, 2.2f), edge, d45);          // dark rim
+        DrawRect(pos, new Vector2(1.5f, 1.5f), body, d45);          // bright body
+        DrawRect(pos - perp * 0.3f - axis * 0.3f, new Vector2(0.7f, 0.7f), facet, d45);  // facet
+        DrawRect(pos + perp * 0.4f + axis * 0.4f, new Vector2(0.4f, 0.4f), Color.White, d45);  // glint
     }
 
     /// <summary>The rock a gem tile appears embedded in: the most common of its solid,
