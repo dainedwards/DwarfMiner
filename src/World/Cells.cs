@@ -581,8 +581,10 @@ public sealed class Cells
     /// Game1 drains this into licking-flame particles, so the visible flame body lives
     /// exactly where the sim's fire lives: it grows with dwell (more/refreshed fuse
     /// cells), and when fuel lets the fire spread, the flames visibly spread with it.
+    /// Each entry carries the cell's REMAINING FUSE so the flame visual dies down in
+    /// sequence — tall tongues first, then the body, ending as base smolder.
     /// Sampled (not exhaustive) and capped like PendingBubbles.</summary>
-    public readonly List<Vector2> PendingFlames = new();
+    public readonly List<(Vector2 Pos, byte Fuse)> PendingFlames = new();
     private const int MaxPendingFlames = 200;
 
     /// <summary>Spawn dust cells filling the whole polar tile, tagged with the source TileKind
