@@ -72,6 +72,10 @@ public static class Icons
         _icons["glowshroom"] = BuildGlowshroom(gd);
         _icons["ladder"]     = BuildLadder(gd);
         _icons["door"]       = BuildDoor(gd);
+        _icons["brick"]      = BuildBrickIcon(gd);
+        _icons["plating"]    = BuildPlatingIcon(gd);
+        _icons["glass_block"] = BuildGlassIcon(gd);
+        _icons["platform"]   = BuildPlatformIcon(gd);
         _icons["rail"]       = BuildRail(gd);
         _icons["support"]    = BuildSupport(gd);
         _icons["reinforced_support"] = BuildReinforcedSupport(gd);
