@@ -170,7 +170,7 @@ public static class Tiles
 
     /// <summary>Ladder-class climbable tile: while the player overlaps one, gravity is reduced
     /// and W/S directly drive vertical motion.</summary>
-    public static bool IsClimbable(TileKind k) => k == TileKind.Ladder;
+    public static bool IsClimbable(TileKind k) => k is TileKind.Ladder or TileKind.Rope;
 
     /// <summary>Gem-class minerals: shattering one pops a physical <c>Pickup</c> the player
     /// grabs by touch, instead of crumbling to vacuumable dust like ordinary tiles — and the
