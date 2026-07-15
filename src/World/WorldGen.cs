@@ -73,11 +73,17 @@ public static class WorldGen
             : (AngularSample(lumpLobes, a) * 1.5f + AngularSample(lumpDents!, a) * 0.5f - 0.3f)
               * def.Lumpiness * S;
 
+        // City worlds grade their land: a civilization that raises 1/3-of-the-surface
+        // megacities has flattened the hills first, so the rolling channel runs at 30%
+        // there — towers keep their footing and streets stay walkable (this also keeps the
+        // debug QA world near-flat, which the SimTest defense scenarios rely on).
+        var hillScale = def.CityLots > 0 ? 0.3f : 1f;
+
         // Local terrain height at a bearing — the ONE definition of the ground line, shared
         // by the tile loop and the SurfaceProfile stamp so oxygen depth / sun heightmap /
         // disc preview all follow the same rolling ground.
         float ElevAt(float a) => AngularSample(surfA, a) * 2f * S
-            + (AngularSample(surfB, a) - 0.1f) * 7f * S
+            + (AngularSample(surfB, a) - 0.1f) * 7f * S * hillScale
             + LumpAt(a);
 
         // Explicit mountain placements — each roll is a massif: a main peak flanked by 1-3
