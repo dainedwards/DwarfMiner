@@ -2925,7 +2925,7 @@ public static class SimTest
             var maxR = startR;
             for (var i = 0; i < 40; i++)
             {
-                riser.Update(1f / 60f, pl, 0, false, false);
+                riser.Update(1f / 60f, pl, 0, false);
                 maxR = MathF.Max(maxR, (riser.Position - pl.Center).Length());
             }
             Check($"platform: a rising dwarf passes through ({maxR - platTop:0}px past top)",
