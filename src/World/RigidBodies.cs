@@ -81,6 +81,11 @@ public sealed class RigidBodies
         /// <summary>The tile's radial art rotation at detach (tile angle + 90°). Drawn at
         /// BaseRot + the body's current Angle, the art never pops when the chunk shears off.</summary>
         public float BaseRot;
+        /// <summary>Burn state carried OFF the grid: 0 = not burning; otherwise the tile's
+        /// BurningTiles clock + 1 at detach (offset so 0 stays "none"). Rides the cell
+        /// through splits and re-ignites via Cells.IgniteTile when the body stamps —
+        /// fire persists on a chunk that breaks free and falls.</summary>
+        public float Burn;
     }
 
     public sealed class Body
@@ -356,6 +361,9 @@ public sealed class RigidBodies
             var wp = _planet.TileToWorld(x, y);
             var expose = ExposeMask(x, y);
             var rel = wp - _planet.Center;
+            // A burning tile keeps burning as it breaks free: steal its burn clock off
+            // the grid registry into the cell (clock frozen mid-air, resumed on stamp).
+            var burn = _cells.StealBurning(x, y, out var bclk) ? bclk + 1f : 0f;
             body.Cells.Add(new BodyCell
             {
                 Local = wp - com,
@@ -365,6 +373,7 @@ public sealed class RigidBodies
                 T = y,
                 Expose = expose,
                 BaseRot = MathF.Atan2(rel.Y, rel.X) + MathHelper.PiOver2,
+                Burn = burn,
             });
         }
         foreach (var idx in tiles)
@@ -442,6 +451,13 @@ public sealed class RigidBodies
         {
             var b = Bodies[i];
             Step(b, dt);
+            // Burning cells keep flaming while the chunk tumbles (their burn clocks are
+            // frozen until landing): each queues the odd licking-flame tongue at its
+            // current world position, so a falling burning log visibly stays on fire.
+            if (!b.Dead && Random.Shared.Next(4) == 0)
+                foreach (var c in b.Cells)
+                    if (c.Burn > 0f && Random.Shared.Next(3) == 0)
+                        _cells.QueueFlame(b.Position + Rotate(c.Local, b.Angle));
             if (b.Dead) Bodies.RemoveAt(i);
         }
     }
@@ -756,12 +772,22 @@ public sealed class RigidBodies
         {
             var wp = b.Position + Rotate(c.Local, b.Angle);
             var (tx, ty) = _planet.WorldToTile(wp);
-            if (TryStampAt(tx, ty, c.Kind)) continue;
-            var placed = false;
+            var (sx, sy) = (tx, ty);
+            var placed = TryStampAt(tx, ty, c.Kind);
             for (var dy = -1; dy <= 1 && !placed; dy++)
                 for (var dx = -1; dx <= 1 && !placed; dx++)
-                    placed = TryStampAt(tx + dx, ty + dy, c.Kind);
-            if (!placed) _cells.SpawnDustInTile(tx, ty, c.Kind);
+                    if (TryStampAt(tx + dx, ty + dy, c.Kind))
+                    {
+                        (sx, sy) = (tx + dx, ty + dy);
+                        placed = true;
+                    }
+            if (!placed)
+            {
+                _cells.SpawnDustInTile(tx, ty, c.Kind);
+                continue;
+            }
+            // A burning cell RESUMES its burn where it lands — fire rode the fall.
+            if (c.Burn > 0f) _cells.IgniteTile(sx, sy, c.Burn - 1f);
         }
     }
 

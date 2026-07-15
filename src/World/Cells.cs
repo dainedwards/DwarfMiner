@@ -201,24 +201,8 @@ public sealed class Cells
         return true;
     }
 
-    // CONSUMPTION budget — separate from the spread budget above. Charring rolls scale
-    // with the adjacent flame POPULATION, and budding grows that population, so no char
-    // constant could keep an engulfed tree from eating itself in moments (and chars
-    // fought buds over one budget, making burn-through contention-erratic). This budget
-    // makes total tile consumption population-INDEPENDENT by construction: ~2.5 tiles/s
-    // planet-wide, however furiously things burn. Engulfment (~2 s via budding) therefore
-    // always beats burn-through — a small tree stands fully aflame long before its
-    // first-lit tile gives out — and a forest fire smoulders epically instead of
-    // deleting itself.
-    private float _charBudget = CharBudgetMax;
-    private const float CharBudgetMax = 24f;
-    private const float CharBudgetRegen = 12f;    // tile-chars per second, planet-wide
-    private bool SpendChar()
-    {
-        if (_charBudget < 1f) return false;
-        _charBudget -= 1f;
-        return true;
-    }
+    // (The old separate consumption budget is gone: tile burn-through is now governed by
+    // the BurningTiles registry's fixed per-tile durations — see TickBurningTiles.)
 
     // --- Compaction: buried, undisturbed grains re-form into Conglomerate tiles. ---
     // Per-cell timers would keep every resting grain awake, so the mechanic is tile-level
@@ -550,6 +534,13 @@ public sealed class Cells
             StampAtWorld(worldPos + new Vector2(
                 ((float)_rng.NextDouble() - 0.5f) * 5f,
                 ((float)_rng.NextDouble() - 0.5f) * 5f), Material.Fire, fireFuse);
+        // The jet's touch hands adjacent flammable tiles straight to the burning-tile
+        // lifecycle — the direct, reliable catch at the contact point (IgniteTile
+        // silently ignores anything non-flammable).
+        var (ctx, cty) = Planet.WorldToTile(worldPos);
+        for (var dr = -1; dr <= 1; dr++)
+            for (var da = -1; da <= 1; da++)
+                IgniteTile(ctx + dr, cty + da);
     }
 
     /// <summary>Spawn cells inside the polar tile (tx = ring, ty = angle). Picks random sub-cells.</summary>
@@ -628,6 +619,113 @@ public sealed class Cells
     /// Sampled (not exhaustive) and capped like PendingBubbles.</summary>
     public readonly List<(Vector2 Pos, byte Fuse)> PendingFlames = new();
     private const int MaxPendingFlames = 200;
+
+    /// <summary>Queue a licking-flame site (cap-guarded) — for external emitters like
+    /// tumbling burning rigid bodies.</summary>
+    public void QueueFlame(Vector2 pos, byte fuse = 80)
+    {
+        if (PendingFlames.Count < MaxPendingFlames) PendingFlames.Add((pos, fuse));
+    }
+
+    // ── BURNING TILES: a first-class tile lifecycle (ignite → blaze → char out) ──
+    // The emergent cell-fire approach could never hold the arc "engulf fast, stand fully
+    // ablaze, then burn out" — spread, persistence and consumption were all side-effects
+    // of probabilistic cell mechanics fighting over shared budgets (see the compaction
+    // sweep for the same lesson at tile scale). Burning is now a STATE: ignition adds a
+    // flammable tile to this registry; after BurnSpreadDelay it ignites its 8 neighbours
+    // (a deterministic wavefront over the real fuel graph — no missed corners); each tile
+    // blazes for a fixed hash-stable 4-7 s (emitting licks + occasional hazard flame
+    // cells), then chars to sky. Engulfment (~1.5 s for a small tree) is therefore always
+    // far ahead of burn-through, BY CONSTRUCTION. Cell fire remains the transient/hazard
+    // layer (liquids, gas fronts, embers). Not serialized — a save mid-blaze drops the
+    // burn state, same policy as flying cells.
+    public readonly Dictionary<(int tx, int ty), float> BurningTiles = new();
+    private readonly List<((int tx, int ty) Key, float Clock)> _burnScratch = new();
+    private const int MaxBurningTiles = 400;   // planet-wide cap = the fire-storm guard
+    private const float BurnSpreadDelay = 0.25f;
+    private const float BurnDurMin = 4f, BurnDurVar = 3f;
+
+    /// <summary>Set a flammable tile alight (idempotent; cap-guarded). <paramref
+    /// name="clock"/> resumes a burn — a burning chunk that fell as a rigid body
+    /// re-ignites where it lands with its elapsed burn intact.</summary>
+    public void IgniteTile(int tx, int ty, float clock = 0f)
+    {
+        if (tx < 0 || tx >= Planet.Rings) return;
+        var n = Planet.TilesAt(tx);
+        ty = ((ty % n) + n) % n;
+        if (!IsFlammable(Planet.Get(tx, ty))) return;
+        if (BurningTiles.Count >= MaxBurningTiles) return;
+        if (!BurningTiles.ContainsKey((tx, ty))) BurningTiles[(tx, ty)] = clock;
+    }
+
+    /// <summary>Remove-and-return a tile's burn state — RigidBodies calls this when it
+    /// lifts tiles out of the grid, so fire PERSISTS on a chunk that detaches and falls,
+    /// resuming via <see cref="IgniteTile"/> when the body re-stamps.</summary>
+    public bool StealBurning(int tx, int ty, out float clock)
+    {
+        var n = Planet.TilesAt(tx);
+        var key = (tx, ((ty % n) + n) % n);
+        if (BurningTiles.TryGetValue(key, out clock))
+        {
+            BurningTiles.Remove(key);
+            return true;
+        }
+        return false;
+    }
+
+    private void TickBurningTiles(float dt)
+    {
+        if (BurningTiles.Count == 0) return;
+        _burnScratch.Clear();
+        foreach (var kv in BurningTiles) _burnScratch.Add((kv.Key, kv.Value));
+        foreach (var ((tx, ty), clock) in _burnScratch)
+        {
+            var k = Planet.Get(tx, ty);
+            if (!IsFlammable(k))   // mined, detached, melted away — self-heal
+            {
+                BurningTiles.Remove((tx, ty));
+                continue;
+            }
+            var nc = clock + dt;
+            var h = (uint)((tx * 73856093) ^ (ty * 19349663));
+            var dur = BurnDurMin + (h & 1023) / 1023f * BurnDurVar;
+            // Blaze visuals + hazard: licking flames off the tile, and the odd REAL fire
+            // cell in adjacent open space (creature burn, oil/gas ignition and quenching
+            // keep working through the normal cell rules).
+            if (_rng.Next(5) == 0) QueueFlame(Planet.TileToWorld(tx, ty));
+            if (_rng.Next(30) == 0)
+            {
+                var d4 = _rng.Next(4);
+                var (ax, ay) = d4 switch
+                {
+                    0 => (tx + 1, ty), 1 => (tx - 1, ty), 2 => (tx, ty + 1), _ => (tx, ty - 1),
+                };
+                if (ax >= 0 && ax < Planet.Rings && Planet.Get(ax, ay) == TileKind.Sky)
+                    SpawnInTile(ax, ay, Material.Fire, 1);
+            }
+            // Spread: one deterministic wavefront step over the fuel graph, diagonals
+            // included, the moment this tile has been alight past the delay.
+            if (clock < BurnSpreadDelay && nc >= BurnSpreadDelay)
+                for (var dr = -1; dr <= 1; dr++)
+                    for (var da = -1; da <= 1; da++)
+                    {
+                        if (dr == 0 && da == 0) continue;
+                        IgniteTile(tx + dr, ty + da);
+                    }
+            // Burn out: the tile gives way in a last gout of flame and smoke.
+            if (nc >= dur)
+            {
+                BurningTiles.Remove((tx, ty));
+                Planet.TakeGem(tx, ty);
+                Planet.Set(tx, ty, TileKind.Sky);
+                SpawnInTile(tx, ty, Material.Fire, Density / 2);
+                SpawnInTile(tx, ty, Material.Smoke, Density / 2);
+                ShedBurningLeaves(tx, ty, k);
+                continue;
+            }
+            BurningTiles[(tx, ty)] = nc;
+        }
+    }
 
     /// <summary>Spawn dust cells filling the whole polar tile, tagged with the source TileKind
     /// so the cells render in that tile's colours and pay out that tile's drop on pickup.
@@ -1002,7 +1100,7 @@ public sealed class Cells
     {
         _time += dt;
         if (_fireBudget < FireBudgetMax) _fireBudget = MathF.Min(FireBudgetMax, _fireBudget + FireBudgetRegen * dt);
-        if (_charBudget < CharBudgetMax) _charBudget = MathF.Min(CharBudgetMax, _charBudget + CharBudgetRegen * dt);
+        TickBurningTiles(dt);
 
         UpdateFlying(dt);
 
@@ -1870,16 +1968,10 @@ public sealed class Cells
     {
         if (_rng.Next(24) != 0) return;
         if (c.cy < 0 || c.cy >= Height) return;
-        var tx = c.cy / Density;
-        var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
-        var k = Planet.Get(tx, ty);
-        if (!IsFlammable(k)) return;
-        if (!SpendChar()) return;   // tile DESTRUCTION draws the consumption budget
-        Planet.TakeGem(tx, ty);
-        Planet.Set(tx, ty, TileKind.Sky);
-        SpawnInTile(tx, ty, Material.Fire, Density);
-        SpawnInTile(tx, ty, Material.Smoke, Density / 2);
-        ShedBurningLeaves(tx, ty, k);
+        // Lava-side ignition also feeds the burning-tile lifecycle now — the registry
+        // owns spread, blaze and burn-out (see TickBurningTiles).
+        if (SpendFire())
+            IgniteTile(c.cy / Density, WrapX(c.cx, _cellsAt[c.cy]) / Density);
     }
 
     /// <summary>Leafy tiles don't just vanish into a stationary flame — the burning foliage
@@ -2011,17 +2103,9 @@ public sealed class Cells
         var fuelled = false;
         var doused = false;
         var grounded = false;      // any solid-tile neighbour: a surface the fuse clings to
-        var burningFloor = false;  // the tile directly BELOW is flammable — fire clings to it
-        var fuelMask = 0;          // cardinal fuel directions (bit0 R / 1 L / 2 down / 3 up)
-                                   // — steers fuel-seeking buds along the burning surface
 
-        // dirBit 0-3 as in fuelMask; -1 = DIAGONAL probe. Diagonals ignite/char/fuel like
-        // any other direction — canopies and branches connect at corners, and cardinal-
-        // only probes left corner-connected fuel permanently unreachable ("the fire
-        // misses pieces it's touching") — but they don't steer the bud heuristic.
-        void Probe(int ncx, int ncy, int dirBit = -1)
+        void Probe(int ncx, int ncy)
         {
-            var below = dirBit == 2;
             if (ncy < 0 || ncy >= Height) return;
             var ni = Idx(ncx, ncy);
             switch ((Material)_mat[ni])
@@ -2032,7 +2116,6 @@ public sealed class Cells
                 case Material.Oil:
                 case Material.Gas:
                     fuelled = true;
-                    if (dirBit >= 0) fuelMask |= 1 << dirBit;
                     // Flame front: catch the neighbouring fuel cell alight. Probabilistic
                     // so a pool burns across its surface over seconds, not in one frame —
                     // rate 10 (was 3): fuel is CONSUMED slowly and a burning pool lasts
@@ -2075,50 +2158,26 @@ public sealed class Cells
             }
             if (!IsFlammable(k)) return;
             fuelled = true;
-            if (dirBit >= 0) fuelMask |= 1 << dirBit;
-            if (below) burningFloor = true;
-            // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke.
-            // The roll is RESPONSIVE (40, floor-biased 20) but the actual consumption
-            // pace is governed by the dedicated char budget below — population-
-            // independent, ~2.5 tiles/s planet-wide — so an engulfed tree burns as a
-            // standing bonfire and only gradually gives out underneath, first-lit tile
-            // included. The 2× floor bias keeps down-consumption pacing up-consumption.
-            if (_rng.Next(below ? 20 : 40) != 0) return;
-            if (!SpendChar()) return;
-            var tx = ncy / Density;
-            var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
-            Planet.TakeGem(tx, ty);
-            Planet.Set(tx, ty, TileKind.Sky);
-            SpawnInTile(tx, ty, Material.Fire, Density);
-            SpawnInTile(tx, ty, Material.Smoke, Density / 2);
-            ShedBurningLeaves(tx, ty, k);
+            // Flame touching a flammable tile hands it to the BURNING-TILE lifecycle:
+            // the registry owns spread, blaze and burn-out from here (deterministic
+            // wavefront + fixed durations). The roll just paces how quickly loose flame
+            // catches a surface; SpendFire keeps stray embers from seeding storms.
+            if (_rng.Next(20) == 0 && SpendFire())
+                IgniteTile(ncy / Density, WrapX(ncx, _cellsAt[ncy]) / Density);
         }
 
-        Probe(cx + 1, cy, 0);
-        Probe(cx - 1, cy, 1);
+        Probe(cx + 1, cy);
+        Probe(cx - 1, cy);
         var (icx, icy) = InnerCell(cx, cy);
-        Probe(icx, icy, 2);
-        // Diagonal-down probes: the below-cells of the lateral neighbours.
-        if (cy > 0)
-        {
-            var (dlx, dly) = InnerCell(cx - 1, cy);
-            Probe(dlx, dly);
-            var (drx, dry) = InnerCell(cx + 1, cy);
-            Probe(drx, dry);
-        }
+        Probe(icx, icy);
         if (cy < Height - 1)
         {
             var oc = OuterCellCount(cx, cy);
             for (var w = 0; w < oc; w++)
             {
                 var (ocx, ocy) = OuterCell(cx, cy, w);
-                Probe(ocx, ocy, 3);
+                Probe(ocx, ocy);
             }
-            // Diagonal-up probes: the above-cells of the lateral neighbours.
-            var (ulx, uly) = OuterCell(cx - 1, cy, 0);
-            Probe(ulx, uly);
-            var (urx, ury) = OuterCell(cx + 1, cy, 0);
-            Probe(urx, ury);
         }
 
         if (doused)
@@ -2182,28 +2241,8 @@ public sealed class Cells
         // seconds without consuming anything. Charring alone could never deliver "fully
         // aflame before the first part burns out" — charring IS consumption, so spread
         // and burn-through were the same clock; budding decouples them.
-        if (fuelled && _rng.Next(7) == 0 && SpendFire())
-        {
-            // FUEL-SEEKING buds: travel ALONG the burning surface (perpendicular to
-            // where the fuel is) instead of a blind random direction — fuel above or
-            // below → bud sideways; fuel beside → bud vertically. Flames wick across
-            // the fuel like a fuse instead of wasting buds on open air, which both
-            // speeds the spread and stops concave corners being skipped.
-            int bd;
-            var vertFuel = (fuelMask & 0b1100) != 0;
-            var latFuel = (fuelMask & 0b0011) != 0;
-            if (vertFuel && (!latFuel || _rng.Next(2) == 0)) bd = _rng.Next(2);
-            else if (latFuel) bd = 2 + _rng.Next(2);
-            else bd = _rng.Next(4);
-            var (bx, by) = bd switch
-            {
-                0 => (cx + 1, cy),
-                1 => (cx - 1, cy),
-                2 => cy > 0 ? InnerCell(cx, cy) : (cx, cy),
-                _ => cy < Height - 1 ? OuterCell(cx, cy, 0) : (cx, cy),
-            };
-            if ((bx, by) != (cx, cy) && !IsBlocked(bx, by)) Place(bx, by, Material.Fire);
-        }
+        // (Budding is retired: tile-level spread lives in the BurningTiles wavefront now;
+        // cell fire is the transient/hazard layer only.)
 
         // Ember spit: a rare glowing mote arcs off a fuelled blaze and can start a spot
         // fire where it lands. Emitted, not launched — flame isn't conserved matter. Gated by
@@ -2227,15 +2266,6 @@ public sealed class Cells
         //     keeps the dance for its last moments rather than freezing in the air.
         // Unfused transient fire (explosions, gas fronts, charring) always dances.
         var anchored = _srcTile[i] > 0 && !fuelled && grounded;
-        // CLING: flame standing on the fuel it's eating mostly refuses to leave (mobility
-        // ÷3) — this is what repairs the up/down residence asymmetry: fire piles against
-        // its ceiling for free because it rises, but only clinging cells stay at the
-        // floor long enough for the downward char rolls to accumulate.
-        if (burningFloor && _rng.Next(3) != 0)
-        {
-            Enqueue(Idx(cx, cy));
-            return;
-        }
         if (!anchored && _rng.Next(3) == 0 && cy < Height - 1)
         {
             // FUELLED fire crawls in ANY direction, not just up: a third of its moves go
