@@ -3716,7 +3716,7 @@ public sealed partial class DwarfMinerGame : Game
         // lands where the visible tongue points.
         for (var i = 0; i < 3; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.18f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.072f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
