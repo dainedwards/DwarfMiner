@@ -206,7 +206,8 @@ public static class Tiles
         TileKind.Plating => 4,
         TileKind.GlassBlock => 1,
         TileKind.Platform => 1,
-        TileKind.TreeTrunk => 2,       // a couple of chops to fell
+        TileKind.TreeTrunk => 4,       // tough bole — you chop through the whole trunk to fell it
+                                       // (Planet.Mine scales this up further with the tree's height)
         TileKind.TreeCanopy => 1,
         TileKind.TreeCanopy2 => 1,
         TileKind.SeaFrond => 1,
