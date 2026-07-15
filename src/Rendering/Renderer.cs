@@ -1228,8 +1228,6 @@ public sealed class Renderer
         var halfR = Planet.TileSize * 0.5f;
         var cellSize = new Vector2(cellC + 0.4f, cellR + 0.4f);
         const float nf = 0.32f;                  // noise frequency (~3-px wavelength)
-        // Present-probability thins with each layer outward: layer 0 mostly there, 1 sparse.
-        Span<float> thresh = stackalloc float[] { 0.40f, 0.66f };
 
         // outDir = which way is "into the void" past this edge; along = the edge's tangent.
         void Edge(Vector2 outDir, Vector2 along, float edgeDist, float alongHalf, float alongStep)
@@ -1237,10 +1235,10 @@ public sealed class Renderer
             for (var i = 0; i < d; i++)
             {
                 var a = (i + 0.5f) * alongStep - alongHalf;
-                for (var l = 0; l < thresh.Length; l++)
+                for (var l = 0; l < _crustThresh.Length; l++)
                 {
                     var p = centre + along * a + outDir * (edgeDist + (l + 0.5f) * cellR);
-                    if (Noise2(p.X * nf, p.Y * nf) <= thresh[l]) continue;
+                    if (Noise2(p.X * nf, p.Y * nf) <= _crustThresh[l]) continue;
                     var s = -6 * (l + 1);        // tips read a touch darker than the tile body
                     var c = new Color(
                         Math.Clamp(col.R + s, 0, 255),
