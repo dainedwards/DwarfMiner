@@ -1417,8 +1417,9 @@ public sealed class Cells
         }
 
         // Ember spit: a rare glowing mote arcs off a fuelled blaze and can start a spot
-        // fire where it lands. Emitted, not launched — flame isn't conserved matter.
-        if (fuelled && _rng.Next(60) == 0 && _flying.Count < MaxFlying)
+        // fire where it lands. Emitted, not launched — flame isn't conserved matter. Gated by
+        // the spread budget so a windborne ember can't seed an unstoppable second front.
+        if (fuelled && _rng.Next(60) == 0 && _flying.Count < MaxFlying && SpendFire())
         {
             var (up, tan) = AxesAt(cx, cy);
             LaunchAtWorld(CellToWorld(cx, cy),
