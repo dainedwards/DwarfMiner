@@ -1409,6 +1409,11 @@ public sealed class Particles
                 CollideTiles = true,
                 LightRadius = i < 7 ? 16f : i % 3 == 0 ? 7f : 0f,
                 LightColor = new Color(150, 240, 80),
+                // Every droplet that lands IS acid: it stamps a real Acid cell where it
+                // rests, so the whole visible spray corrodes and pools — not just the 3
+                // launched payload cells. (Acid self-depletes as it eats — TryCorrode
+                // fizzes the cell to smoke — which keeps this from melting the planet.)
+                LandMat = CellFx ? (byte)Material.Acid : (byte)0,
             });
         }
         // A few caustic vapour wisps riding the rope FROM THE MUZZLE (never seeded
