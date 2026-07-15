@@ -88,6 +88,7 @@ public sealed partial class DwarfMinerGame : Game
     private float _updateMs, _drawMs;
     private int _fps, _fpsFrames;
     private long _fpsMark = Environment.TickCount64;
+    private int _gc0, _gc2;   // last-second GC collection counts for the DM_PERF [cnt] line
 
     /// <summary>Cave-in warning state: <c>_caveInWarn</c> counts down while condemned tiles hang
     /// over the dwarf (drives the flashing HUD banner); <c>_caveInDust</c> throttles the sifting
