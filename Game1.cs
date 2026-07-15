@@ -1163,6 +1163,8 @@ public sealed partial class DwarfMinerGame : Game
         var tPerf = FramePerf.Now();
         _run.Physics.Update(dt);
         FramePerf.Add("phys", tPerf);
+        // The falling pod is the far-field throttle's focus during the descent.
+        _run.Cells.CompactionExclusion = _landerPos;
         tPerf = FramePerf.Now();
         _run.Cells.Update(dt);
         FramePerf.Add("cells", tPerf);
