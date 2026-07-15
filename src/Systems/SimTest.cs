@@ -139,7 +139,9 @@ public static class SimTest
             for (var i = 0; i < 120; i++) perfCells.Update(dt);
             var steady = sw.Elapsed.TotalMilliseconds / 120.0;
             Console.WriteLine($"  [info] cells: first-second avg {first:0.00} ms/tick, steady {steady:0.00} ms/tick");
-            Check("perf: steady-state cell tick under 6 ms", steady < 6.0, $"{steady:0.00} ms");
+            // Bound re-calibrated for the Density-8 grid (4× the cells of the old 1-px
+            // grid; this scene ran ~3 ms before, ~13 ms after). Debug-build numbers.
+            Check("perf: steady-state cell tick under 16 ms", steady < 16.0, $"{steady:0.00} ms");
         }
 
         // --- 5. Projectiles: swept collision (no tunnelling), single-hit piercing, contact
