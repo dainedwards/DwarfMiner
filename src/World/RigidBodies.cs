@@ -361,6 +361,9 @@ public sealed class RigidBodies
             var wp = _planet.TileToWorld(x, y);
             var expose = ExposeMask(x, y);
             var rel = wp - _planet.Center;
+            // A burning tile keeps burning as it breaks free: steal its burn clock off
+            // the grid registry into the cell (clock frozen mid-air, resumed on stamp).
+            var burn = _cells.StealBurning(x, y, out var bclk) ? bclk + 1f : 0f;
             body.Cells.Add(new BodyCell
             {
                 Local = wp - com,
@@ -370,6 +373,7 @@ public sealed class RigidBodies
                 T = y,
                 Expose = expose,
                 BaseRot = MathF.Atan2(rel.Y, rel.X) + MathHelper.PiOver2,
+                Burn = burn,
             });
         }
         foreach (var idx in tiles)
