@@ -6344,8 +6344,8 @@ public sealed partial class DwarfMinerGame : Game
         // the lightmap so they actually illuminate the cave wall behind them.
         _particles.AddLights(_renderer);
         // Lava cells along their pool surface light up the cave roof (view-culled).
-        _run.Cells.AddLights(_renderer, viewCentre, viewRadius,
-            _camera.Zoom < 0.55f ? 6 : _camera.Zoom < 0.9f ? 3 : 1);
+        // Same Density-aware stride as the cell draw above.
+        _run.Cells.AddLights(_renderer, viewCentre, viewRadius, cellStride);
 
         // Propagate the seeded grid, rasterize it into the lightmap, and cut the hero
         // lights' ray-cast shadow fans over it. Depth darkness is emergent now: rock
