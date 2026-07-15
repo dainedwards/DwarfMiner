@@ -3041,6 +3041,12 @@ public sealed class Cells
             case Material.Acid:
                 return Tint(new Color(120, 200, 40),
                     (int)(MathF.Sin(_time * 2.0f + ang * 23f + cy * 0.05f) * 12f));
+            case Material.Lava:
+                // Molten body: flat deep orange with a slow, wide heat-swell band — the
+                // fast per-cell flicker lives on in ColorFor for the plain fallback, but
+                // the cohesive body wants one calm surface (the rim + glow carry the heat).
+                return Tint(new Color(235, 92, 20),
+                    (int)(MathF.Sin(_time * 1.3f + ang * 15f + cy * 0.04f) * 14f));
             default: // Oil — near-black slick with a slow crawling sheen.
                 return Tint(new Color(38, 32, 26),
                     (int)(MathF.Sin(_time * 1.1f + ang * 13f + cy * 0.035f) * 7f));
