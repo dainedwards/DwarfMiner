@@ -478,6 +478,7 @@ public static class Tiles
         TileKind.Plating => ("plating", 1),
         TileKind.GlassBlock => ("glass_block", 1),
         TileKind.Platform => ("platform", 1),
+        TileKind.TreeTrunk => ("wood", 2),   // chopping a trunk yields wood
         TileKind.Rail => ("rail", 1),
         TileKind.ReinforcedSupport => ("reinforced_support", 1),
         TileKind.Glowshroom => ("glowshroom", 1),
