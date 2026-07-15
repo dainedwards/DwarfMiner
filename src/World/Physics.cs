@@ -151,11 +151,22 @@ public sealed class Physics
     public void MarkDirty(int x, int y)
     {
         if (!_planet.InBounds(x, y)) return;
-        // Wake up neighbors too — when the player digs out a tile, surrounding tiles become candidates.
-        for (var dy = -1; dy <= 1; dy++)
-            for (var dx = -1; dx <= 1; dx++)
-                if (_planet.InBounds(x + dx, y + dy))
-                    MarkDirtyIdx(_planet.Index(x + dx, y + dy));
+        // Wake up neighbors too — when the player digs out a tile, surrounding tiles become
+        // candidates. Ring tile counts differ, so the neighbouring RINGS' columns are mapped
+        // by ANGLE: a raw index ±1 drifts up to several tiles at bearings far from angle 0,
+        // which left the region above a break unwoken there — a tower severed at the street
+        // on the far side of the planet just hung in the sky, never condemned.
+        for (var dx = -1; dx <= 1; dx++)
+        {
+            var r = x + dx;
+            if (r < 0 || r >= _planet.Rings) continue;
+            var n = _planet.TilesAt(x);
+            var nn = _planet.TilesAt(r);
+            var t0 = dx == 0 ? y : (int)(((y % n + n) % n + 0.5f) / n * nn);
+            for (var dy = -1; dy <= 1; dy++)
+                if (_planet.InBounds(r, t0 + dy))
+                    MarkDirtyIdx(_planet.Index(r, t0 + dy));
+        }
     }
 
     private void MarkDirtyIdx(int idx)
