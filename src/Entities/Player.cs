@@ -402,7 +402,7 @@ public sealed class Player
         // seeds the fall so leaving a ledge drops immediately instead of hovering).
         var wasGrounded = Grounded;
 
-        if (FlyMode)
+        if (Flying)
         {
             // Ghost mode: direct velocity, no gravity, phase through tiles. For world-testing.
             var spd = MoveSpeed * 2.4f;
