@@ -231,11 +231,12 @@ void main()
         w.Write((short)64);
         w.Write(4);
         for (var i = 0; i < 4; i++) { w.Write(i); w.Write((ushort)(i * 16)); } // params 0..3 at 0,16,32,48
-        // cbuffer 1 → PS: one packed vec4 of carve parameters.
+        // cbuffer 1 → PS: two packed vec4s of carve/crust parameters.
         w.Write("ps_uniforms_vec4");
-        w.Write((short)16);
-        w.Write(1);
+        w.Write((short)32);
+        w.Write(2);
         w.Write(4); w.Write((ushort)0);  // param 4 at offset 0
+        w.Write(5); w.Write((ushort)16); // param 5 at offset 16
 
         // --- shaders ---
         w.Write(2);
@@ -243,12 +244,13 @@ void main()
         WriteShader(w, isVertex: false, PixelGlsl, cbuffer: 1, withAttributes: false);
 
         // --- parameters (indices must match the cbuffer tables above) ---
-        w.Write(5);
+        w.Write(6);
         WriteVec4Param(w, "MatrixCol0");
         WriteVec4Param(w, "MatrixCol1");
         WriteVec4Param(w, "MatrixCol2");
         WriteVec4Param(w, "MatrixCol3");
         WriteVec4Param(w, "PsParams");
+        WriteVec4Param(w, "PsParams2");
 
         // --- techniques ---
         w.Write(1);
