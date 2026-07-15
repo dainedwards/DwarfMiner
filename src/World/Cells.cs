@@ -2682,6 +2682,8 @@ public sealed class Cells
         var blob = r.LiquidBlob;
         var blobOrigin = new Vector2(blob.Width / 2f, blob.Height / 2f);
         _surface.Clear();
+        _hotOps.Clear();
+        _hotSurface.Clear();
         // Pool interiors merge into run quads: on an ocean world the view circle holds
         // hundreds of thousands of water cells, and per-cell quads made this pass the
         // single biggest frame cost (~8.5 ms CPU + a vertex flood that halved the GPU
