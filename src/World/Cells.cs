@@ -205,8 +205,10 @@ public sealed class Cells
     /// <summary>Seconds a candidate must sit untouched before it converts.</summary>
     private const float CompactDelay = 45f;
     /// <summary>Occupied-cell floor for conversion — near-full so surface piles stay loose;
-    /// a couple of voids are tolerated because craggy interlocked piles keep small gaps.</summary>
-    private const int CompactMinFill = Density * Density - 2;
+    /// ~12% voids are tolerated because craggy interlocked piles keep small gaps. Expressed
+    /// as a FRACTION of the tile (was a flat "-2", which silently tightened to 3% tolerance
+    /// when Density went 4→8).</summary>
+    private const int CompactMinFill = Density * Density - Density * Density / 8;
     /// <summary>Occupied-cell floor for a tile converting under grain pressure. Naturally
     /// settled piles interlock with 10-25% voids, so the sealed-pocket floor above would
     /// strand every layer after the first; a pressed tile instead pulls grains down from
