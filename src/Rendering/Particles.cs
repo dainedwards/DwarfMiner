@@ -754,7 +754,7 @@ public sealed class Particles
         // Shockwave ring — evenly spaced fast radial particles with hard drag, so a crisp
         // circle expands a short distance and dies. No gravity: the wavefront stays round.
         // White-hot cooling to fire orange.
-        var ringCount = (int)(strength * 1.3f);
+        var ringCount = (int)(strength * 2.4f);
         for (var i = 0; i < ringCount; i++)
         {
             var ang = i / (float)ringCount * MathHelper.TwoPi + (float)(_rng.NextDouble() * 0.12);
@@ -766,7 +766,7 @@ public sealed class Particles
                 MaxLife = 0.26f,
                 Color = new Color(255, 250, 220),
                 FadeColor = Color.Lerp(new Color(255, 150, 50), sparkColor, 0.4f),
-                Size = 1.5f,
+                Size = 1f,
                 GravityScale = 0f,
                 Drag = 6f,
             });
