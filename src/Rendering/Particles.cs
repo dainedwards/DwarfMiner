@@ -901,16 +901,17 @@ public sealed class Particles
             MaxLife = 0.06f,
             Color = Color.White,
             FadeColor = color,
-            Size = 3f,
+            Size = 1.6f,
             GravityScale = 0f,
             Drag = 0f,
             // One-frame hero flash: each shot strobes the cave with hard shadows — the
-            // propagated grid alone made muzzle flashes read as a faint blush.
+            // propagated grid alone made muzzle flashes read as a faint blush. The LIGHT
+            // is the flash; the drawn quad is just a small hot heart at the muzzle.
             LightRadius = 44f,
             LightColor = color,
             HeroLight = true,
         });
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 8; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.7f;
             var c = MathF.Cos(spread);
@@ -924,7 +925,7 @@ public sealed class Particles
                 MaxLife = 0.16f,
                 Color = color,
                 FadeColor = new Color(60, 30, 20),
-                Size = 1f,
+                Size = 0.8f,
                 GravityScale = 0f,
                 Drag = 6f,
             });
