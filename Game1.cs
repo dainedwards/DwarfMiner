@@ -1428,7 +1428,10 @@ public sealed partial class DwarfMinerGame : Game
 
     private void UpdateFrame(GameTime gameTime)
     {
-        var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        // Hitch clamp: under variable timestep a stalled frame must not hand the sim a
+        // huge dt (tunnelling, oversized integration steps). 30 Hz floor = worst case the
+        // world runs briefly in slow motion, exactly like the fixed-step catch-up cap.
+        var dt = MathF.Min((float)gameTime.ElapsedGameTime.TotalSeconds, 1f / 30f);
         _frameDt = dt;   // for per-frame item actions dispatched by id (see BuildItems)
         var keys = Keyboard.GetState();
         var mouse = Screen.Mouse();
