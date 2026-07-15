@@ -134,8 +134,7 @@ public static class SpawnDirector
                     if (run.Cells.CountWaterNear(p, 3f) < 3) continue;
                     var splash = p - dir * 10f;
                     var deep = run.Cells.CountWaterNear(splash - dir * 14f, 5f) >= 8;
-                    var kind = deep && Random.Shared.NextDouble() < 0.35
-                        ? CreatureKind.AlienWhale : CreatureKind.AlienCrab;
+                    var kind = LakeKindFor(deep);
                     run.Creatures.Add(new Creature(splash, kind) { Resident = true });
                     aquatics++;
                     break;
