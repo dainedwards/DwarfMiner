@@ -48,11 +48,19 @@ public static class RuntimeEffect
     /// <summary>Build the terrain-carve effect, or null if anything goes wrong (wrong
     /// MonoGame version, GLSL rejected by the driver, …) — callers must treat null as
     /// "no shader" and keep the baked-erosion path.</summary>
-    public static Effect? BuildTerrainCarve(GraphicsDevice gd)
+    public static Effect? BuildTerrainCarve(GraphicsDevice gd) =>
+        Build(gd, PixelGlsl, "TerrainCarve", "terrain carve");
+
+    /// <summary>Build the liquid-composite effect (threshold + rim over the liquid RT), or
+    /// null — callers fall back to a plain NonPremultiplied blit of the RT.</summary>
+    public static Effect? BuildLiquidComposite(GraphicsDevice gd) =>
+        Build(gd, LiquidGlsl, "LiquidComposite", "liquid composite");
+
+    private static Effect? Build(GraphicsDevice gd, string pixelGlsl, string technique, string label)
     {
         try
         {
-            var fx = new Effect(gd, WriteMgfx());
+            var fx = new Effect(gd, WriteMgfx(pixelGlsl, technique));
             // Touch the parameters now so a malformed stream fails HERE (inside the
             // try) rather than mid-frame on first use.
             _ = fx.Parameters["MatrixCol0"];
