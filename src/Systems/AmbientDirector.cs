@@ -155,9 +155,20 @@ public static class AmbientDirector
             case DisasterKind.Eruption:
             {
                 if (run.Planet is not { VolcanoVents.Count: > 0 }) return false;
-                run.EruptionVent = Random.Shared.Next(run.Planet.VolcanoVents.Count);
+                // Erupt the volcano NEAREST the player, so a debug trigger (or a scheduled
+                // eruption) always fires the vent you can actually see rather than one on the
+                // far side of the world.
+                var best = 0;
+                var bestSq = float.MaxValue;
+                for (var i = 0; i < run.Planet.VolcanoVents.Count; i++)
+                {
+                    var (vvx, vvy, _) = run.Planet.VolcanoVents[i];
+                    var d = (run.Planet.TileToWorld(vvx, vvy) - run.Player.Position).LengthSquared();
+                    if (d < bestSq) { bestSq = d; best = i; }
+                }
+                run.EruptionVent = best;
                 run.EruptionLeft = 5f + (float)Random.Shared.NextDouble() * 4f;
-                var (vx, vy, _) = run.Planet.VolcanoVents[run.EruptionVent];
+                var (vx, vy, _) = run.Planet.VolcanoVents[best];
                 result.EruptionStarted = true;
                 result.EruptionPos = run.Planet.TileToWorld(vx, vy);
                 return true;
