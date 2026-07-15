@@ -1421,8 +1421,15 @@ public sealed class Particles
                 Position = pos - shooterVel * ((float)_rng.NextDouble() * 0.016f)
                          + d * (float)_rng.NextDouble() * 1.5f,
                 Velocity = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)) + shooterVel,
-                Life = 0.8f + (float)_rng.NextDouble() * 0.55f,
-                MaxLife = 1.35f,
+                // Life bounded to the OUTBOUND arc only: at full stream speed a carrier
+                // needs ~0.75s to reach max range, and a straight-up shot tops out at
+                // ~0.55s and would land back at the shooter's feet at ~1.1s — the old
+                // 0.8-1.35s lives meant invisible carriers rained back down and stamped
+                // fire + spark bursts where the visible flame never went (the "sparks at
+                // my feet firing upward" bug). Dying by 0.85s, a carrier can reach
+                // anything the stream points at but can never complete a return arc.
+                Life = 0.65f + (float)_rng.NextDouble() * 0.2f,
+                MaxLife = 0.85f,
                 Color = new Color(255, 180, 60),
                 FadeColor = new Color(120, 35, 15),
                 Size = 0f,
