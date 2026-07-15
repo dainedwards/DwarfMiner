@@ -1109,7 +1109,8 @@ public static class WorldGen
                 var t = ((t0 + dt) % n + n) % n;
                 if ((planet.TileToWorld(r, t) - centre).LengthSquared() > radiusSq) continue;
                 var k = planet.Get(r, t);
-                if (k == TileKind.Sky || Tiles.IsAnchored(k) || k == TileKind.Obsidian) continue;
+                if (k == TileKind.Sky || Tiles.IsAnchored(k)
+                    || (!biteObsidian && k == TileKind.Obsidian)) continue;
                 planet.Set(r, t, TileKind.Sky);
             }
         }
