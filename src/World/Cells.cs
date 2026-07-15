@@ -1305,10 +1305,15 @@ public sealed class Cells
         WakeNeighbors(cx, cy);
     }
 
-    /// <summary>Tiles open flame chars away: living groundcover and the wooden builds. Lava
-    /// melts far more (IsMeltable) because molten rock outranks a campfire.</summary>
+    /// <summary>Tiles open flame chars away: living groundcover, leafy fernbrush, all of the
+    /// wood — trunks, canopy, roots, water fronds — and the wooden builds. The biome-adapted
+    /// flora (emberbloom, vitrilily, frostcap, geobloom, rustbramble) is deliberately NOT here,
+    /// so it still shrugs off fire the way it shrugs off its home world's lava/acid. Lava melts
+    /// a different, mineral set (IsMeltable) because molten rock outranks a campfire.</summary>
     private static bool IsFlammable(TileKind k) => k is
-        TileKind.Grass or TileKind.Support or TileKind.Ladder;
+        TileKind.Grass or TileKind.Fernleaf or TileKind.Support or TileKind.Ladder
+        or TileKind.Platform or TileKind.TreeTrunk or TileKind.TreeCanopy
+        or TileKind.TreeCanopy2 or TileKind.TreeRoot or TileKind.SeaFrond;
 
     /// <summary>Open flame. One cardinal probe pass drives everything: water on any side
     /// quenches it to steam, fuel cells (oil/gas) catch alight and anchor the flame, and
