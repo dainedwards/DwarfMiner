@@ -470,6 +470,17 @@ public sealed class Renderer
                             (int)Math.Clamp(shade * tintF.X, 0f, 255f),
                             (int)Math.Clamp(shade * tintF.Y, 0f, 255f),
                             (int)Math.Clamp(shade * tintF.Z, 0f, 255f));
+                    // Carve shader live: pick the UNERODED frame and hand the exposure mask
+                    // to the shader in the alpha flag band (64+mask) — the shader then owns
+                    // the whole silhouette, carving one world-continuous coastline where the
+                    // baked frames could only offer per-tile raggedness. Engineered city
+                    // tiles stay unflagged (and un-carved): machined walls read straight.
+                    var frame = exposeMask;
+                    if (_tileFx != null && !IsEngineered(k))
+                    {
+                        frame = 0;
+                        drawCol.A = (byte)(64 + exposeMask);
+                    }
                     // A gem — whether a legacy gem *tile* or an embedded overlay — draws seated
                     // in the SURROUNDING material: the host tile renders as the rock its solid
                     // neighbours are made of, so a gem never reads as its own odd dark block set
@@ -479,7 +490,7 @@ public sealed class Renderer
                     if (Tiles.IsGem(k) || overlayGem != TileKind.Sky)
                         atlasKind = HostRockFor(outerK, innerK, leftK, rightK);
                     _sb.Draw(_tileAtlas, centre,
-                        TileAtlas.Source(atlasKind, VariantFor(atlasKind, r, t, hash), exposeMask),
+                        TileAtlas.Source(atlasKind, VariantFor(atlasKind, r, t, hash), frame),
                         drawCol, rotation,
                         new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
                         new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
