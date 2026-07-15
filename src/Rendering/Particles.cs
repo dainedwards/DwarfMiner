@@ -1207,15 +1207,19 @@ public sealed class Particles
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             _list.Add(new Particle
             {
-                Position = pos + d * (6f + (float)_rng.NextDouble() * (reach * 0.55f)) + Jitter(1.2f),
+                // Seed only the near two-fifths of the tongue with a strong stall (high
+                // drag, short life): licks flick up and die WITHIN the stream's length —
+                // they were riding above the drooping tongue and past its tip, reading as
+                // stray yellow strands out-ranging the fire.
+                Position = pos + d * (6f + (float)_rng.NextDouble() * (reach * 0.4f)) + Jitter(1.2f),
                 Velocity = d * (jetSpeed * 0.25f),
-                Life = 0.22f + (float)_rng.NextDouble() * 0.25f,
-                MaxLife = 0.47f,
+                Life = 0.18f + (float)_rng.NextDouble() * 0.17f,
+                MaxLife = 0.35f,
                 Color = _rng.Next(2) == 0 ? new Color(255, 220, 110) : new Color(255, 160, 55),
                 FadeColor = new Color(120, 35, 15),
                 Size = 0.5f,
                 GravityScale = -0.5f,
-                Drag = 2.6f,
+                Drag = 3.2f,
                 CollideTiles = true,
             });
         }
