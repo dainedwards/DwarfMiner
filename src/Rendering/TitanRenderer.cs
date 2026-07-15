@@ -312,8 +312,9 @@ public static class TitanRenderer
             var sh = chest + f.Right * (s * 52f) + f.Up * 8f;
             r.DrawRect(sh, new Vector2(30f, 26f), steelDark, f.Rot + s * 0.4f);
             r.DrawRect(sh, new Vector2(20f, 16f), steel, f.Rot + s * 0.4f);
-            // Arm.
+            // Arm — hammers when the smash state machine commits this side.
             var hand = sh + f.Right * (f.Face * 20f) - f.Up * (34f + MathF.Sin(f.Pulse + s) * 4f);
+            hand = SmashFist(t, f, s, sh, hand);
             Seg(r, sh, hand, 12f, steelDark);
             r.DrawRect(hand, new Vector2(12f, 12f), steel, f.Rot);   // fist
         }
