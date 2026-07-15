@@ -6522,8 +6522,13 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
+        // Weather backdrop particles (rain/snow) go down FIRST, then the cloud banks paint
+        // over them — so a drop born inside a bank is hidden until it falls clear of the
+        // underside, and the shower visibly streams out of the cloud instead of
+        // materialising on top of it.
+        _particles.Draw(_renderer, backdrop: true);
         // Ambient weather clouds — the gentle ecosystem rain, drawn as soft drifting banks
-        // tinted by the biome's rain. The falling drops themselves are particles.
+        // tinted by the biome's rain.
         DrawWeather();
 
         // Meteors — a molten rock (dark core, hot rim) plus a pulsing warning reticle on the
