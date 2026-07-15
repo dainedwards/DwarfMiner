@@ -725,9 +725,10 @@ public sealed class Particles
                 Velocity = down * (speed * (head ? 1f : 0.94f - i * 0.04f)) + jitter,
                 Life = 1.0f + (float)_rng.NextDouble() * 0.6f,
                 MaxLife = 1.6f,
-                // Softened ~28%: a translucent streak reads as motion blur where a full-
-                // ink one reads as a solid rod (premultiplied Color* scales alpha too).
-                Color = (head ? Color.Lerp(color, Color.White, 0.35f) : color) * 0.72f,
+                // Soft-toned but a touch more present: the head's white lift dropped
+                // (0.35→0.18, less glinting wire) while overall ink rose (0.72→0.82 —
+                // premultiplied Color* scales alpha too), per user tuning.
+                Color = (head ? Color.Lerp(color, Color.White, 0.18f) : color) * 0.82f,
                 FadeColor = color * 0.3f,
                 Size = head ? 0.55f : 0.45f,
                 GravityScale = 1.1f,
