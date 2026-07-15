@@ -218,6 +218,9 @@ public sealed partial class DwarfMinerGame : Game
     /// liquid instead of overlapping translucent quads. Matches the active world target's
     /// resolution (low-res on the pixel-grid path, virtual-res on the direct path).</summary>
     private RenderTarget2D? _liquidRt;
+    /// <summary>Flame-stream coverage target — the flamethrower's metaball body. Separate
+    /// from _liquidRt so fire can never threshold-fuse with water/acid it crosses.</summary>
+    private RenderTarget2D? _flameRt;
     /// <summary>Integer upscale factor of the pixel-grid path this frame; 0 = direct path.</summary>
     private int _pixelK;
     /// <summary>Reentrancy guard for the ClientSizeChanged → ApplyChanges round-trip.</summary>
