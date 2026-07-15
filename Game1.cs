@@ -6865,7 +6865,7 @@ public sealed partial class DwarfMinerGame : Game
         tDraw = FramePerf.Now();
         // Multi-tap separable Gaussian bloom — bright spots (lava, projectiles, headlamp core)
         // bleed a soft glow over the scene through real downsample + 9-tap blur passes.
-        if (!noLight)
+        if (!noLight && Environment.GetEnvironmentVariable("DM_NOBLOOM") is not { Length: > 0 })
             _renderer.BloomLighting(new Point(VirtualWidth, VirtualHeight), new Color(70, 65, 85));
         // Cinematic vignette + subtle cool grade — pushes shadows slightly blue, keeps the
         // surface readable but adds depth at the screen edges.
