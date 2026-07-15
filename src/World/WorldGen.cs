@@ -480,6 +480,7 @@ public static class WorldGen
                     // burning tunnel doesn't automatically chain both. Inert until lit.
                     var isGasPocket = planet.GasSeeds.Count > 0 && planet.GasSeeds[^1] == (r, t);
                     if (!isReservoir && !isGasPocket && def.SeedsOil && depth > 14f && depth < 42f
+                        && radTiles > lavaTopTiles + 4f * S
                         && SampleNoise(pocketNoise, wx * 0.055f - 33f, wy * 0.055f - 33f) > 0.815f)
                         planet.OilSeeds.Add((r, t));
                 }
