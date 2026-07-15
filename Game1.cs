@@ -703,7 +703,9 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.HasFins = Upgrades.Owned(_meta, "fins");
         _run.Player.LungTier = Upgrades.Owned(_meta, "lungs2") ? 2 : Upgrades.Owned(_meta, "lungs") ? 1 : 0;
         _run.Player.HasGills = Upgrades.Owned(_meta, "gills");
-        _run.Player.Breath = _run.Player.EffectiveMaxBreath;
+        // The vacsuit is a full pressure suit with a sealed helmet — it lets you breathe on
+        // airless worlds (the air meter only drains there without it).
+        _run.Player.HasHelmet = Upgrades.Owned(_meta, "vacsuit");
         // Emerald Weave: a bigger health pool, filled from the start of every drop.
         if (Upgrades.Owned(_meta, "vitality"))
         {
