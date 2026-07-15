@@ -2080,6 +2080,21 @@ public sealed class Cells
         var anchored = _srcTile[i] > 0 && !fuelled && grounded;
         if (!anchored && _rng.Next(3) == 0 && cy < Height - 1)
         {
+            // FUELLED fire crawls in ANY direction, not just up: a third of its moves go
+            // sideways or DOWNWARD. Flame only ever drifting skyward fled the fuel beside
+            // and below it before the slow ignite/char rolls could land — fire couldn't
+            // burn DOWN a trunk or descend an oil film. Heat still rises: two-thirds of
+            // fuelled moves (and every unfuelled one) keep the upward dance.
+            if (fuelled && _rng.Next(3) == 0)
+            {
+                var dirRoll = _rng.Next(3);
+                if (dirRoll == 0)
+                {
+                    var (dcx, dcy) = InnerCell(cx, cy);
+                    if (cy > 0 && TryMoveTo(cx, cy, dcx, dcy)) return;
+                }
+                else if (TryMoveTo(cx, cy, cx + (dirRoll == 1 ? 1 : -1), cy)) return;
+            }
             var oc2 = OuterCellCount(cx, cy);
             var (ux, uy) = OuterCell(cx, cy, _rng.Next(oc2));
             if (TryMoveTo(cx, cy, ux, uy)) return;
