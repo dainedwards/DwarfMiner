@@ -789,6 +789,81 @@ public static class WorldGen
         }
     }
 
+    /// <summary>Oases on the GENTLE worlds (low difficulty, breathable): a few spots where
+    /// vegetation packs in tight — a huddle of trees planted nearly shoulder to shoulder with
+    /// undergrowth carpeting every ground tile between them. The harsher a world, the fewer
+    /// (hostile and airless worlds grow none), so an oasis reads as a found sanctuary.</summary>
+    private static void ScatterOases(Planet planet, PlanetDef def, Random rng)
+    {
+        if (def.Airless || def.Difficulty > 0.35f) return;
+        var (_, canopy) = TreePlanFor(def);
+        var flora = FloraFor(def.Biome);
+        if (flora == TileKind.Sky) flora = TileKind.Fernleaf;   // an oasis always has undergrowth
+        var surfRadiusPx = (Planet.RingMin + planet.SurfaceRing) * Planet.TileSize;
+        var oases = 2 + rng.Next(3);
+        for (var o = 0; o < oases; o++)
+        {
+            var centreAng = (float)rng.NextDouble() * MathHelper.TwoPi;
+            // Walk the site tile by tile: trees every ~3 tiles, undergrowth on everything else.
+            var halfSpanTiles = 6 + rng.Next(5);
+            for (var dt = -halfSpanTiles; dt <= halfSpanTiles; dt++)
+            {
+                var ang = centreAng + dt * Planet.TileSize / surfRadiusPx;
+                // Ground on this bearing (topmost solid).
+                var groundR = -1;
+                for (var r = planet.SurfaceRing + 30; r > planet.SurfaceRing - 24; r--)
+                {
+                    var n = planet.TilesAt(r);
+                    var t = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+                    if (planet.Get(r, t) == TileKind.Sky) continue;
+                    groundR = r;
+                    break;
+                }
+                if (groundR < 0) continue;
+                var gn = planet.TilesAt(groundR);
+                var gt = (int)((ang / MathHelper.TwoPi + 1f) % 1f * gn);
+                if (planet.Get(groundR, gt) is not (TileKind.Grass or TileKind.Dirt or TileKind.Snow
+                    or TileKind.MossStone or TileKind.Gravel or TileKind.Basalt)) continue;
+                var an = planet.TilesAt(groundR + 1);
+                var at = (int)((ang / MathHelper.TwoPi + 1f) % 1f * an);
+                if (planet.Get(groundR + 1, at) != TileKind.Sky) continue;
+
+                // A tree every ~3rd tile (tight but not fused), undergrowth everywhere else.
+                if (((dt + halfSpanTiles) % 3) == 1)
+                {
+                    var trunkH = Math.Min(9 + rng.Next(8), planet.Rings - 6 - groundR);
+                    if (trunkH < 4) continue;
+                    var clear = true;
+                    for (var h = 1; h <= trunkH && clear; h++)
+                    {
+                        var rr = groundR + h;
+                        if (rr >= planet.Rings - 1) { clear = false; break; }
+                        var nn = planet.TilesAt(rr);
+                        if (planet.Get(rr, (int)((ang / MathHelper.TwoPi + 1f) % 1f * nn)) != TileKind.Sky)
+                            clear = false;
+                    }
+                    if (!clear) { planet.Set(groundR + 1, at, flora); continue; }
+                    var site = new TreeSite
+                    {
+                        Angle = ang,
+                        GroundR = groundR,
+                        Species = TreeSpeciesFor(def.Biome, rng),
+                        Height = (byte)trunkH,
+                        Canopy = rng.Next(4) == 0
+                            ? (canopy == TileKind.TreeCanopy ? TileKind.TreeCanopy2 : TileKind.TreeCanopy)
+                            : canopy,
+                    };
+                    Systems.TreeEcology.Plant(planet, site);
+                    planet.Trees.Add(site);
+                }
+                else
+                {
+                    planet.Set(groundR + 1, at, flora);
+                }
+            }
+        }
+    }
+
     /// <summary>Scatter waving water plants (SeaFrond) on the shallow lakebeds of any world
     /// that has water — rooted on the solid floor just under the surface of a pool.</summary>
     private static void ScatterWaterPlants(Planet planet, PlanetDef def, Random rng)
