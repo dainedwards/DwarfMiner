@@ -1300,15 +1300,20 @@ public static class SimTest
             }
         foreach (var (x, y) in nub) physics.MarkDirty(x, y);
 
-        // Settle runs every 0.05s, so tick a few frames for the first pass to condemn it.
-        var condemned = false;
-        for (var i = 0; i < 10 && !condemned; i++)
-        {
-            physics.Update(dt);
-            if (physics.NewlyCondemnedThisTick > 0) condemned = true;
-        }
-        Check("cave-in: unsupported rock is condemned into the tremble window",
-            condemned && physics.TremblingTiles.Count > 0);
+        // Cave-ins are QUAKE-driven now: breaking rock apart never condemns undercut
+        // underground regions on its own — the island must keep hanging through the
+        // ordinary settle passes the dirty marks trigger.
+        for (var i = 0; i < 20; i++) physics.Update(dt);
+        Check("cave-in: undercut rock hangs on break (no condemn without a quake)",
+            physics.TremblingTiles.Count == 0
+            && island.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
+
+        // The earthquake is what brings it down: strike the island's pocket and the
+        // condemnation (tremble window → creak + HUD banner) must fire.
+        var epi = planet.TileToWorld(ring + 1, Ti(ring + 1, af, islandW / 2));
+        physics.Earthquake(epi, 220f, 2);
+        Check("cave-in: the quake condemns it into the tremble window",
+            physics.TremblingTiles.Count > 0);
         Check("cave-in: condemned rock still stands during the warning window",
             island.TrueForAll(t => Tiles.IsSolid(planet.Get(t.x, t.y))));
 
