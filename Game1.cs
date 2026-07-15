@@ -212,6 +212,12 @@ public sealed partial class DwarfMinerGame : Game
     /// squares. Sized per zoom step (gameplay zoom is locked to even factors); cinematic
     /// zooms (landing 1.5×, orbit) fall back to the direct full-res path.</summary>
     private RenderTarget2D? _worldRt;
+    /// <summary>Liquid pass target (DM_LIQRT=0 disables): water/acid/oil cells rasterize
+    /// in here each frame, then composite over the world in ONE alpha blend (with the
+    /// metaball threshold + rim shader when available) — pools read as a single body of
+    /// liquid instead of overlapping translucent quads. Matches the active world target's
+    /// resolution (low-res on the pixel-grid path, virtual-res on the direct path).</summary>
+    private RenderTarget2D? _liquidRt;
     /// <summary>Integer upscale factor of the pixel-grid path this frame; 0 = direct path.</summary>
     private int _pixelK;
     /// <summary>Reentrancy guard for the ClientSizeChanged → ApplyChanges round-trip.</summary>
