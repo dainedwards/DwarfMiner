@@ -1636,8 +1636,9 @@ public static class WorldGen
                     }
                     else
                     {
-                        planet.SetWall(r, t, TileKind.Obsidian);
-                        planet.Set(r, t, TileKind.Obsidian);
+                        var shell = def.VolcanoAcid ? TileKind.Obsidian : TileKind.LavaRock;
+                        planet.SetWall(r, t, shell);
+                        planet.Set(r, t, shell);
                     }
                 }
             }
