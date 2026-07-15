@@ -25,6 +25,7 @@ public static class TreeEcology
     {
         "acid"            => RainKind.Acid,
         "ember" or "slag" => RainKind.Fire,
+        "frost"           => RainKind.Snow,   // ice worlds: the clouds shed SNOW, not rain
         _                 => RainKind.Water,
     };
 
