@@ -3438,7 +3438,7 @@ public sealed partial class DwarfMinerGame : Game
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
         var up = _run.Planet.UpAt(_run.Player.Position);
-        var velocity = dir * ThrowSpeed(100f, 220f) + up * 60f;
+        var velocity = dir * ThrowSpeed(25f, 220f) + up * 60f;
         _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, velocity, 60f, 3.0f,
             ProjectileKind.DynamitePack));
         _run.Player.ShootCooldown = 0.35f;
