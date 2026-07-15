@@ -1990,9 +1990,10 @@ public sealed class Cells
         var i = Idx(cx, cy);
         var fuelled = false;
         var doused = false;
-        var grounded = false;   // any solid-tile neighbour: a surface the fuse clings to
+        var grounded = false;      // any solid-tile neighbour: a surface the fuse clings to
+        var burningFloor = false;  // the tile directly BELOW is flammable — fire clings to it
 
-        void Probe(int ncx, int ncy)
+        void Probe(int ncx, int ncy, bool below = false)
         {
             if (ncy < 0 || ncy >= Height) return;
             var ni = Idx(ncx, ncy);
@@ -2046,16 +2047,16 @@ public sealed class Cells
             }
             if (!IsFlammable(k)) return;
             fuelled = true;
+            if (below) burningFloor = true;
             // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke,
             // which is what walks a grass fire along the surface. Throttled by the spread
-            // budget so the front advances but can't blanket the planet. Rate 45 = the
-            // middle path: 28 ate whole trees in moments once fuse fire stood on them for
-            // 6-9s, 90 made the jet's touch feel inert — at 45 a touched surface visibly
-            // catches within a beat but a structure still burns DOWN over a while.
-            // 60 (was 45): burnable TILES are consumed slower too — a burning structure
-            // stays aflame longer instead of being eaten through; the fuse's dwell keeps
-            // the initial catch reliable.
-            if (_rng.Next(60) != 0) return;
+            // budget so the front advances but can't blanket the planet. Base rate 60
+            // (structures burn slowly; the fuse's dwell keeps the initial catch
+            // reliable); the DOWNWARD probe chars at 30 — embers settle against a fire's
+            // floor, and fire naturally accumulates far fewer cell-ticks at its floor
+            // than against its ceiling (it rises), so the hotter per-contact rate is
+            // what lets a tree burn DOWN the trunk at all.
+            if (_rng.Next(below ? 30 : 60) != 0) return;
             if (!SpendFire()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
@@ -2069,7 +2070,7 @@ public sealed class Cells
         Probe(cx + 1, cy);
         Probe(cx - 1, cy);
         var (icx, icy) = InnerCell(cx, cy);
-        Probe(icx, icy);
+        Probe(icx, icy, below: true);
         if (cy < Height - 1)
         {
             var oc = OuterCellCount(cx, cy);
@@ -2153,6 +2154,15 @@ public sealed class Cells
         //     keeps the dance for its last moments rather than freezing in the air.
         // Unfused transient fire (explosions, gas fronts, charring) always dances.
         var anchored = _srcTile[i] > 0 && !fuelled && grounded;
+        // CLING: flame standing on the fuel it's eating mostly refuses to leave (mobility
+        // ÷3) — this is what repairs the up/down residence asymmetry: fire piles against
+        // its ceiling for free because it rises, but only clinging cells stay at the
+        // floor long enough for the downward char rolls to accumulate.
+        if (burningFloor && _rng.Next(3) != 0)
+        {
+            Enqueue(Idx(cx, cy));
+            return;
+        }
         if (!anchored && _rng.Next(3) == 0 && cy < Height - 1)
         {
             // FUELLED fire crawls in ANY direction, not just up: a third of its moves go
