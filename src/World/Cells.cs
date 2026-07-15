@@ -1953,6 +1953,7 @@ public sealed class Cells
                     return;
             }
             var k = TileAt(ncx, ncy);
+            if (Tiles.IsSolid(k)) grounded = true;
             // Fire MELTS snow: the tile flashes to meltwater and steam. Not budget-gated —
             // melting isn't spreading flame — and the puddle it leaves will douse the fire
             // naturally on a later probe, so a flame eats a snowbank but drowns in the melt.
