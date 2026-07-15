@@ -2054,6 +2054,75 @@ public sealed class Creature
         }
     }
 
+    /// <summary>Kraken: the water world's apex monster. In the deep it cruises its basin
+    /// like a slow storm front; prey in the water gets run down and met with a tentacle
+    /// FLURRY (a committed lunge burst — the shark's rush with a leviathan's mass behind
+    /// it); prey taunting it from the shore gets a fan of pressurised brine jets lobbed
+    /// out of the water instead. It never leaves the sea — the obsidian seabed keeps its
+    /// hunting ground from draining, and dry land keeps you from its arms.</summary>
+    private void TickKraken(float dt, Planet planet, Cells cells, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul, List<TitanProjectile>? shots)
+    {
+        _cd -= dt;
+        _burstT -= dt;
+        if (_swing > 0f) _swing -= dt;
+        var inWater = cells.CountWaterNear(Position, 3f) >= 3;
+        var preyWet = cells.CountWaterNear(Position + toPlayer, 3f) >= 3;
+
+        // Tentacle flurry: a committed lunge along the prey's bearing while the window is
+        // live. Contact damage does the hurting; the burst is what makes it land.
+        if (_swing > 0f && dist > 0.01f)
+        {
+            SwimToward(dt, planet, cells, up, right, Position + toPlayer,
+                MoveSpeed * 2.4f * speedMul, 520f);
+            return;
+        }
+
+        if (inWater && preyWet && dist < 420f && dist > 0.01f)
+        {
+            // Run the prey down; inside arm's reach, open the flurry.
+            if (dist < Radius + 30f && _cd <= 0f)
+            {
+                _swing = 0.6f;
+                _cd = 2.8f;
+            }
+            SwimToward(dt, planet, cells, up, right, Position + toPlayer,
+                MoveSpeed * speedMul, 260f);
+            return;
+        }
+
+        // Shore bombardment: prey out of the water but close — rise and lob a fan of
+        // brine jets (the brinespitter's glob physics, three at once and harder).
+        if (inWater && !preyWet && dist is > 30f and < 320f && _burstT <= 0f
+            && shots is not null && dist > 0.01f && HasLineOfSight(planet, toPlayer, dist))
+        {
+            var dir = toPlayer / dist;
+            for (var i = -1; i <= 1; i++)
+            {
+                var aim = Vector2.Normalize(dir + up * (0.30f + i * 0.14f));
+                shots.Add(new TitanProjectile(Position + aim * (Radius + 3f), aim * 250f,
+                    TitanShotKind.Acid, damage: 11f));   // brine jet on the water-glob physics
+            }
+            _burstT = 3.4f + (float)Random.Shared.NextDouble() * 0.9f;
+            _swing = 0.35f;
+        }
+
+        // Idle: lap the deep basin near the bottom, a slow dark bulk under the waves.
+        Wander += dt;
+        var laneAhead = Position + right * (_orbitSign * (Radius + 22f));
+        if (planet.IsSolidAt(laneAhead) || cells.CountWaterNear(laneAhead, 3f) < 2)
+            _orbitSign = -_orbitSign;
+        var bob = MathF.Sin(Wander * 0.5f + _phase) * 6f;
+        if (cells.CountWaterNear(Position + up * (Radius + 4f), 3f) < 2) bob = -16f;
+        else if (planet.IsSolidAt(Position - up * (Radius + 6f))) bob = 12f;
+        // A shore-taunted kraken loiters under its target instead of wandering off.
+        var lane = !preyWet && dist < 320f && dist > 0.01f
+            ? Vector2.Dot(toPlayer, right) * 0.4f
+            : _orbitSign * 46f;
+        SwimToward(dt, planet, cells, up, right,
+            Position + right * lane + up * bob, MoveSpeed * 0.35f * speedMul, 90f);
+    }
+
     // ---------------------------------------------------------------- sky fauna
 
     private void TickFlyer(float dt, Planet planet, Vector2 up, Vector2 right,
