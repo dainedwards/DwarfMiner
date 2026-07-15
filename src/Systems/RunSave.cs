@@ -17,7 +17,8 @@ public static class RunSave
 {
     // Bump when the format or the planet/cell geometry changes — old saves are discarded.
     // v8: 4-px tiles (doubled ring geometry) + Conglomerate composition table.
-    private const int Version = 22;  // 22: skyscraper facade frames (straight-tower lattice)
+    private const int Version = 24;  // 24: Density-8 cell grid — cell state dims changed (23 reserved by the titan-siege pass on noita-sim)
+                                     // 22: skyscraper facade frames (straight-tower lattice)
                                      // 21: titan carcass + soul-claim flag
                                      // 9: planet gem-overlay section
                                      // 20: player ScannerTier (craftable geo-scanner)
