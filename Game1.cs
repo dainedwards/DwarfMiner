@@ -3237,27 +3237,27 @@ public sealed partial class DwarfMinerGame : Game
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
         var muzzle = _run.Player.Position + dir * 8f;
-        // TIGHT caustic rope — a narrow, focused jet in small frequent spurts so it reads as
-        // one steady stream instead of pulsing waves.
-        for (var i = 0; i < 3; i++)
+        var reach = StreamReach();
+        // A tight caustic rope of acid cells (they collide with tiles, so it runs down walls
+        // instead of through them). Reach grows the longer fire is held.
+        for (var i = 0; i < 2; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.15f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.09f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (250f + (float)Random.Shared.NextDouble() * 60f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 2.1f + (float)Random.Shared.NextDouble() * 35f),
                 Material.Acid);
         }
-        _particles.EmitAcidJet(muzzle, dir);
-        _particles.EmitAcidJet(muzzle + dir * 4f, dir);
+        _particles.EmitAcidJet(muzzle, dir, reach);
         foreach (var c in _run.Creatures)
         {
             var to = c.Position - _run.Player.Position;
             var dist = to.Length();
-            if (dist > 100f || dist < 1f) continue;
-            if (Vector2.Dot(to / dist, dir) < 0.84f) continue;
+            if (dist > reach + 10f || dist < 1f) continue;
+            if (Vector2.Dot(to / dist, dir) < 0.9f) continue;
             if (c.ImmuneTo(Material.Acid)) continue;
-            c.Health -= 32f * _frameDt; // halved per-spurt to match the doubled (smoother) cadence
+            c.Health -= 50f * _frameDt;
             c.HitFlash = 0.1f;
         }
         // Caustic against titans too — except the acid-blooded (Otachi's spit, the
@@ -3267,13 +3267,13 @@ public sealed partial class DwarfMinerGame : Game
         {
             var to = _run.Titan.Position - _run.Player.Position;
             var dist = to.Length();
-            if (dist is > 1f and < 120f && Vector2.Dot(to / dist, dir) > 0.7f)
+            if (dist is > 1f && dist < reach + 22f && Vector2.Dot(to / dist, dir) > 0.8f)
             {
-                _run.Titan.Health -= 45f * _frameDt;
+                _run.Titan.Health -= 70f * _frameDt;
                 _run.Titan.HitFlash = 0.1f;
             }
         }
-        _run.Player.ShootCooldown = 0.06f;   // fast, even cadence = a steady stream, no waves
+        _run.Player.ShootCooldown = 0.05f;
     }
 
     /// <summary>Lightning gun: instant chain arc. The bolt seeks the closest creature (or
