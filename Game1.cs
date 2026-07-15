@@ -3298,7 +3298,7 @@ public sealed partial class DwarfMinerGame : Game
             _rideAngle = MathF.Atan2(rel.Y, rel.X);
         }
 
-        if (Pressed(keys, _prevKeys, Keys.W) || p.IsJetting)
+        if (Pressed(keys, _prevKeys, Keys.Space) || p.IsJetting)
         {
             _riding = false;
             var off = new Vector2(MathF.Cos(_rideAngle), MathF.Sin(_rideAngle));
