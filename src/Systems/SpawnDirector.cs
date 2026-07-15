@@ -76,12 +76,13 @@ public static class SpawnDirector
         var planet = run.Planet;
 
         // City dwellers: staff the addresses (doorways + apartments), mostly citizens with
-        // a peacekeeper watch mixed in. Budgeted so a megacity can't triple the census.
-        var budget = 70;
+        // a peacekeeper watch mixed in. Streets are PACKED now — ~3× the old crowd — so a
+        // metropolis teems with civilians.
+        var budget = 210;
         foreach (var (r, t) in planet.CitySpawns)
         {
             if (budget <= 0) break;
-            if (Random.Shared.NextDouble() > 0.7) continue;
+            if (Random.Shared.NextDouble() > 0.9) continue;
             var home = planet.TileToWorld(r, t);
             var kind = Random.Shared.Next(4) == 0 ? CreatureKind.Peacekeeper : CreatureKind.Civilian;
             var c = new Creature(home, kind) { Resident = true };
