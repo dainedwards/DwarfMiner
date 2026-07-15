@@ -89,7 +89,16 @@ public sealed class Particles
                 var dot = Vector2.Dot(p.Velocity, n);
                 p.Velocity = (p.Velocity - n * dot * 1.5f) * 0.4f;
                 if (p.Velocity.LengthSquared() < 4f)
+                {
                     p.Life = MathF.Min(p.Life, p.LightRadius > 0f ? 1.4f : 0.15f);
+                    // Handoff on rest: the particle's persistent half enters the cell sim
+                    // (a landed cinder becomes real fire). Once only.
+                    if (p.LandMat != 0 && cells != null)
+                    {
+                        cells.StampAtWorld(p.Position, (Material)p.LandMat);
+                        p.LandMat = 0;
+                    }
+                }
                 next = p.Position;
             }
             p.Position = next;
