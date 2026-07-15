@@ -837,14 +837,21 @@ public sealed class Renderer
                     case TileKind.TreeTrunk:
                     {
                         // Alien bark: a SLENDER mauve bole — a narrow bar centred in the tile
-                        // (about 3/8 wide) with a darker grain streak and a paler sun-side edge,
-                        // so a column reads as a thin, tall trunk rather than a fat post.
+                        // (about 3/8 wide) — with a sunlit edge, a shaded edge, and hash-keyed
+                        // horizontal bark grain / the odd knot so a column reads as a real
+                        // textured trunk climbing, not a flat mauve bar.
                         var bark = new Color(96, 70, 92);
                         var barkDk = new Color(66, 48, 66);
                         var barkHi = new Color(128, 96, 124);
-                        DrawDeco(centre, right, up, rotation, chord, 2.5f, 0, 3, 8, bark);
-                        DrawDeco(centre, right, up, rotation, chord, 2.5f, 0, 1, 8, barkHi);
-                        DrawDeco(centre, right, up, rotation, chord, 4.5f, 0, 1, 8, barkDk);
+                        var barkMd = new Color(82, 60, 80);
+                        DrawDeco(centre, right, up, rotation, chord, 2.5f, 0, 3, 8, bark);       // bole
+                        DrawDeco(centre, right, up, rotation, chord, 2.5f, 0, 1, 8, barkHi);     // sun edge
+                        DrawDeco(centre, right, up, rotation, chord, 4.5f, 0, 1, 8, barkDk);     // shade edge
+                        var g = (int)((hash >> 2) & 7);
+                        DrawDeco(centre, right, up, rotation, chord, 3, g % 8, 2, 1, barkDk);        // grain ridge
+                        DrawDeco(centre, right, up, rotation, chord, 3, (g + 4) % 8, 2, 1, barkMd);  // grain ridge
+                        if ((hash & 7) == 0)
+                            DrawDeco(centre, right, up, rotation, chord, 2.5f, (g + 2) % 7, 3, 2, barkDk); // knot
                         break;
                     }
                     case TileKind.TreeRoot:
