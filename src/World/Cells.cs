@@ -2019,18 +2019,31 @@ public sealed class Cells
             ShedBurningLeaves(tx, ty, k);
         }
 
-        Probe(cx + 1, cy);
-        Probe(cx - 1, cy);
+        Probe(cx + 1, cy, 0);
+        Probe(cx - 1, cy, 1);
         var (icx, icy) = InnerCell(cx, cy);
-        Probe(icx, icy, below: true);
+        Probe(icx, icy, 2);
+        // Diagonal-down probes: the below-cells of the lateral neighbours.
+        if (cy > 0)
+        {
+            var (dlx, dly) = InnerCell(cx - 1, cy);
+            Probe(dlx, dly);
+            var (drx, dry) = InnerCell(cx + 1, cy);
+            Probe(drx, dry);
+        }
         if (cy < Height - 1)
         {
             var oc = OuterCellCount(cx, cy);
             for (var w = 0; w < oc; w++)
             {
                 var (ocx, ocy) = OuterCell(cx, cy, w);
-                Probe(ocx, ocy);
+                Probe(ocx, ocy, 3);
             }
+            // Diagonal-up probes: the above-cells of the lateral neighbours.
+            var (ulx, uly) = OuterCell(cx - 1, cy, 0);
+            Probe(ulx, uly);
+            var (urx, ury) = OuterCell(cx + 1, cy, 0);
+            Probe(urx, ury);
         }
 
         if (doused)
