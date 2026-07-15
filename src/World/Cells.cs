@@ -1972,16 +1972,16 @@ public sealed class Cells
             }
             if (!IsFlammable(k)) return;
             fuelled = true;
+            if (below) burningFloor = true;
             // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke,
             // which is what walks a grass fire along the surface. Throttled by the spread
-            // budget so the front advances but can't blanket the planet. Rate 45 = the
-            // middle path: 28 ate whole trees in moments once fuse fire stood on them for
-            // 6-9s, 90 made the jet's touch feel inert — at 45 a touched surface visibly
-            // catches within a beat but a structure still burns DOWN over a while.
-            // 60 (was 45): burnable TILES are consumed slower too — a burning structure
-            // stays aflame longer instead of being eaten through; the fuse's dwell keeps
-            // the initial catch reliable.
-            if (_rng.Next(60) != 0) return;
+            // budget so the front advances but can't blanket the planet. Base rate 60
+            // (structures burn slowly; the fuse's dwell keeps the initial catch
+            // reliable); the DOWNWARD probe chars at 30 — embers settle against a fire's
+            // floor, and fire naturally accumulates far fewer cell-ticks at its floor
+            // than against its ceiling (it rises), so the hotter per-contact rate is
+            // what lets a tree burn DOWN the trunk at all.
+            if (_rng.Next(below ? 30 : 60) != 0) return;
             if (!SpendFire()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
