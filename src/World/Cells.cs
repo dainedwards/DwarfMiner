@@ -2271,7 +2271,7 @@ public sealed class Cells
     {
         var radial = (float)Planet.TileSize / Density;
         var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
-        if (stride > 1) cyMin = Math.Max(cyMin, 120 * Density);   // matches the tile LOD's interior cut
+        if (stride > 2) cyMin = Math.Max(cyMin, 120 * Density);   // orbital LOD only: stride 2 now occurs CLOSE-UP (fight-zoom, light-seed thinning) where deep cells must stay
         for (var cy = cyMin; cy <= cyMax; cy += stride)
         {
             var n = _cellsAt[cy];
@@ -2386,7 +2386,7 @@ public sealed class Cells
     public void AddLights(Renderer r, Vector2 viewCentre, float viewRadius, int stride = 1)
     {
         var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
-        if (stride > 1) cyMin = Math.Max(cyMin, 120 * Density);
+        if (stride > 2) cyMin = Math.Max(cyMin, 120 * Density);   // orbital LOD only — see Draw
         var step = 0;
         for (var cy = cyMin; cy <= cyMax; cy += stride)
         {

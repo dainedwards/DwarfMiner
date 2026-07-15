@@ -5587,13 +5587,16 @@ public sealed partial class DwarfMinerGame : Game
 
         // Cells (sand/water/lava/smoke) draw above tiles but below entities so the dwarf walks
         // in front of his own debris pile.
-        // Zoomed-out views (orbit/high descent/landing) sample the cell grid at a stride —
-        // the full scan is the single biggest cost at wide view radii. Stride is derived
-        // from SCREEN px per cell so it tracks Density: the old fixed ladder was tuned for
-        // 1-px cells, and at Density 8 it left descent views scanning 4× the cells (0 fps
-        // over the sea from overhead).
+        // Zoomed-out views (orbit/descent/landing) sample the cell grid at a stride — the
+        // full scan is the single biggest cost at wide view radii. Stride is derived from
+        // SCREEN px per cell so it tracks Density. The pixel-grid path always runs stride 1
+        // (one cell per target texel is the whole point); the DIRECT path — every fractional
+        // zoom, i.e. the entire mothership-drop descent — strides as soon as cells shrink
+        // below ~1.6 screen px, because mid-descent zooms with stride 1 scanned over a
+        // million candidates a frame (the pod-drop lag).
         var cellPx = _camera.Zoom * ((float)Planet.TileSize / Cells.Density);
-        var cellStride = cellPx >= 0.9f ? 1 : Math.Min(8, (int)MathF.Ceiling(1.4f / cellPx));
+        var cellStride = _pixelK > 0 || cellPx >= 1.6f
+            ? 1 : Math.Min(10, (int)MathF.Ceiling(2.2f / cellPx));
         _run.Cells.Draw(_renderer, viewCentre, viewRadius, cellStride);
 
         // Pixel-art dwarf sprite — drawn rotated to align local-up with planet's outward radial.
@@ -6587,9 +6590,12 @@ public sealed partial class DwarfMinerGame : Game
         // Glowing particles (ore flecks, projectile sparks, explosion embers) feed back into
         // the lightmap so they actually illuminate the cave wall behind them.
         _particles.AddLights(_renderer);
-        // Lava cells along their pool surface light up the cave roof (view-culled).
-        // Same Density-aware stride as the cell draw above.
-        _run.Cells.AddLights(_renderer, viewCentre, viewRadius, cellStride);
+        // Lava cells along their pool surface light up the cave roof (view-culled). Floor
+        // of 2 on the seeding stride even in close play: this pass re-scans the same cell
+        // candidates as the draw, but light seeds combine by MAX into 4-px light cells —
+        // every-2nd-cell seeding is visually identical and halves the second scan on both
+        // axes (the draw + seed scans together were ~half the descent frame cost).
+        _run.Cells.AddLights(_renderer, viewCentre, viewRadius, Math.Max(cellStride, 2));
 
         // Propagate the seeded grid, rasterize it into the lightmap, and cut the hero
         // lights' ray-cast shadow fans over it. Depth darkness is emergent now: rock
