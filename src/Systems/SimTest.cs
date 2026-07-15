@@ -2499,6 +2499,80 @@ public static class SimTest
         Check($"census: the water world's deep holds its kraken ({krakens} seeded)", krakens >= 1);
     }
 
+    /// <summary>Rain provenance: a shower over a real pool JOINS it permanently (tagged
+    /// rain sheds its tag on contact instead of evaporating away), while the same rain
+    /// filmed thin across dry rock still dries without a trace — the evaporation sink
+    /// must survive the absorption rule.</summary>
+    private static void TestRainPooling()
+    {
+        const float dt = 1f / 60f;
+        var planet = WorldGen.Generate(97);
+        var cells = new Cells(planet);
+        var surfaceR = planet.SurfaceRing;
+
+        // Obsidian-walled pocket below the surface, part-filled with PERMANENT water —
+        // carved by angle per ring (tile counts vary every ring).
+        const float pAng = 2.2f;
+        for (var r = surfaceR - 10; r <= surfaceR - 1; r++)
+        {
+            var n = planet.TilesAt(r);
+            var t0 = (int)(pAng / MathHelper.TwoPi * n);
+            for (var d = -8; d <= 8; d++)
+            {
+                var tt = ((t0 + d) % n + n) % n;
+                var edge = r == surfaceR - 10 || d is -8 or 8;
+                planet.Set(r, tt, edge ? TileKind.Obsidian : TileKind.Sky);
+                if (!edge && r <= surfaceR - 6) cells.FillTile(r, tt, Material.Water);
+            }
+        }
+        for (var i = 0; i < 120; i++) cells.Update(dt);
+        var nC = planet.TilesAt(surfaceR - 7);
+        var poolCentre = planet.TileToWorld(surfaceR - 7, (int)(pAng / MathHelper.TwoPi * nC));
+        var upP = planet.UpAt(poolCentre);
+        var right = new Vector2(-upP.Y, upP.X);
+        var before = cells.CountWaterNear(poolCentre, 26f);
+
+        // Shower into the pocket for ~4s, then 20s of calm — twice the ~10s evaporation
+        // expectation, so any cells that failed to join the pool would be long gone.
+        var rng = new Random(5);
+        for (var i = 0; i < 240; i++)
+        {
+            if (i % 2 == 0)
+                cells.SpawnRainWater(poolCentre + upP * 14f
+                    + right * ((float)rng.NextDouble() * 16f - 8f));
+            cells.Update(dt);
+        }
+        for (var i = 0; i < 1200; i++) cells.Update(dt);
+        var after = cells.CountWaterNear(poolCentre, 26f);
+        Check($"rain: shower permanently raises the pool ({before} -> {after})",
+            after >= before + 30);
+
+        // Dry control: a rimmed obsidian tray floating in the sky band — the film in it
+        // never reaches a tile deep and touches no permanent water, so it must dry out.
+        var shelfR = surfaceR + 8;
+        var nS = planet.TilesAt(shelfR);
+        var s0 = (int)(4.0f / MathHelper.TwoPi * nS);
+        for (var d = -7; d <= 7; d++)
+        {
+            var tt = ((s0 + d) % nS + nS) % nS;
+            planet.Set(shelfR, tt, TileKind.Obsidian);
+            if (d is -7 or 7) planet.Set(shelfR + 1, tt, TileKind.Obsidian);
+        }
+        var trayCentre = planet.TileToWorld(shelfR + 1, (int)(4.0f / MathHelper.TwoPi * planet.TilesAt(shelfR + 1)));
+        var upT = planet.UpAt(trayCentre);
+        var rightT = new Vector2(-upT.Y, upT.X);
+        for (var i = 0; i < 300; i++)
+        {
+            if (i % 10 == 0)
+                cells.SpawnRainWater(trayCentre + upT * 6f
+                    + rightT * ((float)rng.NextDouble() * 40f - 20f));
+            cells.Update(dt);
+        }
+        for (var i = 0; i < 1500; i++) cells.Update(dt);
+        var left = cells.CountWaterNear(trayCentre, 30f);
+        Check($"rain: thin film on dry rock still dries out ({left} cells left)", left <= 6);
+    }
+
     /// <summary>The aquatics: player swimming (strokes rise, idle sinks gently, fins are
     /// faster), breath-ceiling tiers, land-swimmer buoyancy, and the two water-only species
     /// living in a carved test pool without embedding or beaching.</summary>
