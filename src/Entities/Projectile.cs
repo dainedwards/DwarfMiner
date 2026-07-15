@@ -431,6 +431,7 @@ public sealed class Projectile
                     continue;
                 }
                 planet.Set(r, t, TileKind.Sky);
+                carved = true;
                 // Outer ~45% of the radius crumbles to dust; inside that, vaporised.
                 if (dust && distSq > maxDistSq * 0.3f)
                 {
