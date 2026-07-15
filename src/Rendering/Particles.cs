@@ -1315,8 +1315,6 @@ public sealed class Particles
                 break;
             case ProjectileKind.Dynamite:
             case ProjectileKind.DynamitePack:
-            case ProjectileKind.Tnt:
-            case ProjectileKind.TntPack:
                 // Sputtering fuse — intermittent tiny sparks tumbling off the stick, plus a
                 // flickering glow riding the charge itself so a lobbed stick visibly burns
                 // its way through a dark cave right up to the bang.
