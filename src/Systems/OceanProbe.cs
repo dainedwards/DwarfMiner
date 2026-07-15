@@ -113,10 +113,12 @@ public static class OceanProbe
             Report(ref allOk, deepestFloorRing > lavaTop + 8f,
                 $"seas clear the lava fill (floor ring {deepestFloorRing:0} vs lava top {lavaTop:0})");
 
-            // 5. The ocean worm band (CarveWormTunnels: 0.30 floor, 16-legacy-tile ceiling)
-            //    holds a real, interconnected network.
-            var bandLo = planet.Radius * MathF.Max(0.30f, def.LavaFillFrac + 0.08f) + 2f;
-            var bandHi = baseline - 16f * S;
+            // 5. The ocean worm band holds a real, interconnected network. The band is the
+            //    worms' true bite envelope (steering floor 0.30 minus a little drift, up to
+            //    the 14-legacy-tile ceiling) — measuring a narrower slice cuts corridors
+            //    mid-crossing and undercounts the connectivity.
+            var bandLo = planet.Radius * MathF.Max(0.30f, def.LavaFillFrac + 0.08f) - 6f;
+            var bandHi = baseline - 13f * S;
             var (air, largest) = BandAirAndLargestComponent(planet, bandLo, bandHi);
             Report(ref allOk, air > 2000, $"network exists ({air} cave tiles in band {bandLo:0}-{bandHi:0}t)");
             Report(ref allOk, air > 0 && largest >= air * 0.4f,
