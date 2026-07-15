@@ -1581,6 +1581,14 @@ public static class WorldGen
                 if (fr - 1 >= 2 && planet.Get(fr - 1, ft) == TileKind.LizardBrick)
                     planet.Set(fr - 1, ft, i == 0 ? TileKind.Ruby : TileKind.GoldOre);
             }
+            // The prize: one or two treasure chests standing on the vault floor. The dwarf
+            // opens them with E for a pile of gold and a shot at a rare gem (see Game1's chest
+            // interaction) — the reward for fighting down through the warren's guards.
+            for (var i = 0; i < 1 + rng.Next(2) && interiorFloor.Count > 0; i++)
+            {
+                var (fr, ft) = interiorFloor[rng.Next(interiorFloor.Count)];
+                if (planet.Get(fr, ft) == TileKind.Sky) planet.Set(fr, ft, TileKind.Chest);
+            }
         }
         else if (halfWpx > 52f && interiorFloor.Count > 8)
         {
