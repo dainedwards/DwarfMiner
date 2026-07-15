@@ -214,8 +214,6 @@ public static class OceanProbe
                 largest = Math.Max(largest, size);
             }
         }
-        // `air` double-counts nothing but was incremented before the visited check; the
-        // component BFS marks tiles, so recount cleanly from visited.
         return (visited.Count, largest);
     }
 
