@@ -519,6 +519,20 @@ public sealed class Cells
             _srcTile[i] = (byte)Math.Min(80, _srcTile[i] + fireFuse / 2);
     }
 
+    /// <summary>Stamp a small BLOB of fused fire cells around a jet contact point (~5
+    /// tries in a 2.5 px disc; occupied fire cells get fuse top-ups instead). A single
+    /// cell per touch left the ground fire too sparse to read as burning — a cluster
+    /// dances, tier-shades, and feeds the licking-flame queue densely enough to look
+    /// like the world itself is on fire, which is the Noita read.</summary>
+    public void StampFireBlob(Vector2 worldPos, byte fireFuse)
+    {
+        StampAtWorld(worldPos, Material.Fire, fireFuse);
+        for (var i = 0; i < 4; i++)
+            StampAtWorld(worldPos + new Vector2(
+                ((float)_rng.NextDouble() - 0.5f) * 5f,
+                ((float)_rng.NextDouble() - 0.5f) * 5f), Material.Fire, fireFuse);
+    }
+
     /// <summary>Spawn cells inside the polar tile (tx = ring, ty = angle). Picks random sub-cells.</summary>
     public void SpawnInTile(int tx, int ty, Material m, int count)
     {
@@ -2076,7 +2090,7 @@ public sealed class Cells
         // strays) sample themselves into the flame queue; Game1 turns each entry into a
         // rising flame tongue. Because the source is the live fire population, the
         // visible flames grow with jet dwell and spread wherever fuel carries the fire.
-        if ((_srcTile[i] > 0 || fuelled) && _rng.Next(12) == 0
+        if ((_srcTile[i] > 0 || fuelled) && _rng.Next(5) == 0
             && PendingFlames.Count < MaxPendingFlames)
             PendingFlames.Add(CellToWorld(cx, cy));
         // Gutter out: half to a smoke wisp, half to nothing (all-smoke fires read as grey

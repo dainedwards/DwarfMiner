@@ -86,49 +86,10 @@ public sealed class Particles
     /// fall back to ordinary strand quads.</summary>
     public bool FluidMode;
 
-    /// <summary>Guaranteed contact flame: everywhere the jet TOUCHES plants (or, within
-    /// 4 px, refreshes) a site that emits licking pixel flames for 3 seconds — the burn
-    /// visual is a promise of the touch itself, independent of whether the cell-sim fire
-    /// stamp found an open cell. Cosmetic only; not serialized.</summary>
-    private struct FlameSite { public Vector2 Pos; public float Ttl; }
-    private readonly List<FlameSite> _flameSites = new();
-    private const int MaxFlameSites = 48;
-    private const float FlameSiteTtl = 3f;
-
-    private void AddFlameSite(Vector2 pos)
-    {
-        for (var i = 0; i < _flameSites.Count; i++)
-            if (Vector2.DistanceSquared(_flameSites[i].Pos, pos) < 16f)
-            {
-                var s = _flameSites[i];
-                s.Ttl = FlameSiteTtl;
-                _flameSites[i] = s;
-                return;
-            }
-        if (_flameSites.Count < MaxFlameSites)
-            _flameSites.Add(new FlameSite { Pos = pos, Ttl = FlameSiteTtl });
-    }
-
     public int Count => _list.Count;
 
     public void Update(float dt, Planet planet, Cells? cells = null)
     {
-        // Contact flame sites: each emits a licking pixel tongue every few ticks until
-        // its 3 s runs out (refreshed while the jet keeps hitting nearby).
-        for (var i = _flameSites.Count - 1; i >= 0; i--)
-        {
-            var site = _flameSites[i];
-            site.Ttl -= dt;
-            if (site.Ttl <= 0f)
-            {
-                _flameSites[i] = _flameSites[^1];
-                _flameSites.RemoveAt(_flameSites.Count - 1);
-                continue;
-            }
-            _flameSites[i] = site;
-            if (_rng.Next(3) == 0)
-                EmitLickingFlame(site.Pos + Jitter(1.5f), planet.UpAt(site.Pos));
-        }
         for (var i = _list.Count - 1; i >= 0; i--)
         {
             var p = _list[i];
@@ -222,10 +183,12 @@ public sealed class Particles
                 // strike; everything else (cinders, debris) keeps the rest-based handoff.
                 if (p.LandFuse > 0 && p.LandMat != 0 && cells != null)
                 {
-                    cells.StampAtWorld(p.Position, (Material)p.LandMat, p.LandFuse);
+                    // A BLOB of fire cells, not one: single-cell stamps left the ground
+                    // fire too sparse to read — Noita ground fire is dense WORLD fire.
+                    // The cluster's cells dance, tier-shade, source licking pixels, and
+                    // top each other's fuses up under sustained dwell.
+                    cells.StampFireBlob(p.Position, p.LandFuse);
                     p.LandMat = 0;
-                    // Guaranteed 3s of licking pixel flames right at the strike point.
-                    AddFlameSite(p.Position);
                     // Stop dead at the strike point: the rest branch below then runs THIS
                     // frame — contact spark burst + fast death — no skittering onward.
                     p.Velocity = Vector2.Zero;
@@ -1471,10 +1434,10 @@ public sealed class Particles
         _list.Add(new Particle
         {
             Position = pos + side * (((float)_rng.NextDouble() - 0.5f) * 2f),
-            Velocity = up * (14f + (float)_rng.NextDouble() * 22f)
+            Velocity = up * (18f + (float)_rng.NextDouble() * 26f)
                      + side * (((float)_rng.NextDouble() - 0.5f) * 16f),
-            Life = 0.3f + (float)_rng.NextDouble() * 0.3f,
-            MaxLife = 0.6f,
+            Life = 0.4f + (float)_rng.NextDouble() * 0.35f,
+            MaxLife = 0.75f,
             Color = FlameTones[_rng.Next(3)],
             FadeColor = new Color(205, 75, 15),
             Size = 0.5f + (float)_rng.NextDouble() * 0.3f,
