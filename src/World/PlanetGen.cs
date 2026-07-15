@@ -271,20 +271,23 @@ public static class PlanetGen
                 Biome: "city", Difficulty: difficulty),
 
             Biome.Ocean => new(id, name,
-                "Ocean world - the land is the exception, pack for the crossings",
+                "Water world - islands in an endless sea, dry caverns beneath the floor",
                 Jit(new Color(52, 96, 150), 18), Jit(new Color(120, 190, 230), 18),
                 TileKind.Grass,
-                // Drowned world: even more sea than before — land is scarce, so what rock
-                // remains is packed with ore (the per-tile bias boosts keep total yield
-                // competitive despite far fewer ground tiles).
-                LakeMin: 11, LakeExtra: 4, MountainMin: 3, MountainExtra: 2,
+                // True water world: the surface is nearly ALL sea — islands survive only in
+                // the mountains' shadows — and what rock remains is packed with ore (the
+                // per-tile bias boosts keep total yield competitive despite far fewer
+                // ground tiles). The real estate moved underground: WorldGen honeycombs
+                // the crust below the obsidian seabed with a dry, interconnected cave
+                // network (extra worms + vaulted chambers + island grotto mouths).
+                LakeMin: 13, LakeExtra: 5, MountainMin: 3, MountainExtra: 2,
                 MountainHeightScale: J(0.8f, 1.1f), LavaFillFrac: 0.35f, HasWater: true,
                 OreBias: WithRare((oreKind, sigBias), (TileKind.IronOre, 0.03f), (TileKind.Emerald, 0.032f),
                     (TileKind.GoldOre, 0.014f), (TileKind.Sapphire, 0.022f)),
-                QuakeScale: quake, CaveSpawnCap: caveCap,
+                QuakeScale: quake, CaveSpawnCap: caveCap + 3,
                 ShipOre: shipOre, ShipOreCount: shipOreCount, OxygenDrainScale: oxy * 0.95f,
                 Titan: titan, FungalPockets: 2 + rng.Next(3),
-                SizeScale: size, LakeScale: J(3.2f, 4.2f),
+                SizeScale: size, LakeScale: J(3.9f, 4.8f),
                 Volcanoes: strayVolcano, VolcanoScale: strayScale, Biome: "ocean", Difficulty: difficulty),
 
             Biome.Acid => new(id, name,
