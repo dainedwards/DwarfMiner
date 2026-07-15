@@ -303,6 +303,13 @@ public sealed partial class DwarfMinerGame : Game
         // it at 50 ms locked the fixed-step loop at a permanent 30 fps.
         IsFixedTimeStep = Environment.GetEnvironmentVariable("DM_FIXEDSTEP") is { Length: > 0 };
         TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
+        // MonoGame injects a 20 ms Thread.Sleep into EVERY tick while the window isn't
+        // frontmost (InactiveSleepTime) — that's an instant 24-33 fps whenever focus sits
+        // elsewhere, which read as random "the game is lagging" states (and it poisoned
+        // every backgrounded perf capture this session). The world keeps simulating when
+        // unfocused, so it should keep rendering honestly too; our EndDraw limiter is the
+        // one and only pacer.
+        InactiveSleepTime = TimeSpan.Zero;
         Window.Title = "Dwarf Miner";
         // The scene renders at the fixed virtual resolution and scales to the window, so
         // the window itself is free to be any size (drag-resize or F11 fullscreen).
