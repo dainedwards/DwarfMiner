@@ -56,12 +56,17 @@ public static class AmbientDirector
 
         // Meteor cadence shortens with thin atmosphere (OxygenDrainScale: slag 1.7 → ~20s,
         // temperate 1.0 → ~34s). A slight pre-warning gap on the first one at run start.
-        run.MeteorTimer -= dt;
-        if (run.MeteorTimer <= 0f)
+        // NoDisasters worlds (the QA rig) skip the ambient cadence — the debug menu's
+        // EVENTS tab is their only weather.
+        if (!run.Def.NoDisasters)
         {
-            SpawnMeteor(run);
-            var interval = 34f / MathF.Max(0.5f, run.Def.OxygenDrainScale);
-            run.MeteorTimer = interval * (0.6f + (float)Random.Shared.NextDouble() * 0.9f);
+            run.MeteorTimer -= dt;
+            if (run.MeteorTimer <= 0f)
+            {
+                SpawnMeteor(run);
+                var interval = 34f / MathF.Max(0.5f, run.Def.OxygenDrainScale);
+                run.MeteorTimer = interval * (0.6f + (float)Random.Shared.NextDouble() * 0.9f);
+            }
         }
 
         // Tick whatever disaster is live. Phases only — starting a new one is the shared
