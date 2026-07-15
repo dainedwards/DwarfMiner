@@ -1210,6 +1210,19 @@ public sealed class Cells
         // water is itself a neighbour change.
         i = Idx(cx, cy);
         var self = (Material)_mat[i];
+        // Rain water dries out: a rain-fed cell resting exposed to open air evaporates on a
+        // slow per-tick roll (~10s expected once exposed), so puddles shrink top-down and a
+        // shower never leaves a permanent flood. Only rain-marked water — seeded lakes and
+        // oceans keep their mass forever.
+        var rainFed = self == Material.Water && _srcTile[i] == RainWaterSrc;
+        if (rainFed && ExposedAbove(cx, cy) && _rng.Next(600) == 0)
+        {
+            _mat[i] = 0;
+            _srcTile[i] = 0;
+            ClearKinetics(i);
+            WakeNeighbors(cx, cy);
+            return;
+        }
         if (self == Material.Water || self == Material.Lava || self == Material.Acid || self == Material.Oil)
         {
             var (scx, scy) = InnerCell(cx, cy);
@@ -1218,7 +1231,15 @@ public sealed class Cells
             // hemmed pool keeps gnawing at the tile it rests against instead of sleeping on it.
             var stillEating = (self == Material.Lava && HasMeltableNeighbour(cx, cy))
                            || (self == Material.Acid && HasCorrodibleNeighbour(cx, cy));
-            if (hemmed && !stillEating) return;
+            if (hemmed && !stillEating)
+            {
+                // Hemmed rain water that's still open to the air above must keep ticking or
+                // its evaporation roll never fires (a flat one-deep puddle is hemmed by its
+                // own row-mates). Buried rain cells sleep like any lake interior — if the
+                // water above them ever clears, the neighbour wake re-arms them.
+                if (rainFed && ExposedAbove(cx, cy)) Enqueue(i);
+                return;
+            }
         }
 
         // Lateral dispersion: flow several cells per tick in a persistent direction so pools
