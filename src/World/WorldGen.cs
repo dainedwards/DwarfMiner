@@ -1619,29 +1619,20 @@ public static class WorldGen
             // one tile wider than the hull — towers stand on pilings, not on topsoil.
             var footingR = Math.Max(2, surfaceR - (int)(14 * S));
 
-            // Facade rasterization. The true facade lines are authored in pixels; each ring
-            // picks the tile column nearest that line, with HYSTERESIS: keep the previous
-            // ring's column while it still sits within ~0.7 tile of the truth. Tiles-per-ring
-            // drifts a little every ring on the smooth polar grid, so the old rasterizer
-            // (floor of the centre index plus floor-of-span + 1) re-quantised both edges per
-            // ring and towers came out sawtoothed; sticky columns give long dead-straight
-            // runs with a rare single-tile step where the line genuinely crosses a column.
-            int PickColumn(float trueAng, ref float prevAng, int n)
-            {
-                var chord = MathHelper.TwoPi / n;
-                var c = trueAng / chord - 0.5f;      // tile-space coordinate of the true line
-                var pick = (int)MathF.Round(c);
-                if (!float.IsNaN(prevAng))
-                {
-                    var cont = (int)MathF.Round(prevAng / chord - 0.5f);
-                    if (MathF.Abs(cont - c) <= 0.72f) pick = cont;
-                }
-                prevAng = (pick + 0.5f) * chord;
-                return pick;
-            }
+            // COLUMN-LATTICE rasterization. The hull width quantises to a whole number of
+            // tile columns, and every ring assigns the SAME logical column j (0..cols-1) to
+            // the grid tile nearest that column's lateral position in the tower frame. Roles
+            // (door, window, ladder, slab) key off j, so the structure is identical storey
+            // to storey; the leftover ≤½-tile grid jitter is erased at draw time, where the
+            // renderer snaps engineered tiles back onto this exact lattice (see
+            // Planet.CityFacades / FacadeSnapAngle — the polar grid's tiles-per-ring drifts
+            // every ring, which is what made towers render as leaning sawtooth staircases).
+            var cols = Math.Max(6, (int)MathF.Round(halfWidthPx * 2f / Planet.TileSize));
+            var halfW = cols * Planet.TileSize * 0.5f;
+            var midJ = cols / 2;                     // ladder spine column
+            planet.CityFacades.Add((ang, halfW, footingR,
+                Math.Min(planet.Rings - 1, topR + (int)(7 * S))));
 
-            var prevLAng = float.NaN;
-            var prevRAng = float.NaN;
             for (var r = footingR; r <= topR; r++)
             {
                 var n = planet.TilesAt(r);
@@ -1649,97 +1640,104 @@ public static class WorldGen
                 var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
                 var storey = r - baseR;
                 var slabRow = storey % floorEvery < 2 && storey >= floorEvery && storey < height - 2;
-                var tL = PickColumn(ang - halfWidthPx / ringRadius, ref prevLAng, n);
-                var tR = PickColumn(ang + halfWidthPx / ringRadius, ref prevRAng, n);
-                var tC = (int)MathF.Round(ang / chordAng - 0.5f);
-                var span = (tR - tL) / 2;            // half-width in tiles, interior layout
                 // Slab rows carry a one-tile exterior ledge — horizontal ribs that break up
-                // the hull. The foundation is a tile wider than the tower for the same span
+                // the hull. The foundation is a tile wider than the tower for the same
                 // bump, so the plinth reads as a footing, not a buried wall.
                 var ledge = slabRow || r <= surfaceR ? 1 : 0;
-                for (var ti = tL - ledge; ti <= tR + ledge; ti++)
+                var gapSide = storey / floorEvery % 2 == 0 ? 1 : -1;
+                var prevT = int.MinValue;
+                for (var j = -ledge; j < cols + ledge; j++)
                 {
-                    var t = (ti % n + n) % n;
-                    if (Tiles.IsAnchored(planet.Get(r, t))) continue;
-                    planet.SetWall(r, t, TileKind.AlienAlloy);
-
-                    // Below the baseline surface: solid piling, whatever the local
-                    // elevation noise did to the ground line.
-                    if (r <= surfaceR) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
-
-                    // Roof cap.
-                    if (storey >= height - 2) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
-
-                    var edge = ti <= tL + 1 || ti >= tR - 1;
-                    if (edge)
+                    var lat = -halfW + (j + 0.5f) * Planet.TileSize;
+                    var tj = (int)MathF.Round((ang + lat / ringRadius) / chordAng - 0.5f);
+                    // Ring chords run a hair off TileSize, so the column map can very rarely
+                    // skip a grid tile — backfill the gap so the hull stays airtight.
+                    for (var ti = prevT == int.MinValue ? tj : Math.Min(prevT + 1, tj); ti <= tj; ti++)
                     {
-                        // Street-level doorway (with a glass transom over the lintel) on one
-                        // side; windows above the ground floor per the facade style; alloy
-                        // hull everywhere else.
-                        var window = curtainWall
-                            ? storey >= floorEvery && !slabRow
-                            : storey >= floorEvery && storey % floorEvery >= 3
-                                                   && storey % floorEvery <= floorEvery - 3;
-                        if (storey < doorH)
-                            // Doorway on BOTH sides at street level: the outer column is a
-                            // real working door (closed at gen time — residents and the dwarf
-                            // pop it open with E / by walking up), the inner column is open
-                            // lobby behind it. Both left and right edges get one now.
-                            planet.Set(r, t, ti <= tL || ti >= tR ? TileKind.DoorClosed
-                                                                  : TileKind.Sky);
-                        else if (storey == doorH)
-                            planet.Set(r, t, TileKind.CityGlass);   // glass transom over both doors
-                        else
-                            planet.Set(r, t, window ? TileKind.CityGlass : TileKind.AlienAlloy);
-                        continue;
-                    }
+                        var t = (ti % n + n) % n;
+                        if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                        planet.SetWall(r, t, TileKind.AlienAlloy);
 
-                    // Interior: floor slab at the base of every storey above the ground
-                    // floor (the plinth is street level's floor), with a stair gap hugging
-                    // alternating walls so the shaft zig-zags up the tower.
-                    var dt = ti - tC;
-                    var gapSide = storey / floorEvery % 2 == 0 ? 1 : -1;
-                    var slab = slabRow && dt * gapSide < span - 4;
+                        // Below the baseline surface: solid piling, whatever the local
+                        // elevation noise did to the ground line.
+                        if (r <= surfaceR) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
 
-                    // Climbing spine: a full-height ladder shaft dead-centre in the tower —
-                    // always reachable from the ground floor and clear of the slab (it's
-                    // placed before the slab fill and punches through every floor), so every
-                    // storey connects. The stair-gap beside it lets you step off each level.
-                    if (dt == 0 && storey >= 0 && storey < height - 2)
-                    {
-                        planet.Set(r, t, TileKind.Ladder);
-                        continue;
-                    }
-                    // Keep the two columns flanking the ladder open its full height, so the
-                    // climb shaft is a clean 3-wide channel: floor slabs stop short of it and
-                    // never seal over the ladder, and the dwarf's body clears each storey.
-                    // (A 1-tile ladder hole through a 2-tile-thick slab used to wall you in.)
-                    if (Math.Abs(dt) <= 1 && storey >= 0 && storey < height - 2)
-                    {
-                        planet.Set(r, t, TileKind.Sky);
-                        continue;
-                    }
-                    if (slab) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
+                        // Roof cap.
+                        if (storey >= height - 2) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
 
-                    // Apartment furniture on the row sitting directly on each slab: potted
-                    // tentacle-plants, levitating egg-chairs, orb lamps — placed by a
-                    // position hash (no rng draws, so downstream worldgen streams hold).
-                    if (storey >= floorEvery && storey % floorEvery == 2
-                        && Math.Abs(dt) < span - 2 && dt * gapSide < span - 4)
-                    {
-                        var h = (r * 7919 + t * 104729) & 1023;
-                        if (h < 150)
+                        var edge = j <= 1 || j >= cols - 2;
+                        if (edge)
                         {
-                            planet.Set(r, t, (h % 3) switch
-                            {
-                                0 => TileKind.AlienPlant,
-                                1 => TileKind.HoverPod,
-                                _ => TileKind.OrbLamp,
-                            });
+                            // Street-level doorway (with a glass transom over the lintel) on
+                            // both sides; windows above the ground floor per the facade
+                            // style; alloy hull everywhere else.
+                            var window = curtainWall
+                                ? storey >= floorEvery && !slabRow
+                                : storey >= floorEvery && storey % floorEvery >= 3
+                                                       && storey % floorEvery <= floorEvery - 3;
+                            if (storey < doorH)
+                                // The outer column is a real working door (closed at gen
+                                // time — residents and the dwarf pop it open with E / by
+                                // walking up), the inner column is open lobby behind it.
+                                planet.Set(r, t, j <= 0 || j >= cols - 1 ? TileKind.DoorClosed
+                                                                         : TileKind.Sky);
+                            else if (storey == doorH)
+                                planet.Set(r, t, TileKind.CityGlass);   // transom over both doors
+                            else
+                                planet.Set(r, t, window ? TileKind.CityGlass : TileKind.AlienAlloy);
                             continue;
                         }
+
+                        // Interior: floor slab at the base of every storey above the ground
+                        // floor (the plinth is street level's floor), with a stair gap
+                        // hugging alternating walls so the shaft zig-zags up the tower.
+                        var dt = j - midJ;
+                        var span = cols / 2;
+                        var slab = slabRow && dt * gapSide < span - 4;
+
+                        // Climbing spine: a full-height ladder shaft dead-centre in the
+                        // tower — always reachable from the ground floor and clear of the
+                        // slab, so every storey connects. The stair-gap beside it lets you
+                        // step off each level.
+                        if (dt == 0 && storey >= 0 && storey < height - 2)
+                        {
+                            planet.Set(r, t, TileKind.Ladder);
+                            continue;
+                        }
+                        // Keep the two columns flanking the ladder open its full height, so
+                        // the climb shaft is a clean 3-wide channel: floor slabs stop short
+                        // of it and never seal over the ladder, and the dwarf's body clears
+                        // each storey. (A 1-tile ladder hole through a 2-tile-thick slab
+                        // used to wall you in.)
+                        if (Math.Abs(dt) <= 1 && storey >= 0 && storey < height - 2)
+                        {
+                            planet.Set(r, t, TileKind.Sky);
+                            continue;
+                        }
+                        if (slab) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
+
+                        // Apartment furniture on the row sitting directly on each slab:
+                        // potted tentacle-plants, levitating egg-chairs, orb lamps — placed
+                        // by a position hash (no rng draws, so downstream worldgen streams
+                        // hold).
+                        if (storey >= floorEvery && storey % floorEvery == 2
+                            && Math.Abs(dt) < span - 2 && dt * gapSide < span - 4)
+                        {
+                            var h = (r * 7919 + t * 104729) & 1023;
+                            if (h < 150)
+                            {
+                                planet.Set(r, t, (h % 3) switch
+                                {
+                                    0 => TileKind.AlienPlant,
+                                    1 => TileKind.HoverPod,
+                                    _ => TileKind.OrbLamp,
+                                });
+                                continue;
+                            }
+                        }
+                        planet.Set(r, t, TileKind.Sky);
                     }
-                    planet.Set(r, t, TileKind.Sky);
+                    prevT = tj;
                 }
             }
 
