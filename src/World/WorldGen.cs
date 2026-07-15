@@ -1749,10 +1749,12 @@ public static class WorldGen
             {
                 // Antenna mast: a thin anchored spike off the roof with a glowing beacon tip.
                 var mastTop = Math.Min(planet.Rings - 2, topR + (int)(3 * S) + rng.Next((int)(3 * S)));
+                var mastLat = -halfW + (midJ + 0.5f) * Planet.TileSize;   // the spine column's slot
                 for (var r = topR + 1; r <= mastTop; r++)
                 {
                     var n = planet.TilesAt(r);
-                    var t = ((int)MathF.Round(ang / (MathHelper.TwoPi / n) - 0.5f) % n + n) % n;
+                    var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
+                    var t = ((int)MathF.Round((ang + mastLat / ringRadius) / (MathHelper.TwoPi / n) - 0.5f) % n + n) % n;
                     if (Tiles.IsAnchored(planet.Get(r, t))) continue;
                     planet.Set(r, t, r == mastTop ? TileKind.Beacon : TileKind.AlienAlloy);
                     planet.SetWall(r, t, TileKind.AlienAlloy);
