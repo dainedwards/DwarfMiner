@@ -2672,8 +2672,8 @@ public sealed partial class DwarfMinerGame : Game
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
         _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 235, 160));
-        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 480f, 14f, 1.5f, ProjectileKind.Pistol));
-        _run.Player.ShootCooldown = 0.32f;
+        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 340f, 14f, 1.5f, ProjectileKind.Pistol));
+        _run.Player.ShootCooldown = 0.44f;
     }
 
     /// <summary>Machine gun: weak rounds at a blistering cadence with a small random spread,
