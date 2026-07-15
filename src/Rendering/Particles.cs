@@ -682,16 +682,17 @@ public sealed class Particles
                 Velocity = down * (speed * (head ? 1f : 0.94f - i * 0.04f)) + jitter,
                 Life = 1.0f + (float)_rng.NextDouble() * 0.6f,
                 MaxLife = 1.6f,
-                Color = head ? Color.Lerp(color, Color.White, 0.35f) : color,
-                FadeColor = color * 0.4f,
+                // Softened ~28%: a translucent streak reads as motion blur where a full-
+                // ink one reads as a solid rod (premultiplied Color* scales alpha too).
+                Color = (head ? Color.Lerp(color, Color.White, 0.35f) : color) * 0.72f,
+                FadeColor = color * 0.3f,
                 Size = head ? 0.55f : 0.45f,
                 GravityScale = 1.1f,
                 Drag = 0.02f,
                 CollideTiles = true,
-                // Pinned to the original short streak (~3.3 px, the first smear tuning):
-                // the shared smear has since been lengthened twice for the hose streams,
-                // and rain shouldn't ride along — decoupled per user.
-                SmearMax = 3.3f,
+                // Rain's own streak length, decoupled from the hose smear tuning
+                // (was pinned 3.3 — lengthened to 6 per user).
+                SmearMax = 6f,
             });
         }
     }
