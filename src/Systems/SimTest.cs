@@ -2512,7 +2512,9 @@ public static class SimTest
             for (var i = 0; i < 40; i++)
             {
                 riser.Update(1f / 60f, pl, 0, false);
-                maxR = MathF.Max(maxR, (riser.Position - pl.Center).Length());
+                var rr = (riser.Position - pl.Center).Length();
+                maxR = MathF.Max(maxR, rr);
+                if (i < 8) Console.WriteLine($"  [dbg] frame {i}: r-platTop={rr - platTop:0.0} vUp={Vector2.Dot(riser.Velocity, up):0}");
             }
             Check($"platform: a rising dwarf passes through ({maxR - platTop:0}px past top)",
                 maxR > platTop + 4f);
