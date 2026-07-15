@@ -3273,6 +3273,158 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.ShootCooldown = 0.35f;
     }
 
+    /// <summary>Climbing the monster: an airborne dwarf touching the titan's hull latches to
+    /// a bearing on its body circle and moves WITH it — the platform is the monster. A/D walk
+    /// around the hide (all the way over the back, to hold aim on a weakpoint), W hops off,
+    /// lighting the jetpack pulls free, and the shake-off thrash flings the rider.</summary>
+    private void TickTitanRiding(float dt, KeyboardState keys)
+    {
+        var t = _run.Titan;
+        var p = _run.Player;
+        if (!t.Hatched || t.Health <= 0 || !t.Targetable || p.FlyMode) { _riding = false; return; }
+
+        var surfR = t.BodyRadius + p.Radius + 2f;
+        if (!_riding)
+        {
+            // Latch on hull contact — airborne only, so the monster walking into a dwarf
+            // standing on the ground doesn't glue them to it.
+            var rel = p.Position - t.Position;
+            if (p.Grounded || p.IsJetting || rel.Length() > t.BodyRadius + p.Radius + 5f) return;
+            _riding = true;
+            _rideAngle = MathF.Atan2(rel.Y, rel.X);
+        }
+
+        if (Pressed(keys, _prevKeys, Keys.W) || p.IsJetting)
+        {
+            _riding = false;
+            var off = new Vector2(MathF.Cos(_rideAngle), MathF.Sin(_rideAngle));
+            p.Velocity = t.Velocity + off * 90f + _run.Planet.UpAt(p.Position) * 120f;
+            return;
+        }
+
+        var move = 0;
+        if (keys.IsKeyDown(Keys.A) || keys.IsKeyDown(Keys.Left)) move -= 1;
+        if (keys.IsKeyDown(Keys.D) || keys.IsKeyDown(Keys.Right)) move += 1;
+        _rideAngle += move * dt * (48f / surfR);
+        var dir = new Vector2(MathF.Cos(_rideAngle), MathF.Sin(_rideAngle));
+        p.Position = t.Position + dir * surfR;
+        p.Velocity = t.Velocity;
+        // The monster feels the rider and thrashes once its patience runs out (2×dt beats
+        // the titan's own 1×dt decay); mid-shake the grip visibly rattles.
+        t.RiderTime += 2f * dt;
+        if (t.ShakeTimer > 0f) p.Position += dir * (MathF.Sin(t.ShakeTimer * 40f) * 2f);
+    }
+
+    /// <summary>The grapple line as a hard length constraint on the player: swing inside it,
+    /// never stretch past it. Hold LMB (with the hook selected) to reel in, S to pay line
+    /// out, W to cut it. A line latched to the titan rides its hide — the boarding route —
+    /// and counts as clinging for the monster's shake-off patience.</summary>
+    private void TickGrapple(float dt, KeyboardState keys, MouseState mouse)
+    {
+        if (_grapAnchor is null && !_grapOnTitan) return;
+        var t = _run.Titan;
+        var p = _run.Player;
+        if (_grapOnTitan && (t.Health <= 0 || !t.Targetable)) { ReleaseGrapple(); return; }
+        if (_riding) { ReleaseGrapple(); return; }   // boarded — the line's done its job
+        var anchor = _grapOnTitan ? t.Position + _grapLocal : _grapAnchor!.Value;
+        if (!_grapOnTitan)
+        {
+            // The anchor tile got mined/blown away — the hook falls free.
+            var (ax, ay) = _run.Planet.WorldToTile(anchor);
+            if (!Tiles.IsSolid(_run.Planet.Get(ax, ay))) { ReleaseGrapple(); return; }
+        }
+        if (Pressed(keys, _prevKeys, Keys.W)) { ReleaseGrapple(); return; }
+        if (p.Toolbelt.Current == "grapple" && mouse.LeftButton == ButtonState.Pressed)
+            _ropeLen = MathF.Max(10f, _ropeLen - 130f * dt);
+        if (keys.IsKeyDown(Keys.S))
+            _ropeLen = MathF.Min(420f, _ropeLen + 100f * dt);
+
+        var d = p.Position - anchor;
+        var len = d.Length();
+        if (len > 480f) { ReleaseGrapple(); return; }
+        if (len > _ropeLen && len > 0.01f)
+        {
+            var n = d / len;
+            p.Position = anchor + n * _ropeLen;
+            var vOut = Vector2.Dot(p.Velocity, n);
+            if (vOut > 0f) p.Velocity -= n * vOut;   // taut line: keep the swing, kill the stretch
+        }
+        if (_grapOnTitan) t.RiderTime += 2f * dt;
+    }
+
+    private void ReleaseGrapple()
+    {
+        _grapAnchor = null;
+        _grapOnTitan = false;
+    }
+
+    /// <summary>Cast the grappling hook at the cursor: an instant line march that latches to
+    /// the first player-blocking tile — or the titan's hide, the climbing-aid route onto the
+    /// monster. One line at a time; W cuts it (see TickGrapple).</summary>
+    private void FireGrapple(Vector2 worldCursor)
+    {
+        if (_grapAnchor is not null || _grapOnTitan) return;
+        var from = _run.Player.Position;
+        var dir = worldCursor - from;
+        if (dir.LengthSquared() < 0.01f) return;
+        dir.Normalize();
+        _run.Player.ShootCooldown = 0.45f;
+        var t = _run.Titan;
+        for (var d = 8f; d <= 400f; d += 4f)
+        {
+            var probe = from + dir * d;
+            if (t.Hatched && t.Health > 0 && t.Targetable
+                && (probe - t.Position).Length() < t.BodyRadius + 4f)
+            {
+                _grapOnTitan = true;
+                _grapLocal = probe - t.Position;
+                _ropeLen = d;
+                PlayAt("harpoon", from, 0.8f);
+                return;
+            }
+            var (px, py) = _run.Planet.WorldToTile(probe);
+            if (Tiles.BlocksPlayer(_run.Planet.Get(px, py)))   // no purchase on foliage
+            {
+                _grapAnchor = probe;
+                _ropeLen = d;
+                PlayAt("harpoon", from, 0.8f);
+                return;
+            }
+        }
+        PlayAt("ui", from, 0.3f, pitch: -0.4f);   // dry cast — nothing in range
+    }
+
+    /// <summary>Deploy a rope coil at the cursor: anchored under any non-sky tile, it unrolls
+    /// straight down as climbable Rope segments (10 max) until it meets ground — the cheap
+    /// way up a tower flank, a cliff, or into a shaft. One coil per use.</summary>
+    private void PlaceRope(Vector2 worldCursor)
+    {
+        var p = _run.Player;
+        if (p.Inventory.Count("rope") <= 0 && !p.FlyMode) return;
+        if ((worldCursor - p.Position).Length() > 70f) return;
+        var (cx, cy) = _run.Planet.WorldToTile(worldCursor);
+        if (_run.Planet.Get(cx, cy) != TileKind.Sky) return;
+        // Needs something to hang from directly above the top segment.
+        var up = _run.Planet.UpAt(worldCursor);
+        var (ax, ay) = _run.Planet.WorldToTile(worldCursor + up * Planet.TileSize);
+        if (_run.Planet.Get(ax, ay) == TileKind.Sky) return;
+
+        var placed = 0;
+        var pos = worldCursor;
+        for (var i = 0; i < 10; i++)
+        {
+            var (tx, ty) = _run.Planet.WorldToTile(pos);
+            if (_run.Planet.Get(tx, ty) != TileKind.Sky) break;
+            _run.Planet.Set(tx, ty, TileKind.Rope);
+            placed++;
+            pos -= _run.Planet.UpAt(pos) * Planet.TileSize;   // per-step up: follow curvature
+        }
+        if (placed == 0) return;
+        if (!p.FlyMode) p.Inventory.TryConsume("rope", 1);
+        p.ShootCooldown = 0.3f;
+        PlayAt("throw", worldCursor, 0.5f);
+    }
+
     private void FireHarpoon(Vector2 worldCursor)
     {
         var dir = worldCursor - _run.Player.Position;
