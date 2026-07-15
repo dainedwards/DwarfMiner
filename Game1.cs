@@ -3164,40 +3164,52 @@ public sealed partial class DwarfMinerGame : Game
         _run.Player.ShootCooldown = 0.3f;
     }
 
-    /// <summary>Flamethrower: hoses a cone of REAL burning fuel — Fire cells launched into
-    /// ballistic flight that ignite oil, gutter on rock, and light the cave as they fly.
-    /// Creatures caught in the near cone catch fire (the standard burn DoT). Continuous
-    /// while held; the short cooldown just paces the puffs.</summary>
+    /// <summary>Advance the hose's held-length ramp and return the current stream reach. Both
+    /// hoses share it (you fire one at a time): each fire tick nudges the ramp up, and a &gt;0.15s
+    /// gap resets it, so the stream starts SHORT and grows to full reach the longer you hold
+    /// fire, then snaps back short when you let go.</summary>
+    private float StreamReach()
+    {
+        if (_run.RunTime - _streamLast > 0.15f) _streamHold = 0f;
+        _streamLast = _run.RunTime;
+        _streamHold = MathF.Min(_streamHold + _frameDt, StreamHoldMax);
+        return MathHelper.Lerp(42f, 132f, _streamHold / StreamHoldMax);
+    }
+
+    /// <summary>Flamethrower: a steady, TIGHT tongue of REAL burning fuel — Fire cells launched
+    /// down the aim that COLLIDE with tiles, so the flame stops at walls instead of pouring
+    /// through them. The stream starts short and grows to full reach the longer fire is held;
+    /// creatures caught in it catch fire. A continuous low roar, not a rattling machine gun.</summary>
     private void FireFlamethrower(Vector2 worldCursor)
     {
         var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
         var muzzle = _run.Player.Position + dir * 8f;
-        // TIGHT tongue: a narrow, focused jet fired in small frequent puffs so it reads as one
-        // steady stream, not a pulsing wave — fewer cells per puff, but a fast cadence below.
-        for (var i = 0; i < 3; i++)
+        var reach = StreamReach();
+
+        // A tight jet of fire cells fired straight down the aim — speed scaled so the flame
+        // carries just to the current reach, then gutters. Only a narrow spread.
+        for (var i = 0; i < 2; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.18f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.1f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (250f + (float)Random.Shared.NextDouble() * 70f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 2.1f + (float)Random.Shared.NextDouble() * 40f),
                 Material.Fire);
         }
-        _particles.EmitFlameJet(muzzle, dir);
-        _particles.EmitFlameJet(muzzle + dir * 4f, dir);
-        // Near-cone ignition: anything standing in the tongue starts burning and takes a
-        // steady roast on top (the flying cells alone are too sparse to be the damage).
+        _particles.EmitFlameJet(muzzle, dir, reach);
+        // Near-cone ignition out to the current reach — a tight cone.
         foreach (var c in _run.Creatures)
         {
             var to = c.Position - _run.Player.Position;
             var dist = to.Length();
-            if (dist > 110f || dist < 1f) continue;
-            if (Vector2.Dot(to / dist, dir) < 0.82f) continue;
+            if (dist > reach + 12f || dist < 1f) continue;
+            if (Vector2.Dot(to / dist, dir) < 0.9f) continue;
             if (c.ImmuneTo(Material.Fire)) continue;
             c.BurnSeconds = MathF.Max(c.BurnSeconds, 3f);
-            c.Health -= 26f * _frameDt; // halved per-puff to match the doubled (smoother) cadence
+            c.Health -= 42f * _frameDt;
             c.HitFlash = 0.1f;
         }
         // The hose roasts titans too — except the fire-blooded (Godzilla's breath, the
@@ -3207,13 +3219,13 @@ public sealed partial class DwarfMinerGame : Game
         {
             var to = _run.Titan.Position - _run.Player.Position;
             var dist = to.Length();
-            if (dist is > 1f and < 130f && Vector2.Dot(to / dist, dir) > 0.7f)
+            if (dist is > 1f && dist < reach + 24f && Vector2.Dot(to / dist, dir) > 0.8f)
             {
-                _run.Titan.Health -= 40f * _frameDt;
+                _run.Titan.Health -= 62f * _frameDt;
                 _run.Titan.HitFlash = 0.1f;
             }
         }
-        _run.Player.ShootCooldown = 0.055f;   // fast, even cadence = a steady stream, no waves
+        _run.Player.ShootCooldown = 0.05f;
     }
 
     /// <summary>Acid spewer: sprays REAL Acid cells that pool where they land and eat
