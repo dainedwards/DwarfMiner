@@ -3419,7 +3419,13 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
-    private void TickOxygen(float dt)
+    /// <summary>The unified AIR meter. One bar drains in the two situations you can't breathe:
+    /// head underwater (unless the gill graft breathes water), or standing on an airless
+    /// world (no atmosphere) without the vacsuit's sealed helmet. Everywhere else — an
+    /// atmosphere world at any depth, or an airless world with the helmet — it refills.
+    /// Empty = suffocation HP bleed (bypasses armor). God mode stays topped up. Gas pockets
+    /// still choke via the gas hazard's direct Oxygen drain, which outpaces the refill.</summary>
+    private void TickAir(float dt)
     {
         var p = _run.Player;
         var max = p.EffectiveMaxOxygen;
@@ -3429,60 +3435,30 @@ public sealed partial class DwarfMinerGame : Game
             return;
         }
 
-        // Worlds WITH an atmosphere breathe freely at any depth now — caves carry air.
-        // (Water is its own system: the breath meter handles submersion; gas pockets still
-        // choke via the gas hazard's direct drain.) Only the airless rocks — the Hollow,
-        // the moon — ration the tank: no free-breathing band at all, the tank drains from
-        // the first tile underground, and even at the surface only the suit's slow
-        // starlight recycler tops it back up.
-        var airless = _run.Def.Airless;
-        if (!airless)
+        var underwater = p.HeadInWater && !p.HasGills;
+        var airlessNoHelmet = _run.Def.Airless && !p.HasHelmet;
+
+        if (underwater || airlessNoHelmet)
         {
-            // Refill everywhere — but keep the suffocation check below live, so a gas
-            // pocket (whose choke drain outpaces this refill) still drowns the tank.
-            p.Oxygen = MathF.Min(max, p.Oxygen + OxygenRules.RefillRate * dt);
+            p.Oxygen = MathF.Max(0f, p.Oxygen - AirDrainPerSecond * dt);
+            if (p.Oxygen <= 0f)
+            {
+                // Suffocation/drowning ignores armor — no plate stops you running out of air.
+                p.Health -= OxygenRules.SuffocationDps * dt;
+                // Occasional gasp puff so the cause of death reads on-screen.
+                if (Random.Shared.NextDouble() < dt * 4f) _particles.EmitDust(p.Position, 3f);
+            }
         }
         else
         {
-            var depth = DepthBelowSurface();
-            if (OxygenRules.AtSurfaceAir(depth, airless))
-                p.Oxygen = MathF.Min(max, p.Oxygen
-                    + OxygenRules.RefillRate * OxygenRules.AirlessRefillFrac * dt);
-            else
-                p.Oxygen = MathF.Max(0f, p.Oxygen
-                    - OxygenRules.DrainPerSecond(depth, _run.Def.OxygenDrainScale, airless) * dt);
-        }
-
-        if (p.Oxygen <= 0f)
-        {
-            // Suffocation ignores armor — no plate stops you drowning in rock.
-            p.Health -= OxygenRules.SuffocationDps * dt;
-            // Occasional gasp puff so the cause of death reads on-screen.
-            if (Random.Shared.NextDouble() < dt * 3f) _particles.EmitDust(p.Position, 3f);
+            p.Oxygen = MathF.Min(max, p.Oxygen + OxygenRules.RefillRate * dt);
         }
     }
 
-    /// <summary>Advance the breath meter: drains while the head is underwater (unless the
-    /// gill graft breathes water for you), refills fast in air, and drowns the dwarf at
-    /// zero — HP bleed that bypasses armor, like suffocation. God mode stays topped up.</summary>
-    private void TickBreath(float dt)
-    {
-        var p = _run.Player;
-        var max = p.EffectiveMaxBreath;
-        if (p.FlyMode || p.HasGills || !p.HeadInWater)
-        {
-            // Surfacing (or gills): a few seconds tops the meter back up.
-            p.Breath = MathF.Min(max, p.Breath + max / 2.5f * dt);
-            return;
-        }
-        p.Breath = MathF.Max(0f, p.Breath - dt);
-        if (p.Breath <= 0f)
-        {
-            p.Health -= DrownDps * dt;
-            // Bubble gasps so the cause of death reads on-screen.
-            if (Random.Shared.NextDouble() < dt * 4f) _particles.EmitDust(p.Position, 3f);
-        }
-    }
+    /// <summary>Air burned per second while underwater or airless-without-helmet — a base
+    /// 100 reserve lasts ~12.5s, matching the old breath meter (lung/tank upgrades extend
+    /// it by raising the ceiling).</summary>
+    private const float AirDrainPerSecond = 8f;
 
     private const float DrownDps = 9f;
 
