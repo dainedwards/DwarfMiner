@@ -991,7 +991,7 @@ public sealed partial class DwarfMinerGame : Game
         // budget while the player picks a drop site.
         if ((_orbitCellTick = !_orbitCellTick))
             _run.Cells.Update(dt * 2f);
-        _particles.Update(dt, _run.Planet);
+        _particles.Update(dt, _run.Planet, _run.Cells);
         _toastTimer -= dt;
 
         // The loadout menu captures input while open; the orbit keeps drifting behind it.
@@ -1106,7 +1106,7 @@ public sealed partial class DwarfMinerGame : Game
 
         _run.Physics.Update(dt);
         _run.Cells.Update(dt);
-        _particles.Update(dt, _run.Planet);
+        _particles.Update(dt, _run.Planet, _run.Cells);
         _run.RunTime += dt;
         _toastTimer -= dt;
 
@@ -1439,7 +1439,7 @@ public sealed partial class DwarfMinerGame : Game
             _craftingMenu.Update(keys, _prevKeys, mouse, _prevMouse, IsOwned,
                 id => CanAffordId(id), ApplyCraft);
             _run.Physics.Update(dt);
-            _particles.Update(dt, _run.Planet);
+            _particles.Update(dt, _run.Planet, _run.Cells);
             _run.Cells.Update(dt);
             _prevKeys = keys; _prevMouse = mouse;
             base.Update(gameTime);
@@ -1451,7 +1451,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             _charScreen.Update(keys, _prevKeys, mouse, _prevMouse, _run.Player);
             _run.Physics.Update(dt);
-            _particles.Update(dt, _run.Planet);
+            _particles.Update(dt, _run.Planet, _run.Cells);
             _run.Cells.Update(dt);
             _prevKeys = keys; _prevMouse = mouse;
             base.Update(gameTime);
@@ -1466,7 +1466,7 @@ public sealed partial class DwarfMinerGame : Game
         {
             _debugMenu.Update(keys, _prevKeys, mouse, _prevMouse);
             _run.Physics.Update(dt);
-            _particles.Update(dt, _run.Planet);
+            _particles.Update(dt, _run.Planet, _run.Cells);
             _run.Cells.Update(dt);
             _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return;
         }
@@ -1756,7 +1756,7 @@ public sealed partial class DwarfMinerGame : Game
             _sfx.Play("collapse", MathHelper.Clamp(_run.Physics.RigidDetachesThisTick / 120f, 0.3f, 0.9f),
                 pitch: -0.45f, pan: 0f, minGap: 0.25f);
         UpdateRigidBodies(dt);
-        _particles.Update(dt, _run.Planet);
+        _particles.Update(dt, _run.Planet, _run.Cells);
 
         // Thrown torches: fly, stick, and stay. A soft thunk marks the plant.
         foreach (var torch in _run.Torches)
@@ -4302,7 +4302,7 @@ public sealed partial class DwarfMinerGame : Game
             _run.Shake = MathF.Max(_run.Shake, 0.25f);
         }
         _run.Physics.Update(dt);
-        _particles.Update(dt, _run.Planet);
+        _particles.Update(dt, _run.Planet, _run.Cells);
         _run.Cells.Update(dt);
         _run.RunTime += dt;
         _toastTimer -= dt;
