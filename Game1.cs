@@ -5550,8 +5550,12 @@ public sealed partial class DwarfMinerGame : Game
             _fpsFrames = 0;
             _fpsMark = now;
             // DM_FPSLOG=1 → per-second console FPS line, for headless perf comparisons.
+            // updx/slow expose the fixed-step catch-up state (see _updatesSinceDraw).
             if (Environment.GetEnvironmentVariable("DM_FPSLOG") is { Length: > 0 })
-                Console.WriteLine($"[fps] {_fps}  upd {_updateMs:0.0}  drw {_drawMs:0.0}");
+                Console.WriteLine($"[fps] {_fps}  upd {_updateMs:0.0}  drw {_drawMs:0.0}" +
+                    $"  updx {_updatesPerDrawMax}{(_runningSlowly ? " SLOW" : "")}");
+            _updatesPerDrawMax = 0;
+            _runningSlowly = false;
             // DM_PERF=1 → companion per-phase attribution line (mean/worst ms per system),
             // plus population counts and GC activity — a slow-decaying active-cell count or
             // a gen2 collection lining up with a worst-frame spike is the usual smoking gun.
