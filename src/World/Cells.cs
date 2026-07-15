@@ -1476,8 +1476,9 @@ public sealed class Cells
         }
 
         // Gutter out: half to a smoke wisp, half to nothing (all-smoke fires read as grey
-        // soup over a burning pool).
-        if (_rng.Next(fuelled ? 42 : 8) == 0)
+        // soup over a burning pool). Lives noticeably longer now — a fuelled flame ~0.9s, a
+        // starved one ~0.27s — so fire lingers long enough to catch what it's licking.
+        if (_rng.Next(fuelled ? 56 : 16) == 0)
         {
             _mat[i] = _rng.Next(2) == 0 ? (byte)Material.Smoke : (byte)0;
             _srcTile[i] = 0;
