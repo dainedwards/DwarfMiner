@@ -89,6 +89,10 @@ public enum CreatureKind : byte
     Marauder,     // ground bandit with a slug pistol — holds a firing band and pops off aimed rounds
     Raider,       // jetpack bandit — hovers on a sputtering pack and rakes short SMG bursts
     Pyro,         // suited brute lugging a tank flamethrower — closes in and hoses real fire
+    // Deep-cave horrors (Noita-flavoured casters) — glands and hexes, not guns:
+    Quillwing,    // barbed cave flyer — flutters in and looses a fan of THREE bone quills at once
+    Warpwisp,     // drifting eldritch caster — lobs slow, wall-piercing violet hex bolts that hunt you through cover
+    Thornback,    // squat spine-beetle grenadier — arcs clustered barb-mortars over walls, then trundles to a new firing spot
 }
 
 public sealed class Creature
