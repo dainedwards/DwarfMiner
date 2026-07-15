@@ -346,6 +346,10 @@ public sealed class Player
         var up = Up(planet);
         var right = new Vector2(-up.Y, up.X);
 
+        // Radius at the START of the frame (before this frame's fall) — one-way platforms
+        // compare the player's previous feet height against the platform top.
+        _prevRadial = (Position - planet.Center).Length();
+
         // Band of Regeneration (accessory) — a slow trickle back to full health.
         if (Health > 0f && Health < MaxHealth && Equipment.HasAccessory("band_regen"))
             Health = MathF.Min(MaxHealth, Health + 1.2f * dt);
