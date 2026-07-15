@@ -185,6 +185,19 @@ public sealed class Renderer
             _fxPs = _tileFx.Parameters["PsParams"];
             _fxPs2 = _tileFx.Parameters["PsParams2"];
         }
+        if (Environment.GetEnvironmentVariable("DM_SHADER") != "0"
+            && Environment.GetEnvironmentVariable("DM_LIQFX") != "0")
+            _liquidFx = RuntimeEffect.BuildLiquidComposite(gd);
+        if (_liquidFx != null)
+        {
+            _lqCol0 = _liquidFx.Parameters["MatrixCol0"];
+            _lqCol1 = _liquidFx.Parameters["MatrixCol1"];
+            _lqCol2 = _liquidFx.Parameters["MatrixCol2"];
+            _lqCol3 = _liquidFx.Parameters["MatrixCol3"];
+            _lqPs = _liquidFx.Parameters["PsParams"];
+            _lqPs2 = _liquidFx.Parameters["PsParams2"];
+        }
+        _liquidBlob = MakeLiquidBlob(gd, 16);
         _stars = MakeStarfield(gd, 256);
         _atmoTex = MakeAtmosphere(gd, 512);
         _wispTex = MakeSoftBlob(gd, 64);
