@@ -480,7 +480,9 @@ public static class WorldGen
                     if (mN > 0.70f && mN < 0.78f) k = TileKind.MossStone;
                 }
 
-                if (IsOreHost(k))
+                // No ore seams inside the seabed shell: an ore tile is softer than obsidian,
+                // and one soft tile in the armour is all a flooding shortcut needs.
+                if (IsOreHost(k) && !seaShell)
                 {
                     var baseRock = k;
                     var oreN = SampleNoise(oreNoise, wx * 0.31f, wy * 0.31f);
