@@ -176,19 +176,6 @@ public sealed class RigidBodies
         }
     }
 
-    /// <summary>Visit the indices of every cell within lattice-adjacency reach of
-    /// <paramref name="local"/> (3×3 hash buckets, exact distance check by the caller).</summary>
-    private void ForNeighbourCandidates(Vector2 local, Action<int> visit)
-    {
-        var bx = (int)MathF.Floor(local.X / HashSpan);
-        var by = (int)MathF.Floor(local.Y / HashSpan);
-        for (var dy = -1; dy <= 1; dy++)
-            for (var dx = -1; dx <= 1; dx++)
-                if (_cellHash.TryGetValue(((long)(bx + dx) << 32) ^ (uint)(by + dy), out var list))
-                    foreach (var j in list)
-                        visit(j);
-    }
-
     public RigidBodies(Planet planet, Cells cells, Physics physics)
     {
         _planet = planet;
