@@ -1185,21 +1185,40 @@ public static class SimTest
         var physics = new Physics(planet, cells);
         const float dt = 1f / 60f;
 
-        // Carve a hollow pocket at mid-depth and hang a small stone island in it — nothing
-        // solid inward, outward, or beside it, so the connectivity check finds no anchor.
+        // Carve a hollow pocket at mid-depth and hang a stone island in it — nothing solid
+        // inward, outward, or beside it, so the connectivity check finds no anchor. The
+        // island must beat Physics.MinCollapseSize (sub-threshold clusters float now), and
+        // pockets are carved by ANGLE: tile counts vary per ring, so a constant index skews.
         const int ring = 100;
-        const int ang = 100;
+        int Ti(int r, float angFrac, int da) => (int)(angFrac * planet.TilesAt(r)) + da;
+        const float af = 0.25f;
+        const int islandW = 20, islandH = 4;   // 80 tiles — past MinCollapseSize (64)
+        for (var dr = -4; dr <= islandH + 3; dr++)
+            for (var da = -4; da <= islandW + 3; da++)
+                planet.Set(ring + dr, Ti(ring + dr, af, da), TileKind.Sky);
+        var island = new List<(int x, int y)>();
+        for (var dr = 0; dr < islandH; dr++)
+            for (var da = 0; da < islandW; da++)
+            {
+                planet.Set(ring + dr, Ti(ring + dr, af, da), TileKind.Stone);
+                island.Add((ring + dr, Ti(ring + dr, af, da)));
+            }
+        foreach (var (x, y) in island) physics.MarkDirty(x, y);
+
+        // Second pocket with a sub-threshold 2×2 nub: it must NOT be condemned — small
+        // clusters float instead of dusting when their support is gone.
+        const float afNub = 0.6f;
         for (var dr = -4; dr <= 3; dr++)
             for (var da = -4; da <= 4; da++)
-                planet.Set(ring + dr, ang + da, TileKind.Sky);
-        var island = new List<(int x, int y)>();
+                planet.Set(ring + dr, Ti(ring + dr, afNub, da), TileKind.Sky);
+        var nub = new List<(int x, int y)>();
         for (var dr = 0; dr <= 1; dr++)
             for (var da = 0; da <= 1; da++)
             {
-                planet.Set(ring + dr, ang + da, TileKind.Stone);
-                island.Add((ring + dr, ang + da));
+                planet.Set(ring + dr, Ti(ring + dr, afNub, da), TileKind.Stone);
+                nub.Add((ring + dr, Ti(ring + dr, afNub, da)));
             }
-        foreach (var (x, y) in island) physics.MarkDirty(x, y);
+        foreach (var (x, y) in nub) physics.MarkDirty(x, y);
 
         // Settle runs every 0.05s, so tick a few frames for the first pass to condemn it.
         var condemned = false;
