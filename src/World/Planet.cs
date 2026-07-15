@@ -312,6 +312,18 @@ public sealed class Planet
         _wall[Index(x, y)] = k;
     }
 
+    /// <summary>A collapsing structure takes its engineered backdrop with it: when a tile
+    /// above the crust line crumbles or detaches as rigid debris, any alloy/glass/masonry
+    /// back-wall behind it clears too — otherwise a toppled skyscraper leaves its facade
+    /// hanging in the sky as a ghost silhouette. Natural rock backdrop (mountain interiors,
+    /// cave walls) is untouched, and so is everything at or below the crust.</summary>
+    public void ClearStructureWall(int x, int y)
+    {
+        if (x <= SurfaceRing + 4 || !InBounds(x, y)) return;
+        if (_wall[Index(x, y)] is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
+            _wall[Index(x, y)] = TileKind.Sky;
+    }
+
     /// <summary>Apply <paramref name="power"/> mining damage to the tile at (x,y). Returns
     /// the broken tile kind on shatter, or null if it just took damage. Hardness ≥ 99 is the
     /// "anchor-class" gate (PlanetCore, Core, Support beams) — those won't take damage from a
