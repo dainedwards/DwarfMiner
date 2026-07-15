@@ -438,11 +438,15 @@ public static class WorldGen
                     // so it's common enough to gather without a deep dive.
                     if (oreN > 0.905f - boost - Bias(TileKind.FuelOre) && depth > 12f) k = TileKind.FuelOre;
                     if (oreN > 0.92f - boost - Bias(TileKind.IronOre) && depth > 16f) k = TileKind.IronOre;
-                    // Silver and gold are charted rarities: their base thresholds are
-                    // unreachable (like voidstone's), so veins exist only on worlds whose def
-                    // carries the bias — the star map's RARE FINDS line is the prospecting map.
-                    if (oreN > 1.05f - Bias(TileKind.SilverOre) && depth > 30f) k = TileKind.SilverOre;
-                    if (oreN > 1.05f - Bias(TileKind.GoldOre) && depth > 40f) k = TileKind.GoldOre;
+                    // Silver and gold are precious but no longer confined to bias worlds — every
+                    // world now carries thin deep seams of them (so the alien homeworld has them
+                    // too), just RARER than iron and the other common ores. A coarse selector
+                    // noise splits the deep crust into gold country vs silver country, so a given
+                    // region tends to hold one metal, not both — gold and silver rarely mix. The
+                    // def bias still fattens the signature worlds' veins on top of this baseline.
+                    var metalSel = SampleNoise(oreNoise, wx * 0.031f, wy * 0.031f);
+                    if (metalSel < 0.5f && oreN > 0.945f - boost * 0.6f - Bias(TileKind.SilverOre) && depth > 30f) k = TileKind.SilverOre;
+                    if (metalSel >= 0.5f && oreN > 0.955f - boost * 0.6f - Bias(TileKind.GoldOre) && depth > 40f) k = TileKind.GoldOre;
                     if (oreN > 0.965f - boost * 0.6f - Bias(TileKind.PlatinumOre) && depth > 55f) k = TileKind.PlatinumOre;
 
                     // Gems are not blocks: a gem site keeps its host tile (whatever common
