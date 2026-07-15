@@ -1223,6 +1223,11 @@ public sealed class Particles
                 // AddLights scales by remaining life, so the ember's glow dims as it cools.
                 LightRadius = 55f,
                 LightColor = new Color(255, 160, 70),
+                // A quarter of the coals are still burning when they land: they stamp a
+                // real Fire cell where they rest, so a blast near oil, gas, or timber can
+                // genuinely start a fire. The sim's own spread throttle and gutter-out on
+                // bare rock keep this from being an arson machine.
+                LandMat = CellFx && _rng.Next(4) == 0 ? (byte)Material.Fire : (byte)0,
             });
         }
     }
