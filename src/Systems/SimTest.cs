@@ -1772,6 +1772,30 @@ public static class SimTest
                 gaps > 0 && bridged == gaps);
         }
 
+        // One-piece doors: opening any tile of a leaf swings the WHOLE leaf — including
+        // the drifted tiles the old same-angle world-space walk stranded closed.
+        {
+            var (dr, dtile) = (-1, -1);
+            foreach (var (x, y) in city.AllTiles())
+                if (city.Get(x, y) == TileKind.DoorClosed) { (dr, dtile) = (x, y); break; }
+            Check("city: found a street door to swing", dr >= 0);
+            if (dr >= 0)
+            {
+                city.SetDoorRun(dr, dtile, TileKind.DoorOpen);
+                var angD = (dtile + 0.5f) / city.TilesAt(dr) * MathHelper.TwoPi;
+                var stranded = 0;
+                for (var r = Math.Max(1, dr - 6); r <= Math.Min(city.Rings - 2, dr + 6); r++)
+                {
+                    var n = city.TilesAt(r);
+                    var t0 = (int)((angD / MathHelper.TwoPi + 1f) % 1f * n);
+                    for (var d = -2; d <= 2; d++)
+                        if (city.Get(r, ((t0 + d) % n + n) % n) == TileKind.DoorClosed) stranded++;
+                }
+                Check($"city: a door leaf opens as ONE piece ({stranded} tiles left closed)",
+                    stranded == 0);
+            }
+        }
+
         // Warren world: ember (the lava homeland) carries the buried lizard city now — the
         // warrens live only under acid and lava worlds.
         var emberDef = PlanetDefs.ById("ember");
