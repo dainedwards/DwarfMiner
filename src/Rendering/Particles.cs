@@ -106,21 +106,18 @@ public sealed class Particles
                 p.Velocity += planet.GravityAt(p.Position) * GravityStrength * p.GravityScale * dt;
             if (p.Drag > 0)
                 p.Velocity *= MathF.Max(0f, 1f - p.Drag * dt);
-            // Flame plume dynamics (Fluid==Fire only — carriers are exempt, gameplay arc
-            // untouched):
-            // (a) AGE-GROWING BUOYANCY: young puffs carry stream gravity and track the
-            //     drooping arc; old ones tear upward — fire/smoke diverges from the
-            //     stream hardest at its end, like a real flamethrower's rising wash.
-            // (b) Bounded lateral turbulence, phased off each grain's own Life clock —
-            //     writhe around the arc, never a separate trajectory.
+            // Flame turbulence: a bounded lateral wander that grows down the stream (age)
+            // — the jet's body writhes like fire instead of flying a glassy arc. Phased
+            // off each grain's own Life clock (grains are born with random lives, so the
+            // phases scatter for free), and it's ±jitter AROUND the arc, never a separate
+            // trajectory — it cannot recreate the stray-strand problem.
             if (p.Fluid == (byte)Material.Fire)
             {
-                var age = 1f - MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
-                p.Velocity -= planet.GravityAt(p.Position) * (GravityStrength * 4.5f * age * dt);
                 var sp = p.Velocity.LengthSquared();
                 if (sp > 100f)
                 {
                     var inv = 1f / MathF.Sqrt(sp);
+                    var age = 1f - MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
                     p.Velocity += new Vector2(-p.Velocity.Y * inv, p.Velocity.X * inv)
                         * (MathF.Sin(p.Life * 55f) * 90f * age * dt);
                 }
@@ -1334,10 +1331,8 @@ public sealed class Particles
     /// the arc keeps matching the rest of the world's ballistics.</summary>
     private const float HoseArcGravity = 2.25f;
 
-    /// <summary>Real-flamethrower ramp: yellow core → gold-orange → orange-red → deep red
-    /// (the old set leaned pale/white and read as gas-torch, not liquid-fuel fire).</summary>
     private static readonly Color[] FlameTones =
-        { new(255, 235, 150), new(255, 180, 50), new(255, 120, 25), new(230, 75, 20) };
+        { new(255, 250, 200), new(255, 220, 110), new(255, 170, 60), new(255, 120, 35) };
     private static readonly Color[] AcidTones =
         { new(215, 255, 100), new(130, 225, 55), new(130, 225, 55), new(70, 150, 35) };
 
@@ -1404,61 +1399,11 @@ public sealed class Particles
                 Color = tone,
                 FadeColor = new Color(75, 60, 55),   // flame gutters into SMOKE, not embers
                 Size = hot ? 0.7f : 1f,
-                // Stream gravity: YOUNG puffs droop with the carrier arc (the visible
-                // fire follows the stream down); the age-growing buoyancy in Update then
-                // tears the old ones upward — divergence peaks at the stream's end.
-                GravityScale = HoseArcGravity,
-                Drag = 1.2f,
+                GravityScale = -0.3f,                // buoyant: the plume lifts off the arc
+                Drag = 1.5f,                         // stalls late in life, then billows
                 CollideTiles = true,
                 LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
-                LightColor = new Color(255, 160, 55),
-                Fluid = (byte)Material.Fire,
-            });
-        }
-        // 3) Sparks: the odd white-hot fleck spat AHEAD of the flame — faster than the
-        // stream, same arc gravity (never off-trajectory), streaked, quick to die.
-        if (_rng.Next(2) == 0)
-        {
-            var sd = dir;
-            _list.Add(new Particle
-            {
-                Position = pos,
-                Velocity = sd * (jetSpeed * (1.1f + (float)_rng.NextDouble() * 0.3f)) + shooterVel,
-                Life = 0.25f + (float)_rng.NextDouble() * 0.25f,
-                MaxLife = 0.5f,
-                Color = new Color(255, 240, 180),
-                FadeColor = new Color(200, 80, 20),
-                Size = 0.5f,
-                GravityScale = HoseArcGravity,
-                Drag = 0.4f,
-                CollideTiles = true,
-                LightRadius = _rng.Next(3) == 0 ? 18f : 0f,
-                LightColor = new Color(255, 200, 90),
-                SmearMax = 12f,
-                SmearScale = 2f,
-            });
-        }
-        // 4) Smoke puffs: dedicated dark billows joining the plume's coverage body — they
-        // ride the stream briefly, then the age-lift carries them up as the black wash
-        // crowning the fire.
-        if (_rng.Next(2) == 0)
-        {
-            var spread = (float)(_rng.NextDouble() - 0.5) * (coneArc * 3f);
-            var c = MathF.Cos(spread);
-            var s = MathF.Sin(spread);
-            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _list.Add(new Particle
-            {
-                Position = pos + d * (float)_rng.NextDouble() * 3f,
-                Velocity = d * (jetSpeed * (0.7f + (float)_rng.NextDouble() * 0.2f)) + shooterVel,
-                Life = 1.1f + (float)_rng.NextDouble() * 0.5f,
-                MaxLife = 1.6f,
-                Color = new Color(110, 95, 90),
-                FadeColor = new Color(45, 40, 42),
-                Size = 1f,
-                GravityScale = 0.6f,
-                Drag = 1.1f,
-                CollideTiles = true,
+                LightColor = new Color(255, 170, 70),
                 Fluid = (byte)Material.Fire,
             });
         }
