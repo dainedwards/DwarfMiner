@@ -522,7 +522,17 @@ public sealed class Physics
         return (sx, sy);
     }
 
-    /// <summary>Trigger a planet-wide rumble: every solid tile within a radius gets re-checked.</summary>
+    /// <summary>True while an earthquake is actively shaking — the ONLY window in which
+    /// undercut crust-backed regions may condemn (see the gate in Settle). Outside it the
+    /// mined-out underground just hangs, Terraria-style.</summary>
+    public bool QuakeShaking { get; private set; }
+
+    /// <summary>Trigger a planet-wide rumble: every solid tile within a radius gets re-checked
+    /// — and, uniquely, undercut crust regions are ALLOWED to condemn here (QuakeShaking):
+    /// the quake is what brings down everything the mining left hanging. On top of the
+    /// structural pass, the rumble shakes rock loose at RANDOM: a handful of cave-roof blobs
+    /// in the radius are condemned outright, so a quake means falling rock even in tunnels
+    /// that were honestly braced.</summary>
     public void Earthquake(Vector2 epicenterWorld, float radiusPixels, int strength)
     {
         var (cx, cy) = _planet.WorldToTile(epicenterWorld);
@@ -539,6 +549,56 @@ public sealed class Physics
                 if (Tiles.IsSolid(_planet.Get(x, y))) MarkDirty(x, y);
             }
         }
+        QuakeShaking = true;
         for (var i = 0; i < strength; i++) Settle();
+        QuakeShaking = false;
+
+        // Random shake-outs: probe spots in the radius; where one lands on a cave roof
+        // (solid rock over open air), condemn a ragged blob around it. Small blobs ride
+        // the rigid path and drop as tumbling boulders; the rest shower dust.
+        var rng = Random.Shared;
+        var shakes = 6 + strength * 4;
+        for (var i = 0; i < shakes; i++)
+        {
+            var dx = rng.Next(-rTiles, rTiles + 1);
+            var dy = rng.Next(-rTiles, rTiles + 1);
+            if (dx * dx + dy * dy > rSq) continue;
+            var x = cx + dx;
+            var y = cy + dy;
+            if (!_planet.InBounds(x, y)) continue;
+            var k = _planet.Get(x, y);
+            if (!Tiles.CanFall(k) || Materials.IsLoose(k)) continue;   // loose ground crumbles on its own
+            var (inR, inT) = _planet.InnerNeighbour(x, y);
+            if (Tiles.IsSolid(_planet.Get(inR, inT))) continue;        // not a roof — no air below
+            ShakeLooseBlob(x, y, rng);
+        }
+    }
+
+    /// <summary>Condemn a small ragged blob of fallable roof rock around (x, y) — the
+    /// earthquake's random cave-in. Collected as a per-ring angular window (ring tile
+    /// counts differ, so a raw ±dy drifts at far bearings) with corner drop-outs so the
+    /// chunk reads as a shaken-loose rock, not a stamped rectangle.</summary>
+    private void ShakeLooseBlob(int x, int y, Random rng)
+    {
+        var reach = 2 + rng.Next(2);
+        var blob = new List<int>();
+        var n0 = _planet.TilesAt(x);
+        var ang = ((y % n0 + n0) % n0 + 0.5f) / n0;
+        for (var dr = -reach; dr <= reach; dr++)
+        {
+            var r = x + dr;
+            if (r < 0 || r >= _planet.Rings) continue;
+            var nn = _planet.TilesAt(r);
+            var t0 = (int)(ang * nn);
+            for (var dt = -reach; dt <= reach; dt++)
+            {
+                if (Math.Abs(dr) + Math.Abs(dt) > reach + 1) continue;   // ragged diamond, not a square
+                if (!_planet.InBounds(r, t0 + dt)) continue;
+                var k = _planet.Get(r, t0 + dt);
+                if (!Tiles.CanFall(k) || Tiles.IsAnchored(k)) continue;
+                blob.Add(_planet.Index(r, t0 + dt));
+            }
+        }
+        if (blob.Count >= 4) CollapseRegion(blob, sky: false);
     }
 }
