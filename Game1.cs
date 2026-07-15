@@ -4942,6 +4942,12 @@ public sealed partial class DwarfMinerGame : Game
                 Color.White, rot, new Vector2(_jetpackTex.Width * 0.5f, _jetpackTex.Height * 0.5f),
                 new Vector2(0.65f, 1f), SpriteEffects.None, 0f);
         }
+        // Hurt flash: the dwarf sprite briefly washes red when he takes damage, so a hit
+        // reads right on the character, not just at the screen edge.
+        var hurtTint = _run.Player.HurtFlash > 0f
+            ? Color.Lerp(Color.White, new Color(255, 45, 45),
+                MathHelper.Clamp(_run.Player.HurtFlash, 0f, 1f) * 0.85f)
+            : Color.White;
         if (_playerSprite is { } ps)
         {
             // Animated pack sprite: pick a frame from grounded/tangent/radial motion, flip
@@ -4951,14 +4957,14 @@ public sealed partial class DwarfMinerGame : Game
             if (MathF.Abs(vT) > 8f) _playerFacing = MathF.Sign(vT);
             var frame = ps.Frame(_run.Player.Grounded, vT, Vector2.Dot(_run.Player.Velocity, up), _run.RunTime);
             _renderer.Batch.Draw(frame, _run.Player.Position + up * ps.FeetOffset(_run.Player.Radius), null,
-                Color.White, rot, new Vector2(frame.Width * 0.5f, frame.Height * 0.5f), ps.Scale,
+                hurtTint, rot, new Vector2(frame.Width * 0.5f, frame.Height * 0.5f), ps.Scale,
                 _playerFacing < 0 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
         }
         else
         {
             const float spriteScale = 0.6f;          // world units per sprite pixel
             const float spriteFeetOffset = 1.0f;     // = (sprite_half_height * scale) − Radius
-            _renderer.Batch.Draw(_dwarfTex, _run.Player.Position + up * spriteFeetOffset, null, Color.White, rot,
+            _renderer.Batch.Draw(_dwarfTex, _run.Player.Position + up * spriteFeetOffset, null, hurtTint, rot,
                 new Vector2(_dwarfTex.Width * 0.5f, _dwarfTex.Height * 0.5f),
                 spriteScale, SpriteEffects.None, 0f);
         }
