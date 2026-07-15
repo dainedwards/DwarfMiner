@@ -36,6 +36,11 @@ public struct Particle
     /// default (16× grain size). Rain pins this to its own short streak so hose smear
     /// tuning stops dragging the weather along with it.</summary>
     public float SmearMax;
+    /// <summary>Touchdown splash: when this particle comes to REST it throws a tiny burst
+    /// of sparks in ITS OWN current colour — the impact-spark read, tinted per material.
+    /// One-shot (cleared after the burst); the spawned sparks never carry the flag, so a
+    /// splash can't cascade.</summary>
+    public bool LandSparks;
 }
 
 /// <summary>
