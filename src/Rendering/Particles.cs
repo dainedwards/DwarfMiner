@@ -389,26 +389,28 @@ public sealed class Particles
                 EmitExplosion(pos, strength: 14f, sparkCount: 14, smokeCount: 10, sparkColor: new Color(255, 150, 50));
                 break;
             case ProjectileKind.Nuke:
-                // The big one: magenta blast, ember rain, and a tall rising smoke column
-                // (strong negative gravity pushes the plume away from the planet centre).
+                // The big one: magenta blast and ember rain. The tall rising smoke column is
+                // the cell sim's (its huge crater stamps a big Smoke budget in CarveCrater);
+                // the old particle plume only returns when the cell path is switched off.
                 EmitExplosion(pos, strength: 26f, sparkCount: 32, smokeCount: 26, sparkColor: new Color(255, 90, 230));
                 EmitEmbers(pos, count: 16);
-                for (var i = 0; i < 14; i++)
-                {
-                    var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
-                    _list.Add(new Particle
+                if (!CellFx)
+                    for (var i = 0; i < 14; i++)
                     {
-                        Position = pos + Jitter(6f),
-                        Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (10f + (float)_rng.NextDouble() * 20f),
-                        Life = 1.6f + (float)_rng.NextDouble() * 1.2f,
-                        MaxLife = 2.8f,
-                        Color = new Color(150, 110, 150),
-                        FadeColor = new Color(30, 20, 35),
-                        Size = 2.5f + (float)_rng.NextDouble() * 2f,
-                        GravityScale = -0.6f,
-                        Drag = 0.4f,
-                    });
-                }
+                        var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
+                        _list.Add(new Particle
+                        {
+                            Position = pos + Jitter(6f),
+                            Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (10f + (float)_rng.NextDouble() * 20f),
+                            Life = 1.6f + (float)_rng.NextDouble() * 1.2f,
+                            MaxLife = 2.8f,
+                            Color = new Color(150, 110, 150),
+                            FadeColor = new Color(30, 20, 35),
+                            Size = 2.5f + (float)_rng.NextDouble() * 2f,
+                            GravityScale = -0.6f,
+                            Drag = 0.4f,
+                        });
+                    }
                 break;
             case ProjectileKind.Rocket:
                 EmitExplosion(pos, strength: 16f, sparkCount: 18, smokeCount: 12, sparkColor: new Color(255, 150, 60));
