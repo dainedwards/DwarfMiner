@@ -1776,6 +1776,7 @@ public sealed class TitanProjectile
             TitanShotKind.Spike => (4f, 1.6f),
             TitanShotKind.Void  => (6f, 2.4f),    // slow fat orb — dodge the fan, not the bolt
             TitanShotKind.Slug  => (2.2f, 1.5f),  // small bandit bullet
+            TitanShotKind.Dart  => (2.2f, 2.8f),  // blowdart — lives long enough to finish its arc
             _                   => (4f, 0.9f),   // Laser
         };
         Damage = damage ?? kind switch
