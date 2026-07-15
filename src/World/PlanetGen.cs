@@ -219,15 +219,16 @@ public static class PlanetGen
         var oxy = MathHelper.Lerp(1.0f, 2.0f, difficulty) * J(0.9f, 1.1f);
         var caveCap = 12 + (int)(difficulty * 14) + rng.Next(4);
         var quake = MathHelper.Lerp(1.0f, 0.45f, difficulty);
-        // Signature-gem bias so the slot's ship ore is actually findable in quantity.
-        // Gold's base threshold is unreachable, so a gold signature needs the full vein
-        // bias (~0.14 lands the effective threshold near where common veins used to sit).
+        // Signature-gem bias so the slot's ship ore is actually findable in quantity. Gold and
+        // silver now have a reachable BASE threshold on every world, so a gold signature only
+        // needs a modest bump (a big one floods the crust) — leaner than the old charted-metal
+        // era where the base was unreachable.
         var oreKind = shipOre switch
         {
             "gold" => TileKind.GoldOre, "sapphire" => TileKind.Sapphire, "ruby" => TileKind.Ruby,
             "platinum" => TileKind.PlatinumOre, _ => TileKind.Diamond,
         };
-        var sigBias = oreKind == TileKind.GoldOre ? 0.12f : 0.028f;
+        var sigBias = oreKind == TileKind.GoldOre ? 0.05f : 0.028f;
 
         // The rare-metal chart rolled in Campaign, flavoured by biome: frost worlds always
         // run silver in the ice, the slag world's "rich veins" tagline earns it gold odds.
