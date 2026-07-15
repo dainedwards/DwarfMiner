@@ -849,13 +849,18 @@ public sealed class Renderer
                     }
                     case TileKind.TreeRoot:
                     {
-                        // Underground root: dark woody strands threading down through the soil,
-                        // mostly buried so it only reads where the ground is dug open.
+                        // Underground root: THIN woody strands with a few fine tendrils spreading
+                        // off into the soil — small and wispy so it reads as roots reaching
+                        // through the earth, not a solid woody block.
                         var root = new Color(74, 54, 60);
                         var rootDk = new Color(52, 38, 44);
-                        DrawDeco(centre, right, up, rotation, chord, 3, 0, 2, 8, root);
-                        DrawDeco(centre, right, up, rotation, chord, 1, 3, 2, 4, rootDk);
-                        DrawDeco(centre, right, up, rotation, chord, 5, 4, 2, 4, rootDk);
+                        var rootHi = new Color(96, 72, 78);
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 0, 1, 8, root);       // thin central strand
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 0, 0.5f, 8, rootHi);  // sheen
+                        DrawDeco(centre, right, up, rotation, chord, 2, 2, 1.5f, 1, rootDk);     // tendrils
+                        DrawDeco(centre, right, up, rotation, chord, 4.5f, 4, 1.5f, 1, rootDk);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 5, 1, 1, rootDk);        // fine root hairs
+                        DrawDeco(centre, right, up, rotation, chord, 6, 3, 1, 1, rootDk);
                         break;
                     }
                     case TileKind.Chest:
