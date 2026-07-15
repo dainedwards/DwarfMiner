@@ -330,6 +330,42 @@ public sealed class Planet
         _damage[i] = 0;
     }
 
+    /// <summary>Set the WHOLE door leaf through tile (x, y) — every contiguous door tile
+    /// above and below it — so a tall door opens and closes as ONE piece. The polar lattice
+    /// drifts a column between rings (towers stamp each ring's door at the tile nearest
+    /// their straight facade line), so the old same-angle world-space walk missed drifted
+    /// tiles and stranded parts of the leaf closed; this walks ring by ring, re-matching
+    /// the door column with a one-tile slack each step.</summary>
+    public void SetDoorRun(int x, int y, TileKind to)
+    {
+        static bool IsDoor(TileKind k) => k is TileKind.DoorClosed or TileKind.DoorOpen;
+        if (!IsDoor(Get(x, y))) return;
+        Set(x, y, to);
+        for (var dir = -1; dir <= 1; dir += 2)
+        {
+            var (cx, cy) = (x, y);
+            for (var step = 0; step < 8; step++)
+            {
+                var r = cx + dir;
+                if (r < 1 || r >= Rings) break;
+                var n = TilesAt(cx);
+                var nn = TilesAt(r);
+                var t0 = (int)(((cy % n + n) % n + 0.5f) / n * nn);
+                var found = false;
+                for (var d = 0; d >= -1; d = d == 0 ? 1 : d == 1 ? -1 : -2)
+                {
+                    var t = ((t0 + d) % nn + nn) % nn;
+                    if (!IsDoor(Get(r, t))) continue;
+                    Set(r, t, to);
+                    (cx, cy) = (r, t);
+                    found = true;
+                    break;
+                }
+                if (!found) break;
+            }
+        }
+    }
+
     public byte Damage(int x, int y) =>
         InBounds(x, y) ? _damage[Index(x, y)] : (byte)0;
 
