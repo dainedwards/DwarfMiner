@@ -444,7 +444,7 @@ public sealed class Player
         if (InWater && !onLadder)
         {
             var strokeN = verticalAxis != 0 ? verticalAxis * SwimSpeed
-                : jumpHeld ? SwimSpeed * 0.9f
+                : (jumpHeld || jetHeld) ? SwimSpeed * 0.9f
                 : -20f;
             vNormal = MoveToward(vNormal, strokeN, 500f * dt);
             vTangent = MoveToward(vTangent, moveAxis * SwimSpeed, 500f * dt);
