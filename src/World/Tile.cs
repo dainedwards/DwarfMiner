@@ -97,7 +97,10 @@ public static class Tiles
           or TileKind.DoorClosed or TileKind.DoorOpen
           or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp
           // A placed platform is a fixed ledge — it never caves in.
-          or TileKind.Platform;
+          or TileKind.Platform
+          // Trees & water plants stand where they grew (never crumble/fall).
+          or TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2
+          or TileKind.SeaFrond;
 
     /// <summary>Biome flora — decorative surface plants. NOT anchored (so a walking titan
     /// tramples them and settling terrain drops them naturally), but hazard-immune via the
