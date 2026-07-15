@@ -100,6 +100,57 @@ public sealed class Titan
     /// damage/knock-back the player and spew debris, since the Titan has no Player reference.</summary>
     public (Vector2 pos, float radius, float damage)? PendingShockwave;
 
+    // ─── Siege: kick low, fist high ───────────────────────────────────────────
+    /// <summary>A kick in flight: the nearest leg's step has been driven onto the base of a
+    /// structure (the existing step machinery IS the animation) and the landing will run
+    /// <see cref="KickImpact"/> — a one-blow breach across the boot plus a debris-pulverising
+    /// shockwave. Every walker kicks; only the arm kinds (<see cref="HasArms"/>) also throw
+    /// the Kong-style hand smash at the UPPER storeys.</summary>
+    public float KickTimer;
+    public Vector2 KickTarget;
+    private float _kickCooldown;
+    private bool _kickPending;
+
+    /// <summary>Kinds with real arms — they get the hand smash (shared state machine:
+    /// <see cref="SmashTimer"/> and friends, animated per kind by the renderer).</summary>
+    public static bool HasArms(TitanKind k) =>
+        k is TitanKind.Godzilla or TitanKind.Mecha or TitanKind.Kong
+          or TitanKind.Leatherback or TitanKind.Slattern;
+
+    /// <summary>Titan attacks grind toppled rigid debris straight to dust — Game1 consumes
+    /// this into <see cref="World.RigidBodies.Pulverize"/> (the Titan has no Rigid reference).
+    /// Mirrors the PendingShockwave hand-off pattern.</summary>
+    public (Vector2 pos, float radius)? PendingPulverize;
+
+    // ─── Rider shake-off ──────────────────────────────────────────────────────
+    /// <summary>Seconds a dwarf has been clinging to the hide (riding or grapple-latched).
+    /// Game1 accrues it at 2×dt while attached; Update decays it at 1×dt — past the
+    /// tolerance the monster thrashes (<see cref="ShakeTimer"/>) and flings the rider
+    /// (<see cref="PendingShakeOff"/>, consumed by Game1). EVERY kind shakes.</summary>
+    public float RiderTime;
+    public float ShakeTimer;
+    public bool PendingShakeOff;
+    private float _shakeCooldown;
+    private bool _shakeFlung;
+
+    // ─── Voice ────────────────────────────────────────────────────────────────
+    /// <summary>Sfx name queued when an attack starts (smash windup, kick, special windup,
+    /// shake-off) — Game1 consumes and plays it at the body. Set with ??= so the first
+    /// event of a frame wins and the voice never stacks.</summary>
+    public string? PendingRoar;
+    /// <summary>The movie-monster register per kind: the big walkers bellow, the light
+    /// sprinters and the flyers screech.</summary>
+    public string RoarVoice =>
+        Flyer || Kind is TitanKind.Raiju or TitanKind.Otachi ? "screech" : "roar";
+    private float _prevSpecial;
+
+    // ─── Weakpoints ───────────────────────────────────────────────────────────
+    /// <summary>Radius of a shootable weakpoint — a projectile landing inside one deals
+    /// triple damage (see Systems.Combat) and lights <see cref="WeakpointFlash"/>.</summary>
+    public const float WeakpointRadius = 18f;
+    public float WeakpointFlash;
+    private readonly List<Vector2> _weakpoints = new();
+
     /// <summary>Knifehead mid-gore / Raiju mid-dash — the renderer leans the body into the
     /// sprint and Game1's HUD can read it. Cleared when the burst resolves.</summary>
     public bool Charging;
