@@ -2372,7 +2372,7 @@ public sealed class Cells
                 // grid target's texel centres), at most 4 cells at full speed, thinning as
                 // it stretches so it stays one grain's worth of ink — motion blur of a
                 // grain, not a growing rectangle.
-                var len = MathHelper.Clamp(speed * 0.016f, PxPerCell, PxPerCell * 4f);
+                var len = MathHelper.Clamp(speed * 0.016f, PxPerCell, PxPerCell * 6f);
                 var wid = MathF.Max(PxPerCell * 0.8f, PxPerCell * PxPerCell / len);
                 var rot = speed > 1f ? MathF.Atan2(f.Vel.Y, f.Vel.X) : 0f;
                 r.Batch.Draw(r.Pixel, f.Pos, null, col, rot,
