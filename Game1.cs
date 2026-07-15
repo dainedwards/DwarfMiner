@@ -3548,20 +3548,9 @@ public sealed partial class DwarfMinerGame : Game
             var k = _run.Planet.Get(tx, ty);
             if (k is not (TileKind.DoorClosed or TileKind.DoorOpen)) return false;
             var to = k == TileKind.DoorClosed ? TileKind.DoorOpen : TileKind.DoorClosed;
-            _run.Planet.Set(tx, ty, to);
-            // The whole leaf swings together: walk the contiguous vertical run of door
-            // tiles both ways (city doors are several tiles tall).
-            var up = _run.Planet.UpAt(at);
-            foreach (var s in new[] { 1f, -1f })
-            {
-                for (var step = 1; step <= 6; step++)
-                {
-                    var (nx, ny) = _run.Planet.WorldToTile(at + up * (Planet.TileSize * step * s));
-                    if (_run.Planet.Get(nx, ny) is not (TileKind.DoorClosed or TileKind.DoorOpen))
-                        break;
-                    _run.Planet.Set(nx, ny, to);
-                }
-            }
+            // The whole leaf swings together — Planet.SetDoorRun walks the run ring by
+            // ring with column slack, so the drifted upper tiles come along too.
+            _run.Planet.SetDoorRun(tx, ty, to);
             PlayAt("creak", at, 0.5f, pitch: to == TileKind.DoorOpen ? 0.3f : -0.2f);
             return true;
         }
