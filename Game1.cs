@@ -1548,7 +1548,7 @@ public sealed partial class DwarfMinerGame : Game
         }
         if (Pressed(keys, _prevKeys, Keys.F9))
         {
-            if (!_debugMenu.Open) _debugMenu.SetEntries(BuildDebugEntries());
+            if (!_debugMenu.Open) _debugMenu.SetTabs(BuildDebugTabs());
             _debugMenu.Toggle();
             _prevKeys = keys; _prevMouse = mouse; base.Update(gameTime); return;
         }
