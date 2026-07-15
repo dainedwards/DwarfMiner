@@ -5467,6 +5467,17 @@ public sealed partial class DwarfMinerGame : Game
                         new Vector2(3f, 1.2f), Color.White, sAng);
                     break;
                 }
+                case TitanShotKind.Dart:
+                {
+                    // Blowdart: a thin reed shaft tipped with a dark point and a little tuft at
+                    // the tail, turned to face the way it's travelling as it arcs.
+                    var sAng = MathF.Atan2(shot.Velocity.Y, shot.Velocity.X);
+                    var fwd = Vector2.Normalize(shot.Velocity);
+                    _renderer.DrawRect(shot.Position, new Vector2(7f, 1.3f), new Color(196, 176, 120), sAng);
+                    _renderer.DrawRect(shot.Position + fwd * 3.4f, new Vector2(2.2f, 1.8f), new Color(70, 90, 60), sAng); // dark point
+                    _renderer.DrawRect(shot.Position - fwd * 3.2f, new Vector2(1.6f, 3f), new Color(230, 90, 90), sAng);  // fletch tuft
+                    break;
+                }
                 default:   // Laser
                 {
                     var ang = MathF.Atan2(shot.Velocity.Y, shot.Velocity.X);
