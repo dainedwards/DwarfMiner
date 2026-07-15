@@ -129,6 +129,11 @@ public sealed class Projectile
     /// city's fight.</summary>
     public bool FriendlyToNeutrals;
 
+    /// <summary>Mining power a blast applies to anchored city architecture (alloy/glass/brick)
+    /// per detonation. Ordinary explosives barely chip it (2); the energy ball hits it hard
+    /// (12) so a fully-charged shot breaks alien metal in ~4 detonations.</summary>
+    public int AlloyMinePower = 2;
+
     public Projectile(Vector2 pos, Vector2 vel, float damage, float life, ProjectileKind kind = ProjectileKind.Bullet)
     {
         Position = pos;
