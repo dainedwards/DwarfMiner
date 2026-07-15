@@ -5621,16 +5621,43 @@ public sealed partial class DwarfMinerGame : Game
                 blobMode ? SamplerState.LinearClamp : SamplerState.PointClamp,
                 null, null, null, _camera.View);
             _run.Cells.DrawLiquids(_renderer, viewCentre, viewRadius, blobMode);
+            // Acid-spewer grains join the SAME coverage field: the stream and the pool
+            // it feeds threshold into one connected body — the spray genuinely merges
+            // into what it lands in.
+            if (blobMode) _particles.DrawFluid(_renderer, Material.Acid);
             _renderer.Batch.End();
+
+            // Flame stream in its OWN coverage field: fire must never metaball-fuse with
+            // water/acid bodies it crosses. Same fill, same composite shader, fire inks.
+            if (blobMode)
+            {
+                if (_flameRt == null || _flameRt.Width != lw || _flameRt.Height != lh)
+                {
+                    _flameRt?.Dispose();
+                    _flameRt = new RenderTarget2D(GraphicsDevice, lw, lh, false,
+                        SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+                }
+                GraphicsDevice.SetRenderTarget(_flameRt);
+                GraphicsDevice.Clear(Color.Transparent);
+                _renderer.Batch.Begin(SpriteSortMode.Deferred, Renderer.LiquidFillBlend,
+                    SamplerState.LinearClamp, null, null, null, _camera.View);
+                _particles.DrawFluid(_renderer, Material.Fire);
+                _renderer.Batch.End();
+            }
         }
+        // Fluid-mode flag for the particle draw: while the metaball composite is live,
+        // hose grains render as the fluid body above and skip their strand quads.
+        _particles.FluidMode = liquidPass && _renderer.LiquidShaderOn;
         if (_pixelK > 0) GraphicsDevice.SetRenderTarget(_worldRt);
         else if (liquidPass) GraphicsDevice.SetRenderTarget(_sceneRt);
 
         _renderer.DrawWorld(_run.Planet, _camera);
 
         // Liquids sit above the terrain (and its crust) but below every entity — same
-        // layer they occupied when they drew inside the cell batch.
+        // layer they occupied when they drew inside the cell batch. The flame stream
+        // composites through the same metaball shader, right above the liquids.
         if (liquidPass) _renderer.CompositeLiquids(_liquidRt!);
+        if (_particles.FluidMode) _renderer.CompositeLiquids(_flameRt!);
 
         _renderer.BeginEntities(_camera);
 
