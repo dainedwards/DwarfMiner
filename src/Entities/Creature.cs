@@ -250,20 +250,21 @@ public sealed class Creature
             case CreatureKind.NullMoth:
                 Radius = 3.5f; Health = 9f; MoveSpeed = 30f; ContactDamage = 0f; Hostile = false;
                 break;
-            // The aliens are hardy for their size — double the health their frames suggest,
-            // so a citizen or guard soaks twice the hits before dropping.
+            // Civilians stay soft (a fleeing citizen isn't a bullet sponge); every OTHER
+            // alien-civilisation entity is now 4× hardier — the guards, air patrol and warren
+            // warriors take real firepower to drop.
             case CreatureKind.Civilian:
                 Radius = 3.5f; Health = 24f; MoveSpeed = 42f; ContactDamage = 0f; Hostile = false;
                 break;
             case CreatureKind.Lizardman:
-                Radius = 4f; Health = 30f; MoveSpeed = 58f; ContactDamage = 12f;
+                Radius = 4f; Health = 120f; MoveSpeed = 58f; ContactDamage = 12f;
                 _cd = 0.8f + (float)Random.Shared.NextDouble(); // first spear is never instant
                 break;
             case CreatureKind.Peacekeeper:
-                Radius = 3.8f; Health = 52f; MoveSpeed = 48f; ContactDamage = 0f; Hostile = false;
+                Radius = 3.8f; Health = 208f; MoveSpeed = 48f; ContactDamage = 0f; Hostile = false;
                 break;
             case CreatureKind.Saucer:
-                Radius = 6f; Health = 44f; MoveSpeed = 55f; ContactDamage = 0f; Hostile = false;
+                Radius = 6f; Health = 176f; MoveSpeed = 55f; ContactDamage = 0f; Hostile = false;
                 break;
             case CreatureKind.AlienWhale:
                 Radius = 11f; Health = 90f; MoveSpeed = 26f; ContactDamage = 0f; Hostile = false;
