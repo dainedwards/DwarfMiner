@@ -38,6 +38,31 @@ public static class Weather
         var kind = TreeEcology.RainFor(run.Def);
         var rng = Random.Shared;
 
+        // Snow lies for good only on the ice world; everywhere else a landed flake slowly
+        // sublimates (see the snow clause in Cells.TickSand). Refreshed here so the flag
+        // always tracks the world the player is actually on.
+        run.Cells.SnowPersists = run.Def.Biome == "frost";
+
+        // Falling leaves: a standing tree near the player sheds the odd leaf in its own
+        // canopy colour — the cheapest "the forest is alive" signal there is. Roll a few
+        // times a second, pick a random tree, and only bother if it's within earshot.
+        if (run.Trees.Count > 0 && rng.NextDouble() < dt * 2.5f)
+        {
+            var tree = run.Trees[rng.Next(run.Trees.Count)];
+            var rel2 = run.Player.Position - planet.Center;
+            var pAng = MathF.Atan2(rel2.Y, rel2.X);
+            if (tree.Standing && MathF.Abs(MathHelper.WrapAngle(tree.Angle - pAng)) < 0.3f)
+            {
+                var ring = Math.Min(planet.Rings - 2, tree.GroundR + tree.Height + rng.Next(3) - 1);
+                var rad = (Planet.RingMin + ring + 0.5f) * Planet.TileSize;
+                var la = tree.Angle + (rng.Next(5) - 2) * (Planet.TileSize / rad);
+                var lpos = planet.Center + new Vector2(MathF.Cos(la), MathF.Sin(la)) * rad;
+                var (leaf, leafDk, _) = Renderer.TreeLeafFor(run.Def.Biome,
+                    tree.Canopy == TileKind.TreeCanopy2);
+                particles.EmitLeaf(lpos, -planet.UpAt(lpos), rng.Next(2) == 0 ? leaf : leafDk);
+            }
+        }
+
         // Form new clouds on a slow clock, biased to drift into view near the player so the
         // weather reads as a moving system, not a fixed backdrop.
         run.CloudTimer -= dt;
