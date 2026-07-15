@@ -298,7 +298,7 @@ public sealed class Particles
         var baseColor = Tiles.BaseColor(kind);
         var fade = Color.Multiply(baseColor, 0.25f);
         // Ring of shards thrown radially outward — heavier and slower than mining chips.
-        for (var i = 0; i < 14; i++)
+        for (var i = 0; i < 26; i++)
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
             var spd = 80f + (float)_rng.NextDouble() * 70f;
@@ -310,26 +310,26 @@ public sealed class Particles
                 MaxLife = 1.1f,
                 Color = baseColor,
                 FadeColor = fade,
-                Size = 1.5f + (float)_rng.NextDouble(),
+                Size = 0.9f + (float)_rng.NextDouble() * 0.5f,
                 GravityScale = 1f,
                 Drag = 0.8f,
                 CollideTiles = true,
             });
         }
         // Dust shroud
-        for (var i = 0; i < 10; i++)
+        for (var i = 0; i < 22; i++)
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
             var spd = 18f + (float)_rng.NextDouble() * 30f;
             _list.Add(new Particle
             {
-                Position = pos,
+                Position = pos + Jitter(2f),
                 Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * spd,
                 Life = 0.7f + (float)_rng.NextDouble() * 0.6f,
                 MaxLife = 1.3f,
                 Color = new Color(150, 140, 130),
                 FadeColor = new Color(35, 30, 30),
-                Size = 2f + (float)_rng.NextDouble() * 1.5f,
+                Size = 1f + (float)_rng.NextDouble() * 0.6f,
                 GravityScale = -0.05f,
                 Drag = 0.6f,
             });
