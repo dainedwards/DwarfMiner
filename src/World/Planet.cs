@@ -625,3 +625,19 @@ public sealed class Planet
         for (var i = 0; i < profLen; i++) SurfaceProfile![i] = r.ReadSingle();
     }
 }
+
+/// <summary>A living tree the ecosystem tracks: where it roots, its species/size, and its
+/// regrowth state. A felled tree keeps its underground roots, and TreeEcology grows the
+/// trunk back over time — faster the more the biome's rain (or standing water/acid/fire)
+/// waters the roots. Mutable class so the regrow tick can update it in place.</summary>
+public sealed class TreeSite
+{
+    public float Angle;             // bearing the trunk rises on
+    public int GroundR;             // ring of the ground tile; the trunk starts at GroundR + 1
+    public byte Species;            // shape family: 0 spire, 1 broad, 2 umbrella, 3 weeping
+    public byte Height;             // full trunk height in tiles
+    public TileKind Canopy = TileKind.TreeCanopy;
+    public float Growth = 1f;       // 0..1 regrow progress (1 = fully grown and standing)
+    public float Moisture;          // recent watering, decays over time; speeds regrowth
+    public bool Standing = true;    // trunk currently present (cleared when the base is felled)
+}
