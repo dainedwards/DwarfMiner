@@ -801,7 +801,8 @@ public sealed partial class DwarfMinerGame : Game
                                 CreatureKind.AlienWhale, CreatureKind.AlienCrab,
                                 CreatureKind.Moonlet, CreatureKind.VacLeech, CreatureKind.Glimmermaw,
                                 CreatureKind.StarJelly, CreatureKind.VoidBarnacle,
-                                CreatureKind.Selenite, CreatureKind.DustDevil };
+                                CreatureKind.Selenite, CreatureKind.DustDevil,
+                                CreatureKind.Kraken };
             for (var i = 0; i < kinds.Length; i++)
                 _run.Creatures.Add(new Creature(
                     _run.Player.Position + fRight * (26f + i * 22f) + fUp * 8f, kinds[i]));
