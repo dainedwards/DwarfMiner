@@ -2386,6 +2386,113 @@ public sealed class Cells
         }
     }
 
+    /// <summary>Scratch for the waterline pass — surface cells found during the liquid
+    /// scan, drawn as one overlapping band strip after the bodies.</summary>
+    private readonly List<(int cx, int cy, byte m)> _surface = new();
+
+    /// <summary>The LIQUID PASS: Water/Acid/Oil grid cells rasterized into the dedicated
+    /// liquid render target (Game1 owns the target + batch state and composites the result
+    /// over the world in ONE blend — see Renderer.CompositeLiquids). Two fill modes:
+    ///  - blob (<paramref name="blobMode"/>, composite shader live): every cell touching
+    ///    air draws the soft LiquidBlob three cells wide so its alpha COVERAGE spills into
+    ///    neighbouring texels; the shader's threshold then rounds pool edges and fuses
+    ///    near droplets — the metaball surface-tension look. Interior cells (all four
+    ///    sides blocked) stay flat single-cell quads: their coverage is saturated anyway,
+    ///    and the small quad keeps the shimmer per-cell instead of blob-stamping it.
+    ///  - plain (no shader): hard quads with per-material translucency in the ALPHA
+    ///    channel, drawn under BlendState.Opaque (replace, not blend) — the
+    ///    NonPremultiplied composite blit then blends the body over the scene exactly once.
+    /// Surface cells additionally draw the WATERLINE: wide overlapping bright bands whose
+    /// bob phase is an integer wave count around the ring (continuous across the wrap), so
+    /// pools get one connected undulating surface line instead of per-cell bobbing squares.
+    /// Runs at stride 1 only — the zoomed-out LODs keep liquids in <see cref="Draw"/>.</summary>
+    public void DrawLiquids(Renderer r, Vector2 viewCentre, float viewRadius, bool blobMode)
+    {
+        var radial = (float)Planet.TileSize / Density;
+        var (cyMin, cyMax) = VisibleRows(viewCentre, viewRadius, out var camAng);
+        var blob = r.LiquidBlob;
+        var blobOrigin = new Vector2(blob.Width / 2f, blob.Height / 2f);
+        _surface.Clear();
+        for (var cy = cyMin; cy <= cyMax; cy++)
+        {
+            var n = _cellsAt[cy];
+            var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
+            var chord = MathHelper.TwoPi * ringRadius / n;
+            var halfAng = MathF.Min(MathF.PI, viewRadius / MathF.Max(ringRadius, 1f));
+            var cx0 = (int)(camAng / MathHelper.TwoPi * n);
+            var range = Math.Min(n / 2, (int)(halfAng / MathHelper.TwoPi * n) + 2);
+            var angStep = MathHelper.TwoPi / n;
+            for (var d = -range; d <= range; d++)
+            {
+                var cx = cx0 + d;
+                var idx = Idx(cx, cy);
+                var m = (Material)_mat[idx];
+                if (m is not (Material.Water or Material.Acid or Material.Oil)) continue;
+                var cellAng = (cx + 0.5f) * angStep;
+                var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
+                var centre = Planet.Center + up * ringRadius;
+                var rotation = cellAng + MathHelper.PiOver2;
+                // Sub-cell fall offset, same as Draw — streams glide between rows.
+                var frac = MathF.Min(_travel[idx], 1f);
+                if (frac > 0f) centre -= up * (frac * radial);
+                var openOut = false;
+                if (cy < Height - 1)
+                {
+                    var (ocx, ocy) = OuterCell(cx, cy, 0);
+                    openOut = !IsBlocked(ocx, ocy);
+                }
+                var openIn = false;
+                if (cy > 0)
+                {
+                    var (icx, icy) = InnerCell(cx, cy);
+                    openIn = !IsBlocked(icx, icy);
+                }
+                var body = LiquidBody(m, cx, cy);
+                var col = new Color(body.R, body.G, body.B, (byte)(MatAlpha(m) * 255f));
+                var interior = !openOut && !openIn && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy);
+                if (blobMode && !interior)
+                {
+                    r.Batch.Draw(blob, centre, null, col, rotation, blobOrigin,
+                        new Vector2(chord * 3f / blob.Width, radial * 3f / blob.Height),
+                        SpriteEffects.None, 0f);
+                }
+                else
+                {
+                    // Neighbour-aware padding as in Draw: bleed only into occupied sides so
+                    // pools stay seamless while a lone droplet keeps its own grain size.
+                    var chordPad = IsBlocked(cx - 1, cy) || IsBlocked(cx + 1, cy) ? 0.5f : 0.1f;
+                    var radialPad = !openIn || !openOut ? 0.5f : 0.1f;
+                    r.Batch.Draw(r.Pixel, centre, null, col, rotation, new Vector2(0.5f, 0.5f),
+                        new Vector2(chord * (1f + chordPad), radial * (1f + radialPad)),
+                        SpriteEffects.None, 0f);
+                }
+                if (openOut && _surface.Count < 4096) _surface.Add((cx, cy, (byte)m));
+            }
+        }
+
+        // Waterline: one wide band per surface cell, overlapping its neighbours, bobbing
+        // on a wave whose count divides the ring — a continuous line, drawn after every
+        // body quad so its colour wins the replace blend.
+        foreach (var (cx, cy, mb) in _surface)
+        {
+            var m = (Material)mb;
+            var n = _cellsAt[cy];
+            var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
+            var chord = MathHelper.TwoPi * ringRadius / n;
+            var cellAng = (WrapX(cx, n) + 0.5f) * (MathHelper.TwoPi / n);
+            var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
+            var waves = Math.Max(1, n / 24);
+            var speed = m == Material.Water ? 2.4f : m == Material.Acid ? 1.8f : 1.0f;
+            var wave = MathF.Sin(_time * speed - cellAng * waves);
+            var centre = Planet.Center + up * (ringRadius + wave * radial * 0.6f);
+            var body = SurfaceColor(m);
+            var col = new Color(body.R, body.G, body.B, (byte)(MatAlpha(m) * 255f));
+            r.Batch.Draw(r.Pixel, centre, null, col, cellAng + MathHelper.PiOver2,
+                new Vector2(0.5f, 0.5f), new Vector2(chord * 2.2f, radial * 0.9f),
+                SpriteEffects.None, 0f);
+        }
+    }
+
     /// <summary>Lava/acid glow emitters. Same LOD contract as <see cref="Draw"/> — the
     /// zoomed-out stride keeps the scan (and the per-light lightmap blits) bounded.</summary>
     public void AddLights(Renderer r, Vector2 viewCentre, float viewRadius, int stride = 1)
