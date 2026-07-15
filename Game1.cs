@@ -1669,7 +1669,7 @@ public sealed partial class DwarfMinerGame : Game
         if (keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up)) verticalAxis += 1;
         if (keys.IsKeyDown(Keys.S) || keys.IsKeyDown(Keys.Down)) verticalAxis -= 1;
 
-        // G toggles fly mode for world testing.
+        // G toggles god mode for world testing.
         if (Pressed(keys, _prevKeys, Keys.G))
         {
             _run.Player.FlyMode = !_run.Player.FlyMode;
@@ -1683,9 +1683,23 @@ public sealed partial class DwarfMinerGame : Game
                 GrantGodmodeItems();
                 GrantGodmodeMaterials();
                 foreach (var w in GodWeaponIds) _run.Player.Toolbelt.AutoEquip(w);
-                _toast = "GOD MODE - FLIGHT, EVERY ITEM, AND 9999 OF EVERY MATERIAL";
+                _toast = "GOD MODE - PRESS H TO FLY, EVERY ITEM, 9999 OF EVERY MATERIAL";
                 _toastTimer = 3f;
             }
+            else
+            {
+                // Leaving god mode drops ghost flight too — you can't fly without it.
+                _run.Player.Flying = false;
+            }
+        }
+
+        // H toggles ghost flight, but only while in god mode — god mode no longer flies you
+        // automatically, so this is how the dev lifts off.
+        if (Pressed(keys, _prevKeys, Keys.H) && _run.Player.FlyMode)
+        {
+            _run.Player.Flying = !_run.Player.Flying;
+            _toast = _run.Player.Flying ? "FLIGHT ON" : "FLIGHT OFF";
+            _toastTimer = 2f;
         }
 
         // Immersion probes feed the swim model and the breath meter: body-centre water for
