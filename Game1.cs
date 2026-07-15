@@ -3245,11 +3245,11 @@ public sealed partial class DwarfMinerGame : Game
         dir.Normalize();
         var muzzle = _run.Player.Position + dir * 8f;
         var reach = StreamReach();
-        // A tight caustic rope of acid cells (they collide with tiles, so it runs down walls
-        // instead of through them). Reach grows the longer fire is held.
-        for (var i = 0; i < 2; i++)
+        // A caustic rope of acid cells (they collide with tiles, so it runs down walls instead
+        // of through them). Reach grows the longer fire is held; spread matches the visible fan.
+        for (var i = 0; i < 3; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.09f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.16f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
