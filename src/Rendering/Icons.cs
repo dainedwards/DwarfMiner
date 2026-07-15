@@ -1228,32 +1228,38 @@ public static class Icons
         ['b'] = new Color(40, 40, 48),
     });
 
+    // The energy ball is fired from an ALIEN CANNON — a dark curved shell over a glowing
+    // energy core, flaring to a wide emitter muzzle where the orb charges.
     private static Texture2D BuildNuke(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
     {
         "................",
-        "......PP........",
-        ".....PpppP......",
-        "....PpoooopP....",
-        "...PpoMMMoopP...",
-        "..PpoMMMMMoopP..",
-        "..PpoMMMMMoopP..",
-        "..PpoMMMMMoopP..",
-        "..PpooooooopP...",
-        "..PppppppppP....",
-        "...PPPPPPPP.....",
-        "....KKKKKK......",
-        ".....KKKK.......",
-        "................",
+        "...KKKKK........",
+        "..KooooKK.......",
+        "..KoCCCoKKK.....",
+        "..KoCMCoooKK..OO",
+        "..KoCMCCCCoK.OMO",
+        "..KoCMCCCCoK.OMO",
+        "..KoCMCoooKK..OO",
+        "..KoCCCoKKK.....",
+        "..KooooKK.......",
+        "...KKKKK........",
+        "....KK..........",
+        "...DDDD.........",
+        "...DDDD.........",
         "................",
         "................",
     }, new Dictionary<char, Color>
     {
         ['.'] = Color.Transparent,
+        ['K'] = new Color(46, 40, 60),      // dark alien shell
+        ['o'] = new Color(78, 66, 104),     // shell mid
+        ['C'] = new Color(150, 110, 235),   // energy violet
+        ['M'] = new Color(235, 215, 255),   // hot core
+        ['O'] = new Color(120, 90, 210),    // muzzle emitter glow
+        ['D'] = new Color(70, 62, 95),      // grip
         ['P'] = new Color(255, 80, 200),
         ['p'] = new Color(180, 40, 130),
-        ['o'] = new Color(60, 25, 60),
-        ['M'] = new Color(255, 180, 240),
-        ['K'] = new Color(40, 30, 30),
+        ['K'] = new Color(46, 40, 60),
     });
 
     private static Texture2D BuildHarpoon(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
