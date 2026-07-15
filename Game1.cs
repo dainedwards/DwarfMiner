@@ -4907,6 +4907,9 @@ public sealed partial class DwarfMinerGame : Game
 
     /// <summary>Next-frame deadline for the manual limiter, in Stopwatch ticks.</summary>
     private long _nextFrameAt;
+    /// <summary>Measured worst-recent cost of a Thread.Sleep(1), in Stopwatch ticks —
+    /// starts at the nominal ~2 ms and adapts (see the limiter in EndDraw).</summary>
+    private long _sleepCost = System.Diagnostics.Stopwatch.Frequency / 500;
 
     /// <summary>Times the platform Present (the backbuffer swap) — GPU saturation and
     /// driver sync stalls surface HERE, invisible to the Update/Draw CPU timers ("swap"
