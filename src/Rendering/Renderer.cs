@@ -381,6 +381,8 @@ public sealed class Renderer
                 _tileAtlas.Width / (float)TileAtlas.Res,
                 _tileAtlas.Height / (float)TileAtlas.Res,
                 CarveAmp, CarveFreq));
+            _fxPs2!.SetValue(new Vector4(
+                CarveAmp * CarveCeilMul, CarveAmp * CarveSideMul, CrustWidth, 0f));
         }
         _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view, effect: _tileFx);
 
