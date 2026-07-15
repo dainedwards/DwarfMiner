@@ -458,7 +458,7 @@ public sealed class Physics
     /// <summary>Condemn a region: enqueue it to tremble, then crumble bottom-to-top. Tiles
     /// already pending from an earlier settle pass are skipped, so the re-detection that
     /// happens every settle tick while the region still stands doesn't restart the timer.</summary>
-    private void CollapseRegion(List<int> region)
+    private void CollapseRegion(List<int> region, bool sky)
     {
         PendingCollapse? p = null;
         foreach (var idx in region)
@@ -473,10 +473,13 @@ public sealed class Physics
             NewlyCondemnedThisTick++;
         }
         if (p is null) return;
-        // Small enough to hold together: the region shears off as one rigid chunk when the
-        // tremble ends. Bigger regions keep the dust cascade — both for the spectacle and
-        // because a giant massif as one rotating body would read as a cardboard cutout.
-        p.Rigid = DetachToRigid is not null && p.Tiles.Count <= RigidBodies.MaxDetachTiles;
+        p.Sky = sky;
+        // Small enough to hold together — or fully above ground: those shear off as one
+        // rigid piece whatever their size (a skyscraper cut at the street, an undercut
+        // mountain, topple whole). Oversized regions with the crust backdrop behind them
+        // keep the dust cascade.
+        p.Rigid = DetachToRigid is not null
+            && (sky || p.Tiles.Count <= RigidBodies.MaxDetachTiles);
         // Innermost ring first = "bottom" in polar gravity, so the crumble sweeps upward.
         // Plain int sort: ring offsets are monotonic, so flat indices already order by ring
         // (the old comparator paid two UnIndex binary searches per comparison for the same
