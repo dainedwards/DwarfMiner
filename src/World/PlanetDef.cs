@@ -197,8 +197,8 @@ public static class PlanetDefs
         // only proven down to it (a 0.55 experiment left the lava sea leaking into the
         // dry strata: ~75k cells churning forever, worse than the giant world).
         SizeScale: 0.7f, LakeScale: 1.4f,
-        AcidPools: 2, AcidRain: true,
-        Volcanoes: 2, VolcanoScale: 1.1f,
+        AcidPools: 2, AcidRain: true, LakePair: true,
+        Volcanoes: 1, VolcanoScale: 1.1f,
         // One civilisation per planet holds on the QA rig too: it keeps the tower district
         // (city QA), and warren QA runs on slag/core via DM_AUTOSTART + DM_WARREN.
         CityLots: 2,
