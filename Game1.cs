@@ -1943,6 +1943,7 @@ public sealed partial class DwarfMinerGame : Game
         // are recycled — they'd never be met again, they eat sim time, and every recycled
         // body frees local-population budget so the spawner keeps the area around the player
         // stocked as they travel.
+        tPerf = FramePerf.Now();
         for (var i = _run.Creatures.Count - 1; i >= 0; i--)
         {
             var c = _run.Creatures[i];
