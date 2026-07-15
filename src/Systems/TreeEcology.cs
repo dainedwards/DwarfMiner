@@ -156,11 +156,17 @@ public static class TreeEcology
             for (var t = 0; t < n; t++)
             {
                 if (p.Get(r, t) != TileKind.TreeRoot) continue;
-                // Only the shallowest root of a column seeds a site (the tile one ring outward
-                // is soil, not another root) so each tree is rebuilt exactly once.
+                // Seed a site only from a TAPROOT top: the tile one ring outward is soil (this
+                // is the shallowest root) AND the tile one ring inward is another root (a
+                // vertical taproot run below). This ignores the shallow lateral flare roots,
+                // which are lone tiles, so each tree is rebuilt exactly once — never a phantom
+                // site under a spreading side-root.
                 var outN = p.TilesAt(r + 1);
                 var outT = (int)((t + 0.5f) / n * outN);
-                if (p.Get(r + 1, outT) == TileKind.TreeRoot) continue;
+                if (p.Get(r + 1, outT) == TileKind.TreeRoot) continue;   // not the shallowest
+                var inN = p.TilesAt(r - 1);
+                var inT = (int)((t + 0.5f) / n * inN);
+                if (p.Get(r - 1, inT) != TileKind.TreeRoot) continue;    // lone lateral root — skip
 
                 var groundR = r + 1;
                 var ang = (t + 0.5f) / n * MathHelper.TwoPi;
