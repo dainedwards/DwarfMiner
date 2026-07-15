@@ -1138,6 +1138,10 @@ public sealed partial class DwarfMinerGame : Game
         run.Player.Gravity = 320f * run.Def.GravityScale;
         // Loading woke every cell; burn the resettle here like world gen's pre-settle pass.
         for (var i = 0; i < 45; i++) _run.Cells.Update(1f / 60f);
+        // Trees live in the saved tile grid, but their ecosystem sites aren't serialized — walk
+        // the grid for TreeRoot columns and rebuild the sites so regrowth and rain-watering
+        // keep working on a resumed world.
+        TreeEcology.RebuildSites(_run);
         // Creatures aren't saved — re-seed the planet-wide resident census (cities staffed,
         // warrens garrisoned, lakes stocked) so a resumed world isn't a ghost town.
         SpawnDirector.PopulateWorld(_run);
