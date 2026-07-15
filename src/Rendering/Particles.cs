@@ -1203,7 +1203,7 @@ public sealed class Particles
     /// The grains ARE the weapon now (no launched payload cells — they could never share
     /// the particle arc exactly): every grain stamps its material where it lands and
     /// throws the touchdown spark splash. Lights ride the hot minority only.</summary>
-    private void EmitJetCore(Vector2 pos, Vector2 dir, float reach, Vector2 up,
+    private void EmitJetCore(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel,
         Color[] tones, int hotTones, Color fade, Material landMat,
         Color lightColor, float hotLight, float bodyLight, float drag)
     {
