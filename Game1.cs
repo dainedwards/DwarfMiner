@@ -536,10 +536,15 @@ public sealed partial class DwarfMinerGame : Game
         run.Planet = WorldGen.Generate(seed, def);
         run.Cells = new Cells(run.Planet);
         run.Physics = new Physics(run.Planet, run.Cells);
-        // Lava seeding: any cave (Sky tile) within the def's lava fraction of the planet
-        // radius gets filled with lava — volcanic worlds flood far shallower cavities.
+        // Lava seeding: caves (Sky tiles) inside the lava SEA band fill with lava —
+        // volcanic worlds flood far shallower cavities. The sea has a floor now
+        // (WorldGen.CaveStrata): below it lie the sealed dry strata, deep cave layers the
+        // player mines into, kept from ever plumbing into the sea by solid seams.
         if (def.LavaFillFrac > 0f)
-            run.Cells.FillSkyTilesWithin(run.Planet.Radius * def.LavaFillFrac, Material.Lava);
+        {
+            var (_, _, seaFloor) = WorldGen.CaveStrata(run.Planet, def);
+            run.Cells.FillSkyTilesWithin(run.Planet.Radius * def.LavaFillFrac, Material.Lava, seaFloor);
+        }
 
         // Volcano priming: the crater pool, throat, and magma chamber recorded by world gen
         // fill with lava so every volcano stands primed — a continuous column from the deep
