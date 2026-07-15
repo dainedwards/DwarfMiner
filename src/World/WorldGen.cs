@@ -1530,14 +1530,16 @@ public static class WorldGen
             var ok = false;
             for (var tries = 0; tries < 180 && !ok; tries++)
             {
-                // First half of the tries insists the whole row clears the mountains;
-                // the fallback half relaxes to the old centre-only margin.
-                var clearance = tries < 90 ? rowHalfAng + 0.04f : 0.16f;
+                // First half of the tries insists the whole row clears the mountains,
+                // the rover drop AND every stamped landmark — anything mid-row skips
+                // lots and splits the district. The fallback half relaxes to the old
+                // centre-only margins.
+                var rowPad = tries < 90 ? rowHalfAng : 0f;
                 cAng = (float)(rng.NextDouble() * MathHelper.TwoPi);
-                ok = !NearMountain(mountains, cAng, clearance)
-                     && AngDist(cAng, MathF.PI * 1.5f) > 0.3f;
+                ok = !NearMountain(mountains, cAng, rowPad + (tries < 90 ? 0.04f : 0.16f))
+                     && AngDist(cAng, MathF.PI * 1.5f) > 0.3f + rowPad;
                 for (var i = 0; ok && i < avoid.Count; i++)
-                    ok = AngDist(cAng, avoid[i].ang) > avoid[i].w + 0.14f;
+                    ok = AngDist(cAng, avoid[i].ang) > avoid[i].w + 0.14f + rowPad;
                 for (var i = 0; ok && i < centres.Count; i++)
                     ok = AngDist(cAng, centres[i]) > 0.95f;
             }
