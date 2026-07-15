@@ -1886,16 +1886,10 @@ public sealed class Cells
     {
         if (_rng.Next(24) != 0) return;
         if (c.cy < 0 || c.cy >= Height) return;
-        var tx = c.cy / Density;
-        var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
-        var k = Planet.Get(tx, ty);
-        if (!IsFlammable(k)) return;
-        if (!SpendChar()) return;   // tile DESTRUCTION draws the consumption budget
-        Planet.TakeGem(tx, ty);
-        Planet.Set(tx, ty, TileKind.Sky);
-        SpawnInTile(tx, ty, Material.Fire, Density);
-        SpawnInTile(tx, ty, Material.Smoke, Density / 2);
-        ShedBurningLeaves(tx, ty, k);
+        // Lava-side ignition also feeds the burning-tile lifecycle now — the registry
+        // owns spread, blaze and burn-out (see TickBurningTiles).
+        if (SpendFire())
+            IgniteTile(c.cy / Density, WrapX(c.cx, _cellsAt[c.cy]) / Density);
     }
 
     /// <summary>Leafy tiles don't just vanish into a stationary flame — the burning foliage
