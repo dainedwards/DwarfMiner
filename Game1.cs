@@ -2605,6 +2605,7 @@ public sealed partial class DwarfMinerGame : Game
         p.HasDrill = p.HasHammer = p.HasMiningLaser = p.HasCoreDrill = true;
         p.HasPistol = p.HasMachineGun = p.HasLaser = p.HasLaserCannon = p.HasRocketLauncher = true;
         p.HasFlamethrower = p.HasAcidSpewer = p.HasLightningGun = true;
+        p.HasGrapple = true;
         _run.HasCannon = true;
         p.PickaxeTier = 4;
         p.ScannerTier = 4;
