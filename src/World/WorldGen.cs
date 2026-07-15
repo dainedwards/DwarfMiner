@@ -471,8 +471,12 @@ public static class WorldGen
                     // fresh dry cave tiles down there would otherwise all roll gas seeds,
                     // and wandering gas is exactly the kind of never-sleeping cell load the
                     // strata design promises not to add.
+                    // One legacy tile of clearance above the flood: gas stays in its
+                    // authored home hugging the lava (ember's whole gas band lives there —
+                    // a fatter margin left that world with no gas at all), but never in
+                    // CONTACT with it, which ignited pockets during the load settle.
                     if (!isReservoir && def.SeedsGas && depth > 34f
-                        && radTiles > MathF.Max(seaFloorTiles, lavaTopTiles + 2f * S)
+                        && radTiles > MathF.Max(seaFloorTiles, lavaTopTiles + S)
                         && SampleNoise(pocketNoise, wx * 0.06f + 21f, wy * 0.06f + 21f) > 0.80f)
                         planet.GasSeeds.Add((r, t));
 
