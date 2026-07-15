@@ -2298,11 +2298,13 @@ public sealed class Cells
                 if (Vector2.DistanceSquared(f.Pos, viewCentre) > maxDistSq) continue;
                 var col = ColorFor((Material)f.Mat, (int)f.Pos.X, (int)f.Pos.Y, f.Src);
                 var speed = f.Vel.Length();
-                var len = MathHelper.Clamp(speed * 0.016f, PxPerCell * 0.7f, PxPerCell * 3f);
-                // Area-conserving smear: a stretched streak thins so it stays one grain's
-                // worth of ink — motion blur of a grain, not a growing rectangle. Base size
-                // ~0.7 px to match the half-px sub-grain skin resting cells draw with.
-                var wid = MathF.Max(0.4f, 0.7f * PxPerCell * PxPerCell / len);
+                // Streak length/width in CELL units so the smear scales with the grain:
+                // at least one full cell long (sub-cell quads flicker against the pixel-
+                // grid target's texel centres), at most 4 cells at full speed, thinning as
+                // it stretches so it stays one grain's worth of ink — motion blur of a
+                // grain, not a growing rectangle.
+                var len = MathHelper.Clamp(speed * 0.016f, PxPerCell, PxPerCell * 4f);
+                var wid = MathF.Max(PxPerCell * 0.8f, PxPerCell * PxPerCell / len);
                 var rot = speed > 1f ? MathF.Atan2(f.Vel.Y, f.Vel.X) : 0f;
                 r.Batch.Draw(r.Pixel, f.Pos, null, col, rot,
                     new Vector2(0.5f, 0.5f), new Vector2(len, wid), SpriteEffects.None, 0f);
