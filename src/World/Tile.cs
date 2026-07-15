@@ -235,7 +235,7 @@ public static class Tiles
         // (the renderer adds a live glint on top).
         TileKind.SilverOre => new Color(202, 208, 224),
         TileKind.GoldOre => new Color(198, 160, 74),
-        TileKind.PlatinumOre => new Color(200, 215, 220),
+        TileKind.PlatinumOre => new Color(206, 198, 172),   // warm champagne-pearl — NOT silver's blue-white
         TileKind.Ruby => new Color(160, 40, 60),
         TileKind.Sapphire => new Color(50, 70, 170),
         TileKind.Diamond => new Color(180, 220, 230),
