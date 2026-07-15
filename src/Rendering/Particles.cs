@@ -44,6 +44,12 @@ public struct Particle
     /// <summary>Multiplier on the motion-smear length (0 = 1×). The hoses use 2× so their
     /// strands read as long ribbons without touching the shared smear factor.</summary>
     public float SmearScale;
+    /// <summary>Fluid-body tag (a <see cref="Material"/>; 0 = none): hose grains render as
+    /// soft coverage blobs through the liquid metaball composite instead of as individual
+    /// strand quads — one connected tongue that absorbs per-grain arc differences (the
+    /// "spaghetti" of firing while accelerating). Only honoured while the composite is
+    /// live (see Particles.FluidMode); otherwise the grain draws as a normal strand.</summary>
+    public byte Fluid;
 }
 
 /// <summary>
