@@ -201,6 +201,25 @@ public sealed class Cells
         return true;
     }
 
+    // CONSUMPTION budget — separate from the spread budget above. Charring rolls scale
+    // with the adjacent flame POPULATION, and budding grows that population, so no char
+    // constant could keep an engulfed tree from eating itself in moments (and chars
+    // fought buds over one budget, making burn-through contention-erratic). This budget
+    // makes total tile consumption population-INDEPENDENT by construction: ~2.5 tiles/s
+    // planet-wide, however furiously things burn. Engulfment (~2 s via budding) therefore
+    // always beats burn-through — a small tree stands fully aflame long before its
+    // first-lit tile gives out — and a forest fire smoulders epically instead of
+    // deleting itself.
+    private float _charBudget = CharBudgetMax;
+    private const float CharBudgetMax = 6f;
+    private const float CharBudgetRegen = 2.5f;   // tile-chars per second, planet-wide
+    private bool SpendChar()
+    {
+        if (_charBudget < 1f) return false;
+        _charBudget -= 1f;
+        return true;
+    }
+
     // --- Compaction: buried, undisturbed grains re-form into Conglomerate tiles. ---
     // Per-cell timers would keep every resting grain awake, so the mechanic is tile-level
     // and sweep-based instead: TickSand records the owning tile whenever a grain comes to
@@ -983,6 +1002,7 @@ public sealed class Cells
     {
         _time += dt;
         if (_fireBudget < FireBudgetMax) _fireBudget = MathF.Min(FireBudgetMax, _fireBudget + FireBudgetRegen * dt);
+        if (_charBudget < CharBudgetMax) _charBudget = MathF.Min(CharBudgetMax, _charBudget + CharBudgetRegen * dt);
 
         UpdateFlying(dt);
 
@@ -1854,7 +1874,7 @@ public sealed class Cells
         var ty = WrapX(c.cx, _cellsAt[c.cy]) / Density;
         var k = Planet.Get(tx, ty);
         if (!IsFlammable(k)) return;
-        if (!SpendFire()) return;
+        if (!SpendChar()) return;   // tile DESTRUCTION draws the consumption budget
         Planet.TakeGem(tx, ty);
         Planet.Set(tx, ty, TileKind.Sky);
         SpawnInTile(tx, ty, Material.Fire, Density);
@@ -2049,14 +2069,13 @@ public sealed class Cells
             fuelled = true;
             if (below) burningFloor = true;
             // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke.
-            // CHARRING IS CONSUMPTION, and it's deliberately SLOW (base 110, floor 55 —
-            // the 2× floor bias keeps down-consumption pacing up-consumption despite fire
-            // piling against ceilings): the target contract is that a small tree is
-            // engulfed — every tile wreathed in flame via BUDDING below — well before
-            // the first-lit part burns through. Spread lives in the flames; charring is
-            // just the fuel slowly giving out underneath them.
-            if (_rng.Next(below ? 55 : 110) != 0) return;
-            if (!SpendFire()) return;
+            // The roll is RESPONSIVE (40, floor-biased 20) but the actual consumption
+            // pace is governed by the dedicated char budget below — population-
+            // independent, ~2.5 tiles/s planet-wide — so an engulfed tree burns as a
+            // standing bonfire and only gradually gives out underneath, first-lit tile
+            // included. The 2× floor bias keeps down-consumption pacing up-consumption.
+            if (_rng.Next(below ? 20 : 40) != 0) return;
+            if (!SpendChar()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
             Planet.TakeGem(tx, ty);
