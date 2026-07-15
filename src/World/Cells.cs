@@ -32,6 +32,11 @@ public enum Material : byte
     /// through it, so oil films collect on top of pools. Inert until a flame or lava tongue
     /// touches it, then it burns away cell by cell.</summary>
     Oil = 11,
+    /// <summary>Fallen snow. A powder that drifts and piles like sand; on frost worlds it
+    /// lies (and eventually presses into Snow tiles via the compaction sweep), elsewhere an
+    /// exposed flake slowly sublimates away. Fire and lava melt it to rain-tagged meltwater,
+    /// so slush dries out instead of flooding.</summary>
+    Snow = 12,
 }
 
 public static class Materials
