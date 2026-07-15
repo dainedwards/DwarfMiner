@@ -1446,38 +1446,48 @@ public sealed class Particles
         }
     }
 
-    /// <summary>Acid spewer spray: the liquid twin of the flamethrower — same stream core
-    /// (see <see cref="EmitJetCore"/>), acid inks, and every droplet that lands stamps a
-    /// real Acid cell (the corrosion mechanic itself now; acid self-depletes as it eats,
-    /// which keeps the spray from melting the planet). Neon leading droplets, bright
-    /// body, occasional deep green — a liquid rope needs dark grains for depth.</summary>
+    /// <summary>Acid spewer spray — DELIBERATELY INDEPENDENT of EmitFlameJet (split back
+    /// from the shared core per user; tune each weapon on its own). Droplets render as
+    /// the metaball liquid body (joining the pool coverage RT, so the spray fuses into
+    /// what it lands in); half stamp real Acid on landing — the corrosion mechanic itself
+    /// (acid self-depletes as it eats). NO secondary populations — the vapour wisps read
+    /// as stray stream effects and are gone.</summary>
     public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
     {
-        EmitJetCore(pos, dir, reach, up, shooterVel, AcidTones, hotTones: 1,
-            fade: new Color(40, 90, 25), landMat: Material.Acid,
-            lightColor: new Color(150, 240, 80), hotLight: 16f, bodyLight: 7f, drag: 1.0f);
-        var jetSpeed = reach * 1.35f;
-        // A caustic vapour wisp riding the rope FROM THE MUZZLE (never seeded mid-air
-        // along the stream — that materialised droplets in space that fell like rain).
-        // Per-frame emission now, so one wisp per frame matches the old 3-per-puff rate.
-        for (var i = 0; i < 1; i++)
+        var jetSpeed = reach * 1.35f;       // ~half the original spray speed
+        const float coneArc = 0.041f;       // tight cone (round 23)
+        const float smearCap = 17.6f;       // private smear cap (strand fallback only)
+        // 8 droplets EVERY FRAME minus a 1-in-5 skip — continuous rope, see EmitFlameJet.
+        for (var i = 0; i < 8; i++)
         {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
+            if (_rng.Next(5) == 0) continue;
+            var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            var hot = i < 3;   // neon leading droplets
+            var tone = AcidTones[hot ? 0 : _rng.Next(AcidTones.Length)];
+            var vel = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)) + shooterVel;
             _list.Add(new Particle
             {
-                Position = pos + d * (4f + (float)_rng.NextDouble() * 6f),
-                Velocity = d * (jetSpeed * (0.55f + (float)_rng.NextDouble() * 0.25f)) + shooterVel,
-                Life = 0.35f + (float)_rng.NextDouble() * 0.3f,
-                MaxLife = 0.65f,
-                Color = new Color(90, 150, 55),
-                FadeColor = new Color(30, 55, 25),
-                Size = 0.9f + (float)_rng.NextDouble() * 0.4f,
-                GravityScale = HoseArcGravity * 0.8f,   // rides (nearly) the rope's own arc
-                Drag = 1.6f,
+                Position = pos - shooterVel * ((float)_rng.NextDouble() * 0.016f)
+                         + d * (float)_rng.NextDouble() * 1.5f,
+                Velocity = vel,
+                Life = 0.8f + (float)_rng.NextDouble() * 0.55f,
+                MaxLife = 1.35f,
+                Color = tone,
+                FadeColor = new Color(40, 90, 25),
+                Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
+                GravityScale = HoseArcGravity,
+                Drag = 1.0f,
                 CollideTiles = true,
+                LightRadius = hot ? 16f : i % 3 == 0 ? 7f : 0f,
+                LightColor = new Color(150, 240, 80),
+                LandMat = CellFx && _rng.Next(2) == 0 ? (byte)Material.Acid : (byte)0,
+                LandSparks = true,
+                SmearMax = smearCap,
+                SmearScale = 2f,
+                Fluid = (byte)Material.Acid,
             });
         }
     }
