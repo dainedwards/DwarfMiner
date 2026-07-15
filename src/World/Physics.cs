@@ -179,7 +179,7 @@ public sealed class Physics
         var (x, y) = _planet.UnIndex(idx);
         var k = _planet.Get(x, y);
         // The tile may have been mined (or melted) during the tremble — nothing to do.
-        if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) return;
+        if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k) || Tiles.IsFlora(k)) return;
         _planet.Set(x, y, TileKind.Sky);
         _cells.SpawnDustInTile(x, y, k);
         CollapsesThisTick++;
@@ -206,7 +206,7 @@ public sealed class Physics
             var idx = _dirtyWork[qi];
             var (x, y) = _planet.UnIndex(idx);
             var k = _planet.Get(x, y);
-            if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
+            if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k) || Tiles.IsFlora(k)) continue;
 
             // Loose ground: cardinal-down (= inward radial in polar) empty → crumble to dust
             // tagged with the original tile kind so it falls in the right colour and pays out
@@ -408,7 +408,7 @@ public sealed class Physics
             if (_pendingTiles.Contains(idx)) continue;
             var (x, y) = _planet.UnIndex(idx);
             var k = _planet.Get(x, y);
-            if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
+            if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k) || Tiles.IsFlora(k)) continue;
             p ??= new PendingCollapse();
             p.Tiles.Add(idx);
             _pendingTiles.Add(idx);

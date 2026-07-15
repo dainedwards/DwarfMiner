@@ -286,11 +286,15 @@ public static class SpawnDirector
     public static Vector2 FindSurfaceSpawn(Planet planet, float angle, int radius)
     {
         var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-        // Start well above the highest possible peak and step inward until we hit solid.
+        // Start well above the highest possible peak and step inward until we hit solid GROUND
+        // — flora, trees and water plants are transparent here (they sit on the ground; a
+        // creature spawns on the soil, not on a tree top).
         for (var d = radius + 60; d > 20; d--)
         {
             var p = planet.Center + dir * (d * Planet.TileSize);
-            if (planet.IsSolidAt(p))
+            var (tx, ty) = planet.WorldToTile(p);
+            var k = planet.Get(tx, ty);
+            if (Tiles.IsSolid(k) && !Tiles.IsFlora(k))
                 return p - dir * (Planet.TileSize * 1.5f);
         }
         return planet.Center + dir * ((radius + 24) * Planet.TileSize);
