@@ -131,7 +131,7 @@ public sealed class Particles
                 // full stream / 60 ≈ 5-6 sparks per frame. JetSpark gives them the same
                 // turbulence pattern as the jet (clause above) WITHOUT joining the fluid
                 // coverage or shedding recursively.
-                if (!p.JetSpark && _rng.Next(60) == 0)
+                if (!p.JetSpark && _rng.Next(20) == 0)
                     _list.Add(new Particle
                     {
                         Position = p.Position + Jitter(1f),
