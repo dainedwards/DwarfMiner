@@ -847,7 +847,7 @@ public sealed class Renderer
                         DrawDeco(centre, right, up, rotation, chord, 2.5f, 0, 3, 8, bark);       // bole
                         DrawDeco(centre, right, up, rotation, chord, 2.5f, 0, 1, 8, barkHi);     // sun edge
                         DrawDeco(centre, right, up, rotation, chord, 4.5f, 0, 1, 8, barkDk);     // shade edge
-                        var g = (int)((hash >> 2) & 7);
+                        var g = (hash >> 2) & 7;
                         DrawDeco(centre, right, up, rotation, chord, 3, g % 8, 2, 1, barkDk);        // grain ridge
                         DrawDeco(centre, right, up, rotation, chord, 3, (g + 4) % 8, 2, 1, barkMd);  // grain ridge
                         if ((hash & 7) == 0)
