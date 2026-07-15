@@ -1403,9 +1403,11 @@ public sealed class Cells
 
         // Lateral dispersion: flow several cells per tick in a persistent direction so pools
         // level out quickly, plus a splash bonus proportional to how hard the cell just landed.
+        // Per-material rate is the viscosity knob (Noita's trick): water races out flat,
+        // acid pours, oil crawls as a slick, lava creeps as molten rock.
         var dir = (int)_flow[i];
         if (dir == 0) dir = _rng.Next(2) == 0 ? 1 : -1;
-        var spread = LiquidDispersion + (int)(impact * SplashScale);
+        var spread = DispersionFor(self) + (int)(impact * SplashScale);
         var bounced = false;
         var movedYet = false;   // a bounce advances s without moving, so s==0 can't stand in for "still at the departure cell"
         for (var s = 0; s < spread; s++)
