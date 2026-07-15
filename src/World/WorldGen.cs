@@ -2374,8 +2374,10 @@ public static class WorldGen
         }
     }
 
-    private static void SeedBiomePockets(Planet planet, PlanetDef def, Random rng)
+    private static void SeedBiomePockets(Planet planet, PlanetDef def, Random rng,
+        (float ang, float depth, float w)[] lakes)
     {
+        var ocean = def.LakeScale > 2.5f;
         void Carve(int count, bool crystal)
         {
             for (var i = 0; i < count; i++)
@@ -2385,6 +2387,18 @@ public static class WorldGen
                 var depth = (int)((crystal ? 30 + rng.Next(40) : 8 + rng.Next(22)) * S);
                 var cr = planet.SurfaceRing - depth;
                 if (cr < 8 * S) continue;
+                // Ocean worlds: pockets keep off the sea bearings entirely. Their basins
+                // plunge past the grove band, and this carve eats ANYTHING unanchored —
+                // obsidian shell included — so one grove under a sea is a drain into the
+                // dry network. (The skip comes after the rolls, so the shared rng stream
+                // is unmoved; other worlds don't reach this branch at all.)
+                if (ocean)
+                {
+                    var wet = false;
+                    foreach (var l in lakes)
+                        if (MathF.Abs(MathHelper.WrapAngle(ang - l.ang)) < l.w + 0.05f) { wet = true; break; }
+                    if (wet) continue;
+                }
                 var radius = (int)((crystal ? 4 + rng.Next(4) : 3 + rng.Next(3)) * S);
                 var n = planet.TilesAt(cr);
                 var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
