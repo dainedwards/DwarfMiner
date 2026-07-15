@@ -387,13 +387,20 @@ public sealed partial class DwarfMinerGame
     /// the same direction stay individually readable (the user's "don't overlap" ask).</summary>
     private void DrawGeoScannerArrows()
     {
-        // Expanding scan-pulse ring for a beat after firing (world-space around the player).
+        // Expanding scan-pulse ring for a beat after firing (world-space around the player),
+        // drawn as a dotted circle since the renderer has no outline primitive.
         if (_scanPulseT < 0.9f && _run.Player.ScannerTier > 0)
         {
             var pr = _scanPulseT / 0.9f;
             var rad = pr * (200f + (_run.Player.ScannerTier - 1) * 120f);
-            var a = (int)((1f - pr) * 160f);
-            _renderer.DrawCircleOutline(_run.Player.Position, rad, new Color(120, 220, 160, a), 1.5f);
+            var col = new Color(120, 220, 160, (int)((1f - pr) * 160f));
+            var dots = 48;
+            for (var i = 0; i < dots; i++)
+            {
+                var a = i / (float)dots * MathF.Tau;
+                _renderer.DrawRect(_run.Player.Position + new Vector2(MathF.Cos(a), MathF.Sin(a)) * rad,
+                    new Vector2(1.4f, 1.4f), col);
+            }
         }
         if (_geoScanHits.Count == 0) return;
 
