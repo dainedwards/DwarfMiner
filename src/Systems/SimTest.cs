@@ -1989,12 +1989,12 @@ public static class SimTest
         // --- Player swimming ---
         {
             var swimmer = new Player(poolCentre) { InWater = true };
-            for (var i = 0; i < 60; i++) swimmer.Update(dt, planet, 0, false, +1);
+            for (var i = 0; i < 60; i++) swimmer.Update(dt, planet, 0, false, false, +1);
             var rose = Vector2.Dot(swimmer.Position - poolCentre, upP);
             Check($"swim: stroking up rises ({rose:0}px in 1s)", rose > 8f);
 
             var idler = new Player(poolCentre) { InWater = true };
-            for (var i = 0; i < 60; i++) idler.Update(dt, planet, 0, false);
+            for (var i = 0; i < 60; i++) idler.Update(dt, planet, 0, false, false);
             var sank = Vector2.Dot(idler.Position - poolCentre, upP);
             Check($"swim: idle sink is gentle ({sank:0}px in 1s)", sank < 0f && sank > -35f);
 
@@ -2002,8 +2002,8 @@ public static class SimTest
             var slow = new Player(poolCentre) { InWater = true };
             for (var i = 0; i < 45; i++)
             {
-                finned.Update(dt, planet, +1, false);
-                slow.Update(dt, planet, +1, false);
+                finned.Update(dt, planet, +1, false, false);
+                slow.Update(dt, planet, +1, false, false);
             }
             var upF = planet.UpAt(poolCentre);
             var rF = new Vector2(-upF.Y, upF.X);
@@ -2518,7 +2518,7 @@ public static class SimTest
             var platTop = (Planet.RingMin + pr + 1) * Planet.TileSize;
 
             var lander = new Player(platCentre + up * 22f);
-            for (var i = 0; i < 150; i++) lander.Update(1f / 60f, pl, 0, false);
+            for (var i = 0; i < 150; i++) lander.Update(1f / 60f, pl, 0, false, false);
             var landedR = (lander.Position - pl.Center).Length();
             Check($"platform: a falling dwarf lands on top ({landedR - platTop:0.0}px above face)",
                 landedR >= platTop - 1f && landedR <= platTop + lander.Radius + 4f);
@@ -2528,7 +2528,7 @@ public static class SimTest
             var maxR = startR;
             for (var i = 0; i < 40; i++)
             {
-                riser.Update(1f / 60f, pl, 0, false);
+                riser.Update(1f / 60f, pl, 0, false, false);
                 maxR = MathF.Max(maxR, (riser.Position - pl.Center).Length());
             }
             Check($"platform: a rising dwarf passes through ({maxR - platTop:0}px past top)",

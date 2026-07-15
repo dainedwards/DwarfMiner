@@ -410,7 +410,7 @@ public sealed class Projectile
                     // eventually breach a wall, but one stick never levels an apartment.
                     // Other anchored tiles (core, supports, placeables) stay untouched.
                     if (k is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick
-                        && planet.Mine(r, t, 2) is { } cracked)
+                        && planet.Mine(r, t, AlloyMinePower) is { } cracked)
                     {
                         physics.MarkDirty(r, t);
                         cells.SpawnDustInTile(r, t, cracked);
