@@ -3143,15 +3143,15 @@ public sealed partial class DwarfMinerGame : Game
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
         var muzzle = _run.Player.Position + dir * 8f;
-        // Thicker tongue: more fuel per puff across a wider fan (the slower cadence below
-        // trades rate for volume — each pull is a fat gout, not a hiss).
-        for (var i = 0; i < 6; i++)
+        // TIGHT tongue: a narrow, focused jet fired in small frequent puffs so it reads as one
+        // steady stream, not a pulsing wave — fewer cells per puff, but a fast cadence below.
+        for (var i = 0; i < 3; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.42f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.18f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (240f + (float)Random.Shared.NextDouble() * 100f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (250f + (float)Random.Shared.NextDouble() * 70f),
                 Material.Fire);
         }
         _particles.EmitFlameJet(muzzle, dir);
