@@ -1518,8 +1518,9 @@ public static class SimTest
             var baseR = city.SurfaceRing + 1;
             var floorEvery = (int)(4 * Planet.LegacyTileScale);
 
-            // Lateral offset (px) of the outer face of the wall band in direction dir, or
-            // null when the walk finds no wall (past the roof / not a tower row).
+            // Lateral offset (px) of the outer face of the wall band in direction dir — AS
+            // DRAWN, i.e. after the facade-lattice snap the renderer applies — or null when
+            // the walk finds no wall (past the roof / not a tower row).
             float? EdgeLat(int r, float bearing, int dir)
             {
                 var n = city.TilesAt(r);
@@ -1536,7 +1537,8 @@ public static class SimTest
                     if (engineered)
                     {
                         inWall = true;
-                        edge = MathHelper.WrapAngle((t + 0.5f) * chordAng - bearing) * ringRadius;
+                        var drawn = city.FacadeSnapAngle(r, (t + 0.5f) * chordAng, ringRadius);
+                        edge = MathHelper.WrapAngle(drawn - bearing) * ringRadius;
                     }
                     else if (inWall) break;   // walked out the far side of the wall band
                 }
