@@ -2481,17 +2481,7 @@ public sealed class Cells
             case Material.Sand:    return Tint(new Color(190, 158, 92), jitter / 3);
             case Material.Snow:    return Tint(new Color(232, 240, 250), jitter / 5);
             case Material.Water:
-            {
-                // A conducting lightning strike flashes the whole pool electric white-blue
-                // for a beat (see ZapWater).
-                if (_zapUntil > _time && _zapped.Contains(_rowOffsets[cy] + WrapX(cx, _cellsAt[cy])))
-                    return new Color(216, 236, 255);
-                // Translucent body with slow-moving shimmer bands — tiles and back-wall
-                // ghost through, and pools read as liquid even while the sim has them
-                // asleep (colour is computed at draw time, not sim time).
-                var shimmer = (int)(MathF.Sin(_time * 1.6f + ((hash >> 3) & 7) * 0.8f + cy * 0.3f) * 9f);
-                return Tint(new Color(46, 90, 178), jitter / 5 + shimmer) * 0.78f;
-            }
+                return LiquidBody(m, cx, cy) * 0.78f;
             case Material.Lava:
             {
                 var t = (int)(_time * 8f);
