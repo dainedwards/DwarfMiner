@@ -2007,9 +2007,9 @@ public sealed class Cells
                     fuelled = true;
                     // Flame front: catch the neighbouring fuel cell alight. Probabilistic
                     // so a pool burns across its surface over seconds, not in one frame —
-                    // rate halved (3→6) so fuel is CONSUMED slower and a burning pool
-                    // lasts twice as long (the released fused fire keeps the front alive).
-                    if (_rng.Next(6) == 0)
+                    // rate 10 (was 3): fuel is CONSUMED slowly and a burning pool lasts
+                    // several times longer (the released fused fire keeps the front alive).
+                    if (_rng.Next(10) == 0)
                     {
                         var (fcx, fcy) = UnIdx(ni);
                         IgniteCell(fcx, fcy);
@@ -2048,15 +2048,14 @@ public sealed class Cells
             if (!IsFlammable(k)) return;
             fuelled = true;
             if (below) burningFloor = true;
-            // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke,
-            // which is what walks a grass fire along the surface. Throttled by the spread
-            // budget so the front advances but can't blanket the planet. Base rate 60
-            // (structures burn slowly; the fuse's dwell keeps the initial catch
-            // reliable); the DOWNWARD probe chars at 30 — embers settle against a fire's
-            // floor, and fire naturally accumulates far fewer cell-ticks at its floor
-            // than against its ceiling (it rises), so the hotter per-contact rate is
-            // what lets a tree burn DOWN the trunk at all.
-            if (_rng.Next(below ? 30 : 60) != 0) return;
+            // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke.
+            // CHARRING IS CONSUMPTION, and it's deliberately SLOW (base 110, floor 55 —
+            // the 2× floor bias keeps down-consumption pacing up-consumption despite fire
+            // piling against ceilings): the target contract is that a small tree is
+            // engulfed — every tile wreathed in flame via BUDDING below — well before
+            // the first-lit part burns through. Spread lives in the flames; charring is
+            // just the fuel slowly giving out underneath them.
+            if (_rng.Next(below ? 55 : 110) != 0) return;
             if (!SpendFire()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
@@ -2111,9 +2110,10 @@ public sealed class Cells
         // strays) sample themselves into the flame queue; Game1 turns each entry into a
         // rising flame tongue. Because the source is the live fire population, the
         // visible flames grow with jet dwell and spread wherever fuel carries the fire.
-        // FUELLED fire burns visibly hotter: 2.5× the licking-flame emission of a bare
-        // fused burn — a fire that found fuel rages, one on rock just burns.
-        if ((_srcTile[i] > 0 || fuelled) && _rng.Next(fuelled ? 2 : 5) == 0
+        // FUELLED fire burns visibly hottest: EVERY sampled tick queues a lick (vs 1-in-5
+        // for a bare fused burn) — a fire that found fuel rages, one on rock just burns.
+        // The queue cap bounds a fully-engulfed forest.
+        if ((_srcTile[i] > 0 || fuelled) && (fuelled || _rng.Next(5) == 0)
             && PendingFlames.Count < MaxPendingFlames)
             PendingFlames.Add((CellToWorld(cx, cy),
                 fuelled ? (byte)Math.Max((int)_srcTile[i], 55) : _srcTile[i]));
@@ -2122,7 +2122,9 @@ public sealed class Cells
         // ~0.8s before dying (was ~0.27s) — flame dropped on bare rock visibly burns as a
         // fire for a beat instead of blinking out, per user. Spread stays budget-gated, so
         // longer-lived starved flame can't creep further, it just LOOKS alive longer.
-        else if (_rng.Next(fuelled ? 56 : 48) == 0)
+        // Fuelled flame lives ~2.2s (was ~0.9): the front PERSISTS — the first-lit part
+        // of a tree is still flaming when the engulfment reaches the last part.
+        else if (_rng.Next(fuelled ? 130 : 48) == 0)
         {
             _mat[i] = _rng.Next(2) == 0 ? (byte)Material.Smoke : (byte)0;
             _srcTile[i] = 0;
@@ -2130,6 +2132,26 @@ public sealed class Cells
             if (_mat[i] != 0) Enqueue(i);
             WakeNeighbors(cx, cy);
             return;
+        }
+
+        // BUDDING: fuelled flame MULTIPLIES along the fuel surface — now and then it
+        // births a new flame into a random free cardinal neighbour (SpendFire-gated so
+        // the budget still caps planet-scale blazes). This is the ENGULFMENT mechanism,
+        // and it's direction-neutral: it wraps a small tree in fire within a couple of
+        // seconds without consuming anything. Charring alone could never deliver "fully
+        // aflame before the first part burns out" — charring IS consumption, so spread
+        // and burn-through were the same clock; budding decouples them.
+        if (fuelled && _rng.Next(25) == 0 && SpendFire())
+        {
+            var bd = _rng.Next(4);
+            var (bx, by) = bd switch
+            {
+                0 => (cx + 1, cy),
+                1 => (cx - 1, cy),
+                2 => cy > 0 ? InnerCell(cx, cy) : (cx, cy),
+                _ => cy < Height - 1 ? OuterCell(cx, cy, 0) : (cx, cy),
+            };
+            if ((bx, by) != (cx, cy) && !IsBlocked(bx, by)) Place(bx, by, Material.Fire);
         }
 
         // Ember spit: a rare glowing mote arcs off a fuelled blaze and can start a spot
