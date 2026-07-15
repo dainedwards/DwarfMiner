@@ -300,8 +300,75 @@ public sealed class Cells
             throw new System.IO.InvalidDataException($"cell count mismatch: {n} vs {_mat.Length}");
         r.ReadBytes(n).CopyTo(_mat, 0);
         r.ReadBytes(n).CopyTo(_srcTile, 0);
-        for (var i = 0; i < n; i++)
-            if (_mat[i] != 0) Enqueue(i);
+        // Wake only the free surfaces. Waking EVERY occupied cell made the first ticks
+        // after resume walk millions of hemmed sea/lake interiors just to re-discover
+        // they're asleep — seconds of stall at Density 8. Anything saved mid-flight has
+        // open neighbours by definition, so it still wakes and resettles.
+        WakeFreeSurfaces(0, Height - 1);
+    }
+
+    /// <summary>Wake only the FREE-SURFACE cells of a row band: occupied cells with at
+    /// least one open (non-solid, non-occupied) cardinal neighbour. Bulk seeding and save
+    /// restore used to wake every cell they touched, which made the first sim ticks walk
+    /// entire seas of hemmed interior cells once each before they slept — a multi-second
+    /// load stall at Density 8. Interior cells born asleep behave identically: asleep IS
+    /// their steady state, and any later disturbance still wakes them via WakeNeighbors
+    /// like every other sleeping cell.</summary>
+    public void WakeFreeSurfaces(int cyMin, int cyMax)
+    {
+        cyMin = Math.Max(0, cyMin);
+        cyMax = Math.Min(Height - 1, cyMax);
+        for (var cy = cyMin; cy <= cyMax; cy++)
+        {
+            var n = _cellsAt[cy];
+            var row = _rowOffsets[cy];
+            for (var cx = 0; cx < n; cx++)
+            {
+                var i = row + cx;
+                if (_mat[i] == 0) continue;
+                var open = !IsBlocked(cx - 1, cy) || !IsBlocked(cx + 1, cy);
+                if (!open && cy > 0)
+                {
+                    var (icx, icy) = InnerCell(cx, cy);
+                    open = !IsBlocked(icx, icy);
+                }
+                if (!open && cy < Height - 1)
+                {
+                    var oc = OuterCellCount(cx, cy);
+                    for (var w = 0; w < oc && !open; w++)
+                    {
+                        var (ocx, ocy) = OuterCell(cx, cy, w);
+                        open = !IsBlocked(ocx, ocy);
+                    }
+                }
+                if (open) Enqueue(i);
+            }
+        }
+    }
+
+    /// <summary>Raw cell write for bulk seeding: no enqueue, no neighbour wake — callers
+    /// run one <see cref="WakeFreeSurfaces"/> pass when the whole fill is in place.</summary>
+    private void PlaceSilent(int cx, int cy, Material m)
+    {
+        if (!InBounds(cx, cy)) return;
+        var i = Idx(cx, cy);
+        if (_mat[i] != 0) return;
+        _mat[i] = (byte)m;
+        _srcTile[i] = (byte)TileKind.Sky;
+        ClearKinetics(i);
+    }
+
+    /// <summary>Silent full-tile fill for load-time seeding (lakes, gas pockets, acid,
+    /// oil sumps) — pair with one <see cref="WakeFreeSurfaces"/> after ALL seeding.
+    /// Full tiles have no interior holes, so the boundary wake reaches everything that
+    /// could possibly move.</summary>
+    public void FillTileSilent(int tx, int ty, Material m)
+    {
+        var c0y = tx * Density;
+        var c0x = ty * Density;
+        for (var dy = 0; dy < Density; dy++)
+            for (var dx = 0; dx < Density; dx++)
+                PlaceSilent(c0x + dx, c0y + dy, m);
     }
 
     public int CellsAt(int cy) => (cy < 0 || cy >= Height) ? 1 : _cellsAt[cy];
