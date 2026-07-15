@@ -133,6 +133,15 @@ public static class Combat
         }
     }
 
+    /// <summary>Blast damage multiplier by normalised distance from the epicentre (0 = dead
+    /// centre, 1 = the rim). Squared so the core hits hard and the damage drops off steeply
+    /// toward the edge; floored at 10% so a graze still stings.</summary>
+    public static float BlastFalloff(float t)
+    {
+        t = MathHelper.Clamp(t, 0f, 1f);
+        return MathHelper.Clamp(1f - t * t, 0.1f, 1f);
+    }
+
     /// <summary>Earliest point on the a→a+seg segment within <paramref name="radius"/> of
     /// <paramref name="center"/>, as t in [0,1] — or null if the segment misses the circle.
     /// Closest-approach test: exact for the "did we cross this body this frame" question.</summary>
