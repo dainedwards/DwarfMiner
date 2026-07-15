@@ -1584,6 +1584,7 @@ public static class WorldGen
             }
 
             var cursor = centres[d] - rowPx / surfRadiusPx * 0.5f;
+            var rowTowers = new List<(float ang, float halfW)>();   // this row, west-to-east
             foreach (var (classRoll, halfWidthPx, height, gapPx) in specs)
             {
                 var footAng = halfWidthPx / surfRadiusPx;
@@ -1603,12 +1604,60 @@ public static class WorldGen
                 if (!clear) continue;
                 placed.Add((ang, footAng));
 
-                BuildTower(ang, classRoll, halfWidthPx, height);
+                BuildTower(ang, classRoll, halfWidthPx, height, rowTowers);
+            }
+
+            // Street bridges: an anchored alloy deck at the baseline surface ring spanning
+            // every street gap between neighbouring hulls (and the odd skipped lot), with
+            // standing headroom cleared above. The ground between towers rolls and dips,
+            // which stranded citizens (and the dwarf) in the hollows — and because the
+            // deck is anchored alloy, meteors, acid and quakes can't disintegrate the
+            // crossing. Doors, hulls and furniture are all anchored too, so the clearing
+            // pass can't harm them.
+            for (var i = 1; i < rowTowers.Count; i++)
+            {
+                var (a0, w0) = rowTowers[i - 1];
+                var (a1, w1) = rowTowers[i];
+                var e0 = a0 + w0 / surfRadiusPx;
+                var e1 = a1 - w1 / surfRadiusPx;
+                var gapWorld = (e1 - e0) * surfRadiusPx;
+                if (gapWorld <= 0f || gapWorld > 120f) continue;
+                BuildBridge(e0, e1);
             }
         }
 
         avoid.AddRange(placed);
         return;
+
+        void BuildBridge(float a0, float a1)
+        {
+            // Deck at the baseline surface ring (its top face is the towers' door
+            // threshold level), padded just over half a tile into each hull so it meets
+            // the pilings without a seam; the rings above are cleared for headroom.
+            var deckR = surfaceR;
+            var topClear = Math.Min(planet.Rings - 2, deckR + (int)(4 * S));
+            for (var r = deckR; r <= topClear; r++)
+            {
+                var n = planet.TilesAt(r);
+                var chord = MathHelper.TwoPi / n;
+                var t0 = (int)MathF.Floor((a0 - chord * 0.6f) / chord);
+                var t1 = (int)MathF.Ceiling((a1 + chord * 0.6f) / chord);
+                for (var ti = t0; ti <= t1; ti++)
+                {
+                    var t = (ti % n + n) % n;
+                    if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                    if (r == deckR)
+                    {
+                        planet.Set(r, t, TileKind.AlienAlloy);
+                        planet.SetWall(r, t, TileKind.AlienAlloy);
+                    }
+                    else
+                    {
+                        planet.Set(r, t, TileKind.Sky);
+                    }
+                }
+            }
+        }
 
         void BuildTower(float ang, double classRoll, float halfWidthPx, int height)
         {
