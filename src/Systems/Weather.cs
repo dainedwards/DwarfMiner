@@ -163,18 +163,20 @@ public static class Weather
 
         var rng = Random.Shared;
 
-        // The shower actually lands: a throttled trickle of REAL water cells dropped just
-        // above the ground under the band, so rain pools in hollows and runs off slopes
-        // instead of passing through the terrain. Rain water is tagged in the cell sim and
-        // evaporates once it rests exposed near the surface (see Cells.SpawnRainWater), so a
-        // shower leaves drying puddles, never a slow world-flood. Water rain only — acid and
-        // ember rain stay atmospheric per the brief, and snow just dusts visually.
-        if (kind == RainKind.Water && rng.Next(3) == 0)
+        // The shower actually lands: a throttled trickle of REAL cells dropped just above
+        // the ground under the band. Water rain pools in hollows and runs off slopes
+        // instead of passing through the terrain (tagged in the cell sim so puddles
+        // evaporate — see Cells.SpawnRainWater); snowfall banks into drifts that lie on the
+        // frost world and sublimate away everywhere else. Acid and ember rain stay
+        // atmospheric per the brief.
+        if (kind is RainKind.Water or RainKind.Snow && rng.Next(3) == 0)
         {
             var wAng = c.Angle + ((float)rng.NextDouble() - 0.5f) * 2f * c.HalfWidth;
             var wGround = SpawnDirector.FindSurfaceSpawn(planet, wAng, planet.Radius);
             var wUp = planet.UpAt(wGround);
-            run.Cells.SpawnRainWater(wGround + wUp * (4f + (float)rng.NextDouble() * 10f));
+            var drop = wGround + wUp * (4f + (float)rng.NextDouble() * 10f);
+            if (kind == RainKind.Water) run.Cells.SpawnRainWater(drop);
+            else run.Cells.SpawnSnow(drop);
         }
 
         var color = kind switch
