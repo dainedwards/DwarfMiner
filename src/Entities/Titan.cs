@@ -1346,12 +1346,13 @@ public sealed class Titan
     /// <summary>The fist lands: heavy Mine damage across the fist's footprint plus a quake and
     /// a short shockwave (<see cref="PendingShockwave"/> — Game1 hurts/knocks back the player
     /// and creatures inside it). Building tiles are anchored but not fist-proof — Mine's own
-    /// hardness gate (≥99) is what protects true anchor-class tiles (core, supports), so city
-    /// glass shatters in one blow and alien alloy caves over a few.</summary>
+    /// hardness gate (≥99) is what protects true anchor-class tiles (core, supports). Power 34
+    /// over a 3-tile radius: alloy breaches in a single blow, so a working titan opens a tower
+    /// floor per swing, and any toppled debris in range is ground straight to dust.</summary>
     private void SmashImpact(Physics physics, Cells cells)
     {
         var (fx, fy) = _planet.WorldToTile(SmashTarget);
-        const int r = 2;
+        const int r = 3;
         for (var dy = -r; dy <= r; dy++)
         {
             for (var dx = -r; dx <= r; dx++)
@@ -1359,7 +1360,7 @@ public sealed class Titan
                 if (dx * dx + dy * dy > r * r) continue;
                 var x = fx + dx; var y = fy + dy;
                 if (!Tiles.IsSolid(_planet.Get(x, y))) continue;
-                if (_planet.Mine(x, y, 12) is { } broken)
+                if (_planet.Mine(x, y, 34) is { } broken)
                 {
                     physics.MarkDirty(x, y);
                     cells.SpawnDustInTile(x, y, broken);
@@ -1368,27 +1369,7 @@ public sealed class Titan
         }
         physics.Earthquake(SmashTarget, 110f, 2);
         PendingShockwave = (SmashTarget, 110f, 24f);
-    }
-
-    /// <summary>Nearest city-architecture tile within the fist's reach ahead of the body — the
-    /// demolition target for Kong's hand smash while it loiters in a district. Samples a short
-    /// fan of points in the facing direction across torso heights.</summary>
-    private Vector2? FindBuildingInReach()
-    {
-        var up = _planet.UpAt(Position);
-        var right = new Vector2(-up.Y, up.X);
-        var face = Facing >= 0f ? 1f : -1f;
-        for (var d = 70f; d <= SmashReach; d += 24f)
-        {
-            for (var h = -70f; h <= 70f; h += 35f)
-            {
-                var p = Position + right * (face * d) + up * h;
-                var (x, y) = _planet.WorldToTile(p);
-                if (_planet.Get(x, y) is TileKind.AlienAlloy or TileKind.CityGlass or TileKind.LizardBrick)
-                    return _planet.TileToWorld(x, y);
-            }
-        }
-        return null;
+        PendingPulverize = (SmashTarget, 150f);
     }
 
     /// <summary>True if this planted foot can actually bear weight: it rests on solid ground
