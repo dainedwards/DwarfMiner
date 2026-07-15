@@ -1028,7 +1028,11 @@ public sealed class Cells
     /// reject first; the trig-free arc estimate is exact enough for a rate gate).</summary>
     private bool IsFarFromFocus(int cx, int cy, int fcy, float ffrac)
     {
-        const float FarPx = 1200f;
+        // Play zoom shows ~640×360 world px (half-diagonal ~370), so 700 px = the visible
+        // frame plus most of a screen of margin. Anything past it can run at 15 Hz without
+        // the player ever seeing the difference — and on standard worlds (radius ~800 px)
+        // the gate genuinely fires; the first cut at 1200 px covered the whole planet.
+        const float FarPx = 700f;
         if (Math.Abs(cy - fcy) * PxPerCell > FarPx) return true;
         var n = _cellsAt[cy];
         var df = MathF.Abs((float)WrapX(cx, n) / n - ffrac);

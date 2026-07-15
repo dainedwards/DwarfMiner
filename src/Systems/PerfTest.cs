@@ -42,10 +42,10 @@ public static class PerfTest
         // the SILENT fills and one boundary wake — so this measures the real load path
         // (the old always-wake FillTile seeding made the first ticks walk every interior
         // sea cell once; at Density 8 that was the user-visible multi-second load stall).
-        if (PlanetDefs.DebugWorld.LavaFillFrac > 0f)
+        if (HarnessWorld.LavaFillFrac > 0f)
         {
-            var (_, _, seaFloor) = WorldGen.CaveStrata(planet, PlanetDefs.DebugWorld);
-            cells.FillSkyTilesWithin(planet.Radius * PlanetDefs.DebugWorld.LavaFillFrac,
+            var (_, _, seaFloor) = WorldGen.CaveStrata(planet, HarnessWorld);
+            cells.FillSkyTilesWithin(planet.Radius * HarnessWorld.LavaFillFrac,
                 Material.Lava, seaFloor);
         }
         foreach (var (x, y) in planet.WaterSeeds) cells.FillTileSilent(x, y, Material.Water);
