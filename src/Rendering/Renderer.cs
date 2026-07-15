@@ -496,8 +496,12 @@ public sealed class Renderer
                         var wcx = (int)(angle / MathHelper.TwoPi * wcells.CellsAt(wcy));
                         if (wcells.Get(wcx, wcy) == Material.Water
                             || wcells.Get(wcx + 1, wcy) == Material.Water)
+                        {
+                            // col drives the flat/authored/crust paths; tintF the atlas art.
                             col = new Color((int)(col.R * 0.72f), (int)(col.G * 0.78f),
                                 (int)(col.B * 0.92f));
+                            tintF *= new Vector3(0.72f, 0.78f, 0.92f);
+                        }
                     }
                 }
 
