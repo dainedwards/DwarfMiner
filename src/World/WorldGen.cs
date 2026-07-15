@@ -288,22 +288,27 @@ public static class WorldGen
                     }
                 }
 
+                // How deep the sea reaches at this bearing (0 = dry land). Hoisted out of the
+                // basin carve (like acidDepth) so the layered-ground pass below can armour the
+                // seabed on ocean worlds: an obsidian shell plus a cave-free buffer under every
+                // deep basin, keeping the under-sea cave network dry and the sea overhead.
+                var lakeDepth = 0f;
+                foreach (var l in lakes)
+                {
+                    var angDiff = MathF.Abs(ang - l.ang);
+                    if (angDiff > MathF.PI) angDiff = MathHelper.TwoPi - angDiff;
+                    if (angDiff < l.w)
+                    {
+                        var f = angDiff / l.w;
+                        var d = (1f - f * f) * l.depth;
+                        if (d > lakeDepth) lakeDepth = d;
+                    }
+                }
+
                 // Lake basin: carve the bowl out of the surface and seed it with water. The
                 // top course (depth < 1) stays air so the waterline sits just below the shore.
                 if (mountainHeight <= 0.5f)
                 {
-                    var lakeDepth = 0f;
-                    foreach (var l in lakes)
-                    {
-                        var angDiff = MathF.Abs(ang - l.ang);
-                        if (angDiff > MathF.PI) angDiff = MathHelper.TwoPi - angDiff;
-                        if (angDiff < l.w)
-                        {
-                            var f = angDiff / l.w;
-                            var d = (1f - f * f) * l.depth;
-                            if (d > lakeDepth) lakeDepth = d;
-                        }
-                    }
                     if (lakeDepth > 0.5f && depth < lakeDepth)
                     {
                         planet.SetWall(r, t, TileKind.Dirt);
