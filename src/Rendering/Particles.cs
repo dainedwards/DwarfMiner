@@ -36,6 +36,11 @@ public struct Particle
     /// default (16× grain size). Rain pins this to its own short streak so hose smear
     /// tuning stops dragging the weather along with it.</summary>
     public float SmearMax;
+    /// <summary>Touchdown splash: when this particle comes to REST it throws a tiny burst
+    /// of sparks in ITS OWN current colour — the impact-spark read, tinted per material.
+    /// One-shot (cleared after the burst); the spawned sparks never carry the flag, so a
+    /// splash can't cascade.</summary>
+    public bool LandSparks;
 }
 
 /// <summary>
@@ -101,6 +106,34 @@ public sealed class Particles
                     {
                         cells.StampAtWorld(p.Position, (Material)p.LandMat);
                         p.LandMat = 0;
+                    }
+                    // Touchdown splash: a pinch of sparks in the lander's own colour,
+                    // kicked up and out along the local surface. Appended mid-iteration is
+                    // safe — the backwards loop never revisits fresh tail entries this
+                    // pass, and the sparks carry no flags that could cascade.
+                    if (p.LandSparks)
+                    {
+                        p.LandSparks = false;
+                        var t2 = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
+                        var sc = Color.Lerp(p.FadeColor, p.Color, MathF.Ceiling(t2 * 4f) * 0.25f);
+                        for (var k = 0; k < 3; k++)
+                        {
+                            var side = ((_rng.Next(2) == 0 ? 1f : -1f))
+                                * (0.35f + (float)_rng.NextDouble() * 0.65f);
+                            _list.Add(new Particle
+                            {
+                                Position = p.Position,
+                                Velocity = n * (26f + (float)_rng.NextDouble() * 34f)
+                                         + new Vector2(-n.Y, n.X) * side * 38f,
+                                Life = 0.14f + (float)_rng.NextDouble() * 0.14f,
+                                MaxLife = 0.28f,
+                                Color = Color.Lerp(sc, Color.White, 0.25f),
+                                FadeColor = p.FadeColor,
+                                Size = 0.5f,
+                                GravityScale = 1f,
+                                Drag = 1.6f,
+                            });
+                        }
                     }
                 }
                 next = p.Position;
@@ -1206,37 +1239,16 @@ public sealed class Particles
                 // throttles spread, and starved fire gutters ~0.8s — so the tongue's
                 // landing zone burns for real without becoming an arson machine).
                 LandMat = CellFx ? (byte)Material.Fire : (byte)0,
+                // Touchdown splash in the grain's own fire tone — the impact-spark
+                // effect on every landing flame, per user.
+                LandSparks = true,
             });
         }
-        // Fire is BUOYANT: tongues lick UP off the stream as it travels — the Noita curl.
-        // A few short-lived grains seeded along the tongue with negative gravity slow,
-        // detach, and flick upward before dying to a dark ember (mid-air seeding is right
-        // here, unlike the acid wisps: rising flame, not falling rain).
-        for (var i = 0; i < 5; i++)
-        {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.3f;
-            var c = MathF.Cos(spread);
-            var s = MathF.Sin(spread);
-            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _list.Add(new Particle
-            {
-                // Seed only the near two-fifths of the tongue with a strong stall (high
-                // drag, short life): licks flick up and die WITHIN the stream's length —
-                // they were riding above the drooping tongue and past its tip, reading as
-                // stray yellow strands out-ranging the fire.
-                Position = pos + d * (6f + (float)_rng.NextDouble() * (reach * 0.4f)) + Jitter(1.2f),
-                Velocity = d * (jetSpeed * 0.25f),
-                Life = 0.18f + (float)_rng.NextDouble() * 0.17f,
-                MaxLife = 0.35f,
-                Color = _rng.Next(2) == 0 ? new Color(255, 220, 110) : new Color(255, 160, 55),
-                FadeColor = new Color(120, 35, 15),
-                Size = 0.5f,
-                GravityScale = -0.5f,
-                Drag = 3.2f,
-                CollideTiles = true,
-                LandMat = CellFx ? (byte)Material.Fire : (byte)0,
-            });
-        }
+        // NO off-trajectory populations: the buoyant "lick" grains and the hose-shed
+        // cinders both flew arcs of their own (rising / ember-gravity-flat) and kept
+        // reading as stray yellow embers out of step with the stream — removed per user.
+        // Everything visible in the tongue now rides the SAME arc as the fuel cells, and
+        // "keeps burning where it lands" is covered by every grain's Fire stamp.
         // Sooty flecks shed along the tongue — they inherit the arc, then buoy upward as they
         // cool (weak net gravity), so spent flame rolls off the stream like Noita's smoke.
         for (var i = 0; i < 6; i++)
@@ -1276,11 +1288,6 @@ public sealed class Particles
             LightColor = new Color(255, 170, 80),
             HeroLight = true,
         });
-        // The hose sheds tumbling cinders that keep burning where they land. Launched at
-        // well under stream speed with the ember's LOW gravity scale — at reach*0.9 they
-        // flew flatter than the drooping tongue and sailed past its tip as stray bright
-        // strands out-ranging the visible fire.
-        if (_rng.Next(3) == 0) EmitCinders(pos + dir * 8f, dir * (reach * 0.4f), 1);
     }
 
     /// <summary>Jetpack exhaust, coloured by tier: red (I) → orange (II) → yellow (III) →
