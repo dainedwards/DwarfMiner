@@ -130,12 +130,14 @@ public static class SpawnDirector
             }
         }
 
-        // Warren garrisons: a guard pair in every hall.
+        // Warren garrisons: a guard pack (2-3) in every hall — the warren is a tight village,
+        // so the halls are held in numbers, not by a lone sentry.
         foreach (var (dr, dt) in planet.LizardDens)
         {
             var den = planet.TileToWorld(dr, dt);
             var denRight = new Vector2(-planet.UpAt(den).Y, planet.UpAt(den).X);
-            for (var i = 0; i < 2; i++)
+            var garrison = 2 + Random.Shared.Next(2);
+            for (var i = 0; i < garrison; i++)
             {
                 var post = den + denRight * (((float)Random.Shared.NextDouble() - 0.5f) * 36f);
                 var g = new Creature(post, CreatureKind.Lizardman) { Resident = true };
