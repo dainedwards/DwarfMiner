@@ -397,6 +397,13 @@ public sealed class Projectile
         if (ang < 0) ang += MathHelper.TwoPi;
         var chipBudget = 24;   // tiles that get a particle burst; ~2-3 particles each
         var ejectaBudget = 90; // real dust cells blasted into ballistic flight per crater
+        // Real Smoke cells stamped into the vaporised core — the explosion's plume lives in
+        // the CELL SIM (rises, pools under cave ceilings, drifts out of openings) instead of
+        // being painted as fading particle blobs. Scales with crater size, hard-capped:
+        // smoke cells stay awake until they gutter (~3s), so this bounds the wake cost of
+        // even a nuke to a modest slice of a heavy scene. DM_CELLFX=0 restores the old look.
+        var smokeBudget = Particles.CellFx ? Math.Min(150, 30 + tiles * 10) : 0;
+        var carved = false;
         for (var r = centerRing - tiles; r <= centerRing + tiles; r++)
         {
             if (r < 0 || r >= planet.Rings) continue;
