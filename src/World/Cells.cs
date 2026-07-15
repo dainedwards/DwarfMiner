@@ -1777,9 +1777,11 @@ public sealed class Cells
         }
 
         // Gutter out: half to a smoke wisp, half to nothing (all-smoke fires read as grey
-        // soup over a burning pool). Lives noticeably longer now — a fuelled flame ~0.9s, a
-        // starved one ~0.27s — so fire lingers long enough to catch what it's licking.
-        if (_rng.Next(fuelled ? 56 : 16) == 0)
+        // soup over a burning pool). A fuelled flame lives ~0.9s; a STARVED one now pools
+        // ~0.8s before dying (was ~0.27s) — flame dropped on bare rock visibly burns as a
+        // fire for a beat instead of blinking out, per user. Spread stays budget-gated, so
+        // longer-lived starved flame can't creep further, it just LOOKS alive longer.
+        if (_rng.Next(fuelled ? 56 : 48) == 0)
         {
             _mat[i] = _rng.Next(2) == 0 ? (byte)Material.Smoke : (byte)0;
             _srcTile[i] = 0;
