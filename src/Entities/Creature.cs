@@ -359,7 +359,8 @@ public sealed class Creature
         or CreatureKind.DustDevil;
     /// <summary>Aquatic-only kinds — spawned into water by the director's lake spawner and
     /// budgeted separately from every land habitat.</summary>
-    public bool IsWaterKind => Kind is CreatureKind.AlienWhale or CreatureKind.AlienCrab;
+    public bool IsWaterKind => Kind is CreatureKind.AlienWhale or CreatureKind.AlienCrab
+        or CreatureKind.AlienShark or CreatureKind.Gulper or CreatureKind.Brinespitter;
     public bool IsCaveKind => !IsSkyKind && !IsSurfaceKind && !IsWaterKind;
 
     /// <summary>Land kinds that can also swim: submerged, buoyancy replaces the plummet
