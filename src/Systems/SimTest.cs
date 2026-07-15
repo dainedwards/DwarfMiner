@@ -338,6 +338,7 @@ public static class SimTest
         TestCities();
         TestCityDefense();
         TestAquatics();
+        TestRainPooling();
         TestPopulateWorld();
         TestTreeEcology();
         TestRigidBodies();
