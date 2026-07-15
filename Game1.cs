@@ -1869,6 +1869,21 @@ public sealed partial class DwarfMinerGame : Game
                 && (_run.Titan.Position - pk.Position).LengthSquared() < 380f * 380f)
                 threat = _run.Titan.Position;
             pk.GuardTarget = threat;
+            // Command-ship tractor beam: while it holds the PLAYER as its target within
+            // reach, it drags them toward it and heavily slows them — a constant pull, no
+            // cooldown. (Ordinary saucers don't have one.)
+            if (big && threatIsPlayer && threat is { } beamAt
+                && (beamAt - pk.Position).Length() < fireR)
+            {
+                var toShip = pk.Position - _run.Player.Position;
+                var bd = toShip.Length();
+                if (bd > 1f)
+                {
+                    _run.Player.Velocity += toShip / bd * 120f * dt;    // reel in
+                    _run.Player.Velocity *= 1f - MathF.Min(0.85f, 3.0f * dt); // and bog down
+                    _run.Player.EmpTimer = MathF.Max(_run.Player.EmpTimer, 0.1f); // brief tech-choke feel
+                }
+            }
             if (threat is { } tp && pk.GuardFireCd <= 0f)
             {
                 var diff = tp - pk.Position;
@@ -1876,19 +1891,30 @@ public sealed partial class DwarfMinerGame : Game
                 if (d > 10f && d < fireR)
                 {
                     var dir = diff / d;
-                    if (threatIsPlayer)
-                        // Player-seeking rounds ride the self-contained titan-shot path
-                        // (civic bolts are hard-coded friendly to the dwarf).
-                        _run.TitanShots.Add(new TitanProjectile(
-                            pk.Position + dir * (pk.Radius + 3f), dir * 270f,
-                            TitanShotKind.Slug, damage: 7f));
-                    else
-                        _run.Projectiles.Add(new Projectile(
-                            pk.Position + dir * (pk.Radius + 3f), dir * 260f, 3f, 1.1f,
-                            ProjectileKind.CivicBolt));
-                    pk.GuardFireCd = 1.1f + (float)Random.Shared.NextDouble() * 0.5f;
+                    // The command ship fires a FAN of lasers; peacekeepers/saucers a single
+                    // round. Player-seeking shots ride the self-contained titan-shot path
+                    // (civic bolts are hard-coded friendly to the dwarf).
+                    var shots = big ? 3 : 1;
+                    for (var s = 0; s < shots; s++)
+                    {
+                        var spread = big ? (s - 1) * 0.16f : 0f;
+                        var sd = new Vector2(
+                            dir.X * MathF.Cos(spread) - dir.Y * MathF.Sin(spread),
+                            dir.X * MathF.Sin(spread) + dir.Y * MathF.Cos(spread));
+                        if (threatIsPlayer)
+                            _run.TitanShots.Add(new TitanProjectile(
+                                pk.Position + sd * (pk.Radius + 3f), sd * (big ? 320f : 270f),
+                                big ? TitanShotKind.Laser : TitanShotKind.Slug,
+                                damage: big ? 14f : 7f));
+                        else
+                            _run.Projectiles.Add(new Projectile(
+                                pk.Position + sd * (pk.Radius + 3f), sd * 260f, 3f, 1.1f,
+                                ProjectileKind.CivicBolt));
+                    }
+                    pk.GuardFireCd = big ? 0.9f + (float)Random.Shared.NextDouble() * 0.4f
+                                         : 1.1f + (float)Random.Shared.NextDouble() * 0.5f;
                     pk.GuardMuzzleFlash();
-                    PlayAt("shoot", pk.Position, 0.35f, pitch: 0.45f, minGap: 0.1f);
+                    PlayAt("shoot", pk.Position, big ? 0.6f : 0.35f, pitch: big ? -0.2f : 0.45f, minGap: 0.1f);
                 }
             }
         }
