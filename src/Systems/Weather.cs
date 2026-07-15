@@ -161,7 +161,7 @@ public static class Weather
                 }
             }
         }
-        return maxTop - baseR + 130f;   // several tiles of clear air above the tallest thing
+        return maxTop;
     }
 
     /// <summary>One rain tick under a cloud: water the trees in its band, throw a few falling
