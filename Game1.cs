@@ -4895,6 +4895,16 @@ public sealed partial class DwarfMinerGame : Game
         return n;
     }
 
+    /// <summary>Times the platform Present (the backbuffer swap) — GPU saturation and
+    /// driver sync stalls surface HERE, invisible to the Update/Draw CPU timers. Shows up
+    /// as the "swap" phase in the DM_PERF report.</summary>
+    protected override void EndDraw()
+    {
+        var t0 = FramePerf.Now();
+        base.EndDraw();
+        FramePerf.Add("swap", t0);
+    }
+
     protected override void Draw(GameTime gameTime)
     {
         if (_updatesSinceDraw > _updatesPerDrawMax) _updatesPerDrawMax = _updatesSinceDraw;
