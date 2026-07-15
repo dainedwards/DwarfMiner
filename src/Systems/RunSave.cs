@@ -90,6 +90,7 @@ public static class RunSave
             w.Write(p.HasLaserCannon); w.Write(p.HasRocketLauncher); w.Write(p.HasMiningLaser);
             // v16: the elemental arms (flamethrower / acid spewer / lightning gun).
             w.Write(p.HasFlamethrower); w.Write(p.HasAcidSpewer); w.Write(p.HasLightningGun);
+            w.Write(p.HasGrapple);    // v23
             w.Write(p.ScannerTier);   // v20
             w.Write(p.FlyMode);
             w.Write(p.BeaconWorld.HasValue);
