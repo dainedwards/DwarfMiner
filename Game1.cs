@@ -2745,7 +2745,7 @@ public sealed partial class DwarfMinerGame : Game
         _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir,
             Color.Lerp(new Color(150, 120, 255), new Color(255, 120, 240), f));
         var p = new Projectile(_run.Player.Position + dir * 6f, dir * 240f, 1500f * f, 3f, ProjectileKind.Nuke);
-        p.Radius *= 0.6f + 0.8f * f;                        // the ball is bigger the harder it's charged
+        p.Radius *= (0.6f + 0.8f * f) * 0.35f;              // 35% of the old ball size, at every charge stage
         p.ExplosionRadius *= 0.45f + 0.55f * f;
         p.CraterTiles = Math.Max(2, (int)(p.CraterTiles * (0.4f + 0.6f * f)));
         p.AlloyMinePower = Math.Max(2, (int)(12 * f));      // full charge = 12 (breaks alien metal ~4 hits)
