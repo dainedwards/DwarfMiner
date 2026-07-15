@@ -2306,6 +2306,7 @@ public sealed partial class DwarfMinerGame : Game
 
         if (_run.Titan.Health > 0)
             _run.Titan.Update(dt, _run.Planet, _run.Physics, _run.Cells, _run.Player.Position, _run.Boulders, _run.TitanShots);
+        FramePerf.Add("crit", tPerf);
         // Hatch feedback: a heavy shake + shell-burst the frame the egg cracks open.
         if (_run.Titan.JustHatched)
         {
