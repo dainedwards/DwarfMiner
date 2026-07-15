@@ -1599,9 +1599,10 @@ public static class WorldGen
                 }
             }
 
-            // The magma chamber: an obsidian-shelled pool deep under the cone. Obsidian
-            // resists both lava melt and acid corrosion, so the reservoir holds until the
-            // player (or a cave-in) breaches it.
+            // The magma chamber: a shelled pool deep under the cone. Lava chambers wear a
+            // LAVA-ROCK shell (melt/burn-proof — the same jacket every lava body gets);
+            // acid chambers keep OBSIDIAN, the only kind acid can't corrode. Either way
+            // the reservoir holds until the player (or a cave-in) breaches it.
             var chamberRad = (int)((4 + rng.Next(3) + scale * 1.5f) * S);
             var chamberR = surfaceR - (int)((55 + rng.Next(26)) * S);
             if (def.VolcanoAcid)
