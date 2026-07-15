@@ -1742,7 +1742,7 @@ public sealed class TitanLeg
 /// <summary>Slug is not a titan shot at all: it's the pistol/SMG round the humanoid bandit
 /// creatures fire (Marauder/Raider) — a weaker cousin of the player's own guns riding the
 /// same self-contained shot physics.</summary>
-public enum TitanShotKind { Flame, Laser, Acid, Spike, Lava, Void, Slug }
+public enum TitanShotKind { Flame, Laser, Acid, Spike, Lava, Void, Slug, Dart }
 
 public sealed class TitanProjectile
 {
