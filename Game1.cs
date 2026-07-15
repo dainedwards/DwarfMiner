@@ -5525,8 +5525,18 @@ public sealed partial class DwarfMinerGame : Game
             // DM_FPSLOG=1 → per-second console FPS line, for headless perf comparisons.
             if (Environment.GetEnvironmentVariable("DM_FPSLOG") is { Length: > 0 })
                 Console.WriteLine($"[fps] {_fps}  upd {_updateMs:0.0}  drw {_drawMs:0.0}");
-            // DM_PERF=1 → companion per-phase attribution line (mean/worst ms per system).
+            // DM_PERF=1 → companion per-phase attribution line (mean/worst ms per system),
+            // plus population counts and GC activity — a slow-decaying active-cell count or
+            // a gen2 collection lining up with a worst-frame spike is the usual smoking gun.
             FramePerf.Report();
+            if (FramePerf.On && _run is not null)
+            {
+                var g0 = GC.CollectionCount(0);
+                var g2 = GC.CollectionCount(2);
+                Console.WriteLine($"[cnt] active {_run.Cells.ActiveCellCount}  fly {_run.Cells.FlyingCellCount}" +
+                    $"  parts {_particles.Count}  crit {_run.Creatures.Count}  gc0 {g0 - _gc0}  gc2 {g2 - _gc2}");
+                _gc0 = g0; _gc2 = g2;
+            }
         }
         var fpsText = $"FPS {_fps}  UPD {_updateMs:0.0}  DRW {_drawMs:0.0}";
         _renderer.DrawText(fpsText,
