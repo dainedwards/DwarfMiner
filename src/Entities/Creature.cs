@@ -634,6 +634,7 @@ public sealed class Creature
             case CreatureKind.AlienShark: TickShark(dt, planet, cells, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.Gulper:     TickGulper(dt, planet, cells, up, right, toPlayer, dist, speedMul); break;
             case CreatureKind.Brinespitter: TickBrinespitter(dt, planet, cells, up, right, toPlayer, dist, speedMul, shots); break;
+            case CreatureKind.Kraken:     TickKraken(dt, planet, cells, up, right, toPlayer, dist, speedMul, shots); break;
             // Belt natives. The moonlet and glimmermaw run bespoke brains below; the leech
             // hunts on the skitterer's pounce brain (its air siphon lives in the contact
             // block, not the tick).
