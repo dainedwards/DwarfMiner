@@ -1567,9 +1567,10 @@ public sealed class Cells
             else if (m == Material.Empty && !SolidTileAtCell(cx, cy))
             {
                 // Ceiling drip: open air under a porous tile with water pooled on top weeps
-                // the odd droplet through. The droplet is rain-tagged, so a dripping cave
-                // pools puddles that evaporate — never a slow flood — and the pool above is
-                // NOT drained (a real seep would empty every lake through its bed).
+                // the odd droplet through. The droplet is DRIP-tagged (never converts to
+                // permanent water, unlike rain), so a dripping cave pools puddles that
+                // evaporate — never a slow flood — and the pool above is NOT drained (a
+                // real seep would empty every lake through its bed).
                 var (px, py) = (cx, cy);
                 for (var k = 0; k < 12 && py < Height - 1; k++)
                 {
