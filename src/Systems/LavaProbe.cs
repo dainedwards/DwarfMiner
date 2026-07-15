@@ -78,6 +78,60 @@ public static class LavaProbe
             foreach (var s in samples) Console.WriteLine("    " + s);
             Console.WriteLine(naked == 0 ? "    OK: every lava body fully jacketed"
                                          : "    FAIL: shell has holes");
+
+            if (id != "debug") continue;
+
+            // RUNTIME LEAK HUNT: snapshot every tile that holds any lava cell, run the
+            // sim untrottled (headless SimFocus off) for two minutes, then report lava
+            // found in tiles OUTSIDE the initial body — where it got to and what the
+            // neighbourhood looks like, which localises the breach.
+            var initial = new System.Collections.Generic.HashSet<(int r, int t)>();
+            void ScanLava(System.Collections.Generic.HashSet<(int r, int t)> set)
+            {
+                for (var r = 0; r < planet.Rings; r++)
+                {
+                    var n = planet.TilesAt(r);
+                    for (var t = 0; t < n; t++)
+                        for (var dy = 0; dy < Cells.Density && !set.Contains((r, t)); dy++)
+                            for (var dx = 0; dx < Cells.Density; dx++)
+                                if (cells.Get(t * Cells.Density + dx, r * Cells.Density + dy)
+                                    == Material.Lava)
+                                {
+                                    set.Add((r, t));
+                                    break;
+                                }
+                }
+            }
+            ScanLava(initial);
+
+            const float dt = 1f / 60f;
+            for (var tick = 0; tick < 120 * 60; tick++) cells.Update(dt);
+
+            var after = new System.Collections.Generic.HashSet<(int r, int t)>();
+            ScanLava(after);
+            var escaped = 0;
+            var esc = new System.Collections.Generic.List<string>();
+            foreach (var (r, t) in after)
+            {
+                // Adjacent spill (one tile of slosh around the body) is normal liquid
+                // behaviour; anything further is a breach.
+                var near = false;
+                for (var dr = -1; dr <= 1 && !near; dr++)
+                    for (var dtt = -1; dtt <= 1 && !near; dtt++)
+                    {
+                        var r2 = r + dr;
+                        if (r2 < 0 || r2 >= planet.Rings) continue;
+                        var n2 = planet.TilesAt(r2);
+                        var t2 = (int)((t + 0.5f) / planet.TilesAt(r) * n2) + dtt;
+                        near = initial.Contains((r2, (t2 % n2 + n2) % n2));
+                    }
+                if (near) continue;
+                escaped++;
+                if (esc.Count < 15) esc.Add($"escaped lava at ({r},{t}) kind={planet.Get(r, t)}");
+            }
+            Console.WriteLine($"    after 120s sim: lava tiles {after.Count} (was {initial.Count}), " +
+                              $"escaped beyond body+1: {escaped}");
+            foreach (var s in esc) Console.WriteLine("    " + s);
         }
     }
 }
