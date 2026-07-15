@@ -583,6 +583,48 @@ public sealed class Particles
         });
     }
 
+    /// <summary>A single air bubble underwater: a pale speck that wobbles upward (negative
+    /// gravity scale rises along the local up) and pops after a beat. Emitted by the drowning
+    /// dwarf's breath, boiling quench fronts, and fire gouts dying in a pool.</summary>
+    public void EmitBubble(Vector2 pos, Vector2 up)
+    {
+        var side = new Vector2(-up.Y, up.X);
+        _list.Add(new Particle
+        {
+            Position = pos + side * (((float)_rng.NextDouble() - 0.5f) * 4f),
+            Velocity = up * (14f + (float)_rng.NextDouble() * 16f)
+                     + side * (((float)_rng.NextDouble() - 0.5f) * 14f),
+            Life = 0.5f + (float)_rng.NextDouble() * 0.7f,
+            MaxLife = 1.2f,
+            Color = new Color(190, 220, 245),
+            FadeColor = new Color(120, 160, 200),
+            Size = 1f + (float)_rng.NextDouble() * 0.8f,
+            GravityScale = -0.18f,
+            Drag = 0.9f,
+        });
+    }
+
+    /// <summary>A single falling leaf: a fleck in the canopy's own colour that flutters down
+    /// slowly, drifting sideways — trees shed the odd leaf so a forest reads alive.</summary>
+    public void EmitLeaf(Vector2 pos, Vector2 down, Color color)
+    {
+        var side = new Vector2(-down.Y, down.X);
+        _list.Add(new Particle
+        {
+            Position = pos,
+            Velocity = down * (8f + (float)_rng.NextDouble() * 10f)
+                     + side * (((float)_rng.NextDouble() - 0.5f) * 26f),
+            Life = 2.2f + (float)_rng.NextDouble() * 1.8f,
+            MaxLife = 4f,
+            Color = color,
+            FadeColor = Color.Multiply(color, 0.5f),
+            Size = 1.2f + (float)_rng.NextDouble() * 0.7f,
+            GravityScale = 0.05f,
+            Drag = 0.75f,
+            CollideTiles = true,
+        });
+    }
+
     /// <summary>A single snowflake: drifts down slowly, wafting side to side, barely pulled by
     /// gravity — fluffy and light, the ice world's answer to rain.</summary>
     public void EmitSnow(Vector2 pos, Vector2 down, Color color)
