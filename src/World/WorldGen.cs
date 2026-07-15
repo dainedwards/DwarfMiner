@@ -1619,22 +1619,47 @@ public static class WorldGen
             // one tile wider than the hull — towers stand on pilings, not on topsoil.
             var footingR = Math.Max(2, surfaceR - (int)(14 * S));
 
+            // Facade rasterization. The true facade lines are authored in pixels; each ring
+            // picks the tile column nearest that line, with HYSTERESIS: keep the previous
+            // ring's column while it still sits within ~0.7 tile of the truth. Tiles-per-ring
+            // drifts a little every ring on the smooth polar grid, so the old rasterizer
+            // (floor of the centre index plus floor-of-span + 1) re-quantised both edges per
+            // ring and towers came out sawtoothed; sticky columns give long dead-straight
+            // runs with a rare single-tile step where the line genuinely crosses a column.
+            int PickColumn(float trueAng, ref float prevAng, int n)
+            {
+                var chord = MathHelper.TwoPi / n;
+                var c = trueAng / chord - 0.5f;      // tile-space coordinate of the true line
+                var pick = (int)MathF.Round(c);
+                if (!float.IsNaN(prevAng))
+                {
+                    var cont = (int)MathF.Round(prevAng / chord - 0.5f);
+                    if (MathF.Abs(cont - c) <= 0.72f) pick = cont;
+                }
+                prevAng = (pick + 0.5f) * chord;
+                return pick;
+            }
+
+            var prevLAng = float.NaN;
+            var prevRAng = float.NaN;
             for (var r = footingR; r <= topR; r++)
             {
                 var n = planet.TilesAt(r);
+                var chordAng = MathHelper.TwoPi / n;
                 var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
-                var halfAng = halfWidthPx / ringRadius;
-                var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
-                var span = (int)(halfAng / MathHelper.TwoPi * n) + 1;
                 var storey = r - baseR;
                 var slabRow = storey % floorEvery < 2 && storey >= floorEvery && storey < height - 2;
+                var tL = PickColumn(ang - halfWidthPx / ringRadius, ref prevLAng, n);
+                var tR = PickColumn(ang + halfWidthPx / ringRadius, ref prevRAng, n);
+                var tC = (int)MathF.Round(ang / chordAng - 0.5f);
+                var span = (tR - tL) / 2;            // half-width in tiles, interior layout
                 // Slab rows carry a one-tile exterior ledge — horizontal ribs that break up
                 // the hull. The foundation is a tile wider than the tower for the same span
                 // bump, so the plinth reads as a footing, not a buried wall.
-                var spanHere = span + (slabRow || r <= surfaceR ? 1 : 0);
-                for (var dt = -spanHere; dt <= spanHere; dt++)
+                var ledge = slabRow || r <= surfaceR ? 1 : 0;
+                for (var ti = tL - ledge; ti <= tR + ledge; ti++)
                 {
-                    var t = ((t0 + dt) % n + n) % n;
+                    var t = (ti % n + n) % n;
                     if (Tiles.IsAnchored(planet.Get(r, t))) continue;
                     planet.SetWall(r, t, TileKind.AlienAlloy);
 
@@ -1645,7 +1670,7 @@ public static class WorldGen
                     // Roof cap.
                     if (storey >= height - 2) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
 
-                    var edge = Math.Abs(dt) >= spanHere - 1;
+                    var edge = ti <= tL + 1 || ti >= tR - 1;
                     if (edge)
                     {
                         // Street-level doorway (with a glass transom over the lintel) on one
@@ -1660,8 +1685,8 @@ public static class WorldGen
                             // real working door (closed at gen time — residents and the dwarf
                             // pop it open with E / by walking up), the inner column is open
                             // lobby behind it. Both left and right edges get one now.
-                            planet.Set(r, t, Math.Abs(dt) >= spanHere ? TileKind.DoorClosed
-                                                                      : TileKind.Sky);
+                            planet.Set(r, t, ti <= tL || ti >= tR ? TileKind.DoorClosed
+                                                                  : TileKind.Sky);
                         else if (storey == doorH)
                             planet.Set(r, t, TileKind.CityGlass);   // glass transom over both doors
                         else
@@ -1672,6 +1697,7 @@ public static class WorldGen
                     // Interior: floor slab at the base of every storey above the ground
                     // floor (the plinth is street level's floor), with a stair gap hugging
                     // alternating walls so the shaft zig-zags up the tower.
+                    var dt = ti - tC;
                     var gapSide = storey / floorEvery % 2 == 0 ? 1 : -1;
                     var slab = slabRow && dt * gapSide < span - 4;
 
