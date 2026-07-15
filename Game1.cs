@@ -5305,9 +5305,12 @@ public sealed partial class DwarfMinerGame : Game
                 }
                 case ProjectileKind.MachineGun:
                 {
-                    // Short tracer streak so held fire reads as a stream.
+                    // Small, sharp copper round with a hot tip — reads as a fast little slug
+                    // rather than a fat tracer streak now.
                     var ang = MathF.Atan2(p.Velocity.Y, p.Velocity.X);
-                    _renderer.DrawRect(p.Position, new Vector2(5f, 1.2f), new Color(255, 210, 120), ang);
+                    var nose = p.Position + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * 1.2f;
+                    _renderer.DrawRect(p.Position, new Vector2(2.6f, 0.95f), new Color(200, 130, 80), ang);
+                    _renderer.DrawRect(nose, new Vector2(1.1f, 0.95f), new Color(255, 205, 130), ang);
                     break;
                 }
                 case ProjectileKind.Laser:
