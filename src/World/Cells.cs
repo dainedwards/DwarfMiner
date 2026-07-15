@@ -701,6 +701,7 @@ public sealed class Cells
     public void Update(float dt)
     {
         _time += dt;
+        if (_fireBudget < FireBudgetMax) _fireBudget = MathF.Min(FireBudgetMax, _fireBudget + FireBudgetRegen * dt);
 
         UpdateFlying(dt);
 
