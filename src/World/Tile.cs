@@ -66,6 +66,13 @@ public enum TileKind : byte
     Plating = 46,      // riveted iron wall panel
     GlassBlock = 47,   // clear pane — a window block
     Platform = 49,     // thin ledge you stand on but jump/drop through (one-way, anchored)
+    // Alien trees & water plants — WorldGen scatters them on every world that grows life
+    // (none on airless rock). Trunks are chopped for WOOD; canopies are passable foliage;
+    // seafronds sway in the shallows.
+    TreeTrunk = 50,    // chop it → wood (anchored so the tree stands until felled)
+    TreeCanopy = 51,   // leafy foliage (passable, no drop)
+    TreeCanopy2 = 52,  // a second canopy tone for variety / other biomes
+    SeaFrond = 53,     // waving water plant rooted on the lakebed
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
