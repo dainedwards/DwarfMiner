@@ -104,6 +104,10 @@ public sealed class Physics
         public readonly List<int> Tiles = new();
         public float Timer = TrembleTime;
         public int Next;
+        /// <summary>Candidate for rigid detach: when the tremble runs out the whole region
+        /// leaves the grid as one tumbling body (see RigidBodies) instead of ring-crumbling
+        /// to dust. Cleared if the detach is refused (over budget) — then the dust path runs.</summary>
+        public bool Rigid;
     }
 
     private readonly List<PendingCollapse> _pendingCollapses = new();
@@ -117,6 +121,16 @@ public sealed class Physics
     /// crumbled yet). Game1 reads this to sound the cave-in warning creak with lead time,
     /// before the "collapse" boom that <see cref="CollapsesThisTick"/> drives.</summary>
     public int NewlyCondemnedThisTick { get; private set; }
+
+    /// <summary>When set, condemned stone regions small enough to hold together hand their
+    /// tiles here after the tremble instead of dusting. Returns false to decline (disabled /
+    /// over budget), in which case the legacy crumble runs. Wired by Game1; headless probes
+    /// and old tests leave it null and keep pure-dust behaviour.</summary>
+    public Func<List<int>, bool>? DetachToRigid;
+
+    /// <summary>Tiles that left the grid as rigid chunks this Update — Game1's cue for the
+    /// crack-and-groan of a slab shearing free (distinct from the dust-crumble boom).</summary>
+    public int RigidDetachesThisTick { get; private set; }
 
     public Physics(Planet planet, Cells cells)
     {
@@ -148,6 +162,7 @@ public sealed class Physics
     {
         CollapsesThisTick = 0;
         NewlyCondemnedThisTick = 0;
+        RigidDetachesThisTick = 0;
         TickPendingCollapses(dt);
         _settleAccum += dt;
         if (_settleAccum < SettleInterval) return;
@@ -164,6 +179,19 @@ public sealed class Physics
         {
             var p = _pendingCollapses[i];
             p.Timer -= dt;
+            // Rigid detach: the moment the tremble expires — before any tile has crumbled —
+            // the whole region tries to leave the grid as one body. Declined → dust path.
+            if (p.Rigid && p.Timer <= 0f && p.Next == 0)
+            {
+                p.Rigid = false;
+                if (DetachToRigid is not null && DetachToRigid(p.Tiles))
+                {
+                    foreach (var t in p.Tiles) _pendingTiles.Remove(t);
+                    _pendingCollapses.RemoveAt(i);
+                    RigidDetachesThisTick += p.Tiles.Count;
+                    continue;
+                }
+            }
             while (p.Timer <= 0f && p.Next < p.Tiles.Count)
             {
                 var ring = _planet.UnIndex(p.Tiles[p.Next]).x;
@@ -435,6 +463,10 @@ public sealed class Physics
             NewlyCondemnedThisTick++;
         }
         if (p is null) return;
+        // Small enough to hold together: the region shears off as one rigid chunk when the
+        // tremble ends. Bigger regions keep the dust cascade — both for the spectacle and
+        // because a giant massif as one rotating body would read as a cardboard cutout.
+        p.Rigid = DetachToRigid is not null && p.Tiles.Count <= RigidBodies.MaxChunkTiles;
         // Innermost ring first = "bottom" in polar gravity, so the crumble sweeps upward.
         // Plain int sort: ring offsets are monotonic, so flat indices already order by ring
         // (the old comparator paid two UnIndex binary searches per comparison for the same

@@ -19,6 +19,9 @@ public sealed class Session
     public Planet Planet = null!;
     public Cells Cells = null!;
     public Physics Physics = null!;
+    /// <summary>Noita-style rigid debris (detached tile chunks in flight). Null in headless
+    /// probes/tests that build a bare Physics — everything guards with <c>Rigid?.</c></summary>
+    public RigidBodies? Rigid;
     public Player Player = null!;
     public Titan Titan = null!;
 

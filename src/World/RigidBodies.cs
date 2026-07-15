@@ -1,0 +1,647 @@
+using System;
+using System.Collections.Generic;
+using Microsoft.Xna.Framework;
+
+namespace DwarfMiner.World;
+
+/// <summary>
+/// Noita-style rigid debris: a detached region of solid tiles leaves the grid and becomes a
+/// tumbling body that keeps its shape — it falls, rotates, bounces off terrain, and when it
+/// comes to rest its tiles stamp back into the planet, mass-conserved (cells that can't find
+/// a free tile spill out as ordinary dust). The polar grid means bodies live in Cartesian
+/// world space: each payload cell remembers its offset from the centre of mass at detach
+/// time, and every grid interaction (collision sampling, hazard erosion, re-stamping) goes
+/// through Planet.WorldToTile per cell, so band-halving boundaries and ring curvature never
+/// need special cases.
+///
+/// Coupling with the rest of the sim:
+///   • Physics.CollapseRegion routes qualifying stone regions here instead of dusting them
+///     (the tremble telegraph still runs first — see Physics.PendingCollapse.Rigid).
+///   • Explosions near a fresh detach launch it ballistically (see NoteBlast), so blasted
+///     walls fly apart in chunks instead of politely slumping.
+///   • Fire/lava/acid in the cell sim eat a live body's cells; losing cells can split the
+///     body into separate pieces, each of which keeps tumbling on its own.
+///   • Bodies collide with terrain tiles only — they sink through loose cell-sim dust
+///     (heavy rock through powder) and crush flora tiles they land on.
+/// </summary>
+public sealed class RigidBodies
+{
+    /// <summary>Kill switch: DM_RIGID=0 reverts every detach back to the legacy dust crumble.</summary>
+    public static bool Enabled { get; } =
+        Environment.GetEnvironmentVariable("DM_RIGID") != "0";
+
+    /// <summary>Largest region that converts to a single body. Bigger cave-ins keep the
+    /// legacy dust cascade — a thousand-tile massif as one rotating sprite would read as a
+    /// cutout, and the dust rain is the established spectacle for the big ones.</summary>
+    public const int MaxChunkTiles = 400;
+
+    /// <summary>Live-body budget. Over budget, new detaches fall back to dust rather than
+    /// force-stamping an old body mid-air (which would leave floating terrain).</summary>
+    public const int MaxBodies = 20;
+
+    private const float Gravity = 300f;          // px/s² toward the core — reads heavy
+    private const float Restitution = 0.12f;     // rock thuds, it doesn't bounce
+    /// <summary>Impacts slower than this don't bounce at all — resting contact must be
+    /// perfectly inelastic or the restitution + push-out cycle pumps micro-jitter forever
+    /// and the body never sleeps (measured: ±20 px/s of noise, SleepTimer pinned at 0).</summary>
+    private const float BounceThreshold = 60f;
+    private const float Friction = 0.55f;
+    private const float SleepSpeed = 18f;        // px/s below which the sleep timer runs
+    private const float SleepSpin = 0.35f;       // rad/s
+    private const float SleepAfter = 0.6f;       // seconds of stillness before stamping
+    private const float MaxSpeed = 460f;
+    private const float ErodeInterval = 0.22f;   // hazard sampling cadence per body
+    /// <summary>How long after a blast a fresh detach still inherits its launch impulse —
+    /// covers the settle tick (50ms) + tremble (0.35s) between the carve and the detach.</summary>
+    private const float BlastMemory = 0.6f;
+
+    public struct BodyCell
+    {
+        public Vector2 Local;   // offset from centre of mass in the body frame (angle 0)
+        public TileKind Kind;
+        public bool Surface;    // had a non-region cardinal neighbour at detach → contact point
+    }
+
+    public sealed class Body
+    {
+        public Vector2 Position;      // world-space centre of mass
+        public Vector2 Velocity;
+        public float Angle;
+        public float Spin;            // rad/s
+        public readonly List<BodyCell> Cells = new();
+        public float InvMass;
+        public float InvInertia;
+        public float BoundRadius;     // world-space bounding circle around Position
+        public float SleepTimer;
+        /// <summary>Seconds since terrain contact. A resting body alternates contact/free
+        /// every few frames (the push-out separates it, gravity re-engages), so sleep and
+        /// damping decisions use "touched recently", never "touching this exact frame".</summary>
+        public float SinceContact = 10f;
+        public float ErodeTimer;
+        public bool Dead;
+
+        /// <summary>Rebuild mass/inertia/bounds from the current payload — called at spawn
+        /// and again whenever erosion removes cells. Unit mass per cell.</summary>
+        public void RecomputeMass()
+        {
+            var n = Cells.Count;
+            if (n == 0) { Dead = true; return; }
+            var com = Vector2.Zero;
+            foreach (var c in Cells) com += c.Local;
+            com /= n;
+            if (com.LengthSquared() > 0.01f)
+            {
+                // Re-centre so Position stays the true centre of mass after cell loss —
+                // otherwise an eroded body spins about a phantom point.
+                Position += Rotate(com, Angle);
+                for (var i = 0; i < Cells.Count; i++)
+                {
+                    var c = Cells[i];
+                    c.Local -= com;
+                    Cells[i] = c;
+                }
+            }
+            var inertia = 0f;
+            var maxSq = 0f;
+            foreach (var c in Cells)
+            {
+                var d = c.Local.LengthSquared();
+                inertia += d + Planet.TileSize * Planet.TileSize / 6f;
+                maxSq = MathF.Max(maxSq, d);
+            }
+            InvMass = 1f / n;
+            InvInertia = 1f / MathF.Max(1f, inertia);
+            BoundRadius = MathF.Sqrt(maxSq) + Planet.TileSize;
+        }
+    }
+
+    private readonly Planet _planet;
+    private readonly Cells _cells;
+    private readonly Physics _physics;
+    public readonly List<Body> Bodies = new();
+
+    /// <summary>Hard landings this tick: (position, impact speed × mass). Game1 drains these
+    /// for shake/dust/sound, same pattern as Cells.PendingGemDrops.</summary>
+    public readonly List<(Vector2 pos, float force)> Impacts = new();
+
+    private readonly List<(Vector2 pos, float radius, float power, float age)> _blasts = new();
+
+    // Scratch buffers for detach/stamp/split — reused so a cascade of detaches doesn't churn
+    // the heap mid-disaster.
+    private readonly HashSet<int> _regionSet = new();
+    private readonly List<Vector2> _contacts = new();
+    private readonly List<Vector2> _normals = new();
+
+    public RigidBodies(Planet planet, Cells cells, Physics physics)
+    {
+        _planet = planet;
+        _cells = cells;
+        _physics = physics;
+    }
+
+    public static Vector2 Rotate(Vector2 v, float a)
+    {
+        var c = MathF.Cos(a);
+        var s = MathF.Sin(a);
+        return new Vector2(v.X * c - v.Y * s, v.X * s + v.Y * c);
+    }
+
+    /// <summary>Remember an explosion so a region it just carved free launches outward when
+    /// Physics detaches it a tick or two later (see BlastMemory).</summary>
+    public void NoteBlast(Vector2 pos, float radius, float power)
+    {
+        _blasts.Add((pos, MathF.Max(radius, 24f), power, 0f));
+        // Bodies already in flight take the impulse immediately.
+        foreach (var b in Bodies) ApplyBlast(b, pos, MathF.Max(radius, 24f), power);
+    }
+
+    private static void ApplyBlast(Body b, Vector2 pos, float radius, float power)
+    {
+        var d = b.Position - pos;
+        var dist = d.Length();
+        if (dist > radius + b.BoundRadius) return;
+        var dir = dist > 0.5f ? d / dist : new Vector2(0, -1);
+        var falloff = 1f - MathHelper.Clamp(dist / (radius + b.BoundRadius), 0f, 1f);
+        b.Velocity += dir * power * falloff;
+        // Off-centre kick: torque from the blast reaching one side of the body first.
+        b.Spin += (dir.X * d.Y - dir.Y * d.X) * power * falloff * b.InvInertia * 0.5f;
+        b.SleepTimer = 0f;
+    }
+
+    /// <summary>
+    /// Detach a condemned region into a rigid body. Tiles are removed from the grid here.
+    /// Returns false (leaving the grid untouched) when over budget or the region is too big —
+    /// the caller falls back to the legacy dust crumble.
+    /// </summary>
+    public bool TryDetach(List<int> regionTiles)
+    {
+        if (!Enabled || Bodies.Count >= MaxBodies) return false;
+        if (regionTiles.Count > MaxChunkTiles) return false;
+
+        // Gather the still-valid tiles (some may have been mined/melted during the tremble).
+        _regionSet.Clear();
+        var com = Vector2.Zero;
+        var count = 0;
+        foreach (var idx in regionTiles)
+        {
+            var (x, y) = _planet.UnIndex(idx);
+            var k = _planet.Get(x, y);
+            if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k) || Tiles.IsFlora(k)) continue;
+            _regionSet.Add(idx);
+            com += _planet.TileToWorld(x, y);
+            count++;
+        }
+        if (count < 4) return false;
+        com /= count;
+
+        var body = new Body { Position = com };
+        foreach (var idx in _regionSet)
+        {
+            var (x, y) = _planet.UnIndex(idx);
+            var k = _planet.Get(x, y);
+            body.Cells.Add(new BodyCell
+            {
+                Local = _planet.TileToWorld(x, y) - com,
+                Kind = k,
+                Surface = IsRegionSurface(x, y),
+            });
+        }
+        // Only now that the body is definitely spawning do the tiles leave the grid.
+        foreach (var idx in _regionSet)
+        {
+            var (x, y) = _planet.UnIndex(idx);
+            _planet.Set(x, y, TileKind.Sky);
+            _physics.MarkDirty(x, y);
+        }
+        body.RecomputeMass();
+        // A sliver of spin so even a clean vertical drop tumbles a little.
+        body.Spin = ((float)Random.Shared.NextDouble() - 0.5f) * 0.6f;
+
+        // A blast that just carved this region free hurls it outward.
+        foreach (var (bp, br, pw, age) in _blasts)
+            if (age <= BlastMemory) ApplyBlast(body, bp, br, pw);
+
+        Bodies.Add(body);
+        return true;
+    }
+
+    /// <summary>Spawn a body directly from explicit tiles (tree logs). Removes them from the
+    /// grid itself; returns false untouched when disabled or over budget.</summary>
+    public bool SpawnFromTiles(List<(int x, int y)> tiles, Vector2 initialVel, float initialSpin)
+    {
+        if (!Enabled || Bodies.Count >= MaxBodies || tiles.Count < 3) return false;
+        _regionSet.Clear();
+        var com = Vector2.Zero;
+        foreach (var (x, y) in tiles)
+        {
+            _regionSet.Add(_planet.Index(x, y));
+            com += _planet.TileToWorld(x, y);
+        }
+        com /= tiles.Count;
+        var body = new Body { Position = com, Velocity = initialVel, Spin = initialSpin };
+        foreach (var (x, y) in tiles)
+        {
+            body.Cells.Add(new BodyCell
+            {
+                Local = _planet.TileToWorld(x, y) - com,
+                Kind = _planet.Get(x, y),
+                Surface = IsRegionSurface(x, y),
+            });
+            _planet.Set(x, y, TileKind.Sky);
+            _physics.MarkDirty(x, y);
+        }
+        body.RecomputeMass();
+        Bodies.Add(body);
+        return true;
+    }
+
+    /// <summary>Surface test at detach time, on the original polar adjacency: a cell with any
+    /// cardinal neighbour outside the region is a contact point. Interior cells can never
+    /// touch terrain first, so the solver skips them entirely.</summary>
+    private bool IsRegionSurface(int x, int y)
+    {
+        var (ir, it) = _planet.InnerNeighbour(x, y);
+        if (ir < 0 || !_regionSet.Contains(_planet.Index(ir, it))) return true;
+        var oc = _planet.OuterNeighbourCount(x, y);
+        for (var i = 0; i < oc; i++)
+        {
+            var (or_, ot_) = _planet.OuterNeighbour(x, y, i);
+            if (or_ >= _planet.Rings || !_regionSet.Contains(_planet.Index(or_, ot_))) return true;
+        }
+        if (!_regionSet.Contains(_planet.Index(x, y - 1))) return true;
+        if (!_regionSet.Contains(_planet.Index(x, y + 1))) return true;
+        return false;
+    }
+
+    public void Update(float dt)
+    {
+        Impacts.Clear();
+        for (var i = _blasts.Count - 1; i >= 0; i--)
+        {
+            var b = _blasts[i];
+            b.age += dt;
+            if (b.age > BlastMemory) _blasts.RemoveAt(i);
+            else _blasts[i] = b;
+        }
+
+        for (var i = Bodies.Count - 1; i >= 0; i--)
+        {
+            var b = Bodies[i];
+            Step(b, dt);
+            if (b.Dead) Bodies.RemoveAt(i);
+        }
+    }
+
+    private void Step(Body b, float dt)
+    {
+        b.ErodeTimer += dt;
+        if (b.ErodeTimer >= ErodeInterval)
+        {
+            b.ErodeTimer = 0f;
+            Erode(b);
+            if (b.Dead) return;
+        }
+
+        var grav = _planet.GravityAt(b.Position) * Gravity;
+        b.Velocity += grav * dt;
+        var speed = b.Velocity.Length();
+        if (speed > MaxSpeed) b.Velocity *= MaxSpeed / speed;
+
+        // Substep so fast bodies can't tunnel a 4-px tile in one integration.
+        var steps = Math.Clamp((int)MathF.Ceiling((speed * dt + MathF.Abs(b.Spin) * b.BoundRadius * dt) / 2f), 1, 4);
+        var sub = dt / steps;
+        var contacted = false;
+        for (var s = 0; s < steps && !b.Dead; s++)
+        {
+            b.Position += b.Velocity * sub;
+            b.Angle += b.Spin * sub;
+            contacted |= ResolveContacts(b);
+        }
+        b.SinceContact = contacted ? 0f : b.SinceContact + dt;
+
+        // Settle assist: a grounded body crawling along is trying to come to rest — bleed
+        // the crawl hard so the slope-rocking instability (slow slide → impulse burst →
+        // opposite slide) can't rebuild. Real motion (falls, blast launches) is far above
+        // this window and untouched.
+        var grounded = b.SinceContact < 0.12f;
+        if (grounded && b.Velocity.LengthSquared() < 30f * 30f)
+        {
+            b.Velocity *= 0.88f;
+            b.Spin *= 0.86f;
+        }
+
+        // Sleep only while grounded — a body coasting at apogee is slow but not done.
+        var slow = b.Velocity.LengthSquared() < SleepSpeed * SleepSpeed && MathF.Abs(b.Spin) < SleepSpin;
+        b.SleepTimer = grounded && slow ? b.SleepTimer + dt : 0f;
+        if (b.SleepTimer >= SleepAfter) Stamp(b);
+    }
+
+    /// <summary>Sample every surface cell against the tile grid, then resolve the deepest
+    /// contacts with impulses + a positional push-out. Two Gauss-Seidel passes over the
+    /// contact set settle a resting body without a proper LCP solver.</summary>
+    private bool ResolveContacts(Body b)
+    {
+        _contacts.Clear();
+        _normals.Clear();
+        foreach (var c in b.Cells)
+        {
+            if (!c.Surface) continue;
+            var wp = b.Position + Rotate(c.Local, b.Angle);
+            var (tx, ty) = _planet.WorldToTile(wp);
+            var k = _planet.Get(tx, ty);
+            if (!Tiles.IsSolid(k) || Tiles.IsPassable(k)) continue;
+            if (Tiles.IsFlora(k))
+            {
+                // Debris crushes plants: the trampled tile sheds a wisp of dust and the
+                // body keeps moving — a felled log shouldn't perch on a fern.
+                _planet.Set(tx, ty, TileKind.Sky);
+                _cells.SpawnDustFraction(tx, ty, k, 0.3f);
+                _physics.MarkDirty(tx, ty);
+                continue;
+            }
+            var n = ContactNormal(wp);
+            if (n == Vector2.Zero) n = _planet.UpAt(wp);
+            _contacts.Add(wp);
+            _normals.Add(n);
+        }
+        if (_contacts.Count == 0) return false;
+
+        for (var pass = 0; pass < 2; pass++)
+        {
+            for (var i = 0; i < _contacts.Count; i++)
+            {
+                var n = _normals[i];
+                var r = _contacts[i] - b.Position;
+                // Velocity of this contact point (v + ω × r in 2D).
+                var vp = b.Velocity + new Vector2(-b.Spin * r.Y, b.Spin * r.X);
+                var vn = Vector2.Dot(vp, n);
+                if (vn >= 0f) continue;
+
+                var rn = r.X * n.Y - r.Y * n.X;
+                var invEff = b.InvMass + rn * rn * b.InvInertia;
+                var e = vn < -BounceThreshold ? Restitution : 0f;
+                var j = -(1f + e) * vn / invEff;
+                b.Velocity += n * (j * b.InvMass);
+                b.Spin += rn * j * b.InvInertia;
+
+                // Coulomb friction along the tangent, clamped by the normal impulse.
+                var t = new Vector2(-n.Y, n.X);
+                vp = b.Velocity + new Vector2(-b.Spin * r.Y, b.Spin * r.X);
+                var vt = Vector2.Dot(vp, t);
+                var rt = r.X * t.Y - r.Y * t.X;
+                var invEffT = b.InvMass + rt * rt * b.InvInertia;
+                var jt = MathHelper.Clamp(-vt / invEffT, -Friction * j, Friction * j);
+                b.Velocity += t * (jt * b.InvMass);
+                b.Spin += rt * jt * b.InvInertia;
+
+                if (pass == 0 && j * b.InvMass > 55f)
+                    Impacts.Add((_contacts[i], j));
+            }
+        }
+
+        // Contact damping: while touching ground, bleed linear + angular energy hard. The
+        // sequential impulses above aren't a real LCP solve, and whatever error they leave
+        // each substep would otherwise accumulate as the micro-jitter that keeps a landed
+        // body "awake" forever. Airborne flight is untouched.
+        b.Velocity *= 0.96f;
+        b.Spin *= 0.94f;
+
+        // Positional correction: push out along the average contact normal, gently — just
+        // enough that a resting body doesn't sink while its sleep timer runs. Overdoing
+        // this (or scaling it by contact count) pumps the body back into the air.
+        var push = Vector2.Zero;
+        foreach (var n in _normals) push += n;
+        if (push.LengthSquared() > 0.001f)
+            b.Position += Vector2.Normalize(push) * MathF.Min(0.8f, 0.15f * _contacts.Count);
+        return true;
+    }
+
+    /// <summary>Estimate the terrain normal at a penetrating point by averaging the open
+    /// directions in a one-tile ring — the classic falling-sand gradient probe. Returns
+    /// zero deep inside rock (caller substitutes radial up).</summary>
+    private Vector2 ContactNormal(Vector2 wp)
+    {
+        var n = Vector2.Zero;
+        const float step = Planet.TileSize;
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                if (dx == 0 && dy == 0) continue;
+                var off = new Vector2(dx * step, dy * step);
+                var (tx, ty) = _planet.WorldToTile(wp + off);
+                var k = _planet.Get(tx, ty);
+                if (!Tiles.IsSolid(k) || Tiles.IsPassable(k) || Tiles.IsFlora(k))
+                    n += off;
+            }
+        }
+        return n.LengthSquared() > 0.001f ? Vector2.Normalize(n) : Vector2.Zero;
+    }
+
+    /// <summary>Fire/lava/acid in the cell sim gnaw at a body's surface cells (wood burns,
+    /// rock melts into the lava that swallowed it). Removing cells can split the body —
+    /// each connected piece keeps flying separately, Noita-style.</summary>
+    private void Erode(Body b)
+    {
+        var removed = false;
+        for (var i = b.Cells.Count - 1; i >= 0; i--)
+        {
+            var c = b.Cells[i];
+            if (!c.Surface) continue;
+            var wp = b.Position + Rotate(c.Local, b.Angle);
+            var (cx, cy) = _cells.WorldToCell(wp);
+            var m = _cells.Get(cx, cy);
+            var burns = m is Material.Lava or Material.Fire && !Tiles.IsAnchored(c.Kind);
+            var corrodes = m is Material.Acid;
+            if (!burns && !corrodes) continue;
+            b.Cells.RemoveAt(i);
+            removed = true;
+        }
+        if (!removed) return;
+        if (b.Cells.Count < 3)
+        {
+            // Too little left to be a body — the remainder spills as dust where it is.
+            foreach (var c in b.Cells)
+            {
+                var wp = b.Position + Rotate(c.Local, b.Angle);
+                var (tx, ty) = _planet.WorldToTile(wp);
+                _cells.SpawnDustFraction(tx, ty, c.Kind, 0.5f);
+            }
+            b.Dead = true;
+            return;
+        }
+        // Interior cells uncovered by the erosion become the new surface.
+        RebuildSurface(b);
+        SplitIfDisconnected(b);
+        b.RecomputeMass();
+    }
+
+    /// <summary>Recompute surface flags from local-frame adjacency: a cell is surface when
+    /// any of its four lattice neighbours (one tile away in the body frame) is missing. The
+    /// polar detach lattice isn't perfectly square, so neighbours match by distance.</summary>
+    private static void RebuildSurface(Body b)
+    {
+        const float adjSq = (Planet.TileSize * 1.5f) * (Planet.TileSize * 1.5f);
+        for (var i = 0; i < b.Cells.Count; i++)
+        {
+            var ci = b.Cells[i];
+            var neighbours = 0;
+            for (var j = 0; j < b.Cells.Count && neighbours < 4; j++)
+            {
+                if (i == j) continue;
+                if ((b.Cells[j].Local - ci.Local).LengthSquared() <= adjSq) neighbours++;
+            }
+            ci.Surface = neighbours < 4;
+            b.Cells[i] = ci;
+        }
+    }
+
+    /// <summary>Flood the payload over local-frame adjacency; if more than one component
+    /// remains, the largest keeps this body and the rest respawn as their own bodies.</summary>
+    private void SplitIfDisconnected(Body b)
+    {
+        var n = b.Cells.Count;
+        var comp = new int[n];
+        for (var i = 0; i < n; i++) comp[i] = -1;
+        const float adjSq = (Planet.TileSize * 1.5f) * (Planet.TileSize * 1.5f);
+        var compCount = 0;
+        var stack = new Stack<int>();
+        for (var seed = 0; seed < n; seed++)
+        {
+            if (comp[seed] >= 0) continue;
+            stack.Push(seed);
+            comp[seed] = compCount;
+            while (stack.Count > 0)
+            {
+                var i = stack.Pop();
+                for (var j = 0; j < n; j++)
+                {
+                    if (comp[j] >= 0) continue;
+                    if ((b.Cells[j].Local - b.Cells[i].Local).LengthSquared() <= adjSq)
+                    {
+                        comp[j] = compCount;
+                        stack.Push(j);
+                    }
+                }
+            }
+            compCount++;
+        }
+        if (compCount <= 1) return;
+
+        // Count members; the biggest component stays, others peel off into new bodies that
+        // inherit this body's motion (they were one piece until a moment ago).
+        var sizes = new int[compCount];
+        for (var i = 0; i < n; i++) sizes[comp[i]]++;
+        var keep = 0;
+        for (var c = 1; c < compCount; c++) if (sizes[c] > sizes[keep]) keep = c;
+
+        for (var c = 0; c < compCount; c++)
+        {
+            if (c == keep) continue;
+            // Crumbs under 3 cells (or pieces past the body budget, below) spill as dust
+            // where they are — split conserves matter the same way stamping does.
+            if (sizes[c] < 3 || Bodies.Count >= MaxBodies)
+            {
+                for (var i = 0; i < n; i++)
+                {
+                    if (comp[i] != c) continue;
+                    var wp = b.Position + Rotate(b.Cells[i].Local, b.Angle);
+                    var (tx, ty) = _planet.WorldToTile(wp);
+                    _cells.SpawnDustFraction(tx, ty, b.Cells[i].Kind, 0.5f);
+                }
+                continue;
+            }
+            var piece = new Body
+            {
+                Position = b.Position,
+                Velocity = b.Velocity,
+                Angle = b.Angle,
+                Spin = b.Spin,
+            };
+            for (var i = 0; i < n; i++)
+                if (comp[i] == c) piece.Cells.Add(b.Cells[i]);
+            piece.RecomputeMass();
+            Bodies.Add(piece);
+        }
+        for (var i = n - 1; i >= 0; i--)
+            if (comp[i] != keep) b.Cells.RemoveAt(i);
+    }
+
+    /// <summary>Stamp a resting body back into the tile grid, mass-conserved: each cell takes
+    /// the tile under it if free, then tries the surrounding ring, and failing that spills as
+    /// dust of its kind — nothing is created, nothing vanishes. Every written tile wakes the
+    /// settle physics so a bad perch re-condemns naturally.</summary>
+    public void Stamp(Body b)
+    {
+        b.Dead = true;
+        foreach (var c in b.Cells)
+        {
+            var wp = b.Position + Rotate(c.Local, b.Angle);
+            var (tx, ty) = _planet.WorldToTile(wp);
+            if (TryStampAt(tx, ty, c.Kind)) continue;
+            var placed = false;
+            for (var dy = -1; dy <= 1 && !placed; dy++)
+                for (var dx = -1; dx <= 1 && !placed; dx++)
+                    placed = TryStampAt(tx + dx, ty + dy, c.Kind);
+            if (!placed) _cells.SpawnDustInTile(tx, ty, c.Kind);
+        }
+    }
+
+    private bool TryStampAt(int tx, int ty, TileKind k)
+    {
+        if (!_planet.InBounds(tx, ty)) return false;
+        if (_planet.Get(tx, ty) != TileKind.Sky) return false;
+        _planet.Set(tx, ty, k);
+        _physics.MarkDirty(tx, ty);
+        return true;
+    }
+
+    /// <summary>Force every live body into the grid — called before a run save so no matter
+    /// leaves the world (kinetics aren't persisted, same policy as flying cells). A mid-air
+    /// chunk stamps where it is and simply re-condemns after the save.</summary>
+    public void StampAll()
+    {
+        foreach (var b in Bodies)
+            if (!b.Dead) Stamp(b);
+        Bodies.Clear();
+    }
+
+    /// <summary>Overlap test between a body and an actor circle (dwarf, creature). Finds the
+    /// nearest surface cell; when it's within reach, returns the push-out normal (body → actor)
+    /// and the body's velocity at that contact point, so the caller can shoulder the actor
+    /// aside gently or clobber them on a fast hit.</summary>
+    public static bool Overlap(Body b, Vector2 pos, float radius, out Vector2 normal, out Vector2 contactVel)
+    {
+        normal = default;
+        contactVel = default;
+        var d = pos - b.Position;
+        var reach = radius + Planet.TileSize * 0.7f;
+        if (d.LengthSquared() > (b.BoundRadius + radius) * (b.BoundRadius + radius)) return false;
+        var bestSq = float.MaxValue;
+        var bestWp = Vector2.Zero;
+        foreach (var c in b.Cells)
+        {
+            if (!c.Surface) continue;
+            var wp = b.Position + Rotate(c.Local, b.Angle);
+            var dsq = (pos - wp).LengthSquared();
+            if (dsq < bestSq) { bestSq = dsq; bestWp = wp; }
+        }
+        if (bestSq > reach * reach) return false;
+        var n = pos - bestWp;
+        normal = n.LengthSquared() > 0.01f ? Vector2.Normalize(n) : new Vector2(0f, -1f);
+        var r = bestWp - b.Position;
+        contactVel = b.Velocity + new Vector2(-b.Spin * r.Y, b.Spin * r.X);
+        return true;
+    }
+
+    /// <summary>Total payload cells across live bodies (perf counters / tests).</summary>
+    public int CellCount
+    {
+        get
+        {
+            var n = 0;
+            foreach (var b in Bodies) n += b.Cells.Count;
+            return n;
+        }
+    }
+}
