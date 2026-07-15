@@ -1624,10 +1624,12 @@ public sealed class Cells
     }
 
     /// <summary>Whether a rain cell merges into permanent water here: any cardinal
-    /// neighbour is untagged Water (the body absorbs the raindrop), or the cell sits
-    /// mid-column with water both directly above and below regardless of provenance —
-    /// rain pooled ≥3 deep in a hollow starts converting to a real pond from the middle,
-    /// and the contact rule then spreads the untag through the connected pool.</summary>
+    /// neighbour is untagged Water (the body absorbs the raindrop), or a FULL TILE's worth
+    /// of water presses from directly above (a basin filling ≥1 tile deep starts converting
+    /// to a real pond from the bottom up, and the contact rule then spreads the untag
+    /// through the connected pool). The tile-depth bar is deliberate: a shallower rule
+    /// (any sandwiched cell) turned every 1.5-px dip permanent and killed the evaporation
+    /// sink — the creeping flood the rain tag exists to prevent.</summary>
     private bool JoinsWaterBody(int cx, int cy)
     {
         bool Permanent(int ncx, int ncy)
@@ -1637,17 +1639,27 @@ public sealed class Cells
             return (Material)_mat[ni] == Material.Water
                 && _srcTile[ni] != RainWaterSrc && _srcTile[ni] != DripWaterSrc;
         }
-        bool Water(int ncx, int ncy) =>
-            ncy >= 0 && ncy < Height && (Material)_mat[Idx(ncx, ncy)] == Material.Water;
 
         if (Permanent(cx - 1, cy) || Permanent(cx + 1, cy)) return true;
-        var hasInner = cy > 0;
-        var (icx, icy) = hasInner ? InnerCell(cx, cy) : (0, 0);
-        if (hasInner && Permanent(icx, icy)) return true;
-        var hasOuter = cy < Height - 1;
-        var (ocx, ocy) = hasOuter ? OuterCell(cx, cy, 0) : (0, 0);
-        if (hasOuter && Permanent(ocx, ocy)) return true;
-        return hasInner && hasOuter && Water(icx, icy) && Water(ocx, ocy);
+        if (cy > 0)
+        {
+            var (icx, icy) = InnerCell(cx, cy);
+            if (Permanent(icx, icy)) return true;
+        }
+        if (cy < Height - 1)
+        {
+            var (ocx, ocy) = OuterCell(cx, cy, 0);
+            if (Permanent(ocx, ocy)) return true;
+        }
+        // Deep-pool conversion: one continuous tile of water (any provenance) overhead.
+        var (px, py) = (cx, cy);
+        for (var k = 0; k < Density; k++)
+        {
+            if (py >= Height - 1) return false;
+            (px, py) = OuterCell(px, py);
+            if ((Material)_mat[Idx(px, py)] != Material.Water) return false;
+        }
+        return true;
     }
 
     /// <summary>Flat index of the first cardinal neighbour holding material m, or -1.</summary>
