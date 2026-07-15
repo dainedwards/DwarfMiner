@@ -218,6 +218,7 @@ public static class Tiles
         TileKind.Support => 99,
         TileKind.ReinforcedSupport => 99,
         TileKind.Ladder => 1,
+        TileKind.Rope => 1,
         TileKind.Rail => 2,
         TileKind.Glowshroom => 1,
         TileKind.Beacon => 3,
