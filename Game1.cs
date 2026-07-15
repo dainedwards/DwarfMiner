@@ -5636,10 +5636,13 @@ public sealed partial class DwarfMinerGame : Game
             _run.Cells.DrawLiquids(_renderer, viewCentre, viewRadius, blobMode);
             _renderer.Batch.End();
         }
+        FramePerf.Add("liqRT", tDraw);
         if (_pixelK > 0) GraphicsDevice.SetRenderTarget(_worldRt);
         else if (liquidPass) GraphicsDevice.SetRenderTarget(_sceneRt);
 
+        tDraw = FramePerf.Now();
         _renderer.DrawWorld(_run.Planet, _camera);
+        FramePerf.Add("world", tDraw);
 
         // Liquids sit above the terrain (and its crust) but below every entity — same
         // layer they occupied when they drew inside the cell batch.
