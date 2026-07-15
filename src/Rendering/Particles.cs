@@ -985,19 +985,20 @@ public sealed class Particles
         switch (p.Kind)
         {
             case ProjectileKind.Rocket:
-                // Exhaust: grey puff shed at the tail every frame, drifting and expanding.
-                _list.Add(new Particle
-                {
-                    Position = p.Position + back * 6f + Jitter(1f),
-                    Velocity = back * 20f + Jitter(8f),
-                    Life = 0.35f + (float)_rng.NextDouble() * 0.25f,
-                    MaxLife = 0.6f,
-                    Color = new Color(150, 140, 135),
-                    FadeColor = new Color(40, 35, 35),
-                    Size = 1.5f + (float)_rng.NextDouble(),
-                    GravityScale = -0.05f,
-                    Drag = 1.2f,
-                });
+                // Exhaust: grey grains shed at the tail every frame, drifting apart.
+                for (var i = 0; i < 3; i++)
+                    _list.Add(new Particle
+                    {
+                        Position = p.Position + back * (4f + (float)_rng.NextDouble() * 4f) + Jitter(1.2f),
+                        Velocity = back * 20f + Jitter(10f),
+                        Life = 0.35f + (float)_rng.NextDouble() * 0.25f,
+                        MaxLife = 0.6f,
+                        Color = new Color(150, 140, 135),
+                        FadeColor = new Color(40, 35, 35),
+                        Size = 0.9f + (float)_rng.NextDouble() * 0.4f,
+                        GravityScale = -0.05f,
+                        Drag = 1.2f,
+                    });
                 break;
             case ProjectileKind.Dynamite:
             case ProjectileKind.DynamitePack:
