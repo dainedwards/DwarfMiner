@@ -106,15 +106,11 @@ public static class TileAtlas
             lft[i] = (mask & 4) != 0 ? EdgeDepth(seed, 2, i) : 0;
             rgt[i] = (mask & 8) != 0 ? EdgeDepth(seed, 3, i) : 0;
         }
-        // Corner treatment where two exposed edges meet. A *clean* convex corner — exactly two
-        // orthogonally-adjacent edges open and the opposite two solid — is cut to a full 45°
-        // diagonal (Terraria-style slope), so a boxy silhouette reads as clean ramps and rounded
-        // caps. Any busier exposure (a 1-wide tip or finger where a third edge is also open)
-        // keeps the small ~3 px chamfer instead, so slivers don't collapse to a spike.
-        var tl = Corner(mask, 0b0101, seed, 0); // top + left
-        var tr = Corner(mask, 0b1001, seed, 1); // top + right
-        var bl = Corner(mask, 0b0110, seed, 2); // bottom + left
-        var br = Corner(mask, 0b1010, seed, 3); // bottom + right
+        // Corner chamfers where two exposed edges meet (diagonal cut of ~3 px, hash ±1).
+        var tl = (mask & 5) == 5 ? 2 + EdgeDepth(seed, 4, 0) : 0;
+        var tr = (mask & 9) == 9 ? 2 + EdgeDepth(seed, 4, 1) : 0;
+        var bl = (mask & 6) == 6 ? 2 + EdgeDepth(seed, 4, 2) : 0;
+        var br = (mask & 10) == 10 ? 2 + EdgeDepth(seed, 4, 3) : 0;
 
         for (var y = 0; y < Res; y++)
         {
