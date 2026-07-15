@@ -41,6 +41,7 @@ public sealed class CharacterScreen
 
     /// <summary>Item context menu (RMB on a backpack cell): equip / upgrade / drop.</summary>
     private (string Id, Point Pos)? _ctx;
+    private bool _ctxUpgrade;   // context menu is showing the upgrade detail (materials + confirm)
     private readonly List<(string action, Rectangle rect, bool enabled)> _ctxRects = new();
 
     /// <summary>Wired by Game1: upgrade-path probe (label + affordability; null = no
