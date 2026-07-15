@@ -1366,6 +1366,7 @@ public sealed class Cells
         Enqueue(wi);
         var (wcx, wcy) = UnIdx(wi);
         WakeNeighbors(wcx, wcy);
+        QueueBubble(CellToWorld(wcx, wcy));   // the boil fizzes off a bubble train
 
         var i = Idx(cx, cy);
         _mat[i] = (byte)Material.Gravel;
