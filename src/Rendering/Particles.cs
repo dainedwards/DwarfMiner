@@ -1192,6 +1192,11 @@ public sealed class Particles
                 CollideTiles = true,
                 LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
                 LightColor = new Color(255, 170, 70),
+                // Every flame grain that lands IS fire: it stamps a real Fire cell where
+                // it rests (StampAtWorld only fills open cells, the sim's fire budget
+                // throttles spread, and starved fire gutters ~0.8s — so the tongue's
+                // landing zone burns for real without becoming an arson machine).
+                LandMat = CellFx ? (byte)Material.Fire : (byte)0,
             });
         }
         // Fire is BUOYANT: tongues lick UP off the stream as it travels — the Noita curl.
