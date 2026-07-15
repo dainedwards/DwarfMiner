@@ -23,6 +23,11 @@ public sealed class Renderer
     private readonly Texture2D _atmoTex;
     private readonly Texture2D _wispTex;
 
+    /// <summary>Noita-style per-pixel silhouette crust: on by default; DM_NOITA=0 reverts to
+    /// the plain atlas-eroded (tile-quantised) edge for an A/B comparison. See DrawCrust.</summary>
+    private static readonly bool _noita =
+        Environment.GetEnvironmentVariable("DM_NOITA") != "0";
+
     public Renderer(GraphicsDevice gd)
     {
         _gd = gd;
