@@ -4916,27 +4916,15 @@ public sealed partial class DwarfMinerGame : Game
             var facet = Tiles.OreSpeckle(g.Kind);
             // Dark rim slightly larger than the body, so the cut edges read.
             var edge = new Color(body.R / 2, body.G / 2, body.B / 2);
-            if (g.Kind == TileKind.Crystal)
-            {
-                // Diamond rhombus: a tall four-point kite (two stacked triangles), point up
-                // and down, with a bright central facet — sharper and gemmier than the old
-                // stubby prism.
-                _renderer.DrawRect(g.Position, new Vector2(3.6f, 3.6f), edge, grot + MathF.PI / 4f);
-                _renderer.DrawRect(g.Position, new Vector2(2.6f, 2.6f), body, grot + MathF.PI / 4f);
-                _renderer.DrawRect(g.Position + gup * 3.0f, new Vector2(1.1f, 1.6f), body, grot);
-                _renderer.DrawRect(g.Position - gup * 3.0f, new Vector2(1.1f, 1.6f), body, grot);
-                _renderer.DrawRect(g.Position, new Vector2(1.3f, 1.3f), facet, grot + MathF.PI / 4f);
-            }
-            else
-            {
-                // Cut jewel: a faceted diamond body with a crown facet up top and a bright
-                // table in the middle — the loose stone's own colour, not a generic blob.
-                _renderer.DrawRect(g.Position, new Vector2(3.2f, 3.2f), edge, grot + MathF.PI / 4f);
-                _renderer.DrawRect(g.Position, new Vector2(2.4f, 2.4f), body, grot + MathF.PI / 4f);
-                _renderer.DrawRect(g.Position + gup * 1.9f, new Vector2(3.0f, 1.2f), body, grot);
-                _renderer.DrawRect(g.Position + gup * 2.6f, new Vector2(1.6f, 1.0f), edge, grot);
-                _renderer.DrawRect(g.Position - gup * 0.2f, new Vector2(1.3f, 1.3f), facet, grot + MathF.PI / 4f);
-            }
+            // A small, clean DIAMOND (rotated square) for every loose stone — no protruding
+            // point pieces, smaller than before, so it reads as a neat cut jewel.
+            var d45 = grot + MathF.PI / 4f;
+            _renderer.DrawRect(g.Position, new Vector2(2.6f, 2.6f), edge, d45);   // dark rim
+            _renderer.DrawRect(g.Position, new Vector2(1.9f, 1.9f), body, d45);   // bright body
+            _renderer.DrawRect(g.Position - gright * 0.35f + gup * 0.35f,
+                new Vector2(0.9f, 0.9f), facet, d45);                            // facet
+            _renderer.DrawRect(g.Position + gright * 0.45f - gup * 0.1f,
+                new Vector2(0.5f, 0.5f), Color.White, d45);                      // glint
             // Slight travelling shine: a small highlight that sweeps across the stone, plus
             // an occasional bright sparkle at a corner — the "just mined, still glinting"
             // read the user asked for.
