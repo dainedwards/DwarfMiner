@@ -112,10 +112,10 @@ public sealed class Player
     /// <summary>1-4 while owned (drives the exhaust flame colour: red→orange→yellow→blue),
     /// 0 without the pack.</summary>
     public int JetTier => JetTier4 ? 4 : JetTier3 ? 3 : JetTier2 ? 2 : HasJetpack ? 1 : 0;
-    private float JetRiseSpeed => JetTier4 ? 110f : JetTier3 ? 95f : JetTier2 ? 82f : 70f;
+    private float JetRiseSpeed => JetTier4 ? 95f : JetTier3 ? 82f : JetTier2 ? 72f : 62f;
     /// <summary>Net upward acceleration while thrusting (applied on top of cancelling
-    /// gravity) — low enough that catching a fall takes a beat, the Noita float.</summary>
-    private const float JetLift = 165f;
+    /// gravity) — reduced so the pack lifts gently, the slow Noita float.</summary>
+    private const float JetLift = 110f;
     /// <summary>One-shot upward velocity kick applied the frame a burn first lights — the
     /// "more initial thrust" pop, on top of the steady lift acceleration.</summary>
     private const float JetInitialKick = 55f;
