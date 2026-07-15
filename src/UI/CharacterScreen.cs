@@ -166,6 +166,7 @@ public sealed class CharacterScreen
             {
                 if (!rect.Contains(mx, my)) continue;
                 _ctx = (id, new Point(mx, my));
+                _ctxUpgrade = false;   // fresh menu opens on the action list
                 return;
             }
             return;
