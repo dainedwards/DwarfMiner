@@ -237,17 +237,14 @@ public sealed class Projectile
 
     public void Update(float dt, Planet planet, Physics physics, Cells cells, Particles? particles = null)
     {
-        // Thrown TIMED explosives (dynamite / dynamite pack / TNT) are fuse bombs, never
-        // contact bombs: they arc under gravity, thud off terrain with a damped bounce, and
-        // blow ONLY when the 3-second fuse burns out. The TNT pack instead cements to the
-        // first wall it touches and burns its fuse there.
-        var timed = Kind is ProjectileKind.Dynamite or ProjectileKind.DynamitePack
-                        or ProjectileKind.Tnt or ProjectileKind.TntPack;
+        // Thrown TIMED explosives (dynamite / dynamite pack) are fuse bombs, never contact
+        // bombs: they arc under gravity, thud off terrain with a damped bounce, and blow ONLY
+        // when the 3-second fuse burns out.
+        var timed = Kind is ProjectileKind.Dynamite or ProjectileKind.DynamitePack;
         if (timed)
         {
-            // Sticks drop lighter, satchels heavier — the throw weight reads in the arc.
-            var grav = Kind is ProjectileKind.Tnt or ProjectileKind.TntPack ? 380f : 260f;
-            if (!_stuck) Velocity += planet.GravityAt(Position) * grav * dt;
+            const float grav = 260f;
+            Velocity += planet.GravityAt(Position) * grav * dt;
 
             // The fuse always ticks, whether it's mid-air, bouncing, or cemented.
             Life -= dt;
