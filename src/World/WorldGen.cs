@@ -839,42 +839,166 @@ public static class WorldGen
         }
     }
 
+    /// <summary>Radial layout of the underground cave strata, shared by three consumers:
+    /// the noise-cave pass (suppresses carving inside <c>seams</c>), the deep worm pass
+    /// (each entry in <c>bands</c> gets its own sealed network), and Game1's lava flood
+    /// (<c>seaFloorTiles</c> turns the old fill-everything-below flood into a lava SEA with
+    /// a dry, explorable zone beneath). All values are radii in tiles-from-centre.
+    ///
+    /// The seams do two jobs at once. Gameplay: deep strata are deliberately NOT connected
+    /// to each other or to the crust network above — the player mines the last stretch
+    /// between layers. Perf: a stratum that never touches the lava sea can never become
+    /// lava plumbing (sealed lava sleeps; flowing lava keeps the cell sim awake — the
+    /// constraint that used to forbid ALL deep caves).</summary>
+    internal static (List<(float lo, float hi)> seams, List<(float lo, float hi)> bands, float seaFloorTiles)
+        CaveStrata(Planet planet, PlanetDef def)
+    {
+        var seams = new List<(float, float)>();
+        var bands = new List<(float, float)>();
+        float radius = planet.Radius;
+        // The lava sea keeps its historical TOP (LavaFillFrac×radius) but gains a floor —
+        // thick enough (14% of radius) to stay a real barrier layer you must cross.
+        var seaFloor = def.LavaFillFrac > 0f
+            ? MathF.Max(radius * (def.LavaFillFrac - 0.14f), Planet.RingMin + 30f)
+            : 0f;
+        // Ceiling of the deep zone: under the sea when the world has one, otherwise
+        // directly under the upper worm network's floor (same 0.38 as CarveWormTunnels).
+        var deepCeil = def.LavaFillFrac > 0f ? seaFloor : radius * 0.38f;
+        const float seamThick = 8f;              // 32 px of guaranteed solid rock per seam
+        var coreTop = Planet.RingMin + 2f;       // strata may reach the core shell face
+        seams.Add((deepCeil - seamThick, deepCeil));
+        var top = deepCeil - seamThick;
+        if (top - coreTop < 24f) return (seams, bands, seaFloor);   // too small for a deep zone
+        if (top - coreTop > 110f)
+        {
+            // Thick deep zones split into TWO strata around a mid seam — two mining
+            // frontiers on the way down instead of one.
+            var mid = coreTop + (top - coreTop) * 0.5f;
+            bands.Add((mid + seamThick * 0.5f, top));
+            seams.Add((mid - seamThick * 0.5f, mid + seamThick * 0.5f));
+            bands.Add((coreTop, mid - seamThick * 0.5f));
+        }
+        else
+        {
+            bands.Add((coreTop, top));
+        }
+        return (seams, bands, seaFloor);
+    }
+
     /// <summary>Noita-style interconnecting tunnels: a couple dozen "perlin worms" wander
     /// the crust carving narrow winding corridors, each with a chance to fork once. The
     /// noise caves give chambers; the worms give the paths BETWEEN them — the difference
     /// between isolated pockets you mine into and a cave system you can travel. Worms stay
-    /// below the dirt band (the surface keeps its skin) and above the deep core, never
-    /// carve anchored tiles or obsidian (acid/volcano linings stay sealed), and simply
-    /// leave those tiles standing as natural dead-ends when they meet one.</summary>
+    /// below the dirt band (the surface keeps its skin), never carve anchored tiles or
+    /// obsidian (acid/volcano linings stay sealed), and simply leave those tiles standing
+    /// as natural dead-ends when they meet one. Below the upper network, CarveDeepStrata
+    /// adds the sealed deep layers.</summary>
     private static void CarveWormTunnels(Planet planet, PlanetDef def, Random rng)
     {
-        // High-lava worlds skip the worms: their habitable band is a thin shell squeezed
-        // between the flood line and the surface (the warrens carry the underground feel
-        // there), and every tunnel that grazes the lava zone becomes permanent plumbing
-        // that keeps the cell sim awake — measured at 3× the steady update budget.
-        if (def.LavaFillFrac > 0.5f) return;
-        // Dense enough that neighbouring walks intersect constantly — the underground
-        // should read as one connected Noita warren, not isolated corridors.
-        var worms = 30 + rng.Next(11);
-        // Stay above THIS world's lava zone — StartNewRun floods every sky tile below
-        // LavaFillFrac×radius (ember-class worlds run 0.55-0.70), and tunnels crossing
-        // that line become permanent lava plumbing that wrecks the steady-state cell
-        // budget — and below the dirt band.
-        // Reach much deeper than before — the cave network now threads the LOWER crust too,
-        // not just the upper shell — but still stop a safe margin ABOVE this world's lava fill
-        // line (crossing it turns tunnels into permanent lava plumbing that wrecks the cell
-        // budget). On a low-lava world that opens the deep half of the crust to caving.
-        var minFrac = MathF.Max(0.38f, def.LavaFillFrac + 0.08f);
-        var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
-        for (var i = 0; i < worms; i++)
+        // High-lava worlds skip the UPPER worms: their habitable band is a thin shell
+        // squeezed between the flood line and the surface (the warrens carry the
+        // underground feel there), and every tunnel that grazes the lava zone becomes
+        // permanent plumbing that keeps the cell sim awake — measured at 3× the steady
+        // update budget. They still get the deep strata below the sea.
+        if (def.LavaFillFrac <= 0.5f)
         {
-            var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
-            var radiusTiles = MathHelper.Lerp(planet.Radius * minFrac, maxTiles,
-                (float)rng.NextDouble());
-            var start = planet.Center
-                + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
-            CarveWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
-                260 + rng.Next(300), branchBudget: 2, minFrac);
+            // Dense enough that neighbouring walks intersect constantly — the underground
+            // should read as one connected Noita warren, not isolated corridors.
+            var worms = 30 + rng.Next(11);
+            // Stay above THIS world's lava zone (crossing the flood line turns tunnels into
+            // permanent lava plumbing) and below the dirt band. The hard floor passed to
+            // CarveWorm stops drifting walks from ever biting the stratum seam below.
+            var minFrac = MathF.Max(0.38f, def.LavaFillFrac + 0.08f);
+            var (upperSeams, _, _) = CaveStrata(planet, def);
+            var hardFloorPx = upperSeams[0].lo * Planet.TileSize;
+            var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
+            for (var i = 0; i < worms; i++)
+            {
+                var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+                var radiusTiles = MathHelper.Lerp(planet.Radius * minFrac, maxTiles,
+                    (float)rng.NextDouble());
+                var start = planet.Center
+                    + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
+                CarveWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
+                    260 + rng.Next(300), branchBudget: 2, minFrac, hardFloorPx);
+            }
+        }
+
+        CarveDeepStrata(planet, def, rng);
+    }
+
+    /// <summary>The deep cave strata: worm networks BELOW the lava sea (or below the upper
+    /// network on lava-less worlds), reaching all the way down to the core shell. Each
+    /// stratum is internally connected but sealed off from everything above by CaveStrata's
+    /// solid seams — enforced here as HARD carve bands (a drifting worm keeps walking but
+    /// bites nothing outside its stratum) and in Generate as noise-cave suppression. Deep
+    /// rock is mostly obsidian/basalt, so these worms MAY bite obsidian — but they detour
+    /// around volcano bearings (throat/chamber linings must stay sealed) and warren halls.</summary>
+    private static void CarveDeepStrata(Planet planet, PlanetDef def, Random rng)
+    {
+        var (_, bands, _) = CaveStrata(planet, def);
+        // Volcano plumbing bearings — an obsidian-biting worm must never breach a throat.
+        var vents = new float[planet.VolcanoVents.Count];
+        for (var i = 0; i < vents.Length; i++)
+        {
+            var (vx, vy, _) = planet.VolcanoVents[i];
+            var rel = planet.TileToWorld(vx, vy) - planet.Center;
+            vents[i] = MathF.Atan2(rel.Y, rel.X);
+        }
+        foreach (var (lo, hi) in bands)
+        {
+            // Deeper bands have less circumference, so scale count with band thickness.
+            var worms = 8 + (int)((hi - lo) * 0.22f) + rng.Next(5);
+            for (var i = 0; i < worms; i++)
+            {
+                var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
+                var radiusTiles = MathHelper.Lerp(lo + 3f, hi - 3f, (float)rng.NextDouble());
+                var start = planet.Center
+                    + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
+                CarveDeepWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
+                    120 + rng.Next(200), branchBudget: 2, lo, hi, vents);
+            }
+        }
+    }
+
+    private static void CarveDeepWorm(Planet planet, Random rng, Vector2 pos, float heading,
+        int length, int branchBudget, float bandLoTiles, float bandHiTiles, float[] ventBearings)
+    {
+        var minPx = (bandLoTiles + 1.5f) * Planet.TileSize;
+        var maxPx = (bandHiTiles - 1.5f) * Planet.TileSize;
+        if (maxPx <= minPx) return;
+        for (var s = 0; s < length; s++)
+        {
+            heading += ((float)rng.NextDouble() - 0.5f) * 0.55f;
+            var rel = pos - planet.Center;
+            var dist = rel.Length();
+            if (dist > maxPx || dist < minPx)
+            {
+                var radial = MathF.Atan2(rel.Y, rel.X);
+                var desired = dist > maxPx ? radial + MathF.PI : radial;
+                heading += MathHelper.WrapAngle(desired - heading) * 0.25f;
+            }
+            pos += new Vector2(MathF.Cos(heading), MathF.Sin(heading)) * Planet.TileSize;
+            // HARD band clamp — steering is soft and drifts, but carving is what must never
+            // cross a stratum seam, so a worm outside its band walks without biting.
+            rel = pos - planet.Center;
+            dist = rel.Length();
+            var nearVent = false;
+            if (ventBearings.Length > 0)
+            {
+                var posAng = MathF.Atan2(rel.Y, rel.X);
+                foreach (var v in ventBearings)
+                    if (MathF.Abs(MathHelper.WrapAngle(posAng - v)) < 0.07f) { nearVent = true; break; }
+            }
+            if (dist >= minPx && dist <= maxPx && !nearVent && !NearDenOrCity(planet, pos))
+                CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 10f : 7f, biteObsidian: true);
+            if (branchBudget > 0 && s > length / 4 && rng.Next(50) == 0)
+            {
+                branchBudget--;
+                CarveDeepWorm(planet, rng, pos,
+                    heading + (rng.Next(2) == 0 ? 1f : -1f) * (0.8f + (float)rng.NextDouble()),
+                    length / 2, length > 80 ? 1 : 0, bandLoTiles, bandHiTiles, ventBearings);
+            }
         }
     }
 
