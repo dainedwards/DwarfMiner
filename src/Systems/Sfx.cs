@@ -38,6 +38,9 @@ public sealed class Sfx
         // Mothership: the ion-engine rumble is a short loopable burst re-triggered while
         // thrusting (min-gap keeps it continuous without stacking).
         "thrust",
+        // Kaiju voices — the movie-monster bellow when an attack starts, the shriller
+        // screech of the lighter/flying kinds, and the deep thud of a landed kick/fist.
+        "roar", "screech", "thud",
     };
 
     public void Build()
