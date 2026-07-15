@@ -554,24 +554,7 @@ public static class TitanRenderer
             var stance = shoulder + f.Right * (s * 10f) - f.Up * (66f + MathF.Sin(f.Pulse + s) * 5f);  // knuckle stance
             Vector2 fist;
             if (t.SmashTimer > 0f && s == t.SmashHand)
-            {
-                // The committed arm: rear the fist high, hammer it onto the smash target so
-                // it arrives exactly at the impact moment, then leave it buried in the rubble
-                // for the follow-through.
-                var elapsed = Titan.SmashDuration - t.SmashTimer;
-                var raised = shoulder + f.Up * 74f + f.Right * (f.Face * 26f);
-                const float raiseEnd = 0.35f;
-                const float hammerEnd = Titan.SmashDuration - Titan.SmashImpactAt;
-                if (elapsed < raiseEnd)
-                    fist = Vector2.Lerp(stance, raised, elapsed / raiseEnd);
-                else if (elapsed < hammerEnd)
-                {
-                    var q = (elapsed - raiseEnd) / (hammerEnd - raiseEnd);
-                    fist = Vector2.Lerp(raised, t.SmashTarget, q * q);   // accelerating swing
-                }
-                else
-                    fist = t.SmashTarget;
-            }
+                fist = SmashFist(t, f, s, shoulder, stance);
             else if (t.Leaping)
                 fist = shoulder + f.Up * 60f + f.Right * (f.Face * 18f);          // reaching to slam
             else
