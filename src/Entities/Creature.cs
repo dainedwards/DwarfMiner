@@ -68,6 +68,10 @@ public enum CreatureKind : byte
     // Aquatic-only fauna (spawned into the lakes; see SpawnDirector's water spawner):
     AlienWhale,   // gentle glowing leviathan cruising the deep basins — never leaves the water
     AlienCrab,    // armoured lakebed scuttler — territorial, pinches anything that wades close
+    // Hostile sea monsters — the deep water is dangerous now:
+    AlienShark,   // sleek torpedo predator — circles, then rushes anything swimming in its water
+    Gulper,       // deep-water anglerfish — drifts with a glowing lure, then lunges a huge bite
+    Brinespitter, // reef lurker that spits water-globs at swimmers from range (aquatic artillery)
     // The belt natives (the Hollow asteroid, biome "belt") — the ONLY things living there,
     // all of them creatures that never needed air (Metroid / Dead Space / Half-Life school):
     Moonlet,      // floating boulder-parasite — falls into orbit around the dwarf, then slingshots itself at them
