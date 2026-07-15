@@ -340,7 +340,7 @@ public sealed class Particles
     public void EmitMiningTick(Vector2 pos, TileKind kind)
     {
         var baseColor = Tiles.BaseColor(kind);
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 4; i++)
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
             var spd = 20f + (float)_rng.NextDouble() * 30f;
@@ -352,7 +352,7 @@ public sealed class Particles
                 MaxLife = 0.30f,
                 Color = baseColor,
                 FadeColor = Color.Multiply(baseColor, 0.3f),
-                Size = 1f,
+                Size = 0.8f,
                 GravityScale = 0.6f,
                 Drag = 1.5f,
                 CollideTiles = false,
