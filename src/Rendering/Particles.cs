@@ -1252,11 +1252,6 @@ public sealed class Particles
             LightColor = new Color(255, 170, 80),
             HeroLight = true,
         });
-        // The hose sheds tumbling cinders that keep burning where they land. Launched at
-        // well under stream speed with the ember's LOW gravity scale — at reach*0.9 they
-        // flew flatter than the drooping tongue and sailed past its tip as stray bright
-        // strands out-ranging the visible fire.
-        if (_rng.Next(3) == 0) EmitCinders(pos + dir * 8f, dir * (reach * 0.4f), 1);
     }
 
     /// <summary>Jetpack exhaust, coloured by tier: red (I) → orange (II) → yellow (III) →
