@@ -499,16 +499,19 @@ public static class SpawnDirector
         }
         else if (depth > 45f)
         {
-            // Deep band gets the heavy bandits: the pyro brute and the jetpack raider.
-            kind = roll < 0.26 ? CreatureKind.MagmaSlug
-                 : roll < 0.40 ? CreatureKind.HornedDelver
-                 : roll < 0.51 ? CreatureKind.Centipede
-                 : roll < 0.62 ? CreatureKind.AcidSpitter
-                 : roll < 0.71 ? CreatureKind.CaveEye
-                 : roll < 0.79 ? CreatureKind.BomberBeetle
-                 : roll < 0.86 ? CreatureKind.Pyro
-                 : roll < 0.92 ? CreatureKind.Raider
-                 : roll < 0.97 ? CreatureKind.Grub
+            // Deep band gets the heavy bandits (pyro brute, jetpack raider) AND the deep-cave
+            // horrors: the hex-lobbing warpwisp, the quill-fan flyer, the spine-mortar beetle.
+            kind = roll < 0.22 ? CreatureKind.MagmaSlug
+                 : roll < 0.34 ? CreatureKind.HornedDelver
+                 : roll < 0.43 ? CreatureKind.Centipede
+                 : roll < 0.52 ? CreatureKind.AcidSpitter
+                 : roll < 0.60 ? CreatureKind.CaveEye
+                 : roll < 0.67 ? CreatureKind.Warpwisp
+                 : roll < 0.74 ? CreatureKind.Quillwing
+                 : roll < 0.80 ? CreatureKind.Thornback
+                 : roll < 0.86 ? CreatureKind.BomberBeetle
+                 : roll < 0.91 ? CreatureKind.Pyro
+                 : roll < 0.96 ? CreatureKind.Raider
                  : CreatureKind.RockMimic;
         }
         else if (depth > 20f)
