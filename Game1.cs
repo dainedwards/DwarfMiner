@@ -4022,6 +4022,8 @@ public sealed partial class DwarfMinerGame : Game
         new("Disaster — eruption",      () => TriggerDebugDisaster(DisasterKind.Eruption)),
         new("Disaster — earthquake",    () => TriggerDebugDisaster(DisasterKind.Earthquake)),
         new("Meteor strike (ambient)",  () => AmbientDirector.SpawnMeteor(_run)),
+        new("Cloud — rain shower (starts now)", () => Weather.SpawnDebugCloud(_run, RainKind.Water)),
+        new("Cloud — acid drizzle (starts now)", () => Weather.SpawnDebugCloud(_run, RainKind.Acid)),
         new("Toggle fullbright (light up the underground)", () => _fullbright = !_fullbright),
         new("Return to mothership (suspends run)", DebugReturnToShip),
     };
