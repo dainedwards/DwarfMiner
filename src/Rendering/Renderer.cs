@@ -39,6 +39,40 @@ public sealed class Renderer
     private readonly Effect? _tileFx;
     private readonly EffectParameter? _fxCol0, _fxCol1, _fxCol2, _fxCol3, _fxPs, _fxPs2;
 
+    /// <summary>The runtime-built liquid composite shader (see RuntimeEffect.LiquidGlsl),
+    /// or null when DM_SHADER=0 or unavailable. When live, liquid cells rasterize into the
+    /// liquid RT as soft-alpha blobs (alpha accumulates = coverage field) and this shader
+    /// composites the RT over the world with a metaball threshold and a bright rim texel —
+    /// pool edges round off, near droplets fuse, the whole body blends ONCE at uniform
+    /// opacity. Null falls back to hard quads + a plain NonPremultiplied blit (still kills
+    /// the per-quad double-blend mottling, just without the fused edge).</summary>
+    private readonly Effect? _liquidFx;
+    private readonly EffectParameter? _lqCol0, _lqCol1, _lqCol2, _lqCol3, _lqPs, _lqPs2;
+    private readonly Texture2D _liquidBlob;
+
+    /// <summary>Coverage cut for the metaball composite. Calibrated against the blob
+    /// profile (~0.45 alpha one cell out × ~0.8 material alpha ≈ 0.35 per contribution):
+    /// one neighbour's spill stays under the cut, two facing spills sum past it — so a
+    /// lone droplet keeps its own texel only, while droplets a cell apart fuse.</summary>
+    private const float LiquidThresh = 0.40f;
+    /// <summary>Single composite opacity for the whole liquid body — the RT alpha channel
+    /// is coverage, so per-material translucency collapses to this one constant.</summary>
+    private const float LiquidOpacity = 0.80f;
+    private const float LiquidRimMul = 1.45f;
+    private const float LiquidRimAdd = 0.08f;
+
+    /// <summary>Blend state for filling the liquid RT in blob (shader) mode: colour
+    /// REPLACES (last writer wins — all cells of a material share one flat colour, so
+    /// overwrite is invisible) while alpha ACCUMULATES into the coverage field the
+    /// composite shader thresholds.</summary>
+    public static readonly BlendState LiquidFillBlend = new()
+    {
+        ColorSourceBlend = Blend.One,
+        ColorDestinationBlend = Blend.Zero,
+        AlphaSourceBlend = Blend.One,
+        AlphaDestinationBlend = Blend.One,
+    };
+
     /// <summary>TOP-FACE carve amplitude as a fraction of a tile edge. DM_CARVE=&lt;px&gt;
     /// overrides the max carve depth in world pixels (0 disables carve, corner rounding
     /// and all). Default 1.3: the physics bound, not an aesthetic one — sand rests on the
