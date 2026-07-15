@@ -1578,8 +1578,35 @@ public sealed partial class DwarfMinerGame : Game
         var shootCdBefore = _run.Player.ShootCooldown;
         var selectedId = _run.Player.Toolbelt.Current;
         var throwable = selectedId is not null && IsThrowable(selectedId) && !_invUi.Carrying;
-        if (throwable)
+        var isEnergyBall = selectedId == "nuke" && !_invUi.Carrying;
+        if (isEnergyBall)
         {
+            // The energy ball CHARGES: hold LMB to wind it up (a growing orb at the muzzle
+            // and a rising hum), release to fire. Non-linear power — released early it's
+            // weak, only a full charge hits max.
+            if (mouse.LeftButton == ButtonState.Pressed && !clickConsumed
+                && CanThrowSelected("nuke") && _run.Player.ShootCooldown <= 0f)
+            {
+                _energyCharging = true;
+                _energyCharge = MathF.Min(1f, _energyCharge + dt / EnergyChargeTime);
+                _energyHumT -= dt;
+                if (_energyHumT <= 0f)
+                {
+                    _energyHumT = 0.14f;
+                    PlayAt("shoot_beam", _run.Player.Position, 0.25f,
+                        pitch: -0.5f + _energyCharge * 1.1f, minGap: 0.05f);
+                }
+            }
+            else if (_energyCharging)
+            {
+                _energyCharging = false;
+                if (_energyCharge > 0.05f) UseSelectedSlot(worldCursor);  // FireEnergyBall reads _energyCharge
+                _energyCharge = 0f;
+            }
+        }
+        else if (throwable)
+        {
+            _energyCharging = false; _energyCharge = 0f;
             // Charge while held (only when a throw is actually available), throw on release.
             if (mouse.LeftButton == ButtonState.Pressed && !clickConsumed)
             {
@@ -1600,6 +1627,8 @@ public sealed partial class DwarfMinerGame : Game
         {
             _throwCharging = false;
             _throwCharge = 0f;
+            _energyCharging = false;
+            _energyCharge = 0f;
             if (mouse.LeftButton == ButtonState.Pressed && !clickConsumed && !_invUi.Carrying)
                 UseSelectedSlot(worldCursor);
         }
