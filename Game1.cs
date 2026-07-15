@@ -3460,8 +3460,6 @@ public sealed partial class DwarfMinerGame : Game
     /// it by raising the ceiling).</summary>
     private const float AirDrainPerSecond = 8f;
 
-    private const float DrownDps = 9f;
-
     // Hazard-contact tuning (per second while the dwarf's body overlaps the cells).
     private const float LavaBurnDps = 42f;   // ~2.4s from full — a lava bath is near-instant death
     private const float AcidBurnDps = 20f;   // corrosive but survivable if you scramble out
