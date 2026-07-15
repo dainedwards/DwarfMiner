@@ -4328,18 +4328,19 @@ public sealed partial class DwarfMinerGame : Game
                 new Color(255, 140, 70) * lowGlow);
 
         // Rotating gas giant, tilted 30°: each disc row samples a scrolling window of the
-        // cylinder map (period 160) — bands and storm drift across the face — and every row
+        // cylinder map (period 320) — bands and storm drift across the face — and every row
         // is drawn rotated about the planet's centre (origin trick), so the whole assembly
-        // leans without losing the row-scroll rotation. Its ring system splits around it:
-        // far half behind the disc, near half in front. Rings are drawn 30% larger than the
-        // disc scale; no shade overlay now (shading/shadows removed — flat bands).
-        const int pcx = 504, pcy = 84, pr = 27;   // half-res disc drawn at 4× = chunky pixels
+        // leans without losing the row-scroll rotation. Built at double resolution and drawn
+        // at 2× (matching the sun/moon's finer pixels — no more chunky 4×). Its ring system
+        // splits around it: far half behind the disc, near half in front, drawn 30% larger
+        // than the disc. No shade overlay (shading/shadows removed — flat bands).
+        const int pcx = 504, pcy = 84, pr = 54;   // full-res disc drawn at 2× = ~same size, finer pixels
         var tilt = MathHelper.ToRadians(30f);
-        const float ringScale = 4f * 1.3f;         // rings 30% bigger than the disc's 4×
+        const float ringScale = 2f * 1.3f;         // rings 30% bigger than the disc's 2×
         var planetCentre = new Vector2(pcx * 2, pcy * 2);
-        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 0, 86, 12), Color.White,
-            tilt, new Vector2(43f, 12f), ringScale, SpriteEffects.None, 0f);
-        var scroll = time * 2.5f;
+        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 0, 172, 24), Color.White,
+            tilt, new Vector2(86f, 24f), ringScale, SpriteEffects.None, 0f);
+        var scroll = time * 5f;
         for (var row = 0; row < pr * 2; row++)
         {
             var dy = row - pr;
@@ -4347,13 +4348,13 @@ public sealed partial class DwarfMinerGame : Game
             if (halfSq <= 0) continue;
             var half = MathF.Sqrt(halfSq);
             var rowW = Math.Max(1, (int)(half * 2f));
-            var srcX = (int)(scroll % 160);
+            var srcX = (int)(scroll % 320);
             sb.Draw(_titlePlanetMap, planetCentre,
                 new Rectangle(srcX, row, rowW, 1), Color.White,
-                tilt, new Vector2(rowW / 2f, pr - row), 4f, SpriteEffects.None, 0f);
+                tilt, new Vector2(rowW / 2f, pr - row), 2f, SpriteEffects.None, 0f);
         }
-        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 12, 86, 12), Color.White,
-            tilt, new Vector2(43f, 0f), ringScale, SpriteEffects.None, 0f);
+        sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 24, 172, 24), Color.White,
+            tilt, new Vector2(86f, 0f), ringScale, SpriteEffects.None, 0f);
 
         // The titan: every so often a colossal silhouette rises past the far skyline and
         // lumbers off — drawn BEFORE the land layer, so only its head and shoulders show
