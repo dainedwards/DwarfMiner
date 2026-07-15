@@ -1353,7 +1353,17 @@ public sealed class Cells
         // Splash: a hard landing sometimes flings the cell straight back out as a ballistic
         // droplet — waterfalls fizz at the plunge pool, poured lava spits glowing beads.
         // Needs open air above (a droplet can't jump inside a filled pool interior).
-        if (impact > SplashMinImpact && _rng.Next(3) == 0
+        // Landing ON LIQUID splashes far easier than landing on rock (a pool's surface
+        // gives): raindrops crown off a lake at speeds that would land silently on stone.
+        var splashBar = SplashMinImpact;
+        if (cy > 0)
+        {
+            var (lcx, lcy) = InnerCell(cx, cy);
+            var below = Get(lcx, lcy);
+            if (below is Material.Water or Material.Acid or Material.Oil or Material.Lava)
+                splashBar *= 0.35f;
+        }
+        if (impact > splashBar && _rng.Next(3) == 0
             && _flying.Count < MaxFlying && cy < Height - 1)
         {
             var (ucx, ucy) = OuterCell(cx, cy);
