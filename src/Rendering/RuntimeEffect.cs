@@ -209,6 +209,10 @@ void main()
         w.Write(false);                 // no depth-stencil block
         w.Write(false);                 // no rasterizer block
 
+        // File tail: the Effect ctor re-reads the signature here and throws if it isn't
+        // exactly in place — a free end-to-end check that every field above was sized right.
+        w.Write(0x5846474D);
+
         w.Flush();
         return ms.ToArray();
     }
