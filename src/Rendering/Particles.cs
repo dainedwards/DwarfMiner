@@ -562,7 +562,9 @@ public sealed class Particles
 
     /// <summary>A single falling raindrop: a short streak that starts high under a cloud and
     /// accelerates toward the ground under planet gravity. <paramref name="down"/> is the
-    /// toward-surface direction; the drop is tinted by the rain kind.</summary>
+    /// toward-surface direction; the drop is tinted by the rain kind. Drops collide with the
+    /// terrain — they die in a brief splash on the surface instead of streaking on through
+    /// the ground — so the life is generous; impact ends it early.</summary>
     public void EmitRain(Vector2 pos, Vector2 down, Color color)
     {
         var jitter = new Vector2(-down.Y, down.X) * (((float)_rng.NextDouble() - 0.5f) * 12f);
@@ -570,13 +572,14 @@ public sealed class Particles
         {
             Position = pos,
             Velocity = down * (140f + (float)_rng.NextDouble() * 90f) + jitter,
-            Life = 0.6f + (float)_rng.NextDouble() * 0.5f,
-            MaxLife = 1.1f,
+            Life = 1.0f + (float)_rng.NextDouble() * 0.6f,
+            MaxLife = 1.6f,
             Color = color,
             FadeColor = color * 0.4f,
             Size = 1.4f + (float)_rng.NextDouble() * 1.1f,
             GravityScale = 1.1f,
             Drag = 0.02f,
+            CollideTiles = true,
         });
     }
 
