@@ -416,10 +416,13 @@ public sealed class Renderer
                             (int)Math.Clamp(shade * tintF.X, 0f, 255f),
                             (int)Math.Clamp(shade * tintF.Y, 0f, 255f),
                             (int)Math.Clamp(shade * tintF.Z, 0f, 255f));
-                    // Legacy gem *tiles* (old worlds — gems are overlays now) draw as the
-                    // rock their solid neighbours are made of, so they read as embedded too.
+                    // A gem — whether a legacy gem *tile* or an embedded overlay — draws seated
+                    // in the SURROUNDING material: the host tile renders as the rock its solid
+                    // neighbours are made of, so a gem never reads as its own odd dark block set
+                    // apart from the wall around it; it's genuinely embedded in that wall.
+                    var overlayGem = planet.GemAt(r, t);
                     var atlasKind = k;
-                    if (Tiles.IsGem(k))
+                    if (Tiles.IsGem(k) || overlayGem != TileKind.Sky)
                         atlasKind = HostRockFor(outerK, innerK, leftK, rightK);
                     _sb.Draw(_tileAtlas, centre,
                         TileAtlas.Source(atlasKind, VariantFor(atlasKind, r, t, hash), exposeMask),
@@ -427,8 +430,6 @@ public sealed class Renderer
                         new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
                         new Vector2(size.X / TileAtlas.Res, size.Y / TileAtlas.Res),
                         SpriteEffects.None, 0f);
-                    // An embedded gem draws on top of whatever host it sits in.
-                    var overlayGem = planet.GemAt(r, t);
                     if (overlayGem != TileKind.Sky)
                         DrawGemCrystal(centre, hash, overlayGem);
                     else if (Tiles.IsGem(k))
