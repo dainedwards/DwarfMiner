@@ -153,17 +153,19 @@ public static class PlanetDefs
         All = withExtras;
     }
 
-    /// <summary>The kitchen-sink QA world: max size, every disaster armed (quakes, meteors,
+    /// <summary>The kitchen-sink QA world: every disaster armed (quakes, meteors,
     /// flares, blizzards, acid rain, magma surges, eruptions, gas + acid pockets, cave-ins),
     /// every biome feature (banded surface, lakes, acid pools, crystal caverns, fungal
-    /// groves, volcanoes), every ore findable, and the standard cave enemies. SurfaceTile is
+    /// groves, volcanoes), every ore findable. SurfaceTile is
     /// Snow because the blizzard and snow-cap gates key off it; the actual ground cycles
-    /// through SurfaceBands. Its core holds no shard — it's a test rig, not a campaign world.</summary>
+    /// through SurfaceBands. Its core holds no shard — it's a test rig, not a campaign world.
+    /// Deliberately SMALL (0.55×) and CREATURE-FREE so it loads in a blink and runs clean —
+    /// the debug menu's creature tab conjures any test subject on demand.</summary>
     public static readonly PlanetDef DebugWorld = new("debug", "Debug",
         "QA test rig - every biome and every disaster at once",
         new Color(225, 110, 200), new Color(255, 190, 245),
         TileKind.Snow,
-        LakeMin: 4, LakeExtra: 1, MountainMin: 10, MountainExtra: 3,
+        LakeMin: 3, LakeExtra: 0, MountainMin: 5, MountainExtra: 2,
         MountainHeightScale: 1.3f, LavaFillFrac: 0.55f, HasWater: true,
         OreBias: new[]
         {
