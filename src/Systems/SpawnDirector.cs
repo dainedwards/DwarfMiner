@@ -80,6 +80,7 @@ public static class SpawnDirector
     /// only top up wildlife, and never inside a city.</summary>
     public static void PopulateWorld(Session run)
     {
+        if (run.Def.NoFauna) return;
         var planet = run.Planet;
 
         // City dwellers: staff the addresses (doorways + apartments), mostly citizens with
