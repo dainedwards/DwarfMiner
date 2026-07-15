@@ -1168,11 +1168,16 @@ public sealed class Particles
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             var hot = i < 7;
             var tone = hot ? _rng.Next(2) : _rng.Next(4);
+            var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
+            // De-pulse: every grain starts with a random fraction of one puff interval
+            // already travelled, so consecutive puffs interleave into one continuous flow
+            // instead of reading as discrete waves marching down the stream.
+            var lead = (float)_rng.NextDouble() * 0.06f;
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 5f,
-                Velocity = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f)),
-                Life = 0.5f + (float)_rng.NextDouble() * 0.35f,
+                Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
+                Velocity = vel,
+                Life = 0.5f + (float)_rng.NextDouble() * 0.35f - lead,
                 MaxLife = 0.85f,
                 Color = tone switch
                 {
@@ -1202,15 +1207,19 @@ public sealed class Particles
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             _list.Add(new Particle
             {
-                Position = pos + d * (6f + (float)_rng.NextDouble() * (reach * 0.55f)) + Jitter(1.2f),
+                // Seed only the near two-fifths of the tongue with a strong stall (high
+                // drag, short life): licks flick up and die WITHIN the stream's length —
+                // they were riding above the drooping tongue and past its tip, reading as
+                // stray yellow strands out-ranging the fire.
+                Position = pos + d * (6f + (float)_rng.NextDouble() * (reach * 0.4f)) + Jitter(1.2f),
                 Velocity = d * (jetSpeed * 0.25f),
-                Life = 0.22f + (float)_rng.NextDouble() * 0.25f,
-                MaxLife = 0.47f,
+                Life = 0.18f + (float)_rng.NextDouble() * 0.17f,
+                MaxLife = 0.35f,
                 Color = _rng.Next(2) == 0 ? new Color(255, 220, 110) : new Color(255, 160, 55),
                 FadeColor = new Color(120, 35, 15),
                 Size = 0.5f,
                 GravityScale = -0.5f,
-                Drag = 2.6f,
+                Drag = 3.2f,
                 CollideTiles = true,
             });
         }
@@ -1253,8 +1262,11 @@ public sealed class Particles
             LightColor = new Color(255, 170, 80),
             HeroLight = true,
         });
-        // The hose sheds tumbling cinders that keep burning where they land.
-        if (_rng.Next(3) == 0) EmitCinders(pos + dir * 8f, dir * (reach * 0.9f), 1);
+        // The hose sheds tumbling cinders that keep burning where they land. Launched at
+        // well under stream speed with the ember's LOW gravity scale — at reach*0.9 they
+        // flew flatter than the drooping tongue and sailed past its tip as stray bright
+        // strands out-ranging the visible fire.
+        if (_rng.Next(3) == 0) EmitCinders(pos + dir * 8f, dir * (reach * 0.4f), 1);
     }
 
     /// <summary>Jetpack exhaust, coloured by tier: red (I) → orange (II) → yellow (III) →
@@ -1371,11 +1383,14 @@ public sealed class Particles
             // occasional DEEP green — a liquid rope needs dark grains for depth, where
             // fire wants none.
             var tone = i < 7 ? 0 : _rng.Next(4);
+            var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
+            // De-pulse — see EmitFlameJet: random emission-time head start interleaves puffs.
+            var lead = (float)_rng.NextDouble() * 0.06f;
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 5f,
-                Velocity = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f)),
-                Life = 0.5f + (float)_rng.NextDouble() * 0.32f,
+                Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
+                Velocity = vel,
+                Life = 0.5f + (float)_rng.NextDouble() * 0.32f - lead,
                 MaxLife = 0.82f,
                 Color = tone switch
                 {
