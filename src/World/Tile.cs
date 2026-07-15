@@ -122,7 +122,9 @@ public static class Tiles
           or TileKind.AlienPlant or TileKind.HoverPod or TileKind.OrbLamp
           // Surface flora is walked through, like tall grass.
           or TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
-          or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom;
+          or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom
+          // Tree canopy and water plants are pushed through; the solid trunk is not.
+          or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond;
 
     /// <summary>Tiles that should block-place but allow the player's collision body to pass —
     /// equivalent to "non-solid" for player physics, while staying solid for rendering and
