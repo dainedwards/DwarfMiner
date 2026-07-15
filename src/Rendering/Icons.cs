@@ -1503,6 +1503,110 @@ public static class Icons
         ['w'] = new Color(140, 95, 55),
     });
 
+    private static Texture2D BuildBrickIcon(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "..bbbbbbbbbbbb..",
+        "..bBBbBBbBBbBb..",
+        "..bBBbBBbBBbBb..",
+        "..bbbbbbbbbbbb..",
+        "..BbBBbBBbBBbB..",
+        "..BbBBbBBbBBbB..",
+        "..bbbbbbbbbbbb..",
+        "..bBBbBBbBBbBb..",
+        "..bBBbBBbBBbBb..",
+        "..bbbbbbbbbbbb..",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['B'] = new Color(126, 100, 92),
+        ['b'] = new Color(92, 72, 66),
+    });
+
+    private static Texture2D BuildPlatingIcon(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "..SSSSSSSSSSSS..",
+        "..SrPPPPPPPPrS..",
+        "..SPPPPPPPPPPS..",
+        "..SPPPPPPPPPPS..",
+        "..SPPPPPPPPPPS..",
+        "..SPPPPPPPPPPS..",
+        "..SPPPPPPPPPPS..",
+        "..SPPPPPPPPPPS..",
+        "..SrPPPPPPPPrS..",
+        "..DDDDDDDDDDDD..",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['P'] = new Color(122, 134, 152),
+        ['S'] = new Color(168, 180, 198),
+        ['D'] = new Color(84, 94, 110),
+        ['r'] = new Color(60, 66, 78),
+    });
+
+    private static Texture2D BuildGlassIcon(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "..FFFFFFFFFFFF..",
+        "..FggggggggggF..",
+        "..FgggggghgggF..",
+        "..FggggghgggFF..",
+        "..FgggghggggFF..",
+        "..FggghgggggGF..",
+        "..FgghggggggGF..",
+        "..FghgggggggGF..",
+        "..FgggggggggGF..",
+        "..FFFFFFFFFFFF..",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['g'] = new Color(150, 200, 220),
+        ['G'] = new Color(120, 170, 195),
+        ['h'] = new Color(240, 250, 255),
+        ['F'] = new Color(200, 230, 245),
+    });
+
+    private static Texture2D BuildPlatformIcon(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
+    {
+        "................",
+        "................",
+        "................",
+        "................",
+        "..WWWWWWWWWWWW..",
+        "..wwwwwwwwwwww..",
+        "..w..w....w..w..",
+        "..w..w....w..w..",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    }, new Dictionary<char, Color>
+    {
+        ['.'] = Color.Transparent,
+        ['W'] = new Color(150, 116, 78),
+        ['w'] = new Color(112, 84, 54),
+    });
+
     private static Texture2D BuildDoor(GraphicsDevice gd) => Renderer.BuildSprite(gd, new[]
     {
         "................",
