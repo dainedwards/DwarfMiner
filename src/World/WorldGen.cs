@@ -192,9 +192,19 @@ public static class WorldGen
 
         var baselineR = planet.SurfaceRing;
 
+        // Cave-strata seams: solid shells where NO noise cave may open, so each stratum
+        // stays sealed from the next (gameplay: the player mines between layers; perf: the
+        // lava sea can never drain into the dry caves below it). See CaveStrata.
+        var (strataSeams, _, _) = CaveStrata(planet, def);
+
         for (var r = 0; r < planet.Rings; r++)
         {
             var n = planet.TilesAt(r);
+            // Seams are purely radial, so one check per ring covers every tile in it.
+            var radTiles = Planet.RingMin + r + 0.5f;
+            var inSeam = false;
+            foreach (var (lo, hi) in strataSeams)
+                if (radTiles >= lo && radTiles < hi) { inSeam = true; break; }
             for (var t = 0; t < n; t++)
             {
                 var ang = (t + 0.5f) / n * MathHelper.TwoPi;
