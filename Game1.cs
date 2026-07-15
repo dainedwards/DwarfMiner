@@ -290,7 +290,11 @@ public sealed partial class DwarfMinerGame : Game
             e.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
-        IsFixedTimeStep = true;
+        // DM_VARSTEP=1 → vsync-paced variable timestep (pacing experiment: the fixed-step
+        // sleep on macOS overshoots on CHEAP frames — Thread.Sleep granularity — missing
+        // vblanks and latching IsRunningSlowly, so light scenes ran at 22-34 fps while
+        // heavy ones held a clean 60). UpdateFrame clamps dt on hitches either way.
+        IsFixedTimeStep = Environment.GetEnvironmentVariable("DM_VARSTEP") is not { Length: > 0 };
         TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
         // NOTE: leave MaxElapsedTime at its 500 ms default. Capping it at 50 ms to blunt
         // the catch-up spiral instead LOCKED the vsync'd fixed-step loop at a permanent
