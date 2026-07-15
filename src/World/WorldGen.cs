@@ -665,15 +665,18 @@ public static class WorldGen
             if (lastRing == groundR && Math.Abs(gt - lastT) < 3) continue;
 
             // Species drives height and silhouette. Tall and thin across the board — even the
-            // "short" broad trees stand several tiles, and spires/umbrellas soar.
+            // "short" broad trees stand several tiles, spires/umbrellas soar, and roughly one in
+            // six of any species is a GIANT (a big height bonus) so the canopy line is ragged
+            // with the occasional towering old-growth alien among the ordinary trees.
             var species = (byte)rng.Next(4);
             var trunkH = species switch
             {
-                0 => 10 + rng.Next(7),   // spire   — the tallest, a thin plume on top
-                2 => 9 + rng.Next(6),    // umbrella — long bare bole under a flat cap
-                3 => 8 + rng.Next(5),    // weeping  — tall, draping crown
-                _ => 6 + rng.Next(5),    // broad    — shortest, still a proper trunk
+                0 => 12 + rng.Next(10),  // spire   — the tallest, a thin plume on top
+                2 => 11 + rng.Next(8),   // umbrella — long bare bole under a flat cap
+                3 => 9 + rng.Next(7),    // weeping  — tall, draping crown
+                _ => 7 + rng.Next(6),    // broad    — shortest, still a proper trunk
             };
+            if (rng.Next(6) == 0) trunkH += 8 + rng.Next(10);   // the occasional giant
             // Keep the crown (up to ~5 rings of canopy) inside the sky.
             trunkH = Math.Min(trunkH, planet.Rings - 6 - groundR);
             if (trunkH < 4) continue;
