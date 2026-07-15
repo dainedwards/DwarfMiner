@@ -80,9 +80,12 @@ public static class Weather
                 {
                     Angle = cAng,
                     HalfWidth = cHalf,
-                    // Sit well clear of the tallest thing beneath the band (peaks, giant trees)
-                    // plus a random extra height, so a cloud never spawns inside terrain.
-                    Alt = TargetAlt(planet, cAng, cHalf) + (float)rng.NextDouble() * 120f,
+                    // Fixed cruising radius, set ONCE at spawn: well clear of the tallest thing
+                    // beneath the band (peaks, giant trees) plus a random extra height. The
+                    // cloud holds this altitude for its whole life — no terrain-tracking, no
+                    // bobbing — and if the drift carries it into something taller it shreds
+                    // and dissipates instead of hopping over it.
+                    Alt = BandTopRadius(planet, cAng, cHalf) + 110f + (float)rng.NextDouble() * 120f,
                     Drift = ((float)rng.NextDouble() - 0.5f) * 0.05f,
                     Life = 45f + (float)rng.NextDouble() * 60f,
                     RainCooldown = 4f + (float)rng.NextDouble() * 10f,
