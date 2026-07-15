@@ -4245,13 +4245,15 @@ public sealed partial class DwarfMinerGame : Game
 
                 // Directional light from the upper-left + limb darkening, quantised into a
                 // few flat cels with a dithered boundary — the moon's exact shading school.
-                var lum = 0.62f - (nx * 0.42f + ny * 0.16f) + (1f - d) * 0.30f;
-                lum = MathHelper.Clamp(lum, 0.12f, 1.15f);
+                // A gentler gradient (and a lifted dark floor) keeps the terminator a soft
+                // painted step rather than a harsh black wedge.
+                var lum = 0.70f - (nx * 0.34f + ny * 0.14f) + (1f - d) * 0.26f;
+                lum = MathHelper.Clamp(lum, 0.30f, 1.12f);
                 var step = lum * 4f;
                 var cel = MathF.Floor(step);
                 var frac = step - cel;
                 if (frac > 0.5f || (frac > 0.25f && ((dx + dy) & 1) == 0)) cel += 1f;
-                var shadeMul = MathHelper.Clamp(cel / 4f, 0.16f, 1.1f);
+                var shadeMul = MathHelper.Clamp(cel / 4f, 0.34f, 1.08f);
                 planet[idx] = new Color(
                     (int)MathHelper.Clamp(col.R * shadeMul, 0, 255),
                     (int)MathHelper.Clamp(col.G * shadeMul, 0, 255),
