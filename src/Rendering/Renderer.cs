@@ -475,8 +475,9 @@ public sealed class Renderer
                 // Crumb accretion: a pinch of the tile's own material scattered on exposed
                 // top surfaces — scree on stone ledges, soil on dirt runs. Material-coloured
                 // single grains at hash positions (many tiles get none), so flat runs lose
-                // their ruler line without any edge strip. Grass grows tufts instead.
-                else if (outerSky)
+                // their ruler line without any edge strip. Grass grows tufts instead; machined
+                // city walls get nothing (a straight parapet, no scree).
+                else if (outerSky && !IsEngineered(k))
                 {
                     var crumbs = (hash >> 9) & 3;
                     for (var ci = 0; ci < crumbs; ci++)
