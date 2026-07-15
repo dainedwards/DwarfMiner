@@ -3279,8 +3279,8 @@ public sealed partial class DwarfMinerGame : Game
 
     /// <summary>Climbing the monster: an airborne dwarf touching the titan's hull latches to
     /// a bearing on its body circle and moves WITH it — the platform is the monster. A/D walk
-    /// around the hide (all the way over the back, to hold aim on a weakpoint), W hops off,
-    /// lighting the jetpack pulls free, and the shake-off thrash flings the rider.</summary>
+    /// around the hide (all the way over the back, to hold aim on a weakpoint), a Space tap
+    /// hops off, lighting the jetpack pulls free, and the shake-off thrash flings the rider.</summary>
     private void TickTitanRiding(float dt, KeyboardState keys)
     {
         var t = _run.Titan;
