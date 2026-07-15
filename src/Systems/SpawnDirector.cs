@@ -22,6 +22,7 @@ public static class SpawnDirector
     /// cap is alive nearby.</summary>
     public static void Update(float dt, Session run)
     {
+        if (run.Def.NoFauna) return;
         foreach (var s in run.Spawners)
         {
             s.Timer -= dt;
