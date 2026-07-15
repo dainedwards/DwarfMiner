@@ -2046,6 +2046,22 @@ public static class SimTest
             for (var i = 0; i < 60 * 6; i++) crab.Update(dt, planet, physics, cells, nobody);
             Check("aquatic: crab settles the lakebed without embedding",
                 !EmbeddedInRock(planet, crab.Position));
+
+            // Sea monster: a shark on one side of the pool torpedoes toward a swimmer on the
+            // other, closing the gap while staying in the water (and never embedding).
+            var rP = new Vector2(-upP.Y, upP.X);
+            var swimmer = new Player(poolCentre + rP * 20f) { HeadInWater = true, InWater = true };
+            var shark = new Creature(poolCentre - rP * 20f, CreatureKind.AlienShark);
+            var startGap = (shark.Position - swimmer.Position).Length();
+            var minGap = startGap;
+            for (var i = 0; i < 60 * 4; i++)
+            {
+                shark.Update(dt, planet, physics, cells, swimmer);
+                cells.Update(dt);
+                minGap = MathF.Min(minGap, (shark.Position - swimmer.Position).Length());
+            }
+            Check($"aquatic: shark hunts a swimmer ({startGap:0} -> {minGap:0}px closest)",
+                minGap < startGap - 6f && !EmbeddedInRock(planet, shark.Position));
         }
     }
 
