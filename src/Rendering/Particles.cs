@@ -1263,9 +1263,9 @@ public sealed class Particles
         }
     }
 
-    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
+    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
     {
-        EmitJetCore(pos, dir, reach, up, FlameTones, hotTones: 2,
+        EmitJetCore(pos, dir, reach, up, shooterVel, FlameTones, hotTones: 2,
             fade: new Color(120, 35, 15), landMat: Material.Fire,
             lightColor: new Color(255, 170, 70), hotLight: 60f, bodyLight: 30f, drag: 1.2f);
         var jetSpeed = reach * 1.35f;
