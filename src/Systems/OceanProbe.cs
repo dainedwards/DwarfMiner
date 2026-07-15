@@ -174,7 +174,6 @@ public static class OceanProbe
         long Key(int r, int t) => (long)r * 4_000_000L + (uint)t;
         bool InBand(int r) => Planet.RingMin + r + 0.5f >= loTiles && Planet.RingMin + r + 0.5f < hiTiles;
 
-        var air = 0;
         var largest = 0;
         var r0 = Math.Max(0, (int)(loTiles - Planet.RingMin));
         var r1 = Math.Min(planet.Rings - 1, (int)(hiTiles - Planet.RingMin) + 1);
@@ -185,7 +184,6 @@ public static class OceanProbe
             for (var t = 0; t < n; t++)
             {
                 if (planet.Get(r, t) != TileKind.Sky) continue;
-                air++;
                 if (!visited.Add(Key(r, t))) continue;
                 // BFS this component.
                 var size = 1;
