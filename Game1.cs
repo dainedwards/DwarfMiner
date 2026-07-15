@@ -4356,9 +4356,14 @@ public sealed partial class DwarfMinerGame : Game
         sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 24, 172, 24), Color.White,
             tilt, new Vector2(86f, 0f), ringScale, SpriteEffects.None, 0f);
 
-        // The titan: every so often a colossal silhouette rises past the far skyline and
-        // lumbers off — drawn BEFORE the land layer, so only its head and shoulders show
-        // above the ridge line, a shadow on the horizon.
+        // The titans: every so often a colossal silhouette rises past the far skyline and
+        // lumbers off — drawn BEFORE the land layer, so only the head and shoulders show
+        // above the ridge line, a shadow on the horizon. TWO different walkers on their own
+        // clocks (different periods, so they drift in and out of sync): a spiny long-tailed
+        // kaiju crossing right→left, and a broad hunched ape-biped crossing left→right.
+        var dark = new Color(9, 7, 13) * 0.92f;
+        void TBlock(float x, float y, int wPx, int hPx) =>
+            sb.Draw(_renderer.Pixel, new Rectangle((int)x * 2, (int)y * 2, wPx * 2, hPx * 2), dark);
         {
             var cyc = (time + 20f) % 47f;
             if (cyc < 13f)
@@ -4367,15 +4372,31 @@ public sealed partial class DwarfMinerGame : Game
                 var tx2 = MathHelper.Lerp(700f, -80f, tp);
                 var bob = MathF.Sin(time * 2.2f) * 1.4f;
                 var ty2 = 196f + bob;
-                var dark = new Color(9, 7, 13) * 0.92f;
-                void TBlock(float x, float y, int wPx, int hPx) =>
-                    sb.Draw(_renderer.Pixel, new Rectangle((int)x * 2, (int)y * 2, wPx * 2, hPx * 2), dark);
                 TBlock(tx2 - 14, ty2 - 22, 28, 40);           // torso (lower half hides behind land)
                 TBlock(tx2 - 22, ty2 - 34, 10, 9);            // head, leading the walk
                 TBlock(tx2 - 18, ty2 - 27, 8, 6);             // jaw/neck
                 for (var sp = 0; sp < 3; sp++)                // back spines
                     TBlock(tx2 - 4 + sp * 7, ty2 - 28 - sp * 2, 4, 7 + sp * 2);
                 TBlock(tx2 + 14, ty2 - 12, 12, 6);            // tail root
+            }
+        }
+        {
+            // Second walker: a broad, hunched ape-biped (no tail/spines) plodding the other
+            // way — heavy shoulders, a domed brow, and long arms swinging by its sides.
+            var cyc = (time + 6f) % 61f;
+            if (cyc < 15f)
+            {
+                var tp = cyc / 15f;
+                var tx3 = MathHelper.Lerp(-90f, 760f, tp);
+                var sway = MathF.Sin(time * 1.7f) * 1.6f;
+                var ty3 = 198f + sway;
+                var arm = MathF.Sin(time * 1.7f) * 4f;        // arms swing with the gait
+                TBlock(tx3 - 16, ty3 - 22, 34, 42);           // hunched torso
+                TBlock(tx3 - 22, ty3 - 24, 46, 9);            // broad shoulders
+                TBlock(tx3 + 2, ty3 - 35, 15, 12);            // domed head, leading the walk
+                TBlock(tx3 + 1, ty3 - 37, 18, 4);             // heavy brow ridge
+                TBlock(tx3 - 25, ty3 - 16 + arm, 8, 28);      // trailing arm
+                TBlock(tx3 + 19, ty3 - 16 - arm, 8, 28);      // leading arm
             }
         }
 
