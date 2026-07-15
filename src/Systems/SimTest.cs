@@ -1049,7 +1049,8 @@ public static class SimTest
             var (wRow, wN) = MeanRow(Material.Water);
             var (oRow, oN) = MeanRow(Material.Oil);
             Check($"oil: floats up through water (water mean row {wRow:0.0} ×{wN}, oil {oRow:0.0} ×{oN})",
-                wN == 48 && oN == 48 && oRow > wRow + 2.5f);
+                wN == 3 * Cells.Density * Cells.Density && oN == 3 * Cells.Density * Cells.Density
+                && oRow > wRow + Cells.Density * 0.625f);
         }
 
         // --- Fire: a flame dropped on an oil pool burns it away, then dies out itself ---
