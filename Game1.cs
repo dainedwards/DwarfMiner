@@ -1891,6 +1891,7 @@ public sealed partial class DwarfMinerGame : Game
         }
 
         // Population upkeep — cave dwellers, surface herds, sky flyers (see SpawnDirector).
+        tPerf = FramePerf.Now();
         SpawnDirector.Update(dt, _run);
 
         // Ambient events — meteors on their own cadence, disasters off the shared clock
