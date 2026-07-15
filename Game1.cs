@@ -582,9 +582,11 @@ public sealed partial class DwarfMinerGame : Game
     /// time they press Enter the world is usually already built (seamless landing).</summary>
     internal static Session BuildSessionWorld(PlanetDef def, System.Threading.CancellationToken settleToken = default)
     {
+        var loadSw = System.Diagnostics.Stopwatch.StartNew();
         var seed = (int)DateTime.Now.Ticks;
         var run = new Session(def);
         run.Planet = WorldGen.Generate(seed, def);
+        var tGen = loadSw.ElapsedMilliseconds;
         run.Cells = new Cells(run.Planet);
         run.Physics = new Physics(run.Planet, run.Cells);
         // Lava seeding: caves (Sky tiles) inside the lava SEA band fill with lava —
