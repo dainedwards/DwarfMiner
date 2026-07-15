@@ -147,11 +147,13 @@ public static class SpawnDirector
             }
         }
 
-        // Lake fauna: sweep the whole ring for open water and stock every find.
+        // Lake fauna: sweep the whole ring for open water and stock every find. Ocean
+        // worlds get a bigger stock — the sea IS the biome there.
         if (run.Def.HasWater)
         {
+            var aquaticCap = run.Def.Biome == "ocean" ? 20 : 12;
             var aquatics = 0;
-            for (var a = 0f; a < MathHelper.TwoPi && aquatics < 12; a += 0.22f)
+            for (var a = 0f; a < MathHelper.TwoPi && aquatics < aquaticCap; a += 0.22f)
             {
                 var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
                 for (var d = planet.Radius + 40; d > 20; d--)
@@ -164,6 +166,37 @@ public static class SpawnDirector
                     var kind = LakeKindFor(deep);
                     run.Creatures.Add(new Creature(splash, kind) { Resident = true });
                     aquatics++;
+                    break;
+                }
+            }
+        }
+
+        // THE KRAKEN — the water world's apex monster. Census-only, like the city's
+        // command saucer: sweep for the deepest basins and sink one into each of the
+        // biggest finds, spaced far apart so two never share a sea. Never rolled by the
+        // dynamic spawner — meeting one should mean you swam into ITS basin.
+        if (run.Def.Biome == "ocean")
+        {
+            var lairs = new List<Vector2>();
+            var want = run.Def.SizeScale >= 1f ? 2 : 1;
+            for (var a = 0f; a < MathHelper.TwoPi && lairs.Count < want; a += 0.13f)
+            {
+                var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+                for (var d = planet.Radius + 40; d > 20; d--)
+                {
+                    var p = planet.Center + dir * (d * Planet.TileSize);
+                    if (planet.IsSolidAt(p)) break;
+                    if (run.Cells.CountWaterNear(p, 3f) < 3) continue;
+                    // Deep-water gate: a fat column of water below the surface find — a
+                    // kraken in a puddle is a beached joke, not an apex monster.
+                    var lair = p - dir * 30f;
+                    if (run.Cells.CountWaterNear(lair, 6f) < 24) break;
+                    var spaced = true;
+                    foreach (var other in lairs)
+                        if ((other - lair).LengthSquared() < 700f * 700f) { spaced = false; break; }
+                    if (!spaced) break;
+                    lairs.Add(lair);
+                    run.Creatures.Add(new Creature(lair, CreatureKind.Kraken) { Resident = true });
                     break;
                 }
             }
