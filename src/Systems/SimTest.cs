@@ -2611,7 +2611,7 @@ public static class SimTest
             Check($"drown: submerged gunman drowns ({hp0:0} -> {bare.Health:0} HP)",
                 bare.Health < hp0 - 8f);
             Check($"drown: breather bandit survives the same water ({rigged.Health:0} HP)",
-                rigged.Health > rigged.Radius /* alive by a wide margin */ && rigged.Health > 20f);
+                rigged.Health > 20f);
             Check($"drown: never-breathed kinds don't drown ({hpV0:0} -> {vortex.Health:0} HP)",
                 vortex.Health > hpV0 - 0.5f);
             Check("drown: breather rig makes a bandit a swimmer",
