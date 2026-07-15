@@ -2767,7 +2767,10 @@ public sealed class Cells
                 var wcx = WrapX(cx0 + d, n);
                 var idx = rowOff + wcx;
                 var m = (Material)_mat[idx];
-                if (m is not (Material.Water or Material.Acid or Material.Oil))
+                // Lava joins the scan in blob mode only (its ops divert to the hot field —
+                // see HotOp); the plain fallback leaves it to the main cell draw.
+                if (m is not (Material.Water or Material.Acid or Material.Oil)
+                    && !(blobMode && m == Material.Lava))
                 {
                     FlushRun();
                     continue;
