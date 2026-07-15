@@ -3492,7 +3492,7 @@ public sealed partial class DwarfMinerGame : Game
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 2.1f + (float)Random.Shared.NextDouble() * 40f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 1.7f + (float)Random.Shared.NextDouble() * 30f),
                 Material.Fire);
         }
         _particles.EmitFlameJet(muzzle, dir, reach);
@@ -3542,7 +3542,7 @@ public sealed partial class DwarfMinerGame : Game
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 2.1f + (float)Random.Shared.NextDouble() * 35f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (reach * 1.7f + (float)Random.Shared.NextDouble() * 28f),
                 Material.Acid);
         }
         _particles.EmitAcidJet(muzzle, dir, reach);

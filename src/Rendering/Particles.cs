@@ -1148,8 +1148,11 @@ public sealed class Particles
         // Particle speed tuned so a blob travels roughly `reach` before its life ends, so the
         // visible tongue matches the stream's current length. Blobs COLLIDE with tiles and fall
         // on the same arc as the launched fuel cells — the Noita look: a dense bright throat
-        // that stretches into a drooping, smoking tongue.
-        var jetSpeed = reach * 2.6f;
+        // that stretches into a drooping, smoking tongue. Deliberately SLOW (with longer
+        // grain lives holding the same tongue length): a fast stream reads as stretched
+        // pixels spraying past; a slow one reads as flowing flame. Game1's payload launch
+        // speed (reach*1.7) is retuned alongside — the two must share an arc.</summary>
+        var jetSpeed = reach * 1.9f;
         // Many TINY grains rather than a few fat blobs — the stream reads as granular burning
         // fluid (Noita's pixel-fire) instead of soft puffballs. Grain colours pick from a
         // FOUR-TONE fire ramp (white-yellow → gold → orange → red-orange) so the stream body
