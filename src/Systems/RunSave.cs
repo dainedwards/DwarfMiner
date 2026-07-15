@@ -17,7 +17,8 @@ public static class RunSave
 {
     // Bump when the format or the planet/cell geometry changes — old saves are discarded.
     // v8: 4-px tiles (doubled ring geometry) + Conglomerate composition table.
-    private const int Version = 21;  // 21: titan carcass + soul-claim flag
+    private const int Version = 22;  // 22: skyscraper facade frames (straight-tower lattice)
+                                     // 21: titan carcass + soul-claim flag
                                      // 9: planet gem-overlay section
                                      // 20: player ScannerTier (craftable geo-scanner)
                                      // 10: city civilian spawn sites + lizardman dens in planet state
