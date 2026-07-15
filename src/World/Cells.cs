@@ -1309,17 +1309,22 @@ public sealed class Cells
             if (steps == 0) { Enqueue(i); return; }
 
             var selfMat = (Material)_mat[i];
+            var fallSpeed = _velR[i];
             var plunges = 0;
             for (var s = 0; s < steps && cy > 0; s++)
             {
                 var (icx, icy) = InnerCell(cx, cy);
                 if (TryMoveTo(cx, cy, icx, icy, s == 0)) { cx = icx; cy = icy; continue; }
-                // Plunge: a falling stream meeting its own pool dives INTO it instead of
-                // stopping dead on the surface — swap with the liquid below and keep going
-                // (the displaced cell surfaces, wakes, and spreads). Probabilistic and
-                // depth-capped so half the stream still splashes and a deep dive can't
-                // chew a whole tick; different liquids never plunge (buoyancy owns that).
-                if (plunges < 2 && (Material)_mat[Idx(icx, icy)] == selfMat
+                // Plunge: a HARD-falling stream meeting its own pool dives INTO it instead
+                // of stopping dead on the surface — swap with the liquid below and keep
+                // going (the displaced cell surfaces, wakes, and spreads). The speed gate
+                // keeps it to waterfalls: gently-fallen drops (rain, drips) rest ON the
+                // surface and splash there instead of silently vanishing under it.
+                // Probabilistic and depth-capped so half the stream still splashes and a
+                // deep dive can't chew a whole tick; different liquids never plunge
+                // (buoyancy owns that).
+                if (plunges < 2 && fallSpeed > TerminalCells * 0.6f
+                    && (Material)_mat[Idx(icx, icy)] == selfMat
                     && !IsTileSolidAt(icx, icy) && _rng.Next(2) == 0)
                 {
                     SwapCells(cx, cy, icx, icy);
