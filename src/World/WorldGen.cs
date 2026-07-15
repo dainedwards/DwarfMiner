@@ -521,14 +521,17 @@ public static class WorldGen
 
         // Biome flora: dot the surface with the world's signature plant (fire/acid-proof on
         // the hostile worlds). Isolated rng, same stream-stability reason.
-        ScatterBiomeFlora(planet, def, new Random(seed ^ 0xF10A));
+        if (ScatterVegetation)
+        {
+            ScatterBiomeFlora(planet, def, new Random(seed ^ 0xF10A));
 
-        // Alien trees (harvest the trunks for WOOD) and shallow-water plants. Density is by
-        // world: living/ocean worlds are forested, the hostile/dead worlds have sparse groves,
-        // and truly airless rock (belt/moon) grows no trees at all. Isolated rng for stream
-        // stability, like the flora above.
-        ScatterTrees(planet, def, new Random(seed ^ 0x77EE));
-        ScatterWaterPlants(planet, def, new Random(seed ^ 0x5EA1));
+            // Alien trees (harvest the trunks for WOOD) and shallow-water plants. Density is
+            // by world: living/ocean worlds are forested, the hostile/dead worlds have sparse
+            // groves, and truly airless rock (belt/moon) grows no trees at all. Isolated rng
+            // for stream stability, like the flora above.
+            ScatterTrees(planet, def, new Random(seed ^ 0x77EE));
+            ScatterWaterPlants(planet, def, new Random(seed ^ 0x5EA1));
+        }
 
         // Skin every acid reservoir (surface pools, volcano plumbing, and the scattered crust
         // seeps) in obsidian so the acid can't chew outward through the crust. Obsidian shrugs
