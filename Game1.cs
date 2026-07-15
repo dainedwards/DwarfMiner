@@ -44,6 +44,20 @@ public sealed partial class DwarfMinerGame : Game
     private float _gravityWellTimer;
     private float _gravityWellRadius;
 
+    /// <summary>Titan-climbing: while riding, the dwarf clings to a bearing on the monster's
+    /// body circle and moves with it — A/D walks around the hull, W jumps off, and the
+    /// monster's shake-off thrash flings the rider (see TickTitanRiding).</summary>
+    private bool _riding;
+    private float _rideAngle;
+
+    /// <summary>Grappling-hook line: latched to terrain (<see cref="_grapAnchor"/>) or to the
+    /// titan's hide (<see cref="_grapOnTitan"/> + body-local offset). While latched the rope
+    /// is a hard length constraint — hold LMB to reel in, S pays line out, W cuts it.</summary>
+    private Vector2? _grapAnchor;
+    private bool _grapOnTitan;
+    private Vector2 _grapLocal;
+    private float _ropeLen;
+
     /// <summary>The current planet visit. Everything per-run lives here — swapped atomically
     /// when the player lands on a planet from space. Null only while flying in space before
     /// the first run; Playing/GameOver screens always have one.</summary>
