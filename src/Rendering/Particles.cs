@@ -173,6 +173,20 @@ public sealed class Particles
                 var n = planet.UpAt(p.Position);
                 var dot = Vector2.Dot(p.Velocity, n);
                 p.Velocity = (p.Velocity - n * dot * 1.5f) * 0.4f;
+                // STREAM contact fires on FIRST TOUCH, not at rest: carriers hit at
+                // ~250 px/s and skitter through several bounces — many expired before
+                // ever "resting", so the jet visibly touched things without lighting
+                // them. Fuse-carrying grains (only the hose carriers have a LandFuse)
+                // deliver their fire stamp and the contact spark burst the moment they
+                // strike; everything else (cinders, debris) keeps the rest-based handoff.
+                if (p.LandFuse > 0 && p.LandMat != 0 && cells != null)
+                {
+                    cells.StampAtWorld(p.Position, (Material)p.LandMat, p.LandFuse);
+                    p.LandMat = 0;
+                    // Stop dead at the strike point: the rest branch below then runs THIS
+                    // frame — contact spark burst + fast death — no skittering onward.
+                    p.Velocity = Vector2.Zero;
+                }
                 if (p.Velocity.LengthSquared() < 4f)
                 {
                     // Flame grains DIE on touchdown (fire isn't matter — it can't lie on
@@ -1418,10 +1432,10 @@ public sealed class Particles
                 LandMat = CellFx ? (byte)Material.Fire : (byte)0,
                 // 6-9s burn fuse — the standing ground fire (see Cells.TickFire).
                 LandFuse = (byte)(120 + _rng.Next(60)),
-                // NO touchdown spark splash (per user): sparks must never appear to
-                // interact with the ground — the stream's contact effect is the fire
-                // stamp above, full stop. (The splash was a 3-fleck burst kicked up at
-                // every carrier landing — literally sparks born at ground contact.)
+                // The contact spark burst is part of the STREAM's touch (fires on first
+                // strike, with the stamp) — distinct from the flying jet sparks, which
+                // never interact with the world.
+                LandSparks = true,
             });
         }
         // 2) Plume puffs (6/frame — THE visible fire): launched with the stream but under
