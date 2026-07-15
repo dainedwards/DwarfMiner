@@ -2313,7 +2313,8 @@ public sealed class Cells
             foreach (var f in _flying)
             {
                 if (Vector2.DistanceSquared(f.Pos, viewCentre) > maxDistSq) continue;
-                var col = ColorFor((Material)f.Mat, (int)f.Pos.X, (int)f.Pos.Y, f.Src);
+                // skin ink: airborne droplets are opaque, same as the landed skin they join.
+                var col = ColorFor((Material)f.Mat, (int)f.Pos.X, (int)f.Pos.Y, f.Src, skin: true);
                 var speed = f.Vel.Length();
                 var len = MathHelper.Clamp(speed * 0.016f, PxPerCell * 0.7f, PxPerCell * 3f);
                 // Area-conserving smear: a stretched streak thins so it stays one grain's
