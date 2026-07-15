@@ -279,8 +279,22 @@ public sealed class Physics
             // Stone-like: connectivity check. Skip the cheap-pass bail-outs first — only run a
             // flood when at least one cardinal neighbour is non-solid (otherwise definitely supported).
             if (!HasEmptyCardinalNeighbor(x, y)) continue;
-            if (_anchorStamp[idx] == _anchorGen) continue;
-            if (IsRegionAnchored(x, y)) continue;
+            if (_anchorStamp[idx] == _anchorGen)
+            {
+                if (System.Environment.GetEnvironmentVariable("DM_TOPDBG") is { Length: > 0 })
+                    System.Console.WriteLine($"    [settle] seed {x}/{y} {k}: anchor-stamped");
+                continue;
+            }
+            if (IsRegionAnchored(x, y))
+            {
+                if (System.Environment.GetEnvironmentVariable("DM_TOPDBG") is { Length: > 0 })
+                    System.Console.WriteLine($"    [settle] seed {x}/{y} {k}: region anchored "
+                        + $"({_floodRegion.Count} tiles, crust {_regionTouchesCrust})");
+                continue;
+            }
+            if (System.Environment.GetEnvironmentVariable("DM_TOPDBG") is { Length: > 0 })
+                System.Console.WriteLine($"    [settle] seed {x}/{y} {k}: CONDEMN "
+                    + $"({_floodRegion.Count} tiles, crust {_regionTouchesCrust})");
 
             CollapseRegion(_floodRegion, sky: !_regionTouchesCrust);
         }
