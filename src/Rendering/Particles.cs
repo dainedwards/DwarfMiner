@@ -1003,13 +1003,15 @@ public sealed class Particles
         // on the same arc as the launched fuel cells — the Noita look: a dense bright throat
         // that stretches into a drooping, smoking tongue.
         var jetSpeed = reach * 2.6f;
-        for (var i = 0; i < 9; i++)
+        // Many TINY grains rather than a few fat blobs — the stream reads as granular burning
+        // fluid (Noita's pixel-fire) instead of soft puffballs.
+        for (var i = 0; i < 14; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.24f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            var hot = i < 3;
+            var hot = i < 5;
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f,
@@ -1018,17 +1020,17 @@ public sealed class Particles
                 MaxLife = 0.4f,
                 Color = hot ? new Color(255, 245, 190) : new Color(255, 160, 60),
                 FadeColor = new Color(150, 45, 15),
-                Size = hot ? 1.8f : 2.4f + (float)_rng.NextDouble() * 0.8f,
+                Size = hot ? 0.8f : 1.0f + (float)_rng.NextDouble() * 0.5f,
                 GravityScale = HoseArcGravity,   // same arc as the fuel cells
                 Drag = 1.2f,
                 CollideTiles = true,
-                LightRadius = hot ? 66f : 36f,
+                LightRadius = hot ? 60f : 30f,
                 LightColor = new Color(255, 170, 70),
             });
         }
-        // Sooty curls shed along the tongue — they inherit the arc, then buoy upward as they
+        // Sooty flecks shed along the tongue — they inherit the arc, then buoy upward as they
         // cool (weak net gravity), so spent flame rolls off the stream like Noita's smoke.
-        for (var i = 0; i < 3; i++)
+        for (var i = 0; i < 4; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.3f;
             var c = MathF.Cos(spread);
@@ -1042,7 +1044,7 @@ public sealed class Particles
                 MaxLife = 0.9f,
                 Color = new Color(95, 62, 45),
                 FadeColor = new Color(35, 28, 30),
-                Size = 2.1f + (float)_rng.NextDouble(),
+                Size = 1.1f + (float)_rng.NextDouble() * 0.5f,
                 GravityScale = -0.18f,
                 Drag = 2.2f,
                 CollideTiles = true,
