@@ -1796,9 +1796,10 @@ public static class WorldGen
                     var f = dr / (float)domeH;
                     var domeW = halfWidthPx * 0.85f * MathF.Sqrt(MathF.Max(0.05f, 1f - f * f));
                     var n = planet.TilesAt(r);
-                    var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
-                    var sw = (int)(domeW / ((Planet.RingMin + r + 0.5f) * Planet.TileSize)
-                                   / MathHelper.TwoPi * n) + 1;
+                    var t0 = (int)MathF.Round(ang / (MathHelper.TwoPi / n) - 0.5f);
+                    var sw = Math.Max(1, (int)MathF.Round(
+                        domeW / ((Planet.RingMin + r + 0.5f) * Planet.TileSize)
+                        / MathHelper.TwoPi * n));
                     for (var dt = -sw; dt <= sw; dt++)
                     {
                         var t = ((t0 + dt) % n + n) % n;
