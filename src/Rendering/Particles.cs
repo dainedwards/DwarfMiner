@@ -183,10 +183,12 @@ public sealed class Particles
                 // strike; everything else (cinders, debris) keeps the rest-based handoff.
                 if (p.LandFuse > 0 && p.LandMat != 0 && cells != null)
                 {
-                    cells.StampAtWorld(p.Position, (Material)p.LandMat, p.LandFuse);
+                    // A BLOB of fire cells, not one: single-cell stamps left the ground
+                    // fire too sparse to read — Noita ground fire is dense WORLD fire.
+                    // The cluster's cells dance, tier-shade, source licking pixels, and
+                    // top each other's fuses up under sustained dwell.
+                    cells.StampFireBlob(p.Position, p.LandFuse);
                     p.LandMat = 0;
-                    // Guaranteed 3s of licking pixel flames right at the strike point.
-                    AddFlameSite(p.Position);
                     // Stop dead at the strike point: the rest branch below then runs THIS
                     // frame — contact spark burst + fast death — no skittering onward.
                     p.Velocity = Vector2.Zero;
