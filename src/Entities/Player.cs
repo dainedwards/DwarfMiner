@@ -240,11 +240,17 @@ public sealed class Player
     private float _coyoteTimer;       // counts down from CoyoteTime after leaving ground
     private float _jumpBufferTimer;   // counts down from JumpBufferTime after a jump press
 
-    /// <summary>Debug god mode: ghost flight (no gravity / no collision), super-pickaxe power,
-    /// and extended mining reach. Toggled in-game with the G key. When on, mining uses the
-    /// god values below; when off, it falls back to the tier-derived stats so crafted
-    /// upgrades still persist across toggles.</summary>
+    /// <summary>Debug god mode: invulnerability, super-pickaxe power, and extended mining reach.
+    /// Toggled in-game with the G key. When on, mining uses the god values below; when off, it
+    /// falls back to the tier-derived stats so crafted upgrades still persist across toggles.
+    /// God mode NO LONGER auto-enables flight — press H while in god mode to toggle ghost
+    /// flight (see <see cref="Flying"/>).</summary>
     public bool FlyMode;
+
+    /// <summary>Ghost flight: no gravity, no collision, direct velocity control. Only meaningful
+    /// while <see cref="FlyMode"/> (god mode) is on, and toggled with the H key. Kept separate
+    /// from god mode so the dev can be invulnerable while still walking the surface normally.</summary>
+    public bool Flying;
     public const int GodPickaxePower = 50;
     public const float GodMineRange = 200f;
 
