@@ -135,7 +135,7 @@ public sealed class Particles
                 // resting at the ground surface in their last frames were spawning
                 // sparks right on the terrain — the other half of the phantom
                 // "sparks interacting with the ground".
-                if (!p.JetSpark && sp > 3600f && _rng.Next(20) == 0)
+                if (!p.JetSpark && sp > 3600f && _rng.Next(7) == 0)
                     _list.Add(new Particle
                     {
                         Position = p.Position + Jitter(1f),
