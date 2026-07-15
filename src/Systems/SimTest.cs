@@ -2465,6 +2465,22 @@ public static class SimTest
         }
         Check($"spawn: nobody hatches inside lava/acid they can't survive ({trapped} trapped of {slag.Creatures.Count})",
             trapped == 0);
+
+        // Ocean world: the kraken census — the deepest basins hold their apex monster
+        // from minute zero (census-only, like the city's command saucer).
+        PlanetDef? oceanDef = null;
+        foreach (var d in PlanetGen.Campaign(21)) if (d.Biome == "ocean") { oceanDef = d; break; }
+        var sea = new Session(oceanDef!) { Planet = WorldGen.Generate(148, oceanDef!) };
+        sea.Cells = new Cells(sea.Planet);
+        sea.Physics = new Physics(sea.Planet, sea.Cells);
+        sea.Player = new Player(SpawnDirector.FindSurfaceSpawn(sea.Planet, -MathF.PI / 2f, sea.Planet.Radius));
+        foreach (var (wx, wy) in sea.Planet.WaterSeeds) sea.Cells.FillTile(wx, wy, Material.Water);
+        for (var i = 0; i < 5; i++) sea.Cells.Update(1f / 60f);
+        SpawnDirector.PopulateWorld(sea);
+        var krakens = 0;
+        foreach (var c in sea.Creatures)
+            if (c is { Kind: CreatureKind.Kraken, Resident: true }) krakens++;
+        Check($"census: the water world's deep holds its kraken ({krakens} seeded)", krakens >= 1);
     }
 
     /// <summary>The aquatics: player swimming (strokes rise, idle sinks gently, fins are
