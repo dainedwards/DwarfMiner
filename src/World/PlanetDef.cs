@@ -195,7 +195,7 @@ public static class PlanetDefs
         // (city QA), and warren QA runs on slag/core via DM_AUTOSTART + DM_WARREN.
         CityLots: 2,
         SurfaceBands: new[] { TileKind.Grass, TileKind.Snow, TileKind.Gravel, TileKind.Dirt, TileKind.Basalt },
-        Biome: "debug", Difficulty: 1f, NoFauna: true);
+        Biome: "debug", Difficulty: 1f, NoFauna: true, NoDisasters: true);
 
     /// <summary>The Hollow: a mega-asteroid on the belt at the edge of the system, big
     /// enough to land on and mine like a planet — but truly airless: no atmosphere in the
