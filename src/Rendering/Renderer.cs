@@ -292,6 +292,28 @@ public sealed class Renderer
         // quads (visually identical at that scale, a fraction of the quads and loop work).
         var tileStep = cam.Zoom < 0.48f ? 3 : cam.Zoom < 0.55f ? 2 : 1;
 
+        // The tile pass runs in its own batch so the carve shader (when live) applies only
+        // here. A custom effect replaces SpriteBatch's vertex shader, so the Begin transform
+        // is inert for it — the full view×projection goes in as four column params instead
+        // (columns, not a Matrix param, so no transpose-convention guesswork: clip_j =
+        // dot(pos, col_j) exactly). Everything drawn with a normal alpha passes through the
+        // shader unchanged; only base tile quads carry the 64+mask alpha flag.
+        _sb.End();
+        if (_tileFx != null)
+        {
+            var vp = _gd.Viewport;
+            var m = view * Matrix.CreateOrthographicOffCenter(0, vp.Width, vp.Height, 0, 0, -1);
+            _fxCol0!.SetValue(new Vector4(m.M11, m.M21, m.M31, m.M41));
+            _fxCol1!.SetValue(new Vector4(m.M12, m.M22, m.M32, m.M42));
+            _fxCol2!.SetValue(new Vector4(m.M13, m.M23, m.M33, m.M43));
+            _fxCol3!.SetValue(new Vector4(m.M14, m.M24, m.M34, m.M44));
+            _fxPs!.SetValue(new Vector4(
+                _tileAtlas.Width / (float)TileAtlas.Res,
+                _tileAtlas.Height / (float)TileAtlas.Res,
+                CarveAmp, CarveFreq));
+        }
+        _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view, effect: _tileFx);
+
         for (var r = minRing; r <= maxRing; r += tileStep)
         {
             var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
