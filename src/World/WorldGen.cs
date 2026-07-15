@@ -1587,7 +1587,11 @@ public static class WorldGen
                         else if (f > 0.55f && above > h - 1.5f * S) k = TileKind.Gravel;
                     }
                     else if (f < craterFrac + 0.1f)
-                        k = rng.Next(3) == 0 ? TileKind.Obsidian : TileKind.Basalt;
+                        // Lava craters line with LAVA ROCK, not obsidian — the whole lava
+                        // jacket contract is one material (obsidian stays the ACID seal;
+                        // lava rock is corrodible, so the acid bowl above keeps obsidian).
+                        // Same rng draw as the legacy mix so downstream placement is stable.
+                        k = rng.Next(3) == 0 ? TileKind.LavaRock : TileKind.Basalt;
                     else if (f > 0.55f && above > h - 1.5f * S)
                         k = TileKind.Gravel;                       // ash skirt
                     planet.SetWall(r, t, TileKind.Basalt);
