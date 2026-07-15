@@ -104,7 +104,7 @@ public sealed class Renderer
     /// the TreeCanopy2 off-tone — the biome's SIBLING species, a genuinely different colour
     /// (autumn amber in the green forest, icy pale against the blue pines…) so mixed stands
     /// read as two kinds of tree, not one tree in two lights.</summary>
-    private static (Color leaf, Color dk, Color hi) TreeLeafFor(string biome, bool alt) => (biome, alt) switch
+    public static (Color leaf, Color dk, Color hi) TreeLeafFor(string biome, bool alt) => (biome, alt) switch
     {
         ("verdant", false) => (new Color(64, 138, 62), new Color(40, 96, 44), new Color(112, 196, 96)),
         ("verdant", true)  => (new Color(196, 142, 54), new Color(140, 92, 38), new Color(240, 196, 96)),   // autumn amber
