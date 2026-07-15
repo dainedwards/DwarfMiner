@@ -514,6 +514,11 @@ public sealed class Creature
             // The crab is a lakebed walker on the grub brain with a short territorial fuse —
             // it scuttles the bottom rather than swimming, so no special water physics.
             case CreatureKind.AlienCrab:  TickCrab(dt, planet, up, right, toPlayer, dist, speedMul); break;
+            // Hostile sea monsters: shark torpedo-hunts, gulper drifts then lunges, and the
+            // brinespitter lobs water-globs from range (its own artillery brain via shots).
+            case CreatureKind.AlienShark: TickShark(dt, planet, cells, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.Gulper:     TickGulper(dt, planet, cells, up, right, toPlayer, dist, speedMul); break;
+            case CreatureKind.Brinespitter: TickBrinespitter(dt, planet, cells, up, right, toPlayer, dist, speedMul, shots); break;
             // Belt natives. The moonlet and glimmermaw run bespoke brains below; the leech
             // hunts on the skitterer's pounce brain (its air siphon lives in the contact
             // block, not the tick).
