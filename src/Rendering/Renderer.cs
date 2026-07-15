@@ -526,7 +526,12 @@ public sealed class Renderer
                     // Noita crust: rough the air-facing silhouette into a continuous per-pixel
                     // coastline (world-space noise → grid dissolves across tile seams). Skip
                     // engineered city tiles — machined hull/glass/brick shouldn't grow a fringe.
-                    if (_noita && (outerSky || innerSky || leftSky || rightSky) && !IsEngineered(k))
+                    // FALLBACK-ONLY once the carve shader is live: the crust hugs the nominal
+                    // square tile boundary while the shader retreats the body inward, so the
+                    // two together read as a detached grain outline tracing the tile grid
+                    // around an empty moat — worse than either alone. The carve owns the edge.
+                    if (_noita && _tileFx == null
+                        && (outerSky || innerSky || leftSky || rightSky) && !IsEngineered(k))
                         DrawCrust(centre, right, up, rotation, chord,
                             outerSky, innerSky, leftSky, rightSky, col);
                 }
