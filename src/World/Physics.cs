@@ -395,6 +395,15 @@ public sealed class Physics
             VisitFloodNeighbour(x, y - 1);
             VisitFloodNeighbour(x, y + 1);
         }
+        // Fully unsupported — but a cluster this small never crumbles. Breaking one block
+        // out of a little built span (or leaving a nub while mining) strands its remainder
+        // in mid-air; it stays floating rather than dissolving into dust. Stamp it anchored
+        // so sibling seeds in this settle pass short-circuit.
+        if (_floodRegion.Count < MinCollapseSize)
+        {
+            foreach (var v in _floodVisitList) _anchorStamp[v] = _anchorGen;
+            return true;
+        }
         return false;
     }
 
