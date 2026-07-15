@@ -90,7 +90,11 @@ public static class SimTest
             {
                 if (FindCavePos(planet, seedOffset: 999 + s * 13) is not { } q) continue;
                 var u = planet.UpAt(q);
-                if (planet.IsSolidAt(q + u * 14f) && planet.IsSolidAt(q + u * 22f) && planet.IsSolidAt(q + u * 30f))
+                // Need a solid band OVERHEAD (something to dig up through) AND solid GROUND just
+                // below, so the delver is grounded and digs the ceiling rather than falling away
+                // into open cave (which the deeper cave network now leaves under some sites).
+                if (planet.IsSolidAt(q + u * 14f) && planet.IsSolidAt(q + u * 22f) && planet.IsSolidAt(q + u * 30f)
+                    && planet.IsSolidAt(q - u * 8f))
                 {
                     site = q;
                     up = u;
