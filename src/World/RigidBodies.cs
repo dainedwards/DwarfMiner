@@ -81,6 +81,11 @@ public sealed class RigidBodies
         /// <summary>The tile's radial art rotation at detach (tile angle + 90°). Drawn at
         /// BaseRot + the body's current Angle, the art never pops when the chunk shears off.</summary>
         public float BaseRot;
+        /// <summary>Burn state carried OFF the grid: 0 = not burning; otherwise the tile's
+        /// BurningTiles clock + 1 at detach (offset so 0 stays "none"). Rides the cell
+        /// through splits and re-ignites via Cells.IgniteTile when the body stamps —
+        /// fire persists on a chunk that breaks free and falls.</summary>
+        public float Burn;
     }
 
     public sealed class Body
