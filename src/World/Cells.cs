@@ -1393,6 +1393,9 @@ public sealed class Cells
         Material.Dust when src != TileKind.Sky && src != TileKind.Conglomerate => src,
         Material.Dirt => TileKind.Dirt,
         Material.Snow => TileKind.Snow,   // a buried drift presses into packed snow
+        // Quench crust (water-hardened lava, tagged in QuenchIfWet) presses into solid
+        // lava rock — the "water meets lava and hardens" end state.
+        Material.Gravel when src == TileKind.LavaRock => TileKind.LavaRock,
         _ => TileKind.Gravel,   // Sand, Gravel, untagged/legacy dust
     };
 
