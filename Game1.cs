@@ -290,16 +290,19 @@ public sealed partial class DwarfMinerGame : Game
             e.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
-        // DM_VARSTEP=1 → vsync-paced variable timestep (pacing experiment: the fixed-step
-        // sleep on macOS overshoots on CHEAP frames — Thread.Sleep granularity — missing
-        // vblanks and latching IsRunningSlowly, so light scenes ran at 22-34 fps while
-        // heavy ones held a clean 60). UpdateFrame clamps dt on hitches either way.
-        IsFixedTimeStep = Environment.GetEnvironmentVariable("DM_VARSTEP") is not { Length: > 0 };
+        // Variable timestep + our own precise 60 Hz limiter (see EndDraw). Two macOS
+        // findings forced this: (1) SynchronizeWithVerticalRetrace never actually engages
+        // here (uncapped runs hit 78-80 fps), so nothing paced the loop but MonoGame's
+        // fixed-step sleep; (2) that sleep OVERSHOOTS (Thread.Sleep granularity), so
+        // paradoxically the CHEAPER the frame the worse the rate — light scenes latched
+        // IsRunningSlowly at 22-34 fps while heavy ones held a clean 60. With the precise
+        // limiter dt arrives a steady ~16.7 ms, so per-tick probability rates in the sim
+        // keep their authored 60 Hz meaning; UpdateFrame clamps dt on real hitches.
+        // DM_FIXEDSTEP=1 restores the old MonoGame fixed-step loop for A/B comparison.
+        // NOTE if it ever returns: leave MaxElapsedTime at its 500 ms default — capping
+        // it at 50 ms locked the fixed-step loop at a permanent 30 fps.
+        IsFixedTimeStep = Environment.GetEnvironmentVariable("DM_FIXEDSTEP") is { Length: > 0 };
         TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
-        // NOTE: leave MaxElapsedTime at its 500 ms default. Capping it at 50 ms to blunt
-        // the catch-up spiral instead LOCKED the vsync'd fixed-step loop at a permanent
-        // 30 fps with a near-idle CPU (updx 2 SLOW forever) — the clamp keeps the game
-        // clock perpetually behind the vblank cadence, so every present misses.
         Window.Title = "Dwarf Miner";
         // The scene renders at the fixed virtual resolution and scales to the window, so
         // the window itself is free to be any size (drag-resize or F11 fullscreen).
