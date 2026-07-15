@@ -5911,7 +5911,16 @@ public sealed partial class DwarfMinerGame : Game
         string label;
         var (cx, cy) = _run.Cells.WorldToCell(worldCursor);
         var mat = _run.Cells.Get(cx, cy);
-        if (mat != Material.Empty)
+        if (mat == Material.Dust)
+        {
+            // "Dust" is just the loose state — name it for the material it came from.
+            var src = _run.Cells.SrcTileAt(cx, cy);
+            var srcName = Tiles.Drop(src) is { } d ? Tiles.ResourceLabel(d.id)
+                        : src == TileKind.Sky ? "DEBRIS"
+                        : src.ToString().ToUpperInvariant();
+            label = $"MATERIAL: {srcName} (LOOSE)";
+        }
+        else if (mat != Material.Empty)
         {
             label = $"MATERIAL: {mat}";
         }
