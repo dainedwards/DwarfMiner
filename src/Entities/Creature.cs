@@ -709,6 +709,16 @@ public sealed class Creature
         GroundMove(dt, planet, up, right, moveAxis, speedMul);
     }
 
+    /// <summary>A steady idle-hop direction: picked once, then held for several hops (only a
+    /// 1-in-5 chance to reverse) so a resting hopper drifts one way instead of twitching left
+    /// and right every bounce. Keeps the bouncing from reading as erratic.</summary>
+    private float IdleHopDir()
+    {
+        if (_hopDir == 0f || Random.Shared.Next(5) == 0)
+            _hopDir = Random.Shared.Next(2) == 0 ? 1f : -1f;
+        return _hopDir;
+    }
+
     private void TickHopper(float dt, Planet planet, Vector2 up, Vector2 right,
         Vector2 toPlayer, float dist, float speedMul)
     {
