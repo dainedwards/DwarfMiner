@@ -46,5 +46,13 @@ if (args.Length > 0 && args[0] == "--strataprobe")
     return;
 }
 
+// Diagnostic: `--smokeprobe` verifies effects-as-materials (DM_CELLFX) — explosion smoke
+// plumes as real Smoke cells and landed cinders stamp real Fire cells.
+if (args.Length > 0 && args[0] == "--smokeprobe")
+{
+    DwarfMiner.Systems.SmokeProbe.Run();
+    return;
+}
+
 using var game = new DwarfMinerGame();
 game.Run();
