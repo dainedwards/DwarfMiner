@@ -1430,10 +1430,10 @@ public sealed class Particles
                 LandMat = CellFx ? (byte)Material.Fire : (byte)0,
                 // 6-9s burn fuse — the standing ground fire (see Cells.TickFire).
                 LandFuse = (byte)(120 + _rng.Next(60)),
-                // NO touchdown spark splash (per user): sparks must never appear to
-                // interact with the ground — the stream's contact effect is the fire
-                // stamp above, full stop. (The splash was a 3-fleck burst kicked up at
-                // every carrier landing — literally sparks born at ground contact.)
+                // The contact spark burst is part of the STREAM's touch (fires on first
+                // strike, with the stamp) — distinct from the flying jet sparks, which
+                // never interact with the world.
+                LandSparks = true,
             });
         }
         // 2) Plume puffs (6/frame — THE visible fire): launched with the stream but under
