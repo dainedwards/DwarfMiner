@@ -6280,6 +6280,22 @@ public sealed partial class DwarfMinerGame : Game
         if (titanOnScreen)
             TitanRenderer.Draw(_renderer, _run.Titan, _run.Planet, _run.Player.Position, _renderer.Time);
 
+        // Grapple line — a taut hemp strand from the dwarf to its hook (terrain point or a
+        // spot on the titan's hide), with the hook drawn as a bright claw at the anchor.
+        if (_grapAnchor is not null || _grapOnTitan)
+        {
+            var anchor = _grapOnTitan ? _run.Titan.Position + _grapLocal : _grapAnchor!.Value;
+            var span = anchor - _run.Player.Position;
+            var segLen = span.Length();
+            if (segLen > 1f)
+            {
+                var mid = _run.Player.Position + span * 0.5f;
+                var rot = MathF.Atan2(span.Y, span.X);
+                _renderer.DrawRect(mid, new Vector2(segLen, 1.2f), new Color(196, 160, 96), rot);
+                _renderer.DrawCircle(anchor, 2.2f, new Color(220, 220, 230));
+            }
+        }
+
         // Particles drawn last so chips and sparks pop over creatures and the player.
         _particles.Draw(_renderer);
 
