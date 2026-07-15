@@ -287,7 +287,7 @@ void main()
         // --- shaders ---
         w.Write(2);
         WriteShader(w, isVertex: true, VertexGlsl, cbuffer: 0, withAttributes: true);
-        WriteShader(w, isVertex: false, PixelGlsl, cbuffer: 1, withAttributes: false);
+        WriteShader(w, isVertex: false, pixelGlsl, cbuffer: 1, withAttributes: false);
 
         // --- parameters (indices must match the cbuffer tables above) ---
         w.Write(6);
