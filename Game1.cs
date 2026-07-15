@@ -1588,7 +1588,18 @@ public sealed partial class DwarfMinerGame : Game
             _playZoom = MathHelper.Clamp(_playZoom * (1f - 1.6f * dt), 2.2f, 8f);
         if (keys.IsKeyDown(Keys.OemPlus) || keys.IsKeyDown(Keys.Add))
             _playZoom = MathHelper.Clamp(_playZoom * (1f + 1.6f * dt), 2.2f, 8f);
-        _camera.Zoom = _playZoom;
+        // Kaiju-scale framing: fighting near the titan eases the camera out so the whole
+        // monster fits the fight, then eases back in once the player breaks away. The blend
+        // is smoothed so crossing the range boundary never pops the zoom.
+        {
+            var tt = _run.Titan;
+            var titanNear = tt.Hatched && tt.Health > 0 && tt.Targetable
+                && (tt.Position - _run.Player.Position).Length() < 760f;
+            _fightZoomBlend = MathHelper.Clamp(
+                _fightZoomBlend + (titanNear ? dt * 1.6f : -dt * 1.1f), 0f, 1f);
+            var fightZoom = MathF.Max(2.2f, _playZoom * 0.68f);
+            _camera.Zoom = MathHelper.Lerp(_playZoom, fightZoom, _fightZoomBlend);
+        }
 
         // Camera follows player, rotating so up = away from planet center. DM_BOSSCAM frames
         // the boss instead (testing hook for screenshotting the variants).
