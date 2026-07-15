@@ -61,7 +61,8 @@ public static class ItemInfo
         // Building: everything placeable, plus the base/ship construction chain.
         if (id is "blocks" or "ladder" or "door" or "rail" or "support" or "reinforced_support"
             or "glowshroom" or "beacon" or "storage_depot" or "launch_pad"
-            or "ship_hull" or "ship_engine" or "ship_nav")
+            or "ship_hull" or "ship_engine" or "ship_nav"
+            or "brick" or "plating" or "glass_block" or "platform")
             return ItemCategory.Building;
 
         // Everything else is raw stock: ores, gems, soils, creature parts.
