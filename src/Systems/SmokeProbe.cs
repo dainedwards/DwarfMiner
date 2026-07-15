@@ -69,7 +69,9 @@ public static class SmokeProbe
         {
             particles.Update(dt, planet, cells);
             cells.Update(dt);
-            if (step % 30 == 0)
+            // Sample tightly: starved fire cells gutter in ~0.8s, so a half-second
+            // sampling stride was missing the population peak and flaking the check.
+            if (step % 8 == 0)
                 firePeak = Math.Max(firePeak, cells.CountNear(surface, 150f, Material.Fire));
         }
         Console.WriteLine($"[smokeprobe] cinder handoff: peak {firePeak} fire cells on the ground");
