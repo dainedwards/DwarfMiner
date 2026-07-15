@@ -2248,15 +2248,12 @@ public sealed partial class DwarfMinerGame : Game
                     Scanner.OreTileFor(_run.Def.ShipOre), 620f);
             }
         }
-        if (_run.Player.ScannerTier > 0)
-        {
-            _geoScanTimer -= dt;
-            if (_geoScanTimer <= 0f)
-            {
-                _geoScanTimer = 0.8f;
-                RefreshGeoScan();
-            }
-        }
+        // Geo-scanner upkeep: cool the pulse down, advance the ring animation, and prune the
+        // marks whose lifetime has run out (the scanner is activated now, not passive).
+        if (_scanCooldown > 0f) _scanCooldown -= dt;
+        _scanPulseT += dt;
+        for (var i = _geoScanHits.Count - 1; i >= 0; i--)
+            if (_run.RunTime >= _geoScanHits[i].expiry) _geoScanHits.RemoveAt(i);
 
         _prevKeys = keys;
         _prevMouse = mouse;
