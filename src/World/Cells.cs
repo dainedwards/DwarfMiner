@@ -2539,11 +2539,7 @@ public sealed class Cells
                 };
             }
             case Material.Oil:
-            {
-                // Near-black slick with a slow oily sheen crawling across it.
-                var sheen = (int)(MathF.Sin(_time * 1.1f + ((hash >> 3) & 7) * 0.9f + cy * 0.25f) * 7f);
-                return Tint(new Color(38, 32, 26), jitter / 6 + sheen) * 0.94f;
-            }
+                return LiquidBody(m, cx, cy) * 0.94f;
             case Material.Dirt:    return Tint(new Color(115, 75, 42), jitter / 3);
             case Material.Gravel:  return Tint(new Color(125, 120, 110), jitter / 3);
             case Material.Dust:
