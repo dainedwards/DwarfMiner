@@ -65,7 +65,7 @@ public static class Combat
         foreach (var (t, victim) in _hits)
         {
             p.HitVictims.Add(victim);
-            ApplyDirectDamage(p, victim);
+            ApplyDirectDamage(p, victim, p.PrevPosition + seg * t);
 
             if (p.DetonatesOnContact)
             {
