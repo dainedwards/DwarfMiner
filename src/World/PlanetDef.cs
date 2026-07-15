@@ -180,15 +180,15 @@ public static class PlanetDefs
         ShipOre: "gold", ShipOreCount: 3,
         OxygenDrainScale: 1.5f, SeedsGas: true, SeedsAcid: true, SeedsOil: true,
         Titan: TitanKind.Godzilla,
-        CrystalPockets: 3, FungalPockets: 3,
-        SizeScale: 1.8f, LakeScale: 1.4f,
-        AcidPools: 3, AcidRain: true,
-        Volcanoes: 3, VolcanoScale: 1.1f,
+        CrystalPockets: 2, FungalPockets: 2,
+        SizeScale: 0.55f, LakeScale: 1.4f,
+        AcidPools: 2, AcidRain: true,
+        Volcanoes: 2, VolcanoScale: 1.1f,
         // One civilisation per planet holds on the QA rig too: it keeps the tower district
         // (city QA), and warren QA runs on slag/core via DM_AUTOSTART + DM_WARREN.
-        CityLots: 4,
+        CityLots: 2,
         SurfaceBands: new[] { TileKind.Grass, TileKind.Snow, TileKind.Gravel, TileKind.Dirt, TileKind.Basalt },
-        Biome: "debug", Difficulty: 1f);
+        Biome: "debug", Difficulty: 1f, NoFauna: true);
 
     /// <summary>The Hollow: a mega-asteroid on the belt at the edge of the system, big
     /// enough to land on and mine like a planet — but truly airless: no atmosphere in the
