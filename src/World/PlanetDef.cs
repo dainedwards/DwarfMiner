@@ -166,7 +166,7 @@ public static class PlanetDefs
             (TileKind.CoalOre, 0.03f), (TileKind.FuelOre, 0.02f), (TileKind.IronOre, 0.03f),
             // Gold/silver base thresholds are unreachable (charted-rarity metals), so the
             // QA world carries full vein biases — everything must be findable here.
-            (TileKind.SilverOre, 0.16f), (TileKind.GoldOre, 0.16f), (TileKind.PlatinumOre, 0.03f),
+            (TileKind.SilverOre, 0.06f), (TileKind.GoldOre, 0.06f), (TileKind.PlatinumOre, 0.03f),
             (TileKind.Ruby, 0.03f), (TileKind.Sapphire, 0.03f), (TileKind.Crystal, 0.03f),
             (TileKind.Emerald, 0.03f), (TileKind.Diamond, 0.03f), (TileKind.Voidstone, 0.105f),
         },
