@@ -5800,6 +5800,7 @@ public sealed partial class DwarfMinerGame : Game
             controls = "A/D STEER THE ROVER\nTOUCHDOWN WHERE YOU AIM";
         else if (_ascending)
             controls = "A/D TURN THE NOSE   SPACE BURN   E SET DOWN AND STEP OUT\nGET CLOSE TO THE MOTHERSHIP TO DOCK";
+        _renderer.DrawHurtVignette(VirtualWidth, VirtualHeight, _run.Player.HurtFlash);
         _renderer.DrawHudBars(VirtualWidth, VirtualHeight, _run.Player, (int)_run.Titan.Anger, status, controls);
 
         // Depot prompt: at the depot, show deposit/withdraw; otherwise, if a stash is waiting on
