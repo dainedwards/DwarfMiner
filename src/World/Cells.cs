@@ -2395,7 +2395,12 @@ public sealed class Cells
         }
     }
 
-    private Color ColorFor(Material m, int cx, int cy, byte srcByte)
+    /// <summary><paramref name="skin"/> = the cell is EXPOSED (open-air side) or airborne:
+    /// liquids drop their see-through body translucency and draw as opaque droplets — the
+    /// same ink they had flying out of the hose — so a stream that lands doesn't suddenly
+    /// dim into a darker glassy slab. Pool interiors keep the translucency (that's where
+    /// tiles ghosting through reads as depth).</summary>
+    private Color ColorFor(Material m, int cx, int cy, byte srcByte, bool skin = false)
     {
         var hash = (cx * 73856093) ^ (cy * 19349663);
         var jitter = ((hash >> 4) & 31) - 16;
@@ -2413,7 +2418,8 @@ public sealed class Cells
                 // ghost through, and pools read as liquid even while the sim has them
                 // asleep (colour is computed at draw time, not sim time).
                 var shimmer = (int)(MathF.Sin(_time * 1.6f + ((hash >> 3) & 7) * 0.8f + cy * 0.3f) * 9f);
-                return Tint(new Color(46, 90, 178), jitter / 5 + shimmer) * 0.78f;
+                var body = Tint(new Color(46, 90, 178), jitter / 5 + shimmer);
+                return skin ? Tint(body, 24) : body * 0.78f;
             }
             case Material.Lava:
             {
