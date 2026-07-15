@@ -242,6 +242,13 @@ public sealed class Cells
     /// <summary>Player position, refreshed by Game1 each frame; null in headless contexts.</summary>
     public Vector2? CompactionExclusion;
 
+    /// <summary>Focus of the far-field throttle (see Update): the sim runs full-rate in a
+    /// bubble around this point and quarter-rate beyond it. Distinct from
+    /// <see cref="CompactionExclusion"/> so contexts without a standing dwarf — the parking
+    /// orbit, the pod descent, the LOAD-TIME pre-settle — can throttle around their own
+    /// anchor without also switching on the ambient drip/moss sweeps. Null = no throttle.</summary>
+    public Vector2? SimFocus;
+
     /// <summary>Shattered gem sites awaiting their physical drop (see the gem handling in
     /// <see cref="SpawnDustInTile"/>). Game1 drains this into Session.Pickups. Every entry —
     /// embedded-gem pop or shattered gem tile — is one whole drop at the shatter site.</summary>
