@@ -1431,12 +1431,20 @@ public sealed class Particles
     public void EmitLickingFlame(Vector2 pos, Vector2 up)
     {
         var side = new Vector2(-up.Y, up.X);
+        // Real flame SHAPE: born across a wide base, every lick's sideways velocity
+        // opposes its own base offset (drag then bleeds it off) so paths angle inward
+        // as they rise — wide at the bottom, converging toward the axis: the taper.
+        // Outer licks live shorter (they only exist low on the flame), and 1-in-4 is a
+        // TALL tongue that shoots past the rest — the dancing tip licking the air.
+        var s0 = ((float)_rng.NextDouble() - 0.5f) * 4f;
+        var tall = _rng.Next(4) == 0;
         _list.Add(new Particle
         {
-            Position = pos + side * (((float)_rng.NextDouble() - 0.5f) * 2f),
-            Velocity = up * (18f + (float)_rng.NextDouble() * 26f)
-                     + side * (((float)_rng.NextDouble() - 0.5f) * 16f),
-            Life = 0.4f + (float)_rng.NextDouble() * 0.35f,
+            Position = pos + side * s0,
+            Velocity = up * ((tall ? 34f : 18f) + (float)_rng.NextDouble() * (tall ? 30f : 18f))
+                     - side * (s0 * 5f),
+            Life = ((tall ? 0.55f : 0.35f) + (float)_rng.NextDouble() * 0.2f)
+                 * (1f - MathF.Abs(s0) * 0.12f),
             MaxLife = 0.75f,
             Color = FlameTones[_rng.Next(3)],
             FadeColor = new Color(205, 75, 15),
