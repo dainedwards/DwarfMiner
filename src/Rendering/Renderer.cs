@@ -1018,14 +1018,13 @@ public sealed class Renderer
                     case TileKind.TreeCanopy:
                     case TileKind.TreeCanopy2:
                     {
-                        // Leafy alien foliage — a layered, dappled leaf mass swaying on the
-                        // clock: a dark under-shadow, the main leaf body, a sunlit crown, and a
-                        // scatter of individual leaf clusters for texture. Teal or violet.
-                        var teal = k == TileKind.TreeCanopy;
-                        var leaf = teal ? new Color(78, 150, 130) : new Color(150, 120, 190);
-                        var leafDk = teal ? new Color(52, 110, 96) : new Color(112, 86, 150);
-                        var leafHi = teal ? new Color(120, 200, 170) : new Color(196, 168, 228);
-                        var leafMd = teal ? new Color(96, 176, 148) : new Color(172, 144, 210);
+                        // Leafy foliage — a layered, dappled leaf mass swaying on the clock:
+                        // a dark under-shadow, the main body, a sunlit crown, and a scatter of
+                        // leaf clusters — all in the planet biome's own foliage palette
+                        // (TreeLeafFor; Canopy2 is the biome's off-tone sibling species), with
+                        // a signature flourish per world so no two forests read alike.
+                        var (leaf, leafDk, leafHi) = TreeLeafFor(TreeBiome, k == TileKind.TreeCanopy2);
+                        var leafMd = Color.Lerp(leaf, leafHi, 0.5f);
                         var sway = (int)(MathF.Sin(Time * 1.3f + (hash & 63) * 0.1f) * 1.2f);
                         DrawDeco(centre, right, up, rotation, chord, 0, 1, 8, 7, leafDk);        // under-shadow mass
                         DrawDeco(centre, right, up, rotation, chord, 0, 0, 7, 6, leaf);          // main body
@@ -1037,6 +1036,47 @@ public sealed class Renderer
                             var ly = (int)((hh >> 3) % 7) + 1;
                             var lc = (hh & 3) switch { 0u => leafDk, 1u => leafHi, 2u => leafMd, _ => leaf };
                             DrawDeco(centre, right, up, rotation, chord, lx, ly, 1, 1, lc);
+                        }
+                        switch (TreeBiome)
+                        {
+                            case "frost":
+                                // Snow lying along the top of the crown, with a dangling icicle.
+                                DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 1, new Color(238, 246, 255));
+                                if ((hash & 7) == 0)
+                                    DrawDeco(centre, right, up, rotation, chord, (hash >> 8) & 7, 6, 1, 2, new Color(200, 226, 246));
+                                break;
+                            case "ember":
+                            {
+                                // Smouldering buds glowing among the ash-leaves.
+                                var pulse = MathF.Sin(Time * 3f + (hash & 63) * 0.4f) * 0.5f + 0.5f;
+                                var bud = Color.Lerp(new Color(200, 70, 20), new Color(255, 190, 60), pulse);
+                                DrawDeco(centre, right, up, rotation, chord, (hash >> 8) & 7, ((hash >> 11) & 5) + 1, 1, 1, bud);
+                                break;
+                            }
+                            case "crystal":
+                                // Faceted glints winking across the crystalline crown.
+                                if ((((int)(Time * 2f) + (hash >> 6)) & 7) == 0)
+                                    DrawDeco(centre, right, up, rotation, chord, (hash >> 8) & 7, ((hash >> 11) & 5) + 1, 1, 1, Color.White);
+                                break;
+                            case "acid":
+                                // A toxic droplet swelling at the canopy's underside.
+                                if ((hash & 7) == 0)
+                                    DrawDeco(centre, right, up, rotation, chord, (hash >> 8) & 7, 7, 1, 1, new Color(190, 230, 80));
+                                break;
+                            case "ocean":
+                                // Salt-spray flecks caught in the fronds.
+                                if ((hash & 7) == 0)
+                                    DrawDeco(centre, right, up, rotation, chord, (hash >> 8) & 7, ((hash >> 11) & 5) + 1, 1, 1, new Color(220, 245, 240));
+                                break;
+                            case "city":
+                            {
+                                // Groomed ornamentals with bioluminescent grafts — soft cyan
+                                // node-lights pulsing in the trimmed crown.
+                                var pulse = MathF.Sin(Time * 1.6f + (hash & 63) * 0.5f) * 0.5f + 0.5f;
+                                DrawDeco(centre, right, up, rotation, chord, (hash >> 8) & 7, ((hash >> 11) & 5) + 1, 1, 1,
+                                    Color.Lerp(new Color(60, 160, 180), new Color(140, 240, 255), pulse));
+                                break;
+                            }
                         }
                         break;
                     }
