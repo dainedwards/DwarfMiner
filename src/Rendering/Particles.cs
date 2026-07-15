@@ -525,22 +525,22 @@ public sealed class Particles
     /// glows, and drifts upward like cinders. Visible for ~1.5s.</summary>
     private void EmitEmbers(Vector2 pos, int count)
     {
-        for (var i = 0; i < count; i++)
+        for (var i = 0; i < count * 2; i++)
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
             var spd = 20f + (float)_rng.NextDouble() * 25f;
             _list.Add(new Particle
             {
-                Position = pos,
+                Position = pos + Jitter(2f),
                 Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * spd,
                 Life = 1.2f + (float)_rng.NextDouble() * 0.6f,
                 MaxLife = 1.8f,
                 Color = new Color(255, 170, 80),
                 FadeColor = new Color(120, 30, 10),
-                Size = 1f,
+                Size = 0.8f,
                 GravityScale = -0.2f,
                 Drag = 0.8f,
-                LightRadius = 8f,
+                LightRadius = i % 2 == 0 ? 8f : 0f,
                 LightColor = new Color(255, 140, 60),
             });
         }
