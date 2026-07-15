@@ -585,19 +585,30 @@ public sealed class RigidBodies
 
     /// <summary>Recompute surface flags from local-frame adjacency: a cell is surface when
     /// any of its four lattice neighbours (one tile away in the body frame) is missing. The
-    /// polar detach lattice isn't perfectly square, so neighbours match by distance.</summary>
-    private static void RebuildSurface(Body b)
+    /// polar detach lattice isn't perfectly square, so neighbours match by distance —
+    /// candidates come from the spatial hash so whole-structure bodies stay O(n).</summary>
+    private void RebuildSurface(Body b)
     {
         const float adjSq = (Planet.TileSize * 1.5f) * (Planet.TileSize * 1.5f);
+        BuildCellHash(b);
         for (var i = 0; i < b.Cells.Count; i++)
         {
             var ci = b.Cells[i];
             var neighbours = 0;
-            for (var j = 0; j < b.Cells.Count && neighbours < 4; j++)
-            {
-                if (i == j) continue;
-                if ((b.Cells[j].Local - ci.Local).LengthSquared() <= adjSq) neighbours++;
-            }
+            var bx = (int)MathF.Floor(ci.Local.X / HashSpan);
+            var by = (int)MathF.Floor(ci.Local.Y / HashSpan);
+            for (var dy = -1; dy <= 1 && neighbours < 4; dy++)
+                for (var dx = -1; dx <= 1 && neighbours < 4; dx++)
+                {
+                    if (!_cellHash.TryGetValue(((long)(bx + dx) << 32) ^ (uint)(by + dy), out var list))
+                        continue;
+                    foreach (var j in list)
+                    {
+                        if (i == j) continue;
+                        if ((b.Cells[j].Local - ci.Local).LengthSquared() <= adjSq
+                            && ++neighbours >= 4) break;
+                    }
+                }
             ci.Surface = neighbours < 4;
             b.Cells[i] = ci;
         }
