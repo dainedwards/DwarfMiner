@@ -720,7 +720,6 @@ public sealed class CharacterScreen
         "core_drill"   => new[] { "The only tool that pierces", "a planet's core." },
         // Throwables / consumables / ammo
         "dynamite"  => new[] { "Thrown charge (Z). Clears a crater." },
-        "tnt"       => new[] { "Short toss, huge blast." },
         "nuke"      => new[] { "Titan-killing device.", "Do not stand near the flash." },
         "harpoon"   => new[] { "Anti-titan harpoon (Y)." },
         "rocket"    => new[] { "Launcher ammo." },
