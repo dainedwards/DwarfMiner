@@ -33,15 +33,21 @@ public static class SpawnDirector
             var (kind, cap, interval) = s.Kind switch
             {
                 SpawnerKind.GooPile    => (CreatureKind.CaveSlime, 3, 22f),
-                SpawnerKind.LizardDoor => (CreatureKind.Lizardman, 2, 60f),   // low rate
+                SpawnerKind.LizardDoor => (CreatureKind.Lizardman, 4, 54f),   // low rate, but in packs
                 _                      => (CreatureKind.Civilian, 8, 20f),     // packed streets
             };
             if (CountKindNear(run, s.Position, 240f, kind) >= cap) { s.Timer = 8f; continue; }
 
             var up = run.Planet.UpAt(s.Position);
-            var c = new Creature(s.Position + up * 4f, kind) { Resident = true };
-            if (!HazardRejectsSpawn(run, c.Position, c))
+            var right = new Vector2(-up.Y, up.X);
+            // Lizardmen are a pack — they trickle out of the warren door two at a time, not one
+            // lone guard; everything else emerges singly.
+            var pack = s.Kind == SpawnerKind.LizardDoor ? 2 : 1;
+            for (var pi = 0; pi < pack; pi++)
             {
+                var at = s.Position + up * 4f + right * ((pi - (pack - 1) * 0.5f) * 10f);
+                var c = new Creature(at, kind) { Resident = true };
+                if (HazardRejectsSpawn(run, c.Position, c)) continue;
                 ClearSpawnSpace(run, c.Position, c.Radius);
                 run.Creatures.Add(c);
             }
