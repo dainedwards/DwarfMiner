@@ -1113,7 +1113,6 @@ public static class WorldGen
             var topR = Math.Min(planet.Rings - 2, baseR + height);
             var floorEvery = (int)(4 * S);            // one storey per 4 legacy tiles (32 px)
             var doorH = (int)(2.5f * S);              // street door: 20 px of headroom
-            var doorSide = rng.Next(2) == 0 ? -1 : 1;
             // Facade style: banded windows (spandrel rows between glass strips) or a sheer
             // curtain wall (glass all the way up, broken only by the slab lines).
             var curtainWall = rng.Next(3) == 0;
