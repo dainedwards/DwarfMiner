@@ -841,6 +841,31 @@ public sealed class Renderer
                         DrawDeco(centre, right, up, rotation, chord, 5, 4, 2, 4, rootDk);
                         break;
                     }
+                    case TileKind.Chest:
+                    {
+                        // Banded wooden treasure chest with a brass lid strap, corner fittings
+                        // and a keyhole plate — closed and inviting.
+                        var wood = new Color(150, 100, 52);
+                        var woodDk = new Color(104, 68, 36);
+                        var brass = new Color(224, 190, 90);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 2, 8, 6, wood);       // body
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 2, woodDk);     // domed lid
+                        DrawDeco(centre, right, up, rotation, chord, 0, 3, 8, 1, brass);      // lid strap
+                        DrawDeco(centre, right, up, rotation, chord, 0, 2, 1, 6, brass);      // corner band
+                        DrawDeco(centre, right, up, rotation, chord, 7, 2, 1, 6, brass);      // corner band
+                        DrawDeco(centre, right, up, rotation, chord, 3.5f, 4, 1, 2, new Color(60, 44, 30)); // keyhole
+                        break;
+                    }
+                    case TileKind.ChestOpen:
+                    {
+                        // Looted chest: lid flung back, dark empty interior.
+                        var wood = new Color(96, 66, 40);
+                        var woodDk = new Color(60, 42, 26);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 3, 8, 5, wood);       // body
+                        DrawDeco(centre, right, up, rotation, chord, 1, 4, 6, 3, new Color(28, 20, 14)); // empty hollow
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 2, woodDk);     // thrown-back lid
+                        break;
+                    }
                     case TileKind.TreeCanopy:
                     case TileKind.TreeCanopy2:
                     {
