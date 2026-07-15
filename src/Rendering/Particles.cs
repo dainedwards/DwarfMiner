@@ -1286,7 +1286,9 @@ public sealed class Particles
             });
         }
         // Hero flicker riding a third of the way down the tongue: the shadow-casting part
-        // of the fire, jittered per puff so the whole cave breathes with the hose.
+        // of the fire, jittered so the whole cave breathes with the hose. Gated to every
+        // 3rd frame — per-frame hero lights would triple the ray-cast budget.
+        if (_rng.Next(3) != 0) return;
         _list.Add(new Particle
         {
             Position = pos + dir * (reach * (0.3f + (float)_rng.NextDouble() * 0.25f)),
