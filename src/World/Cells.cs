@@ -1587,7 +1587,7 @@ public sealed class Cells
                         up.Normalize();
                         if (CountWaterNear(face + up * Planet.TileSize, 3.5f) >= 3
                             && _rng.Next(4) == 0)
-                            Place(px, py, Material.Water, (TileKind)RainWaterSrc);
+                            Place(px, py, Material.Water, (TileKind)DripWaterSrc);
                         break;
                     }
                     (px, py) = (ox, oy);
