@@ -478,12 +478,22 @@ public sealed class Cells
     /// footprint. A cinder that lands stamps fire where the fire can actually live.</summary>
     /// <summary><paramref name="fireFuse"/> (Fire only): a burn fuse carried in the fire
     /// cell's otherwise-unused source slot — while it runs down the flame won't gutter
-    /// (~fuse×3 ticks of guaranteed burning; see the fuse clause in TickFire). Rides the
-    /// save like any src byte.</summary>
+    /// (~fuse×3 ticks ≈ fuse/20 seconds of guaranteed burning; see the fuse clause in
+    /// TickFire). Rides the save like any src byte. Re-stamping a cell that's ALREADY
+    /// burning TOPS UP its fuse (capped at 80 ≈ 4 s): holding the jet on one spot builds
+    /// a longer-lived flame there — dwell time IS the burn duration.</summary>
     public void StampAtWorld(Vector2 worldPos, Material m, byte fireFuse = 0)
     {
         var (cx, cy) = WorldToCell(worldPos);
-        if (!IsBlocked(cx, cy)) Place(cx, cy, m, (TileKind)fireFuse);
+        if (!IsBlocked(cx, cy))
+        {
+            Place(cx, cy, m, (TileKind)fireFuse);
+            return;
+        }
+        if (m != Material.Fire || fireFuse == 0 || !InBounds(cx, cy)) return;
+        var i = Idx(cx, cy);
+        if (_mat[i] == (byte)Material.Fire)
+            _srcTile[i] = (byte)Math.Min(80, _srcTile[i] + fireFuse / 2);
     }
 
     /// <summary>Spawn cells inside the polar tile (tx = ring, ty = angle). Picks random sub-cells.</summary>
