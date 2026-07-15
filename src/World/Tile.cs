@@ -377,6 +377,7 @@ public static class Tiles
     public static string ResourceLabel(string id) => id switch
     {
         "rocket_part"        => "ROCKET PART",
+        "nuke"               => "ENERGY BALL",
         "moss_stone"         => "MOSS STONE",
         "reinforced_support" => "REINFORCED SUPPORT",
         "ammo_silver"        => "SILVER SHELL",
