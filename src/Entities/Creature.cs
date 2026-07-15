@@ -516,6 +516,7 @@ public sealed class Creature
             case CreatureKind.Lizardman:  TickLizardman(dt, planet, up, right, toPlayer, dist, speedMul, shots); break;
             case CreatureKind.Peacekeeper: TickPeacekeeper(dt, planet, up, right, speedMul); break;
             case CreatureKind.Saucer:     TickSaucer(dt, planet, up, right, speedMul); break;
+            case CreatureKind.BigSaucer:  TickSaucer(dt, planet, up, right, speedMul); break;   // same patrol brain; Game1 does its heavy weapons
             case CreatureKind.AlienWhale: TickWhale(dt, planet, cells, up, right, speedMul); break;
             // The crab is a lakebed walker on the grub brain with a short territorial fuse —
             // it scuttles the bottom rather than swimming, so no special water physics.
