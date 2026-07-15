@@ -620,6 +620,30 @@ public static class WorldGen
     /// <summary>Trees per world: how many of the ~500 bearings grow a tree (0-100 scale),
     /// and which canopy tone. Airless rock grows none; the dead/hostile worlds are sparse;
     /// the living and ocean worlds are properly forested.</summary>
+    /// <summary>Which tree silhouettes a biome grows, as weights over the four species
+    /// (0 spire, 1 broad, 2 umbrella, 3 weeping). Every world type gets a recognisably
+    /// DIFFERENT forest: frost grows tall conifer-like spires, verdant lush broad crowns and
+    /// weepers, the burnt/toxic worlds bare umbrella boles, the crystal world glassy spires.</summary>
+    private static byte TreeSpeciesFor(string biome, Random rng)
+    {
+        var w = biome switch
+        {
+            "verdant" => new[] { 1, 4, 1, 3 },
+            "ocean"   => new[] { 1, 3, 1, 4 },
+            "frost"   => new[] { 6, 1, 1, 1 },
+            "crystal" => new[] { 4, 1, 3, 1 },
+            "acid"    => new[] { 1, 1, 5, 1 },
+            "ember"   => new[] { 1, 1, 5, 1 },
+            "slag"    => new[] { 1, 4, 2, 1 },
+            "city"    => new[] { 1, 4, 1, 2 },
+            _         => new[] { 1, 1, 1, 1 },
+        };
+        var total = w[0] + w[1] + w[2] + w[3];
+        var roll = rng.Next(total);
+        for (byte s = 0; s < 4; s++) { if (roll < w[s]) return s; roll -= w[s]; }
+        return 1;
+    }
+
     private static (int density, TileKind canopy) TreePlanFor(PlanetDef def)
     {
         if (def.Airless) return (0, TileKind.TreeCanopy);        // belt / moon: no wood
