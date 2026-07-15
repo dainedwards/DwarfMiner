@@ -1151,46 +1151,52 @@ public sealed class Particles
 
     /// <summary>Acid spewer spray: caustic green droplets with a sickly glow. The corrosive
     /// payload is real Acid cells launched by Game1 — this is the visible mist around it.</summary>
-    public void EmitAcidJet(Vector2 pos, Vector2 dir)
+    public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach)
     {
-        for (var i = 0; i < 9; i++)
+        var jetSpeed = reach * 2.6f;
+        for (var i = 0; i < 5; i++)
         {
-            // Same thick-gout read as the flamethrower: wider fan, more droplets per spurt.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.4f;
+            // Narrow, focused caustic rope — droplets COLLIDE with tiles so it runs down walls
+            // rather than spraying through them.
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.14f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 7f,
-                Velocity = d * (240f + (float)_rng.NextDouble() * 100f),
-                Life = 0.22f + (float)_rng.NextDouble() * 0.24f,
-                MaxLife = 0.46f,
+                Position = pos + d * (float)_rng.NextDouble() * 4f,
+                Velocity = d * (jetSpeed * (0.8f + (float)_rng.NextDouble() * 0.4f)),
+                Life = 0.16f + (float)_rng.NextDouble() * 0.18f,
+                MaxLife = 0.4f,
                 Color = i < 2 ? new Color(200, 255, 120) : new Color(120, 220, 60),
                 FadeColor = new Color(40, 90, 25),
                 Size = 1.3f + (float)_rng.NextDouble() * 0.8f,
-                GravityScale = 0.5f,
-                Drag = 1.2f,
+                GravityScale = 0.4f,
+                Drag = 1.1f,
+                CollideTiles = true,
                 LightRadius = i < 2 ? 18f : 8f,
                 LightColor = new Color(150, 240, 80),
             });
         }
-        // Caustic vapour that hangs where the rope passed — sickly and slow.
+        // A caustic vapour wisp or two riding the rope — also collides.
         for (var i = 0; i < 2; i++)
         {
-            var d = Vector2.Normalize(dir + new Vector2(
-                (float)(_rng.NextDouble() - 0.5) * 0.6f, (float)(_rng.NextDouble() - 0.5) * 0.6f));
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.16f;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             _list.Add(new Particle
             {
-                Position = pos + d * (12f + (float)_rng.NextDouble() * 16f),
-                Velocity = d * (40f + (float)_rng.NextDouble() * 40f),
-                Life = 0.5f + (float)_rng.NextDouble() * 0.4f,
+                Position = pos + d * (6f + (float)_rng.NextDouble() * 6f),
+                Velocity = d * (jetSpeed * 0.45f),
+                Life = 0.4f + (float)_rng.NextDouble() * 0.4f,
                 MaxLife = 0.9f,
                 Color = new Color(90, 150, 55),
                 FadeColor = new Color(30, 55, 25),
                 Size = 1.7f,
-                GravityScale = -0.1f,
+                GravityScale = -0.08f,
                 Drag = 2.6f,
+                CollideTiles = true,
             });
         }
     }
