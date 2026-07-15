@@ -346,7 +346,7 @@ public sealed class LightGrid
     public void Upload(GraphicsDevice gd)
     {
         if (!_active && _tex[_front] is not null) return;
-        var back = 1 - _front;
+        var back = (_front + 1) % _tex.Length;
         if (_tex[back] is null || _tex[back]!.Width != _side)
             _tex[back] = new Texture2D(gd, _side, _side, false, SurfaceFormat.Color);
         for (var i = 0; i < _pix.Length; i++)
