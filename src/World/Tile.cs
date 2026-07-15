@@ -282,6 +282,7 @@ public static class Tiles
         TileKind.Support => new Color(150, 110, 70),
         TileKind.ReinforcedSupport => new Color(120, 105, 95),
         TileKind.Ladder => new Color(140, 95, 55),
+        TileKind.Rope => new Color(196, 160, 96),   // hemp line
         TileKind.DoorClosed => new Color(88, 122, 132),
         TileKind.DoorOpen => new Color(50, 66, 74),
         TileKind.AlienPlant => new Color(90, 160, 110),
