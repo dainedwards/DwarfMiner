@@ -1168,6 +1168,7 @@ public sealed class Cells
         Material.Dust when src == TileKind.Grass => TileKind.Dirt,
         Material.Dust when src != TileKind.Sky && src != TileKind.Conglomerate => src,
         Material.Dirt => TileKind.Dirt,
+        Material.Snow => TileKind.Snow,   // a buried drift presses into packed snow
         _ => TileKind.Gravel,   // Sand, Gravel, untagged/legacy dust
     };
 
