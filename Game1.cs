@@ -1901,6 +1901,7 @@ public sealed partial class DwarfMinerGame : Game
         // their roots the more that rain (or a nearby pool) waters them.
         Weather.Update(dt, _run, _particles);
         TreeEcology.Update(dt, _run);
+        FramePerf.Add("dir", tPerf);
         // Exposure: both disasters punish standing in surface air; underground is safe.
         var exposed = DepthBelowSurface() < OxygenRules.AirDepth;
         if (exposed && _run.FlareActive > 0f)
