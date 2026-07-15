@@ -28,6 +28,10 @@ public sealed class Renderer
     private static readonly bool _noita =
         Environment.GetEnvironmentVariable("DM_NOITA") != "0";
 
+    /// <summary>Per-layer noise threshold for the silhouette crust: outward layers keep fewer
+    /// pixels (layer 0 present ~60%, layer 1 ~34%), giving a fractal 1–2 px fringe. See DrawCrust.</summary>
+    private static readonly float[] _crustThresh = { 0.40f, 0.66f };
+
     public Renderer(GraphicsDevice gd)
     {
         _gd = gd;
