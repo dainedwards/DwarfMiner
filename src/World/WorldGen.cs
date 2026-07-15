@@ -1659,7 +1659,8 @@ public static class WorldGen
             }
         }
 
-        void BuildTower(float ang, double classRoll, float halfWidthPx, int height)
+        void BuildTower(float ang, double classRoll, float halfWidthPx, int height,
+            List<(float ang, float halfW)> rowTowers)
         {
             var baseR = surfaceR + 1;
             var topR = Math.Min(planet.Rings - 2, baseR + height);
