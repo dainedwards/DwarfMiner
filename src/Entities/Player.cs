@@ -94,6 +94,7 @@ public sealed class Player
     public bool HasFlamethrower;
     public bool HasAcidSpewer;
     public bool HasLightningGun;
+    public bool HasGrapple;
 
     /// <summary>Mothership-foundry upgrades (not craftable in-run, not in the run save —
     /// re-applied from MetaSave on every planet entry). Jetpack: a worn BACK item (the
