@@ -2665,7 +2665,9 @@ public sealed class Cells
 
     /// <summary>The LIQUID PASS: Water/Acid/Oil grid cells rasterized into the dedicated
     /// liquid render target (Game1 owns the target + batch state and composites the result
-    /// over the world in ONE blend — see Renderer.CompositeLiquids). Two fill modes:
+    /// over the world in ONE blend — see Renderer.CompositeLiquids). In blob mode Lava
+    /// joins the scan too, but its ops divert to the hot coverage field — see
+    /// <see cref="HotOp"/> and <see cref="DrawHotLiquids"/>. Two fill modes:
     ///  - blob (<paramref name="blobMode"/>, composite shader live): every cell touching
     ///    air draws the soft LiquidBlob three cells wide so its alpha COVERAGE spills into
     ///    neighbouring texels; the shader's threshold then rounds pool edges and fuses
