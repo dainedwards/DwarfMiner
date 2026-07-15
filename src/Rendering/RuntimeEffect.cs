@@ -140,6 +140,7 @@ void main()
         gl_FragColor = tex * vColor;
         return;
     }
+    gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; // DEBUG: flagged path = magenta
     float m = floor(aByte + 0.5) - 64.0;
     float eR = step(8.0, m); m -= eR * 8.0;
     float eL = step(4.0, m); m -= eL * 4.0;
