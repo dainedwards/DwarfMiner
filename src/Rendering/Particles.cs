@@ -1135,8 +1135,12 @@ public sealed class Particles
         // that stretches into a drooping, smoking tongue.
         var jetSpeed = reach * 2.6f;
         // Many TINY grains rather than a few fat blobs — the stream reads as granular burning
-        // fluid (Noita's pixel-fire) instead of soft puffballs. Lights ride the hot minority
-        // only: 22 grains all shedding 30-60px light would swamp the lighting pass.
+        // fluid (Noita's pixel-fire) instead of soft puffballs. Grain colours pick from a
+        // FOUR-TONE fire ramp (white-yellow → gold → orange → red-orange) so the stream body
+        // is speckled with distinct inks like Noita's, rather than two flat colours; the
+        // stepped life-fade in Draw then cools each grain through hard palette jumps.
+        // Lights ride the hot minority only: 22 grains all shedding 30-60px light would
+        // swamp the lighting pass.
         for (var i = 0; i < 22; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.24f;
@@ -1144,20 +1148,51 @@ public sealed class Particles
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             var hot = i < 7;
+            var tone = hot ? _rng.Next(2) : _rng.Next(4);
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f,
                 Velocity = d * (jetSpeed * (0.75f + (float)_rng.NextDouble() * 0.5f)),
                 Life = 0.18f + (float)_rng.NextDouble() * 0.22f,
                 MaxLife = 0.4f,
-                Color = hot ? new Color(255, 245, 190) : new Color(255, 160, 60),
-                FadeColor = new Color(150, 45, 15),
+                Color = tone switch
+                {
+                    0 => new Color(255, 250, 200),
+                    1 => new Color(255, 220, 110),
+                    2 => new Color(255, 170, 60),
+                    _ => new Color(255, 120, 35),
+                },
+                FadeColor = new Color(120, 35, 15),
                 Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
                 GravityScale = HoseArcGravity,   // same arc as the fuel cells
                 Drag = 1.2f,
                 CollideTiles = true,
                 LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
                 LightColor = new Color(255, 170, 70),
+            });
+        }
+        // Fire is BUOYANT: tongues lick UP off the stream as it travels — the Noita curl.
+        // A few short-lived grains seeded along the tongue with negative gravity slow,
+        // detach, and flick upward before dying to a dark ember (mid-air seeding is right
+        // here, unlike the acid wisps: rising flame, not falling rain).
+        for (var i = 0; i < 5; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.3f;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            _list.Add(new Particle
+            {
+                Position = pos + d * (6f + (float)_rng.NextDouble() * (reach * 0.55f)) + Jitter(1.2f),
+                Velocity = d * (jetSpeed * 0.25f),
+                Life = 0.22f + (float)_rng.NextDouble() * 0.25f,
+                MaxLife = 0.47f,
+                Color = _rng.Next(2) == 0 ? new Color(255, 220, 110) : new Color(255, 160, 55),
+                FadeColor = new Color(120, 35, 15),
+                Size = 0.5f,
+                GravityScale = -0.5f,
+                Drag = 2.6f,
+                CollideTiles = true,
             });
         }
         // Sooty flecks shed along the tongue — they inherit the arc, then buoy upward as they
