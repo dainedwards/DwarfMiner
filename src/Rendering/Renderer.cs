@@ -1164,13 +1164,15 @@ public sealed class Renderer
         _sb.Draw(_pixel, new Rectangle(12, 12 + barH - 1, barW, 1), Color.Black);
         _font.Draw(_sb, "HP", new Vector2(barW + 18, 13), Color.White, scale: 1);
 
-        // Oxygen bar — cyan, flashing to a warning red as the supply runs low.
+        // AIR bar — the unified air/breath supply. Cyan normally; a deeper blue while
+        // submerged (breathing water), and flashing to a warning red as it runs low.
         var oxFrac = MathHelper.Clamp(player.Oxygen / player.EffectiveMaxOxygen, 0f, 1f);
         var oxFill = (int)(barW * oxFrac);
         var oxLow = oxFrac < 0.25f;
+        var oxBase = player.HeadInWater ? new Color(70, 130, 235) : new Color(90, 190, 220);
         var oxColor = oxLow
-            ? Color.Lerp(new Color(120, 180, 210), new Color(230, 70, 60), MathF.Sin(Time * 8f) * 0.5f + 0.5f)
-            : new Color(90, 190, 220);
+            ? Color.Lerp(oxBase, new Color(230, 70, 60), MathF.Sin(Time * 8f) * 0.5f + 0.5f)
+            : oxBase;
         _sb.Draw(_pixel, new Rectangle(12, 32, barW, barH), new Color(12, 30, 38));
         _sb.Draw(_pixel, new Rectangle(12, 32, oxFill, barH), oxColor);
         _sb.Draw(_pixel, new Rectangle(12, 32, barW, 1), Color.Black);
