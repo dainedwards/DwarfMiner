@@ -224,10 +224,21 @@ public sealed partial class DwarfMinerGame
                 Blocked = () => _run.Player.PickaxeTier < 3,
                 OnCraft = () => _run.Player.PickaxeTier = 4,
             },
-            // Geo-scanner tiers: sequential like the pickaxe. Each rung widens what the HUD
-            // arrows detect (ores → metals → gems → super-rare). No belt slot — it's a
-            // passive sense once crafted.
-            ["scanner"] = new() { Owned = () => _run.Player.ScannerTier >= 1, OnCraft = () => _run.Player.ScannerTier = 1 },
+            // Geo-scanner: an ACTIVATED tool now — a belt item you select and fire (LMB) to
+            // emit a scan pulse that marks the deposits in an area for a while. Tier upgrades
+            // (scanner_ii/iii/iv) widen what it detects (ores → metals → gems → super-rare),
+            // the scan radius, and how long the marks last (15/30/45/60s).
+            ["scanner"] = new()
+            {
+                Owned = () => _run.Player.ScannerTier >= 1,
+                Use = _ => DoScanPulse(),
+                OnCraft = () =>
+                {
+                    _run.Player.ScannerTier = 1;
+                    if (_run.Player.Inventory.Count("scanner") == 0) _run.Player.Inventory.Add("scanner", 1);
+                    _run.Player.Toolbelt.AutoEquip("scanner");
+                },
+            },
             ["scanner_ii"] = new()
             {
                 Owned = () => _run.Player.ScannerTier >= 2,
