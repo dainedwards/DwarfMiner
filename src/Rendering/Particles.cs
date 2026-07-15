@@ -550,7 +550,7 @@ public sealed class Particles
     /// to sell the "cold burst" — visually cold, no heat-trail.</summary>
     private void EmitFrostShards(Vector2 pos, int count)
     {
-        for (var i = 0; i < count; i++)
+        for (var i = 0; i < count * 2; i++)
         {
             var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
             var spd = 70f + (float)_rng.NextDouble() * 60f;
@@ -562,10 +562,10 @@ public sealed class Particles
                 MaxLife = 0.9f,
                 Color = new Color(220, 240, 255),
                 FadeColor = new Color(60, 100, 150),
-                Size = 1.2f,
+                Size = 0.9f,
                 GravityScale = 0.3f,
                 Drag = 1.5f,
-                LightRadius = 5f,
+                LightRadius = i % 3 == 0 ? 5f : 0f,
                 LightColor = new Color(140, 200, 255),
                 CollideTiles = true,
             });
