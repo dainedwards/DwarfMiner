@@ -1881,7 +1881,6 @@ public sealed partial class DwarfMinerGame : Game
                 {
                     _run.Player.Velocity += toShip / bd * 120f * dt;    // reel in
                     _run.Player.Velocity *= 1f - MathF.Min(0.85f, 3.0f * dt); // and bog down
-                    _run.Player.EmpTimer = MathF.Max(_run.Player.EmpTimer, 0.1f); // brief tech-choke feel
                 }
             }
             if (threat is { } tp && pk.GuardFireCd <= 0f)
