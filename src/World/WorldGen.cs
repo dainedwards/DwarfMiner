@@ -1308,6 +1308,15 @@ public static class WorldGen
                         planet.Set(r, t, TileKind.Ladder);
                         continue;
                     }
+                    // Keep the two columns flanking the ladder open its full height, so the
+                    // climb shaft is a clean 3-wide channel: floor slabs stop short of it and
+                    // never seal over the ladder, and the dwarf's body clears each storey.
+                    // (A 1-tile ladder hole through a 2-tile-thick slab used to wall you in.)
+                    if (Math.Abs(dt) <= 1 && storey >= 0 && storey < height - 2)
+                    {
+                        planet.Set(r, t, TileKind.Sky);
+                        continue;
+                    }
                     if (slab) { planet.Set(r, t, TileKind.AlienAlloy); continue; }
 
                     // Apartment furniture on the row sitting directly on each slab: potted
