@@ -1122,6 +1122,9 @@ public static class WorldGen
                     var centre = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
                         * radiusTiles * Planet.TileSize;
                     if (NearDenOrCity(planet, centre)) continue;
+                    // Local-surface clearance: the global cap can't see valleys — a hall
+                    // vaulting up under a low-lying shallow shore would breach it.
+                    if (radiusTiles > planet.SurfaceRadiusAt(centre) - 36f) continue;
                     // A hall is a clutch of overlapping bites around the centre.
                     var lobes = 3 + rng.Next(3);
                     for (var b = 0; b < lobes; b++)
