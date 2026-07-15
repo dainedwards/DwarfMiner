@@ -1242,7 +1242,7 @@ public sealed class Particles
     /// The grains ARE the weapon now (no launched payload cells — they could never share
     /// the particle arc exactly): every grain stamps its material where it lands and
     /// throws the touchdown spark splash. Lights ride the hot minority only.</summary>
-    private void EmitJetCore(Vector2 pos, Vector2 dir, float reach, Vector2 up,
+    private void EmitJetCore(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel,
         Color[] tones, int hotTones, Color fade, Material landMat,
         Color lightColor, float hotLight, float bodyLight, float drag)
     {
@@ -1271,8 +1271,15 @@ public sealed class Particles
             var vel = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f));
             // Outward (skyward) speed cap, kept from the payload era: without it a
             // skyward stream rocketed unnaturally compared to every other flying thing.
+            // Applied to the LAUNCH component only, before momentum inheritance.
             var outward = Vector2.Dot(vel, up);
             if (outward > 170f) vel -= up * (outward - 170f);
+            // Ejected fluid carries the shooter's momentum: without this, a flying player
+            // paints the muzzle's flight path in fire ("shooting spaghetti") — grains
+            // launched world-relative lag every turn the player makes. With it the stream
+            // stays a coherent straight tongue in the SHOOTER'S frame; standing still is
+            // by definition unchanged.
+            vel += shooterVel;
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 1.5f,
@@ -1295,9 +1302,9 @@ public sealed class Particles
         }
     }
 
-    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
+    public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
     {
-        EmitJetCore(pos, dir, reach, up, FlameTones, hotTones: 2,
+        EmitJetCore(pos, dir, reach, up, shooterVel, FlameTones, hotTones: 2,
             fade: new Color(120, 35, 15), landMat: Material.Fire,
             lightColor: new Color(255, 170, 70), hotLight: 60f, bodyLight: 30f, drag: 1.2f);
         var jetSpeed = reach * 1.35f;
@@ -1313,7 +1320,7 @@ public sealed class Particles
             _list.Add(new Particle
             {
                 Position = pos + d * (8f + (float)_rng.NextDouble() * (reach * 0.35f)),
-                Velocity = d * (jetSpeed * 0.45f),
+                Velocity = d * (jetSpeed * 0.45f) + shooterVel,
                 Life = 0.4f + (float)_rng.NextDouble() * 0.45f,
                 MaxLife = 0.9f,
                 Color = new Color(95, 62, 45),
@@ -1442,9 +1449,9 @@ public sealed class Particles
     /// real Acid cell (the corrosion mechanic itself now; acid self-depletes as it eats,
     /// which keeps the spray from melting the planet). Neon leading droplets, bright
     /// body, occasional deep green — a liquid rope needs dark grains for depth.</summary>
-    public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
+    public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
     {
-        EmitJetCore(pos, dir, reach, up, AcidTones, hotTones: 1,
+        EmitJetCore(pos, dir, reach, up, shooterVel, AcidTones, hotTones: 1,
             fade: new Color(40, 90, 25), landMat: Material.Acid,
             lightColor: new Color(150, 240, 80), hotLight: 16f, bodyLight: 7f, drag: 1.0f);
         var jetSpeed = reach * 1.35f;
@@ -1460,7 +1467,7 @@ public sealed class Particles
             _list.Add(new Particle
             {
                 Position = pos + d * (4f + (float)_rng.NextDouble() * 6f),
-                Velocity = d * (jetSpeed * (0.55f + (float)_rng.NextDouble() * 0.25f)),
+                Velocity = d * (jetSpeed * (0.55f + (float)_rng.NextDouble() * 0.25f)) + shooterVel,
                 Life = 0.35f + (float)_rng.NextDouble() * 0.3f,
                 MaxLife = 0.65f,
                 Color = new Color(90, 150, 55),
