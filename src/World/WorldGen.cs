@@ -452,21 +452,22 @@ public static class WorldGen
                     // Gems are not blocks: a gem site keeps its host tile (whatever common
                     // rock/ore the cascade above chose) and seats a gem overlay inside it —
                     // except the precious metals, which stay pure veins (a gem never rides
-                    // silver/gold/platinum; the host reverts to plain rock instead). Only
-                    // every 4th qualifying site gets a gem: each embedded gem pays out one
-                    // whole drop, so the thinning keeps a vein's total yield matched to the
-                    // old 4-fine-tiles-per-drop dust economy.
+                    // silver/gold/platinum; the host reverts to plain rock instead). Gems are
+                    // now MUCH rarer — the thresholds are pushed high and only every 8th
+                    // qualifying site actually seats one (below) — and CRYSTALS are rarer still
+                    // than the cut gems, the scarcest thing in the crust bar voidstone.
                     var gem = TileKind.Sky;
-                    if (oreN > 0.972f - boost * 0.5f - Bias(TileKind.Ruby) && depth > 65f) gem = TileKind.Ruby;
-                    if (oreN > 0.978f - boost * 0.4f - Bias(TileKind.Sapphire) && depth > 75f) gem = TileKind.Sapphire;
-                    if (oreN > 0.984f - boost * 0.3f - Bias(TileKind.Crystal) && depth > 42f) gem = TileKind.Crystal;
-                    if (oreN > 0.989f - boost * 0.2f - Bias(TileKind.Diamond) && depth > 95f) gem = TileKind.Diamond;
-                    // Emerald seams sit deep on the living worlds (verdant/frost carry the
-                    // bias). Voidstone's base threshold is unreachable — only the Rift's
-                    // bias pulls it into existence, making it the campaign's endgame gem.
-                    if (oreN > 0.986f - boost * 0.3f - Bias(TileKind.Emerald) && depth > 80f) gem = TileKind.Emerald;
+                    if (oreN > 0.985f - boost * 0.4f - Bias(TileKind.Ruby) && depth > 65f) gem = TileKind.Ruby;
+                    if (oreN > 0.988f - boost * 0.35f - Bias(TileKind.Sapphire) && depth > 75f) gem = TileKind.Sapphire;
+                    if (oreN > 0.990f - boost * 0.3f - Bias(TileKind.Emerald) && depth > 80f) gem = TileKind.Emerald;
+                    if (oreN > 0.992f - boost * 0.25f - Bias(TileKind.Diamond) && depth > 95f) gem = TileKind.Diamond;
+                    // Crystal is now the rarest of the ambient gems — its threshold sits above
+                    // every cut gem, so a raw crystal is a scarcer find than a diamond.
+                    if (oreN > 0.994f - boost * 0.2f - Bias(TileKind.Crystal) && depth > 60f) gem = TileKind.Crystal;
+                    // Voidstone's base threshold is unreachable — only the Rift's bias pulls it
+                    // into existence, making it the campaign's endgame gem.
                     if (oreN > 1.05f - Bias(TileKind.Voidstone) && depth > 100f) gem = TileKind.Voidstone;
-                    if (gem != TileKind.Sky && (((r * 73856093) ^ (t * 19349663)) & 3) == 0)
+                    if (gem != TileKind.Sky && (((r * 73856093) ^ (t * 19349663)) & 7) == 0)
                     {
                         if (k is TileKind.SilverOre or TileKind.GoldOre or TileKind.PlatinumOre)
                             k = baseRock;
