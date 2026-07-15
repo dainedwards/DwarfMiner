@@ -100,22 +100,25 @@ public static class Weather
         {
             RainKind.Acid => new Color(150, 200, 90),
             RainKind.Fire => new Color(255, 150, 70),
+            RainKind.Snow => new Color(235, 244, 255),
             _             => new Color(120, 170, 235),
         };
-        // A few visible drops per tick, scattered across the band, streaking down from the cloud.
+        // A few flakes/drops per tick, scattered across the band, falling from the cloud. Snow
+        // drifts down slow and fluffy; everything else streaks.
         for (var i = 0; i < 5; i++)
         {
             var ang = c.Angle + ((float)rng.NextDouble() - 0.5f) * 2f * c.HalfWidth;
             var ground = SpawnDirector.FindSurfaceSpawn(planet, ang, planet.Radius);
             var up = planet.UpAt(ground);
             var start = ground + up * (c.Alt * (0.5f + (float)rng.NextDouble() * 0.6f));
-            particles.EmitRain(start, -up, color);
+            if (kind == RainKind.Snow) particles.EmitSnow(start, -up, color);
+            else particles.EmitRain(start, -up, color);
         }
 
         // Harsh-world exhaust: a thin acid drizzle fizzes off a little gas; ember-rain gutters
         // to a wisp of smoke. Both are rare and land high, so nothing corrodes or ignites the
-        // ground — it's atmosphere, per the brief. Water rain stays clean.
-        if (kind != RainKind.Water && rng.Next(4) == 0)
+        // ground — it's atmosphere, per the brief. Water rain and snow stay clean.
+        if ((kind == RainKind.Acid || kind == RainKind.Fire) && rng.Next(4) == 0)
         {
             var ang = c.Angle + ((float)rng.NextDouble() - 0.5f) * 2f * c.HalfWidth;
             var ground = SpawnDirector.FindSurfaceSpawn(planet, ang, planet.Radius);
