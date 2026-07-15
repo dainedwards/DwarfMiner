@@ -2895,20 +2895,30 @@ public sealed partial class DwarfMinerGame : Game
         foreach (var c in _run.Clouds)
         {
             if (c.Grow < 0.03f) continue;
-            var up = new Vector2(MathF.Cos(c.Angle), MathF.Sin(c.Angle));
-            var right = new Vector2(-up.Y, up.X);
-            var ground = SpawnDirector.FindSurfaceSpawn(_run.Planet, c.Angle, _run.Planet.Radius);
-            var centre = ground + up * c.Alt;
             var raining = c.RainTimer > 0f;
-            const int puffs = 5;
-            for (var i = -puffs; i <= puffs; i++)
+            var bodyCol = raining ? body : Color.Lerp(body, bodyLt, 0.35f);
+            // A slim connected bank: many small puffs packed tightly along the ARC at the
+            // cloud's one fixed radius from the planet centre — flat-bottomed, no gaps, and
+            // dead-steady altitude (the old version bobbed on a sine and spaced fat puffs
+            // wider than their radii, which read as disconnected bouncing balls). The only
+            // per-puff variation is a deterministic outline wobble, so the silhouette is
+            // organic but motionless.
+            var arcLen = c.HalfWidth * 2f * c.Alt;
+            var puffs = Math.Max(4, (int)(arcLen / 11f));
+            for (var i = 0; i <= puffs; i++)
             {
-                var f = 1f - MathF.Abs(i) / (float)(puffs + 1);
-                var bob = MathF.Sin(_renderer.Time * 1.1f + c.Phase + i) * 5f;
-                var p = centre + right * (i * c.HalfWidth * 240f) + up * bob;
-                var rad = (16f + f * 26f) * c.Grow;
-                _renderer.DrawCircle(p, rad, raining ? body : Color.Lerp(body, bodyLt, 0.35f));
-                _renderer.DrawCircle(p + up * (rad * 0.4f), rad * 0.66f, bodyLt);
+                var fi = i / (float)puffs;
+                var envelope = MathF.Sin(fi * MathF.PI);          // thick middle, thin tips
+                var wob = MathF.Sin(c.Phase + i * 2.17f);
+                var rad = (6f + envelope * 11f + wob * 1.5f) * c.Grow;
+                if (rad < 1.5f) continue;
+                var a = c.Angle + (fi - 0.5f) * 2f * c.HalfWidth;
+                var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
+                // Base row rides the exact cruise radius (a flat underside); the highlight
+                // puff sits on the sunlit top of the bank.
+                var p = _run.Planet.Center + dir * (c.Alt + wob * 1.2f);
+                _renderer.DrawCircle(p, rad, bodyCol);
+                _renderer.DrawCircle(p + dir * (rad * 0.45f), rad * 0.62f, bodyLt);
             }
         }
     }
