@@ -196,15 +196,17 @@ public sealed class RigidBodies
 
     /// <summary>
     /// Detach a condemned region into rigid bodies. Tiles are removed from the grid here.
-    /// Regions up to MaxChunkTiles become one body; up to MaxDetachTiles they partition
-    /// into several boulders (world-space buckets, connectivity-split); anything the body
-    /// budget can't carry crumbles to dust in place. Returns false (grid untouched) when
-    /// disabled, over budget, or the region is too big — caller runs the legacy crumble.
+    /// A <paramref name="sky"/> region — floating entirely above the crust, i.e. a severed
+    /// skyscraper section or an undercut mountain — always converts WHOLE as one body, no
+    /// size cap: above-ground structures topple in one piece. Crust-backed regions keep the
+    /// graded treatment: up to MaxChunkTiles one body; up to MaxDetachTiles several boulders
+    /// (world-space buckets, connectivity-split); bigger declines. Returns false (grid
+    /// untouched) when disabled or over the body budget — caller runs the legacy crumble.
     /// </summary>
-    public bool TryDetach(List<int> regionTiles)
+    public bool TryDetach(List<int> regionTiles, bool sky)
     {
         if (!Enabled || Bodies.Count >= MaxBodies) return false;
-        if (regionTiles.Count > MaxDetachTiles) return false;
+        if (!sky && regionTiles.Count > MaxDetachTiles) return false;
 
         // Gather the still-valid tiles (some may have been mined/melted during the tremble).
         _regionSet.Clear();
@@ -218,7 +220,7 @@ public sealed class RigidBodies
         }
         if (_detach.Count < 4) return false;
 
-        if (_detach.Count <= MaxChunkTiles)
+        if (sky || _detach.Count <= MaxChunkTiles)
         {
             SpawnBody(_detach);
             return true;
