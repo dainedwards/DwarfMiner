@@ -3086,6 +3086,63 @@ public sealed class Cells
         WakeFreeSurfaces(minRing * Density, maxRing * Density);
     }
 
+    /// <summary>Post-seed pass (BuildSessionWorld, after every lava fill): jacket each lava
+    /// body in a TWO-TILE shell of <see cref="TileKind.LavaRock"/> — the fireproof crucible
+    /// every body of lava is born in, so a sea or a primed volcano throat can never melt or
+    /// ignite its own surroundings on load. Converts plain terrain only: ores, gems,
+    /// obsidian seals (the acid contract), architecture, flora and anchor-class tiles all
+    /// survive. Interior lava tiles skip via a 4-probe early-out, so the cost is the
+    /// bodies' perimeter, not their area.</summary>
+    public void ShellLavaBodies()
+    {
+        bool IsLavaTile(int r, int t)
+        {
+            if (r < 0 || r >= Planet.Rings) return false;
+            var n = Planet.TilesAt(r);
+            t = (t % n + n) % n;
+            if (Planet.Get(r, t) != TileKind.Sky) return false;
+            // Lava fills are whole-tile (FillSkyTilesWithin / FillTileSilent), so the
+            // centre cell is proof enough.
+            return (Material)_mat[Idx(t * Density + Density / 2, r * Density + Density / 2)]
+                == Material.Lava;
+        }
+
+        static bool Convertible(TileKind k) => k is
+            TileKind.Dirt or TileKind.Grass or TileKind.Stone or TileKind.Gravel
+            or TileKind.MossStone or TileKind.Granite or TileKind.Basalt
+            or TileKind.Snow or TileKind.Conglomerate;
+
+        for (var r = 0; r < Planet.Rings; r++)
+        {
+            var n = Planet.TilesAt(r);
+            for (var t = 0; t < n; t++)
+            {
+                if (!IsLavaTile(r, t)) continue;
+                // Interior early-out: hemmed in by lava on all four sides means every
+                // convertible tile in reach is closer to some boundary lava tile.
+                var nIn = Planet.TilesAt(Math.Max(0, r - 1));
+                var nOut = Planet.TilesAt(Math.Min(Planet.Rings - 1, r + 1));
+                if (IsLavaTile(r, t - 1) && IsLavaTile(r, t + 1)
+                    && IsLavaTile(r - 1, (int)((t + 0.5f) / n * nIn))
+                    && IsLavaTile(r + 1, (int)((t + 0.5f) / n * nOut)))
+                    continue;
+                for (var dr = -2; dr <= 2; dr++)
+                {
+                    var r2 = r + dr;
+                    if (r2 < 0 || r2 >= Planet.Rings) continue;
+                    var n2 = Planet.TilesAt(r2);
+                    var t2c = (int)((t + 0.5f) / n * n2);
+                    for (var dt = -2; dt <= 2; dt++)
+                    {
+                        var t2 = ((t2c + dt) % n2 + n2) % n2;
+                        if (Convertible(Planet.Get(r2, t2)))
+                            Planet.Set(r2, t2, TileKind.LavaRock);
+                    }
+                }
+            }
+        }
+    }
+
     /// <summary>Flat liquid body colour: ONE colour per material plus a slow shimmer band
     /// travelling smoothly across the pool. The old per-cell hash jitter and hash-phased
     /// shimmer made adjacent cells sparkle out of sync — which is exactly what read as "a
