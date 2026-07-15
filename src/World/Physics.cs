@@ -215,7 +215,7 @@ public sealed class Physics
         var (x, y) = _planet.UnIndex(idx);
         var k = _planet.Get(x, y);
         // The tile may have been mined (or melted) during the tremble — nothing to do.
-        if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k) || Tiles.IsFlora(k)) return;
+        if (!Tiles.CanFall(k)) return;
         _planet.Set(x, y, TileKind.Sky);
         _cells.SpawnDustInTile(x, y, k);
         CollapsesThisTick++;
@@ -242,7 +242,7 @@ public sealed class Physics
             var idx = _dirtyWork[qi];
             var (x, y) = _planet.UnIndex(idx);
             var k = _planet.Get(x, y);
-            if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k) || Tiles.IsFlora(k)) continue;
+            if (!Tiles.CanFall(k)) continue;
 
             // Loose ground: cardinal-down (= inward radial in polar) empty → crumble to dust
             // tagged with the original tile kind so it falls in the right colour and pays out
@@ -368,7 +368,9 @@ public sealed class Physics
 
             var k = _planet.Get(x, y);
             if (!Tiles.IsSolid(k)) continue;
-            if (Tiles.IsAnchored(k))
+            // Toppling architecture is anchored against hazards but NOT here: a tower wall
+            // must carry load like rock so a severed section condemns and falls.
+            if (Tiles.IsAnchored(k) && !Tiles.Topples(k))
             {
                 foreach (var v in _floodVisitList) _anchorStamp[v] = _anchorGen;
                 return true;
@@ -456,7 +458,7 @@ public sealed class Physics
             if (_pendingTiles.Contains(idx)) continue;
             var (x, y) = _planet.UnIndex(idx);
             var k = _planet.Get(x, y);
-            if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k) || Tiles.IsFlora(k)) continue;
+            if (!Tiles.CanFall(k)) continue;
             p ??= new PendingCollapse();
             p.Tiles.Add(idx);
             _pendingTiles.Add(idx);
@@ -466,7 +468,7 @@ public sealed class Physics
         // Small enough to hold together: the region shears off as one rigid chunk when the
         // tremble ends. Bigger regions keep the dust cascade — both for the spectacle and
         // because a giant massif as one rotating body would read as a cardboard cutout.
-        p.Rigid = DetachToRigid is not null && p.Tiles.Count <= RigidBodies.MaxChunkTiles;
+        p.Rigid = DetachToRigid is not null && p.Tiles.Count <= RigidBodies.MaxDetachTiles;
         // Innermost ring first = "bottom" in polar gravity, so the crumble sweeps upward.
         // Plain int sort: ring offsets are monotonic, so flat indices already order by ring
         // (the old comparator paid two UnIndex binary searches per comparison for the same

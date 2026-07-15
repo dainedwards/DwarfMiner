@@ -2683,29 +2683,50 @@ public sealed partial class DwarfMinerGame : Game
     {
         var planet = _run.Planet;
         var centerFrac = (baseCol + 0.5f) / planet.TilesAt(baseRing);
+        // Flood-fill the connected tree above the cut instead of scanning a fixed ±4-column
+        // window per ring: wide crowns and leaning regrowth spilled past the window and left
+        // canopy chunks hanging in the sky. Everything trunk/canopy reachable from the cut
+        // (strictly above it — the stump and roots stay) comes down in one fell.
         var trunk = new List<(int x, int y)>();
-        for (var rr = baseRing + 1; rr < planet.Rings - 1; rr++)
+        var canopy = new List<(int x, int y, TileKind k)>();
+        var seen = new HashSet<int>();
+        var flood = new Stack<(int x, int y)>();
+        void Visit(int vx, int vy)
         {
-            var n = planet.TilesAt(rr);
-            var c0 = (int)(centerFrac * n);
-            var found = false;
-            for (var dt = -4; dt <= 4; dt++)
+            if (vx <= baseRing || vx >= planet.Rings) return;
+            var vi = planet.Index(vx, vy);
+            if (!seen.Add(vi)) return;
+            var vk = planet.Get(vx, vy);
+            if (vk is not (TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2)) return;
+            flood.Push((vx, vy));
+        }
+        // Seed just above the cut, a couple of columns wide (trunks can be 2 tiles thick).
+        {
+            var n1 = planet.TilesAt(baseRing + 1);
+            var c1 = (int)(centerFrac * n1);
+            for (var dt = -2; dt <= 2; dt++) Visit(baseRing + 1, ((c1 + dt) % n1 + n1) % n1);
+        }
+        while (flood.Count > 0 && seen.Count < 4000)
+        {
+            var (rr, tt) = flood.Pop();
+            var k = planet.Get(rr, tt);
+            if (k == TileKind.TreeTrunk) trunk.Add((rr, tt));
+            else canopy.Add((rr, tt, k));
+            var oc = planet.OuterNeighbourCount(rr, tt);
+            for (var oi = 0; oi < oc; oi++)
             {
-                var t = ((c0 + dt) % n + n) % n;
-                var k = planet.Get(rr, t);
-                if (k == TileKind.TreeTrunk)
-                {
-                    trunk.Add((rr, t));
-                    found = true;
-                }
-                else if (k is TileKind.TreeCanopy or TileKind.TreeCanopy2)
-                {
-                    planet.Set(rr, t, TileKind.Sky);
-                    _run.Cells.SpawnDustFraction(rr, t, k, 0.3f);   // airy foliage: 30% of a tile
-                    found = true;
-                }
+                var (or_, ot_) = planet.OuterNeighbour(rr, tt, oi);
+                Visit(or_, ot_);
             }
-            if (!found) break;   // cleared the top of the crown
+            var (ir_, it_) = planet.InnerNeighbour(rr, tt);
+            Visit(ir_, it_);
+            Visit(rr, tt - 1);
+            Visit(rr, tt + 1);
+        }
+        foreach (var (rr, tt, ck) in canopy)
+        {
+            planet.Set(rr, tt, TileKind.Sky);
+            _run.Cells.SpawnDustFraction(rr, tt, ck, 0.3f);   // airy foliage: 30% of a tile
         }
         // Tip the log over: a sideways shove at the base plus matching spin, so it keels
         // over and rolls rather than dropping straight down its own shaft.
@@ -5622,28 +5643,9 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.DrawCircle(b.Position, b.Radius, new Color(80, 70, 60));
         }
 
-        // Rigid debris: each payload cell as a rotated quad in its tile's colour, with a
-        // per-cell brightness wobble so a chunk keeps the grain of the rock it came from
-        // instead of reading as a flat cardboard cutout. Slightly oversized quads hide the
-        // hairline seams the rotation would otherwise open between cells.
-        if (_run.Rigid is { } rigidDraw)
-        {
-            foreach (var b in rigidDraw.Bodies)
-            {
-                var cellSize = new Vector2(Planet.TileSize + 0.7f);
-                for (var ci = 0; ci < b.Cells.Count; ci++)
-                {
-                    var c = b.Cells[ci];
-                    var wp = b.Position + RigidBodies.Rotate(c.Local, b.Angle);
-                    var col = Tiles.BaseColor(c.Kind);
-                    var shade = 0.88f + 0.24f * (((ci * 2654435761u) >> 7 & 15) / 15f);
-                    _renderer.DrawRect(wp, cellSize,
-                        new Color((byte)MathF.Min(255f, col.R * shade),
-                                  (byte)MathF.Min(255f, col.G * shade),
-                                  (byte)MathF.Min(255f, col.B * shade)), b.Angle);
-                }
-            }
-        }
+        // Rigid debris — drawn with the terrain's own atlas art so chunks match the wall
+        // they broke out of (see Renderer.DrawRigidBodies).
+        if (_run.Rigid is { } rigidDraw) _renderer.DrawRigidBodies(rigidDraw);
 
         // Toxic cloud — the acid-rain storm's source, a roiling olive bank parked above the
         // surface at the storm bearing. The falling acid cells themselves are drawn by the

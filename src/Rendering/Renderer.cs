@@ -1565,6 +1565,48 @@ public sealed class Renderer
         _sb.Draw(_pixel, worldPos, null, color, rotation, new Vector2(0.5f, 0.5f), size, SpriteEffects.None, 0f);
     }
 
+    /// <summary>Rigid debris cells, drawn with the SAME atlas art + blob shading the terrain
+    /// pass uses — variant keyed to each cell's original grid coords, exposure mask picking
+    /// the baked ragged-erosion frame — so a chunk in flight is visually the wall it broke
+    /// out of, just rotating (flat BaseColor read as badly discoloured next to textured
+    /// ground). Flat-colour fallback for authored-art placeables (doors, furniture), whose
+    /// deco pass doesn't rotate. Must be called inside the entities batch.</summary>
+    public void DrawRigidBodies(RigidBodies rigid)
+    {
+        const float size = Planet.TileSize + 0.7f;   // slight overlap hides rotation seams
+        foreach (var b in rigid.Bodies)
+        {
+            foreach (var c in b.Cells)
+            {
+                var wp = b.Position + RigidBodies.Rotate(c.Local, b.Angle);
+                var rot = c.BaseRot + b.Angle;
+                var hash = (c.R * 73856093) ^ (c.T * 19349663);
+                if (UsesAuthoredArt(c.Kind))
+                {
+                    var col = Tiles.BaseColor(c.Kind);
+                    var jitter = ((hash >> 4) & 31) - 16;
+                    col = new Color(
+                        Math.Clamp(col.R + jitter / 4, 0, 255),
+                        Math.Clamp(col.G + jitter / 4, 0, 255),
+                        Math.Clamp(col.B + jitter / 4, 0, 255));
+                    _sb.Draw(_pixel, wp, null, col, rot, new Vector2(0.5f, 0.5f),
+                        new Vector2(size, size), SpriteEffects.None, 0f);
+                    continue;
+                }
+                // Gems ride seated in host stone with the crystal on top, like the terrain pass.
+                var atlasKind = Tiles.IsGem(c.Kind) ? TileKind.Stone : c.Kind;
+                var shade = (int)(255 * BlobShade(wp));
+                _sb.Draw(_tileAtlas, wp,
+                    TileAtlas.Source(atlasKind, VariantFor(atlasKind, c.R, c.T, hash), c.Expose),
+                    new Color(shade, shade, shade), rot,
+                    new Vector2(TileAtlas.Res * 0.5f, TileAtlas.Res * 0.5f),
+                    new Vector2(size / TileAtlas.Res, size / TileAtlas.Res),
+                    SpriteEffects.None, 0f);
+                if (Tiles.IsGem(c.Kind)) DrawGemCrystal(wp, hash, c.Kind);
+            }
+        }
+    }
+
     public void DrawCircle(Vector2 worldPos, float radius, Color color)
     {
         _sb.Draw(_circle, worldPos, null, color, 0f,

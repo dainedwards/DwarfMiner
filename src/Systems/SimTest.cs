@@ -3445,6 +3445,57 @@ public static class SimTest
         Check("rigid: StampAll returns matter before a save",
             rigid.Bodies.Count == 0 && CountSolidPlanet(planet) >= preSpawn - 2,
             $"{CountSolidPlanet(planet) - (preSpawn - 10)}/10 back");
+
+        // Toppling architecture: alien alloy is anchored against hazards (acid, craters,
+        // quake crumble) yet a severed span must still condemn and shear off as a body.
+        var t2 = slabT0 + 40;
+        for (var dr = 0; dr < slabH; dr++)
+            for (var dtc = 0; dtc < slabW; dtc++)
+            {
+                planet.Set(slabR + dr, t2 + dtc, TileKind.AlienAlloy);
+                physics.MarkDirty(slabR + dr, t2 + dtc);
+            }
+        for (var i = 0; i < 120 && rigid.Bodies.Count == 0; i++)
+        {
+            physics.Update(dt);
+            rigid.Update(dt);
+        }
+        Check("rigid: severed alien-alloy span topples as a body", rigid.Bodies.Count == 1,
+            $"{rigid.Bodies.Count} bodies, {rigid.CellCount} cells");
+        Check("rigid: alloy tiles left the grid on topple",
+            rigid.CellCount == slabH * slabW, $"{rigid.CellCount}/{slabH * slabW}");
+        // Let the alloy land and stamp for real — StampAll here would park it mid-air,
+        // where it immediately re-condemns and pollutes the mountain test's tile counts.
+        for (var i = 0; i < 60 * 25 && rigid.Bodies.Count > 0; i++)
+        {
+            physics.Update(dt);
+            rigid.Update(dt);
+            cells.Update(dt);
+        }
+        Check("rigid: alloy chunk lands and stamps", rigid.Bodies.Count == 0);
+
+        // Mountain-scale: a region past MaxChunkTiles partitions into several boulders
+        // instead of one huge cutout (or declining to dust).
+        var t3 = slabT0 + 90;
+        const int bigH = 24, bigW = 60;   // 1440 tiles: > MaxChunkTiles, < MaxDetachTiles
+        for (var dr = 0; dr < bigH; dr++)
+            for (var dtc = 0; dtc < bigW; dtc++)
+            {
+                planet.Set(slabR + dr, t3 + dtc, TileKind.Stone);
+                physics.MarkDirty(slabR + dr, t3 + dtc);
+            }
+        var beforeBig = CountSolidPlanet(planet);
+        for (var i = 0; i < 180 && rigid.Bodies.Count == 0; i++)
+        {
+            physics.Update(dt);
+            rigid.Update(dt);
+        }
+        var bigGone = beforeBig - CountSolidPlanet(planet);
+        Check("rigid: mountain-scale slab breaks into several boulders", rigid.Bodies.Count >= 3,
+            $"{rigid.Bodies.Count} bodies, {rigid.CellCount} cells aloft");
+        Check("rigid: boulders + dust account for the whole slab",
+            bigGone == bigH * bigW, $"{bigGone}/{bigH * bigW} tiles left the grid");
+        rigid.StampAll();
     }
 
     private static void Check(string name, bool ok, string detail = "")

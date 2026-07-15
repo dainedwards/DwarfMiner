@@ -30,10 +30,19 @@ public sealed class RigidBodies
     public static bool Enabled { get; } =
         Environment.GetEnvironmentVariable("DM_RIGID") != "0";
 
-    /// <summary>Largest region that converts to a single body. Bigger cave-ins keep the
-    /// legacy dust cascade — a thousand-tile massif as one rotating sprite would read as a
-    /// cutout, and the dust rain is the established spectacle for the big ones.</summary>
+    /// <summary>Largest region that converts to a single body. Regions between this and
+    /// <see cref="MaxDetachTiles"/> split into several bodies (a mountain top breaks into
+    /// boulders, not one rotating cutout).</summary>
     public const int MaxChunkTiles = 400;
+
+    /// <summary>Ceiling for rigid conversion overall. An undercut mountain flank bigger
+    /// than this keeps the legacy dust cascade — that rain is the established spectacle
+    /// for the truly huge cave-ins, and the body budget couldn't carry it anyway.</summary>
+    public const int MaxDetachTiles = 2400;
+
+    /// <summary>World px per partition cell when a big region splits into boulders (~18
+    /// tiles across → chunks near MaxChunkTiles).</summary>
+    private const float BucketSpan = 72f;
 
     /// <summary>Live-body budget. Over budget, new detaches fall back to dust rather than
     /// force-stamping an old body mid-air (which would leave floating terrain).</summary>
@@ -59,7 +68,17 @@ public sealed class RigidBodies
     {
         public Vector2 Local;   // offset from centre of mass in the body frame (angle 0)
         public TileKind Kind;
-        public bool Surface;    // had a non-region cardinal neighbour at detach → contact point
+        public bool Surface;    // has a missing lattice neighbour → contact/erosion point
+        /// <summary>Original grid coords — keep the tile's atlas variant + colour jitter
+        /// stable, so a chunk in flight looks exactly like the wall it broke out of.</summary>
+        public int R, T;
+        /// <summary>4-bit missing-neighbour mask at detach (outer=1 inner=2 left=4 right=8,
+        /// the terrain renderer's exposure convention) — selects the baked ragged-erosion
+        /// atlas frame so the chunk silhouette matches eroded terrain.</summary>
+        public byte Expose;
+        /// <summary>The tile's radial art rotation at detach (tile angle + 90°). Drawn at
+        /// BaseRot + the body's current Angle, the art never pops when the chunk shears off.</summary>
+        public float BaseRot;
     }
 
     public sealed class Body
@@ -168,61 +187,125 @@ public sealed class RigidBodies
         b.SleepTimer = 0f;
     }
 
+    private readonly List<int> _detach = new();
+
     /// <summary>
-    /// Detach a condemned region into a rigid body. Tiles are removed from the grid here.
-    /// Returns false (leaving the grid untouched) when over budget or the region is too big —
-    /// the caller falls back to the legacy dust crumble.
+    /// Detach a condemned region into rigid bodies. Tiles are removed from the grid here.
+    /// Regions up to MaxChunkTiles become one body; up to MaxDetachTiles they partition
+    /// into several boulders (world-space buckets, connectivity-split); anything the body
+    /// budget can't carry crumbles to dust in place. Returns false (grid untouched) when
+    /// disabled, over budget, or the region is too big — caller runs the legacy crumble.
     /// </summary>
     public bool TryDetach(List<int> regionTiles)
     {
         if (!Enabled || Bodies.Count >= MaxBodies) return false;
-        if (regionTiles.Count > MaxChunkTiles) return false;
+        if (regionTiles.Count > MaxDetachTiles) return false;
 
         // Gather the still-valid tiles (some may have been mined/melted during the tremble).
         _regionSet.Clear();
-        var com = Vector2.Zero;
-        var count = 0;
+        _detach.Clear();
         foreach (var idx in regionTiles)
         {
             var (x, y) = _planet.UnIndex(idx);
-            var k = _planet.Get(x, y);
-            if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k) || Tiles.IsFlora(k)) continue;
+            if (!Tiles.CanFall(_planet.Get(x, y))) continue;
             _regionSet.Add(idx);
-            com += _planet.TileToWorld(x, y);
-            count++;
+            _detach.Add(idx);
         }
-        if (count < 4) return false;
-        com /= count;
+        if (_detach.Count < 4) return false;
 
-        var body = new Body { Position = com };
-        foreach (var idx in _regionSet)
+        if (_detach.Count <= MaxChunkTiles)
+        {
+            SpawnBody(_detach);
+            return true;
+        }
+
+        // Mountain-scale region: bucket by world position so it breaks into boulder-sized
+        // pieces along a rough grid. Expose masks still come from the FULL region set, so
+        // the outer silhouette keeps its ragged erosion while the bucket-to-bucket cut
+        // faces stay clean — fresh fracture surfaces.
+        var buckets = new Dictionary<(int, int), List<int>>();
+        foreach (var idx in _detach)
         {
             var (x, y) = _planet.UnIndex(idx);
-            var k = _planet.Get(x, y);
+            var wp = _planet.TileToWorld(x, y);
+            var key = ((int)MathF.Floor(wp.X / BucketSpan), (int)MathF.Floor(wp.Y / BucketSpan));
+            if (!buckets.TryGetValue(key, out var list)) buckets[key] = list = new List<int>();
+            list.Add(idx);
+        }
+        // Biggest buckets claim body slots first; the rest (and any crumbs) dust in place.
+        var ordered = new List<List<int>>(buckets.Values);
+        ordered.Sort((a, b) => b.Count - a.Count);
+        foreach (var bucket in ordered)
+        {
+            if (Bodies.Count < MaxBodies && bucket.Count >= 4)
+            {
+                SpawnBody(bucket);
+                continue;
+            }
+            foreach (var idx in bucket)
+            {
+                var (x, y) = _planet.UnIndex(idx);
+                var k = _planet.Get(x, y);
+                _planet.Set(x, y, TileKind.Sky);
+                _cells.SpawnDustInTile(x, y, k);
+                _physics.MarkDirty(x, y);
+            }
+        }
+        return true;
+    }
+
+    /// <summary>Lift one group of tiles (membership tested against <see cref="_regionSet"/>
+    /// for exposure) out of the grid as a body: capture each cell's kind, grid coords, art
+    /// rotation and erosion mask, clear the tiles, seed a sliver of spin, inherit any recent
+    /// blast, and connectivity-split in case the group holds separate lumps.</summary>
+    private void SpawnBody(List<int> tiles, Vector2 initialVel = default, float? initialSpin = null)
+    {
+        var com = Vector2.Zero;
+        foreach (var idx in tiles)
+        {
+            var (x, y) = _planet.UnIndex(idx);
+            com += _planet.TileToWorld(x, y);
+        }
+        com /= tiles.Count;
+
+        var body = new Body { Position = com };
+        foreach (var idx in tiles)
+        {
+            var (x, y) = _planet.UnIndex(idx);
+            var wp = _planet.TileToWorld(x, y);
+            var expose = ExposeMask(x, y);
+            var rel = wp - _planet.Center;
             body.Cells.Add(new BodyCell
             {
-                Local = _planet.TileToWorld(x, y) - com,
-                Kind = k,
-                Surface = IsRegionSurface(x, y),
+                Local = wp - com,
+                Kind = _planet.Get(x, y),
+                Surface = expose != 0,
+                R = x,
+                T = y,
+                Expose = expose,
+                BaseRot = MathF.Atan2(rel.Y, rel.X) + MathHelper.PiOver2,
             });
         }
-        // Only now that the body is definitely spawning do the tiles leave the grid.
-        foreach (var idx in _regionSet)
+        foreach (var idx in tiles)
         {
             var (x, y) = _planet.UnIndex(idx);
             _planet.Set(x, y, TileKind.Sky);
             _physics.MarkDirty(x, y);
         }
         body.RecomputeMass();
-        // A sliver of spin so even a clean vertical drop tumbles a little.
-        body.Spin = ((float)Random.Shared.NextDouble() - 0.5f) * 0.6f;
+        // A sliver of spin so even a clean vertical drop tumbles a little (callers with a
+        // real tip direction — felled logs — pass their own).
+        body.Velocity = initialVel;
+        body.Spin = initialSpin ?? ((float)Random.Shared.NextDouble() - 0.5f) * 0.6f;
 
         // A blast that just carved this region free hurls it outward.
         foreach (var (bp, br, pw, age) in _blasts)
             if (age <= BlastMemory) ApplyBlast(body, bp, br, pw);
 
+        // Motion is set before the split so any separate lumps inherit it.
         Bodies.Add(body);
-        return true;
+        SplitIfDisconnected(body);
+        body.RecomputeMass();
     }
 
     /// <summary>Spawn a body directly from explicit tiles (tree logs). Removes them from the
@@ -231,46 +314,35 @@ public sealed class RigidBodies
     {
         if (!Enabled || Bodies.Count >= MaxBodies || tiles.Count < 3) return false;
         _regionSet.Clear();
-        var com = Vector2.Zero;
+        _detach.Clear();
         foreach (var (x, y) in tiles)
         {
-            _regionSet.Add(_planet.Index(x, y));
-            com += _planet.TileToWorld(x, y);
+            var idx = _planet.Index(x, y);
+            _regionSet.Add(idx);
+            _detach.Add(idx);
         }
-        com /= tiles.Count;
-        var body = new Body { Position = com, Velocity = initialVel, Spin = initialSpin };
-        foreach (var (x, y) in tiles)
-        {
-            body.Cells.Add(new BodyCell
-            {
-                Local = _planet.TileToWorld(x, y) - com,
-                Kind = _planet.Get(x, y),
-                Surface = IsRegionSurface(x, y),
-            });
-            _planet.Set(x, y, TileKind.Sky);
-            _physics.MarkDirty(x, y);
-        }
-        body.RecomputeMass();
-        Bodies.Add(body);
+        SpawnBody(_detach, initialVel, initialSpin);
         return true;
     }
 
-    /// <summary>Surface test at detach time, on the original polar adjacency: a cell with any
-    /// cardinal neighbour outside the region is a contact point. Interior cells can never
-    /// touch terrain first, so the solver skips them entirely.</summary>
-    private bool IsRegionSurface(int x, int y)
+    /// <summary>Missing-neighbour mask at detach time, on the original polar adjacency, in
+    /// the terrain renderer's exposure convention (outer=1 inner=2 left=4 right=8). Non-zero
+    /// means surface: a contact point for the solver and a ragged-erosion atlas frame for
+    /// the renderer. Interior cells can never touch terrain first, so the solver skips them.</summary>
+    private byte ExposeMask(int x, int y)
     {
-        var (ir, it) = _planet.InnerNeighbour(x, y);
-        if (ir < 0 || !_regionSet.Contains(_planet.Index(ir, it))) return true;
+        var mask = 0;
         var oc = _planet.OuterNeighbourCount(x, y);
         for (var i = 0; i < oc; i++)
         {
             var (or_, ot_) = _planet.OuterNeighbour(x, y, i);
-            if (or_ >= _planet.Rings || !_regionSet.Contains(_planet.Index(or_, ot_))) return true;
+            if (or_ >= _planet.Rings || !_regionSet.Contains(_planet.Index(or_, ot_))) { mask |= 1; break; }
         }
-        if (!_regionSet.Contains(_planet.Index(x, y - 1))) return true;
-        if (!_regionSet.Contains(_planet.Index(x, y + 1))) return true;
-        return false;
+        var (ir, it) = _planet.InnerNeighbour(x, y);
+        if (ir < 0 || !_regionSet.Contains(_planet.Index(ir, it))) mask |= 2;
+        if (!_regionSet.Contains(_planet.Index(x, y - 1))) mask |= 4;
+        if (!_regionSet.Contains(_planet.Index(x, y + 1))) mask |= 8;
+        return (byte)mask;
     }
 
     public void Update(float dt)
@@ -452,7 +524,10 @@ public sealed class RigidBodies
             var (cx, cy) = _cells.WorldToCell(wp);
             var m = _cells.Get(cx, cy);
             var burns = m is Material.Lava or Material.Fire && !Tiles.IsAnchored(c.Kind);
-            var corrodes = m is Material.Acid;
+            // Acid follows the tile-world corrosion rule: anchored architecture (even the
+            // toppling kinds), obsidian, and acid-adapted flora resist in flight too.
+            var corrodes = m is Material.Acid && !Tiles.IsAnchored(c.Kind)
+                && c.Kind != TileKind.Obsidian && !Tiles.IsFlora(c.Kind);
             if (!burns && !corrodes) continue;
             b.Cells.RemoveAt(i);
             removed = true;
