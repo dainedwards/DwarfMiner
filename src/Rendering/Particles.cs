@@ -1163,7 +1163,8 @@ public sealed class Particles
     public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach)
     {
         var jetSpeed = reach * 2.6f;
-        for (var i = 0; i < 9; i++)
+        // Many TINY droplets — a granular liquid rope, not fat green puffs.
+        for (var i = 0; i < 14; i++)
         {
             // Caustic rope — droplets COLLIDE with tiles and fall on the SAME arc as the acid
             // cells, so the visible spray lands exactly where the corrosive payload pools.
@@ -1177,18 +1178,18 @@ public sealed class Particles
                 Velocity = d * (jetSpeed * (0.75f + (float)_rng.NextDouble() * 0.5f)),
                 Life = 0.18f + (float)_rng.NextDouble() * 0.2f,
                 MaxLife = 0.4f,
-                Color = i < 3 ? new Color(210, 255, 130) : new Color(120, 220, 60),
+                Color = i < 5 ? new Color(210, 255, 130) : new Color(120, 220, 60),
                 FadeColor = new Color(40, 90, 25),
-                Size = i < 3 ? 1.6f : 2.1f + (float)_rng.NextDouble() * 0.7f,
+                Size = i < 5 ? 0.8f : 0.9f + (float)_rng.NextDouble() * 0.5f,
                 GravityScale = HoseArcGravity,   // same arc as the acid cells
                 Drag = 1.0f,
                 CollideTiles = true,
-                LightRadius = i < 3 ? 18f : 8f,
+                LightRadius = i < 5 ? 16f : 7f,
                 LightColor = new Color(150, 240, 80),
             });
         }
         // Caustic vapour wisps shed along the rope — arcing off it, then hanging.
-        for (var i = 0; i < 3; i++)
+        for (var i = 0; i < 4; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.28f;
             var c = MathF.Cos(spread);
@@ -1202,7 +1203,7 @@ public sealed class Particles
                 MaxLife = 0.9f,
                 Color = new Color(90, 150, 55),
                 FadeColor = new Color(30, 55, 25),
-                Size = 2.0f + (float)_rng.NextDouble() * 0.8f,
+                Size = 1.1f + (float)_rng.NextDouble() * 0.5f,
                 GravityScale = -0.06f,
                 Drag = 2.4f,
                 CollideTiles = true,
