@@ -3194,14 +3194,15 @@ public sealed partial class DwarfMinerGame : Game
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
         var muzzle = _run.Player.Position + dir * 8f;
-        // Fatter caustic rope — more droplets per spurt, wider fan, slower spurts.
-        for (var i = 0; i < 6; i++)
+        // TIGHT caustic rope — a narrow, focused jet in small frequent spurts so it reads as
+        // one steady stream instead of pulsing waves.
+        for (var i = 0; i < 3; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.36f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.15f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            _run.Cells.LaunchAtWorld(muzzle, d * (240f + (float)Random.Shared.NextDouble() * 90f),
+            _run.Cells.LaunchAtWorld(muzzle, d * (250f + (float)Random.Shared.NextDouble() * 60f),
                 Material.Acid);
         }
         _particles.EmitAcidJet(muzzle, dir);
