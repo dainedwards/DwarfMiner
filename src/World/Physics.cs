@@ -596,6 +596,9 @@ public sealed class Physics
                 if (!_planet.InBounds(r, t0 + dt)) continue;
                 var k = _planet.Get(r, t0 + dt);
                 if (!Tiles.CanFall(k) || Tiles.IsAnchored(k)) continue;
+                // A reinforced beam quake-proofs its halo — that's what the upgrade buys.
+                // (Plain supports hold ordinary load but not a shaking planet.)
+                if (HasReinforcedNeighbor(r, t0 + dt)) continue;
                 blob.Add(_planet.Index(r, t0 + dt));
             }
         }
