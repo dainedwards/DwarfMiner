@@ -166,10 +166,11 @@ void main()
     vec2 intra = fract(vTexCoord * ps_uniforms_vec4[0].xy);
     float amp  = ps_uniforms_vec4[0].z;
     float freq = ps_uniforms_vec4[0].w;
-    float dO = eO * pow(vnoise(vWorld * freq),                     1.5) * amp;
-    float dI = eI * pow(vnoise(vWorld * freq + vec2(37.0, 17.0)),  1.5) * amp;
-    float dL = eL * pow(vnoise(vWorld * freq + vec2(91.0, 53.0)),  1.5) * amp;
-    float dR = eR * pow(vnoise(vWorld * freq + vec2(13.0, 71.0)),  1.5) * amp;
+    vec2 w = vWorld * freq;
+    float dO = eO * carve(w, vec2(0.0, 0.0))   * amp;
+    float dI = eI * carve(w, vec2(37.0, 17.0)) * amp;
+    float dL = eL * carve(w, vec2(91.0, 53.0)) * amp;
+    float dR = eR * carve(w, vec2(13.0, 71.0)) * amp;
     if (intra.y < dO || 1.0 - intra.y < dI || intra.x < dL || 1.0 - intra.x < dR)
         discard;
     gl_FragColor = vec4(tex.rgb * vColor.rgb, tex.a);
