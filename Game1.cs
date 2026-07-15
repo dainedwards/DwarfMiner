@@ -3214,7 +3214,7 @@ public sealed partial class DwarfMinerGame : Game
             if (dist > 100f || dist < 1f) continue;
             if (Vector2.Dot(to / dist, dir) < 0.84f) continue;
             if (c.ImmuneTo(Material.Acid)) continue;
-            c.Health -= 64f * _frameDt; // 2x per spurt — pays back the slower cadence
+            c.Health -= 32f * _frameDt; // halved per-spurt to match the doubled (smoother) cadence
             c.HitFlash = 0.1f;
         }
         // Caustic against titans too — except the acid-blooded (Otachi's spit, the
