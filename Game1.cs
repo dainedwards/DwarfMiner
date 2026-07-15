@@ -394,6 +394,15 @@ public sealed partial class DwarfMinerGame : Game
     /// letting it keep writing would repopulate them with the wrong worlds.</summary>
     private void StartSurveyWarm()
     {
+        // DM_NOWARM=1 skips the background survey warm-up entirely — perf measurement
+        // hook: DM_AUTOSTART jumps past the load screen that normally absorbs the warm-up,
+        // so without this the first ~8s of any autostarted FPS reading is polluted by
+        // full world gens contending on background threads.
+        if (Environment.GetEnvironmentVariable("DM_NOWARM") is { Length: > 0 })
+        {
+            _warmTotal = 0;
+            return;
+        }
         _warmCts?.Cancel();
         var cts = new System.Threading.CancellationTokenSource();
         _warmCts = cts;
