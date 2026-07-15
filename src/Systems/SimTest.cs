@@ -2477,6 +2477,47 @@ public static class SimTest
             new Space.SpaceSim { ShieldTier = 2 }.ShieldRechargeTime == 4f
             && new Space.SpaceSim().ShieldRechargeTime == 8f);
 
+        // One-way platform: a falling dwarf lands on top, a rising dwarf passes through.
+        {
+            var pl = WorldGen.Generate(70);
+            var cells = new Cells(pl);
+            var phys = new Physics(pl, cells);
+            var ang = 0.3f;
+            var pr = pl.SurfaceRing + 12;
+            var n = pl.TilesAt(pr);
+            var pt = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
+            // Clear a pocket of sky around the ledge so nearby terrain can't taint the test.
+            for (var dr = -3; dr <= 4; dr++)
+                for (var dtc = -3; dtc <= 3; dtc++)
+                {
+                    var rr = pr + dr;
+                    if (rr < 0 || rr >= pl.Rings) continue;
+                    var nn = pl.TilesAt(rr);
+                    pl.Set(rr, ((pt + dtc) % nn + nn) % nn, TileKind.Sky);
+                }
+            pl.Set(pr, pt, TileKind.Platform);
+            var platCentre = pl.TileToWorld(pr, pt);
+            var up = pl.UpAt(platCentre);
+            var platTop = (Planet.RingMin + pr + 1) * Planet.TileSize;
+
+            var lander = new Player(platCentre + up * 22f);
+            for (var i = 0; i < 150; i++) lander.Update(1f / 60f, pl, 0, false);
+            var landedR = (lander.Position - pl.Center).Length();
+            Check($"platform: a falling dwarf lands on top ({landedR - platTop:0.0}px above face)",
+                landedR >= platTop - 1f && landedR <= platTop + lander.Radius + 4f);
+
+            var riser = new Player(platCentre - up * 9f) { Velocity = up * 220f };
+            var startR = (riser.Position - pl.Center).Length();
+            var maxR = startR;
+            for (var i = 0; i < 40; i++)
+            {
+                riser.Update(1f / 60f, pl, 0, false);
+                maxR = MathF.Max(maxR, (riser.Position - pl.Center).Length());
+            }
+            Check($"platform: a rising dwarf passes through ({maxR - platTop:0}px past top)",
+                maxR > platTop + 4f);
+        }
+
         // The rover loadout manifest: kits price in cargo, stack in the pending manifest,
         // and refuse gracefully when the hold is short.
         var loadMeta = new MetaSave();
