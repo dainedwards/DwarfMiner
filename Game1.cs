@@ -5329,6 +5329,10 @@ public sealed partial class DwarfMinerGame : Game
             }
         }
 
+        // Ambient weather clouds — the gentle ecosystem rain, drawn as soft drifting banks
+        // tinted by the biome's rain. The falling drops themselves are particles.
+        DrawWeather();
+
         // Meteors — a molten rock (dark core, hot rim) plus a pulsing warning reticle on the
         // ground it's aimed at, so the strike is telegraphed and dodgeable.
         foreach (var m in _run.Meteors)
