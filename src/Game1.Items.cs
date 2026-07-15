@@ -183,8 +183,6 @@ public sealed partial class DwarfMinerGame
             // ─── Throwables (stackable weapons — god mode throws for free) ────────
             ["dynamite"] = new() { Weapon = true, NeedsCooldown = true, Ammo = "dynamite", ShotSound = "throw",        Use = FireDynamite },
             ["dynamite_pack"] = new() { Weapon = true, NeedsCooldown = true, Ammo = "dynamite_pack", ShotSound = "throw", Use = FireDynamitePack },
-            ["tnt"]      = new() { Weapon = true, NeedsCooldown = true, Ammo = "tnt",      ShotSound = "throw",        Use = FireTnt },
-            ["tnt_pack"] = new() { Weapon = true, NeedsCooldown = true, Ammo = "tnt_pack", ShotSound = "throw",        Use = FireTntPack },
             ["harpoon"]  = new() { Weapon = true, NeedsCooldown = true, Ammo = "harpoon",  ShotSound = "harpoon",      Use = FireHarpoon },
 
             // ─── Mobility gear ────────────────────────────────────────────────────
