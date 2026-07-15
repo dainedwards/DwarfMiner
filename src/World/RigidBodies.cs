@@ -298,6 +298,7 @@ public sealed class RigidBodies
         {
             var (x, y) = _planet.UnIndex(idx);
             _planet.Set(x, y, TileKind.Sky);
+            _planet.ClearStructureWall(x, y);
             _physics.MarkDirty(x, y);
         }
         body.RecomputeMass();
