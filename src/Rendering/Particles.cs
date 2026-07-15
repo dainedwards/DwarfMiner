@@ -990,54 +990,61 @@ public sealed class Particles
     /// shadows while it roars. Called every puff, so held fire reads as one continuous
     /// jet. (The burning FUEL is real Fire cells launched by Game1 — these are the glow
     /// around it.)</summary>
+    /// <summary>Gravity multiplier that gives a hose particle the SAME ballistic arc as the
+    /// flying fuel cells it rides with: cells pull ~450 px/s² toward the core (FlyGravity),
+    /// particles pull GravityStrength(200) × scale — so 2.25 matches, and the visible tongue
+    /// droops along exactly the trajectory the real fire/acid lands on.</summary>
+    private const float HoseArcGravity = 2.25f;
+
     public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach)
     {
-        // Particle speed tuned so a blob travels roughly `reach` before its ~0.4s life ends,
-        // so the visible tongue matches the stream's current length. Blobs COLLIDE with tiles,
-        // so the flame splashes on walls instead of pouring straight through them.
+        // Particle speed tuned so a blob travels roughly `reach` before its life ends, so the
+        // visible tongue matches the stream's current length. Blobs COLLIDE with tiles and fall
+        // on the same arc as the launched fuel cells — the Noita look: a dense bright throat
+        // that stretches into a drooping, smoking tongue.
         var jetSpeed = reach * 2.6f;
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 9; i++)
         {
-            // Narrow, focused cone — a tight jet, not a fat fan.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.16f;
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.24f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            var hot = i < 2;
+            var hot = i < 3;
             _list.Add(new Particle
             {
-                Position = pos + d * (float)_rng.NextDouble() * 4f,
-                Velocity = d * (jetSpeed * (0.8f + (float)_rng.NextDouble() * 0.4f)),
-                Life = 0.16f + (float)_rng.NextDouble() * 0.2f,
+                Position = pos + d * (float)_rng.NextDouble() * 5f,
+                Velocity = d * (jetSpeed * (0.75f + (float)_rng.NextDouble() * 0.5f)),
+                Life = 0.18f + (float)_rng.NextDouble() * 0.22f,
                 MaxLife = 0.4f,
-                Color = hot ? new Color(255, 240, 170) : new Color(255, 160, 60),
-                FadeColor = new Color(140, 40, 15),
-                Size = hot ? 1.4f : 2.1f,
-                GravityScale = -0.1f,   // heat rises
-                Drag = 1.4f,
+                Color = hot ? new Color(255, 245, 190) : new Color(255, 160, 60),
+                FadeColor = new Color(150, 45, 15),
+                Size = hot ? 1.8f : 2.4f + (float)_rng.NextDouble() * 0.8f,
+                GravityScale = HoseArcGravity,   // same arc as the fuel cells
+                Drag = 1.2f,
                 CollideTiles = true,
-                LightRadius = hot ? 64f : 34f,
+                LightRadius = hot ? 66f : 36f,
                 LightColor = new Color(255, 170, 70),
             });
         }
-        // A sooty curl or two riding the tongue — also collides, so smoke doesn't ghost walls.
-        for (var i = 0; i < 2; i++)
+        // Sooty curls shed along the tongue — they inherit the arc, then buoy upward as they
+        // cool (weak net gravity), so spent flame rolls off the stream like Noita's smoke.
+        for (var i = 0; i < 3; i++)
         {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.16f;
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.3f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
             _list.Add(new Particle
             {
-                Position = pos + d * (6f + (float)_rng.NextDouble() * 6f),
-                Velocity = d * (jetSpeed * 0.5f),
-                Life = 0.4f + (float)_rng.NextDouble() * 0.4f,
+                Position = pos + d * (8f + (float)_rng.NextDouble() * (reach * 0.35f)),
+                Velocity = d * (jetSpeed * 0.45f),
+                Life = 0.4f + (float)_rng.NextDouble() * 0.45f,
                 MaxLife = 0.9f,
-                Color = new Color(90, 60, 45),
+                Color = new Color(95, 62, 45),
                 FadeColor = new Color(35, 28, 30),
-                Size = 1.8f,
-                GravityScale = -0.22f,
-                Drag = 2.4f,
+                Size = 2.1f + (float)_rng.NextDouble(),
+                GravityScale = -0.18f,
+                Drag = 2.2f,
                 CollideTiles = true,
             });
         }
