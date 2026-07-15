@@ -693,6 +693,19 @@ public sealed class Cells
                 if (cy >= Height) { f.Pos = next; continue; }   // open sky: pure ballistics
                 if (cy < 0 || IsBlocked(cx, cy))
                 {
+                    // Gas-like cells (smoke/steam, gas pockets, open flame) are NOT obstacles
+                    // to a flying grain — it punches straight through them. Without this, the
+                    // steam curling back off an acid splash blocked the next spurt mid-air,
+                    // stacking acid in the sky and making the stream drop far short. A fire
+                    // grain passing through a gas pocket still lights it on the way.
+                    if (cy >= 0 && !SolidTileAtCell(cx, cy)
+                        && Get(cx, cy) is Material.Smoke or Material.Gas or Material.Fire)
+                    {
+                        if ((Material)f.Mat == Material.Fire && Get(cx, cy) == Material.Gas)
+                            IgniteCell(cx, cy);
+                        f.Pos = next;
+                        continue;
+                    }
                     // Open flame dies the moment it meets water: a flying fire gout that hits
                     // (or is hosed into) a pool flashes to a wisp of steam instead of banking
                     // a burning cell on the surface.
