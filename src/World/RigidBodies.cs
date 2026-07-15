@@ -30,14 +30,16 @@ public sealed class RigidBodies
     public static bool Enabled { get; } =
         Environment.GetEnvironmentVariable("DM_RIGID") != "0";
 
-    /// <summary>Largest region that converts to a single body. Regions between this and
-    /// <see cref="MaxDetachTiles"/> split into several bodies (a mountain top breaks into
-    /// boulders, not one rotating cutout).</summary>
+    /// <summary>Largest crust-backed region that converts to a single body. Regions between
+    /// this and <see cref="MaxDetachTiles"/> split into several bodies (an underground shelf
+    /// breaks into boulders, not one rotating cutout). Fully above-ground regions ignore
+    /// both limits — see <see cref="TryDetach"/>.</summary>
     public const int MaxChunkTiles = 400;
 
-    /// <summary>Ceiling for rigid conversion overall. An undercut mountain flank bigger
-    /// than this keeps the legacy dust cascade — that rain is the established spectacle
-    /// for the truly huge cave-ins, and the body budget couldn't carry it anyway.</summary>
+    /// <summary>Ceiling for rigid conversion of regions that reach down to the crust — past
+    /// it the legacy dust cascade runs. Regions floating entirely above the crust (severed
+    /// skyscrapers, undercut mountains) are exempt: those topple whole, whatever their size,
+    /// because half a structure raining down as sand while the rest tumbles reads wrong.</summary>
     public const int MaxDetachTiles = 2400;
 
     /// <summary>World px per partition cell when a big region splits into boulders (~18
