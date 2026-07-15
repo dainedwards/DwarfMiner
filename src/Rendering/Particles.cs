@@ -376,6 +376,17 @@ public sealed class Particles
                 // initial life), so a grain flickers coherently rather than strobing
                 // white-noise as its life ticks down.
                 c *= 0.85f + 0.25f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f);
+                // TAIL-END SMOKE: the last stretch of a puff's life — the wisping top of
+                // the plume and everything left when the trigger releases — shifts to
+                // black-smoke in two hard steps. Fire colours own the body; soot owns the
+                // die-off. Hue-shift only: alpha (coverage) is preserved, so the wisp
+                // keeps its shape while going dark.
+                if (age > 0.7f)
+                {
+                    var k = MathF.Ceiling((age - 0.7f) / 0.3f * 2f) * 0.5f;
+                    var a = c.A;
+                    c = Color.Lerp(c, new Color(48 * a / 255, 43 * a / 255, 44 * a / 255, a), k);
+                }
             }
             r.Batch.Draw(tex, p.Position, null, c, rot, org,
                 new Vector2(len / tex.Width, wid / tex.Height), SpriteEffects.None, 0f);
