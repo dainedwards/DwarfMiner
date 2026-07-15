@@ -964,6 +964,25 @@ public sealed class Cells
         _next.Clear();
         if (_active.Count == 0) return;
 
+        // Far-field throttle: awake cells beyond ~2.5 screens of the player's focus tick
+        // at QUARTER rate — they stay in the active set (nothing sleeps that shouldn't)
+        // but 3 of 4 ticks just re-enqueue. A distant quench front or simmering lava rim
+        // still evolves, at 15 Hz instead of 60, and its cost drops fourfold: the QA rig's
+        // lava sea alone held ~27k cells churning forever with the player nowhere near.
+        // Focus rides CompactionExclusion (the player, set every live frame); headless
+        // contexts leave it null and throttle nothing, so tests see the full-rate sim.
+        _tickNo++;
+        var throttled = CompactionExclusion is not null;
+        var fcy = 0;
+        var ffrac = 0f;
+        if (throttled)
+        {
+            var (fcx, fc) = WorldToCell(CompactionExclusion!.Value);
+            fcy = Math.Clamp(fc, 0, Height - 1);
+            var fn = _cellsAt[fcy];
+            ffrac = (float)WrapX(fcx, fn) / fn;
+        }
+
         // Clear the queued flags up front (so any cell can re-enqueue itself or be woken
         // again during this tick), then process in shuffled order — a fixed visit order
         // would bias flows sideways.
@@ -976,6 +995,11 @@ public sealed class Cells
             var m = (Material)_mat[idx];
             if (m == Material.Empty) continue;
             var (cx, cy) = UnIdx(idx);
+            if (throttled && ((idx + _tickNo) & 3) != 0 && IsFarFromFocus(cx, cy, fcy, ffrac))
+            {
+                Enqueue(idx);
+                continue;
+            }
             switch (m)
             {
                 case Material.Sand:
