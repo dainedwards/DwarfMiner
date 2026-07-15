@@ -1715,13 +1715,14 @@ public sealed class Creature
     private void SwimToward(float dt, Planet planet, Cells cells, Vector2 up, Vector2 right,
         Vector2 target, float speed, float accel)
     {
+        // NOTE: only sets Velocity — the shared substepped integration in Update moves the
+        // body and resolves tile collision, so this must never touch Position itself.
         if (cells.CountWaterNear(Position, Radius) < 3)
         {
             // Out of water — sink and coast, don't flop across the ground.
             var vT0 = MoveToward(Vector2.Dot(Velocity, right), 0f, 150f * dt);
             var vN0 = MathF.Max(Vector2.Dot(Velocity, up) - Grav(planet) * dt, -180f);
             Velocity = right * vT0 + up * vN0;
-            Position += Velocity * dt;
             return;
         }
         var to = target - Position;
@@ -1730,9 +1731,7 @@ public sealed class Creature
         var ahead = Position + to * (Radius + 8f);
         if (planet.IsSolidAt(ahead) || cells.CountWaterNear(ahead + up * (Radius + 2f), 2f) < 1)
             to -= up * Vector2.Dot(to, up);   // strip the outward/vertical component near a wall/surface
-        var desired = to * speed;
-        Velocity = MoveTowardV(Velocity, desired, accel * dt);
-        Position += Velocity * dt;
+        Velocity = MoveTowardV(Velocity, to * speed, accel * dt);
     }
 
     /// <summary>Alien shark: a torpedo predator. When the dwarf is in its water it accelerates
