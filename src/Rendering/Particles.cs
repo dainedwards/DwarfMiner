@@ -183,7 +183,9 @@ public sealed class Particles
                 {
                     cells.StampAtWorld(p.Position, (Material)p.LandMat, p.LandFuse);
                     p.LandMat = 0;
-                    p.Life = MathF.Min(p.Life, 0.05f);   // delivered — done
+                    // Stop dead at the strike point: the rest branch below then runs THIS
+                    // frame — contact spark burst + fast death — no skittering onward.
+                    p.Velocity = Vector2.Zero;
                 }
                 if (p.Velocity.LengthSquared() < 4f)
                 {
