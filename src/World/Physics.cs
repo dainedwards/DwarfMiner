@@ -213,16 +213,16 @@ public sealed class Physics
             // that tile's drop when the player walks through it.
             if (Materials.IsLoose(k))
             {
-                // Cohesion: loose ground now needs FIRMER footing — it holds only when the
-                // tile straight below it is solid AND at least one inner diagonal is too. So a
-                // tile that is undercut straight-down and open on either shoulder sloughs off,
-                // which makes each soil layer crumble with far less support (steeper angle of
-                // repose) while a fully-buttressed tunnel roof still self-arches.
+                // Cohesion: loose ground now needs FIRMER footing. It holds when the tile
+                // straight below is solid, OR when it's fully braced on BOTH inner shoulders.
+                // So a tile undercut straight-down with either shoulder open sloughs off —
+                // each soil layer crumbles with less support (a steeper angle of repose) while
+                // a fully-buttressed tunnel roof still self-arches.
                 var (inX, inY) = _planet.InnerNeighbour(x, y);
                 var belowSolid = Tiles.IsSolid(_planet.Get(inX, inY));
-                var diagSolid = Tiles.IsSolid(_planet.Get(inX, inY - 1))
-                             && Tiles.IsSolid(_planet.Get(inX, inY + 1));
-                if (!belowSolid || !diagSolid)
+                var bothShoulders = Tiles.IsSolid(_planet.Get(inX, inY - 1))
+                                 && Tiles.IsSolid(_planet.Get(inX, inY + 1));
+                if (!belowSolid && !bothShoulders)
                 {
                     _planet.Set(x, y, TileKind.Sky);
                     _cells.SpawnDustInTile(x, y, k);
