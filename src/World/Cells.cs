@@ -1429,6 +1429,17 @@ public sealed class Cells
         Enqueue(Idx(cx, cy)); // liquids stay awake, as before
     }
 
+    /// <summary>Lateral flow rate in cells per tick — per-material viscosity. Scaled off
+    /// Density like the old shared constant so proportions survive Density changes.</summary>
+    private static int DispersionFor(Material m) => m switch
+    {
+        Material.Water => Density,          // 8 — levels out fast, the Noita water feel
+        Material.Acid => Density * 5 / 8,   // 5
+        Material.Oil => Density / 2,        // 4 — syrupy slick
+        Material.Lava => Density * 3 / 8,   // 3 — molten creep
+        _ => LiquidDispersion,
+    };
+
     private void TickLava(int cx, int cy, float dt)
     {
         if (QuenchIfWet(cx, cy)) return;
