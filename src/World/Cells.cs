@@ -1321,6 +1321,20 @@ public sealed class Cells
         return true;
     }
 
+    /// <summary>Whether any cell in the row just outward is open air (no solid tile, no
+    /// material) — the "exposed to the sky-side" test rain-water evaporation keys off.</summary>
+    private bool ExposedAbove(int cx, int cy)
+    {
+        if (cy >= Height - 1) return true;
+        var oc = OuterCellCount(cx, cy);
+        for (var k = 0; k < oc; k++)
+        {
+            var (ocx, ocy) = OuterCell(cx, cy, k);
+            if (!IsBlocked(ocx, ocy)) return true;
+        }
+        return false;
+    }
+
     /// <summary>Flat index of the first cardinal neighbour holding material m, or -1.</summary>
     private int FindNeighbour(int cx, int cy, Material m)
     {
