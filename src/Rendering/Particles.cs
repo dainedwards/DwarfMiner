@@ -251,13 +251,20 @@ public sealed class Particles
     {
         var tex = r.LiquidBlob;
         var org = new Vector2(tex.Width / 2f, tex.Height / 2f);
-        var scale = 5f / tex.Width;   // ~5 world px blob: neighbouring grains fuse
         foreach (var p in _list)
         {
             if (p.Fluid != (byte)which) continue;
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             var c = Color.Lerp(p.FadeColor, p.Color, MathF.Ceiling(t * 4f) * 0.25f);
-            r.Batch.Draw(tex, p.Position, null, c, 0f, org, scale, SpriteEffects.None, 0f);
+            // CAPSULES, not discs: each frame's grain batch fuses into one blob, but
+            // round blobs don't bridge the ~4 px gap to the next frame's batch — the
+            // stream read as a meatball chain. Stretched ~2 frames of travel along the
+            // velocity, consecutive batches overlap and threshold into ONE ribbon.
+            var speed = p.Velocity.Length();
+            var len = MathF.Max(5f, speed * 0.033f);
+            var rot = speed > 1f ? MathF.Atan2(p.Velocity.Y, p.Velocity.X) : 0f;
+            r.Batch.Draw(tex, p.Position, null, c, rot, org,
+                new Vector2(len / tex.Width, 4f / tex.Height), SpriteEffects.None, 0f);
         }
     }
 
