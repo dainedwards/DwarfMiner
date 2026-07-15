@@ -211,8 +211,8 @@ public sealed class Cells
     // first-lit tile gives out — and a forest fire smoulders epically instead of
     // deleting itself.
     private float _charBudget = CharBudgetMax;
-    private const float CharBudgetMax = 12f;
-    private const float CharBudgetRegen = 6f;     // tile-chars per second, planet-wide
+    private const float CharBudgetMax = 24f;
+    private const float CharBudgetRegen = 12f;    // tile-chars per second, planet-wide
     private bool SpendChar()
     {
         if (_charBudget < 1f) return false;
@@ -2012,9 +2012,16 @@ public sealed class Cells
         var doused = false;
         var grounded = false;      // any solid-tile neighbour: a surface the fuse clings to
         var burningFloor = false;  // the tile directly BELOW is flammable — fire clings to it
+        var fuelMask = 0;          // cardinal fuel directions (bit0 R / 1 L / 2 down / 3 up)
+                                   // — steers fuel-seeking buds along the burning surface
 
-        void Probe(int ncx, int ncy, bool below = false)
+        // dirBit 0-3 as in fuelMask; -1 = DIAGONAL probe. Diagonals ignite/char/fuel like
+        // any other direction — canopies and branches connect at corners, and cardinal-
+        // only probes left corner-connected fuel permanently unreachable ("the fire
+        // misses pieces it's touching") — but they don't steer the bud heuristic.
+        void Probe(int ncx, int ncy, int dirBit = -1)
         {
+            var below = dirBit == 2;
             if (ncy < 0 || ncy >= Height) return;
             var ni = Idx(ncx, ncy);
             switch ((Material)_mat[ni])
@@ -2025,6 +2032,7 @@ public sealed class Cells
                 case Material.Oil:
                 case Material.Gas:
                     fuelled = true;
+                    if (dirBit >= 0) fuelMask |= 1 << dirBit;
                     // Flame front: catch the neighbouring fuel cell alight. Probabilistic
                     // so a pool burns across its surface over seconds, not in one frame —
                     // rate 10 (was 3): fuel is CONSUMED slowly and a burning pool lasts
@@ -2067,6 +2075,7 @@ public sealed class Cells
             }
             if (!IsFlammable(k)) return;
             fuelled = true;
+            if (dirBit >= 0) fuelMask |= 1 << dirBit;
             if (below) burningFloor = true;
             // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke.
             // The roll is RESPONSIVE (40, floor-biased 20) but the actual consumption
@@ -2085,18 +2094,31 @@ public sealed class Cells
             ShedBurningLeaves(tx, ty, k);
         }
 
-        Probe(cx + 1, cy);
-        Probe(cx - 1, cy);
+        Probe(cx + 1, cy, 0);
+        Probe(cx - 1, cy, 1);
         var (icx, icy) = InnerCell(cx, cy);
-        Probe(icx, icy, below: true);
+        Probe(icx, icy, 2);
+        // Diagonal-down probes: the below-cells of the lateral neighbours.
+        if (cy > 0)
+        {
+            var (dlx, dly) = InnerCell(cx - 1, cy);
+            Probe(dlx, dly);
+            var (drx, dry) = InnerCell(cx + 1, cy);
+            Probe(drx, dry);
+        }
         if (cy < Height - 1)
         {
             var oc = OuterCellCount(cx, cy);
             for (var w = 0; w < oc; w++)
             {
                 var (ocx, ocy) = OuterCell(cx, cy, w);
-                Probe(ocx, ocy);
+                Probe(ocx, ocy, 3);
             }
+            // Diagonal-up probes: the above-cells of the lateral neighbours.
+            var (ulx, uly) = OuterCell(cx - 1, cy, 0);
+            Probe(ulx, uly);
+            var (urx, ury) = OuterCell(cx + 1, cy, 0);
+            Probe(urx, ury);
         }
 
         if (doused)
@@ -2160,9 +2182,19 @@ public sealed class Cells
         // seconds without consuming anything. Charring alone could never deliver "fully
         // aflame before the first part burns out" — charring IS consumption, so spread
         // and burn-through were the same clock; budding decouples them.
-        if (fuelled && _rng.Next(12) == 0 && SpendFire())
+        if (fuelled && _rng.Next(7) == 0 && SpendFire())
         {
-            var bd = _rng.Next(4);
+            // FUEL-SEEKING buds: travel ALONG the burning surface (perpendicular to
+            // where the fuel is) instead of a blind random direction — fuel above or
+            // below → bud sideways; fuel beside → bud vertically. Flames wick across
+            // the fuel like a fuse instead of wasting buds on open air, which both
+            // speeds the spread and stops concave corners being skipped.
+            int bd;
+            var vertFuel = (fuelMask & 0b1100) != 0;
+            var latFuel = (fuelMask & 0b0011) != 0;
+            if (vertFuel && (!latFuel || _rng.Next(2) == 0)) bd = _rng.Next(2);
+            else if (latFuel) bd = 2 + _rng.Next(2);
+            else bd = _rng.Next(4);
             var (bx, by) = bd switch
             {
                 0 => (cx + 1, cy),
