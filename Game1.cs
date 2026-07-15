@@ -172,7 +172,7 @@ public sealed partial class DwarfMinerGame : Game
     /// longer it's held; a gap in firing resets it. Shared by both hoses (only one fires at once).</summary>
     private float _streamHold;
     private float _streamLast;
-    private const float StreamHoldMax = 0.35f;   // reaches full length fast — a quick throttle-up
+    private const float StreamHoldMax = 0.245f;  // reaches full length fast — a quick throttle-up
     private readonly bool _bossCam = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 };
     private readonly bool _rigidDbg = Environment.GetEnvironmentVariable("DM_RIGIDDBG") is { Length: > 0 };
     private int _prevRigidCount;
@@ -3686,7 +3686,7 @@ public sealed partial class DwarfMinerGame : Game
         if (_run.RunTime - _streamLast > 0.15f) _streamHold = 0f;
         _streamLast = _run.RunTime;
         _streamHold = MathF.Min(_streamHold + _frameDt, StreamHoldMax);
-        return MathHelper.Lerp(42f, 132f, _streamHold / StreamHoldMax);
+        return MathHelper.Lerp(59f, 185f, _streamHold / StreamHoldMax);
     }
 
     /// <summary>Flamethrower: a steady, TIGHT tongue of REAL burning fuel — Fire cells launched
@@ -3716,7 +3716,7 @@ public sealed partial class DwarfMinerGame : Game
         // lands where the visible tongue points.
         for (var i = 0; i < 3; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.18f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.072f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
@@ -3766,7 +3766,7 @@ public sealed partial class DwarfMinerGame : Game
         // of through them). Reach grows the longer fire is held; spread matches the visible fan.
         for (var i = 0; i < 3; i++)
         {
-            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.16f;
+            var spread = ((float)Random.Shared.NextDouble() - 0.5f) * 0.064f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);

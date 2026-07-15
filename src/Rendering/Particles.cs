@@ -1162,7 +1162,7 @@ public sealed class Particles
         {
             // Tighter cone + narrower speed band than the old fan: grains stay bunched
             // along the stream axis, so their motion-smears overlap into one rope.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.17f;
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.068f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
@@ -1363,7 +1363,7 @@ public sealed class Particles
             // Caustic rope — droplets COLLIDE with tiles and fall on the SAME arc as the acid
             // cells, so the visible spray lands exactly where the corrosive payload pools.
             // Tight cone: the motion-smears in Draw fuse bunched grains into one rope.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.16f;
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.064f;
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
