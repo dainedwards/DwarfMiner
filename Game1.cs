@@ -5693,13 +5693,10 @@ public sealed partial class DwarfMinerGame : Game
                 _renderer.Batch.End();
             }
         }
-<<<<<<< HEAD
         FramePerf.Add("liqRT", tDraw);
-=======
         // Fluid-mode flag for the particle draw: while the metaball composite is live,
         // hose grains render as the fluid body above and skip their strand quads.
         _particles.FluidMode = liquidPass && _renderer.LiquidShaderOn;
->>>>>>> cell-effects
         if (_pixelK > 0) GraphicsDevice.SetRenderTarget(_worldRt);
         else if (liquidPass) GraphicsDevice.SetRenderTarget(_sceneRt);
 
