@@ -8,7 +8,7 @@ namespace DwarfMiner.Systems;
 /// <summary>What a biome's rain is made of — and so what waters (or, on the harsh worlds,
 /// what a tree has adapted to drink): plain water on temperate worlds, thin acid on acid
 /// worlds, ember-rain on the burning ones.</summary>
-public enum RainKind { Water, Acid, Fire }
+public enum RainKind { Water, Acid, Fire, Snow }
 
 /// <summary>The tree half of the living ecosystem. It owns the shape code that turns a
 /// <see cref="TreeSite"/> into tiles — shared by world gen (plant a full tree) and regrowth
