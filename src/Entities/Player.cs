@@ -374,9 +374,13 @@ public sealed class Player
         // mode toggles don't accidentally trigger a buffered jump.
         var jumpEdge = jumpHeld && !_jumpHeldPrev;
         _jumpHeldPrev = jumpHeld;
-        // How long jump has been held continuously — the jet only lights after a real
-        // hold, so a tapped jump is just a jump and never sputters the pack.
+        // How long jump has been held continuously — a grounded press only lights the jet
+        // after a real hold, so a tapped jump is just a jump and never sputters the pack.
         _jumpHoldTime = jumpHeld ? _jumpHoldTime + dt : 0f;
+        // Remember whether this hold began in the air: an airborne press is a hover request
+        // (Noita levitation — the pack answers instantly), a grounded press is a jump first
+        // and only becomes a burn once held past JetHoldDelay.
+        if (jumpEdge) _jetPressAirborne = !Grounded && _coyoteTimer <= 0f;
 
         // A build under construction survives only while placement attempts keep arriving
         // (TryPlace/TryPlaceBuildId set the flag every held frame) — letting go abandons it.
