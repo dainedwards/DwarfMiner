@@ -407,6 +407,23 @@ public sealed class Cells
         }
     }
 
+    /// <summary>_srcTile marker for water shed by rain. Not a real TileKind — water cells
+    /// never use their source slot, so it's free to carry provenance: rain-fed water slowly
+    /// evaporates once it rests exposed to open air near the surface (see the rain clause in
+    /// <see cref="TickLiquid"/>), so showers leave puddles that dry out instead of a creeping
+    /// permanent flood. The marker rides every move/swap/launch like dust's source kind does,
+    /// survives the save, and clears if the cell steams away against lava.</summary>
+    private const byte RainWaterSrc = 255;
+
+    /// <summary>Spawn one rain-fed water cell at a world position — the real, pooling half of
+    /// a shower (the streaking drops are particles). Skipped silently if the cell is occupied,
+    /// so rain over a lake just merges into the top of it.</summary>
+    public void SpawnRainWater(Vector2 worldPos)
+    {
+        var (cx, cy) = WorldToCell(worldPos);
+        Place(cx, cy, Material.Water, (TileKind)RainWaterSrc);
+    }
+
     /// <summary>Spawn dust cells filling the whole polar tile, tagged with the source TileKind
     /// so the cells render in that tile's colours and pay out that tile's drop on pickup.
     /// Deterministic count (DustCellsPerTile = Density²) so the debris occupies exactly the
