@@ -523,17 +523,12 @@ public sealed class Physics
         return (sx, sy);
     }
 
-    /// <summary>True while an earthquake is actively shaking — the ONLY window in which
-    /// undercut crust-backed regions may condemn (see the gate in Settle). Outside it the
-    /// mined-out underground just hangs, Terraria-style.</summary>
-    public bool QuakeShaking { get; private set; }
-
     /// <summary>Trigger a planet-wide rumble: every solid tile within a radius gets re-checked
-    /// — and, uniquely, undercut crust regions are ALLOWED to condemn here (QuakeShaking):
-    /// the quake is what brings down everything the mining left hanging. On top of the
-    /// structural pass, the rumble shakes rock loose at RANDOM: a handful of cave-roof blobs
-    /// in the radius are condemned outright, so a quake means falling rock even in tunnels
-    /// that were honestly braced.</summary>
+    /// (loose ground sloughs, freshly airborne regions fall) — but undercut crust-backed rock
+    /// is NOT brought down wholesale. Instead the shaking rattles a few discrete chunks out
+    /// of the cave roofs in the radius: mostly single blocks, sometimes a small cluster,
+    /// rarely a real slab (see ShakeLooseBlob's size roll). Small chunks ride the rigid path
+    /// and drop as tumbling rocks; the rest shower dust.</summary>
     public void Earthquake(Vector2 epicenterWorld, float radiusPixels, int strength)
     {
         var (cx, cy) = _planet.WorldToTile(epicenterWorld);
@@ -550,13 +545,10 @@ public sealed class Physics
                 if (Tiles.IsSolid(_planet.Get(x, y))) MarkDirty(x, y);
             }
         }
-        QuakeShaking = true;
         for (var i = 0; i < strength; i++) Settle();
-        QuakeShaking = false;
 
         // Random shake-outs: probe spots in the radius; where one lands on a cave roof
-        // (solid rock over open air), condemn a ragged blob around it. Small blobs ride
-        // the rigid path and drop as tumbling boulders; the rest shower dust.
+        // (solid rock over open air), a chunk shakes loose.
         var rng = Random.Shared;
         var shakes = 6 + strength * 4;
         for (var i = 0; i < shakes; i++)
@@ -575,34 +567,54 @@ public sealed class Physics
         }
     }
 
-    /// <summary>Condemn a small ragged blob of fallable roof rock around (x, y) — the
-    /// earthquake's random cave-in. Collected as a per-ring angular window (ring tile
-    /// counts differ, so a raw ±dy drifts at far bearings) with corner drop-outs so the
-    /// chunk reads as a shaken-loose rock, not a stamped rectangle.</summary>
+    /// <summary>Condemn one shaken-loose chunk of fallable roof rock at (x, y) — the
+    /// earthquake's cave-in. The size roll is heavily bottom-weighted (a quake rattles
+    /// rocks out of the roof, it doesn't demolish it): single blocks are the common case,
+    /// small clusters less so, a ~10-block cluster uncommon, a real slab rare. The chunk
+    /// grows as a CONNECTED region from the roof seed, expanding in random order so it
+    /// reads as a rock, not a stamp; anchored tiles and anything in a reinforced beam's
+    /// halo stay put (a reinforced prop quake-proofs its 3×3 — that's what it buys; plain
+    /// supports hold ordinary load, not a shaking planet).</summary>
     private void ShakeLooseBlob(int x, int y, Random rng)
     {
-        var reach = 2 + rng.Next(2);
+        var u = rng.NextDouble();
+        var target = u < 0.45 ? 1                    // common: one rattled-out block
+                   : u < 0.72 ? 2 + rng.Next(3)      // small cluster (2-4)
+                   : u < 0.90 ? 5 + rng.Next(6)      // uncommon: a ~10-block cluster (5-10)
+                   : u < 0.98 ? 11 + rng.Next(8)     // rare: a heavy cluster (11-18)
+                   : 19 + rng.Next(14);              // the once-in-a-blue-moon slab (19-32)
+
         var blob = new List<int>();
-        var n0 = _planet.TilesAt(x);
-        var ang = ((y % n0 + n0) % n0 + 0.5f) / n0;
-        for (var dr = -reach; dr <= reach; dr++)
+        var frontier = new List<(int x, int y)> { (x, y) };
+        var seen = new HashSet<int> { _planet.Index(x, y) };
+        while (frontier.Count > 0 && blob.Count < target)
         {
-            var r = x + dr;
-            if (r < 0 || r >= _planet.Rings) continue;
-            var nn = _planet.TilesAt(r);
-            var t0 = (int)(ang * nn);
-            for (var dt = -reach; dt <= reach; dt++)
+            var pick = rng.Next(frontier.Count);
+            var (bx, by) = frontier[pick];
+            frontier[pick] = frontier[^1];
+            frontier.RemoveAt(frontier.Count - 1);
+
+            var k = _planet.Get(bx, by);
+            if (!Tiles.CanFall(k) || Tiles.IsAnchored(k)) continue;
+            if (HasReinforcedNeighbor(bx, by)) continue;
+            blob.Add(_planet.Index(bx, by));
+
+            void Grow(int nx, int ny)
             {
-                if (Math.Abs(dr) + Math.Abs(dt) > reach + 1) continue;   // ragged diamond, not a square
-                if (!_planet.InBounds(r, t0 + dt)) continue;
-                var k = _planet.Get(r, t0 + dt);
-                if (!Tiles.CanFall(k) || Tiles.IsAnchored(k)) continue;
-                // A reinforced beam quake-proofs its halo — that's what the upgrade buys.
-                // (Plain supports hold ordinary load but not a shaking planet.)
-                if (HasReinforcedNeighbor(r, t0 + dt)) continue;
-                blob.Add(_planet.Index(r, t0 + dt));
+                if (!_planet.InBounds(nx, ny)) return;
+                if (seen.Add(_planet.Index(nx, ny))) frontier.Add((nx, ny));
+            }
+            Grow(bx, by - 1);
+            Grow(bx, by + 1);
+            var (ir, it) = _planet.InnerNeighbour(bx, by);
+            if (ir >= 0) Grow(ir, it);
+            var oc = _planet.OuterNeighbourCount(bx, by);
+            for (var oi = 0; oi < oc; oi++)
+            {
+                var (or_, ot_) = _planet.OuterNeighbour(bx, by, oi);
+                if (or_ < _planet.Rings) Grow(or_, ot_);
             }
         }
-        if (blob.Count >= 4) CollapseRegion(blob, sky: false);
+        if (blob.Count > 0) CollapseRegion(blob, sky: false);
     }
 }
