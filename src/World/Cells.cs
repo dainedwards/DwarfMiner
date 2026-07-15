@@ -2876,24 +2876,48 @@ public sealed class Cells
 
     private void DrawWaterline(Renderer r, float radial)
     {
-        foreach (var (cx, cy, mb) in _surface)
-        {
-            var m = (Material)mb;
-            var n = _cellsAt[cy];
-            var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
-            var chord = MathHelper.TwoPi * ringRadius / n;
-            var cellAng = (WrapX(cx, n) + 0.5f) * (MathHelper.TwoPi / n);
-            var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
-            var waves = Math.Max(1, n / 24);
-            var speed = m == Material.Water ? 2.4f : m == Material.Acid ? 1.8f : 1.0f;
-            var wave = MathF.Sin(_time * speed - cellAng * waves);
-            var centre = Planet.Center + up * (ringRadius + wave * radial * 0.6f);
-            var body = SurfaceColor(m);
-            var col = new Color(body.R, body.G, body.B, (byte)(MatAlpha(m) * 255f));
-            r.Batch.Draw(r.Pixel, centre, null, col, cellAng + MathHelper.PiOver2,
-                new Vector2(0.5f, 0.5f), new Vector2(chord * 2.2f, radial * 0.9f),
+        foreach (var (cx, cy, mb) in _surface) DrawSurfaceBand(r, radial, cx, cy, (Material)mb);
+    }
+
+    /// <summary>One waterline band — shared by the cold pass and the lava (hot) pass, which
+    /// draw into different targets but want the same continuous undulating surface.</summary>
+    private void DrawSurfaceBand(Renderer r, float radial, int cx, int cy, Material m)
+    {
+        var n = _cellsAt[cy];
+        var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
+        var chord = MathHelper.TwoPi * ringRadius / n;
+        var cellAng = (WrapX(cx, n) + 0.5f) * (MathHelper.TwoPi / n);
+        var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
+        var waves = Math.Max(1, n / 24);
+        // Lava heaves slow and heavy; water laps, acid simmers in between.
+        var speed = m == Material.Water ? 2.4f : m == Material.Acid ? 1.8f
+                  : m == Material.Lava ? 0.7f : 1.0f;
+        var wave = MathF.Sin(_time * speed - cellAng * waves);
+        var centre = Planet.Center + up * (ringRadius + wave * radial * 0.6f);
+        var body = SurfaceColor(m);
+        var col = new Color(body.R, body.G, body.B, (byte)(MatAlpha(m) * 255f));
+        r.Batch.Draw(r.Pixel, centre, null, col, cellAng + MathHelper.PiOver2,
+            new Vector2(0.5f, 0.5f), new Vector2(chord * 2.2f, radial * 0.9f),
+            SpriteEffects.None, 0f);
+    }
+
+    /// <summary>Replay the lava ops collected by <see cref="DrawLiquids"/> into the HOT
+    /// coverage field. Game1 calls this inside the flame-RT batch (blob mode only), so lava
+    /// and the flamethrower stream threshold into one fire-family surface and composite
+    /// opaque with the hot bright rim — while staying a separate field from water/acid/oil,
+    /// which lava must never metaball-fuse with.</summary>
+    public void DrawHotLiquids(Renderer r)
+    {
+        var radial = (float)Planet.TileSize / Density;
+        var blob = r.LiquidBlob;
+        var blobOrigin = new Vector2(blob.Width / 2f, blob.Height / 2f);
+        foreach (var op in _hotOps)
+            r.Batch.Draw(op.Blob ? blob : r.Pixel, op.Pos, null, op.Col, op.Rot,
+                op.Blob ? blobOrigin : new Vector2(0.5f, 0.5f), op.Scale,
                 SpriteEffects.None, 0f);
-        }
+        // Lava's own surface line: the slow bright molten crest, after the bodies so its
+        // colour wins the replace blend.
+        foreach (var (cx, cy) in _hotSurface) DrawSurfaceBand(r, radial, cx, cy, Material.Lava);
     }
 
     /// <summary>Lava/acid glow emitters. Same LOD contract as <see cref="Draw"/> — the
