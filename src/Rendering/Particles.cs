@@ -1429,37 +1429,34 @@ public sealed class Particles
     /// DELIBERATELY INDEPENDENT of EmitAcidJet.</summary>
     /// <summary>One licking flame PIXEL rising off a burning cell (see
     /// Cells.PendingFlames) — Noita-style crisp grains, NOT part of the metaball fluid
-    /// body. <paramref name="fuse"/> is the ORIGIN cell's remaining fuel: the risen
-    /// sparks' lifetime and height scale with it, so as the origin dies down everything
-    /// ABOVE it expires faster and hugs lower — while the origin itself (the fuse-backed
-    /// burning cell at the surface) has the most fuel and outlasts all of it.</summary>
+    /// body. Every spark rolls a HEIGHT AMBITION with lifetime inversely tied to it:
+    /// base-huggers barely rise but glow LONG at the origin point, tall tongues shoot
+    /// high and die fast, and the continuum between fills the flame — so the origin
+    /// always reads as the persistent heart while the top flickers and vanishes.
+    /// (<paramref name="fuse"/> is currently unused — kept for future strength cues.)</summary>
     public void EmitLickingFlame(Vector2 pos, Vector2 up, byte fuse)
     {
         var side = new Vector2(-up.Y, up.X);
-        var strength = MathHelper.Clamp(fuse / 80f, 0f, 1f);
-        // Real flame SHAPE: born across a wide base, every lick's sideways velocity
-        // opposes its own base offset (drag bleeds it off) so paths angle inward as
-        // they rise — wide at the bottom, converging toward the axis: the taper.
-        // Outer licks live shorter (they only exist low on the flame), and 1-in-4 is a
-        // TALL tongue that shoots past the rest — the dancing tip licking the air.
         var s0 = ((float)_rng.NextDouble() - 0.5f) * 4f;
-        var tall = _rng.Next(4) == 0;
-        // Lifetime and rise are throttled by the origin's remaining fuel: a dying base
-        // spawns brief, low flickers; a fresh burn throws the full flame.
-        var vigor = 0.45f + 0.55f * strength;
-        var life = ((tall ? 0.55f : 0.35f) + (float)_rng.NextDouble() * 0.2f)
-                 * (1f - MathF.Abs(s0) * 0.12f) * vigor;
+        // Height ambition h: 0 = base-hugger, 1 = tall tongue. Rise grows with h²
+        // (most sparks stay low, the tall ones REALLY go); lifetime runs the other way —
+        // long-burning at the base, brief at the top. Outer births still live shorter
+        // (the taper), and MaxLife == Life so every spark is born white-hot.
+        var h = (float)_rng.NextDouble();
+        var life = MathHelper.Lerp(0.85f, 0.25f, h)
+                 * (0.8f + (float)_rng.NextDouble() * 0.4f)
+                 * (1f - MathF.Abs(s0) * 0.12f);
         _list.Add(new Particle
         {
             Position = pos + side * s0,
-            Velocity = (up * ((tall ? 34f : 18f) + (float)_rng.NextDouble() * (tall ? 30f : 18f))
-                     - side * (s0 * 5f)) * vigor,
+            Velocity = up * MathHelper.Lerp(3f, 52f, h * h)
+                     - side * (s0 * (1.5f + 3.5f * h)),
             Life = life,
-            MaxLife = life,   // born white-hot, cools over its own full path
+            MaxLife = life,
             Color = FlameTones[_rng.Next(3)],
             FadeColor = new Color(205, 75, 15),
             Size = 0.5f + (float)_rng.NextDouble() * 0.3f,
-            GravityScale = -0.35f,   // flame rises
+            GravityScale = -0.35f * h,   // only the climbers get buoyancy
             Drag = 1.6f,
             LightRadius = _rng.Next(4) == 0 ? 24f : 0f,
             LightColor = new Color(255, 160, 55),
