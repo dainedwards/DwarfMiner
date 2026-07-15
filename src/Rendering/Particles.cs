@@ -239,6 +239,27 @@ public sealed class Particles
         }
     }
 
+    /// <summary>Draw the Fluid-tagged grains of one material as soft coverage blobs into
+    /// the CURRENTLY-BEGUN liquid fill batch (LiquidFillBlend: colour replaces, alpha
+    /// accumulates). The metaball composite then thresholds them into one connected
+    /// tongue with a rim — the "water shooting out" body that absorbs the per-grain arc
+    /// spread of firing under acceleration. Blob colour is the grain's own stepped-fade
+    /// tone, so the tongue still cools white→orange→red along its length (neon→deep
+    /// green for acid).</summary>
+    public void DrawFluid(Renderer r, Material which)
+    {
+        var tex = r.LiquidBlob;
+        var org = new Vector2(tex.Width / 2f, tex.Height / 2f);
+        var scale = 5f / tex.Width;   // ~5 world px blob: neighbouring grains fuse
+        foreach (var p in _list)
+        {
+            if (p.Fluid != (byte)which) continue;
+            var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
+            var c = Color.Lerp(p.FadeColor, p.Color, MathF.Ceiling(t * 4f) * 0.25f);
+            r.Batch.Draw(tex, p.Position, null, c, 0f, org, scale, SpriteEffects.None, 0f);
+        }
+    }
+
     public void AddLights(Renderer r)
     {
         foreach (var p in _list)
