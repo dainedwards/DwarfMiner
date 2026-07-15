@@ -1145,12 +1145,11 @@ public sealed class Particles
 
     public void EmitFlameJet(Vector2 pos, Vector2 dir, float reach)
     {
-        // SLOW flow, FULL range: speed still scales with reach (the payload must land at
-        // the held stream's full distance — pinning it constant gutted the weapon's range,
-        // reverted per user), but at a much lower multiplier than the original 2.6, with
-        // grain lives sized so travel ≈ reach at every hold length (speed·life = 1.4r·0.7
-        // ≈ r). The flame drifts along the tongue instead of spraying down it.
-        var jetSpeed = reach * 1.4f;
+        // Flow speed EXACTLY matches Game1's payload launch (reach*1.7): any gap between
+        // the two puts the landing fire beyond (or short of) the visible tongue tip — the
+        // "mismatch" read. Still ~35% slower than the original 2.6 spray; grain lives are
+        // sized so travel ≈ reach at every hold length.
+        var jetSpeed = reach * 1.7f;
         // Many TINY grains rather than a few fat blobs — the stream reads as granular burning
         // fluid (Noita's pixel-fire) instead of soft puffballs. Grain colours pick from a
         // FOUR-TONE fire ramp (white-yellow → gold → orange → red-orange) so the stream body
@@ -1193,6 +1192,11 @@ public sealed class Particles
                 CollideTiles = true,
                 LightRadius = hot ? 60f : i % 3 == 0 ? 30f : 0f,
                 LightColor = new Color(255, 170, 70),
+                // Every flame grain that lands IS fire: it stamps a real Fire cell where
+                // it rests (StampAtWorld only fills open cells, the sim's fire budget
+                // throttles spread, and starved fire gutters ~0.8s — so the tongue's
+                // landing zone burns for real without becoming an arson machine).
+                LandMat = CellFx ? (byte)Material.Fire : (byte)0,
             });
         }
         // Fire is BUOYANT: tongues lick UP off the stream as it travels — the Noita curl.
@@ -1221,6 +1225,7 @@ public sealed class Particles
                 GravityScale = -0.5f,
                 Drag = 3.2f,
                 CollideTiles = true,
+                LandMat = CellFx ? (byte)Material.Fire : (byte)0,
             });
         }
         // Sooty flecks shed along the tongue — they inherit the arc, then buoy upward as they
@@ -1365,9 +1370,8 @@ public sealed class Particles
     /// payload is real Acid cells launched by Game1 — this is the visible mist around it.</summary>
     public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach)
     {
-        // Slow rope, full range — same retune as EmitFlameJet (and Game1's cell launch):
-        // low speed multiplier, lives sized so travel ≈ reach at every hold length.
-        var jetSpeed = reach * 1.4f;
+        // Speed matches Game1's payload launch exactly — see EmitFlameJet.
+        var jetSpeed = reach * 1.7f;
         // Many TINY droplets — a granular liquid rope, not fat green puffs. Lights on the
         // bright leading droplets only (see EmitFlameJet).
         for (var i = 0; i < 22; i++)
@@ -1405,6 +1409,11 @@ public sealed class Particles
                 CollideTiles = true,
                 LightRadius = i < 7 ? 16f : i % 3 == 0 ? 7f : 0f,
                 LightColor = new Color(150, 240, 80),
+                // Every droplet that lands IS acid: it stamps a real Acid cell where it
+                // rests, so the whole visible spray corrodes and pools — not just the 3
+                // launched payload cells. (Acid self-depletes as it eats — TryCorrode
+                // fizzes the cell to smoke — which keeps this from melting the planet.)
+                LandMat = CellFx ? (byte)Material.Acid : (byte)0,
             });
         }
         // A few caustic vapour wisps riding the rope FROM THE MUZZLE (never seeded
