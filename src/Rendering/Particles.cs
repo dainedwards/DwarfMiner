@@ -138,13 +138,16 @@ public sealed class Particles
                 }
                 next = p.Position;
             }
-            else if (p.CollideTiles && cells != null && cells.WaterAtWorld(next))
+            else if (p.CollideTiles && cells != null && cells.WaterAtWorld(next)
+                     && !cells.WaterAtWorld(p.Position))
             {
-                // Water surface: colliding effects interact with pools instead of sailing
-                // through the body. A fire-natured grain FIZZLES — its handoff becomes a
-                // steam wisp at the last position above the waterline; any other payload
-                // (acid droplets) stamps there instead, settling ON the surface. Rain and
-                // sparks throw a tiny crown of spray. Everything dies at the surface.
+                // Water surface CROSSING (entering water from outside — grains born
+                // underwater, like mining chips and rising bubbles, are exempt): colliding
+                // effects interact with pools instead of sailing through the body. A
+                // fire-natured grain FIZZLES — its handoff becomes a steam wisp at the
+                // last position above the waterline; any other payload (acid droplets)
+                // stamps there instead, settling ON the surface. Rain and sparks throw a
+                // tiny crown of spray. Everything dies at the surface.
                 if (p.LandMat == (byte)Material.Fire)
                     cells.StampAtWorld(p.Position, Material.Smoke);
                 else if (p.LandMat != 0)
