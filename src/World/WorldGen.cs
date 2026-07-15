@@ -1278,9 +1278,12 @@ public static class WorldGen
             // seam: soft steering lets a walk DRIFT below its band, which was harmless when
             // everything below was solid, but must never puncture the seam now that sealed
             // strata live under it.
+            var radius2 = rng.Next(3) == 0 ? 11f : 8f;   // rolled unconditionally: bite gating must not shift the rng stream
             if ((pos - planet.Center).LengthSquared() >= hardFloorPx * hardFloorPx
-                && !NearDenOrCity(planet, pos))
-                CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 11f : 8f);
+                && !NearDenOrCity(planet, pos)
+                && (!localCeiling || (pos - planet.Center).Length()
+                    <= (planet.SurfaceRadiusAt(pos) - 28f) * Planet.TileSize))
+                CarveWormDisk(planet, pos, radius2);
             if (branchBudget > 0 && s > length / 4 && rng.Next(55) == 0)
             {
                 branchBudget--;
@@ -1288,7 +1291,7 @@ public static class WorldGen
                 // stitch neighbouring worm systems into one continuous warren.
                 CarveWorm(planet, rng, pos,
                     heading + (rng.Next(2) == 0 ? 1f : -1f) * (0.8f + (float)rng.NextDouble()),
-                    length / 2, length > 80 ? 1 : 0, minFrac, hardFloorPx);
+                    length / 2, length > 80 ? 1 : 0, minFrac, hardFloorPx, localCeiling);
             }
         }
     }
