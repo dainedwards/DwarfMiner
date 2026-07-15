@@ -202,6 +202,7 @@ public sealed class Particles
     {
         foreach (var p in _list)
         {
+            if (FluidMode && p.Fluid != 0) continue;   // rendered by DrawFluid instead
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             // Noita palette rule: colours cool in FOUR HARD STEPS, not a smooth ramp — a
             // spark is white, then orange, then red, then a dark ember, each a distinct
