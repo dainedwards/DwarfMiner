@@ -2472,6 +2472,59 @@ public sealed class Cells
         WakeFreeSurfaces(minRing * Density, maxRing * Density);
     }
 
+    /// <summary>Flat liquid body colour: ONE colour per material plus a slow shimmer band
+    /// travelling smoothly across the pool. The old per-cell hash jitter and hash-phased
+    /// shimmer made adjacent cells sparkle out of sync — which is exactly what read as "a
+    /// bunch of stacked pixels" instead of one body of water. Phase is a smooth function
+    /// of position (an INTEGER multiple of the ring angle, so it's continuous across the
+    /// wrap seam). Returns an opaque colour; callers apply translucency.</summary>
+    private Color LiquidBody(Material m, int cx, int cy)
+    {
+        // Flying liquid cells land here with world px coords (see Draw) — out of row
+        // bounds, so they get a coarse positional phase instead of an angular one.
+        float ang;
+        if (cy >= 0 && cy < Height)
+        {
+            var n = _cellsAt[cy];
+            ang = (WrapX(cx, n) + 0.5f) / n * MathHelper.TwoPi;
+        }
+        else ang = cx * 0.01f;
+        switch (m)
+        {
+            case Material.Water:
+                // A conducting lightning strike flashes the whole pool electric white-blue
+                // for a beat (see ZapWater).
+                if (_zapUntil > _time && cy >= 0 && cy < Height
+                    && _zapped.Contains(_rowOffsets[cy] + WrapX(cx, _cellsAt[cy])))
+                    return new Color(216, 236, 255);
+                return Tint(new Color(46, 90, 178),
+                    (int)(MathF.Sin(_time * 1.6f + ang * 17f + cy * 0.045f) * 10f));
+            case Material.Acid:
+                return Tint(new Color(120, 200, 40),
+                    (int)(MathF.Sin(_time * 2.0f + ang * 23f + cy * 0.05f) * 12f));
+            default: // Oil — near-black slick with a slow crawling sheen.
+                return Tint(new Color(38, 32, 26),
+                    (int)(MathF.Sin(_time * 1.1f + ang * 13f + cy * 0.035f) * 7f));
+        }
+    }
+
+    /// <summary>Translucency for the plain (no-shader) liquid RT fill — carried in the RT's
+    /// alpha channel and applied once by the NonPremultiplied composite blit.</summary>
+    private static float MatAlpha(Material m) => m switch
+    {
+        Material.Water => 0.78f,
+        Material.Acid => 0.82f,
+        _ => 0.94f,
+    };
+
+    /// <summary>Waterline band colour — the brighter surface strip over an open pool.</summary>
+    private static Color SurfaceColor(Material m) => m switch
+    {
+        Material.Water => new Color(110, 175, 230),
+        Material.Acid => new Color(178, 235, 96),
+        _ => new Color(84, 72, 58),
+    };
+
     private Color ColorFor(Material m, int cx, int cy, byte srcByte)
     {
         var hash = (cx * 73856093) ^ (cy * 19349663);
