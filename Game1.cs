@@ -2720,14 +2720,38 @@ public sealed partial class DwarfMinerGame : Game
         }
     }
 
-    private void FireNuke(Vector2 worldCursor)
+    // ── Energy ball (the old "nuke") — a charge-up alien cannon ─────────────────────────
+    private float _energyCharge;      // 0..1 while winding up
+    private bool _energyCharging;
+    private float _energyHumT;        // throttle for the rising charge hum
+    private const float EnergyChargeTime = 1.6f;   // seconds to full charge
+
+    /// <summary>Non-linear charge → damage/size factor: a half charge is only ~30% power, a
+    /// full charge is 100%. Pow(charge, 1.74) hits 0.30 at 0.5 and 1.0 at 1.0.</summary>
+    private static float EnergyPower(float charge) => MathF.Pow(MathHelper.Clamp(charge, 0f, 1f), 1.74f);
+
+    /// <summary>Fire the energy ball at its current charge. Reads _energyCharge (set by the
+    /// hold-to-charge input). The orb's size, blast, damage, and alien-metal bite all scale
+    /// non-linearly with the charge — a tapped shot is a firecracker, a full charge levels a
+    /// block.</summary>
+    private void FireEnergyBall(Vector2 worldCursor)
     {
         var dir = worldCursor - _run.Player.Position;
         if (dir.LengthSquared() < 0.01f) return;
         dir.Normalize();
-        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir, new Color(255, 90, 230));
-        _run.Projectiles.Add(new Projectile(_run.Player.Position + dir * 6f, dir * 240f, 1500f, 3f, ProjectileKind.Nuke));
+        var f = EnergyPower(_energyCharge);
+        _particles.EmitMuzzleFlash(_run.Player.Position + dir * 7f, dir,
+            Color.Lerp(new Color(150, 120, 255), new Color(255, 120, 240), f));
+        var p = new Projectile(_run.Player.Position + dir * 6f, dir * 240f, 1500f * f, 3f, ProjectileKind.Nuke);
+        p.Radius *= 0.6f + 0.8f * f;                        // the ball is bigger the harder it's charged
+        p.ExplosionRadius *= 0.45f + 0.55f * f;
+        p.CraterTiles = Math.Max(2, (int)(p.CraterTiles * (0.4f + 0.6f * f)));
+        p.AlloyMinePower = Math.Max(2, (int)(12 * f));      // full charge = 12 (breaks alien metal ~4 hits)
+        p.ChargeScale = 0.6f + 0.8f * f;                    // drives the drawn orb size
+        _run.Projectiles.Add(p);
         _run.Player.ShootCooldown = 0.6f;
+        _run.Shake = MathF.Max(_run.Shake, 0.3f + 0.5f * f);
+        PlayAt("explode", _run.Player.Position, 0.4f + 0.4f * f, pitch: 0.3f - 0.5f * f);
     }
 
     private void FireDynamite(Vector2 worldCursor)
