@@ -324,6 +324,15 @@ public sealed class Creature
             case CreatureKind.Pyro:
                 Radius = 4.4f; Health = 38f; MoveSpeed = 30f; ContactDamage = 10f;
                 break;
+            case CreatureKind.Quillwing:
+                Radius = 3.6f; Health = 14f; MoveSpeed = 52f; ContactDamage = 5f;
+                break;
+            case CreatureKind.Warpwisp:
+                Radius = 3.8f; Health = 18f; MoveSpeed = 40f; ContactDamage = 8f;
+                break;
+            case CreatureKind.Thornback:
+                Radius = 4.4f; Health = 30f; MoveSpeed = 22f; ContactDamage = 9f;
+                break;
         }
     }
 
