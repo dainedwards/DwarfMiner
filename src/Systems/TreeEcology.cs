@@ -60,7 +60,7 @@ public static class TreeEcology
             var col = ColAt(p, rr, s.Angle);
             var here = p.Get(rr, col);
             if (here is TileKind.Dirt or TileKind.Grass or TileKind.Snow or TileKind.MossStone
-                or TileKind.Gravel or TileKind.Basalt or TileKind.Sand)
+                or TileKind.Gravel or TileKind.Basalt)
                 p.Set(rr, col, TileKind.TreeRoot);
         }
     }
