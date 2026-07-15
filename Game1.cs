@@ -1804,7 +1804,9 @@ public sealed partial class DwarfMinerGame : Game
         }
 
         // Physics + particles + cells update.
+        var tPerf = FramePerf.Now();
         _run.Physics.Update(dt);
+        FramePerf.Add("phys", tPerf);
         // A slab shearing free gets its own crack — deeper than the dust-crumble boom.
         if (_run.Physics.RigidDetachesThisTick > 0)
             _sfx.Play("collapse", MathHelper.Clamp(_run.Physics.RigidDetachesThisTick / 120f, 0.3f, 0.9f),
