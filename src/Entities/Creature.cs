@@ -1051,6 +1051,89 @@ public sealed class Creature
         Velocity = Vector2.Lerp(Velocity, dir * speed * speedMul, MathF.Min(1f, 4f * dt));
     }
 
+    /// <summary>Quillwing: a barbed cave flyer. It flits through the caverns on the CaveEye's
+    /// flight brain and, when it sights the dwarf at mid-range, looses a FAN of three bone
+    /// quills at once — a spread you strafe out of, not a single dodge.</summary>
+    private void TickQuillwing(float dt, Planet planet, Vector2 toPlayer, float dist,
+        float speedMul, List<TitanProjectile>? shots)
+    {
+        TickCaveEye(dt, planet, toPlayer, dist, speedMul, aggro: 240f);
+        _cd -= dt;
+        if (_swing > 0f) _swing -= dt;
+        if (dist is > 40f and < 220f && _cd <= 0f && shots is not null && dist > 0.01f
+            && HasLineOfSight(planet, toPlayer, dist))
+        {
+            var baseAng = MathF.Atan2(toPlayer.Y, toPlayer.X);
+            for (var i = -1; i <= 1; i++)     // three quills in a shallow fan
+            {
+                var a = baseAng + i * 0.20f;
+                var qd = new Vector2(MathF.Cos(a), MathF.Sin(a));
+                shots.Add(new TitanProjectile(Position + qd * (Radius + 2f), qd * 300f,
+                    TitanShotKind.Spike, damage: 5f));
+            }
+            _cd = 2.0f + (float)Random.Shared.NextDouble() * 0.9f;
+            _swing = 0.25f;
+        }
+    }
+
+    /// <summary>Warpwisp: a drifting eldritch caster. It hovers at a standoff on the CaveEye
+    /// flight brain and, on a slow cadence, lobs a fat VIOLET hex bolt that drifts in slowly
+    /// and bores through a tile or two of cover (TitanShotKind.Void) — you can't just duck
+    /// behind a wall, you have to break its sightline and keep moving.</summary>
+    private void TickWarpwisp(float dt, Planet planet, Vector2 toPlayer, float dist,
+        float speedMul, List<TitanProjectile>? shots)
+    {
+        TickCaveEye(dt, planet, toPlayer, dist, speedMul, aggro: 260f);
+        _cd -= dt;
+        if (_swing > 0f) _swing -= dt;
+        if (dist is > 60f and < 280f && _cd <= 0f && shots is not null && dist > 0.01f
+            && HasLineOfSight(planet, toPlayer, dist))
+        {
+            var dir = toPlayer / dist;
+            shots.Add(new TitanProjectile(Position + dir * (Radius + 3f), dir * 120f,
+                TitanShotKind.Void, damage: 10f));
+            _cd = 2.4f + (float)Random.Shared.NextDouble() * 1.0f;
+            _swing = 0.4f;
+        }
+    }
+
+    /// <summary>Thornback: a squat spine-beetle grenadier. It trundles the floor like a grub,
+    /// holds a mid-range firing band, and lobs a high-arcing barb-mortar (a ballistic Dart)
+    /// OVER walls onto the dwarf — no line of sight needed — then shuffles to a fresh spot
+    /// between volleys so it's never an easy sitting target.</summary>
+    private void TickThornback(float dt, Planet planet, Vector2 up, Vector2 right,
+        Vector2 toPlayer, float dist, float speedMul, List<TitanProjectile>? shots)
+    {
+        _cd -= dt;
+        if (_swing > 0f) _swing -= dt;
+        float moveAxis;
+        if (dist < 300f)
+        {
+            var tDist = Vector2.Dot(toPlayer, right);
+            moveAxis = dist < 120f ? -MathF.Sign(tDist)   // too close — back off
+                     : dist > 210f ? MathF.Sign(tDist)    // too far — close in
+                     : 0f;
+        }
+        else
+        {
+            Wander -= dt;
+            if (Wander <= 0) Wander = 2.5f + (float)Random.Shared.NextDouble() * 3f;
+            moveAxis = MathF.Sin(Wander * 1.8f) * 0.4f;
+        }
+        GroundMove(dt, planet, up, right, moveAxis, speedMul);
+
+        if (dist is > 90f and < 250f && _cd <= 0f && shots is not null && dist > 0.01f)
+        {
+            // A high mortar arc — heavy loft so the barb clears walls and drops onto the target.
+            var dir = toPlayer / dist;
+            var aim = Vector2.Normalize(dir + up * (0.55f + dist * 0.0016f));
+            shots.Add(new TitanProjectile(Position + aim * (Radius + 2f), aim * 210f,
+                TitanShotKind.Dart, damage: 8f));
+            _cd = 2.6f + (float)Random.Shared.NextDouble() * 1.0f;
+            _swing = 0.35f;
+        }
+    }
+
     // ---------------------------------------------------------------- belt natives
 
     /// <summary>Moonlet: a boulder-parasite that treats anything massive as a primary. Far
