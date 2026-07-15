@@ -1331,8 +1331,10 @@ public sealed class Particles
     /// the arc keeps matching the rest of the world's ballistics.</summary>
     private const float HoseArcGravity = 2.25f;
 
+    /// <summary>Real-flamethrower ramp: yellow core → gold-orange → orange-red → deep red
+    /// (the old set leaned pale/white and read as gas-torch, not liquid-fuel fire).</summary>
     private static readonly Color[] FlameTones =
-        { new(255, 250, 200), new(255, 220, 110), new(255, 170, 60), new(255, 120, 35) };
+        { new(255, 235, 150), new(255, 180, 50), new(255, 120, 25), new(230, 75, 20) };
     private static readonly Color[] AcidTones =
         { new(215, 255, 100), new(130, 225, 55), new(130, 225, 55), new(70, 150, 35) };
 
