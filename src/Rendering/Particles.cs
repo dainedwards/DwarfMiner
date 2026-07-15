@@ -145,7 +145,12 @@ public sealed class Particles
                         // the others sag down — dancing fire flecks, not falling grit.
                         GravityScale = ((float)_rng.NextDouble() * 2f - 1f) * 1.6f,
                         Drag = 1.4f,
-                        CollideTiles = true,
+                        // NO ground interaction at all (per user): sparks don't bounce,
+                        // rest, or ricochet — they're pure light, fading out wherever
+                        // their moment ends (their sub-half-second life keeps any
+                        // into-the-ground overshoot invisible at 0.5 px). Only the
+                        // STREAM's carriers touch the world.
+                        CollideTiles = false,
                         LightRadius = _rng.Next(5) == 0 ? 14f : 0f,
                         LightColor = new Color(255, 190, 80),
                         // MUCH shorter streak than the shared default (was up to 8 px).
