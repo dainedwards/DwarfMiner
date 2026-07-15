@@ -334,7 +334,10 @@ public sealed class CharacterScreen
             if (Equipment.IsEquippable(ctx.Id) && !player.Equipment.IsEquipped(ctx.Id))
                 rows.Add(("equip", "EQUIP", true));
             if (UpgradeInfo?.Invoke(ctx.Id) is { } up)
-                rows.Add(("upgrade", up.label, up.can || true));   // clickable to view the detail
+                // Always clickable — it opens the upgrade detail so you can SEE the cost even
+                // when you can't yet afford it. "MAXED" upgrades read as disabled.
+                rows.Add(("upgrade", up.label.StartsWith("UPGRADE:") ? "UPGRADE ▸" : up.label,
+                    !up.label.Contains("MAXED")));
             var count = player.Inventory.Count(ctx.Id);
             rows.Add(("drop1", "DROP ONE", count > 0));
             rows.Add(("dropall", $"DROP ALL ({count})", count > 0));
