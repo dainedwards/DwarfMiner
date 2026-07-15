@@ -144,6 +144,7 @@ public sealed class Renderer
             _fxCol2 = _tileFx.Parameters["MatrixCol2"];
             _fxCol3 = _tileFx.Parameters["MatrixCol3"];
             _fxPs = _tileFx.Parameters["PsParams"];
+            _fxPs2 = _tileFx.Parameters["PsParams2"];
         }
         _stars = MakeStarfield(gd, 256);
         _atmoTex = MakeAtmosphere(gd, 512);
