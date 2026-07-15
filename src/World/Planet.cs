@@ -352,7 +352,7 @@ public sealed class Planet
                 var nn = TilesAt(r);
                 var t0 = (int)(((cy % n + n) % n + 0.5f) / n * nn);
                 var found = false;
-                for (var d = 0; d >= -1; d = d == 0 ? 1 : d == 1 ? -1 : -2)
+                foreach (var d in _doorSlack)
                 {
                     var t = ((t0 + d) % nn + nn) % nn;
                     if (!IsDoor(Get(r, t))) continue;
