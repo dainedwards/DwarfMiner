@@ -2547,29 +2547,34 @@ public static class SimTest
         Check($"rain: shower permanently raises the pool ({before} -> {after})",
             after >= before + 30);
 
-        // Dry control: a rimmed obsidian tray floating in the sky band — the film in it
-        // never reaches a tile deep and touches no permanent water, so it must dry out.
-        var shelfR = surfaceR + 8;
-        var nS = planet.TilesAt(shelfR);
-        var s0 = (int)(4.0f / MathHelper.TwoPi * nS);
-        for (var d = -7; d <= 7; d++)
+        // Dry control: an identical obsidian pocket with NO seeded water, far around the
+        // ring — the light shower films across its floor (nowhere near a tile deep, no
+        // permanent water to join), so it must dry without a trace.
+        const float dAng = 4.0f;
+        for (var r = surfaceR - 10; r <= surfaceR - 1; r++)
         {
-            var tt = ((s0 + d) % nS + nS) % nS;
-            planet.Set(shelfR, tt, TileKind.Obsidian);
-            if (d is -7 or 7) planet.Set(shelfR + 1, tt, TileKind.Obsidian);
+            var n = planet.TilesAt(r);
+            var t0 = (int)(dAng / MathHelper.TwoPi * n);
+            for (var d = -8; d <= 8; d++)
+            {
+                var tt = ((t0 + d) % n + n) % n;
+                var edge = r == surfaceR - 10 || d is -8 or 8;
+                planet.Set(r, tt, edge ? TileKind.Obsidian : TileKind.Sky);
+            }
         }
-        var trayCentre = planet.TileToWorld(shelfR + 1, (int)(4.0f / MathHelper.TwoPi * planet.TilesAt(shelfR + 1)));
-        var upT = planet.UpAt(trayCentre);
+        var nD = planet.TilesAt(surfaceR - 9);
+        var dryCentre = planet.TileToWorld(surfaceR - 9, (int)(dAng / MathHelper.TwoPi * nD));
+        var upT = planet.UpAt(dryCentre);
         var rightT = new Vector2(-upT.Y, upT.X);
         for (var i = 0; i < 300; i++)
         {
             if (i % 10 == 0)
-                cells.SpawnRainWater(trayCentre + upT * 6f
+                cells.SpawnRainWater(dryCentre + upT * 8f
                     + rightT * ((float)rng.NextDouble() * 40f - 20f));
             cells.Update(dt);
         }
         for (var i = 0; i < 1500; i++) cells.Update(dt);
-        var left = cells.CountWaterNear(trayCentre, 30f);
+        var left = cells.CountWaterNear(dryCentre, 30f);
         Check($"rain: thin film on dry rock still dries out ({left} cells left)", left <= 6);
     }
 
