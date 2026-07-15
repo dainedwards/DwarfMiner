@@ -1995,7 +1995,7 @@ public sealed class Cells
         Probe(cx + 1, cy);
         Probe(cx - 1, cy);
         var (icx, icy) = InnerCell(cx, cy);
-        Probe(icx, icy);
+        Probe(icx, icy, below: true);
         if (cy < Height - 1)
         {
             var oc = OuterCellCount(cx, cy);
