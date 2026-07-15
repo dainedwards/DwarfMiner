@@ -308,6 +308,10 @@ public sealed class Cells
 
     public Material Get(int cx, int cy) => InBounds(cx, cy) ? (Material)_mat[Idx(cx, cy)] : Material.Empty;
 
+    /// <summary>Source TileKind a dust cell came from (Sky for non-dust). "Dust" is only a
+    /// state — this is the actual material (stone, wood, ore…) so the readout can name it.</summary>
+    public TileKind SrcTileAt(int cx, int cy) => InBounds(cx, cy) ? (TileKind)_srcTile[Idx(cx, cy)] : TileKind.Sky;
+
     public Vector2 CellToWorld(int cx, int cy)
     {
         var n = CellsAt(cy);
