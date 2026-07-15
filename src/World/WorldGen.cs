@@ -1591,7 +1591,12 @@ public static class WorldGen
             {
                 var (fr, ft) = interiorFloor[rng.Next(interiorFloor.Count)];
                 if (fr - 1 >= 2 && planet.Get(fr - 1, ft) == TileKind.LizardBrick)
-                    planet.Set(fr - 1, ft, i == 0 ? TileKind.Ruby : TileKind.GoldOre);
+                {
+                    // Gold seams set into the brick course, and the centrepiece ruby is EMBEDDED
+                    // in a gold seam (a gem inside the material, not a solid ruby block).
+                    planet.Set(fr - 1, ft, TileKind.GoldOre);
+                    if (i == 0) planet.SetGem(fr - 1, ft, TileKind.Ruby);
+                }
             }
             // The prize: one or two treasure chests standing on the vault floor. The dwarf
             // opens them with E for a pile of gold and a shot at a rare gem (see Game1's chest
