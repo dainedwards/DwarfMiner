@@ -1225,6 +1225,7 @@ public sealed class Particles
                 GravityScale = -0.5f,
                 Drag = 3.2f,
                 CollideTiles = true,
+                LandMat = CellFx ? (byte)Material.Fire : (byte)0,
             });
         }
         // Sooty flecks shed along the tongue — they inherit the arc, then buoy upward as they
