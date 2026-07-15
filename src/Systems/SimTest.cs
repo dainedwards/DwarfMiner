@@ -404,6 +404,22 @@ public static class SimTest
             Check("ecosystem: planting threads roots underground", RootCount(p, site) >= 1,
                 $"{RootCount(p, site)} root tiles");
 
+            // Branches: a full-grown tall tree carries boughs OFF the main trunk column
+            // (trunk wood in the side columns), so it reads as a tree, not a bare pole.
+            var boughs = 0;
+            for (var h = 2; h <= site.Height; h++)
+            {
+                var rr = site.GroundR + h;
+                var nn = p.TilesAt(rr);
+                var col = Col(p, rr, site.Angle);
+                for (var d = -2; d <= 2; d++)
+                {
+                    if (d == 0) continue;
+                    if (p.Get(rr, ((col + d) % nn + nn) % nn) == TileKind.TreeTrunk) boughs++;
+                }
+            }
+            Check("ecosystem: a tall tree grows side branches", boughs >= 1, $"{boughs} bough tiles");
+
             // Fell it: clear the standing tree, keep the roots. It stops being standing.
             ClearCrown(p, site);
             site.Standing = false;
