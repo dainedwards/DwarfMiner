@@ -349,15 +349,15 @@ public sealed class Player
     }
 
     /// <param name="moveAxis">-1 left, 0 idle, +1 right (in player-local tangent)</param>
-    /// <param name="jumpHeld">whether the jump button is currently held (continuous, not edge).
-    /// The Player tracks the previous frame's value to derive the press edge internally — this
-    /// way variable-jump-height (hold = full apex / tap = short hop) works without the caller
-    /// having to think about it.</param>
-    /// <param name="jetHeld">whether the jetpack button (Space) is held. Separate from jump
-    /// now: W jumps, Space (while airborne) burns the jetpack — a W does NOT light the pack.</param>
+    /// <param name="jumpHeld">whether the jump button (Space) is currently held (continuous,
+    /// not edge). The Player tracks the previous frame's value to derive the press edge
+    /// internally — this way variable-jump-height (hold = full apex / tap = short hop) works
+    /// without the caller having to think about it. Space is ALSO the jetpack throttle,
+    /// Noita-style: a grounded press jumps, and keeping it held past the tap window lights
+    /// the pack; an airborne press lights the pack immediately.</param>
     /// <param name="verticalAxis">-1 down, 0 idle, +1 up (along local up). Used in fly mode and
     /// when the player is overlapping a ladder tile (climb up/down).</param>
-    public void Update(float dt, Planet planet, int moveAxis, bool jumpHeld, bool jetHeld, int verticalAxis = 0)
+    public void Update(float dt, Planet planet, int moveAxis, bool jumpHeld, int verticalAxis = 0)
     {
         var up = Up(planet);
         var right = new Vector2(-up.Y, up.X);
