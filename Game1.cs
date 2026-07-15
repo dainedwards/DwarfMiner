@@ -4981,6 +4981,7 @@ public sealed partial class DwarfMinerGame : Game
 
         // Re-wired every frame because _run.Physics is recreated on restart while _renderer persists.
         _renderer.TrembleTiles = _run.Physics.TremblingTiles;
+        _renderer.TreeBiome = _run.Def.Biome;   // trees paint in this world's own palette
         _renderer.DrawWorld(_run.Planet, _camera);
 
         _renderer.BeginEntities(_camera);
