@@ -104,8 +104,8 @@ public static class LavaProbe
             }
             ScanLava(initial);
 
-            const float dt = 1f / 60f;
-            for (var tick = 0; tick < 120 * 60; tick++) cells.Update(dt);
+            const float step = 1f / 60f;
+            for (var tick = 0; tick < 120 * 60; tick++) cells.Update(step);
 
             var after = new System.Collections.Generic.HashSet<(int r, int t)>();
             ScanLava(after);
