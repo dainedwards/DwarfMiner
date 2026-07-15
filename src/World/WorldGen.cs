@@ -49,10 +49,11 @@ public static class WorldGen
         // collision and sand all agree on — the organic large-scale shape the edge shader's
         // 1-px carve budget can't provide. Downward-biased like the asteroid lumps (valleys
         // have the whole crust below; crests share the fixed sky headroom with mountains).
-        // NOTE: the extra noise draw shifts every downstream roll — same-seed worlds lay
-        // out differently than before this change (no cross-version seed promise exists).
+        // surfB draws from an ISOLATED rng (the worms/veins/flora pattern): a draw on the
+        // shared stream would relocate every downstream placement — mountains, lakes,
+        // districts, cave corridors — and the layout-sensitive SimTest scenarios with them.
         var surfA = MakeAngularNoise(rng, 8);
-        var surfB = MakeAngularNoise(rng, 64);
+        var surfB = MakeAngularNoise(new Random(seed ^ 0x0511), 64);
         var surfC = MakeAngularNoise(rng, 128);
         var ridge = MakeAngularNoise(rng, 512);
 
