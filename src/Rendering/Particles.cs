@@ -632,7 +632,7 @@ public sealed class Particles
             MaxLife = 1.2f,
             Color = new Color(190, 220, 245),
             FadeColor = new Color(120, 160, 200),
-            Size = 1f + (float)_rng.NextDouble() * 0.8f,
+            Size = 0.8f + (float)_rng.NextDouble() * 0.4f,
             GravityScale = -0.18f,
             Drag = 0.9f,
         });
