@@ -205,7 +205,10 @@ public static class Weather
             var ang = c.Angle + ((float)rng.NextDouble() - 0.5f) * 2f * c.HalfWidth;
             var ground = SpawnDirector.FindSurfaceSpawn(planet, ang, planet.Radius);
             var up = planet.UpAt(ground);
-            var start = ground + up * (c.Alt * (0.5f + (float)rng.NextDouble() * 0.6f));
+            // Alt is the cloud's radius from the planet centre — convert to height above
+            // this bearing's ground so drops always start between cloud-base and ground.
+            var altAbove = MathF.Max(30f, c.Alt - (ground - planet.Center).Length());
+            var start = ground + up * (altAbove * (0.5f + (float)rng.NextDouble() * 0.6f));
             if (kind == RainKind.Snow) particles.EmitSnow(start, -up, color);
             else particles.EmitRain(start, -up, color);
         }
