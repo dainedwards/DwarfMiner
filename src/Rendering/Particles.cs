@@ -214,20 +214,23 @@ public sealed class Particles
         }
         // One tile-coloured chip flung perpendicular to the drill direction so the wall
         // reads as actively shedding fragments.
-        var perp = new Vector2(-dirToTile.Y, dirToTile.X) * (_rng.NextDouble() < 0.5 ? 1f : -1f);
-        _list.Add(new Particle
+        for (var i = 0; i < 2; i++)
         {
-            Position = pos,
-            Velocity = perp * (15f + (float)_rng.NextDouble() * 20f),
-            Life = 0.25f + (float)_rng.NextDouble() * 0.15f,
-            MaxLife = 0.40f,
-            Color = baseColor,
-            FadeColor = fade,
-            Size = 1f,
-            GravityScale = 1f,
-            Drag = 1.5f,
-            CollideTiles = true,
-        });
+            var perp = new Vector2(-dirToTile.Y, dirToTile.X) * (_rng.NextDouble() < 0.5 ? 1f : -1f);
+            _list.Add(new Particle
+            {
+                Position = pos,
+                Velocity = perp * (15f + (float)_rng.NextDouble() * 20f),
+                Life = 0.25f + (float)_rng.NextDouble() * 0.15f,
+                MaxLife = 0.40f,
+                Color = baseColor,
+                FadeColor = fade,
+                Size = 0.8f,
+                GravityScale = 1f,
+                Drag = 1.5f,
+                CollideTiles = true,
+            });
+        }
     }
 
     /// <summary>Continuous mining-laser beam: hot glow motes strung along the beam line plus
