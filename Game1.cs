@@ -2110,6 +2110,18 @@ public sealed partial class DwarfMinerGame : Game
             _run.Cells.PendingGemDrops.Clear();
         }
 
+        // Bubble sites: quench boils and drowned fire gouts queue positions in the cell sim
+        // (it has no particle access); each becomes a small train of rising bubbles.
+        if (_run.Cells.PendingBubbles.Count > 0)
+        {
+            foreach (var bpos in _run.Cells.PendingBubbles)
+            {
+                var bup = _run.Planet.UpAt(bpos);
+                for (var b = 0; b < 3; b++) _particles.EmitBubble(bpos, bup);
+            }
+            _run.Cells.PendingBubbles.Clear();
+        }
+
         // Pickups — settle where they fell and collect by walk-over (no magnet: the player
         // goes to the gem). No decay and no distance cull: a dropped gem is exactly the
         // thing the player came down here for.
@@ -3478,6 +3490,44 @@ public sealed partial class DwarfMinerGame : Game
         const float range = 160f;
         const float chainReach = 70f;
 
+        // Conduction: a strike that lands in water electrifies the WHOLE connected pool for
+        // a beat — the cell grid flood-fills and flash-tints it (Cells.ZapWater), arcs
+        // skitter across the surface, and everything submerged takes the hit, the dwarf
+        // included. This is the classic "never stand in the pool you shoot" rule.
+        var conducted = false;
+        void Conduct(Vector2 at)
+        {
+            if (conducted) return;
+            var arcs = _run.Cells.ZapWater(at);
+            if (arcs.Count == 0) return;
+            conducted = true;
+            for (var a = 0; a < arcs.Count && a < 4; a++) _particles.EmitLightning(at, arcs[a]);
+            foreach (var c in _run.Creatures)
+                if (_run.Cells.ZappedAt(c.Position))
+                {
+                    c.Health -= 16f;
+                    c.HitFlash = 0.15f;
+                }
+            if (_run.Cells.ZappedAt(_run.Player.Position)) _run.Player.TakeDamage(10f);
+            _run.Shake = MathF.Max(_run.Shake, 0.25f);
+        }
+
+        // Does the beam meet open water before anything else? March the aim line; rock
+        // shadows the pool, and a closer body target still wins below.
+        Vector2? waterHit = null;
+        var waterDist = range;
+        for (var d = 10f; d < range; d += 5f)
+        {
+            var probe = _run.Player.Position + dir * d;
+            if (_run.Planet.IsSolidAt(probe)) break;
+            if (_run.Cells.CountWaterNear(probe, 2.5f) >= 2)
+            {
+                waterHit = probe;
+                waterDist = d;
+                break;
+            }
+        }
+
         // First victim: nearest creature roughly along the aim; the titan competes too.
         var from = _run.Player.Position + dir * 6f;
         Creature? victim = null;
@@ -3507,16 +3557,25 @@ public sealed partial class DwarfMinerGame : Game
             _run.Titan.Health -= damage;
             _run.Titan.HitFlash = 0.15f;
         }
-        else if (victim is null)
+        else if (victim is null || (waterHit is { } wh0 && waterDist < bestDist))
         {
-            // No body in reach: the arc grounds out on the first rock along the aim.
-            var end = _run.Player.Position + dir * range;
-            for (var d = 8f; d < range; d += 4f)
+            if (waterHit is { } wh && (victim is null || waterDist < bestDist))
             {
-                var probe = _run.Player.Position + dir * d;
-                if (_run.Planet.IsSolidAt(probe)) { end = probe; break; }
+                // The pool is the nearest conductor: the arc dives in and fans out.
+                _particles.EmitLightning(from, wh);
+                Conduct(wh);
             }
-            _particles.EmitLightning(from, end);
+            else
+            {
+                // No body in reach: the arc grounds out on the first rock along the aim.
+                var end = _run.Player.Position + dir * range;
+                for (var d = 8f; d < range; d += 4f)
+                {
+                    var probe = _run.Player.Position + dir * d;
+                    if (_run.Planet.IsSolidAt(probe)) { end = probe; break; }
+                }
+                _particles.EmitLightning(from, end);
+            }
         }
         else
         {
@@ -3530,6 +3589,10 @@ public sealed partial class DwarfMinerGame : Game
                 victim.Health -= damage;
                 victim.HitFlash = 0.15f;
                 hit.Add(victim);
+                // A victim standing in water dumps the arc into its pool — one conduction
+                // per shot, and the chain keeps forking as normal on top of it.
+                if (!conducted && _run.Cells.CountWaterNear(victim.Position, 3f) >= 2)
+                    Conduct(victim.Position);
                 damage *= 0.7f;
                 source = victim.Position;
                 Creature? next = null;
@@ -3920,6 +3983,13 @@ public sealed partial class DwarfMinerGame : Game
         if (underwater || airlessNoHelmet)
         {
             p.Oxygen = MathF.Max(0f, p.Oxygen - AirDrainPerSecond * dt);
+            // Exhaled air: a thin bubble trail from the head while it's under — the AIR
+            // bar's visual twin, and the classic "someone is down there" tell.
+            if (underwater && Random.Shared.NextDouble() < dt * 2.5f)
+            {
+                var bubUp = _run.Planet.UpAt(p.Position);
+                _particles.EmitBubble(p.Position + bubUp * (p.Radius + 1f), bubUp);
+            }
             if (p.Oxygen <= 0f)
             {
                 // Suffocation/drowning ignores armor — no plate stops you running out of air.
@@ -5155,6 +5225,7 @@ public sealed partial class DwarfMinerGame : Game
         // Re-wired every frame because _run.Physics is recreated on restart while _renderer persists.
         _renderer.TrembleTiles = _run.Physics.TremblingTiles;
         _renderer.TreeBiome = _run.Def.Biome;   // trees paint in this world's own palette
+        _renderer.WorldCells = _run.Cells;      // damp-ground probe (water on a tile face)
         _renderer.DrawWorld(_run.Planet, _camera);
 
         _renderer.BeginEntities(_camera);

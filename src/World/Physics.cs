@@ -108,6 +108,11 @@ public sealed class Physics
         /// leaves the grid as one tumbling body (see RigidBodies) instead of ring-crumbling
         /// to dust. Cleared if the detach is refused (over budget) — then the dust path runs.</summary>
         public bool Rigid;
+        /// <summary>The region floated entirely above the crust line when condemned — a
+        /// severed skyscraper section, an undercut mountain. Above-ground structures keep
+        /// their shape no matter how big: RigidBodies skips its size cap and boulder
+        /// partition for these and shears the whole thing off as one body.</summary>
+        public bool Sky;
     }
 
     private readonly List<PendingCollapse> _pendingCollapses = new();
