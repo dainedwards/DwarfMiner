@@ -1518,6 +1518,15 @@ public sealed class Creature
         if (_swing > 0f) _swing -= dt;
         _cd -= dt;
         _retarget -= dt;
+        // Struck from anywhere (even before it sights the prey): the pack is tight, so a
+        // wounded guard immediately bellows for help and locks onto the attacker. HitFlash > 0.12
+        // reads "hit within the last frame or two".
+        if (HitFlash > 0.12f && _aggroT <= 0f)
+        {
+            CallingBackup = true;
+            _aggroT = MathF.Max(_aggroT, 7f);
+            _provokedT = MathF.Max(_provokedT, 8f);
+        }
         if (dist < 240f)
         {
             // Fresh sighting (calm → aggro edge): shriek for backup. Game1's war-cry pass
