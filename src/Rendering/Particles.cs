@@ -304,10 +304,14 @@ public sealed class Particles
         }
     }
 
-    public void Draw(Renderer r)
+    /// <summary><paramref name="backdrop"/> selects the layer: true draws only the
+    /// weather-backdrop particles (rain/snow, called before the cloud banks so they fall
+    /// out from behind them); false draws everything else in the normal late pass.</summary>
+    public void Draw(Renderer r, bool backdrop = false)
     {
         foreach (var p in _list)
         {
+            if (p.Backdrop != backdrop) continue;
             if (FluidMode && p.Fluid != 0) continue;   // rendered by DrawFluid instead
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             // Noita palette rule: colours cool in FOUR HARD STEPS, not a smooth ramp — a
