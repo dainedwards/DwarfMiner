@@ -1772,6 +1772,67 @@ public static class SimTest
                 gaps > 0 && bridged == gaps);
         }
 
+        // Tower interiors are ONE connected structure: walls, floor slabs and the ladder
+        // spine all lace together — no free-floating slab shelves (a wall-side stair gap
+        // used to sever every other floor's outer strip, breaking a toppling tower into
+        // loose pieces). Flood the first few tall towers from any solid tile and check
+        // nearly every solid in the hull extent is reachable.
+        {
+            var towersChecked = 0;
+            foreach (var (fAng, halfW, _, fTop) in city.CityFacades)
+            {
+                if (towersChecked >= 3) break;
+                var lo = city.SurfaceRing + 8;   // above the doors + transom
+                if (fTop - lo < 14) continue;    // shopfronts: too few storeys to say much
+                var inExtent = new HashSet<(int, int)>();
+                (int r, int t)? seed = null;
+                for (var r = lo; r <= fTop && r < city.Rings - 1; r++)
+                {
+                    var n = city.TilesAt(r);
+                    var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
+                    var halfTiles = (int)(halfW / (MathHelper.TwoPi * ringRadius / n)) + 1;
+                    var tC = (int)MathF.Round(fAng / (MathHelper.TwoPi / n) - 0.5f);
+                    for (var dtc = -halfTiles; dtc <= halfTiles; dtc++)
+                    {
+                        var t = ((tC + dtc) % n + n) % n;
+                        if (!Tiles.IsSolid(city.Get(r, t))) continue;
+                        inExtent.Add((r, t));
+                        seed ??= (r, t);
+                    }
+                }
+                if (seed is not { } s0 || inExtent.Count < 40) continue;
+                towersChecked++;
+                var reached = 0;
+                var seen = new HashSet<(int, int)>();
+                var stack = new Stack<(int, int)>();
+                stack.Push(s0);
+                while (stack.Count > 0)
+                {
+                    var (r, t) = stack.Pop();
+                    var n = city.TilesAt(r);
+                    t = ((t % n) + n) % n;
+                    if (!seen.Add((r, t))) continue;
+                    if (!Tiles.IsSolid(city.Get(r, t))) continue;
+                    if (inExtent.Contains((r, t))) reached++;
+                    if (r <= lo - 4) continue;   // grounded below the extent — deep enough
+                    var (ir, it) = city.InnerNeighbour(r, t);
+                    if (ir >= 0) stack.Push((ir, it));
+                    var oc = city.OuterNeighbourCount(r, t);
+                    for (var i = 0; i < oc; i++)
+                    {
+                        var (orr, ott) = city.OuterNeighbour(r, t, i);
+                        if (orr < city.Rings) stack.Push((orr, ott));
+                    }
+                    stack.Push((r, t - 1));
+                    stack.Push((r, t + 1));
+                }
+                Check($"city: tower interior is one connected structure ({reached}/{inExtent.Count} reachable)",
+                    reached >= inExtent.Count * 92 / 100);
+            }
+            Check($"city: interior connectivity checked on real towers ({towersChecked})",
+                towersChecked >= 2);
+        }
+
         // One-piece doors: opening any tile of a leaf swings the WHOLE leaf — including
         // the drifted tiles the old same-angle world-space walk stranded closed.
         {
