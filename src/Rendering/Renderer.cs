@@ -1716,7 +1716,15 @@ public sealed class Renderer
     /// its opacity; fallback is a NonPremultiplied blit of the hard-quad fill. Either way
     /// every liquid texel reaches the scene through exactly one alpha blend — the fix for
     /// the per-quad double-blend mottling that made pools read as stacked pixels.</summary>
-    public void CompositeLiquids(RenderTarget2D rt)
+    public void CompositeLiquids(RenderTarget2D rt) =>
+        CompositeLiquids(rt, LiquidThresh, LiquidOpacity, LiquidRimMul, LiquidRimAdd);
+
+    /// <summary>Parameterised overload: the FLAME stream composites through the same
+    /// metaball shader but must not read as water — it passes full opacity and a hotter,
+    /// brighter rim (a flame's white sheath, not a pool's wet specular lip). Pools keep
+    /// the default constants via the overload above.</summary>
+    public void CompositeLiquids(RenderTarget2D rt, float thresh, float opacity,
+        float rimMul, float rimAdd)
     {
         if (_liquidFx != null)
         {
@@ -1726,8 +1734,8 @@ public sealed class Renderer
             _lqCol1!.SetValue(new Vector4(m.M12, m.M22, m.M32, m.M42));
             _lqCol2!.SetValue(new Vector4(m.M13, m.M23, m.M33, m.M43));
             _lqCol3!.SetValue(new Vector4(m.M14, m.M24, m.M34, m.M44));
-            _lqPs!.SetValue(new Vector4(1f / rt.Width, 1f / rt.Height, LiquidThresh, LiquidOpacity));
-            _lqPs2!.SetValue(new Vector4(LiquidRimMul, LiquidRimAdd, 0f, 0f));
+            _lqPs!.SetValue(new Vector4(1f / rt.Width, 1f / rt.Height, thresh, opacity));
+            _lqPs2!.SetValue(new Vector4(rimMul, rimAdd, 0f, 0f));
             _sb.Begin(samplerState: SamplerState.PointClamp, effect: _liquidFx);
         }
         else

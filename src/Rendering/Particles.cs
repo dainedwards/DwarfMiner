@@ -119,7 +119,14 @@ public sealed class Particles
                 p.Velocity = (p.Velocity - n * dot * 1.5f) * 0.4f;
                 if (p.Velocity.LengthSquared() < 4f)
                 {
-                    p.Life = MathF.Min(p.Life, p.LightRadius > 0f ? 1.4f : 0.15f);
+                    // Flame grains DIE on touchdown (fire isn't matter — it can't lie on
+                    // the ground): dozens of glowing grains resting in one spot fused into
+                    // a molten PUDDLE under the metaball body. The stamped Fire cell (with
+                    // its burn fuse) is the standing flame now. Everything else keeps the
+                    // cinder rule: lit debris cools in place, dull debris vanishes fast.
+                    p.Life = MathF.Min(p.Life,
+                        p.Fluid == (byte)Material.Fire ? 0.1f
+                        : p.LightRadius > 0f ? 1.4f : 0.15f);
                     // Handoff on rest: the particle's persistent half enters the cell sim
                     // (a landed cinder becomes real fire). Once only.
                     if (p.LandMat != 0 && cells != null)
@@ -136,6 +143,10 @@ public sealed class Particles
                         p.LandSparks = false;
                         var t2 = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
                         var sc = Color.Lerp(p.FadeColor, p.Color, MathF.Ceiling(t2 * 4f) * 0.25f);
+                        // Fire splashes UP: buoyant licks that rise off the contact point
+                        // and die dark — flame tonguing off a struck surface. Liquids
+                        // splash like debris: kicked out and pulled back down.
+                        var fiery = p.Fluid == (byte)Material.Fire;
                         for (var k = 0; k < 3; k++)
                         {
                             var side = ((_rng.Next(2) == 0 ? 1f : -1f))
@@ -144,14 +155,15 @@ public sealed class Particles
                             {
                                 Position = p.Position,
                                 Velocity = n * (26f + (float)_rng.NextDouble() * 34f)
-                                         + new Vector2(-n.Y, n.X) * side * 38f,
-                                Life = 0.14f + (float)_rng.NextDouble() * 0.14f,
-                                MaxLife = 0.28f,
+                                         + new Vector2(-n.Y, n.X) * side * (fiery ? 20f : 38f),
+                                Life = fiery ? 0.2f + (float)_rng.NextDouble() * 0.18f
+                                             : 0.14f + (float)_rng.NextDouble() * 0.14f,
+                                MaxLife = fiery ? 0.38f : 0.28f,
                                 Color = Color.Lerp(sc, Color.White, 0.25f),
                                 FadeColor = p.FadeColor,
                                 Size = 0.5f,
-                                GravityScale = 1f,
-                                Drag = 1.6f,
+                                GravityScale = fiery ? -0.45f : 1f,
+                                Drag = fiery ? 2.2f : 1.6f,
                             });
                         }
                     }
