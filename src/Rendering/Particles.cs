@@ -1211,6 +1211,12 @@ public sealed class Particles
             var hot = i < 7;
             var tone = hot ? _rng.Next(2) : _rng.Next(4);
             var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
+            // Mirror the flying-cell FlyMaxOutward cap (170 px/s radially outward): the
+            // PAYLOAD cells obey it, so an uncapped glow out-raced them whenever the hose
+            // aimed skyward — the visible rope split from the landing fire (the recurring
+            // "yellow streaks that don't line up"). Same clamp = same arc at every angle.
+            var outward = Vector2.Dot(vel, up);
+            if (outward > 170f) vel -= up * (outward - 170f);
             // De-pulse: every grain starts with a random fraction of one puff interval
             // already travelled, so consecutive puffs interleave into one continuous flow
             // instead of reading as discrete waves marching down the stream.
@@ -1219,8 +1225,8 @@ public sealed class Particles
             {
                 Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
                 Velocity = vel,
-                Life = 0.5f + (float)_rng.NextDouble() * 0.35f - lead,
-                MaxLife = 0.85f,
+                Life = 0.55f + (float)_rng.NextDouble() * 0.4f - lead,
+                MaxLife = 0.95f,
                 Color = tone switch
                 {
                     0 => new Color(255, 250, 200),
