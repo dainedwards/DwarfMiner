@@ -323,6 +323,7 @@ public static class SimTest
         TestCityDefense();
         TestAquatics();
         TestPopulateWorld();
+        TestTreeEcology();
         TestSpaceSim();
         // These two run last on purpose: both Activate a chain (appending the Hollow +
         // debug rig to PlanetDefs.All), and there is no way to un-append.
