@@ -5925,10 +5925,11 @@ public sealed partial class DwarfMinerGame : Game
 
         _renderer.BeginEntities(_camera);
 
-        // Cells (sand/lava/smoke — liquids too when the RT pass is off) draw above tiles
-        // but below entities so the dwarf walks in front of his own debris pile.
+        // Cells (sand/smoke — liquids and lava too when their RT passes are off) draw above
+        // tiles but below entities so the dwarf walks in front of his own debris pile.
         tDraw = FramePerf.Now();
-        _run.Cells.Draw(_renderer, viewCentre, viewRadius, cellStride, skipLiquids: liquidPass);
+        _run.Cells.Draw(_renderer, viewCentre, viewRadius, cellStride,
+            skipLiquids: liquidPass, skipLava: _particles.FluidMode);
         FramePerf.Add("cellsD", tDraw);
         tDraw = FramePerf.Now();
 
