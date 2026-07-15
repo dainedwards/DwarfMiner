@@ -6290,8 +6290,8 @@ public sealed partial class DwarfMinerGame : Game
             if (segLen > 1f)
             {
                 var mid = _run.Player.Position + span * 0.5f;
-                var rot = MathF.Atan2(span.Y, span.X);
-                _renderer.DrawRect(mid, new Vector2(segLen, 1.2f), new Color(196, 160, 96), rot);
+                var lineRot = MathF.Atan2(span.Y, span.X);
+                _renderer.DrawRect(mid, new Vector2(segLen, 1.2f), new Color(196, 160, 96), lineRot);
                 _renderer.DrawCircle(anchor, 2.2f, new Color(220, 220, 230));
             }
         }
