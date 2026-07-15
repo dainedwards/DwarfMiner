@@ -128,8 +128,11 @@ public sealed class LightGrid
             _r = new float[n]; _g = new float[n]; _b = new float[n];
             _solid = new bool[n];
             _pix = new Color[n];
-            _tex[0]?.Dispose(); _tex[1]?.Dispose();
-            _tex[0] = _tex[1] = null;   // recreated at Upload
+            for (var i = 0; i < _tex.Length; i++)
+            {
+                _tex[i]?.Dispose();
+                _tex[i] = null;   // recreated at Upload
+            }
         }
 
         // Snap the origin to whole cells so texels stay put in world space while the
