@@ -146,7 +146,7 @@ public sealed class Renderer
         TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom or
         TileKind.Brick or TileKind.Plating or TileKind.GlassBlock or TileKind.Platform or
         TileKind.TreeTrunk or TileKind.TreeCanopy or TileKind.TreeCanopy2 or TileKind.SeaFrond or
-        TileKind.TreeRoot or TileKind.Chest or TileKind.ChestOpen;
+        TileKind.TreeRoot or TileKind.Chest or TileKind.ChestOpen or TileKind.LilyPad;
 
     /// <summary>Machined city structures — alien hull plating, its window glass, lizard-city
     /// masonry. They read as engineered walls: no silhouette erosion, no organic crust, no
