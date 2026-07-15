@@ -1099,7 +1099,8 @@ public static class WorldGen
                 var start = planet.Center
                     + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
                 CarveWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
-                    260 + rng.Next(300), branchBudget: 2, minFrac, hardFloorPx);
+                    260 + rng.Next(300), branchBudget: 2, minFrac, hardFloorPx,
+                    localCeiling: ocean);
             }
 
             // Ocean chambers: vaulted halls strung along the worm band — the destination
