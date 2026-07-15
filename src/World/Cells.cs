@@ -1778,6 +1778,11 @@ public sealed class Cells
             var first = _rng.Next(2) == 0 ? 1 : -1;
             if (TryMoveTo(cx, cy, ocx + first, ocy)) return;
             if (TryMoveTo(cx, cy, ocx - first, ocy)) return;
+            // Trapped under a roof: pool along the ceiling like gas does — smoke from a cave
+            // fire hunts sideways for a way up instead of dying where it rose, so a burning
+            // chamber fills from the ceiling down and plumes out of whatever opening exists.
+            if (TryMoveTo(cx, cy, cx + first, cy)) return;
+            if (TryMoveTo(cx, cy, cx - first, cy)) return;
         }
         if (_rng.Next(180) == 0)
         {
