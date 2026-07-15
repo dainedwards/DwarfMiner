@@ -272,10 +272,14 @@ public sealed class Renderer
         var sw = _lightPerfSw;
         Grid.Propagate();
         var tProp = sw.Elapsed.TotalMilliseconds;
-        Grid.Upload(_gd);
+        // Perf-bisect hooks: DM_NOUPLOAD=1 skips the texture upload (light field freezes),
+        // DM_NOHERO=1 skips the ray-cast hero fans. Diagnostics only.
+        if (Environment.GetEnvironmentVariable("DM_NOUPLOAD") is not { Length: > 0 })
+            Grid.Upload(_gd);
         var tUp = sw.Elapsed.TotalMilliseconds - tProp;
         _lighting.RenderGrid(cam, Grid);
-        _lighting.RenderHeroLights(_heroLights, planet);
+        if (Environment.GetEnvironmentVariable("DM_NOHERO") is not { Length: > 0 })
+            _lighting.RenderHeroLights(_heroLights, planet);
         _heroLights.Clear();
         var tRas = sw.Elapsed.TotalMilliseconds - tUp - tProp;
         if (Environment.GetEnvironmentVariable("DM_LIGHTPERF") is { Length: > 0 } && ++_lightPerfN % 60 == 0)
