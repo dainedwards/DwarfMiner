@@ -76,6 +76,7 @@ public enum TileKind : byte
     TreeRoot = 54,     // underground root — survives felling and regrows the tree (watered by rain)
     Chest = 55,        // lizard-warren treasure chest — press E to loot gold / rare materials
     ChestOpen = 56,    // an already-looted chest (lid thrown back, empty)
+    LilyPad = 57,      // alien lily pad floating on a lake surface (anchored, passable flora)
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
