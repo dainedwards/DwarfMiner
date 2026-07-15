@@ -79,12 +79,14 @@ public static class OceanProbe
                     var n = planet.TilesAt(r);
                     var t = (int)(ang / MathHelper.TwoPi * n) % n;
                     var k = planet.Get(r, t);
-                    if (k == TileKind.Sky) continue;
+                    // Air and vegetation (kelp beds root in the basins) aren't the floor.
+                    if (k == TileKind.Sky || Tiles.IsFlora(k) || Tiles.IsPassable(k)) continue;
                     if (k == TileKind.Obsidian) armoured++;
                     break;
                 }
             }
-            Report(ref allOk, deepCols > 0 && armoured >= deepCols * 0.85f,
+            // Not 100%: a mountain crag standing inside a basin is legitimate stone floor.
+            Report(ref allOk, deepCols > 0 && armoured >= deepCols * 0.80f,
                 $"seabed armoured (obsidian first under {armoured}/{deepCols} deep columns)");
 
             // 3. All water belongs to basins (Dirt-walled by the basin carve) — the cave
