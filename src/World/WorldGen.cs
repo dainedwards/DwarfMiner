@@ -628,14 +628,17 @@ public static class WorldGen
         };
     }
 
-    /// <summary>Scatter alien trees across the surface: a trunk column (2-4 tall) topped with
-    /// a canopy blob. The trunk tiles drop WOOD when chopped. Density and canopy tone vary by
-    /// world (airless rock grows none). Trees only root on open walkable soil clear of
-    /// buildings and each other.</summary>
+    /// <summary>Scatter alien trees across the surface: a SLENDER single-tile bole rising tall
+    /// (6-16 tiles) in one of four silhouettes — spire, broad, umbrella, weeping — topped with
+    /// the species' canopy and anchored by roots threaded into the soil. The trunk drops WOOD
+    /// when chopped; felling the base topples the crown to pick-up-able dust; the roots survive
+    /// to regrow the tree. Density and canopy tone vary by world (airless rock grows none).
+    /// Each planted tree is registered as a <see cref="TreeSite"/> so the ecosystem can tend it.</summary>
     private static void ScatterTrees(Planet planet, PlanetDef def, Random rng)
     {
         var (density, canopy) = TreePlanFor(def);
         if (density <= 0) return;
+        var maxRing = (int)(Planet.SkyHeadroom - 4);
         var bearings = 500 + rng.Next(140);
         var lastT = -999;
         var lastRing = -1;
@@ -661,11 +664,23 @@ public static class WorldGen
                 or TileKind.MossStone or TileKind.Gravel or TileKind.Basalt)) continue;
             // Don't crowd trunks: keep a couple of tiles between neighbours.
             if (lastRing == groundR && Math.Abs(gt - lastT) < 3) continue;
-            lastRing = groundR; lastT = gt;
 
-            var trunkH = 2 + rng.Next(3);
+            // Species drives height and silhouette. Tall and thin across the board — even the
+            // "short" broad trees stand several tiles, and spires/umbrellas soar.
+            var species = (byte)rng.Next(4);
+            var trunkH = species switch
+            {
+                0 => 10 + rng.Next(7),   // spire   — the tallest, a thin plume on top
+                2 => 9 + rng.Next(6),    // umbrella — long bare bole under a flat cap
+                3 => 8 + rng.Next(5),    // weeping  — tall, draping crown
+                _ => 6 + rng.Next(5),    // broad    — shortest, still a proper trunk
+            };
+            trunkH = Math.Min(trunkH, maxRing - (groundR - planet.SurfaceRing) - 5);
+            if (trunkH < 4) continue;
+
+            // The trunk column must be clear sky all the way up (canopy may overlap terrain).
             var clear = true;
-            for (var h = 1; h <= trunkH + 2 && clear; h++)
+            for (var h = 1; h <= trunkH && clear; h++)
             {
                 var rr = groundR + h;
                 if (rr >= planet.Rings - 1) { clear = false; break; }
@@ -674,27 +689,21 @@ public static class WorldGen
                     clear = false;
             }
             if (!clear) continue;
-            // Trunk.
-            for (var h = 1; h <= trunkH; h++)
+            lastRing = groundR; lastT = gt;
+
+            var site = new TreeSite
             {
-                var rr = groundR + h;
-                var nn = planet.TilesAt(rr);
-                planet.Set(rr, (int)((ang / MathHelper.TwoPi + 1f) % 1f * nn), TileKind.TreeTrunk);
-            }
-            // Canopy: a small blob around the top.
-            for (var dr = 0; dr <= 2; dr++)
-            {
-                var rr = groundR + trunkH + dr;
-                if (rr >= planet.Rings - 1) break;
-                var nn = planet.TilesAt(rr);
-                var t0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * nn);
-                var wide = dr == 0 || dr == 1 ? 2 : 1;
-                for (var dt = -wide; dt <= wide; dt++)
-                {
-                    var t = ((t0 + dt) % nn + nn) % nn;
-                    if (planet.Get(rr, t) == TileKind.Sky) planet.Set(rr, t, canopy);
-                }
-            }
+                Angle = ang,
+                GroundR = groundR,
+                Species = species,
+                Height = (byte)trunkH,
+                // Mostly the biome canopy, with the occasional off-tone tree for variety.
+                Canopy = rng.Next(4) == 0
+                    ? (canopy == TileKind.TreeCanopy ? TileKind.TreeCanopy2 : TileKind.TreeCanopy)
+                    : canopy,
+            };
+            Systems.TreeEcology.Plant(planet, site);
+            planet.Trees.Add(site);
         }
     }
 
