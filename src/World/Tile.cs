@@ -199,6 +199,10 @@ public static class Tiles
         TileKind.Plating => 4,
         TileKind.GlassBlock => 1,
         TileKind.Platform => 1,
+        TileKind.TreeTrunk => 2,       // a couple of chops to fell
+        TileKind.TreeCanopy => 1,
+        TileKind.TreeCanopy2 => 1,
+        TileKind.SeaFrond => 1,
         _ => 0,
     };
 
