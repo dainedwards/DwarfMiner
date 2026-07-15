@@ -1040,7 +1040,9 @@ public sealed partial class DwarfMinerGame : Game
         // From the parking orbit individual cells are sub-pixel — tick the material sim at
         // half rate (double dt every other frame keeps flow speeds right). On lava/ocean
         // worlds this is several ms a frame, exactly what pushed the orbit over the vsync
-        // budget while the player picks a drop site.
+        // budget while the player picks a drop site. The station is also the far-field
+        // throttle's focus, so the planet's own churn runs at quarter rate besides.
+        _run.Cells.CompactionExclusion = station;
         tPerf = FramePerf.Now();
         if ((_orbitCellTick = !_orbitCellTick))
             _run.Cells.Update(dt * 2f);
