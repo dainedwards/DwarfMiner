@@ -1310,18 +1310,9 @@ public sealed class Titan
     /// leap suppresses the leg-spring via <see cref="Leaping"/> so it launches).</summary>
     private void TickKong(float dt, Physics physics, Cells cells, Vector2 playerPos)
     {
-        // ── Hand smash in flight ─────────────────────────────────────────────
-        if (SmashTimer > 0f)
-        {
-            SmashTimer -= dt;
-            if (!_smashLanded && SmashTimer <= SmashImpactAt)
-            {
-                _smashLanded = true;
-                SmashImpact(physics, cells);
-            }
-            if (SmashTimer <= 0f) _smashCooldown = 1.4f;
-            return;   // a swinging Kong doesn't start a leap
-        }
+        // The hand smash itself lives in TickSiege now (every arm kind swings); a swinging
+        // Kong just doesn't start a leap.
+        if (SmashTimer > 0f) return;
 
         if (Leaping)
         {
