@@ -452,30 +452,31 @@ public sealed class Player
 
         if (EmpTimer > 0f) EmpTimer -= dt;
 
-        // Jetpack: holding SPACE while airborne burns the pack — worn in the Back slot only
-        // (owning it isn't enough). Jump (W) and jet (Space) are separate now: you jump off
-        // the ground with W, then press Space in the air to hover. Noita-style hover physics:
-        // thrust is a gentle acceleration cancelling gravity plus a small lift, so catching a
-        // fall takes a beat and feathering holds altitude. Gated off ladders/water and EMP.
+        // Jetpack: SPACE is a straight on/off thruster, Noita-style — hold it and the pack
+        // burns, lifting you straight off the GROUND (no W-jump needed first; W plays no part
+        // in flying anymore), release and you fall. Worn in the Back slot only (owning it isn't
+        // enough). Thrust is a boost pop the frame it lights plus a gentle gravity-cancelling
+        // lift; the burn drains JetCharge (one second at tier I) and only refills once you're
+        // grounded and off the throttle. Gated off ladders/water and EMP.
         IsJetting = false;
         if (HasJetpack && Equipment.Get(EquipSlot.Back) == "jetpack" && EmpTimer <= 0f)
         {
-            if (Grounded)
+            if (jetHeld && !onLadder && !InWater && JetCharge > 0f)
             {
-                // Noita recharges levitation over a moment on the ground, not instantly.
-                JetCharge = MathF.Min(JetChargeCap, JetCharge + JetChargeCap * dt / JetRefillTime);
-            }
-            else if (jetHeld && !onLadder && !InWater && JetCharge > 0f)
-            {
-                // Small initial pop the frame the burn first lights, then the steady (gentle)
-                // acceleration. Above the rise cap the thrust adds nothing — gravity bleeds
-                // the excess naturally instead of snapping the speed down.
+                // Boost pop the frame the burn first lights (lifts you clear of the ground),
+                // then the steady lift acceleration. Above the rise cap thrust adds nothing —
+                // gravity bleeds the excess naturally instead of snapping the speed down.
                 if (!_jetPrev && vNormal < JetRiseSpeed)
                     vNormal = MathF.Min(JetRiseSpeed, vNormal + JetInitialKick);
                 if (vNormal < JetRiseSpeed)
                     vNormal = MathF.Min(JetRiseSpeed, vNormal + (Gravity + JetLift) * dt);
                 JetCharge -= dt;
                 IsJetting = true;
+            }
+            else if (Grounded)
+            {
+                // Recharge levitation over a moment on the ground, not instantly.
+                JetCharge = MathF.Min(JetChargeCap, JetCharge + JetChargeCap * dt / JetRefillTime);
             }
         }
         _jetPrev = IsJetting;
