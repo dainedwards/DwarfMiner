@@ -250,7 +250,10 @@ public static class OceanProbe
             var ang = MathF.Atan2(rel.Y, rel.X);
             if (ang < 0) ang += MathHelper.TwoPi;
             var c = (int)(ang / MathHelper.TwoPi * cols) % cols;
-            if (!colWet[c])
+            var dry = true;
+            for (var w = -3; w <= 3 && dry; w++)
+                if (colWet[((c + w) % cols + cols) % cols]) dry = false;
+            if (dry)
             {
                 var depth = (planet.SurfaceRadiusAt(pos) - (Planet.RingMin + r + 0.5f)) / S;
                 reach = MathF.Max(reach, depth);
