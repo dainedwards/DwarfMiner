@@ -117,6 +117,7 @@ attribute vec4 inPosition;
 attribute vec4 inColor;
 attribute vec2 inTexCoord;
 uniform vec4 vs_uniforms_vec4[4];
+uniform vec4 posFixup;
 varying vec4 vColor;
 varying vec2 vTexCoord;
 varying vec2 vWorld;
@@ -127,6 +128,12 @@ void main()
                        dot(p, vs_uniforms_vec4[1]),
                        dot(p, vs_uniforms_vec4[2]),
                        dot(p, vs_uniforms_vec4[3]));
+    // MonoGame's standard GL epilogue: the device sets `posFixup` per-draw BY NAME on the
+    // active program (GraphicsDevice.OpenGL) — y = -1 when rendering into a render target,
+    // which both un-mirrors the image AND restores the triangle winding. Omitting this
+    // back-face-culled the whole batch inside the scene RT (invisible world).
+    gl_Position.y = gl_Position.y * posFixup.y;
+    gl_Position.xy += posFixup.zw * gl_Position.ww;
     vColor = inColor;
     vTexCoord = inTexCoord;
     vWorld = inPosition.xy;
