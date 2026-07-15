@@ -122,7 +122,12 @@ public static class SimTest
         {
             var perfPlanet = WorldGen.Generate(7);
             var perfCells = new Cells(perfPlanet);
-            perfCells.FillSkyTilesWithin(perfPlanet.Radius * 0.45f, Material.Lava);
+            // Mirror StartNewRun's ACTUAL flood: the lava sea has a floor now — pouring the
+            // old floorless flood into the deep cave strata drowns tens of thousands of
+            // dry-by-design tiles in lava and measures a world the game never creates.
+            var perfDef = World.PlanetDefs.All[0];
+            var (_, _, perfSeaFloor) = WorldGen.CaveStrata(perfPlanet, perfDef);
+            perfCells.FillSkyTilesWithin(perfPlanet.Radius * perfDef.LavaFillFrac, Material.Lava, perfSeaFloor);
             foreach (var (wsx, wsy) in perfPlanet.WaterSeeds)
                 perfCells.FillTile(wsx, wsy, Material.Water);
 
