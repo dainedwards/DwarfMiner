@@ -441,7 +441,7 @@ public sealed class Particles
             case ProjectileKind.CannonDiamond:
                 // Heavy AoE — bigger sparks, prismatic flecks, longer-lived smoke.
                 EmitExplosion(pos, strength: 22f, sparkCount: 30, smokeCount: 18, sparkColor: new Color(220, 240, 255));
-                for (var i = 0; i < 8; i++)
+                for (var i = 0; i < 16; i++)
                 {
                     var ang = (float)(_rng.NextDouble() * MathHelper.TwoPi);
                     var hue = i % 3 == 0 ? new Color(255, 180, 220)
@@ -455,10 +455,10 @@ public sealed class Particles
                         MaxLife = 0.9f,
                         Color = hue,
                         FadeColor = Color.Black,
-                        Size = 1.2f,
+                        Size = 0.9f,
                         GravityScale = 0.4f,
                         Drag = 1.0f,
-                        LightRadius = 6f,
+                        LightRadius = i % 2 == 0 ? 6f : 0f,
                         LightColor = hue,
                         CollideTiles = true,
                     });
