@@ -680,9 +680,11 @@ public sealed class Particles
 
     private void EmitExplosion(Vector2 pos, float strength, int sparkCount, int smokeCount, Color sparkColor)
     {
-        // Flash core — one big, near-instant blob of light at the epicentre. Sells the "bang"
-        // frame before the sparks/smoke read as an aftermath. Hero-lit: the flash throws
-        // hard ray-cast shadows off the crater rim and every creature silhouette near it.
+        // Flash core — the "bang" frame is the HERO LIGHT (hard ray-cast shadows off the
+        // crater rim), not a drawn shape: the old visible quad was strength*0.55 wide — a
+        // featureless 14-px white square on a nuke, the single chunkiest pixel in the game.
+        // Now the drawn core is a small hot heart and the flash itself is a one-frame
+        // starburst of white-hot 1-px sparks.
         _list.Add(new Particle
         {
             Position = pos,
@@ -691,13 +693,30 @@ public sealed class Particles
             MaxLife = 0.14f,
             Color = Color.White,
             FadeColor = sparkColor,
-            Size = strength * 0.55f,
+            Size = MathF.Min(3.5f, strength * 0.13f),
             GravityScale = 0f,
             Drag = 0f,
             LightRadius = strength * 4.5f,
             LightColor = Color.Lerp(sparkColor, Color.White, 0.5f),
             HeroLight = true,
         });
+        var flashCount = (int)strength;
+        for (var i = 0; i < flashCount; i++)
+        {
+            var ang = i / (float)flashCount * MathHelper.TwoPi + (float)(_rng.NextDouble() * 0.3);
+            _list.Add(new Particle
+            {
+                Position = pos,
+                Velocity = new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * (strength * 8f + (float)_rng.NextDouble() * strength * 10f),
+                Life = 0.06f + (float)_rng.NextDouble() * 0.06f,
+                MaxLife = 0.12f,
+                Color = Color.White,
+                FadeColor = Color.Lerp(sparkColor, Color.White, 0.4f),
+                Size = 1f,
+                GravityScale = 0f,
+                Drag = 5f,
+            });
+        }
         // Lasting cinders: after the flash dies, a handful of thrown coals keep the crater
         // and its surroundings lit for a couple of seconds while they cool.
         EmitCinders(pos, Vector2.Zero, Math.Clamp((int)(strength / 3f), 4, 10), scatter: strength * 4f);
