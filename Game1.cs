@@ -1766,12 +1766,14 @@ public sealed partial class DwarfMinerGame : Game
                 if (c.Kind != CreatureKind.BomberBeetle)
                     _run.Corpses.Add(new Corpse(c.Position, c.Kind, c.Radius));
                 _particles.EmitDust(c.Position, 5f);
-                // A dead resident is a big black mark — unless the titan is rampaging right
-                // there, the city pins the death on the dwarf.
+                // Killing ANY alien turns the whole city on you at once — a single dead
+                // civilian, guard, saucer, or lizardman crosses the wrath threshold (unless
+                // the titan is rampaging right there and takes the blame).
                 if (c.Kind is CreatureKind.Civilian or CreatureKind.Peacekeeper or CreatureKind.Saucer
+                        or CreatureKind.Lizardman or CreatureKind.BigSaucer
                     && (!_run.Titan.Hatched || _run.Titan.Health <= 0
                         || (_run.Titan.Position - c.Position).LengthSquared() > 380f * 380f))
-                    AddCityWrath(35f);
+                    AddCityWrath(60f);
                 switch (c.Kind)
                 {
                     // Spore bats burst into a choking puff — kill them at arm's length.
