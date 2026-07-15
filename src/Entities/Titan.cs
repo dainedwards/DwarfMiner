@@ -1331,22 +1331,6 @@ public sealed class Titan
             return;
         }
 
-        // ── Start a smash ────────────────────────────────────────────────────
-        if (_smashCooldown <= 0f && Grounded && !Digging && Standing())
-        {
-            Vector2? target = null;
-            if (IsAggro && (playerPos - Position).Length() < SmashReach) target = playerPos;
-            else target = FindBuildingInReach();
-            if (target is { } tgt)
-            {
-                SmashTarget = tgt;
-                SmashHand = -SmashHand;
-                SmashTimer = SmashDuration;
-                _smashLanded = false;
-                return;
-            }
-        }
-
         // ── Leap — only for prey beyond the fists ────────────────────────────
         if (!IsAggro || SpecialCooldown > 0f || !Standing()) return;
         var dist = (playerPos - Position).Length();
