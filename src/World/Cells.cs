@@ -2732,10 +2732,19 @@ public sealed class Cells
                         var up = new Vector2(MathF.Cos(midAng), MathF.Sin(midAng));
                         var body = LiquidBody(runMat, cx0 + s + seg / 2, cy);
                         var col = new Color(body.R, body.G, body.B, (byte)(MatAlpha(runMat) * 255f));
-                        r.Batch.Draw(r.Pixel, Planet.Center + up * ringRadius, null, col,
-                            midAng + MathHelper.PiOver2, new Vector2(0.5f, 0.5f),
-                            new Vector2(chord * (seg + 0.5f), radial * 1.5f),
-                            SpriteEffects.None, 0f);
+                        if (runMat == Material.Lava)
+                            _hotOps.Add(new HotOp
+                            {
+                                Pos = Planet.Center + up * ringRadius,
+                                Scale = new Vector2(chord * (seg + 0.5f), radial * 1.5f),
+                                Rot = midAng + MathHelper.PiOver2,
+                                Col = col,
+                            });
+                        else
+                            r.Batch.Draw(r.Pixel, Planet.Center + up * ringRadius, null, col,
+                                midAng + MathHelper.PiOver2, new Vector2(0.5f, 0.5f),
+                                new Vector2(chord * (seg + 0.5f), radial * 1.5f),
+                                SpriteEffects.None, 0f);
                         s += seg;
                     }
                     DrawLiquidCell(r, blob, blobOrigin, blobMode, runStart, cx0, cy,
