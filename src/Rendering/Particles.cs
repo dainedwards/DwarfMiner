@@ -1410,9 +1410,9 @@ public sealed class Particles
     /// real Acid cell (the corrosion mechanic itself now; acid self-depletes as it eats,
     /// which keeps the spray from melting the planet). Neon leading droplets, bright
     /// body, occasional deep green — a liquid rope needs dark grains for depth.</summary>
-    public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
+    public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach, Vector2 up, Vector2 shooterVel)
     {
-        EmitJetCore(pos, dir, reach, up, AcidTones, hotTones: 1,
+        EmitJetCore(pos, dir, reach, up, shooterVel, AcidTones, hotTones: 1,
             fade: new Color(40, 90, 25), landMat: Material.Acid,
             lightColor: new Color(150, 240, 80), hotLight: 16f, bodyLight: 7f, drag: 1.0f);
         var jetSpeed = reach * 1.35f;
