@@ -765,12 +765,22 @@ public sealed class RigidBodies
         {
             var wp = b.Position + Rotate(c.Local, b.Angle);
             var (tx, ty) = _planet.WorldToTile(wp);
-            if (TryStampAt(tx, ty, c.Kind)) continue;
-            var placed = false;
+            var (sx, sy) = (tx, ty);
+            var placed = TryStampAt(tx, ty, c.Kind);
             for (var dy = -1; dy <= 1 && !placed; dy++)
                 for (var dx = -1; dx <= 1 && !placed; dx++)
-                    placed = TryStampAt(tx + dx, ty + dy, c.Kind);
-            if (!placed) _cells.SpawnDustInTile(tx, ty, c.Kind);
+                    if (TryStampAt(tx + dx, ty + dy, c.Kind))
+                    {
+                        (sx, sy) = (tx + dx, ty + dy);
+                        placed = true;
+                    }
+            if (!placed)
+            {
+                _cells.SpawnDustInTile(tx, ty, c.Kind);
+                continue;
+            }
+            // A burning cell RESUMES its burn where it lands — fire rode the fall.
+            if (c.Burn > 0f) _cells.IgniteTile(sx, sy, c.Burn - 1f);
         }
     }
 
