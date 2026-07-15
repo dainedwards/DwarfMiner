@@ -15,11 +15,22 @@ public static class PerfTest
 {
     private const float Dt = 1f / 60f;
 
+    /// <summary>The harness's own pinned world: the QA def blown back up to the 1.8× giant
+    /// it used to be. DebugWorld itself shrank to 0.7× for fast loads, but the harness
+    /// exists for before/after comparisons — its world must stay identical across sessions,
+    /// not track playtest tuning.</summary>
+    private static PlanetDef HarnessWorld => PlanetDefs.DebugWorld with
+    {
+        SizeScale = 1.8f,
+        LakeMin = 4, LakeExtra = 1, MountainMin = 10, MountainExtra = 3,
+        CrystalPockets = 3, FungalPockets = 3, AcidPools = 3, Volcanoes = 3, CityLots = 4,
+    };
+
     public static void Run()
     {
         var total = Stopwatch.StartNew();
         var sw = Stopwatch.StartNew();
-        var planet = WorldGen.Generate(42, PlanetDefs.DebugWorld);   // 1.8x giant = worst case
+        var planet = WorldGen.Generate(42, HarnessWorld);   // 1.8x giant = worst case
         Console.WriteLine($"[perf] worldgen 1.8x: {sw.ElapsedMilliseconds}ms " +
                           $"({planet.Rings} rings, {planet.TileCount} tiles)");
 
