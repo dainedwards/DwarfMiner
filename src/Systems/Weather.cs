@@ -143,6 +143,7 @@ public static class Weather
             else if (c.Grow > 0.7f && c.Life > 10f && !c.Dissipating)
             {
                 c.RainCooldown -= dt;
+                if (ForceRain) c.RainCooldown = 0f;
                 if (c.RainCooldown <= 0f) c.RainTimer = 6f + (float)rng.NextDouble() * 10f;
             }
         }
