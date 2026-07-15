@@ -4187,108 +4187,74 @@ public sealed partial class DwarfMinerGame : Game
         _titleLandTex = new Texture2D(gd, w, h);
         _titleLandTex.SetData(px);
 
-        // ── Gas-giant cylinder map: pixel-art bands with dithered boundaries, a pale
-        // storm oval, darker poles. Periodic over 320 px; the last 108 columns repeat the
-        // first so a scrolling window never has to wrap mid-draw. ──
-        const int mapPeriod = 160, mapW = mapPeriod + 54, mapH = 54;
-        var map = new Color[mapW * mapH];
-        var bandCols = new[]
+        // ── Planet sprite: a clean pixel-art sphere in the SAME painterly style as the
+        // drifting moon (radial disc + flat-colour surface features + quantised terminator
+        // shading + a thin atmosphere rim), just bigger and coloured as a living ocean
+        // world so it reads as a planet, not a busy gas giant. Sun lights it from the left
+        // (matching where the sun sits/sets). Drawn once, static — no scrolling bands. ──
+        const int plR = 40;
+        const int plS = plR * 2 + 1;
+        var planet = new Color[plS * plS];
+        // Palette (deep ocean → shallow sea → two land tones → polar ice), all flat cels.
+        var ocean = new Color(38, 78, 122);
+        var sea = new Color(52, 104, 150);
+        var land1 = new Color(78, 128, 84);
+        var land2 = new Color(120, 132, 78);
+        var ice = new Color(226, 236, 244);
+        // Three continent blobs + two ice caps, placed by offset/radius on the face.
+        (float ox, float oy, float rad, Color a, Color b)[] land =
         {
-            new Color(206, 148, 100), new Color(158, 102, 82),
-            new Color(224, 176, 128), new Color(172, 118, 88),
+            (-0.30f, -0.18f, 0.34f, land1, land2),
+            ( 0.22f,  0.10f, 0.30f, land2, land1),
+            (-0.10f,  0.40f, 0.22f, land1, land2),
         };
-        for (var y = 0; y < mapH; y++)
-        {
-            var band = (int)(y / 6.75f);
-            var c = bandCols[band % bandCols.Length];
-            var next = bandCols[(band + 1) % bandCols.Length];
-            var inBand = y - band * 6.75f;
-            // Pole darkening squeezes the palette toward shadow at top/bottom.
-            var pole = MathF.Abs(y - mapH / 2f) / (mapH / 2f);
-            for (var x = 0; x < mapPeriod; x++)
+        for (var dy = -plR; dy <= plR; dy++)
+            for (var dx = -plR; dx <= plR; dx++)
             {
-                var cc = c;
-                // Dithered band edge: the last row checkers toward the next band.
-                if (inBand > 5.5f && ((x + y) & 1) == 0) cc = next;
-                // Lazy longitudinal waviness so bands aren't dead-straight.
-                if (inBand < 1f && MathF.Sin(x * 0.2f + y) > 0.55f) cc = next;
-                var dim = 1f - MathF.Pow(pole, 3f) * 0.45f;
-                map[y * mapW + x] = new Color((int)(cc.R * dim), (int)(cc.G * dim), (int)(cc.B * dim));
-            }
-        }
-        // Storm oval — a pale swirl in the southern band.
-        for (var dy = -3; dy <= 3; dy++)
-            for (var dx = -5; dx <= 5; dx++)
-            {
-                var d = dx * dx / 25f + dy * dy / 9f;
-                if (d > 1f) continue;
-                var x = (35 + dx + mapPeriod) % mapPeriod;
-                var y = 35 + dy;
-                var cc = d < 0.4f ? new Color(238, 208, 170) : new Color(216, 168, 128);
-                if (((x + y) & 1) == 0 && d > 0.6f) continue;   // dithered rim
-                map[y * mapW + x] = cc;
-            }
-        // Copy the leading 54 columns to the tail for wrap-free windows.
-        for (var y = 0; y < mapH; y++)
-            for (var x = 0; x < 54; x++)
-                map[y * mapW + mapPeriod + x] = map[y * mapW + x];
-        _titlePlanetMap = new Texture2D(gd, mapW, mapH);
-        _titlePlanetMap.SetData(map);
-
-        // Shade overlay: terminator + limb darkening inside the disc, warm atmosphere rim
-        // just outside it.
-        const int shadeR = 27;
-        var shade = new Color[54 * 54];
-        for (var dy = -shadeR; dy < shadeR; dy++)
-            for (var dx = -shadeR; dx < shadeR; dx++)
-            {
-                var d = MathF.Sqrt(dx * dx + dy * dy) / shadeR;
-                var idx = (dy + shadeR) * 54 + dx + shadeR;
-                if (d <= 1f)
+                var d = MathF.Sqrt(dx * dx + dy * dy) / plR;
+                var idx = (dy + plR) * plS + dx + plR;
+                if (d > 1f)
                 {
-                    var lit = 1f - MathHelper.Clamp(dx / (float)shadeR + d * 0.55f, 0f, 1f) * 0.82f;
-                    // Moon-sprite shading: quantise the terminator into four flat cels with
-                    // a dithered checker at each boundary — chunky painted steps instead of
-                    // an airbrushed gradient (same school as the drifting moon's shading).
-                    var step = (1f - lit) * 4f;
-                    var cel = MathF.Floor(step);
-                    var frac = step - cel;
-                    if (frac > 0.5f || (frac > 0.25f && ((dx + dy) & 1) == 0)) cel += 1f;
-                    var a = (int)(MathHelper.Clamp(cel / 4f, 0f, 1f) * 235);
-                    shade[idx] = new Color(0, 0, 0, a);
+                    // Thin cyan atmosphere rim just outside the disc.
+                    if (d < 1.12f)
+                    {
+                        var falloff = 1f - (d - 1f) / 0.12f;
+                        var a = (int)(falloff * 120f);
+                        planet[idx] = new Color(120, 180, 220, a);
+                    }
+                    continue;
                 }
-                else if (d < 1.09f)
+                var nx = dx / (float)plR;
+                var ny = dy / (float)plR;
+                // Base surface: ocean, with a couple of continents and polar caps.
+                var col = d > 0.86f ? ocean : sea;
+                foreach (var (ox, oy, rad, a, b) in land)
                 {
-                    var falloff = 1f - (d - 1f) / 0.09f;
-                    // Premultiplied warm rim — the thin pixel atmosphere.
-                    var a = falloff * 0.5f;
-                    shade[idx] = new Color((int)(255 * a * 0.85f), (int)(190 * a * 0.85f), (int)(140 * a * 0.85f), (int)(a * 40));
+                    var ld = MathF.Sqrt((nx - ox) * (nx - ox) + (ny - oy) * (ny - oy));
+                    if (ld < rad)
+                    {
+                        // Two-tone dithered coastline so the land reads as pixel art.
+                        col = ld < rad * 0.55f ? a : (((dx + dy) & 1) == 0 ? a : b);
+                    }
                 }
-            }
-        _titlePlanetShade = new Texture2D(gd, 54, 54);
-        _titlePlanetShade.SetData(shade);
+                if (ny < -0.72f || ny > 0.74f) col = ice;   // polar caps
 
-        // Ring system: a flat ellipse annulus (two bands split by a dark gap, dithered for
-        // grain). Drawn in two halves around the tilted planet — far side behind, near side
-        // in front.
-        const int ringW = 86, ringH = 24;
-        var ring = new Color[ringW * ringH];
-        for (var y = 0; y < ringH; y++)
-            for (var x = 0; x < ringW; x++)
-            {
-                var nx = (x - ringW / 2f) / 40f;
-                var ny = (y - ringH / 2f) / 10.5f;
-                var rr = MathF.Sqrt(nx * nx + ny * ny);
-                if (rr is < 0.64f or > 1f) continue;
-                if (rr is > 0.82f and < 0.86f) continue;             // the dark division
-                if (((x + y) & 1) == 0 && rr > 0.95f) continue;      // dithered outer edge
-                var bright = rr < 0.82f ? 0.9f : 0.65f;
-                if (((x * 7 + y * 13) & 7) == 0) bright *= 0.75f;    // grain
-                ring[y * ringW + x] = new Color(
-                    (int)(214 * bright), (int)(188 * bright), (int)(148 * bright), 235);
+                // Directional light from the upper-left + limb darkening, quantised into a
+                // few flat cels with a dithered boundary — the moon's exact shading school.
+                var lum = 0.62f - (nx * 0.42f + ny * 0.16f) + (1f - d) * 0.30f;
+                lum = MathHelper.Clamp(lum, 0.12f, 1.15f);
+                var step = lum * 4f;
+                var cel = MathF.Floor(step);
+                var frac = step - cel;
+                if (frac > 0.5f || (frac > 0.25f && ((dx + dy) & 1) == 0)) cel += 1f;
+                var shadeMul = MathHelper.Clamp(cel / 4f, 0.16f, 1.1f);
+                planet[idx] = new Color(
+                    (int)MathHelper.Clamp(col.R * shadeMul, 0, 255),
+                    (int)MathHelper.Clamp(col.G * shadeMul, 0, 255),
+                    (int)MathHelper.Clamp(col.B * shadeMul, 0, 255));
             }
-        _titleRingTex = new Texture2D(gd, ringW, ringH);
-        _titleRingTex.SetData(ring);
+        _titlePlanetTex = new Texture2D(gd, plS, plS);
+        _titlePlanetTex.SetData(planet);
 
         // Sun sprite: white-hot core through orange to a soft halo.
         const int sunR = 22;
