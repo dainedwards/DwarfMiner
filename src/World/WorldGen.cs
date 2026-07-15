@@ -779,15 +779,39 @@ public static class WorldGen
     {
         if (!def.HasWater || planet.WaterSeeds.Count == 0) return;
         var basin = new System.Collections.Generic.HashSet<(int, int)>(planet.WaterSeeds);
-        // For each basin tile that sits on the floor (solid below, water/basin here), root a
-        // frond with a small chance. Cheap: one pass over the seeds, no per-bearing walk.
+        // Ocean worlds are LUSH underwater — dense kelp beds and lily-padded surfaces; other
+        // wet worlds get a lighter dressing of both.
+        var ocean = def.Biome == "ocean";
+        var frondPct = ocean ? 24 : 12;
+        var padPct = ocean ? 22 : 10;
         foreach (var (x, y) in planet.WaterSeeds)
         {
-            if (rng.Next(100) >= 8) continue;                    // sparse
-            if (planet.Get(x, y) != TileKind.Sky) continue;      // must be an open water column
-            if (basin.Contains((x - 1, y))) continue;            // not on the very floor → skip
-            if (Tiles.IsSolid(planet.Get(x - 1, y)))             // solid lakebed directly below
-                planet.Set(x, y, TileKind.SeaFrond);
+            // Seabed: root a seaweed stalk on the lakebed floor — 1-3 fronds STACKED into a
+            // swaying kelp column (taller stands on the ocean world).
+            if (planet.Get(x, y) == TileKind.Sky
+                && !basin.Contains((x - 1, y)) && Tiles.IsSolid(planet.Get(x - 1, y))
+                && rng.Next(100) < frondPct)
+            {
+                var stalk = 1 + rng.Next(ocean ? 3 : 2);
+                for (var h = 0; h < stalk; h++)
+                {
+                    var rr = x + h;
+                    var n = planet.TilesAt(rr);
+                    var t = (int)((y + 0.5f) / planet.TilesAt(x) * n);
+                    if (planet.Get(rr, t) != TileKind.Sky) break;
+                    if (h > 0 && !basin.Contains((rr, t))) break;   // stay under the waterline
+                    planet.Set(rr, t, TileKind.SeaFrond);
+                }
+            }
+            // Surface: an alien lily pad floating on the topmost water row (a basin tile with
+            // open sky above it), blossoms and all.
+            if (!basin.Contains((x + 1, y)) && rng.Next(100) < padPct)
+            {
+                var n = planet.TilesAt(x + 1);
+                var t = (int)((y + 0.5f) / planet.TilesAt(x) * n);
+                if (x + 1 < planet.Rings - 1 && planet.Get(x + 1, t) == TileKind.Sky)
+                    planet.Set(x + 1, t, TileKind.LilyPad);
+            }
         }
     }
 
