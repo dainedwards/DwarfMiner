@@ -1264,7 +1264,8 @@ public sealed class Particles
         var jetSpeed = reach * 1.35f;
         // Sooty flecks shed along the tongue — they inherit the arc, then buoy upward as they
         // cool (weak net gravity), so spent flame rolls off the stream like Noita's smoke.
-        for (var i = 0; i < 6; i++)
+        // (Counts here are PER FRAME now — the hoses fire every frame.)
+        for (var i = 0; i < 2; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.3f;
             var c = MathF.Cos(spread);
