@@ -2025,7 +2025,8 @@ public sealed class Cells
         // visible flames grow with jet dwell and spread wherever fuel carries the fire.
         if ((_srcTile[i] > 0 || fuelled) && _rng.Next(5) == 0
             && PendingFlames.Count < MaxPendingFlames)
-            PendingFlames.Add(CellToWorld(cx, cy));
+            PendingFlames.Add((CellToWorld(cx, cy),
+                fuelled ? (byte)Math.Max((int)_srcTile[i], 55) : _srcTile[i]));
         // Gutter out: half to a smoke wisp, half to nothing (all-smoke fires read as grey
         // soup over a burning pool). A fuelled flame lives ~0.9s; a STARVED one now pools
         // ~0.8s before dying (was ~0.27s) — flame dropped on bare rock visibly burns as a
