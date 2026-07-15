@@ -112,7 +112,13 @@ public sealed class Particles
         {
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             var c = Color.Lerp(p.FadeColor, p.Color, t);
-            r.DrawRect(p.Position, new Vector2(p.Size, p.Size), c);
+            // The Noita rule, enforced at the one choke point every emitter passes through:
+            // a particle is a PIXEL — one world px, the same grain as a sim cell. Emitter
+            // Size values below the cap still vary the fine grain; anything larger (flash
+            // hearts, exhaust cores) clamps to a single pixel, because "big" must come from
+            // COUNT and LIGHT, never from scaling up a featureless quad.
+            var s = MathF.Min(p.Size, 1f);
+            r.DrawRect(p.Position, new Vector2(s, s), c);
         }
     }
 
