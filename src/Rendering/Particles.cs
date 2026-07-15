@@ -1389,59 +1389,17 @@ public sealed class Particles
         }
     }
 
-    /// <summary>Acid spewer spray: caustic green droplets with a sickly glow. The corrosive
-    /// payload is real Acid cells launched by Game1 — this is the visible mist around it.</summary>
+    /// <summary>Acid spewer spray: the liquid twin of the flamethrower — same stream core
+    /// (see <see cref="EmitJetCore"/>), acid inks, and every droplet that lands stamps a
+    /// real Acid cell (the corrosion mechanic itself now; acid self-depletes as it eats,
+    /// which keeps the spray from melting the planet). Neon leading droplets, bright
+    /// body, occasional deep green — a liquid rope needs dark grains for depth.</summary>
     public void EmitAcidJet(Vector2 pos, Vector2 dir, float reach, Vector2 up)
     {
-        // Speed matches Game1's payload launch exactly — see EmitFlameJet.
+        EmitJetCore(pos, dir, reach, up, AcidTones, hotTones: 1,
+            fade: new Color(40, 90, 25), landMat: Material.Acid,
+            lightColor: new Color(150, 240, 80), hotLight: 16f, bodyLight: 7f, drag: 1.0f);
         var jetSpeed = reach * 1.35f;
-        // Many TINY droplets — a granular liquid rope, not fat green puffs. Lights on the
-        // bright leading droplets only (see EmitFlameJet).
-        for (var i = 0; i < 22; i++)
-        {
-            // Caustic rope — droplets COLLIDE with tiles and fall on the SAME arc as the acid
-            // cells, so the visible spray lands exactly where the corrosive payload pools.
-            // Tight cone: the motion-smears in Draw fuse bunched grains into one rope.
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.064f;
-            var c = MathF.Cos(spread);
-            var s = MathF.Sin(spread);
-            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            // Three liquid inks like Noita's acid: neon highlight, bright body, and the
-            // occasional DEEP green — a liquid rope needs dark grains for depth, where
-            // fire wants none.
-            var tone = i < 7 ? 0 : _rng.Next(4);
-            var vel = d * (jetSpeed * (0.85f + (float)_rng.NextDouble() * 0.3f));
-            // Same FlyMaxOutward mirror as EmitFlameJet — glow and payload share one arc.
-            var outward = Vector2.Dot(vel, up);
-            if (outward > 170f) vel -= up * (outward - 170f);
-            // De-pulse — see EmitFlameJet: random emission-time head start interleaves puffs.
-            var lead = (float)_rng.NextDouble() * 0.06f;
-            _list.Add(new Particle
-            {
-                Position = pos + d * (float)_rng.NextDouble() * 5f + vel * lead,
-                Velocity = vel,
-                Life = 0.55f + (float)_rng.NextDouble() * 0.37f - lead,
-                MaxLife = 0.92f,
-                Color = tone switch
-                {
-                    0 => new Color(215, 255, 100),
-                    1 or 2 => new Color(130, 225, 55),
-                    _ => new Color(70, 150, 35),
-                },
-                FadeColor = new Color(40, 90, 25),
-                Size = i < 7 ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
-                GravityScale = HoseArcGravity,   // same arc as the acid cells
-                Drag = 1.0f,
-                CollideTiles = true,
-                LightRadius = i < 7 ? 16f : i % 3 == 0 ? 7f : 0f,
-                LightColor = new Color(150, 240, 80),
-                // Every droplet that lands IS acid: it stamps a real Acid cell where it
-                // rests, so the whole visible spray corrodes and pools — not just the 3
-                // launched payload cells. (Acid self-depletes as it eats — TryCorrode
-                // fizzes the cell to smoke — which keeps this from melting the planet.)
-                LandMat = CellFx ? (byte)Material.Acid : (byte)0,
-            });
-        }
         // A few caustic vapour wisps riding the rope FROM THE MUZZLE (never seeded
         // mid-air along the stream — that materialised droplets in space that fell like rain).
         for (var i = 0; i < 3; i++)
