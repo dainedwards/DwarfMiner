@@ -2082,23 +2082,12 @@ public sealed class Cells
             }
             if (!IsFlammable(k)) return;
             fuelled = true;
-            if (dirBit >= 0) fuelMask |= 1 << dirBit;
-            if (below) burningFloor = true;
-            // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke.
-            // The roll is RESPONSIVE (40, floor-biased 20) but the actual consumption
-            // pace is governed by the dedicated char budget below — population-
-            // independent, ~2.5 tiles/s planet-wide — so an engulfed tree burns as a
-            // standing bonfire and only gradually gives out underneath, first-lit tile
-            // included. The 2× floor bias keeps down-consumption pacing up-consumption.
-            if (_rng.Next(below ? 20 : 40) != 0) return;
-            if (!SpendChar()) return;
-            var tx = ncy / Density;
-            var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
-            Planet.TakeGem(tx, ty);
-            Planet.Set(tx, ty, TileKind.Sky);
-            SpawnInTile(tx, ty, Material.Fire, Density);
-            SpawnInTile(tx, ty, Material.Smoke, Density / 2);
-            ShedBurningLeaves(tx, ty, k);
+            // Flame touching a flammable tile hands it to the BURNING-TILE lifecycle:
+            // the registry owns spread, blaze and burn-out from here (deterministic
+            // wavefront + fixed durations). The roll just paces how quickly loose flame
+            // catches a surface; SpendFire keeps stray embers from seeding storms.
+            if (_rng.Next(20) == 0 && SpendFire())
+                IgniteTile(ncy / Density, WrapX(ncx, _cellsAt[ncy]) / Density);
         }
 
         Probe(cx + 1, cy, 0);
