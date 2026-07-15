@@ -1915,9 +1915,10 @@ public sealed class Cells
         var i = Idx(cx, cy);
         var fuelled = false;
         var doused = false;
-        var grounded = false;   // any solid-tile neighbour: a surface the fuse clings to
+        var grounded = false;      // any solid-tile neighbour: a surface the fuse clings to
+        var burningFloor = false;  // the tile directly BELOW is flammable — fire clings to it
 
-        void Probe(int ncx, int ncy)
+        void Probe(int ncx, int ncy, bool below = false)
         {
             if (ncy < 0 || ncy >= Height) return;
             var ni = Idx(ncx, ncy);
