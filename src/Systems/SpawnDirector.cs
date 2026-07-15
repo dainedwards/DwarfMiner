@@ -516,19 +516,20 @@ public static class SpawnDirector
         }
         else if (depth > 20f)
         {
-            // Mid band: marauder gunmen prowl the tunnels, the odd raider drops in.
-            kind = roll < 0.13 ? CreatureKind.HornedDelver
-                 : roll < 0.24 ? CreatureKind.Centipede
-                 : roll < 0.35 ? CreatureKind.Borer
-                 : roll < 0.44 ? CreatureKind.MoleBeast
-                 : roll < 0.53 ? CreatureKind.CaveSlime
-                 : roll < 0.62 ? CreatureKind.AcidSpitter
-                 : roll < 0.69 ? CreatureKind.BomberBeetle
-                 : roll < 0.77 ? CreatureKind.Marauder
-                 : roll < 0.82 ? CreatureKind.Raider
-                 : roll < 0.88 ? CreatureKind.CaveEye
-                 : roll < 0.92 ? CreatureKind.Grub
-                 : roll < 0.97 ? CreatureKind.SnapperVine
+            // Mid band: marauder gunmen prowl the tunnels, quillwings flit the galleries and
+            // thornback beetles lob barbs from cover.
+            kind = roll < 0.12 ? CreatureKind.HornedDelver
+                 : roll < 0.22 ? CreatureKind.Centipede
+                 : roll < 0.32 ? CreatureKind.Borer
+                 : roll < 0.41 ? CreatureKind.MoleBeast
+                 : roll < 0.50 ? CreatureKind.CaveSlime
+                 : roll < 0.58 ? CreatureKind.AcidSpitter
+                 : roll < 0.65 ? CreatureKind.BomberBeetle
+                 : roll < 0.71 ? CreatureKind.Quillwing
+                 : roll < 0.77 ? CreatureKind.Thornback
+                 : roll < 0.84 ? CreatureKind.Marauder
+                 : roll < 0.89 ? CreatureKind.CaveEye
+                 : roll < 0.94 ? CreatureKind.SnapperVine
                  : CreatureKind.RockMimic;
         }
         else
