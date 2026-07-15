@@ -929,22 +929,49 @@ public sealed class Renderer
                     }
                     case TileKind.TreeTrunk:
                     {
-                        // Alien bark: a SLENDER mauve bole — a narrow bar centred in the tile
-                        // (about 3/8 wide) — with a sunlit edge, a shaded edge, and hash-keyed
-                        // horizontal bark grain / the odd knot so a column reads as a real
-                        // textured trunk climbing, not a flat mauve bar.
-                        var bark = new Color(96, 70, 92);
-                        var barkDk = new Color(66, 48, 66);
-                        var barkHi = new Color(128, 96, 124);
-                        var barkMd = new Color(82, 60, 80);
+                        // Terraria-style bole: a straight, slender bar centred in the tile with
+                        // a sunlit edge, a shaded edge and only SPARSE grain (clean vertical
+                        // line, no knotty wiggle) — drawn in the planet biome's own bark palette
+                        // (TreeBarkFor) plus a biome signature detail, so each world's forest
+                        // reads as its own species.
+                        var (bark, barkDk, barkHi) = TreeBarkFor(TreeBiome);
                         DrawDeco(centre, right, up, rotation, chord, 2.5f, 0, 3, 8, bark);       // bole
                         DrawDeco(centre, right, up, rotation, chord, 2.5f, 0, 1, 8, barkHi);     // sun edge
                         DrawDeco(centre, right, up, rotation, chord, 4.5f, 0, 1, 8, barkDk);     // shade edge
                         var g = (hash >> 2) & 7;
-                        DrawDeco(centre, right, up, rotation, chord, 3, g % 8, 2, 1, barkDk);        // grain ridge
-                        DrawDeco(centre, right, up, rotation, chord, 3, (g + 4) % 8, 2, 1, barkMd);  // grain ridge
-                        if ((hash & 7) == 0)
-                            DrawDeco(centre, right, up, rotation, chord, 2.5f, (g + 2) % 7, 3, 2, barkDk); // knot
+                        if ((hash & 3) == 0)   // sparse grain tick — most tiles stay a clean bar
+                            DrawDeco(centre, right, up, rotation, chord, 3, g % 8, 2, 1, barkDk);
+                        switch (TreeBiome)
+                        {
+                            case "ember":
+                            {
+                                // Charred bole VEINED WITH EMBERS: a glowing crack breathing
+                                // between banked-coal red and searing orange on the clock.
+                                var pulse = MathF.Sin(Time * 2.2f + (hash & 63) * 0.3f) * 0.5f + 0.5f;
+                                var crack = Color.Lerp(new Color(140, 40, 20), new Color(255, 140, 40), pulse);
+                                DrawDeco(centre, right, up, rotation, chord, 3.5f, (g + 2) % 6, 1, 2, crack);
+                                break;
+                            }
+                            case "frost":
+                                // Rime clinging to the sunlit (windward) edge.
+                                DrawDeco(centre, right, up, rotation, chord, 2.5f, g % 8, 1, 1, new Color(226, 238, 250));
+                                break;
+                            case "crystal":
+                                // A glassy facet glint blinking up the stalk.
+                                if ((((int)(Time * 1.5f) + (hash >> 5)) & 7) == 0)
+                                    DrawDeco(centre, right, up, rotation, chord, 3, (g + 3) % 8, 1, 1, Color.White);
+                                break;
+                            case "slag":
+                                // A rusted bolt-band — these "trees" are half scrap-post.
+                                if ((hash & 7) == 0)
+                                    DrawDeco(centre, right, up, rotation, chord, 2.5f, g % 8, 3, 1, new Color(174, 110, 60));
+                                break;
+                            case "acid":
+                                // A bile streak weeping down the bark.
+                                if ((hash & 7) == 0)
+                                    DrawDeco(centre, right, up, rotation, chord, 4, g % 6, 1, 3, new Color(168, 190, 70));
+                                break;
+                        }
                         break;
                     }
                     case TileKind.TreeRoot:
