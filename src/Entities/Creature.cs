@@ -398,15 +398,36 @@ public sealed class Creature
     /// <summary>Aquatic-only kinds — spawned into water by the director's lake spawner and
     /// budgeted separately from every land habitat.</summary>
     public bool IsWaterKind => Kind is CreatureKind.AlienWhale or CreatureKind.AlienCrab
-        or CreatureKind.AlienShark or CreatureKind.Gulper or CreatureKind.Brinespitter;
+        or CreatureKind.AlienShark or CreatureKind.Gulper or CreatureKind.Brinespitter
+        or CreatureKind.Kraken;
     public bool IsCaveKind => !IsSkyKind && !IsSurfaceKind && !IsWaterKind;
+
+    /// <summary>Breather rig: rolled at spawn on some humanoid bandits (SpawnDirector — a
+    /// coin-flip on the water world, a rarity elsewhere). A breather-equipped bandit swims
+    /// (see <see cref="Swims"/>) and never drowns; its mates without one sink, thrash out
+    /// their air reserve, and die like anyone else who breathes (the drown tick in Update).
+    /// Drawn as a visible mask pod + air flask so the player can read who will follow them
+    /// into the sea.</summary>
+    public bool HasBreather;
 
     /// <summary>Land kinds that can also swim: submerged, buoyancy replaces the plummet
     /// (see the swim block in <see cref="Update"/>). Amphibians paddle by nature; lizardmen
     /// swim like the reptiles they are — a lake is no moat against the warren; grubs are
-    /// sealed, buoyant sacks. Everything else sinks and walks the bottom.</summary>
+    /// sealed, buoyant sacks; a breather rig turns a bandit into a swimmer. Everything else
+    /// sinks and walks the bottom.</summary>
     public bool Swims => Kind is CreatureKind.TidePuddler or CreatureKind.Lizardman
-        or CreatureKind.Grub or CreatureKind.AlienWhale;
+        or CreatureKind.Grub or CreatureKind.AlienWhale || HasBreather;
+
+    /// <summary>Air-breathing kinds — the ones the drown tick applies to when they end up
+    /// fully submerged. Water natives and swimmers are exempt at the call site (they pass
+    /// <see cref="ImmuneTo"/>(Water)); this excludes the rest of the never-breathed set:
+    /// machines (saucers), the void phantom, living stone, and every vacuum native (the
+    /// belt/moon roster whose whole identity is that nothing there ever needed air).</summary>
+    public bool Breathes => Kind is not (CreatureKind.Saucer or CreatureKind.BigSaucer
+        or CreatureKind.VoidWraith or CreatureKind.RockMimic
+        or CreatureKind.Moonlet or CreatureKind.VacLeech or CreatureKind.Glimmermaw
+        or CreatureKind.StarJelly or CreatureKind.VoidBarnacle
+        or CreatureKind.Selenite or CreatureKind.DustDevil);
 
     /// <summary>Whether this kind can live inside a hazard cell — the gate the spawner uses so a
     /// creature is never dropped into a material that would drown/burn/dissolve it, and the
