@@ -1421,12 +1421,26 @@ public sealed class Cells
                     return;
             }
             var k = TileAt(ncx, ncy);
+            // Fire MELTS snow: the tile flashes to meltwater and steam. Not budget-gated —
+            // melting isn't spreading flame — and the puddle it leaves will douse the fire
+            // naturally on a later probe, so a flame eats a snowbank but drowns in the melt.
+            if (k == TileKind.Snow)
+            {
+                if (_rng.Next(6) != 0) return;
+                var sx = ncy / Density;
+                var sy = WrapX(ncx, _cellsAt[ncy]) / Density;
+                Planet.Set(sx, sy, TileKind.Sky);
+                SpawnInTile(sx, sy, Material.Water, Density / 2);
+                SpawnInTile(sx, sy, Material.Smoke, Density / 3);   // steam
+                return;
+            }
             if (!IsFlammable(k)) return;
             fuelled = true;
             // Char the tile through, same shape as TryMelt: the tile becomes fire + smoke,
             // which is what walks a grass fire along the surface. Throttled by the spread
-            // budget so the front advances but can't blanket the planet.
-            if (_rng.Next(50) != 0) return;
+            // budget so the front advances but can't blanket the planet. Rate raised (was
+            // 1-in-50) so flame licking a flammable surface reliably takes hold.
+            if (_rng.Next(28) != 0) return;
             if (!SpendFire()) return;
             var tx = ncy / Density;
             var ty = WrapX(ncx, _cellsAt[ncy]) / Density;
