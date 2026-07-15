@@ -2592,6 +2592,57 @@ public static class SimTest
             Check($"aquatic: shark hunts a swimmer ({startGap:0} -> {minGap:0}px closest)",
                 minGap < startGap - 6f && !EmbeddedInRock(planet, shark.Position));
         }
+
+        // --- Drowning + breathers: a submerged gunman thrashes out his air and dies; his
+        // breather-rigged mate swims and lives; nothing that never breathed cares. ---
+        {
+            var nobody = new Player(poolCentre + upP * 900f);
+            var bare = new Creature(poolCentre - upP * 12f, CreatureKind.Marauder);
+            var rigged = new Creature(poolCentre - upP * 12f, CreatureKind.Marauder) { HasBreather = true };
+            var vortex = new Creature(poolCentre - upP * 12f, CreatureKind.DustDevil);
+            var hp0 = bare.Health;
+            var hpV0 = vortex.Health;
+            for (var i = 0; i < 60 * 9; i++)
+            {
+                bare.Update(dt, planet, physics, cells, nobody);
+                rigged.Update(dt, planet, physics, cells, nobody);
+                vortex.Update(dt, planet, physics, cells, nobody);
+            }
+            Check($"drown: submerged gunman drowns ({hp0:0} -> {bare.Health:0} HP)",
+                bare.Health < hp0 - 8f);
+            Check($"drown: breather bandit survives the same water ({rigged.Health:0} HP)",
+                rigged.Health > rigged.Radius /* alive by a wide margin */ && rigged.Health > 20f);
+            Check($"drown: never-breathed kinds don't drown ({hpV0:0} -> {vortex.Health:0} HP)",
+                vortex.Health > hpV0 - 0.5f);
+            Check("drown: breather rig makes a bandit a swimmer",
+                rigged.Swims && rigged.ImmuneTo(Material.Water)
+                && !bare.Swims && !bare.ImmuneTo(Material.Water));
+        }
+
+        // --- Kraken: runs a swimmer down in its water; brine-jets a shore taunter. ---
+        {
+            var rP = new Vector2(-upP.Y, upP.X);
+            var prey = new Player(poolCentre + rP * 24f) { HeadInWater = true, InWater = true };
+            var kraken = new Creature(poolCentre - rP * 24f, CreatureKind.Kraken);
+            var g0 = (kraken.Position - prey.Position).Length();
+            var gMin = g0;
+            for (var i = 0; i < 60 * 5; i++)
+            {
+                kraken.Update(dt, planet, physics, cells, prey);
+                cells.Update(dt);
+                gMin = MathF.Min(gMin, (kraken.Position - prey.Position).Length());
+            }
+            Check($"kraken: runs a swimmer down ({g0:0} -> {gMin:0}px closest)",
+                gMin < g0 - 6f && !EmbeddedInRock(planet, kraken.Position));
+
+            var shots = new List<TitanProjectile>();
+            var taunter = new Player(poolCentre + upP * 44f);   // dry, above the pool
+            var lurker = new Creature(poolCentre - upP * 8f, CreatureKind.Kraken);
+            for (var i = 0; i < 60 * 5 && shots.Count == 0; i++)
+                lurker.Update(dt, planet, physics, cells, taunter, shots);
+            Check($"kraken: brine-jets a shore taunter ({shots.Count} jets in the volley)",
+                shots.Count >= 3);
+        }
     }
 
     /// <summary>True if the position sits inside a tile that actually blocks bodies —
