@@ -123,6 +123,7 @@ public sealed class Creature
 
     // --- Per-kind scratch state ---
     private float _cd;             // multi-use cooldown: pounce / hop / stinger-retreat
+    private float _hopDir;         // persistent idle-hop direction so hoppers don't jitter
     private float _retarget;       // seconds until the Borer re-picks a dig heading
     private int _amble;            // Grazer stroll direction: -1 / 0 / +1
     private float _heading;        // CaveEye flight heading, world-space radians
