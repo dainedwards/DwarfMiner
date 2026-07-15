@@ -1177,11 +1177,11 @@ public static class WorldGen
                     var gapSide = storey / floorEvery % 2 == 0 ? 1 : -1;
                     var slab = slabRow && dt * gapSide < span - 4;
 
-                    // Climbing spine: a ladder shaft hugging the wall opposite the street
-                    // door, running the full tower — it punches through the slabs (the
-                    // ladder tile replaces the floor there), so every storey connects.
-                    if (span >= 5 && dt == -doorSide * (span - 2)
-                        && storey >= 0 && storey < height - 3)
+                    // Climbing spine: a full-height ladder shaft dead-centre in the tower —
+                    // always reachable from the ground floor and clear of the slab (it's
+                    // placed before the slab fill and punches through every floor), so every
+                    // storey connects. The stair-gap beside it lets you step off each level.
+                    if (dt == 0 && storey >= 0 && storey < height - 2)
                     {
                         planet.Set(r, t, TileKind.Ladder);
                         continue;
