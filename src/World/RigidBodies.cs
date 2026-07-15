@@ -757,10 +757,9 @@ public sealed class RigidBodies
         if (d.LengthSquared() > (b.BoundRadius + radius) * (b.BoundRadius + radius)) return false;
         var bestSq = float.MaxValue;
         var bestWp = Vector2.Zero;
-        foreach (var c in b.Cells)
+        foreach (var si in b.SurfaceIdx)
         {
-            if (!c.Surface) continue;
-            var wp = b.Position + Rotate(c.Local, b.Angle);
+            var wp = b.Position + Rotate(b.Cells[si].Local, b.Angle);
             var dsq = (pos - wp).LengthSquared();
             if (dsq < bestSq) { bestSq = dsq; bestWp = wp; }
         }
