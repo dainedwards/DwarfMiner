@@ -206,9 +206,7 @@ public sealed partial class DwarfMinerGame : Game
     /// lip per column so the surface critters can walk the actual ground line.</summary>
     private Texture2D _titleSkyTex = null!;
     private Texture2D _titleLandTex = null!;
-    private Texture2D _titlePlanetMap = null!;
-    private Texture2D _titlePlanetShade = null!;
-    private Texture2D _titleRingTex = null!;
+    private Texture2D _titlePlanetTex = null!;
     private Texture2D _titleSunTex = null!;
     private Texture2D _titleMoonTex = null!;
     /// <summary>Baked volcano summit positions (640-space) — the live eruption plumes
