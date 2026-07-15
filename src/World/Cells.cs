@@ -195,8 +195,8 @@ public sealed class Cells
     // first-lit tile gives out — and a forest fire smoulders epically instead of
     // deleting itself.
     private float _charBudget = CharBudgetMax;
-    private const float CharBudgetMax = 12f;
-    private const float CharBudgetRegen = 6f;     // tile-chars per second, planet-wide
+    private const float CharBudgetMax = 24f;
+    private const float CharBudgetRegen = 12f;    // tile-chars per second, planet-wide
     private bool SpendChar()
     {
         if (_charBudget < 1f) return false;
