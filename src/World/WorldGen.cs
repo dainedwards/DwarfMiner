@@ -1134,6 +1134,12 @@ public static class WorldGen
                             ((float)rng.NextDouble() - 0.5f) * 18f);
                         CarveWormDisk(planet, centre + off, 10f + (float)rng.NextDouble() * 5f);
                     }
+                    // Every hall sends out a connector worm: a hall nobody's corridors
+                    // happen to cross is a sealed pocket, and the whole point down here
+                    // is one travellable network.
+                    CarveWorm(planet, rng, centre, (float)rng.NextDouble() * MathHelper.TwoPi,
+                        130 + rng.Next(90), branchBudget: 1, minFrac, hardFloorPx,
+                        localCeiling: true);
                 }
             }
         }
