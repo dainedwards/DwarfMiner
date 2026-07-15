@@ -6669,6 +6669,8 @@ public sealed partial class DwarfMinerGame : Game
             _renderer.RenderLightGrid(_camera, _run.Planet);
             _renderer.CompositeLighting(new Point(VirtualWidth, VirtualHeight));
         }
+        FramePerf.Add("light", tDraw);
+        tDraw = FramePerf.Now();
         // Multi-tap separable Gaussian bloom — bright spots (lava, projectiles, headlamp core)
         // bleed a soft glow over the scene through real downsample + 9-tap blur passes.
         if (!noLight)
