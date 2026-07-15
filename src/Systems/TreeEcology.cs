@@ -121,6 +121,54 @@ public static class TreeEcology
         }
     }
 
+    /// <summary>Reconstruct the tree sites of a resumed world from the TreeRoot tiles saved in
+    /// its grid (the sites list itself isn't serialized). Each root column's shallowest root
+    /// marks one tree: the ground sits one ring out, and the standing trunk height is measured
+    /// off the grid (a tree felled before the save has no trunk, so it's flagged to regrow).</summary>
+    public static void RebuildSites(Session run)
+    {
+        var p = run.Planet;
+        if (p is null || p.Trees.Count > 0) return;   // fresh worlds already carry their sites
+        var lo = Math.Max(1, p.SurfaceRing - 34);
+        var hi = Math.Min(p.Rings - 2, p.SurfaceRing + 4);
+        for (var r = lo; r <= hi; r++)
+        {
+            var n = p.TilesAt(r);
+            for (var t = 0; t < n; t++)
+            {
+                if (p.Get(r, t) != TileKind.TreeRoot) continue;
+                // Only the shallowest root of a column seeds a site (the tile one ring outward
+                // is soil, not another root) so each tree is rebuilt exactly once.
+                var outN = p.TilesAt(r + 1);
+                var outT = (int)((t + 0.5f) / n * outN);
+                if (p.Get(r + 1, outT) == TileKind.TreeRoot) continue;
+
+                var groundR = r + 1;
+                var ang = (t + 0.5f) / n * MathHelper.TwoPi;
+                var h = 0;
+                for (var hh = 1; hh < 30; hh++)
+                {
+                    var rr = groundR + hh;
+                    if (rr >= p.Rings - 1) break;
+                    if (p.Get(rr, ColAt(p, rr, ang)) != TileKind.TreeTrunk) break;
+                    h = hh;
+                }
+                var standing = h > 0;
+                var hash = (uint)(r * 92821 + t * 68917);
+                p.Trees.Add(new TreeSite
+                {
+                    Angle = ang,
+                    GroundR = groundR,
+                    Species = (byte)(hash % 4),
+                    Height = standing ? (byte)h : (byte)(6 + hash % 8),
+                    Canopy = TileKind.TreeCanopy,
+                    Standing = standing,
+                    Growth = standing ? 1f : 0f,
+                });
+            }
+        }
+    }
+
     // ---- regrowth ------------------------------------------------------------------------
 
     private static bool RootsAlive(Planet p, TreeSite s)
