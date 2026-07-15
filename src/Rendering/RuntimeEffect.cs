@@ -267,7 +267,9 @@ void main()
         w.Write(0x5846474D);            // "MGFX" read as little-endian int
         w.Write((byte)10);              // MGFXVersion — 3.8.2's reader accepts exactly 10
         w.Write((byte)0);               // profile: 0 = OpenGL (Shader.PlatformProfile)
-        w.Write(unchecked((int)0xD0A17A01)); // effectKey: unique id for the device effect cache
+        // effectKey: id for the device effect cache — MUST differ between the effects this
+        // class builds or the second one silently reuses the first one's compiled shaders.
+        w.Write(unchecked((int)0xD0A17A01) ^ technique.GetHashCode());
 
         // --- constant buffers ---
         w.Write(2);
