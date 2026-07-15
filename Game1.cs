@@ -3132,27 +3132,37 @@ public sealed partial class DwarfMinerGame : Game
             var raining = c.RainTimer > 0f;
             var bodyCol = raining ? body : Color.Lerp(body, bodyLt, 0.35f);
             // A slim connected bank: many small puffs packed tightly along the ARC at the
-            // cloud's one fixed radius from the planet centre — flat-bottomed, no gaps, and
-            // dead-steady altitude (the old version bobbed on a sine and spaced fat puffs
-            // wider than their radii, which read as disconnected bouncing balls). The only
-            // per-puff variation is a deterministic outline wobble, so the silhouette is
-            // organic but motionless.
+            // cloud's one fixed radius from the planet centre. The sine envelope is skewed
+            // and re-lumped per cloud (Shape) so no two banks are the same symmetric
+            // almond, and a slow Time billow breathes the tops while every puff's
+            // UNDERSIDE stays pinned to the cruise altitude (the radial shift matches the
+            // radius growth, so the flat base never bobs). Fade rides alpha instead of
+            // size — forming condenses outward from the thick core, dissipating sheds the
+            // thin tips first (envelope-vs-Grow gate) rather than deflating like a balloon
+            // into a row of beads. A translucent halo under each puff softens the rim.
             var arcLen = c.HalfWidth * 2f * c.Alt;
             var puffs = Math.Max(4, (int)(arcLen / 11f));
+            var skew = 0.65f + c.Shape * 0.7f; // envelope exponent: shifts the fat part off-centre
+            var alpha = MathHelper.Clamp(c.Grow * 1.15f, 0f, 1f);
+            var haloCol = bodyCol * (0.3f * alpha);
             for (var i = 0; i <= puffs; i++)
             {
                 var fi = i / (float)puffs;
-                var envelope = MathF.Sin(fi * MathF.PI);          // thick middle, thin tips
+                var envelope = MathF.Sin(MathF.Pow(fi, skew) * MathF.PI)
+                             * (0.74f + 0.26f * MathF.Sin(fi * 7.3f + c.Phase * 5f));
+                if (envelope < (1f - c.Grow) * 0.9f) continue;
                 var wob = MathF.Sin(c.Phase + i * 2.17f);
-                var rad = (6f + envelope * 11f + wob * 1.5f) * c.Grow;
+                var breathe = (0.5f + 0.5f * MathF.Sin(c.Phase + i * 1.31f + _renderer.Time * 0.3f))
+                            * 1.8f * envelope;
+                var rad = 6f + envelope * 11f + wob * 1.5f + breathe;
                 if (rad < 1.5f) continue;
                 var a = c.Angle + (fi - 0.5f) * 2f * c.HalfWidth;
                 var dir = new Vector2(MathF.Cos(a), MathF.Sin(a));
-                // Base row rides the exact cruise radius (a flat underside); the highlight
-                // puff sits on the sunlit top of the bank.
-                var p = _run.Planet.Center + dir * (c.Alt + wob * 1.2f);
-                _renderer.DrawCircle(p, rad, bodyCol);
-                _renderer.DrawCircle(p + dir * (rad * 0.45f), rad * 0.62f, bodyLt);
+                var p = _run.Planet.Center + dir * (c.Alt + wob * 1.2f + breathe);
+                _renderer.DrawCircle(p, rad * 1.45f, haloCol);
+                _renderer.DrawCircle(p, rad, bodyCol * alpha);
+                // The highlight puff sits on the sunlit top of the bank.
+                _renderer.DrawCircle(p + dir * (rad * 0.45f), rad * 0.62f, bodyLt * alpha);
             }
         }
     }
