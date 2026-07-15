@@ -454,6 +454,13 @@ public sealed class Creature
     private const float LavaDps = 26f;
     private const float AcidDps = 12f;
     private const float FireDps = 5f;
+    // Drowning: a fully submerged air-breather holds out for the grace window, then takes
+    // steady damage until it surfaces or dies. Tuned so a bandit gunman (22-38 HP) who
+    // sinks into the sea is dead in a handful of seconds, while a big brute caught in a
+    // flash-flooded tunnel still has time to wade clear.
+    private const float DrownGraceSeconds = 4f;
+    private const float DrownDps = 9f;
+    private float _airT;   // seconds spent continuously submerged
     /// <summary>Seconds between hazard probes. SampleHazardsNear walks a body-sized cell
     /// window, so ticking it every frame for every creature near a pool adds up; damage is
     /// applied per-period at the same per-second rates. Started at a random phase so a herd
