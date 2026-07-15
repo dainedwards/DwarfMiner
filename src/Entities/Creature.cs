@@ -3118,6 +3118,15 @@ public sealed class Creature
                 r.DrawCircle(head, 2.3f, skin);
                 r.DrawRect(head - up * 0.4f, new Vector2(4.4f, 1.6f), rag, rot); // rag mask
                 r.DrawCircle(head + right * (facing * 1.0f) + up * 0.8f, 0.7f, Color.Black);
+                // Breather rig: a rimmed mask pod over the rag and a slim air flask on the
+                // hip — the tell that this one will follow you into the sea.
+                if (HasBreather)
+                {
+                    r.DrawCircle(head + right * (facing * 1.7f) - up * 0.3f, 1.4f, Tinted(new Color(120, 160, 185)));
+                    r.DrawCircle(head + right * (facing * 1.7f) - up * 0.3f, 0.7f, new Color(200, 235, 255));
+                    r.DrawRect(Position - right * (facing * 1.9f) + up * 0.4f, new Vector2(1.2f, 2.6f),
+                        Tinted(new Color(150, 160, 175)), rot);
+                }
                 // Pistol arm follows the last aim.
                 var aim = _gunAim.LengthSquared() > 0.01f ? _gunAim : right * facing;
                 var pAng = MathF.Atan2(aim.Y, aim.X);
