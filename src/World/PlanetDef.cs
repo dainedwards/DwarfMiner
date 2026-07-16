@@ -171,7 +171,7 @@ public static class PlanetDefs
     /// groves, volcanoes), every ore findable. SurfaceTile is
     /// Snow because the blizzard and snow-cap gates key off it; the actual ground cycles
     /// through SurfaceBands. Its core holds no shard — it's a test rig, not a campaign world.
-    /// Deliberately SMALL (0.55×) and CREATURE-FREE so it loads in a blink and runs clean —
+    /// Deliberately SMALL (0.49×) and CREATURE-FREE so it loads in a blink and runs clean —
     /// the debug menu's creature tab conjures any test subject on demand.</summary>
     public static readonly PlanetDef DebugWorld = new("debug", "Debug",
         "QA test rig - every biome and every disaster at once",
