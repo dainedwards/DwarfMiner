@@ -1,5 +1,20 @@
 # DwarfMiner — notes for Claude sessions
 
+## ⚠️ RULE #1 — end every finished change with the run command
+
+**Every reply that finishes a code change MUST end with the current run command line**
+(format below). No exceptions, no "same command as before" — print the full line again.
+The user's `run` launcher executes the NEWEST matching line from the session transcript;
+if you don't print it, the user keeps launching a stale command and your change is
+untestable from their side (this happened: DM_ERUPTSHOW was added and never printed, and
+several playtests silently ran without it).
+
+Triggers — print the line when ANY of these happened since you last printed it:
+- you finished/built any code change,
+- you added, removed, or renamed a `DM_*` variable,
+- the right variable set for testing the current work changed,
+- you set up or switched a worktree.
+
 ## Run command for testing (machine-parsed — keep the exact format)
 
 Whenever you set up a worktree, finish a change, or the way to test changes, print the
