@@ -342,8 +342,8 @@ public sealed class Particles
                     if (p.LandMat != 0 && cells != null)
                     {
                         cells.StampAtWorld(p.Position, (Material)p.LandMat, 0);
-                        for (var e = 0; e < (int)(p.JetScale * 2f); e++)
-                            cells.StampAtWorld(p.Position + Jitter(2.5f),
+                        for (var e = 0; e < (int)(p.JetScale * 6f); e++)
+                            cells.StampAtWorld(p.Position + Jitter(3.5f),
                                 (Material)p.LandMat, 0);
                         p.LandMat = 0;
                     }
