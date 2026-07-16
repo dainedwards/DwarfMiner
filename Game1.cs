@@ -4869,6 +4869,7 @@ public sealed partial class DwarfMinerGame : Game
             // Tooling breadcrumb: headless runs verify the eruption actually began.
             Console.WriteLine($"[erupt] eruption STARTED at vent {_run.EruptionVent} "
                 + $"({_run.EruptionLeft:0.0}s, peak {_run.EruptionPeakFrac:0.00})");
+            _eruptScanLogged = false;
         }
         if (ambient.QuakeStruck)
             _run.Shake = MathF.Max(_run.Shake, 1.0f);
