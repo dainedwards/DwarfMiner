@@ -2271,12 +2271,15 @@ public sealed partial class DwarfMinerGame : Game
 
                     if (surfR < levelR)
                     {
+                        // 3/6 tiles per frame (was 2/4): the squat real-volcano crater is
+                        // ~1.8× wider, so the ramp needs proportionally more volume to
+                        // climb at the same visible pace.
                         var fillR = Math.Min(surfR + 1, _run.Planet.Rings - 1);
                         var fillN = _run.Planet.TilesAt(fillR);
                         var fillT0 = (int)(angF * fillN);
-                        for (var i = 0; i < (peak ? 4 : 2); i++)
+                        for (var i = 0; i < (peak ? 6 : 3); i++)
                             _run.Cells.SpawnInTile(fillR,
-                                ((fillT0 + Random.Shared.Next(-2, 3)) % fillN + fillN) % fillN,
+                                ((fillT0 + Random.Shared.Next(-3, 4)) % fillN + fillN) % fillN,
                                 mat, Cells.Density * Cells.Density);
                     }
 
