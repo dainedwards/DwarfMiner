@@ -42,9 +42,11 @@ public enum Material : byte
 public static class Materials
 {
     /// <summary>Tiles that crumble straight to dust the moment their inward neighbour is empty.
-    /// Conglomerate is compacted debris, so undercutting it spills its stored cells back out.</summary>
+    /// Conglomerate is compacted debris, so undercutting it spills its stored cells back out.
+    /// Dirt is deliberately NOT loose: it holds when undercut like rock does (per user), and
+    /// only gives way through the region collapse path, not the moment the cell below breaks.</summary>
     public static bool IsLoose(TileKind k) => k is
-        TileKind.Dirt or TileKind.Grass or TileKind.MossStone or
+        TileKind.Grass or TileKind.MossStone or
         TileKind.Gravel or TileKind.Snow or TileKind.Conglomerate;
 
     /// <summary>Cell materials the compaction sweep may press into a Conglomerate tile.</summary>
