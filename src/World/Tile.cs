@@ -213,6 +213,7 @@ public static class Tiles
         TileKind.Granite => 3,
         TileKind.Basalt => 4,
         TileKind.LavaRock => 4,
+        TileKind.Geyser => 8,       // the volcano's heart takes a real mining commitment
         TileKind.Obsidian => 6,
         TileKind.CoalOre => 2,
         TileKind.IronOre => 3,
