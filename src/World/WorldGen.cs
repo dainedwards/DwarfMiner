@@ -1292,6 +1292,13 @@ public static class WorldGen
                 foreach (var v in ventBearings)
                     if (MathF.Abs(MathHelper.WrapAngle(posAng - v)) < margin) { nearVent = true; break; }
             }
+            // The chamber disc itself: the bearing margin above covers the ~5-tile throat
+            // column, but a chamber is 10-16 tiles across — Euclidean keep-out, bite
+            // radius (10px) + slack included.
+            if (!nearVent)
+                foreach (var (zc, zr) in planet.ChamberZones)
+                    if (Vector2.DistanceSquared(pos, zc) < (zr + 12f) * (zr + 12f))
+                    { nearVent = true; break; }
             if (dist >= minPx && dist <= maxPx && !nearVent && !NearDenOrCity(planet, pos))
                 CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 10f : 7f, biteObsidian: true);
             if (branchBudget > 0 && s > length / 4 && rng.Next(50) == 0)
