@@ -2336,44 +2336,31 @@ public sealed partial class DwarfMinerGame : Game
                     // list any SOLID tiles engulfed inside the bowl above the resting line
                     // — the "dark floating bars in the dome" artifact. Names the culprit
                     // (worldgen ledge vs quench-compacted crust) in the [erupt] log.
+                    // One-shot diagnostic per eruption: any solid tile in the bowl's
+                    // INTERIOR above the resting line is a floating-slab artifact (edge
+                    // columns and the rest ring itself are excluded — that's the pool's
+                    // own LavaRock wall jacket, verified benign).
                     if (!_eruptScanLogged && levelFrac > 1.15f)
                     {
                         _eruptScanLogged = true;
-                        var kinds = new Dictionary<TileKind, int>();
                         var restRd = vx - (int)(2 * Planet.LegacyTileScale);
-                        for (var r = restRd; r <= Math.Min(levelR, _run.Planet.Rings - 1); r++)
+                        var found = 0;
+                        for (var r = restRd + 2; r <= Math.Min(levelR, _run.Planet.Rings - 1); r++)
                         {
                             var n2 = _run.Planet.TilesAt(r);
                             var t0d = (int)(angF * n2);
                             var half = Math.Max(3, (int)(0.07f / MathHelper.TwoPi * n2));
-                            for (var o = -half; o <= half; o++)
+                            for (var o = -(half - 2); o <= half - 2; o++)
                             {
                                 var k2 = _run.Planet.Get(r, ((t0d + o) % n2 + n2) % n2);
                                 if (k2 == TileKind.Sky) continue;
-                                kinds[k2] = kinds.GetValueOrDefault(k2) + 1;
+                                found++;
+                                Console.WriteLine($"[erupt]   FLOATING SOLID {k2} at ring {r} "
+                                    + $"(rest {restRd}) colOff {o}/{half}");
                             }
                         }
-                        var kindList = new System.Text.StringBuilder();
-                        foreach (var kv in kinds) kindList.Append($"{kv.Key}×{kv.Value} ");
-                        Console.WriteLine("[erupt] solids engulfed in bowl above rest line: "
-                            + (kinds.Count == 0 ? "none" : kindList.ToString()));
-                        // Positions too: edge-column hits are the pool's own wall jacket
-                        // (scan overhang); centre-column hits at one ring are a floating
-                        // slab — the artifact.
-                        for (var r = restRd; r <= Math.Min(levelR, _run.Planet.Rings - 1); r++)
-                        {
-                            var n2 = _run.Planet.TilesAt(r);
-                            var t0d = (int)(angF * n2);
-                            var half = Math.Max(3, (int)(0.07f / MathHelper.TwoPi * n2));
-                            for (var o = -half; o <= half; o++)
-                            {
-                                var k2 = _run.Planet.Get(r, ((t0d + o) % n2 + n2) % n2);
-                                if (k2 != TileKind.Sky)
-                                    Console.WriteLine($"[erupt]   solid {k2} at ring {r} "
-                                        + $"(rest {restRd}, rim ~{_run.Planet.SurfaceRing + (int)coneHrt}) "
-                                        + $"colOff {o}/{half}");
-                            }
-                        }
+                        if (found == 0)
+                            Console.WriteLine("[erupt] bowl interior clean above rest line");
                     }
 
                     // FAR MODE: past ~2000 px the player cannot possibly see the show, so
