@@ -1847,7 +1847,30 @@ public static class WorldGen
                 for (var i = 0; ok && i < placed.Count; i++)
                     ok = AngDist(ang, placed[i].ang) > coneW + placed[i].w + 0.1f;
             }
-            if (!ok) continue;
+            if (!ok)
+            {
+                // GUARANTEED placement: a world defined with volcanoes must GET them (the
+                // shrunken QA rig's crowded circumference made the 80 random tries fail
+                // sometimes — a debug world without its volcano is untestable). Sweep
+                // fixed bearings and take the one with the biggest clearance from the
+                // spawn point, the fluid basins, and other cones. Mountains are fair
+                // game here — a cone swallowing a mountain flank is fine; drowning the
+                // lake trio or the spawn is not. No rng draws: streams stay stable.
+                var bestScore = float.MinValue;
+                for (var k = 0; k < 128; k++)
+                {
+                    var a = k / 128f * MathHelper.TwoPi;
+                    var score = AngDist(a, MathF.PI * 1.5f) - coneW - 0.25f;
+                    for (var i = 0; i < avoid.Count; i++)
+                        score = MathF.Min(score, AngDist(a, avoid[i].ang) - coneW - avoid[i].w - 0.04f);
+                    for (var i = 0; i < placed.Count; i++)
+                        score = MathF.Min(score, AngDist(a, placed[i].ang) - coneW - placed[i].w - 0.1f);
+                    if (score > bestScore) { bestScore = score; ang = a; }
+                }
+                // Still refuse only if even the best bearing would bury a basin or the
+                // spawn under the cone itself (clearance below zero means overlap).
+                if (bestScore < 0f) continue;
+            }
             placed.Add((ang, coneW));
 
             const float craterFrac = 0.30f;           // crater mouth as a fraction of the footprint
