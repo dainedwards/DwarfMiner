@@ -1859,6 +1859,10 @@ public sealed class Particles
             LightRadius = 52f + (float)_rng.NextDouble() * 8f,
             LightColor = new Color(255, 170, 80),
             HeroLight = true,
+            // Volcano-family tag: rides the Hidden gate, so the flash can't strobe from
+            // INSIDE the pool while the column base is still submerged (draws nothing —
+            // Fluid 0 and transparent — so the tag has no other effect).
+            JetScale = 2f,
         });
     }
 
