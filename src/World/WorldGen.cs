@@ -255,9 +255,11 @@ public static class WorldGen
         // stays byte-identical; only the depths change, and only where they overran.
         {
             var maxDepth = baselineR / S * 0.55f;
-            foreach (var (lo, _) in strataSeams)
+            foreach (var (_, hi) in strataSeams)
             {
-                var toSeam = (baselineR + Planet.RingMin - lo) / S - 3f;   // 3 legacy tiles clear
+                // `hi` is the seam band's OUTER radius — the first thing a bowl coming down
+                // from the surface would meet. Stop 3 legacy tiles clear of it.
+                var toSeam = (baselineR + Planet.RingMin - hi) / S - 3f;
                 if (toSeam < maxDepth) maxDepth = toSeam;
             }
             maxDepth = MathF.Max(maxDepth, 2f);
