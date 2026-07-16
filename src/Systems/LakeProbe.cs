@@ -135,6 +135,17 @@ public static class LakeProbe
             ? "    OK: every basin sealed" : "    FAIL: basins leak");
     }
 
+    /// <summary>True if the air tile at (r,t) has more air under it that isn't the lake —
+    /// i.e. it is the mouth of a shaft rather than a course of the bowl's own rim.</summary>
+    private static bool LeadsDown(Planet planet, HashSet<(int r, int t)> lake, int r, int t)
+    {
+        var r2 = r - 1;
+        if (r2 < 0) return false;
+        var n2 = planet.TilesAt(r2);
+        var t2 = (int)((t + 0.5f) / planet.TilesAt(r) * n2) % n2;
+        return planet.Get(r2, t2) == TileKind.Sky && !lake.Contains((r2, t2));
+    }
+
     private static HashSet<(int r, int t)> ScanWater(Planet planet, Cells cells)
     {
         var set = new HashSet<(int r, int t)>();
