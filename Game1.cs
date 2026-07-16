@@ -2350,9 +2350,10 @@ public sealed partial class DwarfMinerGame : Game
                                 kinds[k2] = kinds.GetValueOrDefault(k2) + 1;
                             }
                         }
+                        var kindList = new System.Text.StringBuilder();
+                        foreach (var kv in kinds) kindList.Append($"{kv.Key}×{kv.Value} ");
                         Console.WriteLine("[erupt] solids engulfed in bowl above rest line: "
-                            + (kinds.Count == 0 ? "none"
-                               : string.Join(", ", kinds.Select(kv => $"{kv.Key}×{kv.Value}"))));
+                            + (kinds.Count == 0 ? "none" : kindList.ToString()));
                     }
 
                     // FAR MODE: past ~2000 px the player cannot possibly see the show, so
