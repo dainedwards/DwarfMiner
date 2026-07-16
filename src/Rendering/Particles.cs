@@ -1741,7 +1741,7 @@ public sealed class Particles
                 LightRadius = hot ? 70f : i % 3 == 0 ? 34f : 0f,
                 LightColor = new Color(255, 170, 70),
                 Fluid = (byte)Material.Fire,
-                JetScale = 2f + (float)_rng.NextDouble() * 1.2f,   // cone-scale blob footprint
+                JetScale = 2.8f + (float)_rng.NextDouble() * 1.6f,   // cone-scale blob footprint
                 LandMat = ignites ? (byte)Material.Fire : (byte)0,
                 LandFuse = ignites ? (byte)(30 + _rng.Next(12)) : (byte)0,
                 LandSparks = ignites,
