@@ -1481,14 +1481,18 @@ public static class WorldGen
     /// (crater mouths, lake surfaces, bowl air). This is the absolute half of the tunnel
     /// guards: the keep-out stops the worms, this stops what was carved before the seeds
     /// existed (noise caves) or slipped a diagonal. Lava plugs with its jacket rock, acid
-    /// with the only kind it can't eat.</summary>
-    private static void PlugFluidBreaches(Planet planet, HashSet<long> basinAir)
+    /// with the only kind it can't eat. The basin's carved-but-unseeded LID (freeboard/rim
+    /// courses) stays open as the pool's own surface — but its tiles are walled like the
+    /// seeds themselves: the settle slosh crests a course into the lid, so a shaft or
+    /// shoreline gap at lid level is a drain exactly like one at fill level.</summary>
+    private static void PlugFluidBreaches(Planet planet, HashSet<long> lavaLid,
+        HashSet<long> acidLid)
     {
-        void Plug(List<(int x, int y)> seeds, TileKind barrier)
+        void Plug(List<(int x, int y)> seeds, HashSet<long> lid, TileKind barrier)
         {
-            var set = new HashSet<long>();
-            foreach (var (r, t) in seeds) set.Add(Planet.TileKey(r, t));
-            foreach (var (r, t) in seeds)
+            var open = new HashSet<long>(lid);
+            foreach (var (r, t) in seeds) open.Add(Planet.TileKey(r, t));
+            void Halo(int r, int t)
             {
                 var n = planet.TilesAt(r);
                 for (var dr = -2; dr <= 0; dr++)
@@ -1500,16 +1504,17 @@ public static class WorldGen
                     for (var dt = -2; dt <= 2; dt++)
                     {
                         var t2 = ((t2c + dt) % n2 + n2) % n2;
-                        var key = Planet.TileKey(r2, t2);
-                        if (set.Contains(key) || basinAir.Contains(key)) continue;
+                        if (open.Contains(Planet.TileKey(r2, t2))) continue;
                         if (planet.Get(r2, t2) == TileKind.Sky)
                             planet.Set(r2, t2, barrier);
                     }
                 }
             }
+            foreach (var (r, t) in seeds) Halo(r, t);
+            foreach (var key in lid) Halo((int)(key / 4_000_000L), (int)(key % 4_000_000L));
         }
-        Plug(planet.LavaSeeds, TileKind.LavaRock);
-        Plug(planet.AcidSeeds, TileKind.Obsidian);
+        Plug(planet.LavaSeeds, lavaLid, TileKind.LavaRock);
+        Plug(planet.AcidSeeds, acidLid, TileKind.Obsidian);
     }
 
     /// <summary>Expand every lava/acid seed tile by the 2-tile jacket reach into
