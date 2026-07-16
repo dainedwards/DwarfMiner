@@ -53,6 +53,11 @@ public static class LakeProbe
                 var n2 = planet.TilesAt(r2);
                 var t2 = (((int)((t + 0.5f) / n * n2) + dt) % n2 + n2) % n2;
                 if (planet.Get(r2, t2) != TileKind.Sky || lake.Contains((r2, t2))) continue;
+                // Open ATMOSPHERE beside a basin tile is the lake's own shoreline, not a
+                // drain — the bowl's top courses sit at ground level by construction. Only
+                // air that is genuinely underground is a hole the pour can escape down.
+                if (Planet.RingMin + r2 >= planet.SurfaceRadiusAt(planet.TileToWorld(r2, t2)) - 1f)
+                    continue;
                 mouthCount++;
                 if (mouths.Count < 12)
                     mouths.Add($"drain mouth: water({r},{t}) bearing " +
