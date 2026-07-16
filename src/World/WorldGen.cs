@@ -2594,15 +2594,19 @@ public static class WorldGen
             // cave-riddled crust, gated by a door at the mouth. Lizardmen open doors, so the
             // guards can slip out of the warren and range through the nearby caves — the
             // village isn't a sealed box, its people come and go.
-            foreach (var hall in centres)
+            for (var h = 0; h < centres.Count; h++)
             {
+                var hall = centres[h];
                 var hUp = planet.UpAt(hall);
                 var hRight = new Vector2(-hUp.Y, hUp.X);
                 var side = rng.Next(2) == 0 ? 1f : -1f;
                 var reach = 120f + (float)rng.NextDouble() * 90f;
                 CarveTunnel(planet, hall, hall + hRight * side * reach);
-                // Hang a 3-tall door across the corridor mouth, ~30px out from the hall centre.
-                var doorPos = hall + hRight * side * 30f;
+                // Hang a 3-tall door across the corridor mouth — at the hall's actual WALL
+                // LINE, not a fixed 30px: halls run 39-78px half-wide, so the old fixed
+                // offset stamped doors INSIDE wide halls' open interiors (once right on a
+                // den heart: a closed door is anchored+solid = "solid heart" test fail).
+                var doorPos = hall + hRight * side * (widths[h] + 10f);
                 var rel = doorPos - planet.Center;
                 var doorAng = MathF.Atan2(rel.Y, rel.X);
                 var (doorR, _) = planet.WorldToTile(doorPos);
@@ -2612,6 +2616,9 @@ public static class WorldGen
                     if (r < 2 || r >= planet.Rings) continue;
                     var n = planet.TilesAt(r);
                     var t = (int)((doorAng / MathHelper.TwoPi + 1f) % 1f * n);
+                    // Belt and braces: a door leaf must never occupy a recorded den
+                    // heart, whatever the surrounding geometry rolled.
+                    if (planet.LizardDens.Contains((r, t))) continue;
                     if (planet.Get(r, t) == TileKind.Sky)
                     {
                         planet.Set(r, t, TileKind.DoorClosed);
