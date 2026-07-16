@@ -3213,9 +3213,10 @@ public sealed class Cells
 
         // Drive the registered sites. Each runs a lazy hash clock: quiet for most of its
         // 3-9s period, a ~1.8s swell at the end (fast swell, slow finish — the dome
-        // bursts, never deflates), the POP at the wrap, then a briefly collapsing splash
-        // lip. The dome's centre rides just off the surface cell so the blister visibly
-        // grows OUT of the pool — never hovers above it.
+        // bursts, never deflates), then the POP at the wrap — the dome simply vanishes,
+        // no collapsing splash lip (the side lobes read as spawned smaller bubbles). The
+        // dome's centre rides just off the surface cell so the blister visibly grows OUT
+        // of the pool — never hovers above it.
         var sparks = 0;
         _bubbleDead.Clear();
         foreach (var (key, site) in _bubbleSites)
