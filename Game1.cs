@@ -401,8 +401,28 @@ public sealed partial class DwarfMinerGame : Game
         return s.Length >= 7 ? $"detached {s[..7]}" : null;
     }
 
+    /// <summary>DM_NOFOCUS=1 — an automated/test launch: the window is HIDDEN outright (see
+    /// <see cref="HideWindow"/>). Rendering carries on into the scene render target, so
+    /// DM_AUTOSHOT/F12 screenshots are unaffected; there is simply nothing on screen to
+    /// steal focus, take input, or sit in front of what the user is doing.</summary>
+    private readonly bool _noFocus = Environment.GetEnvironmentVariable("DM_NOFOCUS") is { Length: > 0 };
+
+    [DllImport("libSDL2", EntryPoint = "SDL_HideWindow")]
+    private static extern void SdlHideWindow(IntPtr window);
+
+    /// <summary>Take the window off the screen entirely. `GameWindow.Handle` is the SDL_Window*
+    /// on the DesktopGL backend, and SDL2 is already loaded in-process by MonoGame, so this
+    /// only borrows the one entry point MonoGame's own bindings don't expose. Best-effort: a
+    /// hidden window is a convenience for test runs, never worth failing a launch over.</summary>
+    private void HideWindow()
+    {
+        try { SdlHideWindow(Window.Handle); }
+        catch (Exception e) { Console.WriteLine($"[nofocus] could not hide the window: {e.Message}"); }
+    }
+
     protected override void Initialize()
     {
+        if (_noFocus) HideWindow();
         // Adopt any pre-slot save as slot 1 BEFORE anything reads (and thereby creates)
         // slot files — a fresh meta materialising first would block the migration and
         // orphan the legacy campaign.
