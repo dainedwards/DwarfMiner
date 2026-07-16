@@ -1677,6 +1677,16 @@ public static class SimTest
         foreach (var v in acidWorld.VolcanoVents) acidVent |= v.acid;
         Check("volcano: acid volcanoes vent acid and seed the acid channel",
             acidVent && acidWorld.LavaSeeds.Count == 0 && acidWorld.AcidSeeds.Count > 0);
+
+        // The QA rig's guarantee: Volcanoes: 1 ALWAYS places (random tries + the
+        // deterministic fallback sweep) — a debug world without its volcano is
+        // untestable. Several seeds, since placement pressure varies per layout.
+        foreach (var seed in new[] { 7, 21, 99 })
+        {
+            var rig = WorldGen.Generate(seed, PlanetDefs.ById("debug"));
+            Check($"volcano: QA rig seed {seed} always places its volcano "
+                + $"({rig.VolcanoVents.Count} vents)", rig.VolcanoVents.Count >= 1);
+        }
     }
 
     /// <summary>City worlds and lizard warrens, and the wall between them: towers rise in
