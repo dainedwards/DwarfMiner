@@ -1274,16 +1274,15 @@ public static class WorldGen
             var minFrac = MathF.Max(ocean ? 0.30f : 0.38f, def.LavaFillFrac + 0.08f);
             var (upperSeams, _, _) = CaveStrata(planet, def);
             var hardFloorPx = upperSeams[0].lo * Planet.TileSize;
-            var maxTiles = Planet.RingMin + planet.SurfaceRing - 16f * Planet.LegacyTileScale;
+            var (floorTiles, ceilTiles, driftCeilTiles) = WormBand(planet, def, minFrac, upperSeams);
             for (var i = 0; i < worms; i++)
             {
                 var ang = (float)rng.NextDouble() * MathHelper.TwoPi;
-                var radiusTiles = MathHelper.Lerp(planet.Radius * minFrac, maxTiles,
-                    (float)rng.NextDouble());
+                var radiusTiles = MathHelper.Lerp(floorTiles, ceilTiles, (float)rng.NextDouble());
                 var start = planet.Center
                     + new Vector2(MathF.Cos(ang), MathF.Sin(ang)) * radiusTiles * Planet.TileSize;
                 CarveWorm(planet, rng, start, (float)rng.NextDouble() * MathHelper.TwoPi,
-                    260 + rng.Next(300), branchBudget: 2, minFrac, hardFloorPx,
+                    260 + rng.Next(300), branchBudget: 2, floorTiles, driftCeilTiles, hardFloorPx,
                     localCeiling: ocean);
             }
 
