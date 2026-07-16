@@ -2012,6 +2012,10 @@ public sealed class Particles
                 CollideTiles = true,
                 LightRadius = i % 2 == 0 ? 42f : 0f,
                 LightColor = new Color(255, 150, 60),
+                // Volcano-family tag: rides the Hidden gate (chunks are born under the
+                // crater lava too) and the landed 2.5s cooling linger; chunks carry no
+                // LandMat and no Fluid, so nothing else about them changes.
+                JetScale = 2f,
             });
         }
     }
