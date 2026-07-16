@@ -424,7 +424,7 @@ public static class WorldGen
                 // out only needs one melted or crumbled tile to connect — solid rock there
                 // ends the class. Water lakes deliberately keep their caves (a flooded
                 // grotto is gameplay; a drained lava lake is a broken world).
-                var lavaBuffer = def.LakePair && lakeIdx == 1
+                var lavaBuffer = def.LakeTrio && lakeIdx == 1
                     && lakeDepth > 0.5f && depth < lakeDepth + 12f;
 
                 // Ocean worlds (LakeScale > 2.5, same marker as the deep-water bonus above)
