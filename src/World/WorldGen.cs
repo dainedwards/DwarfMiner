@@ -1247,6 +1247,38 @@ public static class WorldGen
     /// obsidian (acid/volcano linings stay sealed), and simply leave those tiles standing
     /// as natural dead-ends when they meet one. Below the upper network, CarveDeepStrata
     /// adds the sealed deep layers.</summary>
+    /// <summary>Radial envelope of the UPPER worm network, as radii in tiles-from-centre:
+    /// the band's floor, the ceiling a walk may START under, and the slightly higher ceiling
+    /// it may DRIFT to. Both ends were authored against the wrong yardstick:
+    ///
+    /// * the floor was <c>planet.Radius * minFrac</c>, but <see cref="Planet.Radius"/> counts
+    ///   the sky — <c>Rings</c> carries a FIXED 142-ring <see cref="Planet.SkyHeadroom"/>
+    ///   whatever the world's size. On the 0.49 QA rig the sky is two thirds of the radius, so
+    ///   0.38× of it put the floor FOUR tiles under the grass — above the band's own ceiling.
+    ///   Every walk was steered inward on every step and the "upper network" collapsed onto
+    ///   the seam. For a world with no lava sea the floor is simply CaveStrata's deep-zone
+    ///   ceiling, which that function already documents as "the upper worm network's floor" —
+    ///   taking it from there makes the two agree by construction, and inherits its crust
+    ///   clamp. A sea world's floor is a margin above the FLOOD line, which is a fraction of
+    ///   the same sky-inclusive radius Game1 floods by, so it stays as it was.
+    ///
+    /// * the ceiling held worms 16 legacy tiles under the surface — 12% of a standard world's
+    ///   crust, but 59% of the rig's 27-tile one, which is the rest of why the band had no
+    ///   room. Capped to a fifth of the crust, so a small world keeps a proportionate skin.
+    ///
+    /// Both changes are no-ops wherever the crust is big enough for the authored numbers,
+    /// which is every campaign world — only the shrunken rig moves.</summary>
+    private static (float floor, float ceil, float driftCeil) WormBand(Planet planet,
+        PlanetDef def, float minFrac, List<(float lo, float hi)> seams)
+    {
+        var floor = def.LavaFillFrac > 0f ? planet.Radius * minFrac : seams[0].hi;
+        var skinLegacy = MathF.Min(16f, planet.SurfaceRing / S * 0.20f);
+        var surfaceR = Planet.RingMin + planet.SurfaceRing;
+        return (floor,
+                surfaceR - skinLegacy * S,
+                surfaceR - (skinLegacy - 2f) * S);   // walks may drift 2 tiles above the start cap
+    }
+
     private static void CarveWormTunnels(Planet planet, PlanetDef def, Random rng)
     {
         // High-lava worlds skip the UPPER worms: their habitable band is a thin shell
