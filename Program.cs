@@ -15,6 +15,14 @@ if (args.Length > 0 && args[0] == "--perf")
     return;
 }
 
+// Diagnostic: `--geomprobe` hashes fixed-seed worlds (A/B a worldgen refactor: a moved hash
+// is a moved layout) and prints where each world's caves sit below the surface.
+if (args.Length > 0 && args[0] == "--geomprobe")
+{
+    DwarfMiner.Systems.GeomProbe.Run();
+    return;
+}
+
 // Diagnostic: `--lakeprobe` audits the water side of the fluid-containment contract — the
 // surface basins must hold their pour instead of draining down a carver's hole.
 if (args.Length > 0 && args[0] == "--lakeprobe")
