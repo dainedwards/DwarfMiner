@@ -2417,6 +2417,11 @@ public static class WorldGen
                     var y = ((ty0 + dy) % n + n) % n;
                     var k = planet.Get(x, y);
                     if (Tiles.IsAnchored(k)) continue;
+                    // Warren corridors honour the same barrier contract as the worms:
+                    // never through an obsidian seal or lava-rock jacket, never inside a
+                    // fluid seed's halo — a corridor into a reservoir floods the warren.
+                    if (k is TileKind.Obsidian or TileKind.LavaRock
+                        || planet.FluidKeepOut.Contains(Planet.TileKey(x, y))) continue;
                     if ((planet.TileToWorld(x, y) - pos).LengthSquared() > radius * radius) continue;
                     planet.SetWall(x, y, TileKind.LizardBrick);
                     if (Tiles.IsSolid(k)) planet.Set(x, y, TileKind.Sky);
