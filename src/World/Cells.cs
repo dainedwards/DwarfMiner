@@ -3062,7 +3062,16 @@ public sealed class Cells
                     var e = runStart + runLen - 2;
                     while (s <= e)
                     {
-                        var seg = Math.Min(maxRun, e - s + 1);
+                        // Chunk boundaries anchor to the ABSOLUTE cell grid (multiples of
+                        // maxRun), never to the run start: a pool wider than the view is
+                        // one run CUT at the view edge, so run-relative chunking hung
+                        // every boundary — and each chunk's flat shimmer sample — off the
+                        // CAMERA. Panning made all of them re-anchor cell by cell, at
+                        // different angles per tile ring: crawling "shear lines" through
+                        // the body with the wave pattern visibly re-tiling. Grid-anchored
+                        // chunks are static in world space; only the partial chunk at the
+                        // screen edge changes width as the view moves.
+                        var seg = Math.Min(maxRun - WrapX(cx0 + s, n) % maxRun, e - s + 1);
                         var midAng = (cx0 + s + (seg - 1) * 0.5f + 0.5f) * angStep;
                         var up = new Vector2(MathF.Cos(midAng), MathF.Sin(midAng));
                         var body = LiquidBody(runMat, cx0 + s + seg / 2, cy);
