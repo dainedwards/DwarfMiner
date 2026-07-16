@@ -178,7 +178,7 @@ public static class PlanetDefs
         new Color(225, 110, 200), new Color(255, 190, 245),
         TileKind.Snow,
         // No lava SEA on the rig: the world's only lava is the volcano's primed plumbing
-        // (crater pool, throat, magma chamber) and the LakePair demo lake — so lava QA is
+        // (crater pool, throat, magma chamber) and the LakeTrio demo lake — so lava QA is
         // walkable on the surface instead of buried under half the crust.
         LakeMin: 2, LakeExtra: 0, MountainMin: 5, MountainExtra: 2,
         MountainHeightScale: 1.3f, LavaFillFrac: 0f, HasWater: true,
