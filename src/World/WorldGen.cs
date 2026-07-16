@@ -629,6 +629,14 @@ public static class WorldGen
         foreach (var l in lakes) blocked.Add((l.ang, l.w));
         foreach (var a in acidPools) blocked.Add((a.ang, a.w));
         CarveVolcanoes(planet, def, rng, mountains, blocked);
+
+        // Every lava/acid seed is now recorded (lake basins from the tile pass, volcano
+        // plumbing just above) — freeze their 2-tile jacket reach as the fluid keep-out
+        // before ANY tunnel carver runs. A worm or corridor biting inside this halo opens
+        // a drain mouth the pour then empties through (the lava-lake bed sat inside worm
+        // range; the worms had no idea it was there).
+        BuildFluidKeepOut(planet);
+
         RaiseCity(planet, def, rng, mountains, blocked);
         // One civilisation per planet, enforced here regardless of what the def says: a
         // world with an alien city never also hides lizardman warrens — the lizardmen
