@@ -356,7 +356,18 @@ slowly rises to 110–130% and bubbles over the sides):**
   is already the pool's own liquid (LiquidKindAtWorld per column); walls get nothing and
   the pool claims them naturally as it rises. Corollary to the rule of thumb: layer-fill
   a pool STRICTLY within its current wetted footprint. Landing dollops ×3 per user
-  (JetScale·6 extra cells, jitter 3.5px, both stamp sites).
+  (JetScale·6 extra cells, jitter 3.5px, both stamp sites). **Round 3t — screenshot forensics** (user shot showed
+  pale hard-edged rectangles in the flame column + dark notched bars floating in the
+  dome): (1) pale blocks = the REPLACE-blend boundary problem at cone scale — the fire
+  branch's per-grain colour steps draw each 30-50px capsule's rectangle edge where they
+  overlap; JetScale fire now inks ONE flat tone (255,158,64) with ageing/flicker/soot
+  ALL on coverage alpha (same contract as the pools). (2) dark bars = ASH SMOKE spawned
+  at fixed vent+4 rings, which sits INSIDE the risen lava at full ramp — trapped smoke
+  seeps sideways into thin dark layers; plume now spawns at max(vent+4, surfR+3), off
+  the LIVE surface. Diagnosis via a permanent one-shot [erupt] bowl-interior scan
+  (excludes rest ring + 2 edge cols = the pool's own LavaRock wall jacket, which a
+  naive scan false-positives on). Verified: "bowl interior clean above rest line" +
+  clean screenshot.
 - SimTest note: "compaction: voided pile hardens" is time-seeded FLAKY (failed once,
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.

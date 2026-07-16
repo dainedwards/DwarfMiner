@@ -6511,8 +6511,15 @@ public sealed partial class DwarfMinerGame : Game
                 GraphicsDevice.Clear(Color.Transparent);
                 _renderer.Batch.Begin(SpriteSortMode.Deferred, Renderer.LiquidFillBlend,
                     SamplerState.LinearClamp, null, null, null, _camera.View);
-                _run.Cells.DrawHotLiquids(_renderer, _particles);
+                // FIRE first, LAVA family last: the fill blend's colour REPLACES, so the
+                // last writer wins wherever bodies overlap. Fire drawn over the pool used
+                // to stamp its flat tone as hard 30-50px QUAD RECTANGLES across the risen
+                // dome (pale squares; before the flat-tone change, the same rects showed
+                // soot-dark). With the pool and fountain inked afterwards, the column
+                // visually EMERGES from the lava — its submerged stretch simply wears the
+                // dome's colour, and every boundary is a metaball edge, never a quad rect.
                 _particles.DrawFluid(_renderer, Material.Fire);
+                _run.Cells.DrawHotLiquids(_renderer, _particles);
                 // Eruption fountain grains join the hot field too: the molten tongue and
                 // the crater pool it rises from threshold into ONE goopy body.
                 _particles.DrawFluid(_renderer, Material.Lava);
