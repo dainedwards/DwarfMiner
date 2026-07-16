@@ -381,7 +381,13 @@ slowly rises to 110–130% and bubbles over the sides):**
   time-seeded); SimTest pins `rngSeed: 20260716` at all 14 direct `new Cells(planet)`
   sites → the suite is DETERMINISTIC (2× consecutive PASS verified; any future failure is
   a real regression, not dice). The acid-dissolve flake class rides the same fix. Tests
-  that build Cells via BuildSessionWorld remain time-seeded — none have flaked.
+  that build Cells via BuildSessionWorld remain time-seeded — none have flaked. **Round
+  3w**: Hidden-gate BLINK at the pool's top edge — a grain skimming the boiling surface
+  sampled liquid/air alternately as top cells churned, strobing in/out and shattering the
+  column into meatballs at the crossing; hide test is now TWO-POINT (position AND 3px
+  outward both liquid = clearly inside), show the moment the head nears air. Side-spout
+  reach +15% (speed ×√1.15 → 123+77·spew). Bubble-dome eligibility & 127 → & 63 (2×
+  sites, livelier simmer).
 - SimTest note: "compaction: voided pile hardens" is time-seeded FLAKY (failed once,
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.

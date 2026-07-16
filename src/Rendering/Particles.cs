@@ -543,13 +543,15 @@ public sealed class Particles
                     // CONE-SCALE COLOUR CONTRACT: the fill blend REPLACES colour, so any
                     // rgb difference between overlapping capsules draws their rectangular
                     // boundaries — invisible on the hose's 4-11px quads, glaring pale
-                    // blocks on the eruption's 30-50px ones. A big jet inks ONE flat fire
-                    // tone (the pools' own rule); ageing, flicker and the soot die-off all
-                    // ride the ALPHA — coverage tatters and thins, colour never varies.
+                    // blocks on the eruption's 30-50px ones. A big jet inks ONE flat tone;
+                    // ageing, flicker and the die-off all ride the ALPHA — coverage
+                    // tatters and thins, colour never varies. SMOKY BLACK (the hose
+                    // die-off's soot tone), per user: the column reads as a roaring ash
+                    // jet, with the fountain/pool supplying the molten orange.
                     var cov = MathHelper.Lerp(1f, 0.55f, age * age)
                             * (0.92f + 0.08f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f));
                     if (age > 0.7f) cov *= 1f - (age - 0.7f) / 0.3f * 0.85f;
-                    c = new Color((byte)255, (byte)158, (byte)64,
+                    c = new Color((byte)48, (byte)43, (byte)44,
                         (byte)(255 * MathHelper.Clamp(cov, 0f, 1f)));
                 }
                 else
