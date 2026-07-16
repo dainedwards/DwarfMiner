@@ -6,6 +6,9 @@
 
 ## 2026-07-13 Noita-feel pass (branch `noita-sim`)
 
+The Noita-feel pass landed 2026-07-13 on branch `noita-sim`, auto-committed by the parallel
+session's hook — so there is no single feature commit to read it from.
+
 - **Flying cells** (Cells.cs): grid cells launched with full 2D world velocity, integrate under planet gravity, re-enter grid via TryDeposit/Place on contact. Mass-conserving (`LaunchCell`/`EjectFromTile`); `LaunchAtWorld` is emit-only (fire embers). Transient — dropped by WriteState like kinetics. Cap `MaxFlying` 4000; drawn as velocity streaks in Cells.Draw (stride==1 only).
   - GOTCHA/FIX (2026-07-14): the only speed cap was `FlyMaxSpeed=520`, so an outward-launched grain arced ~75 tiles into the sky under FlyGravity and hung near its apex as a lone 1-px "floating pixel in space", always on the side the player fired/dug. Fix = `FlyMaxOutward=170`: `UpdateFlying` bleeds off the radial-outward velocity component each tick (before the move, so even a huge explosion impulse is capped step 1). Keep this — reverting it brings the floating pixels back. Lateral/inward motion untouched, spray still arcs ~8 tiles.
 - **Feeders**: CarveCrater ejecta (budget 90 cells, inner debris fastest) + fire seeds in vaporised core; TickLiquid splash (impact > TerminalCells/2, 1/3 chance, needs air above); QuenchIfWet gravel spark; Game1.OnTileBroken dig spray toward the dwarf.

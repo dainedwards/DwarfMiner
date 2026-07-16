@@ -149,8 +149,28 @@ the one that covers what you are about to touch, and write what you learn back i
   strata, water/ocean worlds, basin containment, lava barriers, volcanoes, quake cave-ins, ore
   and flora scatters. Probes: `--strataprobe --lakeprobe --oceanprobe --lavaprobe --geomprobe`.
   *Before you touch it:* `Planet.Radius` COUNTS THE SKY, and `BuildSessionWorld` is TIME-SEEDED.
-- **[noita-sim](docs/claude-notes/noita-sim.md)** — the cell sim: flying cells, fire/oil, liquid
-  cohesion + metaball RT, rain, titan sieges, bandits, weapons, air/breath. Biggest note.
+- **[cells-and-materials](docs/claude-notes/cells-and-materials.md)** — the cell sim core:
+  flying cells, oil, snow, acid, smoke, bubbles, lightning conduction, the ambient sweep
+  (ceiling drips, moss). *Flying grains need `FlyMaxOutward` or they hang in the sky as
+  "floating pixels".*
+- **[fire-and-hoses](docs/claude-notes/fire-and-hoses.md)** — fire as a material, the burn fuse,
+  the `BurningTiles` registry rewrite, and the flamethrower/acid-spewer saga. Long, and worth
+  it before touching either weapon: ~70 tuning rounds, several dead ends named as dead ends.
+- **[liquids-and-water](docs/claude-notes/liquids-and-water.md)** — liquid RT + metaball
+  cohesion, flat body colour, waterline, plunge/dispersion, rain pooling and joining water
+  bodies, water-surface interaction.
+- **[weather-and-trees](docs/claude-notes/weather-and-trees.md)** — clouds v2, rain/snow by
+  biome, falling leaves, and the tree ecosystem (roots, regrowth, branches, biome identity,
+  oases, vegetation scatter).
+- **[creatures-and-combat](docs/claude-notes/creatures-and-combat.md)** — bandits, sea monsters,
+  the Noita enemies, lizardmen, player weapons, blast falloff, the AIR meter, jump/jet controls
+  (Space-only), city combat buffs.
+- **[titans](docs/claude-notes/titans.md)** — siege (kick/smash), weakpoints, riding, shake-off,
+  grapple + rope, fight camera, pulverize.
+- **[pixel-look](docs/claude-notes/pixel-look.md)** — the grain ladder: particle size caps, cell
+  draw padding, `Density` 4→8, the pixel-grid world RT, motion smear, stride/LOD.
+- **[ore-and-gems](docs/claude-notes/ore-and-gems.md)** — gold/silver/platinum balance, gem
+  rarity and embedding, host-rock blending, depth gradients.
 - **[overworld-and-planets](docs/claude-notes/overworld-and-planets.md)** — star map, campaign
   planets, cities, warrens, moons, The Hollow, spawn director, population census.
 - **[performance](docs/claude-notes/performance.md)** — `--perf` harness, frame-pacing saga,

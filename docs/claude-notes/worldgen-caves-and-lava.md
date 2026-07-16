@@ -151,7 +151,7 @@ eruptions much bigger, spew lava chunks, leak over the rim). WorldGen.CarveVolca
   vent, **pumps dense magma from the bottom** + jets a slug up the bore on peak. Bigger spew
   (18–30 gobs peak vs 9–15, higher speed), **rim-leak** low near-horizontal gobs spilling
   over the lip, **EmitLavaChunks** (glowing scoria bombs, CollideTiles, cool to maroon) on
-  peak (lava only). Duration 12–20s (was 8–14, AmbientDirector). See [noita-sim](noita-sim.md) for fx.
+  peak (lava only). Duration 12–20s (was 8–14, AmbientDirector). See [fire-and-hoses](fire-and-hoses.md) and [pixel-look](pixel-look.md) for the fx.
 
 **Round 2 (same day — user: tube not connected to bowl / geyser OBJECT / goopy jet / higher
 pool / half bulb):**

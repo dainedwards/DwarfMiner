@@ -106,5 +106,5 @@ block chains; slope stepping at strong zoom is tile GEOMETRY (4px), not edge ren
 Hooks: `DM_SHADER=0` disables the shader (baked erosion returns), `DM_CARVE=<px>` sets max
 carve depth in world px (default 2.0), `DM_NOITA=0` disables the additive crust,
 `DM_CONTACT=0` disables the contact probe (raw carve everywhere, no liquid band).
-Related: [textures-and-crust](textures-and-crust.md) (erosion/crust history), [noita-sim](noita-sim.md) (cell sim).
+Related: [textures-and-crust](textures-and-crust.md) (erosion/crust history), [cells-and-materials](cells-and-materials.md) (cell sim).
 
