@@ -2146,6 +2146,20 @@ public sealed partial class DwarfMinerGame : Game
         // standing in / vacuuming (headless contexts leave this null and compact freely).
         _run.Cells.CompactionExclusion = _run.Player.Position;
         _run.Cells.SimFocus = _run.Player.Position;
+        // The erupting (or still-subsiding) volcano is a SECOND full-rate sim bubble: its
+        // lava must land, flow, ignite and drain at 60 Hz even with the player far away
+        // or off-screen — the far-field throttle froze the show the moment you left.
+        var focusVent = _run.EruptionLeft > 0f && _run.EruptionVent >= 0
+                && _run.EruptionVent < _run.Planet.VolcanoVents.Count ? _run.EruptionVent
+            : _run.EruptionDrainVent >= 0
+                && _run.EruptionDrainVent < _run.Planet.VolcanoVents.Count ? _run.EruptionDrainVent
+            : -1;
+        if (focusVent >= 0)
+        {
+            var (fvx, fvy, _) = _run.Planet.VolcanoVents[focusVent];
+            _run.Cells.SecondaryFocus = _run.Planet.TileToWorld(fvx, fvy);
+        }
+        else _run.Cells.SecondaryFocus = null;
         tPerf = FramePerf.Now();
         _run.Cells.Update(dt);
         FramePerf.Add("cells", tPerf);
