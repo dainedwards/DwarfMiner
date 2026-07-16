@@ -729,10 +729,24 @@ public static class WorldGen
     /// just above it. The plants are anchored + fire/lava-proof + acid-proof (see the tile
     /// flags), so the ember bloom survives its lava world and the vitriol lily its acid one —
     /// the "give the plants resistance on hostile worlds" ask.</summary>
+    /// <summary>Key set of every to-be-poured fluid tile (water, lava, acid) — the LAND
+    /// flora scatters skip any bearing whose "ground" is really a basin bed under one of
+    /// these (the topmost-solid walk can't tell a lake bed from a hilltop: the fill is
+    /// cells, poured after gen). The sea gets its own flora via ScatterWaterPlants.</summary>
+    private static HashSet<long> FluidFillSet(Planet planet)
+    {
+        var set = new HashSet<long>();
+        foreach (var (r, t) in planet.WaterSeeds) set.Add(Planet.TileKey(r, t));
+        foreach (var (r, t) in planet.LavaSeeds) set.Add(Planet.TileKey(r, t));
+        foreach (var (r, t) in planet.AcidSeeds) set.Add(Planet.TileKey(r, t));
+        return set;
+    }
+
     private static void ScatterBiomeFlora(Planet planet, PlanetDef def, Random rng)
     {
         var flora = FloraFor(def.Biome);
         if (flora == TileKind.Sky) return;
+        var wet = FluidFillSet(planet);
 
         // One roll per bearing across the whole circumference; density ~48% so the surface
         // reads as generously planted without being carpeted.
