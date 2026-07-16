@@ -102,7 +102,8 @@ public static class LakeProbe
             escaped.Add((r, t));
         }
         Console.WriteLine($"    after 60s: basin fill retained {retained}/{lake.Count}, " +
-                          $"water under a basin bearing below ring {loR - 2}: {escaped.Count}");
+                          $"water under a basin bearing below ring {loR - 2}: {escaped.Count}" +
+                          " (a hint, not a verdict — see below)");
 
         // The highest escape sits nearest the breach it poured through.
         if (escaped.Count > 0)
