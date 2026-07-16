@@ -405,7 +405,7 @@ public sealed class Player
         if (Flying)
         {
             // Ghost mode: direct velocity, no gravity, phase through tiles. For world-testing.
-            var spd = MoveSpeed * 2.4f;
+            var spd = MoveSpeed * 4.8f;
             Velocity = right * (moveAxis * spd) + up * (verticalAxis * spd);
             Position += Velocity * dt;
             Grounded = false;
