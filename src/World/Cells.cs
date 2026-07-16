@@ -585,11 +585,29 @@ public sealed class Cells
 
     /// <summary>Spawn one rain-fed water cell at a world position — the real, pooling half of
     /// a shower (the streaking drops are particles). Skipped silently if the cell is occupied,
-    /// so rain over a lake just merges into the top of it.</summary>
+    /// so rain over a lake just merges into the top of it. The cell SETTLES to the surface
+    /// before placing: FindSurfaceSpawn (the callers' ground probe) floats a body-sized
+    /// clearance above the ground — creature semantics — so a cell placed there materialised
+    /// mid-air and visibly fell as a fat metaball droplet onto the puddle it fed.</summary>
     public void SpawnRainWater(Vector2 worldPos)
     {
         var (cx, cy) = WorldToCell(worldPos);
+        (cx, cy) = SettleToSurface(cx, cy);
         Place(cx, cy, Material.Water, (TileKind)RainWaterSrc);
+    }
+
+    /// <summary>Walk a spawn cell inward until it rests on the first blocked cell below
+    /// (solid tile, pool top, or lying grain) so weather cells appear ON the surface with no
+    /// visible fall. Capped: the surface probe's clearance is a handful of tiles at most.</summary>
+    private (int cx, int cy) SettleToSurface(int cx, int cy)
+    {
+        for (var s = 0; s < 48 && cy > 0; s++)
+        {
+            var (icx, icy) = InnerCell(cx, cy);
+            if (IsBlocked(icx, icy)) break;
+            cx = icx; cy = icy;
+        }
+        return (cx, cy);
     }
 
     /// <summary>Whether resting snow lies for good (frost worlds) or sublimates away.
