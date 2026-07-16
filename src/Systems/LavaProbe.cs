@@ -225,6 +225,53 @@ public static class LavaProbe
             Console.WriteLine($"    after 120s sim: lava tiles {after.Count} (was {initial.Count}), " +
                               $"escaped beyond body+1: {escaped}");
             foreach (var s in esc) Console.WriteLine("    " + s);
+
+            // Map the TOP of the escape chain (highest ring = nearest the source body):
+            // the breach the stream poured through is in this neighbourhood.
+            if (escaped > 0)
+            {
+                var (hr, ht) = (-1, -1);
+                foreach (var (r, t) in after)
+                {
+                    var near = false;
+                    for (var dr = -1; dr <= 1 && !near; dr++)
+                        for (var dtt = -1; dtt <= 1 && !near; dtt++)
+                        {
+                            var r2 = r + dr;
+                            if (r2 < 0 || r2 >= planet.Rings) continue;
+                            var n2 = planet.TilesAt(r2);
+                            var t2 = (int)((t + 0.5f) / planet.TilesAt(r) * n2) + dtt;
+                            near = initial.Contains((r2, (t2 % n2 + n2) % n2));
+                        }
+                    if (!near && r > hr) { hr = r; ht = t; }
+                }
+                var hn = planet.TilesAt(hr);
+                Console.WriteLine($"    map around top escape ({hr},{ht}) " +
+                                  $"bearing {MathHelper.WrapAngle((ht + 0.5f) / hn * MathF.Tau):0.000} " +
+                                  $"(initial body = L, after-lava = A):");
+                for (var r = Math.Min(planet.Rings - 1, hr + 8); r >= Math.Max(0, hr - 4); r--)
+                {
+                    var n2 = planet.TilesAt(r);
+                    var tc = (int)((ht + 0.5f) / hn * n2);
+                    var line = $"      r{r,3}: ";
+                    for (var dt = -12; dt <= 12; dt++)
+                    {
+                        var t2 = ((tc + dt) % n2 + n2) % n2;
+                        var k = planet.Get(r, t2);
+                        line += initial.Contains((r, t2)) ? 'L'
+                            : after.Contains((r, t2)) ? 'A'
+                            : k == TileKind.Sky ? '.'
+                            : k == TileKind.LavaRock ? 'R'
+                            : k == TileKind.Obsidian ? 'O'
+                            : k == TileKind.Basalt ? 'B'
+                            : k == TileKind.Stone ? 's'
+                            : k == TileKind.Dirt ? 'd'
+                            : k == TileKind.Granite ? 'g'
+                            : '?';
+                    }
+                    Console.WriteLine(line);
+                }
+            }
         }
     }
 }
