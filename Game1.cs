@@ -2222,6 +2222,21 @@ public sealed partial class DwarfMinerGame : Game
             _run.Cells.PendingFlames.Clear();
         }
 
+        // Charred-out tiles: the burning-tile lifecycle destroyed these — wake the
+        // structural side so whatever they held up FALLS. Physics settle detaches
+        // undercut regions as rigid bodies (severed by fire exactly like severed by
+        // pickaxe), and a burnt-through trunk fells its tree — the toppled log keeps
+        // burning via the rigid-body burn persistence.
+        if (_run.Cells.PendingCharred.Count > 0)
+        {
+            foreach (var (ctx2, cty2, ck) in _run.Cells.PendingCharred)
+            {
+                _run.Physics.MarkDirty(ctx2, cty2);
+                if (ck == TileKind.TreeTrunk) ToppleTree(ctx2, cty2);
+            }
+            _run.Cells.PendingCharred.Clear();
+        }
+
         // Pickups — settle where they fell and collect by walk-over (no magnet: the player
         // goes to the gem). No decay and no distance cull: a dropped gem is exactly the
         // thing the player came down here for.
