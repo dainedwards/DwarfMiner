@@ -1548,7 +1548,6 @@ public static class WorldGen
                         var t2 = ((t2c + dt) % n2 + n2) % n2;
                         if (open.Contains(Planet.TileKey(r2, t2))) continue;
                         var k = planet.Get(r2, t2);
-                        if (Tiles.IsAnchored(k)) continue;
                         if (melts ? Soft(k) : k == TileKind.Sky)
                         {
                             // A water plug takes the structural wall the tile was cut from,
