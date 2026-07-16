@@ -632,6 +632,13 @@ public sealed class Cells
         if (PendingFlames.Count < MaxPendingFlames) PendingFlames.Add((pos, fuse));
     }
 
+    /// <summary>Tiles the burning-tile lifecycle just charred away (with their former
+    /// kind). Game1 drains this to notify the STRUCTURAL side — physics settle (so
+    /// undercut rock/buildings detach as rigid bodies and fall) and tree topple (a
+    /// burnt-through trunk fells the tree) — which Cells can't reach directly.
+    /// Same pattern as PendingBubbles.</summary>
+    public readonly List<(int Tx, int Ty, TileKind Kind)> PendingCharred = new();
+
     // ── BURNING TILES: a first-class tile lifecycle (ignite → blaze → char out) ──
     // The emergent cell-fire approach could never hold the arc "engulf fast, stand fully
     // ablaze, then burn out" — spread, persistence and consumption were all side-effects
@@ -736,7 +743,10 @@ public sealed class Cells
                         if (dr == 0 && da == 0) continue;
                         IgniteTile(tx + dr, ty + da);
                     }
-            // Burn out: the tile gives way in a last gout of flame and smoke.
+            // Burn out: the tile gives way in a last gout of flame and smoke. The charred
+            // site is queued so Game1 can wake the structural side — whatever this tile
+            // was holding up (the rest of a tree, an undercut ledge, a burnt-through
+            // support) detaches and FALLS through the rigid-body sim.
             if (nc >= dur)
             {
                 BurningTiles.Remove((tx, ty));
@@ -745,6 +755,7 @@ public sealed class Cells
                 SpawnInTile(tx, ty, Material.Fire, Density / 2);
                 SpawnInTile(tx, ty, Material.Smoke, Density / 2);
                 ShedBurningLeaves(tx, ty, k);
+                PendingCharred.Add((tx, ty, k));
                 continue;
             }
             BurningTiles[(tx, ty)] = nc;
