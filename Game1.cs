@@ -311,9 +311,10 @@ public sealed partial class DwarfMinerGame : Game
         // one and only pacer.
         InactiveSleepTime = TimeSpan.Zero;
         // DM_TITLE=<worktree> names the window after the tree being tested (see CLAUDE.md)
-        // so parallel test builds are tellable apart at a glance.
-        Window.Title = Environment.GetEnvironmentVariable("DM_TITLE") is { Length: > 0 } wt
-            ? $"DwarfMiner - {wt}" : "Dwarf Miner";
+        // so parallel test builds are tellable apart at a glance. Without it we walk up
+        // from the binary to the checkout root and use that folder's name, so a build
+        // launched by hand is still tellable apart from every other tree.
+        Window.Title = $"DwarfMiner - {WorktreeName()}";
         // The scene renders at the fixed virtual resolution and scales to the window, so
         // the window itself is free to be any size (drag-resize or F11 fullscreen).
         Window.AllowUserResizing = true;
