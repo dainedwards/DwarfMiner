@@ -278,6 +278,7 @@ public static class Tiles
         TileKind.Basalt => new Color(60, 58, 70),
         TileKind.LavaRock => new Color(68, 42, 48),   // charred maroon scoria — distinct from
                                                       // dirt's orange-brown even under lava glow
+        TileKind.Geyser => new Color(210, 96, 38),    // molten heart — chips/dust fly glowing
         TileKind.Obsidian => new Color(28, 24, 38),
         TileKind.PlanetCore => new Color(60, 60, 70),
         TileKind.CoalOre => new Color(55, 55, 62),
