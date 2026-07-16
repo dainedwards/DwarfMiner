@@ -1461,15 +1461,16 @@ public static class WorldGen
         }
     }
 
-    /// <summary>Plug every open drain a carver left against a to-be-poured lava/acid body.
-    /// Two local rules cover the ways a pool can empty: fluid RESTS on something, so a
-    /// non-seed Sky tile directly INWARD of any seed is a drain floor; and a non-seed Sky
-    /// tile BESIDE an interior-course seed (one with more seed above it — i.e. below the
-    /// body's own surface line) is a side breach. Surface-course seeds keep their open
-    /// sideways air (that's the waterline meeting the basin) and everything keeps its open
-    /// top (crater mouths, lake surfaces). Lava plugs with its jacket rock, acid with the
-    /// only kind it can't eat.</summary>
-    private static void PlugFluidBreaches(Planet planet)
+    /// <summary>Plug every open drain a carver left against a to-be-poured lava/acid body:
+    /// any Sky tile in the 2-tile halo AT OR BELOW a seed's ring that is neither part of
+    /// the fill nor the basin's own carved air (its freeboard/rim courses, recorded during
+    /// the basin carve) gets sealed with the barrier material — 2 tiles to match the
+    /// jacket contract. Fluid never climbs, so the halo's outward rows stay untouched
+    /// (crater mouths, lake surfaces, bowl air). This is the absolute half of the tunnel
+    /// guards: the keep-out stops the worms, this stops what was carved before the seeds
+    /// existed (noise caves) or slipped a diagonal. Lava plugs with its jacket rock, acid
+    /// with the only kind it can't eat.</summary>
+    private static void PlugFluidBreaches(Planet planet, HashSet<long> basinAir)
     {
         void Plug(List<(int x, int y)> seeds, TileKind barrier)
         {
@@ -1477,26 +1478,21 @@ public static class WorldGen
             foreach (var (r, t) in seeds) set.Add(Planet.TileKey(r, t));
             foreach (var (r, t) in seeds)
             {
-                var (ir, it) = planet.InnerNeighbour(r, t);
-                if (ir >= 0 && !set.Contains(Planet.TileKey(ir, it))
-                    && planet.Get(ir, it) == TileKind.Sky)
-                    planet.Set(ir, it, barrier);
-
-                var interior = false;
-                var oc = planet.OuterNeighbourCount(r, t);
-                for (var i = 0; i < oc && !interior; i++)
-                {
-                    var (or2, ot) = planet.OuterNeighbour(r, t, i);
-                    interior = or2 < planet.Rings && set.Contains(Planet.TileKey(or2, ot));
-                }
-                if (!interior) continue;
                 var n = planet.TilesAt(r);
-                for (var dt = -1; dt <= 1; dt += 2)
+                for (var dr = -2; dr <= 0; dr++)
                 {
-                    var t2 = ((t + dt) % n + n) % n;
-                    if (!set.Contains(Planet.TileKey(r, t2))
-                        && planet.Get(r, t2) == TileKind.Sky)
-                        planet.Set(r, t2, barrier);
+                    var r2 = r + dr;
+                    if (r2 < 0) continue;
+                    var n2 = planet.TilesAt(r2);
+                    var t2c = (int)((t + 0.5f) / n * n2);
+                    for (var dt = -2; dt <= 2; dt++)
+                    {
+                        var t2 = ((t2c + dt) % n2 + n2) % n2;
+                        var key = Planet.TileKey(r2, t2);
+                        if (set.Contains(key) || basinAir.Contains(key)) continue;
+                        if (planet.Get(r2, t2) == TileKind.Sky)
+                            planet.Set(r2, t2, barrier);
+                    }
                 }
             }
         }
