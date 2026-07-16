@@ -323,7 +323,18 @@ slowly rises to 110–130% and bubbles over the sides):**
   off volcano PlumbingZones capsules — the geyser well sits at exactly warren depths and
   an overlapping hall would leave an anchored-node heart or bite the shell. Debug print
   of solid den hearts stays in the SimTest (fires only on failure). 447 PASS + probe
-  clean (CONNECTED, 0 escapes) + screenshot-verified wide-cone eruption.
+  clean (CONNECTED, 0 escapes) + screenshot-verified wide-cone eruption. **Round 3p
+  (off-screen eruptions + last hidden leaks)**: `Cells.SecondaryFocus` = second full-rate
+  throttle bubble at the erupting/subsiding vent (set per-frame beside SimFocus in Game1)
+  — the 700px quarter-rate throttle froze off-screen eruptions (lava slept before
+  igniting; drain crawled). Hidden-gate leaks plugged: plume grains don't SHED sparks
+  while Hidden; hero-light carrier + EmitLavaChunks get `JetScale = 2` as a pure
+  volcano-family TAG (rides the Hidden refresh; they carry no Fluid/LandMat so nothing
+  else changes); FLYING CELLS skip draw + fly-lights while `LiquidAtWorld(f.Pos)` (the
+  bore-jet slugs streaked visibly up through the crater pool). FAR MODE (>2000px from
+  vent): all pure-visual emitters skipped, side spouts lob 2 bare lava cells/frame/side
+  on the same trajectories (×1.6 speed for FlyGravity) — identical material outcome,
+  no particle cost. 447 PASS.
 - SimTest note: "compaction: voided pile hardens" is time-seeded FLAKY (failed once,
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.

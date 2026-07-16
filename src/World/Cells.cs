@@ -2600,13 +2600,17 @@ public sealed class Cells
     private TileKind TileAt(int cx, int cy) =>
         (cy < 0 || cy >= Height) ? TileKind.Sky : Planet.Get(cy / Density, WrapX(cx, _cellsAt[cy]) / Density);
 
-    /// <summary>True if any cardinal-neighbour cell of (cx,cy) sits in a meltable tile —
-    /// gates the lava sleep so pooled lava keeps gnawing at dirt it touches.</summary>
+    /// <summary>True if any cardinal-neighbour cell of (cx,cy) sits in a meltable OR
+    /// flammable tile — gates the lava sleep so pooled lava keeps gnawing at loose ground
+    /// it touches AND keeps rolling its ignition dice against trees/grass. (Without the
+    /// flammable half, a lava dollop landing beside a tree settled and SLEPT within a few
+    /// ticks — a handful of 1-in-24 rolls — and the tree essentially never caught.)</summary>
     private bool HasMeltableNeighbour(int cx, int cy)
     {
-        if (IsMeltable(TileAt(cx + 1, cy)) || IsMeltable(TileAt(cx - 1, cy))) return true;
+        static bool Reactive(TileKind k) => IsMeltable(k) || IsFlammable(k);
+        if (Reactive(TileAt(cx + 1, cy)) || Reactive(TileAt(cx - 1, cy))) return true;
         var (icx, icy) = InnerCell(cx, cy);
-        if (IsMeltable(TileAt(icx, icy))) return true;
+        if (Reactive(TileAt(icx, icy))) return true;
         if (cy < Height - 1)
         {
             var oc = OuterCellCount(cx, cy);
