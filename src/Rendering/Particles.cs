@@ -184,10 +184,10 @@ public sealed class Particles
                 // shed its light while it cools, not wink out on touchdown.
                 var n = planet.UpAt(p.Position);
                 var dot = Vector2.Dot(p.Velocity, n);
-                // Rain (the only colliding backdrop grain) ricochets lower: at 0.4 the
-                // ground splash bounced ~50% too high per user — height goes with v², so
-                // 0.33 lands the hop at about two-thirds of the old peak.
-                p.Velocity = (p.Velocity - n * dot * 1.5f) * (p.Backdrop ? 0.33f : 0.4f);
+                // Rain (the only colliding backdrop grain) barely ricochets: 0.4 bounced
+                // ~50% too high per user, 0.33 was STILL too high — 0.15 leaves a ~1-2px
+                // hop that reads as the drop dying in its splash, not bouncing.
+                p.Velocity = (p.Velocity - n * dot * 1.5f) * (p.Backdrop ? 0.15f : 0.4f);
                 // STREAM contact fires on FIRST TOUCH, not at rest: carriers hit at
                 // ~250 px/s and skitter through several bounces — many expired before
                 // ever "resting", so the jet visibly touched things without lighting
