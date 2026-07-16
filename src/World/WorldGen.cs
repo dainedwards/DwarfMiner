@@ -1331,9 +1331,9 @@ public static class WorldGen
                     // Mid-crust band, held clear of both the stratum seam below and the
                     // deepest possible seabed above (a chamber may nudge the shell — it
                     // can't bite obsidian — but shouldn't waste half its volume on it).
-                    var radiusTiles = MathHelper.Lerp(planet.Radius * minFrac + 8f,
-                        maxTiles - 14f, (float)rng.NextDouble());
-                    if (radiusTiles <= planet.Radius * minFrac + 8f) continue;
+                    var radiusTiles = MathHelper.Lerp(floorTiles + 8f,
+                        ceilTiles - 14f, (float)rng.NextDouble());
+                    if (radiusTiles <= floorTiles + 8f) continue;
                     var centre = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
                         * radiusTiles * Planet.TileSize;
                     if (NearDenOrCity(planet, centre)) continue;
