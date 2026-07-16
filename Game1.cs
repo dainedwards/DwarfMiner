@@ -5984,12 +5984,20 @@ public sealed partial class DwarfMinerGame : Game
         // Liquids sit above the terrain (and its crust) but below every entity — same
         // layer they occupied when they drew inside the cell batch. The flame stream
         // composites through the same metaball shader, right above the liquids.
-        if (liquidPass) _renderer.CompositeLiquids(_liquidRt!);
+        // The composite's body texture (shader waves + depth fade) needs the world frame
+        // to anchor its waves to the water rather than the screen.
+        if (liquidPass)
+        {
+            _renderer.SetLiquidWorld(Vector2.Transform(_run.Planet.Center, _camera.View),
+                1f / _camera.Zoom, _camera.SmoothRotation);
+            _renderer.CompositeLiquids(_liquidRt!);
+        }
         // Hot bodies (lava pools + flame stream): full opacity + a hot bright rim — molten
         // rock's yellow-white edge and the flame's sheath, not a pool's translucent wet lip
-        // (which made the tongue read as glowing liquid).
+        // (which made the tongue read as glowing liquid). A stronger body texture gives the
+        // molten mass its slow heat swell (the flame stream shares it as a faint shimmer).
         if (_particles.FluidMode)
-            _renderer.CompositeLiquids(_flameRt!, 0.40f, 1f, 1.85f, 0.15f);
+            _renderer.CompositeLiquids(_flameRt!, 0.40f, 1f, 1.85f, 0.15f, 0.08f);
 
         _renderer.BeginEntities(_camera);
 

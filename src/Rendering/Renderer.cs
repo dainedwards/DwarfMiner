@@ -47,7 +47,7 @@ public sealed class Renderer
     /// opacity. Null falls back to hard quads + a plain NonPremultiplied blit (still kills
     /// the per-quad double-blend mottling, just without the fused edge).</summary>
     private readonly Effect? _liquidFx;
-    private readonly EffectParameter? _lqCol0, _lqCol1, _lqCol2, _lqCol3, _lqPs, _lqPs2;
+    private readonly EffectParameter? _lqCol0, _lqCol1, _lqCol2, _lqCol3, _lqPs, _lqPs2, _lqPs3;
     private readonly Texture2D _liquidBlob;
 
     /// <summary>Coverage cut for the metaball composite. Calibrated against the blob
@@ -205,6 +205,7 @@ public sealed class Renderer
             _lqCol3 = _liquidFx.Parameters["MatrixCol3"];
             _lqPs = _liquidFx.Parameters["PsParams"];
             _lqPs2 = _liquidFx.Parameters["PsParams2"];
+            _lqPs3 = _liquidFx.Parameters["PsParams3"];
         }
         _liquidBlob = MakeLiquidBlob(gd, 16);
         _stars = MakeStarfield(gd, 256);
@@ -1765,14 +1766,38 @@ public sealed class Renderer
     /// every liquid texel reaches the scene through exactly one alpha blend — the fix for
     /// the per-quad double-blend mottling that made pools read as stacked pixels.</summary>
     public void CompositeLiquids(RenderTarget2D rt) =>
-        CompositeLiquids(rt, LiquidThresh, LiquidOpacity, LiquidRimMul, LiquidRimAdd);
+        CompositeLiquids(rt, LiquidThresh, LiquidOpacity, LiquidRimMul, LiquidRimAdd,
+            LiquidWaveAmp);
+
+    /// <summary>Body-texture amplitude for the pool composite (shader waves + depth fade;
+    /// see RuntimeEffect.LiquidGlsl). The body colour itself is strictly flat — this is
+    /// the ONLY texture the submerged body gets, applied per pixel so it cannot show the
+    /// primitive seams that killed the old vertex-level shimmer.</summary>
+    private const float LiquidWaveAmp = 0.06f;
+
+    /// <summary>World frame for the liquid composite's body texture: the planet centre in
+    /// RT pixel coordinates, world px per RT px (1/zoom), and the camera rotation — what
+    /// the shader needs to reconstruct world polar coordinates per pixel so its waves stay
+    /// anchored to the water while the camera pans and rolls. Call each frame before the
+    /// composites; the boot prewarm runs before any camera exists, so defaults are benign.</summary>
+    public void SetLiquidWorld(Vector2 planetCentreRtPx, float worldPxPerRtPx, float camRot)
+    {
+        _lqCentre = planetCentreRtPx;
+        _lqWpp = MathF.Max(worldPxPerRtPx, 0.001f);
+        _lqRot = camRot;
+    }
+
+    private Vector2 _lqCentre = new(-4096f, -4096f);
+    private float _lqWpp = 0.5f;
+    private float _lqRot;
 
     /// <summary>Parameterised overload: the FLAME stream composites through the same
     /// metaball shader but must not read as water — it passes full opacity and a hotter,
-    /// brighter rim (a flame's white sheath, not a pool's wet specular lip). Pools keep
-    /// the default constants via the overload above.</summary>
+    /// brighter rim (a flame's white sheath, not a pool's wet specular lip), plus its own
+    /// body-texture amplitude (a faint heat swell; 0 disables). Pools keep the default
+    /// constants via the overload above.</summary>
     public void CompositeLiquids(RenderTarget2D rt, float thresh, float opacity,
-        float rimMul, float rimAdd)
+        float rimMul, float rimAdd, float waveAmp = 0f)
     {
         if (_liquidFx != null)
         {
@@ -1783,7 +1808,8 @@ public sealed class Renderer
             _lqCol2!.SetValue(new Vector4(m.M13, m.M23, m.M33, m.M43));
             _lqCol3!.SetValue(new Vector4(m.M14, m.M24, m.M34, m.M44));
             _lqPs!.SetValue(new Vector4(1f / rt.Width, 1f / rt.Height, thresh, opacity));
-            _lqPs2!.SetValue(new Vector4(rimMul, rimAdd, 0f, 0f));
+            _lqPs2!.SetValue(new Vector4(rimMul, rimAdd, Time, waveAmp));
+            _lqPs3!.SetValue(new Vector4(_lqCentre.X, _lqCentre.Y, _lqWpp, _lqRot));
             _sb.Begin(samplerState: SamplerState.PointClamp, effect: _liquidFx);
         }
         else

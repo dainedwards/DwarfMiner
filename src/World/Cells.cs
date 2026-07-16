@@ -2988,6 +2988,13 @@ public sealed class Cells
     /// interleaved look.</summary>
     private readonly List<(Vector2 pos, Vector2 scale, float rot, Color col)> _blobOps = new();
     private readonly List<(Vector2 pos, Vector2 scale, float rot, Color col)> _quadOps = new();
+
+    /// <summary>Sparse twinkling glints in resting water (drawn after the body quads).
+    /// DM_GLINT=0 removes them entirely — they're an optional garnish on top of the
+    /// shader-side body texture.</summary>
+    private readonly List<(Vector2 pos, Vector2 scale, float rot, Color col)> _glintOps = new();
+    private static readonly bool GlintsOn =
+        Environment.GetEnvironmentVariable("DM_GLINT") != "0";
     private readonly List<(int cx, int cy)> _hotSurface = new();
 
     /// <summary>The LIQUID PASS: Water/Acid/Oil grid cells rasterized into the dedicated
@@ -3019,6 +3026,7 @@ public sealed class Cells
         _hotSurface.Clear();
         _blobOps.Clear();
         _quadOps.Clear();
+        _glintOps.Clear();
         // Pool interiors merge into run quads: on an ocean world the view circle holds
         // hundreds of thousands of water cells, and per-cell quads made this pass the
         // single biggest frame cost (~8.5 ms CPU + a vertex flood that halved the GPU
@@ -3124,6 +3132,30 @@ public sealed class Cells
                                : cy > 0 && IsBlockedAt(InnerCell(wcx, cy)))
                     && (sameOut ? _mat[idx + n] != 0
                                 : cy < Height - 1 && IsBlockedAt(OuterCell(wcx, cy, 0)));
+                // Sparkle overlay (DM_GLINT=0 disables): sparse world-anchored glints in
+                // resting water bodies — a hash of the flat cell index picks ~0.8% of
+                // interior cells, each twinkling on its own phase. Deferred to _glintOps
+                // so they draw OVER the body quads (replace-blend RGB); the composite
+                // shader's depth fade then dims deep glints for free.
+                if (GlintsOn && mergeable && m == Material.Water)
+                {
+                    var h = (uint)idx * 2654435761u;
+                    if ((h & 127u) == 0)
+                    {
+                        var tw = MathF.Sin(_time * (1.3f + ((h >> 8) & 3u) * 0.6f) + ((h >> 10) & 63u));
+                        if (tw > 0.55f)
+                        {
+                            var k = (tw - 0.55f) / 0.45f;
+                            var gAng = (wcx + 0.5f) * angStep;
+                            var gUp = new Vector2(MathF.Cos(gAng), MathF.Sin(gAng));
+                            var gc = Color.Lerp(new Color(46, 90, 178), new Color(150, 205, 245), k);
+                            _glintOps.Add((Planet.Center + gUp * ringRadius,
+                                new Vector2(chord * 2.2f, radial * 0.9f),
+                                gAng + MathHelper.PiOver2,
+                                new Color(gc.R, gc.G, gc.B, (byte)(MatAlpha(m) * 255f))));
+                        }
+                    }
+                }
                 if (mergeable && runLen > 0 && m == runMat && runStart + runLen == d)
                 {
                     runLen++;
@@ -3146,10 +3178,14 @@ public sealed class Cells
         }
 
         // Flush the deferred ops: blobs first, quads second (see _blobOps for why the
-        // order matters), each as one textured segment.
+        // order matters), each as one textured segment; glints last so they win the
+        // replace blend over the body they sit in.
         foreach (var (pos, scale, rot, col) in _blobOps)
             r.Batch.Draw(blob, pos, null, col, rot, blobOrigin, scale, SpriteEffects.None, 0f);
         foreach (var (pos, scale, rot, col) in _quadOps)
+            r.Batch.Draw(r.Pixel, pos, null, col, rot, new Vector2(0.5f, 0.5f), scale,
+                SpriteEffects.None, 0f);
+        foreach (var (pos, scale, rot, col) in _glintOps)
             r.Batch.Draw(r.Pixel, pos, null, col, rot, new Vector2(0.5f, 0.5f), scale,
                 SpriteEffects.None, 0f);
 
