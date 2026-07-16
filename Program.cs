@@ -108,9 +108,9 @@ if (Environment.GetEnvironmentVariable("DM_NOFOCUS") is { Length: > 0 } && Opera
 using var game = new DwarfMinerGame();
 game.Run();
 
-internal static partial class Native
+internal static class Native
 {
-    [System.Runtime.InteropServices.LibraryImport("libc",
-        StringMarshalling = System.Runtime.InteropServices.StringMarshalling.Utf8)]
-    internal static partial int setenv(string name, string value, int overwrite);
+    [System.Runtime.InteropServices.DllImport("libc",
+        CharSet = System.Runtime.InteropServices.CharSet.Ansi)]
+    internal static extern int setenv(string name, string value, int overwrite);
 }
