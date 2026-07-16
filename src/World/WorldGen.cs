@@ -2802,6 +2802,7 @@ public static class WorldGen
                     ang = (ang + 2.399963f) % MathHelper.TwoPi;   // golden angle: no orbiting
                     moved++;
                 }
+                if (moved > 0) Console.WriteLine($"DBG pocket crystal={crystal} depth={depth} radius={radius} moved={moved}");
                 if (Undercuts(ang)) continue;   // an ocean world can genuinely be all shore
                 var n = planet.TilesAt(cr);
                 var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
