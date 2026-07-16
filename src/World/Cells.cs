@@ -3126,6 +3126,12 @@ public sealed class Cells
     /// cycle wrap (the POP). Sim time, not wall time, so a paused game never pops.</summary>
     private float _hotFxTime;
 
+    /// <summary>Per-site "continuously still since" clocks for the bubble gate: a body must
+    /// have sat unmoving for a few seconds before it may blister — a fresh pour is deep and
+    /// motionless the instant it lands, but isn't SETTLED. Keys are the rare hash-selected
+    /// site cells only, so the map stays tiny; cleared wholesale if it ever grows stale.</summary>
+    private readonly Dictionary<(int cx, int cy), float> _bubbleStill = new();
+
     /// <summary>Replay the lava ops collected by <see cref="DrawLiquids"/> into the HOT
     /// coverage field. Game1 calls this inside the flame-RT batch (blob mode only), so lava
     /// and the flamethrower stream threshold into one fire-family surface and composite
