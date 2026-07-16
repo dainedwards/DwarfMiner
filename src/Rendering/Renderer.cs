@@ -1209,6 +1209,26 @@ public sealed class Renderer
                         DrawDeco(centre, right, up, rotation, chord, 6, 3, 1, 1, rootDk);
                         break;
                     }
+                    case TileKind.Geyser:
+                    {
+                        // The volcano's molten heart: a charred scoria block shot through
+                        // with glowing magma cracks and a white-hot core that throbs on the
+                        // clock — the bright pixels double as bloom seeds so the node reads
+                        // as the light source it is (the actual glow rides the ore-light
+                        // scan in Game1).
+                        var scoria = new Color(52, 30, 32);
+                        var crack = new Color(255, 120, 40);
+                        var throb = 0.5f + 0.5f * MathF.Sin(Time * 2.2f + (hash & 31) * 0.2f);
+                        var core = Color.Lerp(new Color(255, 150, 60), new Color(255, 240, 190), throb);
+                        DrawDeco(centre, right, up, rotation, chord, 0, 0, 8, 8, scoria);   // body
+                        DrawDeco(centre, right, up, rotation, chord, 1, 3, 6, 1, crack);    // magma veins
+                        DrawDeco(centre, right, up, rotation, chord, 3, 1, 1, 6, crack);
+                        DrawDeco(centre, right, up, rotation, chord, 5, 4, 2, 1, crack);
+                        DrawDeco(centre, right, up, rotation, chord, 1, 5, 1, 2, crack);
+                        DrawDeco(centre, right, up, rotation, chord, 2, 2, 4, 4, Color.Lerp(scoria, crack, 0.35f + throb * 0.2f));
+                        DrawDeco(centre, right, up, rotation, chord, 3, 3, 2, 2, core);     // throbbing heart
+                        break;
+                    }
                     case TileKind.Chest:
                     {
                         // Banded wooden treasure chest with a brass lid strap, corner fittings
