@@ -5497,47 +5497,53 @@ public sealed partial class DwarfMinerGame : Game
         sb.Draw(_titleRingTex, planetCentre, new Rectangle(0, 24, 172, 24), Color.White,
             tilt, new Vector2(86f, 0f), ringScale, SpriteEffects.None, 0f);
 
-        // The titans: every so often a colossal silhouette rises past the far skyline and
-        // lumbers off — drawn BEFORE the land layer, so only the head and shoulders show
-        // above the ridge line, a shadow on the horizon. TWO different walkers on their own
-        // clocks (different periods, so they drift in and out of sync): a spiny long-tailed
-        // kaiju crossing right→left, and a broad hunched ape-biped crossing left→right.
+        // The titans: every so often a colossal silhouette crosses the far skyline. TWO
+        // different beasts, but they share ONE master clock with non-overlapping windows so
+        // only ever one is on screen at a time: a spiny long-tailed kaiju lumbers past the
+        // ridge (right→left, drawn behind the land so only head/shoulders show), and later a
+        // winged pterodactyl glides high across the open sky (left→right).
         var dark = new Color(9, 7, 13) * 0.92f;
         void TBlock(float x, float y, int wPx, int hPx) =>
             sb.Draw(_renderer.Pixel, new Rectangle((int)x * 2, (int)y * 2, wPx * 2, hPx * 2), dark);
+        var master = time % 84f;
+        if (master < 13f)
         {
-            var cyc = (time + 20f) % 47f;
-            if (cyc < 13f)
-            {
-                var tp = cyc / 13f;
-                var tx2 = MathHelper.Lerp(700f, -80f, tp);
-                var bob = MathF.Sin(time * 2.2f) * 1.4f;
-                var ty2 = 196f + bob;
-                TBlock(tx2 - 14, ty2 - 22, 28, 40);           // torso (lower half hides behind land)
-                TBlock(tx2 - 22, ty2 - 34, 10, 9);            // head, leading the walk
-                TBlock(tx2 - 18, ty2 - 27, 8, 6);             // jaw/neck
-                for (var sp = 0; sp < 3; sp++)                // back spines
-                    TBlock(tx2 - 4 + sp * 7, ty2 - 28 - sp * 2, 4, 7 + sp * 2);
-                TBlock(tx2 + 14, ty2 - 12, 12, 6);            // tail root
-            }
+            // Kaiju: head and shoulders lumbering past the horizon (lower half hides behind land).
+            var tp = master / 13f;
+            var tx2 = MathHelper.Lerp(700f, -80f, tp);
+            var bob = MathF.Sin(time * 2.2f) * 1.4f;
+            var ty2 = 196f + bob;
+            TBlock(tx2 - 14, ty2 - 22, 28, 40);           // torso (lower half hides behind land)
+            TBlock(tx2 - 22, ty2 - 34, 10, 9);            // head, leading the walk
+            TBlock(tx2 - 18, ty2 - 27, 8, 6);             // jaw/neck
+            for (var sp = 0; sp < 3; sp++)                // back spines
+                TBlock(tx2 - 4 + sp * 7, ty2 - 28 - sp * 2, 4, 7 + sp * 2);
+            TBlock(tx2 + 14, ty2 - 12, 12, 6);            // tail root
         }
+        else if (master is >= 42f and < 60f)
         {
-            // Second walker: a broad, hunched ape-biped (no tail/spines) plodding the other
-            // way — heavy shoulders, a domed brow, and long arms swinging by its sides.
-            var cyc = (time + 6f) % 61f;
-            if (cyc < 15f)
+            // Pterodactyl: a huge winged silhouette gliding across the open sky, wings beating
+            // in a slow M sweep, long beak and swept-back crest leading the way.
+            var tp = (master - 42f) / 18f;
+            var px = MathHelper.Lerp(-90f, 730f, tp);
+            var glide = MathF.Sin(time * 0.5f) * 11f;     // slow rise and fall along the glide
+            var py = 118f + glide;
+            var wing = MathF.Sin(time * 3.4f) * 9f;       // wingbeat: tips rise and dip
+
+            TBlock(px - 6, py - 2, 15, 5);                // body, elongated along travel
+            TBlock(px - 9, py - 1, 5, 2);                 // stubby tail root
+            TBlock(px + 7, py - 4, 5, 5);                 // head
+            TBlock(px + 11, py - 3, 12, 3);              // long beak, leading the glide
+            TBlock(px + 3, py - 7, 5, 3);                 // crest sweeping back and up
+            // Two membrane wings sweeping up to pointed tips; the wingbeat raises/lowers them.
+            var lift = (int)wing;
+            for (var w = 1; w <= 7; w++)
             {
-                var tp = cyc / 15f;
-                var tx3 = MathHelper.Lerp(-90f, 760f, tp);
-                var sway = MathF.Sin(time * 1.7f) * 1.6f;
-                var ty3 = 198f + sway;
-                var arm = MathF.Sin(time * 1.7f) * 4f;        // arms swing with the gait
-                TBlock(tx3 - 16, ty3 - 22, 34, 42);           // hunched torso
-                TBlock(tx3 - 22, ty3 - 24, 46, 9);            // broad shoulders
-                TBlock(tx3 + 2, ty3 - 35, 15, 12);            // domed head, leading the walk
-                TBlock(tx3 + 1, ty3 - 37, 18, 4);             // heavy brow ridge
-                TBlock(tx3 - 25, ty3 - 16 + arm, 8, 28);      // trailing arm
-                TBlock(tx3 + 19, ty3 - 16 - arm, 8, 28);      // leading arm
+                var t = w / 7f;
+                var yUp = (int)(t * (6 + lift));          // higher toward the tip, driven by the beat
+                var thick = Math.Max(1, 5 - w / 2);       // membrane tapers out to the tip
+                TBlock(px - 2 - w * 3, py - 2 - yUp, 4, thick);   // trailing wing (sweeps back)
+                TBlock(px + 2 + w * 3, py - 2 - yUp, 4, thick);   // leading wing (sweeps forward)
             }
         }
 
