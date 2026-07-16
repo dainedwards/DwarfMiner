@@ -364,7 +364,7 @@ public static class WorldGen
                 {
                     if (lakeDepth > 0.5f && depth < lakeDepth)
                     {
-                        // The pair's second basin is the LAVA lake: basalt-walled crucible,
+                        // The trio's second basin is the LAVA lake: basalt-walled crucible,
                         // seeded through LavaSeeds — the same fill path as volcano plumbing.
                         // Lava gets a course of FREEBOARD (fill starts at depth 2, not 1):
                         // the settle slosh crests one course over the fill line, and at
