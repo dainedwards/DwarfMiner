@@ -873,6 +873,17 @@ public sealed class Cells
         return Materials.IsLiquid(Get(cx, cy));
     }
 
+    /// <summary>WHICH liquid pools at a world position (<see cref="Material.Empty"/> if none) —
+    /// the particle pass picks its surface reaction off the kind (fire fizzles on water but
+    /// ignites an oil film).</summary>
+    public Material LiquidKindAtWorld(Vector2 worldPos)
+    {
+        var (cx, cy) = WorldToCell(worldPos);
+        if (cy < 0 || cy >= Height) return Material.Empty;
+        var m = Get(cx, cy);
+        return Materials.IsLiquid(m) ? m : Material.Empty;
+    }
+
     /// <summary>Whether the cell at a world position holds settled powder (sand/dirt/gravel/
     /// dust). Pickups treat these as ground so a dropped gem rests on a pile, not under it.</summary>
     public bool PowderAtWorld(Vector2 worldPos)
