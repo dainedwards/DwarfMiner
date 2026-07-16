@@ -180,6 +180,9 @@ public sealed partial class DwarfMinerGame : Game
     private const float StreamHoldMax = 0.735f;  // REAL seconds now: StreamReach adds _frameDt per call and hoses fire per-frame — 0.245 at the old every-3rd-frame cadence = this
     private readonly bool _bossCam = Environment.GetEnvironmentVariable("DM_BOSSCAM") is { Length: > 0 };
     private readonly bool _rigidDbg = Environment.GetEnvironmentVariable("DM_RIGIDDBG") is { Length: > 0 };
+    /// <summary>One-shot latch for the per-eruption engulfed-solids diagnostic scan
+    /// (reset when an eruption starts; see the [erupt] breadcrumbs).</summary>
+    private bool _eruptScanLogged;
     private int _prevRigidCount;
     // Live harvest channel this frame (corpse or titan carcass) — drives the carving-knife
     // + progress-bar overlay in the draw pass. Null when nothing is being carved.
