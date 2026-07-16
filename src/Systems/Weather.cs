@@ -271,10 +271,10 @@ public static class Weather
                 var wAng = c.Angle + ((float)rng.NextDouble() - 0.5f) * 2f * c.HalfWidth;
                 var wGround = SpawnDirector.FindSurfaceSpawn(planet, wAng, planet.Radius);
                 var wUp = planet.UpAt(wGround);
-                // AT the surface (was 4-14px up): the pooling cells were visibly
-                // materialising in mid-air at about the splash crown's height and
-                // raining a second, private shower onto the puddle they fed.
-                var drop = wGround + wUp * (1f + (float)rng.NextDouble() * 2f);
+                // ON the surface (was 1-3px up): even a couple of pixels of clearance
+                // let the pooling cells visibly materialise in mid-air and drop onto
+                // the puddle they fed. Spawn flush with the ground so there's no fall.
+                var drop = wGround;
                 if (kind == RainKind.Water) run.Cells.SpawnRainWater(drop);
                 else run.Cells.SpawnSnow(drop);
             }
