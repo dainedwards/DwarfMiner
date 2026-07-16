@@ -631,6 +631,13 @@ public sealed class Cells
     /// visible fall. Capped: the surface probe's clearance is a handful of tiles at most.</summary>
     private (int cx, int cy) SettleToSurface(int cx, int cy)
     {
+        // The spawn can arrive from ABOVE the outermost row: FindSurfaceSpawn falls back to
+        // radius+24 tiles on a column that holds no ground, and Weather rains on that point
+        // regardless. Start the walk at the top row — WorldToCell built cx in the CLAMPED
+        // row's angle space, so the pair stays consistent — and the drop settles from the
+        // ceiling (or simply falls, on a column with nothing to land on) instead of walking
+        // the grid off its end, which aborted the process from a passing cloud.
+        cy = Math.Min(cy, Height - 1);
         for (var s = 0; s < 48 && cy > 0; s++)
         {
             var (icx, icy) = InnerCell(cx, cy);
