@@ -143,12 +143,15 @@ public sealed class Planet
     /// keep erupting.</summary>
     public readonly List<(int x, int y, bool acid)> VolcanoVents = new();
 
-    /// <summary>Magma/acid chamber exclusion discs (world px), recorded by CarveVolcanoes
-    /// for the deep-worm carve: a bearing-only margin around the vent can never cover the
-    /// chamber's true angular width at depth (it drained a whole volcano to the core when
-    /// a worm bit the chamber shoulder). GENERATION-ONLY — worms carve inside
-    /// WorldGen.Generate, so this is deliberately not persisted.</summary>
-    public readonly List<(Vector2 Centre, float RadiusPx)> ChamberZones = new();
+    /// <summary>Volcano plumbing exclusion CAPSULES (world px): the chamber disc (A == B)
+    /// and the throat segment from chamber to crater floor, recorded by CarveVolcanoes.
+    /// CarveWormDisk refuses any bite that reaches one — the single chokepoint every worm
+    /// carver funnels through. A bearing-only margin around the vent could never cover the
+    /// chamber's angular width at depth, and the upper worm network had NO protection at
+    /// all (it has always been able to bite a throat's basalt sleeve — the lava sea masked
+    /// the leak until the sea-less QA rig drained its volcano to the core). GENERATION-ONLY
+    /// — worms carve inside WorldGen.Generate, so this is deliberately not persisted.</summary>
+    public readonly List<(Vector2 A, Vector2 B, float RadiusPx)> PlumbingZones = new();
 
     /// <summary>Living trees the ecosystem tracks. WorldGen registers one per planted tree;
     /// <see cref="Systems.TreeEcology"/> regrows a felled one from its surviving underground
