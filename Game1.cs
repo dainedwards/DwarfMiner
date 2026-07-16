@@ -1542,6 +1542,8 @@ public sealed partial class DwarfMinerGame : Game
             _prevKeys = keys;
             _prevMouse = mouse;
         }
+        if (_focusDbg && _blurred != _focusDbgLast)
+        { System.Console.WriteLine($"[focus] blurred={_blurred} t={_totalTime:0.0}"); _focusDbgLast = _blurred; }
         _totalTime += dt;
         _transitionFlash = MathF.Max(0f, _transitionFlash - dt * 1.6f);
 

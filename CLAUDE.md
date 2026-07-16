@@ -46,5 +46,19 @@ reads the tree and branch off it at startup.
 
 - A linked worktree (`.git` file) reports its folder name; the primary checkout (`.git`
   directory) reports `main`, since its folder is named after the repo.
+- **CRITICAL: Do NOT include DM_TITLE in the run command.** The window title is auto-derived
+  and adding DM_TITLE will break the launcher.
 - If the branch you are on titles its window some other way, bring `TitleBar()` over as
   part of your change.
+
+## Common test environment variables
+
+When testing specific features, include the relevant `DM_*` variables:
+
+- **Volcano testing**: `DM_VOLCANO=1 DM_ERUPTION=1` (spawns on volcano, auto-erupts)
+- **Zoom**: `DM_ZOOM_MAX=<value>` (max camera zoom level)
+- **Perf profiling**: `DM_PERF=1` (enables per-phase profiler)
+- **Liquid effects**: `DM_LIQRT=1 DM_LIQFX=1` (liquid RT + metaball rendering)
+- **Debug features**: `DM_DEBUG=1`, `DM_AUTOFIRE=1`, `DM_CRAFT=1`, `DM_JETTEST=1`, `DM_SWIM=1`
+
+Check game code and commit history for the full set of available test variables.
