@@ -2309,17 +2309,27 @@ public sealed partial class DwarfMinerGame : Game
                     var spoutPos = _run.Planet.TileToWorld(spoutR,
                         (int)(angF * _run.Planet.TilesAt(spoutR)));
 
+                    // FAR MODE: past ~2000 px the player cannot possibly see the show, so
+                    // the pure-visual emitters (column, fountain, spew ropes, chunks) are
+                    // skipped and the CELL side carries the whole eruption — pump, fill,
+                    // gobs, and direct lava lobs on the side-spout trajectories below.
+                    // Same material outcome (lava lands, flows, starts fires — the vent's
+                    // SecondaryFocus bubble keeps those cells at full rate), none of the
+                    // particle cost.
+                    var showFx = (_run.Player.Position - ventPos).LengthSquared()
+                               < 2000f * 2000f;
+
                     // THE COLUMN: the flamethrower jet at volcano scale — a roaring pillar
                     // of fire standing out of the molten pool, breathing with the surge
                     // (lava only; an acid vent has no burning column).
-                    if (!vAcid)
+                    if (!vAcid && showFx)
                         _particles.EmitEruptionJet(spoutPos + ventUp * 4f, ventUp,
                             MathF.Min(1f, pulse + (peak ? 0.3f : 0f)));
 
                     // The FOUNTAIN BODY: goopy metaball droplets riding the surge — one
                     // connected molten tongue standing out of the pool, fused with it
                     // (lava only: the acid crater keeps its spewer-green pool identity).
-                    if (!vAcid)
+                    if (!vAcid && showFx)
                         _particles.EmitLavaFountain(spoutPos + ventUp * 5f, ventUp,
                             MathF.Min(1f, pulse + (peak ? 0.35f : 0f)));
 
