@@ -3540,6 +3540,7 @@ public sealed class Cells
             var fm = (Material)f.Mat;
             if (fm != Material.Lava && fm != Material.Fire) continue;
             if (Vector2.DistanceSquared(f.Pos, viewCentre) > flyDistSq) continue;
+            if (LiquidAtWorld(f.Pos)) continue;   // submerged: the pool hides its light too
             // Flying fire IS the flamethrower's burning fuel — it has to visibly carry
             // its light along the arc, not just glow once it lands.
             r.AddLight(f.Pos, 45f, new Color(255, 150, 60));
