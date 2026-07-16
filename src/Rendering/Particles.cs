@@ -1701,6 +1701,63 @@ public sealed class Particles
             });
     }
 
+    /// <summary>The eruption COLUMN: the flamethrower jet scaled to volcano size — a
+    /// roaring pillar of fire-fluid puffs standing out of the crater centre. Same
+    /// mechanics as <see cref="EmitFlameJet"/> (Fluid=Fire grains billow through the hot
+    /// metaball composite's taper/bloom/flicker/soot-tail, shed their own sparks), but
+    /// Size > 1 multiplies the blob footprint (see DrawFluid) and the speeds/lives run
+    /// several times longer, so the plume reads tens of tiles tall. <paramref
+    /// name="strength"/> 0..1 rides the eruption's surge pulse.</summary>
+    public void EmitEruptionJet(Vector2 pos, Vector2 up, float strength)
+    {
+        var right = new Vector2(-up.Y, up.X);
+        var count = 4 + (int)(strength * 6f);
+        for (var i = 0; i < count; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
+            var d = up * MathF.Cos(spread) + right * MathF.Sin(spread);
+            var hot = i < 2;
+            var tone = FlameTones[hot ? _rng.Next(2) : _rng.Next(FlameTones.Length)];
+            var ignites = CellFx && _rng.Next(4) == 0;
+            _list.Add(new Particle
+            {
+                Position = pos + d * (float)_rng.NextDouble() * 4f,
+                Velocity = d * ((170f + strength * 160f) * (0.85f + (float)_rng.NextDouble() * 0.3f)),
+                Life = 0.8f + (float)_rng.NextDouble() * 0.5f,
+                MaxLife = 1.3f,
+                Color = tone,
+                FadeColor = new Color(205, 75, 15),
+                Size = 2f + (float)_rng.NextDouble() * 1.2f,   // cone-scale blob footprint
+                GravityScale = -0.25f,               // buoyant: the plume keeps lifting
+                Drag = 1.1f,
+                CollideTiles = true,
+                LightRadius = hot ? 70f : i % 3 == 0 ? 34f : 0f,
+                LightColor = new Color(255, 170, 70),
+                Fluid = (byte)Material.Fire,
+                LandMat = ignites ? (byte)Material.Fire : (byte)0,
+                LandFuse = ignites ? (byte)(30 + _rng.Next(12)) : (byte)0,
+                LandSparks = ignites,
+            });
+        }
+        // Hero flicker a third of the way up the column — the shadow-casting heart of the
+        // blaze, gated to every 3rd frame like the flamethrower's.
+        if (_rng.Next(3) != 0) return;
+        _list.Add(new Particle
+        {
+            Position = pos + up * (30f + (float)_rng.NextDouble() * 40f),
+            Velocity = up * 60f,
+            Life = 0.07f,
+            MaxLife = 0.07f,
+            Color = Color.Transparent,   // pure light carrier
+            FadeColor = Color.Transparent,
+            Size = 0f,
+            Drag = 0f,
+            LightRadius = 60f + (float)_rng.NextDouble() * 24f,
+            LightColor = new Color(255, 170, 80),
+            HeroLight = true,
+        });
+    }
+
     /// <summary>Erupting lava fountain — the goopy molten body of a volcanic eruption.
     /// Droplets carry the LAVA fluid tag, so they ink the HOT metaball coverage field
     /// (the same composite as the lava pools and the flame stream): the fountain
