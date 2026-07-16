@@ -3077,6 +3077,77 @@ public sealed partial class DwarfMinerGame : Game
             pitch: -0.1f + (float)Random.Shared.NextDouble() * 0.25f, minGap: 0.05f);
     }
 
+    /// <summary>The geyser node is breached: the whole molten heart shatters at once (it is
+    /// one object, not ore to nibble), a single LAVA CORE pickup pops out, and the volcano
+    /// it powered falls silent forever — its vent leaves <see cref="Planet.VolcanoVents"/>
+    /// (persisted, so the silence survives a reload). A 2×2 strike can report two geyser
+    /// tiles in one frame; the empty-cluster + no-vent guard makes the second call a no-op.</summary>
+    private void HandleGeyserBroken(int x, int y)
+    {
+        // Shatter the rest of the connected node (the struck tile is already Sky).
+        var cluster = new List<(int r, int t)>();
+        var queue = new Queue<(int r, int t)>();
+        queue.Enqueue((x, y));
+        var seen = new HashSet<(int, int)> { (x, y) };
+        while (queue.Count > 0)
+        {
+            var (cr, ct) = queue.Dequeue();
+            for (var dr = -1; dr <= 1; dr++)
+                for (var dt = -1; dt <= 1; dt++)
+                {
+                    var r2 = cr + dr;
+                    if (r2 < 1 || r2 >= _run.Planet.Rings) continue;
+                    var n2 = _run.Planet.TilesAt(r2);
+                    var t2 = ((ct + dt) % n2 + n2) % n2;
+                    if (!seen.Add((r2, t2))) continue;
+                    if (_run.Planet.Get(r2, t2) != TileKind.Geyser) continue;
+                    cluster.Add((r2, t2));
+                    queue.Enqueue((r2, t2));
+                }
+        }
+
+        // Which volcano died: the vent sharing this bearing (the geyser sits directly
+        // under its own tube). Bearing match is ample — vents are placed cones apart.
+        var brokeAt = _run.Planet.TileToWorld(x, y);
+        var rel = brokeAt - _run.Planet.Center;
+        var myAng = MathF.Atan2(rel.Y, rel.X);
+        var ventIdx = -1;
+        for (var i = 0; i < _run.Planet.VolcanoVents.Count; i++)
+        {
+            var (vvx, vvy, _) = _run.Planet.VolcanoVents[i];
+            var vRel = _run.Planet.TileToWorld(vvx, vvy) - _run.Planet.Center;
+            if (MathF.Abs(MathHelper.WrapAngle(MathF.Atan2(vRel.Y, vRel.X) - myAng)) < 0.2f)
+            { ventIdx = i; break; }
+        }
+        if (cluster.Count == 0 && ventIdx < 0) return;   // sibling tile already handled it
+
+        foreach (var (cr, ct) in cluster)
+        {
+            _run.Planet.Set(cr, ct, TileKind.Sky);
+            _run.Physics.MarkDirty(cr, ct);
+            _particles.EmitChips(_run.Planet.TileToWorld(cr, ct), TileKind.Geyser);
+        }
+        // The core pops free with a kick — a physical pickup that waits where it lands
+        // (collection credits Tiles.Drop(Geyser) = the lava core material).
+        var up = _run.Planet.UpAt(brokeAt);
+        _run.Pickups.Add(new Pickup(brokeAt + up * 3f, TileKind.Geyser, up * 60f));
+        _meta.TotalOreMined++;
+
+        if (ventIdx >= 0)
+        {
+            // Silence the volcano: stop a live eruption from this vent, then retire it.
+            if (_run.EruptionVent == ventIdx) { _run.EruptionLeft = 0f; _run.EruptionVent = -1; }
+            else if (_run.EruptionVent > ventIdx) _run.EruptionVent--;
+            _run.Planet.VolcanoVents.RemoveAt(ventIdx);
+        }
+
+        _particles.EmitImpact(brokeAt, ProjectileKind.Rocket);
+        _run.Shake = MathF.Max(_run.Shake, 0.8f);
+        PlayAt("explode", brokeAt, 0.8f, pitch: -0.4f);
+        _toast = "THE GEYSER IS DESTROYED - THE VOLCANO FALLS SILENT";
+        _toastTimer = 4f;
+    }
+
     /// <summary>Shove every corpse in a blast radius — dead bodies fly with the explosion
     /// (same falloff as the player knockback) instead of lying rigor-still inside it.</summary>
     private void KickCorpses(Vector2 pos, float radius, float power)
