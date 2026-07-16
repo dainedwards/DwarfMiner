@@ -509,7 +509,12 @@ public sealed class Particles
     /// spread of firing under acceleration. Blob colour is the grain's own stepped-fade
     /// tone, so the tongue still cools white→orange→red along its length (neon→deep
     /// green for acid).</summary>
-    public void DrawFluid(Renderer r, Material which)
+    /// <summary>Fire grains split by <paramref name="smokeJets"/>: the eruption column
+    /// (JetScale &gt; 1, smoky black) inks its OWN coverage RT — sharing the hot field
+    /// with the orange fountain/pool stamped their capsule quads as hard rects over the
+    /// black (the fill blend's colour REPLACES across the whole quad; invisible while
+    /// both were orange). Handheld hoses (smokeJets false) keep the hot field.</summary>
+    public void DrawFluid(Renderer r, Material which, bool smokeJets = false)
     {
         var tex = r.LiquidBlob;
         var org = new Vector2(tex.Width / 2f, tex.Height / 2f);
@@ -517,6 +522,7 @@ public sealed class Particles
         foreach (var p in _list)
         {
             if (p.Fluid != (byte)which || p.Hidden) continue;
+            if (fire && p.JetScale > 1f != smokeJets) continue;
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             var c = Color.Lerp(p.FadeColor, p.Color, MathF.Ceiling(t * 4f) * 0.25f);
             // CAPSULES, not discs: each frame's grain batch fuses into one blob, but
