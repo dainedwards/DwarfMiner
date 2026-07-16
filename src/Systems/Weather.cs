@@ -259,7 +259,11 @@ public static class Weather
         // 1-in-3 trickle was ~7s per TILE of water at Density 8, so a whole shower left
         // nothing you could see); snow keeps the trickle, its drifts have no evaporation
         // counterweight beyond the saturation cap.
-        if (kind is RainKind.Water or RainKind.Snow)
+        // Hold the LANDING half back until the first visible drops have had time to fall
+        // the cloud height (~1.4s at raindrop speeds): the cells spawn just above the
+        // ground, so without the gate puddle splashes and pool crowns fired the instant a
+        // shower opened — before any raindrop had visibly reached the surface.
+        if (kind is RainKind.Water or RainKind.Snow && c.RainElapsed > 1.4f)
         {
             var drops = kind == RainKind.Water ? 3 : rng.Next(3) == 0 ? 1 : 0;
             for (var d = 0; d < drops; d++)
