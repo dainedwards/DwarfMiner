@@ -2400,7 +2400,7 @@ public sealed partial class DwarfMinerGame : Game
                     }
                     // Molten rock bombs flung up off the boiling pool — glowing scoria
                     // chunks arcing over the rim onto the slopes (acid vents spit no rock).
-                    if (peak && !vAcid)
+                    if (peak && !vAcid && showFx)
                         _particles.EmitLavaChunks(spoutPos + ventUp * 8f, ventUp,
                             5 + Random.Shared.Next(5));
 
