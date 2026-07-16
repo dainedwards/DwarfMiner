@@ -641,7 +641,11 @@ public sealed class Cells
     // burn state, same policy as flying cells.
     public readonly Dictionary<(int tx, int ty), float> BurningTiles = new();
     private readonly List<((int tx, int ty) Key, float Clock)> _burnScratch = new();
-    private const int MaxBurningTiles = 400;   // planet-wide cap = the fire-storm guard
+    // Planet-wide cap = the fire-storm guard. 600 gives a grove fire headroom — at the
+    // old 400 a healthy blaze pinned the cap and every ignition (spread steps, cell-fire
+    // catches) dropped silently, which read as the fire stalling and dying in patches.
+    // With retried spread the cap is SOFT: blocked ignitions heal as burn-outs free slots.
+    private const int MaxBurningTiles = 600;
     private const float BurnSpreadDelay = 0.25f;
     private const float BurnDurMin = 4f, BurnDurVar = 3f;
 
@@ -703,9 +707,15 @@ public sealed class Cells
                 if (ax >= 0 && ax < Planet.Rings && Planet.Get(ax, ay) == TileKind.Sky)
                     SpawnInTile(ax, ay, Material.Fire, 1);
             }
-            // Spread: one deterministic wavefront step over the fuel graph, diagonals
-            // included, the moment this tile has been alight past the delay.
-            if (clock < BurnSpreadDelay && nc >= BurnSpreadDelay)
+            // Spread: retried THROUGHOUT the blaze, not a one-shot crossing. The one-shot
+            // version wasted its only attempt whenever a neighbour couldn't ignite at
+            // that exact tick — chiefly the registry cap during a big blaze — leaving
+            // adjacent fuel permanently unlit (uneven burns, stalled waves, and long-
+            // lived flame cells "burning forever" beside tiles they could never hand
+            // off). Retrying is idempotent (already-burning neighbours are one dict hit)
+            // and heals as burn-outs free cap space; resumed clocks from re-stamped
+            // burning rigid chunks spread too, since there's no crossing to miss.
+            if (nc >= BurnSpreadDelay && _rng.Next(18) == 0)
                 for (var dr = -1; dr <= 1; dr++)
                     for (var da = -1; da <= 1; da++)
                     {
