@@ -95,7 +95,11 @@ public static class AmbientDirector
 
         // The shared disaster clock: it only runs while the world is quiet, so disasters
         // can never overlap, and the spacing between them is the difficulty interval.
-        if (!run.Def.NoDisasters && !DisasterActive(run))
+        // A FORCED disaster (run.NextDisaster — set by the DM_FLARE/DM_ACIDRAIN/DM_ERUPT/
+        // DM_ERUPTSHOW tooling hooks) overrides NoDisasters: the QA rig skips the ambient
+        // cadence, but an explicitly scheduled test event must still fire (once — the
+        // hook consumes NextDisaster, and the gate closes again behind it).
+        if ((!run.Def.NoDisasters || run.NextDisaster is not null) && !DisasterActive(run))
         {
             run.DisasterTimer -= dt;
             if (run.DisasterTimer <= 0f)
