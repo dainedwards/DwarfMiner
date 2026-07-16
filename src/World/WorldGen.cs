@@ -341,10 +341,15 @@ public static class WorldGen
                     {
                         // The pair's second basin is the LAVA lake: basalt-walled crucible,
                         // seeded through LavaSeeds — the same fill path as volcano plumbing.
+                        // Lava gets a course of FREEBOARD (fill starts at depth 2, not 1):
+                        // the settle slosh crests one course over the fill line, and at
+                        // shore level that ran along the jacket top and drained down the
+                        // first roofed shaft it met — the crater pool survives the same
+                        // slosh only because its pool line sits tiles below the rim.
                         var lavaLake = def.LakePair && lakeIdx == 1;
                         planet.SetWall(r, t, lavaLake ? TileKind.Basalt : TileKind.Dirt);
                         planet.Set(r, t, TileKind.Sky);
-                        if (depth >= 1f)
+                        if (depth >= (lavaLake ? 2f : 1f))
                             (lavaLake ? planet.LavaSeeds : planet.WaterSeeds).Add((r, t));
                         continue;
                     }
