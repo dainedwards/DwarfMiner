@@ -20,3 +20,15 @@ Rules:
   `dotnet …DwarfMiner.dll` last. The user's `run` launcher greps session transcripts
   for the newest line matching this format and executes it verbatim, so a command in
   any other shape makes the change untestable from the user's side.
+
+## Game window title (identifies which tree is running)
+
+The game window title must be `DwarfMiner - <worktree>` (e.g. `DwarfMiner - liquid-perf`,
+`DwarfMiner - main`) so the user can tell test builds apart.
+
+- The game reads the `DM_TITLE` environment variable: when it is set, set the window
+  title to `DwarfMiner - <value>` (in Game1's Initialize, via `Window.Title`). If the
+  branch you are on does not support `DM_TITLE` yet, add it as part of your change.
+- Always include `DM_TITLE=<worktree name>` (`DM_TITLE=main` on the main checkout) in
+  the run commands you print. The user's launcher also injects it when missing, but
+  printed commands should carry it explicitly.
