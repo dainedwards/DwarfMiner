@@ -242,9 +242,16 @@ public static class SpawnDirector
                 : run.Def.Biome is "belt" or "moon" ? CreatureKind.StarJelly
                 : Random.Shared.NextDouble() < 0.65 ? CreatureKind.SkyMoth
                 : CreatureKind.SkyStinger;
-            run.Creatures.Add(new Creature(
-                ground + up2 * (50f + (float)Random.Shared.NextDouble() * 90f), kind)
-            { Resident = true });
+            // Over a lake or sea, FindSurfaceSpawn found the BED (water is cells, not
+            // tiles) — a fixed 50-140px lift from there parks a moth INSIDE deep water.
+            // Never start below the baseline surface (basins fill to about that level),
+            // and hazard-veto the spot as belt and braces (waves, lava lake surfaces).
+            var alt = MathF.Max((ground - planet.Center).Length(),
+                (Planet.RingMin + planet.SurfaceRing) * Planet.TileSize);
+            var pos = planet.Center + up2 * (alt + 50f + (float)Random.Shared.NextDouble() * 90f);
+            var c = new Creature(pos, kind) { Resident = true };
+            if (HazardRejectsSpawn(run, pos, c)) continue;
+            run.Creatures.Add(c);
         }
 
         // ── Physical spawners — the only post-load source of new creatures. ──────────
