@@ -657,6 +657,15 @@ public sealed class Cells
     private void TickBurningTiles(float dt)
     {
         if (BurningTiles.Count == 0) return;
+        // PRESSURE AGING: as the registry fills toward its cap, every burn's clock runs
+        // faster (up to 3×) — the oldest tiles burn out sooner, freeing slots, so a big
+        // fire becomes a TRAVELLING BAND: the tail consumes itself to keep the front
+        // spreading at full pace, instead of the cap stalling the climb. (The spread
+        // delay shrinks with it, so the front actually quickens slightly under
+        // pressure — a big fire raging harder reads right.)
+        var pressure = 1f + MathF.Max(0f, BurningTiles.Count - MaxBurningTiles * 0.5f)
+                          / (MaxBurningTiles * 0.25f);
+        var adt = dt * MathF.Min(3f, pressure);
         _burnScratch.Clear();
         foreach (var kv in BurningTiles) _burnScratch.Add((kv.Key, kv.Value));
         foreach (var ((tx, ty), clock) in _burnScratch)
@@ -667,7 +676,7 @@ public sealed class Cells
                 BurningTiles.Remove((tx, ty));
                 continue;
             }
-            var nc = clock + dt;
+            var nc = clock + adt;
             var h = (uint)((tx * 73856093) ^ (ty * 19349663));
             var dur = BurnDurMin + (h & 1023) / 1023f * BurnDurVar;
             // Blaze visuals + hazard: licking flames off the tile, and the odd REAL fire
