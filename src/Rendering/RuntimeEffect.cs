@@ -274,7 +274,7 @@ void main()
         {
             float wpp = max(ps_uniforms_vec4[2].z, 0.001);
             vec2 rel  = vTexCoord / texel - ps_uniforms_vec4[2].xy;
-            vec2 up   = (rel / max(length(rel), 0.001)) * texel * (3.0 / wpp);
+            vec2 up   = (rel / max(length(rel), 0.001)) * texel * (4.0 / wpp);
             float depth = 16.0;
             for (int i = 1; i <= 16; i++)
             {
@@ -284,7 +284,7 @@ void main()
                     break;
                 }
             }
-            rgb = mix(rgb, vec3(0.063, 0.173, 0.455), (depth / 16.0) * 0.9 * amp);
+            rgb = mix(rgb, vec3(0.024, 0.055, 0.157), (depth / 16.0) * amp);
         }
     }
     if (n < thresh)
