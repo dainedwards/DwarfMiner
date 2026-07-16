@@ -146,6 +146,57 @@ public static class LavaProbe
             Console.WriteLine($"    drain mouths at load: {mouthCount}");
             foreach (var s in mouths) Console.WriteLine("    " + s);
 
+            // Anatomy dump around the FIRST drain mouth: seam bands + a tile-kind map of the
+            // neighbourhood, so a breach localises to "which carver bit which barrier" without
+            // another bespoke probe run.
+            if (mouthCount > 0)
+            {
+                var (seams, bands, seaFloor) = WorldGen.CaveStrata(planet, def);
+                Console.WriteLine($"    strata: seaFloor {seaFloor:0.0}t, LavaFillFrac {def.LavaFillFrac:0.00} " +
+                    $"(top {planet.Radius * def.LavaFillFrac:0.0}t), RingMin {Planet.RingMin}");
+                foreach (var (lo, hi) in seams) Console.WriteLine($"      seam {lo:0.0}-{hi:0.0}t");
+                foreach (var (lo, hi) in bands) Console.WriteLine($"      band {lo:0.0}-{hi:0.0}t");
+                // First mouth's coordinates were captured in `mouths[0]` as text; re-derive
+                // from the census loop instead: dump around the lowest-ring mouth lava tile.
+                var (mr, mt) = (-1, -1);
+                foreach (var (r, t) in initial)
+                {
+                    var n = planet.TilesAt(r);
+                    foreach (var (dr, dtt) in new[] { (-1, 0), (0, -1), (0, 1) })
+                    {
+                        var r2 = r + dr;
+                        if (r2 < 0 || r2 >= planet.Rings) continue;
+                        var n2 = planet.TilesAt(r2);
+                        var t2 = ((int)((t + 0.5f) / n * n2) + dtt % n2 + n2) % n2;
+                        if (planet.Get(r2, t2) != TileKind.Sky || initial.Contains((r2, t2))) continue;
+                        if (mr < 0 || r < mr) { mr = r; mt = t; }
+                    }
+                }
+                var nm = planet.TilesAt(mr);
+                Console.WriteLine($"    map around mouth lava({mr},{mt}) radTiles {Planet.RingMin + mr + 0.5f:0.0}:");
+                for (var r = Math.Min(planet.Rings - 1, mr + 6); r >= Math.Max(0, mr - 6); r--)
+                {
+                    var n2 = planet.TilesAt(r);
+                    var tc = (int)((mt + 0.5f) / nm * n2);
+                    var line = $"      r{r,3} ({Planet.RingMin + r + 0.5f,5:0.0}t): ";
+                    for (var dt = -10; dt <= 10; dt++)
+                    {
+                        var t2 = ((tc + dt) % n2 + n2) % n2;
+                        var k = planet.Get(r, t2);
+                        line += initial.Contains((r, t2)) ? 'L'
+                            : k == TileKind.Sky ? '.'
+                            : k == TileKind.LavaRock ? 'R'
+                            : k == TileKind.Obsidian ? 'O'
+                            : k == TileKind.Basalt ? 'B'
+                            : k == TileKind.Stone ? 's'
+                            : k == TileKind.Dirt ? 'd'
+                            : k == TileKind.Granite ? 'g'
+                            : '?';
+                    }
+                    Console.WriteLine(line);
+                }
+            }
+
             const float step = 1f / 60f;
             for (var tick = 0; tick < 120 * 60; tick++) cells.Update(step);
 
