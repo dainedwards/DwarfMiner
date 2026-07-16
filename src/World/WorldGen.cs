@@ -1668,6 +1668,10 @@ public static class WorldGen
             // sleeved in basalt so the soft dirt band it crosses can't slump into it.
             // Span keeps the legacy world width: open channel ≈24 px, 8-px walls each side.
             var throatSpan = (int)(2 * S) + 1;
+            // Throat keep-out capsule (chamber → crater floor) — see Planet.PlumbingZones.
+            var throatTop = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
+                * (Planet.RingMin + floorR + 1) * Planet.TileSize;
+            planet.PlumbingZones.Add((centre, throatTop, (throatSpan + 0.5f) * Planet.TileSize));
             for (var r = chamberR + chamberRad - 1; r <= floorR; r++)
             {
                 if (r < 2 || r >= planet.Rings) continue;
