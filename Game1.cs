@@ -6530,6 +6530,25 @@ public sealed partial class DwarfMinerGame : Game
                 // the crater pool it rises from threshold into ONE goopy body.
                 _particles.DrawFluid(_renderer, Material.Lava);
                 _renderer.Batch.End();
+
+                // The eruption's smoky black column fills its OWN coverage field (see
+                // _smokeRt) — gated on live column grains so the target costs nothing
+                // outside an eruption.
+                if (_particles.SmokeJetLive)
+                {
+                    if (_smokeRt == null || _smokeRt.Width != lw || _smokeRt.Height != lh)
+                    {
+                        _smokeRt?.Dispose();
+                        _smokeRt = new RenderTarget2D(GraphicsDevice, lw, lh, false,
+                            SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+                    }
+                    GraphicsDevice.SetRenderTarget(_smokeRt);
+                    GraphicsDevice.Clear(Color.Transparent);
+                    _renderer.Batch.Begin(SpriteSortMode.Deferred, Renderer.LiquidFillBlend,
+                        SamplerState.LinearClamp, null, null, null, _camera.View);
+                    _particles.DrawFluid(_renderer, Material.Fire, smokeJets: true);
+                    _renderer.Batch.End();
+                }
             }
         }
         FramePerf.Add("liqRT", tDraw);
