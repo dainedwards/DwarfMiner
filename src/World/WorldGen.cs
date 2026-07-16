@@ -1611,7 +1611,14 @@ public static class WorldGen
         Plug(planet.AcidSeeds, acidLid, TileKind.Obsidian, melts: true);
         // Water last: it only fills Sky, so it can never overwrite the jackets above.
         // Only the surface BASINS — a crust reservoir's open neighbours are its own cave.
-        //BISECT Plug(planet.LakeBasinSeeds, waterLid, TileKind.Dirt, melts: false);
+        // Water last: it only fills Sky, so it can never overwrite the jackets above. Only
+        // the surface BASINS — a crust reservoir's open neighbours are its own cave — and
+        // only on lake worlds. An ocean's sea is 70%+ of the bearings, and its containment
+        // is already a different, stronger design: an obsidian shell under the seabed with a
+        // cave-free buffer under that. Running the plug over it as well buys nothing and
+        // walls up the island grottoes near the shore, which are the one sanctioned way into
+        // the under-sea network.
+        if (plugWater) Plug(planet.LakeBasinSeeds, waterLid, TileKind.Dirt, melts: false);
     }
 
     /// <summary>Expand every fluid seed tile by the 2-tile jacket reach into
