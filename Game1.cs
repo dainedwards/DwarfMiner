@@ -2127,28 +2127,8 @@ public sealed partial class DwarfMinerGame : Game
                     gx = r; gy = t;
                 }
 
-                // Pump at the geyser: dense magma wells off the node and drives the column
-                // up the tube. Stronger on the surge peak.
-                var pumpN = peak ? 2 : 1;
-                for (var i = 0; i < pumpN; i++)
-                    _run.Cells.SpawnInTile(
-                        Math.Clamp(gx + Random.Shared.Next(-1, 2), 2, _run.Planet.Rings - 1),
-                        gy + Random.Shared.Next(-1, 2), mat, Cells.Density * Cells.Density);
-                if (peak)
-                {
-                    // Jet a slug of magma straight up the bore so the pump visibly shoots
-                    // the column toward the crater.
-                    var geyserPos = _run.Planet.TileToWorld(gx, gy);
-                    var geyserUp = _run.Planet.UpAt(geyserPos);
-                    for (var i = 0; i < 6; i++)
-                        _run.Cells.LaunchAtWorld(geyserPos + geyserUp * 4f,
-                            geyserUp * (220f + (float)Random.Shared.NextDouble() * 120f)
-                            + new Vector2(-geyserUp.Y, geyserUp.X)
-                            * (((float)Random.Shared.NextDouble() - 0.5f) * 40f), mat);
-                }
-
                 // THE RISING MAGMA: the pool rests at 80% of the bowl; over the eruption's
-                // main act the fill line ramps to 110–130% of the rim (EruptionPeakFrac),
+                // main act the fill line ramps to 120–145% of the rim (EruptionPeakFrac),
                 // so the level visibly climbs the crater wall, crests the lip, and bubbles
                 // over the sides in sheets. Cone geometry is derived back from the vent
                 // ring (ventR = surfaceR + 0.91·coneH + 2S at gen — see CarveVolcanoes;
@@ -2163,114 +2143,151 @@ public sealed partial class DwarfMinerGame : Game
                 var levelR = Math.Clamp(
                     _run.Planet.SurfaceRing + (int)(coneHrt - craterDrt * (1f - levelFrac)),
                     2, _run.Planet.Rings - 1);
+                // Find the lava surface at the vent bearing, scanning all the way DOWN TO
+                // THE BULB: if nothing (liquid or crust) is met before the geyser well, the
+                // whole column has been drained out from under the eruption.
                 var surfR = -1;
-                for (var r = levelR; r >= Math.Max(2, levelR - 90); r--)
+                for (var r = levelR; r > gx; r--)
                 {
                     var t = (int)(angF * _run.Planet.TilesAt(r));
                     if (_run.Planet.Get(r, t) != TileKind.Sky
                         || _run.Cells.LiquidKindAtWorld(_run.Planet.TileToWorld(r, t))
                             != Material.Empty) { surfR = r; break; }
                 }
-                if (surfR >= 0 && surfR < levelR)
+                if (surfR < 0)
                 {
-                    var fillR = Math.Min(surfR + 1, _run.Planet.Rings - 1);
-                    var fillN = _run.Planet.TilesAt(fillR);
-                    var fillT0 = (int)(angF * fillN);
-                    for (var i = 0; i < (peak ? 4 : 2); i++)
-                        _run.Cells.SpawnInTile(fillR,
-                            ((fillT0 + Random.Shared.Next(-2, 3)) % fillN + fillN) % fillN,
-                            mat, Cells.Density * Cells.Density);
+                    // DRAINED PAST THE BULB: the player (or a cave-in) bled the column out
+                    // below the geyser well — nothing left to erupt. The show dies on the
+                    // spot, with no subsidence handoff (there is no pool to lower).
+                    _run.EruptionLeft = 0f;
+                    _run.EruptionVent = -1;
                 }
-
-                // THE SPOUT erupts from WITHIN the magma — 10 tiles below the lava line,
-                // deep inside the bowl — so the column and every gob visibly BURST up
-                // through the pool surface rather than standing on it. (Particles born
-                // inside a liquid aren't killed by the surface-crossing gate; they die
-                // normally when they arc back IN.) It rises with the magma line.
-                var spoutR = surfR >= 0 ? Math.Max(2, surfR - 10) : vx;
-                var spoutPos = surfR >= 0
-                    ? _run.Planet.TileToWorld(spoutR, (int)(angF * _run.Planet.TilesAt(spoutR)))
-                    : ventPos;
-
-                // THE COLUMN: the flamethrower jet at volcano scale — a roaring pillar of
-                // fire standing out of the molten pool, breathing with the surge (lava
-                // only; an acid vent has no burning column).
-                if (!vAcid)
-                    _particles.EmitEruptionJet(spoutPos + ventUp * 4f, ventUp,
-                        MathF.Min(1f, pulse + (peak ? 0.3f : 0f)));
-
-                // The FOUNTAIN BODY: goopy metaball droplets riding the surge — one
-                // connected molten tongue standing out of the pool, fused with it
-                // (lava only: the acid crater keeps its own spewer-green pool identity).
-                if (!vAcid)
-                    _particles.EmitLavaFountain(spoutPos + ventUp * 5f, ventUp,
-                        MathF.Min(1f, pulse + (peak ? 0.35f : 0f)));
-
-                // ...and the MASS: real lava gobs hurled up out of the magma, bursting
-                // through the surface, arcing out of the crater mouth and raining down
-                // the slopes — far bigger on the peak. Speeds carry them up from the
-                // submerged spout and clear over the rim.
-                var gobs = peak ? 22 + Random.Shared.Next(14) : 6 + Random.Shared.Next(5);
-                for (var i = 0; i < gobs; i++)
+                else
                 {
-                    var spread = (float)(Random.Shared.NextDouble() - 0.5) * 1.1f;
-                    var dir = ventUp * MathF.Cos(spread) + ventRight * MathF.Sin(spread);
-                    var speed = (peak ? 280f : 200f) + (float)Random.Shared.NextDouble() * 130f;
-                    _run.Cells.LaunchAtWorld(spoutPos + ventUp * 6f, dir * speed, mat);
-                }
-
-                // SIDE SPOUTS: twin goopy blob ropes from the same submerged origin,
-                // angled ±20° over the ledge of the crater. Each blob lives through its
-                // whole lob, POOLS where it lands for a cooling moment, and hands off a
-                // real Lava cell right there (see EmitLavaSpew) — the stream reads as the
-                // spitter jet, and the flanks accumulate genuine sim lava at exactly the
-                // spots the globs visibly struck.
-                if (!vAcid)
-                {
-                    var spew = MathF.Min(1f,
-                        0.35f + 0.65f * pulse + (levelFrac > 1f ? 0.2f : 0f));
-                    const float side20 = 0.349f;   // ~20° off the local up
-                    for (var s = -1; s <= 1; s += 2)
+                    // Pump at the geyser: dense magma wells off the node and drives the
+                    // column up the tube. Stronger on the surge peak.
+                    var pumpN = peak ? 2 : 1;
+                    for (var i = 0; i < pumpN; i++)
+                        _run.Cells.SpawnInTile(
+                            Math.Clamp(gx + Random.Shared.Next(-1, 2), 2, _run.Planet.Rings - 1),
+                            gy + Random.Shared.Next(-1, 2), mat, Cells.Density * Cells.Density);
+                    if (peak)
                     {
-                        // Scatter variety: each jet WANDERS — a slow independent sweep
-                        // plus per-frame jitter swings the aim around its ±20° base, so
-                        // gob clusters land at ever-different spots on the flank instead
-                        // of drilling one line.
-                        var wob = MathF.Sin(_run.EruptionLeft * 1.7f + s * 2.1f) * 0.12f
-                                + ((float)Random.Shared.NextDouble() - 0.5f) * 0.10f;
-                        var ang2 = s * side20 + wob;
-                        var edir = ventUp * MathF.Cos(ang2) + ventRight * MathF.Sin(ang2);
-                        _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
+                        // Jet a slug of magma straight up the bore so the pump visibly
+                        // shoots the column toward the crater.
+                        var geyserPos = _run.Planet.TileToWorld(gx, gy);
+                        var geyserUp = _run.Planet.UpAt(geyserPos);
+                        for (var i = 0; i < 6; i++)
+                            _run.Cells.LaunchAtWorld(geyserPos + geyserUp * 4f,
+                                geyserUp * (220f + (float)Random.Shared.NextDouble() * 120f)
+                                + new Vector2(-geyserUp.Y, geyserUp.X)
+                                * (((float)Random.Shared.NextDouble() - 0.5f) * 40f), mat);
                     }
-                }
 
-                // Rim leak: low, near-horizontal gobs that spill over the crater lip and
-                // crawl down the outer slope, so lava visibly leaks over the rim.
-                if (peak)
-                {
-                    var spills = 6 + Random.Shared.Next(6);
-                    for (var i = 0; i < spills; i++)
+                    if (surfR < levelR)
                     {
-                        var side = Random.Shared.Next(2) == 0 ? -1f : 1f;
-                        var a = 0.75f + (float)Random.Shared.NextDouble() * 0.5f;  // mostly sideways
-                        var dir = ventUp * MathF.Cos(a) + ventRight * (side * MathF.Sin(a));
-                        var speed = 90f + (float)Random.Shared.NextDouble() * 70f;
-                        _run.Cells.LaunchAtWorld(ventPos + ventUp * 4f, dir * speed, mat);
+                        var fillR = Math.Min(surfR + 1, _run.Planet.Rings - 1);
+                        var fillN = _run.Planet.TilesAt(fillR);
+                        var fillT0 = (int)(angF * fillN);
+                        for (var i = 0; i < (peak ? 4 : 2); i++)
+                            _run.Cells.SpawnInTile(fillR,
+                                ((fillT0 + Random.Shared.Next(-2, 3)) % fillN + fillN) % fillN,
+                                mat, Cells.Density * Cells.Density);
                     }
-                }
-                // Molten rock bombs flung up off the boiling pool — glowing scoria chunks
-                // that arc over the rim and litter the slopes (acid vents don't spit rock).
-                if (peak && !vAcid)
-                    _particles.EmitLavaChunks(spoutPos + ventUp * 8f, ventUp,
-                        5 + Random.Shared.Next(5));
 
-                // Ash plume, glowing cinders spat from the fountain, and a rolling rumble.
-                if (Random.Shared.Next(2) == 0)
-                    _run.Cells.SpawnInTile(Math.Min(vx + 4, _run.Planet.Rings - 1), vy,
-                        Material.Smoke, peak ? 14 : 8);
-                _particles.EmitCinders(ventPos + ventUp * 10f, ventUp * 90f, peak ? 10 : 5, 140f);
-                _run.Shake = MathF.Max(_run.Shake, peak ? 0.85f : 0.4f);
-                PlayAt("collapse", ventPos, peak ? 0.7f : 0.4f, pitch: -0.5f, minGap: 0.5f);
+                    // THE SPOUT erupts from WITHIN the magma, 10 tiles below the lava
+                    // line — and it is ANCHORED: set on the first main-act frame, it never
+                    // climbs with the rising pool, only RATCHETS DOWN when the column is
+                    // drained out from under it (never below the bulb, where the drained
+                    // check above kills the show instead).
+                    _run.EruptionSpoutR = Math.Clamp(
+                        Math.Min(_run.EruptionSpoutR, surfR - 10),
+                        gx + 1, _run.Planet.Rings - 1);
+                    var spoutR = _run.EruptionSpoutR;
+                    var spoutPos = _run.Planet.TileToWorld(spoutR,
+                        (int)(angF * _run.Planet.TilesAt(spoutR)));
+
+                    // THE COLUMN: the flamethrower jet at volcano scale — a roaring pillar
+                    // of fire standing out of the molten pool, breathing with the surge
+                    // (lava only; an acid vent has no burning column).
+                    if (!vAcid)
+                        _particles.EmitEruptionJet(spoutPos + ventUp * 4f, ventUp,
+                            MathF.Min(1f, pulse + (peak ? 0.3f : 0f)));
+
+                    // The FOUNTAIN BODY: goopy metaball droplets riding the surge — one
+                    // connected molten tongue standing out of the pool, fused with it
+                    // (lava only: the acid crater keeps its spewer-green pool identity).
+                    if (!vAcid)
+                        _particles.EmitLavaFountain(spoutPos + ventUp * 5f, ventUp,
+                            MathF.Min(1f, pulse + (peak ? 0.35f : 0f)));
+
+                    // ...and the MASS: real lava gobs hurled up out of the magma, bursting
+                    // through the surface, arcing out of the crater mouth and raining down
+                    // the slopes — far bigger on the peak. Speeds carry them up from the
+                    // submerged spout and clear over the rim.
+                    var gobs = peak ? 22 + Random.Shared.Next(14) : 6 + Random.Shared.Next(5);
+                    for (var i = 0; i < gobs; i++)
+                    {
+                        var spread = (float)(Random.Shared.NextDouble() - 0.5) * 1.1f;
+                        var dir = ventUp * MathF.Cos(spread) + ventRight * MathF.Sin(spread);
+                        var speed = (peak ? 280f : 200f) + (float)Random.Shared.NextDouble() * 130f;
+                        _run.Cells.LaunchAtWorld(spoutPos + ventUp * 6f, dir * speed, mat);
+                    }
+
+                    // SIDE SPOUTS: twin goopy blob ropes from the same submerged origin,
+                    // angled ±20° over the ledge of the crater. Each blob lives through
+                    // its whole lob, POOLS where it lands for a cooling moment, and hands
+                    // off a real Lava cell right there (see EmitLavaSpew) — the stream
+                    // reads as the spitter jet, and the flanks accumulate genuine sim lava
+                    // at exactly the spots the globs visibly struck.
+                    if (!vAcid)
+                    {
+                        var spew = MathF.Min(1f,
+                            0.35f + 0.65f * pulse + (levelFrac > 1f ? 0.2f : 0f));
+                        const float side20 = 0.349f;   // ~20° off the local up
+                        for (var s = -1; s <= 1; s += 2)
+                        {
+                            // Scatter variety: each jet WANDERS — a slow independent sweep
+                            // plus per-frame jitter swings the aim around its ±20° base,
+                            // so gob clusters land at ever-different spots on the flank
+                            // instead of drilling one line.
+                            var wob = MathF.Sin(_run.EruptionLeft * 1.7f + s * 2.1f) * 0.12f
+                                    + ((float)Random.Shared.NextDouble() - 0.5f) * 0.10f;
+                            var ang2 = s * side20 + wob;
+                            var edir = ventUp * MathF.Cos(ang2) + ventRight * MathF.Sin(ang2);
+                            _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
+                        }
+                    }
+
+                    // Rim leak: low, near-horizontal gobs that spill over the crater lip
+                    // and crawl down the outer slope, so lava visibly leaks over the rim.
+                    if (peak)
+                    {
+                        var spills = 6 + Random.Shared.Next(6);
+                        for (var i = 0; i < spills; i++)
+                        {
+                            var side = Random.Shared.Next(2) == 0 ? -1f : 1f;
+                            var a = 0.75f + (float)Random.Shared.NextDouble() * 0.5f;  // mostly sideways
+                            var dir = ventUp * MathF.Cos(a) + ventRight * (side * MathF.Sin(a));
+                            var speed = 90f + (float)Random.Shared.NextDouble() * 70f;
+                            _run.Cells.LaunchAtWorld(ventPos + ventUp * 4f, dir * speed, mat);
+                        }
+                    }
+                    // Molten rock bombs flung up off the boiling pool — glowing scoria
+                    // chunks arcing over the rim onto the slopes (acid vents spit no rock).
+                    if (peak && !vAcid)
+                        _particles.EmitLavaChunks(spoutPos + ventUp * 8f, ventUp,
+                            5 + Random.Shared.Next(5));
+
+                    // Ash plume and a rolling rumble. (The old omnidirectional cinder
+                    // burst at the vent is gone — a ball of sparks flying every way read
+                    // as noise, not fire; the jet plume sheds its own directed sparks.)
+                    if (Random.Shared.Next(2) == 0)
+                        _run.Cells.SpawnInTile(Math.Min(vx + 4, _run.Planet.Rings - 1), vy,
+                            Material.Smoke, peak ? 14 : 8);
+                    _run.Shake = MathF.Max(_run.Shake, peak ? 0.85f : 0.4f);
+                    PlayAt("collapse", ventPos, peak ? 0.7f : 0.4f, pitch: -0.5f, minGap: 0.5f);
+                }
             }
         }
         else if (_run.EruptionVent >= 0)
