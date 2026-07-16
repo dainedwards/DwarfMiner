@@ -1,5 +1,6 @@
 using System;
 using DwarfMiner.World;
+using Microsoft.Xna.Framework;
 
 namespace DwarfMiner.Systems;
 
