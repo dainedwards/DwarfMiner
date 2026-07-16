@@ -200,6 +200,8 @@ public sealed class Particles
                         // STREAM's carriers touch the world — and the eruption's embers.
                         CollideTiles = ember,
                         LandSparks = ember,
+                        LandMat = emberBurns ? (byte)Material.Fire : (byte)0,
+                        LandFuse = emberBurns ? (byte)(30 + _rng.Next(12)) : (byte)0,
                         LightRadius = ember ? 12f : _rng.Next(5) == 0 ? 14f : 0f,
                         LightColor = new Color(255, 190, 80),
                         // MUCH shorter streak than the shared default (was up to 8 px).
