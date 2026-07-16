@@ -1353,8 +1353,8 @@ public static class WorldGen
                     // happen to cross is a sealed pocket, and the whole point down here
                     // is one travellable network.
                     CarveWorm(planet, rng, centre, (float)rng.NextDouble() * MathHelper.TwoPi,
-                        130 + rng.Next(90), branchBudget: 1, minFrac, hardFloorPx,
-                        localCeiling: true);
+                        130 + rng.Next(90), branchBudget: 1, floorTiles, driftCeilTiles,
+                        hardFloorPx, localCeiling: true);
                 }
             }
         }
