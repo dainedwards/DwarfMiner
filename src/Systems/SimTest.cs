@@ -1628,20 +1628,48 @@ public static class SimTest
         return dust == Cells.DustCellsPerTile;
     }
 
-    /// <summary>Volcanoes: fire worlds raise lava-primed cones whose plumbing reaches a deep
-    /// chamber; the acid flag reroutes the fluid to the acid seed channel.</summary>
+    /// <summary>Volcanoes: fire worlds raise lava-primed cones whose 3-tile tube runs from
+    /// the crater bowl down to a SHALLOW geyser well just below the first crust layer (the
+    /// old near-core chamber is gone), with a solid Geyser node at the well's heart and an
+    /// unbroken open bore between node and bowl; the acid flag reroutes the fluid to the
+    /// acid seed channel.</summary>
     private static void TestVolcanoes()
     {
         var ember = WorldGen.Generate(5, PlanetDefs.ById("ember"));
         Check($"volcano: ember world raises primed volcanoes ({ember.VolcanoVents.Count} vents, "
             + $"{ember.LavaSeeds.Count} lava sites)",
             ember.VolcanoVents.Count >= 1 && ember.LavaSeeds.Count > 0);
-        var deep = false;
-        foreach (var (x, _) in ember.LavaSeeds) deep |= x < ember.SurfaceRing - 80;
-        Check("volcano: throat is primed down to a deep magma chamber", deep);
+        // The tube must END in the shallow geyser well: primed sites below the dirt band,
+        // but nothing anywhere near the old deep-chamber depth.
+        var wellDepth = false;
+        var tooDeep = false;
+        foreach (var (x, _) in ember.LavaSeeds)
+        {
+            wellDepth |= x < ember.SurfaceRing - 30;
+            tooDeep |= x < ember.SurfaceRing - 70;
+        }
+        Check("volcano: tube primed down into the shallow geyser well", wellDepth);
+        Check("volcano: no plumbing at the old deep-chamber depth", !tooDeep);
         var aboveSurface = false;
         foreach (var (x, _) in ember.LavaSeeds) aboveSurface |= x > ember.SurfaceRing;
         Check("volcano: crater pool sits above the surface", aboveSurface);
+        // Every vent's bore walks OPEN from the crater bowl down onto its geyser node —
+        // the connected-tube contract (a bowl-floor wedge or lining pinch fails this).
+        var connected = ember.VolcanoVents.Count > 0;
+        foreach (var (vx, vy, _) in ember.VolcanoVents)
+        {
+            var vRel = ember.TileToWorld(vx, vy) - ember.Center;
+            var angF = MathF.Atan2(vRel.Y, vRel.X) / (MathF.PI * 2f);
+            if (angF < 0f) angF += 1f;
+            var floorKind = TileKind.Sky;
+            for (var r = vx - 1; r >= 2; r--)
+            {
+                var t = (int)(angF * ember.TilesAt(r));
+                if (ember.Get(r, t) != TileKind.Sky) { floorKind = ember.Get(r, t); break; }
+            }
+            connected &= floorKind == TileKind.Geyser;
+        }
+        Check("volcano: open bore connects the crater bowl to the geyser node", connected);
 
         var acidDef = PlanetDefs.ById("ember") with { VolcanoAcid = true };
         var acidWorld = WorldGen.Generate(6, acidDef);
