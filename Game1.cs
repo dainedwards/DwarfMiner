@@ -412,7 +412,7 @@ public sealed partial class DwarfMinerGame : Game
     /// theft with nothing to show for it), and not activating alone still leaves a window
     /// on screen — one with no dock icon to hide, minimise or quit it.</summary>
     private readonly bool _noFocus = Environment.GetEnvironmentVariable("DM_NOFOCUS") is { Length: > 0 };
-    private bool _windowHidden;
+    private bool _hideWarned;
 
     [DllImport("libSDL2", EntryPoint = "SDL_HideWindow")]
     private static extern void SdlHideWindow(IntPtr window);
@@ -420,6 +420,10 @@ public sealed partial class DwarfMinerGame : Game
     [DllImport("libSDL2", EntryPoint = "SDL_GetWindowFlags")]
     private static extern uint SdlWindowFlags(IntPtr window);
 
+    [DllImport("libSDL2", EntryPoint = "SDL_SetWindowOpacity")]
+    private static extern int SdlSetWindowOpacity(IntPtr window, float opacity);
+
+    private const uint SdlWindowShown = 0x4;    // SDL_WINDOW_SHOWN
     private const uint SdlWindowHidden = 0x8;   // SDL_WINDOW_HIDDEN
 
 
