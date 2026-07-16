@@ -342,7 +342,15 @@ slowly rises to 110–130% and bubbles over the sides):**
   awake until they burn); (2) falling eruption embers get a payload — half carry
   LandMat=Fire + LandFuse = the first-touch StampFireBlob path (+ its 3×3 IgniteTile
   sweep), same mechanism as the flamethrower carriers. Fire budget was NOT the problem
-  (22/s regen, cap 90). 447 PASS.
+  (22/s regen, cap 90). 447 PASS. **Round 3r — the STRUCTURAL fill fix** (user: "find a
+  better solution so we don't have to keep revisiting"): the level-ramp fill dumped
+  Density² SLUGS into 3-6 random tiles at the vent bearing per frame → the pool top
+  churned permanently, ragged part-filled columns broke the surface row's run-merge into
+  strobing metaball singles (every "flicker at the top of the lava" report traced here).
+  Now a UNIFORM THIN-LAYER rain: perTile 4/8 cells across the whole crater mouth
+  (mouthHalf ≈ 0.07 rad ≈ craterFrac·coneW of the squat cones) — same volume, level line
+  that simply rises. Screenshot-verified: smooth dome cresting the rim. Rule of thumb for
+  ANY future pool-level mechanic: never point-dump into a liquid surface; layer it.
 - SimTest note: "compaction: voided pile hardens" is time-seeded FLAKY (failed once,
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.

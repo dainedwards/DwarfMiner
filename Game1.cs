@@ -2300,9 +2300,21 @@ public sealed partial class DwarfMinerGame : Game
                         // squat cones; clamp small so tiny worlds still get a few columns.
                         var mouthHalf = Math.Max(3, (int)(0.07f / MathHelper.TwoPi * fillN));
                         var perTile = peak ? 8 : 4;   // a gentle rain, not a slug
+                        var surfN = _run.Planet.TilesAt(surfR);
                         for (var off = -mouthHalf; off <= mouthHalf; off++)
-                            _run.Cells.SpawnInTile(fillR,
-                                ((fillT0 + off) % fillN + fillN) % fillN, mat, perTile);
+                        {
+                            var t = ((fillT0 + off) % fillN + fillN) % fillN;
+                            // Rain ONLY onto columns that are actually POOL: the fixed
+                            // mouth span overhangs the sloped bowl walls (the open mouth
+                            // narrows below the rim), and cells dropped onto the rock
+                            // beside the pool dribbled down the wall — a permanently
+                            // churning, flickering shoreline. Wall columns get nothing;
+                            // the pool spreads onto them naturally as its level rises.
+                            var tS = (int)((t + 0.5f) / fillN * surfN);
+                            if (_run.Cells.LiquidKindAtWorld(
+                                    _run.Planet.TileToWorld(surfR, tS)) != mat) continue;
+                            _run.Cells.SpawnInTile(fillR, t, mat, perTile);
+                        }
                     }
 
                     // THE SPOUT erupts from WITHIN the magma, 10 tiles below the lava
