@@ -2973,16 +2973,21 @@ public sealed class Cells
 
     private readonly List<HotOp> _hotOps = new();
 
-    /// <summary>Deferred blob stamps for the cold liquids. The fill pass runs Deferred, so
+    /// <summary>Deferred draw ops for the cold liquids. The fill pass runs Deferred, so
     /// every Pixel↔blob texture alternation flushed the sprite batch — and the scan order
     /// interleaves them constantly (run quads and interiors on Pixel, every air-facing
     /// cell on the blob). A draining lake is nearly ALL edge cells: thousands of one-quad
-    /// draw calls per frame. Collecting the blob stamps and flushing them as one textured
-    /// segment leaves the whole pass at ~3 batch flushes. Order note: blobs now draw after
-    /// every body quad instead of interleaved — harmless, their RGB is the same flat
-    /// LiquidBody family and coverage alpha accumulates commutatively; the waterline still
-    /// draws last so its colour wins.</summary>
+    /// draw calls per frame. Both kinds are collected during the scan and flushed as two
+    /// textured segments: BLOBS FIRST, then quads, then the waterline (one batch flush per
+    /// texture change instead of per cell). Order matters for RGB, not coverage: the fill
+    /// blend REPLACES colour (alpha accumulates commutatively), and a blob stamps its flat
+    /// cell colour across its whole 3-cell footprint even where its alpha is ~0 — flushed
+    /// AFTER the quads, every edge cell smeared its colour over the shimmered interior
+    /// rows beside it, visible as "replicated" shear bands crawling along pool surfaces.
+    /// Quads-after-blobs re-stamps the interior colour over the haloes, matching the old
+    /// interleaved look.</summary>
     private readonly List<(Vector2 pos, Vector2 scale, float rot, Color col)> _blobOps = new();
+    private readonly List<(Vector2 pos, Vector2 scale, float rot, Color col)> _quadOps = new();
     private readonly List<(int cx, int cy)> _hotSurface = new();
 
     /// <summary>The LIQUID PASS: Water/Acid/Oil grid cells rasterized into the dedicated
@@ -3013,6 +3018,7 @@ public sealed class Cells
         _hotOps.Clear();
         _hotSurface.Clear();
         _blobOps.Clear();
+        _quadOps.Clear();
         // Pool interiors merge into run quads: on an ocean world the view circle holds
         // hundreds of thousands of water cells, and per-cell quads made this pass the
         // single biggest frame cost (~8.5 ms CPU + a vertex flood that halved the GPU
@@ -3070,10 +3076,9 @@ public sealed class Cells
                                 Col = col,
                             });
                         else
-                            r.Batch.Draw(r.Pixel, Planet.Center + up * ringRadius, null, col,
-                                midAng + MathHelper.PiOver2, new Vector2(0.5f, 0.5f),
+                            _quadOps.Add((Planet.Center + up * ringRadius,
                                 new Vector2(chord * (seg + 0.5f), radial * 1.5f),
-                                SpriteEffects.None, 0f);
+                                midAng + MathHelper.PiOver2, col));
                         s += seg;
                     }
                     DrawLiquidCell(r, blob, blobOrigin, blobMode, runStart, cx0, cy,
@@ -3131,9 +3136,13 @@ public sealed class Cells
             FlushRun();
         }
 
-        // Flush the deferred blob stamps as ONE textured segment (see _blobOps).
+        // Flush the deferred ops: blobs first, quads second (see _blobOps for why the
+        // order matters), each as one textured segment.
         foreach (var (pos, scale, rot, col) in _blobOps)
             r.Batch.Draw(blob, pos, null, col, rot, blobOrigin, scale, SpriteEffects.None, 0f);
+        foreach (var (pos, scale, rot, col) in _quadOps)
+            r.Batch.Draw(r.Pixel, pos, null, col, rot, new Vector2(0.5f, 0.5f), scale,
+                SpriteEffects.None, 0f);
 
         // Waterline: one wide band per surface cell, overlapping its neighbours, bobbing
         // on a wave whose count divides the ring — a continuous line, drawn after every
@@ -3196,8 +3205,7 @@ public sealed class Cells
             if (hot)
                 _hotOps.Add(new HotOp { Pos = centre, Scale = scale, Rot = rotation, Col = col });
             else
-                r.Batch.Draw(r.Pixel, centre, null, col, rotation, new Vector2(0.5f, 0.5f),
-                    scale, SpriteEffects.None, 0f);
+                _quadOps.Add((centre, scale, rotation, col));
         }
         if (openOut)
         {
