@@ -39,6 +39,17 @@ Rules:
 **FORBIDDEN VARIABLES — NEVER include these:**
 - `DM_TITLE` — Window title is auto-derived from `.git` at runtime. Including it breaks the launcher.
   Never print it. If you see it in a past command, that command is stale.
+- `DM_NOFOCUS` — Claude-side only (see below). The user's own playtests must take focus, so
+  this must never appear in a printed run command.
+
+## Launching the game yourself (DM_NOFOCUS)
+
+When YOU launch the game to test something, prefix the run command with `DM_NOFOCUS=1`. The
+window still opens and renders (so `DM_AUTOSHOT` screenshots work exactly as before), but it
+comes up as a macOS accessory app: it never activates, so it does not yank the user out of
+whatever they are working in. Because it never becomes the key window it also never receives
+keyboard/mouse input — fine for automated runs, useless for playing, which is why the printed
+run command must stay free of it.
 
 ## Game window title (identifies which tree is running)
 
