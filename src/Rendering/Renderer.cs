@@ -117,6 +117,15 @@ public sealed class Renderer
     /// Null (menus, orbit, tests) simply skips the effect.</summary>
     public Cells? WorldCells;
 
+    /// <summary>Per-tile wetness [0..1], smoothed over time so rain-damp ground reads as a
+    /// gradient and stops flickering. A raw draw-time probe of the cell grid toggles on/off
+    /// every frame as transient rain droplets brush a tile's face; instead we drive this
+    /// target toward the probe result — rising fast when water touches, drying slowly when it
+    /// leaves — so a tile fades wet and dries out rather than strobing. Lazily sized to the
+    /// planet tile count; <see cref="_wetClock"/> tracks the last sim time we advanced it.</summary>
+    private float[]? _wetness;
+    private float _wetClock = -1f;
+
     /// <summary>Per-biome bark palette (body, shade, highlight) — each world's forest gets its
     /// own species of trunk: warm forest timber, salt-bleached driftwood, frozen pine, glassy
     /// crystal stalk, bile-stained acid wood, charred ember coal, rusted slag scrap, groomed
