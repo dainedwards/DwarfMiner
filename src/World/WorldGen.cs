@@ -1647,8 +1647,13 @@ public static class WorldGen
         }
         Halo(planet.LavaSeeds);
         Halo(planet.AcidSeeds);
-        Halo(planet.WaterSeeds);
         Halo(planet.OilSeeds);
+        // Ocean seas are exempt, as they are from the plug pass: an ocean world's water is
+        // held out of the caves by the obsidian seabed shell (which no worm can bite) over a
+        // cave-free buffer, and its WaterSeeds are that whole sea — 70%+ of the bearings.
+        // Haloing it walls off the island grottoes' descent, and the shafts are the design's
+        // one way into the under-sea network. Lake worlds have no shell, so they need this.
+        if (def.LakeScale <= 2.5f) Halo(planet.WaterSeeds);
     }
 
     /// <summary>True near a lizard-warren hall or under a city district's bearing span —
