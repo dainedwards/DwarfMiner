@@ -67,6 +67,9 @@ public sealed partial class DwarfMinerGame : Game
 
     private KeyboardState _prevKeys;
     private MouseState _prevMouse;
+    /// <summary>Window lost focus: input is being swallowed, and the next focused frame
+    /// must resync the edge baseline. See the IsActive gate in UpdateFrame.</summary>
+    private bool _blurred;
     private string _gameOverReason = "";
     private bool _screenshotPending;
 
