@@ -169,6 +169,10 @@ public sealed class Particles
                     // splash a pinch of sparks there and die (the rest-rule kills a
                     // JetSpark in 0.1s on contact).
                     var ember = p.JetScale > 1f && _rng.Next(4) == 0;
+                    // Half the embers land HOT: they deliver a fire blob on first touch
+                    // (the StampFireBlob path also runs IgniteTile over the 3×3 around
+                    // the strike — this is what sets trees on the flanks alight).
+                    var emberBurns = ember && CellFx && _rng.Next(2) == 0;
                     // Born white-hot: MaxLife == initial Life (see EmitLickingFlame) so
                     // every spark starts at the ramp's top and cools over its own path.
                     var sparkLife = ember ? 1.8f + (float)_rng.NextDouble() * 1.4f
