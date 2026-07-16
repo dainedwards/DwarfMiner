@@ -720,7 +720,7 @@ public static class WorldGen
         // before ANY tunnel carver runs. A worm or corridor biting inside this halo opens
         // a drain mouth the pour then empties through (the lava-lake bed sat inside worm
         // range; the worms had no idea it was there).
-        BuildFluidKeepOut(planet);
+        BuildFluidKeepOut(planet, def);
 
         RaiseCity(planet, def, rng, mountains, blocked);
         // One civilisation per planet, enforced here regardless of what the def says: a

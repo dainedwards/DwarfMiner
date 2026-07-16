@@ -2134,17 +2134,17 @@ public sealed partial class DwarfMinerGame : Game
                 }
 
                 // SIDE SPOUTS: two scaled-up spitter jets from the SAME submerged origin,
-                // angled ±45° — twin lava ropes bursting out of the pool and arcing over
-                // the ledge of the crater to rain down the flanks. On for the whole main
-                // act, breathing with the surge and hardest once the pool crests the rim.
+                // angled ±20° — twin lava ropes lobbing out of the pool and over the ledge
+                // of the crater to fall close on the flanks. On for the whole main act,
+                // breathing with the surge and hardest once the pool crests the rim.
                 if (!vAcid)
                 {
                     var spew = MathF.Min(1f,
                         0.35f + 0.65f * pulse + (levelFrac > 1f ? 0.2f : 0f));
-                    const float side45 = 0.785f;   // ~45° off the local up
+                    const float side20 = 0.349f;   // ~20° off the local up
                     for (var s = -1; s <= 1; s += 2)
                     {
-                        var edir = ventUp * MathF.Cos(side45) + ventRight * (s * MathF.Sin(side45));
+                        var edir = ventUp * MathF.Cos(side20) + ventRight * (s * MathF.Sin(side20));
                         _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
                     }
                 }
