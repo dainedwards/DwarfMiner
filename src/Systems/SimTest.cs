@@ -2489,10 +2489,10 @@ public static class SimTest
             var glassLeft = 0;
             foreach (var (r, t) in glass) if (planet.Get(r, t) == TileKind.CityGlass) glassLeft++;
             var controlLeft = 0;
-            foreach (var (r, t) in control) if (planet.Get(r, t) == TileKind.Dirt) controlLeft++;
+            foreach (var (r, t) in control) if (planet.Get(r, t) == TileKind.Gravel) controlLeft++;
             Check($"defense: lava can't melt the glass roof ({glassLeft}/{glass.Count} intact)",
                 glassLeft == glass.Count);
-            Check($"defense: the same lava melts the dirt control ({control.Count - controlLeft}/{control.Count} gone)",
+            Check($"defense: the same lava melts the gravel control ({control.Count - controlLeft}/{control.Count} gone)",
                 controlLeft < control.Count);
         }
 
