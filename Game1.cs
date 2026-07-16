@@ -310,11 +310,9 @@ public sealed partial class DwarfMinerGame : Game
         // unfocused, so it should keep rendering honestly too; our EndDraw limiter is the
         // one and only pacer.
         InactiveSleepTime = TimeSpan.Zero;
-        // Title format: DwarfMiner | Branch | Worktree (e.g., "DwarfMiner | noita-sim | noita-sim")
-        // This always runs, regardless of DM_TITLE, to make test builds distinguishable at a glance.
-        var branch = GetCurrentBranch();
-        var tree = WorktreeName();
-        Window.Title = $"DwarfMiner | {branch} | {tree}";
+        // Title format: DwarfMiner | Branch | Worktree — read off the checkout itself so
+        // parallel test builds are tellable apart with nothing to remember to set.
+        Window.Title = TitleBar();
         // The scene renders at the fixed virtual resolution and scales to the window, so
         // the window itself is free to be any size (drag-resize or F11 fullscreen).
         Window.AllowUserResizing = true;
