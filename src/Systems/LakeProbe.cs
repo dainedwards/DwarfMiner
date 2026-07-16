@@ -139,8 +139,9 @@ public static class LakeProbe
                 Console.WriteLine(line);
             }
         }
-        Console.WriteLine(mouthCount == 0 && escaped.Count == 0
-            ? "    OK: every basin sealed" : "    FAIL: basins leak");
+        Console.WriteLine(mouthCount == 0 && escaped.Count == 0 && retained >= lake.Count * 0.9
+            ? "    OK: every basin sealed and still holding its fill"
+            : "    FAIL: basins leak");
     }
 
     /// <summary>True if the air tile at (r,t) has more air under it that isn't the lake —
