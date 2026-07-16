@@ -354,7 +354,6 @@ public sealed partial class DwarfMinerGame : Game
         try
         {
             var (tree, gitDir) = LocateTree();
-            if (Environment.GetEnvironmentVariable("DM_TITLE") is { Length: > 0 } wt) tree = wt;
             var branch = BranchAt(gitDir);
             return branch is null ? $"DwarfMiner | {tree}" : $"DwarfMiner | {branch} | {tree}";
         }
