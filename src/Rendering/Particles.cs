@@ -472,8 +472,12 @@ public sealed class Particles
                 // on its own phase, so the fused tongue boils visually. The per-grain
                 // phase key `Life + Time` is CONSTANT for a given grain (birth time +
                 // initial life), so a grain flickers coherently rather than strobing
-                // white-noise as its life ticks down.
-                c *= 0.85f + 0.25f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f);
+                // white-noise as its life ticks down. Cone-scale jets (JetScale) damp
+                // the amplitude hard: the same ±25% on a 40-px blob strobes the whole
+                // eruption column.
+                c *= p.JetScale > 1f
+                    ? 0.94f + 0.10f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f)
+                    : 0.85f + 0.25f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f);
                 // TAIL-END SMOKE: the last stretch of a puff's life — the wisping top of
                 // the plume and everything left when the trigger releases — shifts to
                 // black-smoke in two hard steps. Fire colours own the body; soot owns the
