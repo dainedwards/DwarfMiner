@@ -276,12 +276,19 @@ public sealed class Particles
                 // the crossing never fired, and the drop streaked visibly through the
                 // whole body for its remaining second and a half. Rain is never born
                 // inside a pool, so the exemption buys it nothing but that leak. A
-                // fire-natured grain FIZZLES — its handoff becomes a steam wisp at the
-                // last position above the waterline; any other payload (acid droplets)
-                // stamps there instead, settling ON the surface. Rain and sparks throw a
-                // tiny crown of spray. Everything dies at the surface.
+                // fire-natured grain's handoff depends on the pool: water and acid QUENCH
+                // it to a steam wisp at the last position above the surface line; an OIL
+                // film IGNITES — the hose lights the slick it can no longer pierce; lava
+                // just swallows flame whole. Any other payload (acid droplets) stamps at
+                // the surface instead, settling ON it. Rain and sparks throw a tiny crown
+                // of spray. Everything dies at the surface.
                 if (p.LandMat == (byte)Material.Fire)
-                    cells.StampAtWorld(p.Position, Material.Smoke);
+                {
+                    if (pool == Material.Oil)
+                        cells.StampAtWorld(p.Position, Material.Fire, p.LandFuse);
+                    else if (pool != Material.Lava)
+                        cells.StampAtWorld(p.Position, Material.Smoke);
+                }
                 else if (p.LandMat != 0)
                     cells.StampAtWorld(p.Position, (Material)p.LandMat);
                 p.LandMat = 0;
