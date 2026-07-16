@@ -179,6 +179,7 @@ public static class AmbientDirector
                 // A fresh eruption at the SAME vent cancels its subsidence (another
                 // volcano's drain keeps running — they're independent pools).
                 if (run.EruptionDrainVent == best) run.EruptionDrainVent = -1;
+                run.EruptionSpoutR = int.MaxValue;   // re-anchor the spout on first frame
                 var (vx, vy, _) = run.Planet.VolcanoVents[best];
                 result.EruptionStarted = true;
                 result.EruptionPos = run.Planet.TileToWorld(vx, vy);
