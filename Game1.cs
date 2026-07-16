@@ -437,6 +437,44 @@ public sealed partial class DwarfMinerGame : Game
     private const uint SdlWindowShown = 0x4;    // SDL_WINDOW_SHOWN
     private const uint SdlWindowHidden = 0x8;   // SDL_WINDOW_HIDDEN
 
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_getClass")]
+    private static extern IntPtr ObjcClass(string name);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "sel_registerName")]
+    private static extern IntPtr ObjcSel(string name);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern IntPtr ObjcSend(IntPtr receiver, IntPtr sel);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern IntPtr ObjcSend(IntPtr receiver, IntPtr sel, long arg);
+
+    /// <summary>A DM_NOFOCUS window must be unclickable as well as invisible. MonoGame's run
+    /// loop shows the window ITSELF at loop start, and until the next Update re-hides it the
+    /// fully transparent window sits on screen — a gap that stretches to seconds when an early
+    /// frame stalls on worldgen or prewarm. A click landing on it during that gap activates
+    /// the app and moves macOS keyboard focus to a window the user cannot see: their typing
+    /// silently vanishes. Two locks close that hole: the activation policy becomes Prohibited
+    /// (the app can never be activated, by click or otherwise), and the NSWindow ignores mouse
+    /// events outright so clicks fall through to whatever sits beneath. Neither affects
+    /// offscreen rendering, so DM_AUTOSHOT/F12 captures are untouched.</summary>
+    private void MakeWindowUntouchable()
+    {
+        if (!OperatingSystem.IsMacOS()) return;
+        try
+        {
+            var app = ObjcSend(ObjcClass("NSApplication"), ObjcSel("sharedApplication"));
+            ObjcSend(app, ObjcSel("setActivationPolicy:"), 2 /* NSApplicationActivationPolicyProhibited */);
+            var win = ObjcSend(ObjcSend(app, ObjcSel("windows")), ObjcSel("firstObject"));
+            if (win != IntPtr.Zero) ObjcSend(win, ObjcSel("setIgnoresMouseEvents:"), 1);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[nofocus] WARNING: could not lock the window against input ({e.Message}) — " +
+                              "a click on the invisible window can still steal the user's keyboard focus.");
+        }
+    }
+
 
     /// <summary>Keep the window off the screen, every frame. `GameWindow.Handle` is the
     /// SDL_Window* on the DesktopGL backend and SDL2 is already loaded in-process by MonoGame,
