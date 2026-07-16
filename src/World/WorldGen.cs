@@ -837,6 +837,7 @@ public static class WorldGen
     {
         var (density, canopy) = TreePlanFor(def);
         if (density <= 0) return;
+        var wet = FluidFillSet(planet);
         var bearings = 500 + rng.Next(140);
         var lastT = -999;
         var lastRing = -1;
