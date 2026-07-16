@@ -490,7 +490,7 @@ public sealed class Particles
         var fire = which == Material.Fire;
         foreach (var p in _list)
         {
-            if (p.Fluid != (byte)which) continue;
+            if (p.Fluid != (byte)which || p.Hidden) continue;
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             var c = Color.Lerp(p.FadeColor, p.Color, MathF.Ceiling(t * 4f) * 0.25f);
             // CAPSULES, not discs: each frame's grain batch fuses into one blob, but
