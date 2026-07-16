@@ -1204,6 +1204,20 @@ public static class WorldGen
         // Ceiling of the deep zone: under the sea when the world has one, otherwise
         // directly under the upper worm network's floor (same 0.38 as CarveWormTunnels).
         var deepCeil = def.LavaFillFrac > 0f ? seaFloor : radius * 0.38f;
+
+        // …but `radius` counts the SKY: Planet.Radius is RingMin + Rings, and Rings carries
+        // a FIXED 142-ring sky headroom regardless of world size. On a standard world the
+        // crust dwarfs that and 0.38×radius lands ~130 tiles down — fine. On the shrunken QA
+        // rig (SizeScale 0.49) the sky is two thirds of the radius, so the same fraction put
+        // the deep-strata ceiling — and its 8-tile seam — FOUR tiles under the grass: every
+        // lake bowl was carved through a seam, SealSeams honoured its absolute contract and
+        // slabbed the bowl back up, and that slab is the "lake with its bottom cut off". The
+        // upper worm band was squeezed into the same 4 tiles, below its own hard floor.
+        // So measure against the CRUST (surface radius down to RingMin) instead and take
+        // whichever is deeper: the deep zone always starts in the lower half of the rock.
+        // Sea worlds are exempt — their ceiling is the sea floor, which Game1's flood shares.
+        if (def.LavaFillFrac <= 0f)
+            deepCeil = MathF.Min(deepCeil, Planet.RingMin + planet.SurfaceRing * 0.55f);
         const float seamThick = 8f;              // 32 px of guaranteed solid rock per seam
         var coreTop = Planet.RingMin + 2f;       // strata may reach the core shell face
         seams.Add((deepCeil - seamThick, deepCeil));
