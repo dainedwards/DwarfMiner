@@ -3323,6 +3323,8 @@ public sealed partial class DwarfMinerGame : Game
             // Silence the volcano: stop a live eruption from this vent, then retire it.
             if (_run.EruptionVent == ventIdx) { _run.EruptionLeft = 0f; _run.EruptionVent = -1; }
             else if (_run.EruptionVent > ventIdx) _run.EruptionVent--;
+            if (_run.EruptionDrainVent == ventIdx) _run.EruptionDrainVent = -1;
+            else if (_run.EruptionDrainVent > ventIdx) _run.EruptionDrainVent--;
             _run.Planet.VolcanoVents.RemoveAt(ventIdx);
         }
 
