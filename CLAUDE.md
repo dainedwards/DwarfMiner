@@ -1,5 +1,24 @@
 # DwarfMiner — notes for Claude sessions
 
+## ⚠️ RULE #0 — notes go in THESE FILES, never in memory
+
+**This repo is the single source of truth. Do NOT write project knowledge to Claude's memory
+directory — no memory files, no MEMORY.md entries.** Memory was folded into the repo on
+2026-07-16 precisely to end the split; anything you save there is a second copy that goes stale
+and that the user cannot read, review, or diff.
+
+When you learn something worth keeping:
+
+- **Operational rules** — how to run, launch, test, what never to do → this file, in the
+  matching section. Keep it short: every session pays for this file in full.
+- **Everything else** — how a system works, why it is built that way, contracts, traps, dead
+  ends already tried → the matching **Linked Note** in `docs/claude-notes/` (index at the
+  bottom). Add a new note only for a genuinely new system, and link it from the index.
+- Fix notes in place when you find them stale, and delete what is superseded. A note is a
+  living document, not a log — don't append a dated entry when editing the existing line says
+  it better.
+- Notes are dated and historical by nature: **trust the code over any line in them.**
+
 ## ⚠️ RULE #1 — print the run command whenever it CHANGES (and only then)
 
 The user's `run` launcher executes the NEWEST matching line from the session transcript.
@@ -47,120 +66,52 @@ Rules:
 
 ## Launching the game yourself (DM_NOFOCUS)
 
-When YOU launch the game to test something, prefix the run command with `DM_NOFOCUS=1`. The run
-is INVISIBLE end to end: the process never activates (SDL's macOS background-app hint), the
-window is transparent before it can ever be shown (no flash on startup), and it is hidden on
-every frame thereafter. Nothing appears on screen, nothing steals focus, nothing takes the
-user's keyboard or mouse. Rendering continues into the scene render target, so `DM_AUTOSHOT`
-and F12 screenshots work exactly as they do in a visible run — screenshots stay your way to
-see a test run.
+Prefix YOUR OWN launches with `DM_NOFOCUS=1`. The run is invisible end to end — no window, no
+focus theft, no flash, nothing taking the user's keyboard or mouse — while rendering carries on
+into the scene render target, so `DM_AUTOSHOT` and F12 screenshots work exactly as in a visible
+run. Screenshots stay your way to see a test run.
 
-Never print it in a run command: a hidden window is unplayable, and the user's playtests need
-a real one.
+- **Never print it in a run command**: a hidden window is unplayable, and playtests need a real one.
+- If a run logs `[nofocus] WARNING`, the hide broke: that build leaves a window on screen with
+  no dock icon to hide or quit it. Kill the process and fix it before launching again.
+- **Verifying "it's hidden" needs the window server, not a screenshot** — `screencapture` only
+  sees the current macOS Space, and it has produced a false all-clear twice.
 
-If a run ever logs `[nofocus] WARNING`, the hide stopped working — that build leaves a window
-on screen with NO dock icon to hide or quit it, so kill the process and fix the hide before
-launching again.
+→ [windowing-and-input](docs/claude-notes/windowing-and-input.md) for the mechanism, the
+verification recipe, and the unfocused-input gate.
 
-**How it works (all three parts are load-bearing — `Game1.KeepWindowHidden`/`HideWindowEarly`,
-`Program.cs`):**
+## Never `pkill -f DwarfMiner.dll`
 
-1. `SDL_MAC_BACKGROUND_APP=1`, poked into the real environment via `libc setenv` before SDL
-   starts. .NET's `Environment.SetEnvironmentVariable` writes a MANAGED copy only and SDL's
-   native `getenv` never sees it.
-2. `SDL_SetWindowOpacity(handle, 0)` in `Initialize` — this is what kills the startup FLASH.
-   Opacity is independent of shown/hidden and survives `SDL_ShowWindow`.
-3. `SDL_HideWindow` re-armed EVERY frame from `Update`. MonoGame's run loop calls
-   `Sdl.Window.Show` itself when the loop starts (~583ms), which is ~25ms AFTER the first
-   Update — XNA runs one Update before showing the window. A one-shot hide in `Initialize` OR
-   in the first `Update` is silently undone and the window is back for the whole session.
+Another Claude session codes this repo in parallel and the user playtests between turns, so two
+or three DwarfMiners are often running. `kill <your pid>` only. For the same reason `pgrep -f
+DwarfMiner.dll` often returns several lines — pass ONE pid to osascript or it dies on a syntax
+error, and check for a second pid before assuming a stray window is yours.
 
-`Window.Handle` is the SDL_Window* and is stable throughout. `DllImport("libSDL2")` resolves
-(the dylib ships under `bin/<Config>/net8.0/runtimes/osx/native/`); MonoGame doesn't bind
-Hide/Opacity itself. Note an ASCII `strings` grep over `MonoGame.Framework.dll` proves nothing
-about which SDL calls it binds — .NET metadata is UTF-16, so it reads as a false negative.
+## When something crashes, read the crash report first
 
-**Verifying it stays invisible needs the WINDOW SERVER, not a screenshot.** This wasted a lot
-of time: `screencapture` only sees the CURRENT SPACE, and Rider sits fullscreen in its own
-Space, so a test window on the desktop Space is absent from the capture — twice this was read
-as "hidden" while the window was plainly on screen.
+`~/Library/Logs/DiagnosticReports/*.ips` — `EXC_CRASH (SIGABRT)` + `JIT_RngChkFail` is an
+unhandled `IndexOutOfRangeException`. The managed stack is NOT in the .ips; capture the game's
+stdout for it. Check timestamps and pids against processes you never touched before believing
+any correlation — `kill`/`pkill` exit cleanly (143) and never write a report. Worlds are
+TIME-SEEDED, so prefer a probe that sweeps every case over soaking the GUI.
 
-- Ground truth: `swift` + `CGWindowListCopyWindowInfo(.optionAll)`, filtered by
-  `kCGWindowOwnerPID` and `Height > 100`, checking `kCGWindowIsOnscreen && kCGWindowAlpha > 0`.
-  Poll ~66Hz to catch a one-frame flash.
-- ALWAYS run the control without `DM_NOFOCUS` — it must report the window visible. Without that
-  A/B, "never visible" may just mean the detector is blind.
-- Filter by pid: BOTH sessions' games run as owner `dotnet` with the same window title, and
-  Rider owns a window literally named "DwarfMiner".
-- A visible window during your test is often the USER's own `run` playtest (Release build) —
-  check `pgrep -fl DwarfMiner.dll` for a second pid before blaming your own launch, and never
-  kill theirs.
-
-## Unfocused input
-
-The game ignores keyboard and mouse whenever the window isn't focused (`IsActive` gate at the
-top of `UpdateFrame`): SDL reports the OS-wide keyboard/pointer even when the window is not
-key, so without it, typing in another app drives the player. While blurred the input reads as a
-neutral keyboard and a frozen mouse (buttons up, position and wheel held at their last focused
-values). On the first focused frame the previous-state baseline is adopted from the REAL state
-before anything reads it, so the click that refocuses the window isn't also a trigger pull and
-a scroll elsewhere isn't a hotbar spin. Every input path flows through those two locals, so the
-one gate covers everything.
-
-## Crashes: check the macOS crash reports first
-
-An "error" dialog or a game that vanishes is almost never whatever you did just before it.
-`~/Library/Logs/DiagnosticReports/*.ips` is the record: `EXC_CRASH (SIGABRT)` with
-`JIT_RngChkFail` → `abort()` is an unhandled `IndexOutOfRangeException`. The .ips does NOT
-carry the managed stack (JIT frames are unsymbolicated) — capture the game's stdout and read
-the exception there. Check the report timestamps and pids against processes you never touched
-before believing any correlation. (`kill -TERM`/`pkill` exit the game cleanly, status 143, and
-never write a crash report.)
-
-`--rainprobe` exists because of one of these: rain's landing path
-(`SpawnDirector.FindSurfaceSpawn` → `Cells.SpawnRainWater`) crashed the process whenever a
-cloud drifted over a column with no ground — the fallback point sits ABOVE the cell grid's top
-row. The probe sweeps every angle of debug/verdant/frost and drives the real path, which turned
-a stochastic in-game crash into a deterministic repro (frost: 4 groundless columns / 1600
-angles). Worlds are TIME-SEEDED, so sweeping a whole ring in a probe beats soaking the GUI.
-OPEN QUESTION: why frost has groundless columns at all — the fix is at the consumer, so a
-worldgen hole would still be worth understanding.
+→ [debugging-and-crashes](docs/claude-notes/debugging-and-crashes.md) for the triage recipe,
+the rain-crash worked example, and the probe family.
 
 ## Game window title (identifies which tree is running)
 
 The game titles its own window `DwarfMiner | <branch> | <worktree>` (e.g.
-`DwarfMiner | noita-sim | main`, `DwarfMiner | liquid-perf | liquid-perf`) so the user
-can tell test builds apart. This needs no environment variable and nothing in the run
-command — `Game1.TitleBar()` walks up from the binary to the checkout's `.git` entry and
-reads the tree and branch off it at startup.
+`DwarfMiner | noita-sim | main`) so the user can tell test builds apart. It needs no
+environment variable and nothing in the run command — `Game1.TitleBar()` derives it from the
+checkout's `.git` at startup. If the branch you are on titles its window some other way, bring
+`TitleBar()` over as part of your change.
 
-- A linked worktree (`.git` file) reports its folder name; the primary checkout (`.git`
-  directory) reports `main`, since its folder is named after the repo — otherwise it would
-  read the redundant `DwarfMiner | noita-sim | DwarfMiner`.
-- **CRITICAL: Do NOT include DM_TITLE in the run command.** The window title is auto-derived
-  and adding DM_TITLE will break the launcher. The old rule "always include DM_TITLE=<worktree>"
-  is dead; DM_TITLE is gone from the code.
-- If the branch you are on titles its window some other way, bring `TitleBar()` over as
-  part of your change.
-- `TitleBar()` + `LocateTree()` + `BranchAt()` walk up from `AppContext.BaseDirectory` (the
-  binary sits at `bin/<Config>/net8.0/` INSIDE the checkout) to the `.git` entry and read git's
-  plain files — no shelling out to `git`, so a slow or missing binary can't stall startup.
-- **Why it is self-derived:** the user wanted every build tellable apart with nothing to
-  remember to set; a launcher-injected variable silently produced an untitled window whenever
-  it went missing.
-
-**Never `pkill -f DwarfMiner.dll`.** Another Claude session codes this repo in parallel and the
-user playtests between turns, so two or three DwarfMiners are often running — `kill <your pid>`
-only. For the same reason `pgrep -f DwarfMiner.dll` frequently returns several lines: pass ONE
-pid to osascript or it dies on a syntax error. (Accessibility window enumeration via System
-Events returns EMPTY here — no permission — so read a title off a `screencapture -x` frame, or
-better, use the window-server method under DM_NOFOCUS above.)
+→ [windowing-and-input](docs/claude-notes/windowing-and-input.md#window-title-internals).
 
 ## Common test environment variables
 
-When testing specific features, include the relevant `DM_*` variables. Variable names
-below are verified against the code — grep `GetEnvironmentVariable` before inventing or
-renaming one, and update this list when you add a hook:
+Verified against the code — grep `GetEnvironmentVariable` before inventing or renaming one, and
+update this list when you add a hook:
 
 - **Volcano/eruption demo**: `DM_ERUPTSHOW=1` (spawns on the volcano, zooms out to max,
   auto-erupts ~5s in — the whole show in one variable). Granular pieces: `DM_VOLCANO=1`
@@ -171,63 +122,55 @@ renaming one, and update this list when you add a hook:
 - **Debug features**: `DM_DEBUG=1`, `DM_AUTOFIRE=1`, `DM_CRAFT=1`, `DM_JETTEST=1`,
   `DM_SWIM=1`, `DM_RAIN=1`, `DM_WARREN=1`, `DM_CITY=1`
 
-Check game code and commit history for the full set of available test variables.
+Check game code and commit history for the full set.
 
 ## Working alongside the other session
 
 Another Claude session codes this repo in parallel, and an auto-committer commits DURING a
-session. Consequences that have bitten before:
+session:
 
-- `git status` clean + HEAD holding your own edits is NORMAL — so a HEAD worktree is NOT a
+- `git status` clean + HEAD holding your own edits is NORMAL — a HEAD worktree is NOT a
   baseline for an A/B, and stash-based control runs get defeated. Branch or copy to compare.
-- Before editing a shared system, `git log -p <file>` for the other session's refinements, and
-  merge `noita-sim` in first.
+- Before editing a shared system, `git log -p <file>` for their refinements, and merge
+  `noita-sim` in first.
 - SimTest carries flaky/in-progress failures from the other session — compare failure sets at
   the SAME commit before calling something a regression.
-- `dotnet run` deadlocks against the auto-committer: run the BUILT dll (`dotnet
-  bin/<Config>/net8.0/DwarfMiner.dll --simtest`).
-- macOS has no `timeout`: background the run, `sleep`, then `kill <pid>`.
+- `dotnet run` deadlocks against the auto-committer: run the built dll (`dotnet
+  bin/<Config>/net8.0/DwarfMiner.dll --simtest`). macOS has no `timeout` — background the run,
+  `sleep`, then `kill <pid>`.
 
-## Deep notes (docs/claude-notes/)
+## Linked Notes (docs/claude-notes/)
 
-Detailed per-system notes live in `docs/claude-notes/`, folded out of Claude's memory on
-2026-07-16 so this repo is the single source of truth. Read the one that covers what you are
-about to touch — each carries the contracts, the traps, and the reasons behind decisions that
-the code alone doesn't explain. They are dated and historical: trust the code first, and fix
-the note when you find it stale.
+Per-system detail lives here — contracts, traps, and the reasons the code can't explain. **Read
+the one that covers what you are about to touch, and write what you learn back into it (Rule
+#0).**
 
-- **[worldgen-caves-and-lava.md](docs/claude-notes/worldgen-caves-and-lava.md)** — worm
-  tunnels, stratified underground (`CaveStrata`/`SealSeams`), water/ocean worlds, basin
-  containment, lava-barrier saga, the lava-rock jacket, volcano geysers and eruptions, quake
-  cave-ins, ore/gem/flora scatters. Probes: `--strataprobe --lakeprobe --oceanprobe --lavaprobe
-  --geomprobe`. **Two traps worth knowing before you read:** `Planet.Radius` COUNTS THE SKY, so
-  every `radius*frac` is degenerate on small worlds; and `BuildSessionWorld` is TIME-SEEDED, so
-  validate containment over 8–12 probe loops, never one.
-- **[noita-sim.md](docs/claude-notes/noita-sim.md)** — the cell sim itself: flying material
-  cells, fire/oil, liquid cohesion + metaball RT, rain joining water bodies, titan sieges,
-  bandits, weapons, breath/air. Biggest file; skim its headings for the era you need.
-- **[overworld-and-planets.md](docs/claude-notes/overworld-and-planets.md)** — star map,
-  campaign planets, cities and civilians, warrens, moons, The Hollow belt asteroid, swimming
-  era, spawn director and the population census.
-- **[performance.md](docs/claude-notes/performance.md)** — the `--perf` harness, the frame
-  pacing saga (`InactiveSleepTime`, fixed-step off, the custom limiter), LightGrid SetData
-  stalls and the texture ring, liquid draw batching, far-field cell throttle.
-- **[runtime-shader.md](docs/claude-notes/runtime-shader.md)** — the hand-written MGFX/GLSL
-  effect built at runtime (mgfxc needs Wine), the Noita edge carve, and its contracts. **The
-  posFixup epilogue is REQUIRED** — omit it and the whole world batch silently back-face-culls.
-- **[textures-and-crust.md](docs/claude-notes/textures-and-crust.md)** — CC0 detail + palette
-  remap, procedural fallback, the additive crust, and the 45° slope experiment that was tried
-  and backed out.
-- **[lighting.md](docs/claude-notes/lighting.md)** — propagated LightGrid (the point-gradient
-  lightmap is gone), sky heightmap sun seeding, hero raycast lights, elemental arms.
-- **[rigid-bodies.md](docs/claude-notes/rigid-bodies.md)** — detach/tumble/re-stamp debris,
-  corpse ragdolls, whole-structure sky topples, and three separate resting-jitter lessons.
-  Bodies are Cartesian; every grid touch goes through `Planet.WorldToTile`.
-- **[city-facades.md](docs/claude-notes/city-facades.md)** — why towers looked jagged (polar
-  lattice drift, NOT the rasterizer — an A/B proved it), the column-major facade lattice, and
-  the `Physics.MarkDirty` ring-drift engine bug.
-- **[compaction-and-tiles.md](docs/claude-notes/compaction-and-tiles.md)** — 4px tiles with
-  legacy 8px authoring units (`Planet.LegacyTileScale`), the dust economy divisor, and the
-  compaction sweep with its three nomination-stranding traps.
-- **[equipment-and-ui.md](docs/claude-notes/equipment-and-ui.md)** — character screen,
-  equipment paper doll, crafting, jetpack, building blocks, hotbar.
+- **[worldgen-caves-and-lava](docs/claude-notes/worldgen-caves-and-lava.md)** — worm tunnels,
+  strata, water/ocean worlds, basin containment, lava barriers, volcanoes, quake cave-ins, ore
+  and flora scatters. Probes: `--strataprobe --lakeprobe --oceanprobe --lavaprobe --geomprobe`.
+  *Before you touch it:* `Planet.Radius` COUNTS THE SKY, and `BuildSessionWorld` is TIME-SEEDED.
+- **[noita-sim](docs/claude-notes/noita-sim.md)** — the cell sim: flying cells, fire/oil, liquid
+  cohesion + metaball RT, rain, titan sieges, bandits, weapons, air/breath. Biggest note.
+- **[overworld-and-planets](docs/claude-notes/overworld-and-planets.md)** — star map, campaign
+  planets, cities, warrens, moons, The Hollow, spawn director, population census.
+- **[performance](docs/claude-notes/performance.md)** — `--perf` harness, frame-pacing saga,
+  LightGrid SetData stalls, liquid draw batching, far-field throttle.
+- **[runtime-shader](docs/claude-notes/runtime-shader.md)** — the hand-written MGFX/GLSL effect
+  built at runtime, and the Noita edge carve. *The posFixup epilogue is REQUIRED* — omit it and
+  the whole world batch silently back-face-culls.
+- **[textures-and-crust](docs/claude-notes/textures-and-crust.md)** — CC0 detail + palette
+  remap, procedural fallback, additive crust, the 45° slope experiment that was backed out.
+- **[lighting](docs/claude-notes/lighting.md)** — propagated LightGrid, sky-heightmap sun
+  seeding, hero raycasts, elemental arms.
+- **[rigid-bodies](docs/claude-notes/rigid-bodies.md)** — detach/tumble/re-stamp debris, corpse
+  ragdolls, whole-structure topples, three resting-jitter lessons. Bodies are Cartesian.
+- **[city-facades](docs/claude-notes/city-facades.md)** — why towers looked jagged (polar
+  lattice drift, NOT the rasterizer), the facade lattice, the `MarkDirty` ring-drift bug.
+- **[compaction-and-tiles](docs/claude-notes/compaction-and-tiles.md)** — 4px tiles with legacy
+  8px authoring units, the dust economy, the compaction sweep's stranding traps.
+- **[equipment-and-ui](docs/claude-notes/equipment-and-ui.md)** — character screen, equipment,
+  crafting, jetpack, building blocks, hotbar.
+- **[windowing-and-input](docs/claude-notes/windowing-and-input.md)** — DM_NOFOCUS mechanism,
+  hidden-window verification, unfocused-input gate, window title internals.
+- **[debugging-and-crashes](docs/claude-notes/debugging-and-crashes.md)** — crash-report triage,
+  the rain crash, probe philosophy, verification traps that have actually bitten.
