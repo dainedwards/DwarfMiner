@@ -422,6 +422,14 @@ public sealed class Particles
             var len = MathF.Max(5f, speed * 0.033f);
             var rot = speed > 1f ? MathF.Atan2(p.Velocity.Y, p.Velocity.X) : 0f;
             var wid = 4f;
+            // Scaled-up jets (volcano eruption column / side spew) carry JetScale > 1:
+            // the whole blob footprint multiplies, so the same tongue shapes read at cone
+            // scale. The handheld hoses never set JetScale — their path is untouched.
+            if (p.JetScale > 1f)
+            {
+                wid *= p.JetScale;
+                len = MathF.Max(len, 5f * p.JetScale);
+            }
             if (fire)
             {
                 // Fire is a JET, not a hose: age maps to distance down the stream, so a
@@ -431,15 +439,8 @@ public sealed class Particles
                 // detaching tongues instead of ending in a rounded liquid cap. (Colour
                 // scales with coverage: tips go dim and dark together, as flame does.)
                 var age = 1f - t;
-                wid = MathHelper.Lerp(3f, 11f, age);   // plume billow: puffs EXPAND with age
-                // Scaled-up jets (the volcano's eruption column) carry Size > 1: the whole
-                // blob footprint multiplies, so the same taper/bloom shape reads at cone
-                // scale. Flamethrower grains (Size ≤ 1) are untouched.
-                if (p.Size > 1f)
-                {
-                    wid *= p.Size;
-                    len = MathF.Max(len, 5f * p.Size);
-                }
+                wid = MathHelper.Lerp(3f, 11f, age)    // plume billow: puffs EXPAND with age
+                    * MathF.Max(1f, p.JetScale);       // …at the jet's own scale
                 // Dim floor raised 0.5→0.72: with the fade now ending on deep flame red,
                 // heavier dimming pushed tips toward brown-black — user wants NO black,
                 // so the tips tatter mostly via coverage, less via darkening.
