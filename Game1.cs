@@ -2200,7 +2200,14 @@ public sealed partial class DwarfMinerGame : Game
                     const float side20 = 0.349f;   // ~20° off the local up
                     for (var s = -1; s <= 1; s += 2)
                     {
-                        var edir = ventUp * MathF.Cos(side20) + ventRight * (s * MathF.Sin(side20));
+                        // Scatter variety: each jet WANDERS — a slow independent sweep
+                        // plus per-frame jitter swings the aim around its ±20° base, so
+                        // gob clusters land at ever-different spots on the flank instead
+                        // of drilling one line.
+                        var wob = MathF.Sin(_run.EruptionLeft * 1.7f + s * 2.1f) * 0.12f
+                                + ((float)Random.Shared.NextDouble() - 0.5f) * 0.10f;
+                        var ang2 = s * side20 + wob;
+                        var edir = ventUp * MathF.Cos(ang2) + ventRight * MathF.Sin(ang2);
                         _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
                     }
                 }
