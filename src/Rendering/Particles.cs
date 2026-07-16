@@ -1693,6 +1693,50 @@ public sealed class Particles
             });
     }
 
+    /// <summary>Erupting lava fountain — the goopy molten body of a volcanic eruption.
+    /// Droplets carry the LAVA fluid tag, so they ink the HOT metaball coverage field
+    /// (the same composite as the lava pools and the flame stream): the fountain
+    /// thresholds into one connected molten tongue that fuses with the crater pool it
+    /// rises from, exactly like the acid spewer's rope — but fire-family, with the hot
+    /// bright rim. A third of the droplets stamp real Lava where they land, so the
+    /// spray genuinely coats the flanks. <paramref name="strength"/> 0..1 scales count,
+    /// speed and spread (ride the eruption's surge pulse with it).</summary>
+    public void EmitLavaFountain(Vector2 pos, Vector2 up, float strength)
+    {
+        var right = new Vector2(-up.Y, up.X);
+        var count = 3 + (int)(strength * 7f);
+        for (var i = 0; i < count; i++)
+        {
+            if (_rng.Next(5) == 0) continue;
+            var spread = (float)(_rng.NextDouble() - 0.5) * (0.35f + strength * 0.5f);
+            var d = up * MathF.Cos(spread) + right * MathF.Sin(spread);
+            var hot = i < 2;   // white-hot leading gouts
+            var tone = hot ? new Color(255, 242, 170)
+                : _rng.Next(2) == 0 ? new Color(255, 176, 60) : new Color(250, 120, 40);
+            var speed = (90f + strength * 130f) * (0.85f + (float)_rng.NextDouble() * 0.3f);
+            _list.Add(new Particle
+            {
+                Position = pos + d * (float)_rng.NextDouble() * 2f,
+                Velocity = d * speed,
+                Life = 0.9f + (float)_rng.NextDouble() * 0.6f,
+                MaxLife = 1.5f,
+                Color = tone,
+                FadeColor = new Color(165, 45, 15),
+                Size = hot ? 0.8f : 0.9f + (float)_rng.NextDouble() * 0.5f,
+                GravityScale = 1.0f,
+                Drag = 0.4f,
+                CollideTiles = true,
+                LightRadius = hot ? 20f : i % 3 == 0 ? 9f : 0f,
+                LightColor = new Color(255, 170, 70),
+                LandMat = CellFx && _rng.Next(3) == 0 ? (byte)Material.Lava : (byte)0,
+                LandSparks = true,
+                SmearMax = 17.6f,
+                SmearScale = 2f,
+                Fluid = (byte)Material.Lava,
+            });
+        }
+    }
+
     /// <summary>Volcanic bombs — molten rock lumps hurled out of an erupting crater. Bright
     /// glowing scoria that cools to maroon as it arcs, bounces on terrain, and litters the
     /// slopes. Thrown up and out around <paramref name="up"/> (the crater's outward normal).</summary>
