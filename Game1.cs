@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using DwarfMiner.Entities;
 using DwarfMiner.Rendering;
 using DwarfMiner.Space;
