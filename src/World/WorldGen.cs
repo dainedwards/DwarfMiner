@@ -230,10 +230,10 @@ public static class WorldGen
         // ~40k lava cells and simmered for minutes. All pocket seeding stays above this.
         var lavaTopTiles = def.LavaFillFrac > 0f ? planet.Radius * def.LavaFillFrac : 0f;
 
-        // Carved-but-unseeded basin air (a lava/acid basin's freeboard and rim courses):
-        // recorded so PlugFluidBreaches can tell the pool's own open surface from a
-        // carver's shaft when it seals the seed halo.
-        var basinAir = new HashSet<long>();
+        // Carved-but-unseeded basin air (a lava/acid basin's freeboard and rim courses),
+        // per fluid: PlugFluidBreaches keeps this lid open as the pool's own surface but
+        // WALLS ITS EDGES — the settle slosh crests one course into the lid, so the lid's
+        // rim is part of the containment, not the shore.
 
         for (var r = 0; r < planet.Rings; r++)
         {
