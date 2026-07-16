@@ -1714,8 +1714,9 @@ public static class WorldGen
 
             const float craterFrac = 0.30f;           // crater mouth as a fraction of the footprint
             var craterDepth = coneH * 0.45f;
-            var poolTop = coneH - craterDepth * 0.25f; // fluid level — a few tiles below the rim,
-                                                       // so eruptions visibly overflow the lip
+            var poolTop = coneH - 1.5f * S;            // fluid level BRIMS — barely below the rim
+                                                       // (settle slosh stays contained), so an
+                                                       // erupting pump overflows the lip fast
             var floorR = surfaceR + (int)(coneH - craterDepth);
 
             // The cone. Profile: full height at the rim (f = craterFrac), a near-linear
