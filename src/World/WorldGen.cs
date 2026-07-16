@@ -2702,9 +2702,8 @@ public static class WorldGen
     }
 
     private static void SeedBiomePockets(Planet planet, PlanetDef def, Random rng,
-        (float ang, float depth, float w)[] lakes)
+        (float ang, float depth, float w)[] lakes, (float ang, float depth, float w)[] acidPools)
     {
-        var ocean = def.LakeScale > 2.5f;
         void Carve(int count, bool crystal)
         {
             for (var i = 0; i < count; i++)
