@@ -2157,17 +2157,17 @@ public static class SimTest
             // Sites need a mostly-solid corridor between borer and prey — the test is
             // "digs through rock toward the target", and the worm tunnels riddle the crust
             // with voids a straight-line dig can fall into.
+            // 400 candidates, not 60: a qualifying site is a needle. The finder wants a cave
+            // with 80% solid rock over the next 150px, and this crust is riddled with worm
+            // tunnels — the old budget passed on verdant/77 with a single site at exactly the
+            // threshold, so any shift in the cave layout (here: groves moving off the lake
+            // beds they were undercutting) took the whole DefenseTest down with it. Widen the
+            // hunt rather than lower the bar — the bar is what makes the dig test meaningful.
             Vector2? FindCorridorSite(int seed0)
             {
-                var found = 0; var best = 0f;
-                for (var so = 0; so < 60; so++)
+                for (var so = 0; so < 400; so++)
                 {
-                    if (FindCavePos(planet, seedOffset: seed0 + so * 17) is not { } cand)
-                    {
-                        Console.WriteLine($"DBG so={so}: no cave pos at all");
-                        continue;
-                    }
-                    found++;
+                    if (FindCavePos(planet, seedOffset: seed0 + so * 17) is not { } cand) continue;
                     var cUp = planet.UpAt(cand);
                     var cRight = new Vector2(-cUp.Y, cUp.X);
                     var solid = 0; var samples = 0;
