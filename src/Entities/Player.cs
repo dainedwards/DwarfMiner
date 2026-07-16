@@ -244,12 +244,13 @@ public sealed class Player
     /// Toggled in-game with the G key. When on, mining uses the god values below; when off, it
     /// falls back to the tier-derived stats so crafted upgrades still persist across toggles.
     /// God mode NO LONGER auto-enables flight — press H while in god mode to toggle ghost
-    /// flight (see <see cref="Flying"/>).</summary>
+    /// flight (see <see cref="Flying"/>). Starts on when DM_GOD (or DM_FLY) is set.</summary>
     public bool GodMode;
 
     /// <summary>Ghost flight: no gravity, no collision, direct velocity control. Only meaningful
     /// while <see cref="GodMode"/> (god mode) is on, and toggled with the H key. Kept separate
-    /// from god mode so the dev can be invulnerable while still walking the surface normally.</summary>
+    /// from god mode so the dev can be invulnerable while still walking the surface normally.
+    /// DM_FLY=1 starts a run already flying (and forces god mode on to keep this valid).</summary>
     public bool Flying;
     public const int GodPickaxePower = 50;
     public const float GodMineRange = 200f;
