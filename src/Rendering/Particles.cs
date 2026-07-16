@@ -564,7 +564,7 @@ public sealed class Particles
     {
         foreach (var p in _list)
         {
-            if (p.LightRadius <= 0f) continue;
+            if (p.LightRadius <= 0f || p.Hidden) continue;
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             if (p.HeroLight) r.AddHeroLight(p.Position, p.LightRadius * t, p.LightColor);
             else r.AddLight(p.Position, p.LightRadius * t, p.LightColor);
