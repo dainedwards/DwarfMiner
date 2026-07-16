@@ -348,6 +348,21 @@ public sealed partial class DwarfMinerGame : Game
         };
     }
 
+    // Name of the tree this build came from: DM_TITLE when the launcher set it, else the
+    // folder holding the .git entry above the binary (bin/<Config>/net8.0/ lives inside
+    // the checkout). Falls back to the process dir's name if nothing above it is a repo.
+    static string WorktreeName()
+    {
+        if (Environment.GetEnvironmentVariable("DM_TITLE") is { Length: > 0 } wt) return wt;
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        for (var d = dir; d is not null; d = d.Parent)
+            // A linked worktree carries a .git FILE, the primary checkout a .git directory.
+            if (Directory.Exists(Path.Combine(d.FullName, ".git")) ||
+                File.Exists(Path.Combine(d.FullName, ".git")))
+                return d.Name;
+        return dir.Name;
+    }
+
     protected override void Initialize()
     {
         // Adopt any pre-slot save as slot 1 BEFORE anything reads (and thereby creates)
