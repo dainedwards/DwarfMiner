@@ -89,8 +89,11 @@ public sealed class Session
     public List<TreeSite> Trees => Planet.Trees;
 
     /// <summary>Eruption in progress: which vent is erupting and how long it keeps spewing.
-    /// Vent sites live on <see cref="World.Planet.VolcanoVents"/>.</summary>
+    /// Vent sites live on <see cref="World.Planet.VolcanoVents"/>. EruptionTotal is the
+    /// full scheduled length — the tick derives its phases (rumbling build-up, surging
+    /// main stage, dying spurts) from how far through the show it is.</summary>
     public float EruptionLeft;
+    public float EruptionTotal;
     public int EruptionVent = -1;
 
     public float SpawnTimer;
