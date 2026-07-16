@@ -172,3 +172,62 @@ renaming one, and update this list when you add a hook:
   `DM_SWIM=1`, `DM_RAIN=1`, `DM_WARREN=1`, `DM_CITY=1`
 
 Check game code and commit history for the full set of available test variables.
+
+## Working alongside the other session
+
+Another Claude session codes this repo in parallel, and an auto-committer commits DURING a
+session. Consequences that have bitten before:
+
+- `git status` clean + HEAD holding your own edits is NORMAL — so a HEAD worktree is NOT a
+  baseline for an A/B, and stash-based control runs get defeated. Branch or copy to compare.
+- Before editing a shared system, `git log -p <file>` for the other session's refinements, and
+  merge `noita-sim` in first.
+- SimTest carries flaky/in-progress failures from the other session — compare failure sets at
+  the SAME commit before calling something a regression.
+- `dotnet run` deadlocks against the auto-committer: run the BUILT dll (`dotnet
+  bin/<Config>/net8.0/DwarfMiner.dll --simtest`).
+- macOS has no `timeout`: background the run, `sleep`, then `kill <pid>`.
+
+## Deep notes (docs/claude-notes/)
+
+Detailed per-system notes live in `docs/claude-notes/`, folded out of Claude's memory on
+2026-07-16 so this repo is the single source of truth. Read the one that covers what you are
+about to touch — each carries the contracts, the traps, and the reasons behind decisions that
+the code alone doesn't explain. They are dated and historical: trust the code first, and fix
+the note when you find it stale.
+
+- **[worldgen-caves-and-lava.md](docs/claude-notes/worldgen-caves-and-lava.md)** — worm
+  tunnels, stratified underground (`CaveStrata`/`SealSeams`), water/ocean worlds, basin
+  containment, lava-barrier saga, the lava-rock jacket, volcano geysers and eruptions, quake
+  cave-ins, ore/gem/flora scatters. Probes: `--strataprobe --lakeprobe --oceanprobe --lavaprobe
+  --geomprobe`. **Two traps worth knowing before you read:** `Planet.Radius` COUNTS THE SKY, so
+  every `radius*frac` is degenerate on small worlds; and `BuildSessionWorld` is TIME-SEEDED, so
+  validate containment over 8–12 probe loops, never one.
+- **[noita-sim.md](docs/claude-notes/noita-sim.md)** — the cell sim itself: flying material
+  cells, fire/oil, liquid cohesion + metaball RT, rain joining water bodies, titan sieges,
+  bandits, weapons, breath/air. Biggest file; skim its headings for the era you need.
+- **[overworld-and-planets.md](docs/claude-notes/overworld-and-planets.md)** — star map,
+  campaign planets, cities and civilians, warrens, moons, The Hollow belt asteroid, swimming
+  era, spawn director and the population census.
+- **[performance.md](docs/claude-notes/performance.md)** — the `--perf` harness, the frame
+  pacing saga (`InactiveSleepTime`, fixed-step off, the custom limiter), LightGrid SetData
+  stalls and the texture ring, liquid draw batching, far-field cell throttle.
+- **[runtime-shader.md](docs/claude-notes/runtime-shader.md)** — the hand-written MGFX/GLSL
+  effect built at runtime (mgfxc needs Wine), the Noita edge carve, and its contracts. **The
+  posFixup epilogue is REQUIRED** — omit it and the whole world batch silently back-face-culls.
+- **[textures-and-crust.md](docs/claude-notes/textures-and-crust.md)** — CC0 detail + palette
+  remap, procedural fallback, the additive crust, and the 45° slope experiment that was tried
+  and backed out.
+- **[lighting.md](docs/claude-notes/lighting.md)** — propagated LightGrid (the point-gradient
+  lightmap is gone), sky heightmap sun seeding, hero raycast lights, elemental arms.
+- **[rigid-bodies.md](docs/claude-notes/rigid-bodies.md)** — detach/tumble/re-stamp debris,
+  corpse ragdolls, whole-structure sky topples, and three separate resting-jitter lessons.
+  Bodies are Cartesian; every grid touch goes through `Planet.WorldToTile`.
+- **[city-facades.md](docs/claude-notes/city-facades.md)** — why towers looked jagged (polar
+  lattice drift, NOT the rasterizer — an A/B proved it), the column-major facade lattice, and
+  the `Physics.MarkDirty` ring-drift engine bug.
+- **[compaction-and-tiles.md](docs/claude-notes/compaction-and-tiles.md)** — 4px tiles with
+  legacy 8px authoring units (`Planet.LegacyTileScale`), the dust economy divisor, and the
+  compaction sweep with its three nomination-stranding traps.
+- **[equipment-and-ui.md](docs/claude-notes/equipment-and-ui.md)** — character screen,
+  equipment paper doll, crafting, jetpack, building blocks, hotbar.
