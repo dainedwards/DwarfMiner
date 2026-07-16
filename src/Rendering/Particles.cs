@@ -1739,7 +1739,7 @@ public sealed class Particles
         var count = 6 + (int)(strength * 9f);
         for (var i = 0; i < count; i++)
         {
-            var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
+            var spread = (float)(_rng.NextDouble() - 0.5) * 0.286f;   // nozzle +30%
             var d = up * MathF.Cos(spread) + right * MathF.Sin(spread);
             var hot = i < 2;
             var tone = FlameTones[hot ? _rng.Next(2) : _rng.Next(FlameTones.Length)];
