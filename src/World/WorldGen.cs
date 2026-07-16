@@ -1780,7 +1780,10 @@ public static class WorldGen
             // Lava wells wear a LAVA-ROCK shell (melt/burn-proof — the same jacket every lava
             // body gets); acid wells keep OBSIDIAN, the only kind acid can't corrode. The
             // well holds a primed column that eruptions pump up the tube and over the rim.
-            var chamberRad = (int)((3 + rng.Next(2) + scale) * S);
+            // HALF the old well: a tight bulb just big enough to hold the geyser node and
+            // its molten bath. (Same single rng draw — downstream stamp order is sacred.)
+            var chamberRad = Math.Max((int)(1.5f * S),
+                (int)(((3 + rng.Next(2)) * 0.5f + scale * 0.5f) * S));
             // End the tube below the first underground layer: past the ~10-tile dirt band
             // and a little into the stone crust, so the geyser sits in rock but stays a
             // shallow, reachable conduit rather than a deep-core reservoir.
