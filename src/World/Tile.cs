@@ -500,6 +500,7 @@ public static class Tiles
         "pure_gold"          => "PURE GOLD",
         "pure_platinum"      => "PURE PLATINUM",
         "core_shard"         => "CORE SHARD",
+        "lava_core"          => "LAVA CORE",
         _                    => id.ToUpperInvariant(),
     };
 
