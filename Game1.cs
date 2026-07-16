@@ -784,7 +784,10 @@ public sealed partial class DwarfMinerGame : Game
         var spawnAngle = -MathF.PI / 2f;
         // DM_VOLCANO=1 spawns beside the first volcano vent instead, so tooling can
         // screenshot craters and eruptions without hiking there (pairs with DM_ERUPT).
-        if (Environment.GetEnvironmentVariable("DM_VOLCANO") is { Length: > 0 }
+        // DM_ERUPTSHOW=1 is the one-stop eruption demo: volcano spawn + max zoom-out +
+        // an automatic eruption a few seconds in (see the DisasterTimer hook below).
+        if ((Environment.GetEnvironmentVariable("DM_VOLCANO") is { Length: > 0 }
+             || Environment.GetEnvironmentVariable("DM_ERUPTSHOW") is { Length: > 0 })
             && _run.Planet.VolcanoVents.Count > 0)
         {
             var (vvx, vvy, _) = _run.Planet.VolcanoVents[0];
