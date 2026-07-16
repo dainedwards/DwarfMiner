@@ -1693,6 +1693,36 @@ public sealed class Particles
             });
     }
 
+    /// <summary>Volcanic bombs — molten rock lumps hurled out of an erupting crater. Bright
+    /// glowing scoria that cools to maroon as it arcs, bounces on terrain, and litters the
+    /// slopes. Thrown up and out around <paramref name="up"/> (the crater's outward normal).</summary>
+    public void EmitLavaChunks(Vector2 pos, Vector2 up, int count)
+    {
+        var right = new Vector2(-up.Y, up.X);
+        for (var i = 0; i < count; i++)
+        {
+            var spread = (float)(_rng.NextDouble() - 0.5) * 1.4f;
+            var dir = up * MathF.Cos(spread) + right * MathF.Sin(spread);
+            var speed = 120f + (float)_rng.NextDouble() * 170f;
+            var hot = _rng.Next(3) != 0;
+            _list.Add(new Particle
+            {
+                Position = pos + Jitter(3f),
+                Velocity = dir * speed + Jitter(22f),
+                Life = 1.4f + (float)_rng.NextDouble() * 1.7f,
+                MaxLife = 3.1f,
+                Color = hot ? new Color(255, 180, 70) : new Color(205, 95, 50),
+                FadeColor = new Color(60, 32, 34),      // cools to maroon scoria (LavaRock)
+                Size = 1.4f + (float)_rng.NextDouble() * 1.4f,
+                GravityScale = 1.15f,
+                Drag = 0.25f,
+                CollideTiles = true,
+                LightRadius = i % 2 == 0 ? 42f : 0f,
+                LightColor = new Color(255, 150, 60),
+            });
+        }
+    }
+
     /// <summary>Acid spewer spray — DELIBERATELY INDEPENDENT of EmitFlameJet (split back
     /// from the shared core per user; tune each weapon on its own). Droplets render as
     /// the metaball liquid body (joining the pool coverage RT, so the spray fuses into
