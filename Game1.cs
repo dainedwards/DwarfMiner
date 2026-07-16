@@ -310,7 +310,10 @@ public sealed partial class DwarfMinerGame : Game
         // unfocused, so it should keep rendering honestly too; our EndDraw limiter is the
         // one and only pacer.
         InactiveSleepTime = TimeSpan.Zero;
-        Window.Title = "Dwarf Miner";
+        // DM_TITLE=<worktree> names the window after the tree being tested (see CLAUDE.md)
+        // so parallel test builds are tellable apart at a glance.
+        Window.Title = Environment.GetEnvironmentVariable("DM_TITLE") is { Length: > 0 } wt
+            ? $"DwarfMiner - {wt}" : "Dwarf Miner";
         // The scene renders at the fixed virtual resolution and scales to the window, so
         // the window itself is free to be any size (drag-resize or F11 fullscreen).
         Window.AllowUserResizing = true;
@@ -6185,10 +6188,18 @@ public sealed partial class DwarfMinerGame : Game
         // Liquids sit above the terrain (and its crust) but below every entity — same
         // layer they occupied when they drew inside the cell batch. The flame stream
         // composites through the same metaball shader, right above the liquids.
-        if (liquidPass) _renderer.CompositeLiquids(_liquidRt!);
+        // The composite's water depth gradient needs the world frame to march
+        // surface-ward (radially outward) at a zoom-independent step.
+        if (liquidPass)
+        {
+            _renderer.SetLiquidWorld(Vector2.Transform(_run.Planet.Center, _camera.View),
+                1f / _camera.Zoom, _camera.SmoothRotation);
+            _renderer.CompositeLiquids(_liquidRt!);
+        }
         // Hot bodies (lava pools + flame stream): full opacity + a hot bright rim — molten
         // rock's yellow-white edge and the flame's sheath, not a pool's translucent wet lip
-        // (which made the tongue read as glowing liquid).
+        // (which made the tongue read as glowing liquid). No depth grading — that's a
+        // water-only treatment.
         if (_particles.FluidMode)
             _renderer.CompositeLiquids(_flameRt!, 0.40f, 1f, 1.85f, 0.15f);
 

@@ -872,10 +872,12 @@ public sealed class Cells
     {
         if (cy < 0) return true;
         if (cy >= Height) return true;
-        var tx = cy / Density;
-        var ty = WrapX(cx, _cellsAt[cy]) / Density;
-        if (Tiles.IsSolid(Planet.Get(tx, ty))) return true;
-        return _mat[Idx(cx, cy)] != 0;
+        // Cell occupancy first: in liquid pools and dust piles — where the sim spends
+        // its chaotic frames — the probed neighbour usually holds a cell, and that one
+        // byte read settles it before the costlier tile fetch.
+        var w = WrapX(cx, _cellsAt[cy]);
+        if (_mat[_rowOffsets[cy] + w] != 0) return true;
+        return Tiles.IsSolid(Planet.Get(cy / Density, w / Density));
     }
 
     /// <summary>Whether the TILE holding this cell is solid rock (ignores cell contents) —
@@ -972,13 +974,23 @@ public sealed class Cells
     /// this tick: the cell being vacated was empty before the tick started (the mover only
     /// transited it), so the neighbourhood's net state is unchanged and no wake is owed —
     /// only the *original* departure cell is a real change. At terminal velocity this cuts
-    /// the wake fan-out of a falling grain by up to 8×.</summary>
-    private bool TryMoveTo(int sCx, int sCy, int dCx, int dCy, bool wakeSource = true)
+    /// the wake fan-out of a falling grain by up to 8×.
+    /// <paramref name="enqueue"/> false = the caller guarantees the mover's FINAL resting
+    /// index is enqueued (or deliberately slept) after its multi-step loop, so the per-hop
+    /// enqueue would only leave a stale index in the wake set. A 16-step fall used to park
+    /// 15 dead entries per cell per tick — on a draining lake most of the "active" set was
+    /// these ghosts, each still paying the clear/shuffle/dispatch overhead every frame.</summary>
+    private bool TryMoveTo(int sCx, int sCy, int dCx, int dCy, bool wakeSource = true,
+        bool enqueue = true)
     {
         if (dCy < 0 || dCy >= Height) return false;
-        if (IsTileSolidAt(dCx, dCy)) return false;
-        var di = Idx(dCx, dCy);
+        // Occupancy first: dispersion and slip probes overwhelmingly fail on another
+        // cell (pool interiors, pile flanks), and that one byte read rejects the move
+        // before the costlier tile-solid fetch the old order always paid.
+        var w = WrapX(dCx, _cellsAt[dCy]);
+        var di = _rowOffsets[dCy] + w;
         if (_mat[di] != 0) return false;
+        if (Tiles.IsSolid(Planet.Get(dCy / Density, w / Density))) return false;
         var si = Idx(sCx, sCy);
         var m = _mat[si];
         _mat[di] = m;
@@ -989,17 +1001,55 @@ public sealed class Cells
         _mat[si] = 0;
         _srcTile[si] = 0;
         ClearKinetics(si);
-        Enqueue(di);
+        if (enqueue) Enqueue(di);
         if (wakeSource) WakeNeighbors(sCx, sCy);
-        // Vacating always wakes (neighbours may now move into the hole), but *arriving* only
-        // matters when the arriver can trigger a reaction in a sleeping neighbour: water must
-        // wake hemmed lava it lands on (quench is lava-side — the sleep clause documents
-        // relying on exactly this wake), and fire drifting against a sleeping oil surface
-        // must wake it or the pool never catches. Lava kept out of caution for bulk flows.
-        // Inert grains — the entire mass-break dust case — skip it, halving the wake fan-out.
-        if (m == (byte)Material.Water || m == (byte)Material.Lava || m == (byte)Material.Fire)
-            WakeNeighbors(dCx, dCy);
+        // Vacating always wakes (neighbours may now move into the hole), but *arriving*
+        // FILLS space — it can never open a move for a sleeping neighbour. The only
+        // sleeping cells an arrival must reach are its REACTION partners: water must wake
+        // hemmed lava it lands on (quench is lava-side — the sleep clause documents
+        // relying on exactly this wake), and lava or fire drifting against a sleeping oil
+        // pool must wake it or it never catches (ignition is oil-side / the fire probe).
+        // The old blanket WakeNeighbors here re-armed up to 15 cells per hop of every
+        // moving water/lava cell; on a draining lake that alone kept the whole body
+        // ticking every frame. Inert grains — the mass-break dust case — wake nothing.
+        if (m == (byte)Material.Water) WakeReactiveNeighbors(dCx, dCy, Material.Lava);
+        else if (m == (byte)Material.Lava || m == (byte)Material.Fire)
+            WakeReactiveNeighbors(dCx, dCy, Material.Oil);
         return true;
+    }
+
+    /// <summary>Wake only the neighbours holding <paramref name="want"/> — the
+    /// reaction-targeted arrival wake for <see cref="TryMoveTo"/>. Same reach as
+    /// <see cref="WakeNeighbors"/> so no reachable partner is missed.</summary>
+    private void WakeReactiveNeighbors(int cx, int cy, Material want)
+    {
+        WakeIfKind(cx - 1, cy, want);
+        WakeIfKind(cx + 1, cy, want);
+        if (cy > 0)
+        {
+            var (icx, icy) = InnerCell(cx, cy);
+            WakeIfKind(icx, icy, want);
+            WakeIfKind(icx - 1, icy, want);
+            WakeIfKind(icx + 1, icy, want);
+        }
+        if (cy < Height - 1)
+        {
+            var oc = OuterCellCount(cx, cy);
+            for (var i = 0; i < oc; i++)
+            {
+                var (ocx, ocy) = OuterCell(cx, cy, i);
+                WakeIfKind(ocx, ocy, want);
+                WakeIfKind(ocx - 1, ocy, want);
+                WakeIfKind(ocx + 1, ocy, want);
+            }
+        }
+    }
+
+    private void WakeIfKind(int cx, int cy, Material want)
+    {
+        if (cy < 0 || cy >= Height) return;
+        var i = Idx(cx, cy);
+        if (_mat[i] == (byte)want) Enqueue(i);
     }
 
     /// <summary>Exchange two cells' full state (buoyancy swaps). Both wake — a swap changes
@@ -1359,19 +1409,24 @@ public sealed class Cells
         for (var s = 0; s < steps && cy > 0; s++)
         {
             (icx, icy) = InnerCell(cx, cy);
-            if (TryMoveTo(cx, cy, icx, icy, s == 0)) { cx = icx; cy = icy; continue; }
+            if (TryMoveTo(cx, cy, icx, icy, s == 0, false)) { cx = icx; cy = icy; continue; }
             // Blocked mid-flight: deflect diagonally, bleeding off speed on the impact.
             var d = _rng.Next(2) == 0 ? 1 : -1;
             if (TryMoveTo(cx, cy, icx + d, icy, s == 0)) { _velR[Idx(icx + d, icy)] *= ImpactDamping; return; }
             if (TryMoveTo(cx, cy, icx - d, icy, s == 0)) { _velR[Idx(icx - d, icy)] *= ImpactDamping; return; }
-            // Landed hard: kill velocity so the cell can sleep.
+            // Landed hard: kill velocity, then one more tick as a resting grain (the
+            // angle-of-repose slip pass) before it can sleep — the per-hop enqueue used
+            // to provide that tick.
             i = Idx(cx, cy);
             _velR[i] = 0f;
             _travel[i] = 0f;
+            Enqueue(i);
             RecordRest(cx, cy);
             return;
         }
-        // Covered the full distance without obstruction — TryMoveTo kept the cell awake.
+        // Covered the full distance without obstruction — keep the cell awake at its new
+        // spot (the transit hops deliberately skip their per-hop enqueue now).
+        Enqueue(Idx(cx, cy));
     }
 
     /// <summary>Note the owning planet tile of a grain that just came to rest — and the
@@ -1602,22 +1657,25 @@ public sealed class Cells
         var i = Idx(cx, cy);
         var impact = 0f;
 
+        // Below-neighbour cache: buoyancy, the fall gate, the splash probe, the slips and
+        // the hemmed test all interrogate the same inner cell — resolve it once. Matters
+        // most for the woken pool interior whose whole tick is "check around, go back to
+        // sleep": that path is now a handful of byte reads.
+        var (bcx, bcy) = InnerCell(cx, cy);
+        var bi = cy > 0 ? Idx(bcx, bcy) : -1;
+        var belowMat = bi >= 0 ? (Material)_mat[bi] : Material.Empty;
+
         // Buoyancy: every other liquid is denser than oil, so a cell sitting on oil sinks
         // through it (one swap per tick — mixed pools separate into clean layers over a
         // second or two rather than snapping). Lava sinking into an oil film is the fun
         // case: guaranteed contact, and TickOil torches it next tick.
-        if ((Material)_mat[i] != Material.Oil && cy > 0)
+        if (belowMat == Material.Oil && (Material)_mat[i] != Material.Oil)
         {
-            var (ocx, ocy) = InnerCell(cx, cy);
-            if (Get(ocx, ocy) == Material.Oil)
-            {
-                SwapCells(cx, cy, ocx, ocy);
-                return;
-            }
+            SwapCells(cx, cy, bcx, bcy);
+            return;
         }
 
-        var (bcx, bcy) = InnerCell(cx, cy);
-        if (cy > 0 && !IsBlocked(bcx, bcy))
+        if (cy > 0 && belowMat == Material.Empty && !IsTileSolidAt(bcx, bcy))
         {
             // Airborne: same fall integrator as sand.
             _velR[i] = MathF.Min(_velR[i] + GravityCells * dt, TerminalCells);
@@ -1632,7 +1690,7 @@ public sealed class Cells
             for (var s = 0; s < steps && cy > 0; s++)
             {
                 var (icx, icy) = InnerCell(cx, cy);
-                if (TryMoveTo(cx, cy, icx, icy, s == 0)) { cx = icx; cy = icy; continue; }
+                if (TryMoveTo(cx, cy, icx, icy, s == 0, false)) { cx = icx; cy = icy; continue; }
                 // Plunge: a HARD-falling stream meeting its own pool dives INTO it instead
                 // of stopping dead on the surface — swap with the liquid below and keep
                 // going (the displaced cell surfaces, wakes, and spreads). The speed gate
@@ -1650,8 +1708,8 @@ public sealed class Cells
                     continue;
                 }
                 var dd = _rng.Next(2) == 0 ? 1 : -1;
-                if (TryMoveTo(cx, cy, icx + dd, icy, s == 0)) { cx = WrapX(icx + dd, CellsAt(icy)); cy = icy; continue; }
-                if (TryMoveTo(cx, cy, icx - dd, icy, s == 0)) { cx = WrapX(icx - dd, CellsAt(icy)); cy = icy; continue; }
+                if (TryMoveTo(cx, cy, icx + dd, icy, s == 0, false)) { cx = WrapX(icx + dd, CellsAt(icy)); cy = icy; continue; }
+                if (TryMoveTo(cx, cy, icx - dd, icy, s == 0, false)) { cx = WrapX(icx - dd, CellsAt(icy)); cy = icy; continue; }
                 // Hit the surface: remaining fall speed becomes lateral splash below.
                 i = Idx(cx, cy);
                 impact = _velR[i];
@@ -1660,6 +1718,10 @@ public sealed class Cells
                 break;
             }
             if (impact == 0f) { Enqueue(Idx(cx, cy)); return; } // still airborne
+            // Landed somewhere new: refresh the below cache at the landing cell.
+            (bcx, bcy) = InnerCell(cx, cy);
+            bi = cy > 0 ? Idx(bcx, bcy) : -1;
+            belowMat = bi >= 0 ? (Material)_mat[bi] : Material.Empty;
         }
         else
         {
@@ -1674,21 +1736,15 @@ public sealed class Cells
         // Landing ON LIQUID splashes far easier than landing on rock (a pool's surface
         // gives): raindrops crown off a lake at speeds that would land silently on stone.
         var splashBar = SplashMinImpact;
-        var onLiquid = false;
+        var onLiquid = belowMat is Material.Water or Material.Acid or Material.Oil or Material.Lava;
         var onRainPool = false;
-        if (cy > 0)
+        if (onLiquid)
         {
-            var (lcx, lcy) = InnerCell(cx, cy);
-            var below = Get(lcx, lcy);
-            if (below is Material.Water or Material.Acid or Material.Oil or Material.Lava)
-            {
-                onLiquid = true;
-                splashBar *= 0.35f;
-                // Is the pool it's landing on rain/drip water? A crown thrown off a rain
-                // puddle is the fat rebound droplet the user doesn't want (see below).
-                var bSrc = _srcTile[Idx(lcx, lcy)];
-                onRainPool = below == Material.Water && (bSrc == RainWaterSrc || bSrc == DripWaterSrc);
-            }
+            splashBar *= 0.35f;
+            // Is the pool it's landing on rain/drip water? A crown thrown off a rain
+            // puddle is the fat rebound droplet the user doesn't want (see below).
+            var bSrc = _srcTile[bi];
+            onRainPool = belowMat == Material.Water && (bSrc == RainWaterSrc || bSrc == DripWaterSrc);
         }
         // Rain (and ceiling-drip) water never throws a ballistic rebound droplet — neither the
         // falling rain cell itself, nor a cell landing ON a rain puddle. The crown beads read
@@ -1717,10 +1773,9 @@ public sealed class Cells
         // Supported: diagonal-down slip first, as before.
         if (cy > 0)
         {
-            var (icx, icy) = InnerCell(cx, cy);
             var dd = _rng.Next(2) == 0 ? 1 : -1;
-            if (TryMoveTo(cx, cy, icx + dd, icy)) return;
-            if (TryMoveTo(cx, cy, icx - dd, icy)) return;
+            if (TryMoveTo(cx, cy, bcx + dd, bcy)) return;
+            if (TryMoveTo(cx, cy, bcx - dd, bcy)) return;
         }
 
         // Fully hemmed-in liquid sleeps: supported below and walled both sides (rock or other
@@ -1759,8 +1814,8 @@ public sealed class Cells
         }
         if (self == Material.Water || self == Material.Lava || self == Material.Acid || self == Material.Oil)
         {
-            var (scx, scy) = InnerCell(cx, cy);
-            var hemmed = (cy <= 0 || IsBlocked(scx, scy)) && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy);
+            var hemmed = (cy <= 0 || belowMat != Material.Empty || IsTileSolidAt(bcx, bcy))
+                && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy);
             // Lava and acid stay awake while there's still something adjacent to eat, so a
             // hemmed pool keeps gnawing at the tile it rests against instead of sleeping on it.
             var stillEating = (self == Material.Lava && HasMeltableNeighbour(cx, cy))
@@ -1787,7 +1842,7 @@ public sealed class Cells
         var movedYet = false;   // a bounce advances s without moving, so s==0 can't stand in for "still at the departure cell"
         for (var s = 0; s < spread; s++)
         {
-            if (TryMoveTo(cx, cy, cx + dir, cy, !movedYet))
+            if (TryMoveTo(cx, cy, cx + dir, cy, !movedYet, false))
             {
                 movedYet = true;
                 cx = WrapX(cx + dir, CellsAt(cy));
@@ -1841,13 +1896,15 @@ public sealed class Cells
     /// frames instead of converting a whole front instantly.</summary>
     private bool QuenchIfWet(int cx, int cy)
     {
-        var wi = FindNeighbour(cx, cy, Material.Water);
+        // One pass finds both quench partners — this probe runs for EVERY awake lava cell
+        // every tick, and the old water-then-snow FindNeighbour pair walked the same
+        // neighbourhood twice.
+        var (wi, si) = FindQuenchNeighbours(cx, cy);
         if (wi < 0)
         {
             // No water, but a snow grain against lava flashes to meltwater (rain-tagged so
             // the slush dries out later) — the real quench then fires against the droplet
             // on the next tick.
-            var si = FindNeighbour(cx, cy, Material.Snow);
             if (si < 0) return false;
             _mat[si] = (byte)Material.Water;
             _srcTile[si] = RainWaterSrc;
@@ -2016,6 +2073,42 @@ public sealed class Cells
             if ((Material)_mat[Idx(px, py)] != Material.Water) return false;
         }
         return true;
+    }
+
+    /// <summary>The quench probe's neighbour scan, single-pass: flat index of the first
+    /// cardinal neighbour holding water and the first holding snow (-1 when absent), in
+    /// the same probe order as <see cref="FindNeighbour"/> so partner selection is
+    /// unchanged. Snow only matters when no water was found, so the outer walk stops
+    /// early once water shows up.</summary>
+    private (int wi, int si) FindQuenchNeighbours(int cx, int cy)
+    {
+        int wi = -1, si = -1;
+        void Probe(int px, int py)
+        {
+            if (py < 0 || py >= Height) return;
+            var idx = Idx(px, py);
+            var m = _mat[idx];
+            if (m == (byte)Material.Water) { if (wi < 0) wi = idx; }
+            else if (m == (byte)Material.Snow && si < 0) si = idx;
+        }
+
+        Probe(cx + 1, cy);
+        if (wi < 0 || si < 0) Probe(cx - 1, cy);
+        if (cy > 0 && (wi < 0 || si < 0))
+        {
+            var (icx, icy) = InnerCell(cx, cy);
+            Probe(icx, icy);
+        }
+        if (cy < Height - 1)
+        {
+            var oc = OuterCellCount(cx, cy);
+            for (var k = 0; k < oc && wi < 0; k++)
+            {
+                var (ocx, ocy) = OuterCell(cx, cy, k);
+                Probe(ocx, ocy);
+            }
+        }
+        return (wi, si);
     }
 
     /// <summary>Flat index of the first cardinal neighbour holding material m, or -1.</summary>
@@ -2913,6 +3006,22 @@ public sealed class Cells
     }
 
     private readonly List<HotOp> _hotOps = new();
+
+    /// <summary>Deferred draw ops for the cold liquids. The fill pass runs Deferred, so
+    /// every Pixel↔blob texture alternation flushed the sprite batch — and the scan order
+    /// interleaves them constantly (run quads and interiors on Pixel, every air-facing
+    /// cell on the blob). A draining lake is nearly ALL edge cells: thousands of one-quad
+    /// draw calls per frame. Both kinds are collected during the scan and flushed as two
+    /// textured segments: BLOBS FIRST, then quads, then the waterline (one batch flush per
+    /// texture change instead of per cell). Order matters for RGB, not coverage: the fill
+    /// blend REPLACES colour (alpha accumulates commutatively), and a blob stamps its flat
+    /// cell colour across its whole 3-cell footprint even where its alpha is ~0 — flushed
+    /// AFTER the quads, every edge cell smeared its colour over the shimmered interior
+    /// rows beside it, visible as "replicated" shear bands crawling along pool surfaces.
+    /// Quads-after-blobs re-stamps the interior colour over the haloes, matching the old
+    /// interleaved look.</summary>
+    private readonly List<(Vector2 pos, Vector2 scale, float rot, Color col)> _blobOps = new();
+    private readonly List<(Vector2 pos, Vector2 scale, float rot, Color col)> _quadOps = new();
     private readonly List<(int cx, int cy)> _hotSurface = new();
 
     /// <summary>The LIQUID PASS: Water/Acid/Oil grid cells rasterized into the dedicated
@@ -2942,6 +3051,8 @@ public sealed class Cells
         _surface.Clear();
         _hotOps.Clear();
         _hotSurface.Clear();
+        _blobOps.Clear();
+        _quadOps.Clear();
         // Pool interiors merge into run quads: on an ocean world the view circle holds
         // hundreds of thousands of water cells, and per-cell quads made this pass the
         // single biggest frame cost (~8.5 ms CPU + a vertex flood that halved the GPU
@@ -2985,7 +3096,16 @@ public sealed class Cells
                     var e = runStart + runLen - 2;
                     while (s <= e)
                     {
-                        var seg = Math.Min(maxRun, e - s + 1);
+                        // Chunk boundaries anchor to the ABSOLUTE cell grid (multiples of
+                        // maxRun), never to the run start: a pool wider than the view is
+                        // one run CUT at the view edge, so run-relative chunking hung
+                        // every boundary — and each chunk's flat shimmer sample — off the
+                        // CAMERA. Panning made all of them re-anchor cell by cell, at
+                        // different angles per tile ring: crawling "shear lines" through
+                        // the body with the wave pattern visibly re-tiling. Grid-anchored
+                        // chunks are static in world space; only the partial chunk at the
+                        // screen edge changes width as the view moves.
+                        var seg = Math.Min(maxRun - WrapX(cx0 + s, n) % maxRun, e - s + 1);
                         var midAng = (cx0 + s + (seg - 1) * 0.5f + 0.5f) * angStep;
                         var up = new Vector2(MathF.Cos(midAng), MathF.Sin(midAng));
                         var body = LiquidBody(runMat, cx0 + s + seg / 2, cy);
@@ -2999,10 +3119,9 @@ public sealed class Cells
                                 Col = col,
                             });
                         else
-                            r.Batch.Draw(r.Pixel, Planet.Center + up * ringRadius, null, col,
-                                midAng + MathHelper.PiOver2, new Vector2(0.5f, 0.5f),
+                            _quadOps.Add((Planet.Center + up * ringRadius,
                                 new Vector2(chord * (seg + 0.5f), radial * 1.5f),
-                                SpriteEffects.None, 0f);
+                                midAng + MathHelper.PiOver2, col));
                         s += seg;
                     }
                     DrawLiquidCell(r, blob, blobOrigin, blobMode, runStart, cx0, cy,
@@ -3060,6 +3179,14 @@ public sealed class Cells
             FlushRun();
         }
 
+        // Flush the deferred ops: blobs first, quads second (see _blobOps for why the
+        // order matters), each as one textured segment.
+        foreach (var (pos, scale, rot, col) in _blobOps)
+            r.Batch.Draw(blob, pos, null, col, rot, blobOrigin, scale, SpriteEffects.None, 0f);
+        foreach (var (pos, scale, rot, col) in _quadOps)
+            r.Batch.Draw(r.Pixel, pos, null, col, rot, new Vector2(0.5f, 0.5f), scale,
+                SpriteEffects.None, 0f);
+
         // Waterline: one wide band per surface cell, overlapping its neighbours, bobbing
         // on a wave whose count divides the ring — a continuous line, drawn after every
         // body quad so its colour wins the replace blend.
@@ -3109,8 +3236,7 @@ public sealed class Cells
                 _hotOps.Add(new HotOp
                     { Pos = centre, Scale = scale, Rot = rotation, Col = col, Blob = true });
             else
-                r.Batch.Draw(blob, centre, null, col, rotation, blobOrigin, scale,
-                    SpriteEffects.None, 0f);
+                _blobOps.Add((centre, scale, rotation, col));
         }
         else
         {
@@ -3122,8 +3248,7 @@ public sealed class Cells
             if (hot)
                 _hotOps.Add(new HotOp { Pos = centre, Scale = scale, Rot = rotation, Col = col });
             else
-                r.Batch.Draw(r.Pixel, centre, null, col, rotation, new Vector2(0.5f, 0.5f),
-                    scale, SpriteEffects.None, 0f);
+                _quadOps.Add((centre, scale, rotation, col));
         }
         if (openOut)
         {
@@ -3450,23 +3575,17 @@ public sealed class Cells
         }
     }
 
-    /// <summary>Flat liquid body colour: ONE colour per material plus a slow shimmer band
-    /// travelling smoothly across the pool. The old per-cell hash jitter and hash-phased
-    /// shimmer made adjacent cells sparkle out of sync — which is exactly what read as "a
-    /// bunch of stacked pixels" instead of one body of water. Phase is a smooth function
-    /// of position (an INTEGER multiple of the ring angle, so it's continuous across the
-    /// wrap seam). Returns an opaque colour; callers apply translucency.</summary>
+    /// <summary>Flat liquid body colour: ONE strictly flat colour per material. The body
+    /// is drawn from mixed primitives (merged run chunks sampled once per segment,
+    /// per-cell quads, blob stamps) whose colour sampling points differ — ANY positional
+    /// variation baked in here shows every primitive boundary as a faint moving seam
+    /// patchwork, which is why the old travelling shimmer band was removed (per user).
+    /// Body variation lives per PIXEL in the composite shader instead: water's
+    /// depth-colour gradient keys off the flat water base below (RuntimeEffect.LiquidGlsl
+    /// hardcodes 46,90,178 — keep them in sync). Returns an opaque colour; callers apply
+    /// translucency.</summary>
     private Color LiquidBody(Material m, int cx, int cy)
     {
-        // Flying liquid cells land here with world px coords (see Draw) — out of row
-        // bounds, so they get a coarse positional phase instead of an angular one.
-        float ang;
-        if (cy >= 0 && cy < Height)
-        {
-            var n = _cellsAt[cy];
-            ang = (WrapX(cx, n) + 0.5f) / n * MathHelper.TwoPi;
-        }
-        else ang = cx * 0.01f;
         switch (m)
         {
             case Material.Water:
@@ -3475,20 +3594,16 @@ public sealed class Cells
                 if (_zapUntil > _time && cy >= 0 && cy < Height
                     && _zapped.Contains(_rowOffsets[cy] + WrapX(cx, _cellsAt[cy])))
                     return new Color(216, 236, 255);
-                return Tint(new Color(46, 90, 178),
-                    (int)(MathF.Sin(_time * 1.6f + ang * 17f + cy * 0.045f) * 10f));
+                return new Color(46, 90, 178);
             case Material.Acid:
-                return Tint(new Color(120, 200, 40),
-                    (int)(MathF.Sin(_time * 2.0f + ang * 23f + cy * 0.05f) * 12f));
+                return new Color(120, 200, 40);
             case Material.Lava:
-                // Molten body: flat deep orange with a slow, wide heat-swell band — the
-                // fast per-cell flicker lives on in ColorFor for the plain fallback, but
-                // the cohesive body wants one calm surface (the rim + glow carry the heat).
-                return Tint(new Color(235, 92, 20),
-                    (int)(MathF.Sin(_time * 1.3f + ang * 15f + cy * 0.04f) * 14f));
-            default: // Oil — near-black slick with a slow crawling sheen.
-                return Tint(new Color(38, 32, 26),
-                    (int)(MathF.Sin(_time * 1.1f + ang * 13f + cy * 0.035f) * 7f));
+                // Molten body: flat deep orange — the fast per-cell flicker lives on in
+                // ColorFor for the plain fallback, but the cohesive body wants one calm
+                // surface (the rim + glow carry the heat).
+                return new Color(235, 92, 20);
+            default: // Oil — near-black slick.
+                return new Color(38, 32, 26);
         }
     }
 

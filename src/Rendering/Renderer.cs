@@ -47,7 +47,7 @@ public sealed class Renderer
     /// opacity. Null falls back to hard quads + a plain NonPremultiplied blit (still kills
     /// the per-quad double-blend mottling, just without the fused edge).</summary>
     private readonly Effect? _liquidFx;
-    private readonly EffectParameter? _lqCol0, _lqCol1, _lqCol2, _lqCol3, _lqPs, _lqPs2;
+    private readonly EffectParameter? _lqCol0, _lqCol1, _lqCol2, _lqCol3, _lqPs, _lqPs2, _lqPs3;
     private readonly Texture2D _liquidBlob;
 
     /// <summary>Coverage cut for the metaball composite. Calibrated against the blob
@@ -205,6 +205,7 @@ public sealed class Renderer
             _lqCol3 = _liquidFx.Parameters["MatrixCol3"];
             _lqPs = _liquidFx.Parameters["PsParams"];
             _lqPs2 = _liquidFx.Parameters["PsParams2"];
+            _lqPs3 = _liquidFx.Parameters["PsParams3"];
         }
         _liquidBlob = MakeLiquidBlob(gd, 16);
         _stars = MakeStarfield(gd, 256);
@@ -1786,14 +1787,39 @@ public sealed class Renderer
     /// every liquid texel reaches the scene through exactly one alpha blend — the fix for
     /// the per-quad double-blend mottling that made pools read as stacked pixels.</summary>
     public void CompositeLiquids(RenderTarget2D rt) =>
-        CompositeLiquids(rt, LiquidThresh, LiquidOpacity, LiquidRimMul, LiquidRimAdd);
+        CompositeLiquids(rt, LiquidThresh, LiquidOpacity, LiquidRimMul, LiquidRimAdd,
+            LiquidDepthGrade);
+
+    /// <summary>Strength of the WATER depth-colour gradient (shallow blue → deep navy;
+    /// see RuntimeEffect.LiquidGlsl). The body colour itself is strictly flat — the
+    /// gradient is applied per pixel in the composite so it cannot show the primitive
+    /// seams that killed the old vertex-level shimmer. Water only; acid/oil/lava and the
+    /// glint quads pass through untouched.</summary>
+    private const float LiquidDepthGrade = 1f;
+
+    /// <summary>World frame for the liquid composite's depth march: the planet centre in
+    /// RT pixel coordinates and world px per RT px (1/zoom) — what the shader needs to
+    /// walk "surface-ward" (radially outward) per pixel at a zoom-independent step. Call
+    /// each frame before the composites; the boot prewarm runs before any camera exists,
+    /// so defaults are benign.</summary>
+    public void SetLiquidWorld(Vector2 planetCentreRtPx, float worldPxPerRtPx, float camRot)
+    {
+        _lqCentre = planetCentreRtPx;
+        _lqWpp = MathF.Max(worldPxPerRtPx, 0.001f);
+        _lqRot = camRot;
+    }
+
+    private Vector2 _lqCentre = new(-4096f, -4096f);
+    private float _lqWpp = 0.5f;
+    private float _lqRot;
 
     /// <summary>Parameterised overload: the FLAME stream composites through the same
     /// metaball shader but must not read as water — it passes full opacity and a hotter,
-    /// brighter rim (a flame's white sheath, not a pool's wet specular lip). Pools keep
-    /// the default constants via the overload above.</summary>
+    /// brighter rim (a flame's white sheath, not a pool's wet specular lip), and depth
+    /// grading 0 (the gradient is a water-only treatment). Pools keep the default
+    /// constants via the overload above.</summary>
     public void CompositeLiquids(RenderTarget2D rt, float thresh, float opacity,
-        float rimMul, float rimAdd)
+        float rimMul, float rimAdd, float depthGrade = 0f)
     {
         if (_liquidFx != null)
         {
@@ -1804,7 +1830,8 @@ public sealed class Renderer
             _lqCol2!.SetValue(new Vector4(m.M13, m.M23, m.M33, m.M43));
             _lqCol3!.SetValue(new Vector4(m.M14, m.M24, m.M34, m.M44));
             _lqPs!.SetValue(new Vector4(1f / rt.Width, 1f / rt.Height, thresh, opacity));
-            _lqPs2!.SetValue(new Vector4(rimMul, rimAdd, 0f, 0f));
+            _lqPs2!.SetValue(new Vector4(rimMul, rimAdd, Time, depthGrade));
+            _lqPs3!.SetValue(new Vector4(_lqCentre.X, _lqCentre.Y, _lqWpp, _lqRot));
             _sb.Begin(samplerState: SamplerState.PointClamp, effect: _liquidFx);
         }
         else

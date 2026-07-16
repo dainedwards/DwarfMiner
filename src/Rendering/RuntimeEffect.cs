@@ -49,23 +49,25 @@ public static class RuntimeEffect
     /// MonoGame version, GLSL rejected by the driver, …) — callers must treat null as
     /// "no shader" and keep the baked-erosion path.</summary>
     public static Effect? BuildTerrainCarve(GraphicsDevice gd) =>
-        Build(gd, PixelGlsl, "TerrainCarve", "terrain carve");
+        Build(gd, PixelGlsl, "TerrainCarve", "terrain carve", psVec4s: 2);
 
-    /// <summary>Build the liquid-composite effect (threshold + rim over the liquid RT), or
-    /// null — callers fall back to a plain NonPremultiplied blit of the RT.</summary>
+    /// <summary>Build the liquid-composite effect (threshold + rim + body texture over the
+    /// liquid RT), or null — callers fall back to a plain NonPremultiplied blit of the RT.</summary>
     public static Effect? BuildLiquidComposite(GraphicsDevice gd) =>
-        Build(gd, LiquidGlsl, "LiquidComposite", "liquid composite");
+        Build(gd, LiquidGlsl, "LiquidComposite", "liquid composite", psVec4s: 3);
 
-    private static Effect? Build(GraphicsDevice gd, string pixelGlsl, string technique, string label)
+    private static Effect? Build(GraphicsDevice gd, string pixelGlsl, string technique,
+        string label, int psVec4s)
     {
         try
         {
-            var fx = new Effect(gd, WriteMgfx(pixelGlsl, technique));
+            var fx = new Effect(gd, WriteMgfx(pixelGlsl, technique, psVec4s));
             // Touch the parameters now so a malformed stream fails HERE (inside the
             // try) rather than mid-frame on first use.
             _ = fx.Parameters["MatrixCol0"];
             _ = fx.Parameters["PsParams"];
             _ = fx.Parameters["PsParams2"];
+            if (psVec4s >= 3) _ = fx.Parameters["PsParams3"];
             // GLSL compiles LAZILY at the first draw (glShaderSource/link happen inside
             // ApplyState) — so force one degenerate draw through the effect now. A driver
             // that rejects the GLSL throws here, inside the guard, instead of crashing the
@@ -232,10 +234,23 @@ void main()
     /// premultiplied at ONE uniform opacity, so the whole body composites over the world
     /// in a single blend: no per-quad double-blend mottling, tiles ghost through evenly.
     /// PsParams  = (texelW, texelH, coverage threshold, body opacity).
-    /// PsParams2 = (rim multiply, rim add, unused, unused).</summary>
+    /// PsParams2 = (rim multiply, rim add, time, WATER depth-gradient strength).
+    /// PsParams3 = (planet centre in RT px X, Y, world px per RT px, unused).
+    ///
+    /// Water depth gradient (strength &gt; 0): WATER body pixels shift from their flat
+    /// base blue toward a deep navy by how far below open air they sit — the coverage
+    /// field is marched outward (toward the surface) to measure depth per pixel. Done
+    /// HERE rather than in the fill colours because the field is assembled from mixed
+    /// primitives (merged run chunks, per-cell quads, blob stamps) whose colour sampling
+    /// points differ — anything positional baked into them shows every primitive
+    /// boundary as a seam, while a per-pixel gradient cannot. Water is identified by its
+    /// flat body colour (Cells.LiquidBody's water base — the bodies arrive strictly
+    /// flat, so the match is exact within the surface row's small tint); acid, oil,
+    /// glint quads and the hot field pass through untouched. The flame/hot composite
+    /// passes strength 0, skipping the march entirely.</summary>
     private const string LiquidGlsl = @"#version 110
 uniform sampler2D s0;
-uniform vec4 ps_uniforms_vec4[2];
+uniform vec4 ps_uniforms_vec4[3];
 varying vec4 vColor;
 varying vec2 vTexCoord;
 varying vec2 vWorld;
@@ -251,6 +266,27 @@ void main()
     n = min(n, texture2D(s0, vTexCoord + vec2(0.0, texel.y)).a);
     n = min(n, texture2D(s0, vTexCoord - vec2(0.0, texel.y)).a);
     vec3 rgb = c.rgb;
+    float amp = ps_uniforms_vec4[1].w;
+    if (amp > 0.0)
+    {
+        vec3 dw = rgb - vec3(0.180, 0.353, 0.698);   // 46,90,178 = water body base
+        if (dot(dw, dw) < 0.006)
+        {
+            float wpp = max(ps_uniforms_vec4[2].z, 0.001);
+            vec2 rel  = vTexCoord / texel - ps_uniforms_vec4[2].xy;
+            vec2 up   = (rel / max(length(rel), 0.001)) * texel * (3.0 / wpp);
+            float depth = 16.0;
+            for (int i = 1; i <= 16; i++)
+            {
+                if (texture2D(s0, vTexCoord + up * float(i)).a < thresh)
+                {
+                    depth = float(i);
+                    break;
+                }
+            }
+            rgb = mix(rgb, vec3(0.063, 0.173, 0.455), (depth / 16.0) * 0.9 * amp);
+        }
+    }
     if (n < thresh)
         rgb = min(rgb * ps_uniforms_vec4[1].x + vec3(ps_uniforms_vec4[1].y), vec3(1.0));
     float a = ps_uniforms_vec4[0].w;
@@ -258,7 +294,7 @@ void main()
 }
 ";
 
-    private static byte[] WriteMgfx(string pixelGlsl, string technique)
+    private static byte[] WriteMgfx(string pixelGlsl, string technique, int psVec4s)
     {
         using var ms = new MemoryStream();
         using var w = new BinaryWriter(ms, Encoding.UTF8);
@@ -279,12 +315,12 @@ void main()
         w.Write((short)64);
         w.Write(4);
         for (var i = 0; i < 4; i++) { w.Write(i); w.Write((ushort)(i * 16)); } // params 0..3 at 0,16,32,48
-        // cbuffer 1 → PS: two packed vec4s of carve/crust parameters.
+        // cbuffer 1 → PS: psVec4s packed vec4s of shader parameters (the GLSL's
+        // `ps_uniforms_vec4[n]` array size must match).
         w.Write("ps_uniforms_vec4");
-        w.Write((short)32);
-        w.Write(2);
-        w.Write(4); w.Write((ushort)0);  // param 4 at offset 0
-        w.Write(5); w.Write((ushort)16); // param 5 at offset 16
+        w.Write((short)(psVec4s * 16));
+        w.Write(psVec4s);
+        for (var i = 0; i < psVec4s; i++) { w.Write(4 + i); w.Write((ushort)(i * 16)); }
 
         // --- shaders ---
         w.Write(2);
@@ -292,13 +328,13 @@ void main()
         WriteShader(w, isVertex: false, pixelGlsl, cbuffer: 1, withAttributes: false);
 
         // --- parameters (indices must match the cbuffer tables above) ---
-        w.Write(6);
+        w.Write(4 + psVec4s);
         WriteVec4Param(w, "MatrixCol0");
         WriteVec4Param(w, "MatrixCol1");
         WriteVec4Param(w, "MatrixCol2");
         WriteVec4Param(w, "MatrixCol3");
-        WriteVec4Param(w, "PsParams");
-        WriteVec4Param(w, "PsParams2");
+        for (var i = 0; i < psVec4s; i++)
+            WriteVec4Param(w, i == 0 ? "PsParams" : $"PsParams{i + 1}");
 
         // --- techniques ---
         w.Write(1);
