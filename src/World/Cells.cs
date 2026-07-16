@@ -50,6 +50,11 @@ public static class Materials
     /// <summary>Cell materials the compaction sweep may press into a Conglomerate tile.</summary>
     public static bool IsCompactable(Material m) => m is
         Material.Sand or Material.Dirt or Material.Gravel or Material.Dust or Material.Snow;
+
+    /// <summary>Every flowing liquid — the pool-forming materials whose surface colliding
+    /// particles must stop at (see Particles.Update). New liquids belong in this list.</summary>
+    public static bool IsLiquid(Material m) => m is
+        Material.Water or Material.Lava or Material.Acid or Material.Oil;
 }
 
 /// <summary>
