@@ -683,7 +683,7 @@ public static class WorldGen
         // (noise caves included — they run in the tile pass, before any keep-out exists)
         // opened against a to-be-poured lava/acid body is plugged back with the barrier
         // material. Runs LAST so no later carve can undo it.
-        PlugFluidBreaches(planet);
+        PlugFluidBreaches(planet, basinAir);
 
         // The prospector's jackpot: the odd RICH gold/silver vein — a solid ribbon of ore
         // far denser than the ambient scatter (which runs deliberately lean, gold most of
