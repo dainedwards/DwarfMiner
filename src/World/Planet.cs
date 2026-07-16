@@ -153,11 +153,14 @@ public sealed class Planet
     public readonly List<(int x, int y, bool acid)> VolcanoVents = new();
 
     /// <summary>Tile keys (<see cref="TileKey"/>) within the 2-tile jacket reach of every
-    /// to-be-poured LAVA/ACID seed tile — the hazard-fluid keep-out every gen carver
-    /// (worms, warren corridors) must refuse to bite. Built by WorldGen once the lakes,
-    /// pockets and volcano plumbing have all recorded their seeds; a carve inside this halo
-    /// is a drain mouth waiting for the pour. Water is deliberately NOT in here: the ocean
-    /// worm network runs right under the seabed shell by design.</summary>
+    /// to-be-poured FLUID seed tile — water and oil as well as lava and acid — the keep-out
+    /// every gen carver (worms, warren corridors) must refuse to bite. Built by WorldGen
+    /// once the lakes, pockets and volcano plumbing have all recorded their seeds; a carve
+    /// inside this halo is a drain mouth waiting for the pour. Water used to be left out
+    /// (the ocean worlds lean on their seabed shell instead), but a worm has no idea a lake
+    /// is overhead: it undercut the debug rig's basin and the pour drained through the
+    /// tunnel network. The halo costs the worms nothing — the ocean network still runs under
+    /// the shell, two tiles down.</summary>
     public readonly HashSet<long> FluidKeepOut = new();
 
     /// <summary>Stable dictionary key for a tile coordinate (rings never approach the 4M
