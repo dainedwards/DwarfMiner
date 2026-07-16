@@ -1624,14 +1624,17 @@ public static class WorldGen
 
             var nC = planet.TilesAt(chamberR);
             var centre = planet.TileToWorld(chamberR, (int)((ang / MathHelper.TwoPi + 1f) % 1f * nC));
-            var shellR = (chamberRad + 1) * Planet.TileSize;
-            for (var dr = -chamberRad - 1; dr <= chamberRad + 1; dr++)
+            // TWO-tile shell: honours the every-lava-body 2-block jacket contract, and a
+            // 1-tile Euclidean annulus on the polar grid had diagonal pinholes at the
+            // circle's shoulders — cell flow crosses tile diagonals at ring remaps.
+            var shellR = (chamberRad + 2) * Planet.TileSize;
+            for (var dr = -chamberRad - 2; dr <= chamberRad + 2; dr++)
             {
                 var r = chamberR + dr;
                 if (r < 2 || r >= planet.Rings) continue;
                 var rn = planet.TilesAt(r);
                 var rt0 = (int)((ang / MathHelper.TwoPi + 1f) % 1f * rn);
-                for (var dt = -chamberRad - 2; dt <= chamberRad + 2; dt++)
+                for (var dt = -chamberRad - 3; dt <= chamberRad + 3; dt++)
                 {
                     var t = ((rt0 + dt) % rn + rn) % rn;
                     var dist = (planet.TileToWorld(r, t) - centre).Length();
