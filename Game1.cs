@@ -310,11 +310,11 @@ public sealed partial class DwarfMinerGame : Game
         // unfocused, so it should keep rendering honestly too; our EndDraw limiter is the
         // one and only pacer.
         InactiveSleepTime = TimeSpan.Zero;
-        // DM_TITLE=<worktree> names the window after the tree being tested (see CLAUDE.md)
-        // so parallel test builds are tellable apart at a glance. Without it we walk up
-        // from the binary to the checkout root and use that folder's name, so a build
-        // launched by hand is still tellable apart from every other tree.
-        Window.Title = $"DwarfMiner - {WorktreeName()}";
+        // Title format: DwarfMiner | Branch | Worktree (e.g., "DwarfMiner | noita-sim | noita-sim")
+        // This always runs, regardless of DM_TITLE, to make test builds distinguishable at a glance.
+        var branch = GetCurrentBranch();
+        var tree = WorktreeName();
+        Window.Title = $"DwarfMiner | {branch} | {tree}";
         // The scene renders at the fixed virtual resolution and scales to the window, so
         // the window itself is free to be any size (drag-resize or F11 fullscreen).
         Window.AllowUserResizing = true;
@@ -348,23 +348,57 @@ public sealed partial class DwarfMinerGame : Game
         };
     }
 
-    // Name of the tree this build came from: DM_TITLE when the launcher set it, else the
-    // folder holding the .git entry above the binary (bin/<Config>/net8.0/ lives inside
-    // the checkout). Falls back to the process dir's name if nothing above it is a repo.
-    static string WorktreeName()
+    // "DwarfMiner | <branch> | <worktree>" — the branch segment drops out when the build
+    // isn't sitting in a repo at all. Reads git's plain files rather than shelling out to
+    // `git`, so it can't stall startup on a slow or missing binary.
+    static string TitleBar()
     {
-        if (Environment.GetEnvironmentVariable("DM_TITLE") is { Length: > 0 } wt) return wt;
+        try
+        {
+            var (tree, gitDir) = LocateTree();
+            if (Environment.GetEnvironmentVariable("DM_TITLE") is { Length: > 0 } wt) tree = wt;
+            var branch = BranchAt(gitDir);
+            return branch is null ? $"DwarfMiner | {tree}" : $"DwarfMiner | {branch} | {tree}";
+        }
+        catch (IOException) { return "DwarfMiner"; }
+        catch (UnauthorizedAccessException) { return "DwarfMiner"; }
+    }
+
+    // The tree this build came from, plus the git dir holding its HEAD. bin/<Config>/net8.0/
+    // lives inside the checkout, so walking up from the binary lands on the .git entry.
+    static (string Tree, string? GitDir) LocateTree()
+    {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         for (var d = dir; d is not null; d = d.Parent)
         {
             var git = Path.Combine(d.FullName, ".git");
-            // A linked worktree carries a .git FILE and is named after the tree; the primary
-            // checkout carries a .git DIRECTORY and is named after the repo, so it reports
-            // itself as "main" rather than the redundant "DwarfMiner - DwarfMiner".
-            if (File.Exists(git)) return d.Name;
-            if (Directory.Exists(git)) return "main";
+            // The primary checkout carries a .git DIRECTORY and is named after the repo, so
+            // it reports itself as "main" rather than the redundant "DwarfMiner | DwarfMiner".
+            if (Directory.Exists(git)) return ("main", git);
+            // A linked worktree carries a .git FILE naming its real git dir over in the
+            // parent repo ("gitdir: …/.git/worktrees/<tree>"); the folder IS the tree name.
+            if (File.Exists(git))
+            {
+                var s = File.ReadAllText(git).Trim();
+                if (!s.StartsWith("gitdir:", StringComparison.Ordinal)) return (d.Name, null);
+                var p = s["gitdir:".Length..].Trim();
+                // Git allows the pointer to be relative to the worktree root.
+                return (d.Name, Path.IsPathRooted(p) ? p : Path.Combine(d.FullName, p));
+            }
         }
-        return dir.Name;
+        return (dir.Name, null);
+    }
+
+    static string? BranchAt(string? gitDir)
+    {
+        if (gitDir is null) return null;
+        var head = Path.Combine(gitDir, "HEAD");
+        if (!File.Exists(head)) return null;
+        var s = File.ReadAllText(head).Trim();
+        const string refPrefix = "ref: refs/heads/";
+        // On a branch HEAD is "ref: refs/heads/<branch>"; detached, it's a bare sha.
+        if (s.StartsWith(refPrefix, StringComparison.Ordinal)) return s[refPrefix.Length..];
+        return s.Length >= 7 ? $"detached {s[..7]}" : null;
     }
 
     protected override void Initialize()
