@@ -298,9 +298,13 @@ public sealed class Particles
                     for (var k = 0; k < 2; k++)
                         _list.Add(new Particle
                         {
-                            Position = p.Position,
-                            // Low crown — kicked to ~70% of the first cut's height per user.
-                            Velocity = n * (15f + (float)_rng.NextDouble() * 21f)
+                            // The crown sprouts at the CONTACT point (`next`, just inside
+                            // the surface cell), not the drop's last airborne spot — a
+                            // splash hovering pixels above the waterline read as firing
+                            // before the drop ever hit.
+                            Position = next,
+                            // Low crown — ×0.7 per user, then another ×0.7 ("30% lower").
+                            Velocity = n * (10.5f + (float)_rng.NextDouble() * 14.7f)
                                      + new Vector2(-n.Y, n.X)
                                        * ((_rng.Next(2) == 0 ? 1f : -1f)
                                           * (12f + (float)_rng.NextDouble() * 26f)),
