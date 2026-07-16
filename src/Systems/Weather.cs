@@ -248,6 +248,7 @@ public static class Weather
         TreeEcology.WaterBand(run, c.Angle, c.HalfWidth, kind, 0.22f * dt);
 
         var rng = Random.Shared;
+        c.RainElapsed += dt;
 
         // The shower actually lands: REAL cells dropped just above the ground under the
         // band. Water rain pools in hollows and runs off slopes instead of passing through
