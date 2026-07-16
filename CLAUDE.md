@@ -47,12 +47,19 @@ Rules:
 
 ## Launching the game yourself (DM_NOFOCUS)
 
-When YOU launch the game to test something, prefix the run command with `DM_NOFOCUS=1`. The
-window still opens and renders (so `DM_AUTOSHOT` screenshots work exactly as before), but it
-comes up as a macOS accessory app: it never activates, so it does not yank the user out of
-whatever they are working in. Because it never becomes the key window it also never receives
-keyboard/mouse input — fine for automated runs, useless for playing, which is why the printed
-run command must stay free of it.
+When YOU launch the game to test something, prefix the run command with `DM_NOFOCUS=1`. The run
+is INVISIBLE: the process never activates (SDL's macOS background-app hint) and the window is
+hidden outright, so nothing appears on screen, nothing steals focus, and nothing takes the
+user's keyboard or mouse. Rendering continues into the scene render target, so `DM_AUTOSHOT`
+and F12 screenshots work exactly as they do in a visible run — screenshots stay your way to
+see a test run.
+
+Never print it in a run command: a hidden window is unplayable, and the user's playtests need
+a real one.
+
+If a run ever logs `[nofocus] WARNING`, the hide stopped working — that build leaves a window
+on screen with NO dock icon to hide or quit it, so kill the process and fix the hide before
+launching again.
 
 ## Game window title (identifies which tree is running)
 
