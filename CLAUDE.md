@@ -23,12 +23,13 @@ Rules:
 
 ## Game window title (identifies which tree is running)
 
-The game window title must be `DwarfMiner - <worktree>` (e.g. `DwarfMiner - liquid-perf`,
-`DwarfMiner - main`) so the user can tell test builds apart.
+The game titles its own window `DwarfMiner | <branch> | <worktree>` (e.g.
+`DwarfMiner | noita-sim | main`, `DwarfMiner | liquid-perf | liquid-perf`) so the user
+can tell test builds apart. This needs no environment variable and nothing in the run
+command — `Game1.TitleBar()` walks up from the binary to the checkout's `.git` entry and
+reads the tree and branch off it at startup.
 
-- The game reads the `DM_TITLE` environment variable: when it is set, set the window
-  title to `DwarfMiner - <value>` (in Game1's Initialize, via `Window.Title`). If the
-  branch you are on does not support `DM_TITLE` yet, add it as part of your change.
-- Always include `DM_TITLE=<worktree name>` (`DM_TITLE=main` on the main checkout) in
-  the run commands you print. The user's launcher also injects it when missing, but
-  printed commands should carry it explicitly.
+- A linked worktree (`.git` file) reports its folder name; the primary checkout (`.git`
+  directory) reports `main`, since its folder is named after the repo.
+- If the branch you are on titles its window some other way, bring `TitleBar()` over as
+  part of your change.
