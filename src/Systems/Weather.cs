@@ -17,6 +17,7 @@ public sealed class Cloud
     public float Life;         // seconds before it dissipates
     public float Grow;         // 0..1 fade-in / fade-out
     public float RainTimer;    // >0 while actively raining
+    public float RainElapsed;  // seconds since this shower opened — gates the landing half
     public float RainCooldown; // gap before it can rain again
     public float Phase;        // random phase for per-puff outline wobble
     public float Shape;        // 0..1 silhouette hash — skews the bank so no two look alike
