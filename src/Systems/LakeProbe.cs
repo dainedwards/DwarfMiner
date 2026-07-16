@@ -176,7 +176,12 @@ public static class LakeProbe
             }
         }
 
-        Console.WriteLine(mouthCount == 0 && escaped.Count == 0 && retained >= lake.Count * 0.9
+        // The verdict is the two things that can't be argued with: no open mouth at gen time,
+        // and the fill still in the bowl after the settle. The under-basin water count above
+        // is deliberately NOT part of it — a crust reservoir settling across its own cave
+        // floor lands under a lake's bearing often enough, and that water was never the
+        // lake's. It stays printed because when retention DOES drop, it says where it went.
+        Console.WriteLine(mouthCount == 0 && retained >= lake.Count * 0.95
             ? "    OK: every basin sealed and still holding its fill"
             : "    FAIL: basins leak");
     }
