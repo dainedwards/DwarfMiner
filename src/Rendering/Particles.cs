@@ -1854,10 +1854,10 @@ public sealed class Particles
                 CollideTiles = true,
                 LightRadius = hot ? 22f : i % 3 == 0 ? 9f : 0f,
                 LightColor = new Color(255, 170, 70),
-                // ACTUAL LAVA: every droplet stamps a real Lava cell where it lands, so
-                // the whole rope joins the world — pooling, flowing, igniting, melting —
-                // while the flight keeps the spitter's goopy metaball look.
-                LandMat = CellFx ? (byte)Material.Lava : (byte)0,
+                // PURELY COSMETIC rope: the side spout's material is now a volley of REAL
+                // flying lava cells launched alongside (see the eruption tick) — those
+                // land, pool and overflow. The rope only sheathes the stream in the
+                // spitter's goopy metaball look; stamping here too would double the lava.
                 LandSparks = true,
                 SmearMax = 26f,
                 SmearScale = 2f,
