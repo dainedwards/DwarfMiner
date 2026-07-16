@@ -2056,12 +2056,47 @@ public sealed partial class DwarfMinerGame : Game
                             * (((float)Random.Shared.NextDouble() - 0.5f) * 40f), mat);
                 }
 
-                // Fill the crater pool so it brims and overflows the rim, running down the
-                // flanks (the pool already sits barely below the lip — see CarveVolcanoes).
-                for (var i = 0; i < (peak ? 3 : 1); i++)
-                    _run.Cells.SpawnInTile(
-                        Math.Clamp(vx + Random.Shared.Next(-1, 2), 1, _run.Planet.Rings - 1),
-                        vy + Random.Shared.Next(-1, 2), mat, Cells.Density * Cells.Density);
+                // THE RISING MAGMA: the pool rests at 80% of the bowl; over the eruption's
+                // main act the fill line ramps to 110–130% of the rim (EruptionPeakFrac),
+                // so the level visibly climbs the crater wall, crests the lip, and bubbles
+                // over the sides in sheets. Cone geometry is derived back from the vent
+                // ring (ventR = surfaceR + 0.91·coneH + 2S at gen — see CarveVolcanoes;
+                // keep the two in sync). Fill lands one course above the current surface,
+                // and stops while the surface is at the line — a controlled rise, not a hose.
+                var mainP = MathHelper.Clamp(
+                    (elapsed - 2f) / MathF.Max(1f, _run.EruptionTotal - 3.5f), 0f, 1f);
+                var levelFrac = MathHelper.Lerp(0.8f, MathF.Max(1.05f, _run.EruptionPeakFrac), mainP);
+                var poolRest = vx - _run.Planet.SurfaceRing - (int)(2 * Planet.LegacyTileScale);
+                var coneHrt = poolRest / 0.91f;
+                var craterDrt = coneHrt * 0.45f;
+                var levelR = Math.Clamp(
+                    _run.Planet.SurfaceRing + (int)(coneHrt - craterDrt * (1f - levelFrac)),
+                    2, _run.Planet.Rings - 1);
+                var surfR = -1;
+                for (var r = levelR; r >= Math.Max(2, levelR - 90); r--)
+                {
+                    var t = (int)(angF * _run.Planet.TilesAt(r));
+                    if (_run.Planet.Get(r, t) != TileKind.Sky
+                        || _run.Cells.LiquidKindAtWorld(_run.Planet.TileToWorld(r, t))
+                            != Material.Empty) { surfR = r; break; }
+                }
+                if (surfR >= 0 && surfR < levelR)
+                {
+                    var fillR = Math.Min(surfR + 1, _run.Planet.Rings - 1);
+                    var fillN = _run.Planet.TilesAt(fillR);
+                    var fillT0 = (int)(angF * fillN);
+                    for (var i = 0; i < (peak ? 4 : 2); i++)
+                        _run.Cells.SpawnInTile(fillR,
+                            ((fillT0 + Random.Shared.Next(-2, 3)) % fillN + fillN) % fillN,
+                            mat, Cells.Density * Cells.Density);
+                }
+
+                // THE COLUMN: the flamethrower jet at volcano scale — a roaring pillar of
+                // fire standing out of the crater centre, breathing with the surge (lava
+                // only; an acid vent has no burning column).
+                if (!vAcid)
+                    _particles.EmitEruptionJet(ventPos + ventUp * 4f, ventUp,
+                        MathF.Min(1f, pulse + (peak ? 0.3f : 0f)));
 
                 // The FOUNTAIN BODY: goopy metaball droplets riding the surge — one
                 // connected molten tongue standing out of the crater, fused with the pool
