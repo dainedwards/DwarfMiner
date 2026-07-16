@@ -2417,8 +2417,9 @@ public sealed partial class DwarfMinerGame : Game
                 var n = _run.Planet.TilesAt(dSurf);
                 var t0 = (int)(dAng * n);
                 var span = Math.Max(2, (int)(0.05f / MathHelper.TwoPi * n));
-                // ONE tile's worth per frame — a slow, stately subsidence, not a flush.
-                var budget = Cells.Density * Cells.Density;
+                // A QUARTER tile's worth per frame — a creeping, barely-perceptible
+                // subsidence over the minutes after the show, never a visible flush.
+                var budget = Cells.Density * Cells.Density / 4;
                 for (var off = -span; off <= span && budget > 0; off++)
                 {
                     var t = ((t0 + off) % n + n) % n;
