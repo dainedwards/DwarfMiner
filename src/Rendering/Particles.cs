@@ -64,6 +64,11 @@ public struct Particle
     /// bit-identical no matter how the eruption effects are tuned — and Size keeps its
     /// normal meaning for the strand-quad fallback when the composite is off.</summary>
     public float JetScale;
+    /// <summary>Currently COVERED BY LIQUID (refreshed every Update for JetScale
+    /// particles): the volcano's spout effects are born 10 tiles under the crater pool,
+    /// and until a grain actually breaks the surface it must not draw or shed light —
+    /// the pool hides what's inside it. Cleared the frame the grain leaves the lava.</summary>
+    public bool Hidden;
     /// <summary>Weather-backdrop layer: drawn in the early pass BEFORE the cloud banks
     /// (see Game1's weather-backdrop Draw call), so rain/snow spawned inside a cloud has
     /// its origin hidden behind the puffs and visibly falls OUT of the bank. Everything
