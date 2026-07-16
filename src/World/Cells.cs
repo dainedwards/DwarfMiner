@@ -262,6 +262,12 @@ public sealed class Cells
     /// anchor without also switching on the ambient drip/moss sweeps. Null = no throttle.</summary>
     public Vector2? SimFocus;
 
+    /// <summary>Optional SECOND full-rate bubble (the erupting volcano): cells near either
+    /// focus run at 60 Hz. An eruption the player walked away from must keep flowing,
+    /// igniting and subsiding at full speed — quarter-rate froze the show whenever it went
+    /// off-screen. Set/cleared every frame by Game1's eruption bookkeeping.</summary>
+    public Vector2? SecondaryFocus;
+
     /// <summary>Shattered gem sites awaiting their physical drop (see the gem handling in
     /// <see cref="SpawnDustInTile"/>). Game1 drains this into Session.Pickups. Every entry —
     /// embedded-gem pop or shattered gem tile — is one whole drop at the shatter site.</summary>
