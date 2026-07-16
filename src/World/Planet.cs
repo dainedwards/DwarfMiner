@@ -143,6 +143,18 @@ public sealed class Planet
     /// keep erupting.</summary>
     public readonly List<(int x, int y, bool acid)> VolcanoVents = new();
 
+    /// <summary>Tile keys (<see cref="TileKey"/>) within the 2-tile jacket reach of every
+    /// to-be-poured LAVA/ACID seed tile — the hazard-fluid keep-out every gen carver
+    /// (worms, warren corridors) must refuse to bite. Built by WorldGen once the lakes,
+    /// pockets and volcano plumbing have all recorded their seeds; a carve inside this halo
+    /// is a drain mouth waiting for the pour. Water is deliberately NOT in here: the ocean
+    /// worm network runs right under the seabed shell by design.</summary>
+    public readonly HashSet<long> FluidKeepOut = new();
+
+    /// <summary>Stable dictionary key for a tile coordinate (rings never approach the 4M
+    /// angular stride).</summary>
+    public static long TileKey(int r, int t) => r * 4_000_000L + (uint)t;
+
     /// <summary>Volcano plumbing exclusion CAPSULES (world px): the chamber disc (A == B)
     /// and the throat segment from chamber to crater floor, recorded by CarveVolcanoes.
     /// CarveWormDisk refuses any bite that reaches one — the single chokepoint every worm
