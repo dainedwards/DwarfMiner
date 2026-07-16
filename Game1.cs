@@ -407,6 +407,7 @@ public sealed partial class DwarfMinerGame : Game
     /// DM_AUTOSHOT/F12 screenshots are unaffected; there is simply nothing on screen to
     /// steal focus, take input, or sit in front of what the user is doing.</summary>
     private readonly bool _noFocus = Environment.GetEnvironmentVariable("DM_NOFOCUS") is { Length: > 0 };
+    private bool _windowHidden;
 
     [DllImport("libSDL2", EntryPoint = "SDL_HideWindow")]
     private static extern void SdlHideWindow(IntPtr window);
