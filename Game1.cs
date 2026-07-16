@@ -2259,7 +2259,8 @@ public sealed partial class DwarfMinerGame : Game
         // few tiles' worth of cells off the pool's top surface row across the crater mouth;
         // the remaining liquid re-levels itself, so the whole pool settles smoothly.
         if (_run.EruptionLeft <= 0f && _run.EruptionDrainVent >= 0
-            && _run.EruptionDrainVent < _run.Planet.VolcanoVents.Count)
+            && _run.EruptionDrainVent < _run.Planet.VolcanoVents.Count
+            && (_run.EruptionDrainWait -= dt) <= 0f)
         {
             var (dvx, dvy, dAcid) = _run.Planet.VolcanoVents[_run.EruptionDrainVent];
             var dMat = dAcid ? Material.Acid : Material.Lava;
