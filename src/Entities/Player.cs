@@ -255,7 +255,7 @@ public sealed class Player
     public const float GodMineRange = 200f;
 
     /// <summary>Mining power derived from the current pickaxe tier, plus future augment bonuses
-    /// (none yet — tier acts as the sole input). Tier 1 = 1, Tier 2 = 2, etc. When fly mode is
+    /// (none yet — tier acts as the sole input). Tier 1 = 1, Tier 2 = 2, etc. When god mode is
     /// on, returns the god value so the dev tool always overrides crafted progress.</summary>
     public int EffectivePickaxePower
     {
