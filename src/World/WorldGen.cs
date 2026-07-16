@@ -2770,19 +2770,28 @@ public static class WorldGen
                 // pass leaves under a lake/pool bed). This carve eats anything unanchored —
                 // obsidian shell, buffer, jacket included — and it runs before the keep-out
                 // exists, so a cavity that reaches a bed is a drain the pour finds at load:
-                // a grove is what emptied the debug rig's water lake from below. The old
-                // rule barred pockets from a sea's whole BEARING; that also condemns the
-                // deep crystal caverns 30-70 tiles under a 5-tile puddle, which are no
-                // threat to anything. Compare depths instead: only the cavity that actually
-                // rises into the buffer is dropped, whatever world it's on.
-                var top = depth - (radius + 1) / S;         // shallowest point of the cavity
-                var wet = false;
-                foreach (var l in lakes)
-                    if (top < BasinDepthAt(l, ang) + 14f) { wet = true; break; }
-                if (!wet)
-                    foreach (var a in acidPools)
-                        if (top < BasinDepthAt(a, ang) + 14f) { wet = true; break; }
-                if (wet) continue;
+                // a grove is what emptied the debug rig's water lake from below.
+                //
+                // WALK the pocket to a dry bearing rather than dropping it. The ocean-only
+                // ancestor of this rule just skipped, which was affordable when it fired on
+                // one world; applied to all of them it quietly deletes pockets from worlds
+                // that only have four or five (verdant), and a grove is a destination, not
+                // scenery. Rotating costs no rng draw, so the shared stream — and every
+                // downstream carver's layout — stays put either way.
+                var top = (depth - radius - 1) / S;         // shallowest point, legacy tiles
+                bool Undercuts(float a)
+                {
+                    foreach (var l in lakes) if (top < BasinDepthAt(l, a) + 14f) return true;
+                    foreach (var p in acidPools) if (top < BasinDepthAt(p, a) + 14f) return true;
+                    return false;
+                }
+                var moved = 0;
+                while (Undercuts(ang) && moved < 7)
+                {
+                    ang = (ang + 2.399963f) % MathHelper.TwoPi;   // golden angle: no orbiting
+                    moved++;
+                }
+                if (Undercuts(ang)) continue;   // an ocean world can genuinely be all shore
                 var n = planet.TilesAt(cr);
                 var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
                 var centre = planet.TileToWorld(cr, ct);
