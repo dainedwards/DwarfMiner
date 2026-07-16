@@ -2713,18 +2713,20 @@ public static class WorldGen
                 var depth = (int)((crystal ? 30 + rng.Next(40) : 8 + rng.Next(22)) * S);
                 var cr = planet.SurfaceRing - depth;
                 if (cr < 8 * S) continue;
-                // Ocean worlds: pockets keep off the sea bearings entirely. Their basins
-                // plunge past the grove band, and this carve eats ANYTHING unanchored —
-                // obsidian shell included — so one grove under a sea is a drain into the
-                // dry network. (The skip comes after the rolls, so the shared rng stream
-                // is unmoved; other worlds don't reach this branch at all.)
-                if (ocean)
-                {
-                    var wet = false;
-                    foreach (var l in lakes)
-                        if (MathF.Abs(MathHelper.WrapAngle(ang - l.ang)) < l.w + 0.05f) { wet = true; break; }
-                    if (wet) continue;
-                }
+                // Pockets keep off every lake and acid-pool bearing. This carve eats ANYTHING
+                // unanchored — obsidian shell, basin buffer, jacket included — and it runs
+                // before the keep-out exists, so a grove under a basin is a drain the pour
+                // finds at load: it was the hole that emptied the debug rig's water lake
+                // from below. Was ocean-only, on the theory that only a sea plunges into the
+                // grove band; a 3× QA basin does too, and a normal lake sits close enough
+                // that a radius-5 cavity still bites its bed. (The skip comes after the
+                // rolls, so the shared rng stream — and every seeded layout — is unmoved.)
+                var wet = false;
+                foreach (var l in lakes)
+                    if (MathF.Abs(MathHelper.WrapAngle(ang - l.ang)) < l.w + 0.05f) { wet = true; break; }
+                foreach (var a in acidPools)
+                    if (MathF.Abs(MathHelper.WrapAngle(ang - a.ang)) < a.w + 0.05f) { wet = true; break; }
+                if (wet) continue;
                 var radius = (int)((crystal ? 4 + rng.Next(4) : 3 + rng.Next(3)) * S);
                 var n = planet.TilesAt(cr);
                 var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
