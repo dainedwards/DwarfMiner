@@ -427,10 +427,17 @@ public static class WorldGen
                 // shaft in the crust under/beside the basin that the pour then found. The
                 // jacket + plug passes seal what touches the fill, but a cave a few tiles
                 // out only needs one melted or crumbled tile to connect — solid rock there
-                // ends the class. Water lakes deliberately keep their caves (a flooded
-                // grotto is gameplay; a drained lava lake is a broken world).
-                var lavaBuffer = def.LakeTrio && lakeIdx == 1
-                    && lakeDepth > 0.5f && depth < lakeDepth + 12f;
+                // ends the class.
+                //
+                // WATER basins now get it too. They used to keep their caves on purpose (the
+                // flooded-grotto idea), but a bowl carved straight onto an open cave roof
+                // isn't a grotto — the pour is down the hole before you ever see the lake,
+                // which is exactly what hollowed out the debug rig's basin. A lake you can
+                // still breach by mining is the gameplay; one that arrives pre-drained is a
+                // bug. Ocean worlds keep their own (thicker, shell-backed) seaBuffer below.
+                var lakeBuffer = lakeDepth > 0.5f && depth < lakeDepth + 12f;
+                var lavaBuffer = def.LakeTrio && lakeIdx == 1 && lakeBuffer;
+                var waterBuffer = !lavaBuffer && lakeBuffer;
 
                 // Ocean worlds (LakeScale > 2.5, same marker as the deep-water bonus above)
                 // armour their seabeds: an obsidian SHELL under every real basin (nothing
