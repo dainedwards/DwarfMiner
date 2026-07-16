@@ -1555,11 +1555,14 @@ public static class WorldGen
         Plug(planet.AcidSeeds, acidLid, TileKind.Obsidian);
     }
 
-    /// <summary>Expand every lava/acid seed tile by the 2-tile jacket reach into
+    /// <summary>Expand every fluid seed tile by the 2-tile jacket reach into
     /// <see cref="Planet.FluidKeepOut"/> — the halo the tunnel carvers refuse to bite.
     /// 2 tiles matches the shell contract: what survives between a tunnel and the fluid is
     /// exactly the wall ShellLavaBodies hardens to LavaRock (or LineAcidReservoirs skins
-    /// in obsidian) at load.</summary>
+    /// in obsidian) at load. Water and oil are in here as well as the hazard fluids: a worm
+    /// undercutting a lake bed drains the lake into the tunnel network at load, and a worm
+    /// through an oil sump empties it the same way — the pockets are meant to be FOUND, so
+    /// the only thing that should open one is a pickaxe.</summary>
     private static void BuildFluidKeepOut(Planet planet)
     {
         void Halo(List<(int x, int y)> seeds)
