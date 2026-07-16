@@ -1822,7 +1822,13 @@ public sealed class Particles
     public void EmitLavaSpew(Vector2 pos, Vector2 dir, float strength)
     {
         var jetSpeed = 115f + strength * 72f;
-        const float coneArc = 0.09f;          // a touch looser than the spewer's 0.041
+        const float coneArc = 0.24f;          // a loose spray, not the spewer's tight rope
+        // ONE FLAT COLOUR — the lava body's own (Cells.LiquidBody): the hot composite's
+        // fill blend REPLACES colour wherever a quad lands, so a blob crossing the pool
+        // (or another blob) must ink the identical flat orange or the overlap shows as a
+        // hard-edged stamp. Color == FadeColor also kills the stepped age-fade: the glob
+        // stays lava-orange from launch to pooled rest, exactly like the pool it joins.
+        var body = new Color(235, 92, 20);
         for (var i = 0; i < 8; i++)
         {
             if (_rng.Next(5) == 0) continue;
@@ -1830,19 +1836,19 @@ public sealed class Particles
             var c = MathF.Cos(spread);
             var s = MathF.Sin(spread);
             var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            var hot = i < 2;                  // white-hot leading droplets
-            var tone = hot ? new Color(255, 242, 170)
-                : _rng.Next(2) == 0 ? new Color(255, 176, 60) : new Color(250, 120, 40);
+            var hot = i < 2;                  // (leading droplets keep only a bigger glow)
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 2f,
-                Velocity = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)),
+                // WIDE speed spread (0.7–1.25×): with range going as v², the gobs land
+                // scattered from half-distance to past the nominal arc, not in one line.
+                Velocity = d * (jetSpeed * (0.7f + (float)_rng.NextDouble() * 0.55f)),
                 // Life outlasts the full lob (~1.3-2s of flight) — expiry happens while
                 // POOLED on the ground (the rest-rule clamps to 1.4s), never mid-air.
                 Life = 2.4f + (float)_rng.NextDouble() * 0.6f,
                 MaxLife = 3.0f,
-                Color = tone,
-                FadeColor = new Color(165, 45, 15),
+                Color = body,
+                FadeColor = body,
                 Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
                 // Volcano-scale ballistic arc, NOT the handheld hose's heavy 2.25.
                 GravityScale = 0.9f,
