@@ -158,8 +158,10 @@ public sealed class Particles
                 // resting at the ground surface in their last frames were spawning
                 // sparks right on the terrain — the other half of the phantom
                 // "sparks interacting with the ground".
-                if (!p.JetSpark && sp > 3600f && _rng.Next(7) < 4)
+                if (!p.JetSpark && !p.Hidden && sp > 3600f && _rng.Next(7) < 4)
                 {
+                    // (!Hidden: a plume grain still under the crater lava must not shed —
+                    // its sparks would draw through the pool it is hidden inside.)
                     // ERUPTION EMBERS: a quarter of the volcano column's sparks (JetScale
                     // parents only — the handheld flamethrower keeps its no-ground-contact
                     // contract below) become long-lived falling embers: they ride the
