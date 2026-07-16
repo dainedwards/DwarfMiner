@@ -1777,7 +1777,7 @@ public sealed class Particles
     public void EmitLavaFountain(Vector2 pos, Vector2 up, float strength)
     {
         var right = new Vector2(-up.Y, up.X);
-        var count = 3 + (int)(strength * 7f);
+        var count = 4 + (int)(strength * 9f);
         for (var i = 0; i < count; i++)
         {
             if (_rng.Next(5) == 0) continue;
@@ -1786,13 +1786,13 @@ public sealed class Particles
             var hot = i < 2;   // white-hot leading gouts
             var tone = hot ? new Color(255, 242, 170)
                 : _rng.Next(2) == 0 ? new Color(255, 176, 60) : new Color(250, 120, 40);
-            var speed = (90f + strength * 130f) * (0.85f + (float)_rng.NextDouble() * 0.3f);
+            var speed = (140f + strength * 180f) * (0.85f + (float)_rng.NextDouble() * 0.3f);
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 2f,
                 Velocity = d * speed,
-                Life = 0.9f + (float)_rng.NextDouble() * 0.6f,
-                MaxLife = 1.5f,
+                Life = 1.0f + (float)_rng.NextDouble() * 0.7f,
+                MaxLife = 1.7f,
                 Color = tone,
                 FadeColor = new Color(165, 45, 15),
                 Size = hot ? 0.8f : 0.9f + (float)_rng.NextDouble() * 0.5f,
