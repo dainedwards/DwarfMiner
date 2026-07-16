@@ -930,6 +930,7 @@ public static class WorldGen
         var (_, canopy) = TreePlanFor(def);
         var flora = FloraFor(def.Biome);
         if (flora == TileKind.Sky) flora = TileKind.Fernleaf;   // an oasis always has undergrowth
+        var wet = FluidFillSet(planet);
         var surfRadiusPx = (Planet.RingMin + planet.SurfaceRing) * Planet.TileSize;
         var oases = 2 + rng.Next(3);
         for (var o = 0; o < oases; o++)
