@@ -45,9 +45,9 @@ public static class RainProbe
                 if (cy > topRow) aboveGrid++;
 
                 // The crash path itself: must survive every column.
-                var before = cells.CountMaterial(Material.Water);
+                var before = cells.CountNear(ground, 64f, Material.Water);
                 cells.SpawnRainWater(ground);
-                if (cells.CountMaterial(Material.Water) > before) placed++;
+                if (cells.CountNear(ground, 64f, Material.Water) > before) placed++;
             }
 
             Console.WriteLine($"    swept {steps} angles: {groundless} groundless columns " +
