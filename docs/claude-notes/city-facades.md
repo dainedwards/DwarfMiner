@@ -23,3 +23,15 @@ Fidelity question (user: "consider smaller blocks"): declined halving TileSize 4
 - **Floor connectivity (same day, user: "floors aren't connected, breaks the rigid body")**: the stair gap used to hug the WALL (`dt*gapSide < span-4`) — on the widened towers that left every other floor's outer strip a free-floating shelf, and the 3-wide climb channel severed all slabs from the ladder spine, so a toppling tower shattered into strands (4 bodies) and shelves rained once anything woke settle. Fix: gap is now a 2-col hole BESIDE the channel (`dt*gapSide is 2 or 3`, alternating sides = zig-zag kept, slabs always reach both walls), and at slab rows the channel's flanking columns carry LADDER landings instead of Sky (passable → climb unchanged, but they lace spine↔slabs). Furniture skips the gap columns. Topple now 2 bodies/788 cells; SimTest "tower interior is one connected structure" floods 3 real towers (≥92% reachable).
 - **ENGINE BUG exposed + fixed — Physics.MarkDirty ring drift**: neighbour marks used raw index ±1 across rings, but tiles-per-ring grows ~+6/ring, so at bearings far from angle 0 the "tile above" is 2-3 indices away → the region above a break was NEVER woken → a tower severed at the street on the far side of the planet hung in the sky uncondemned (SimTest topple test only ever passed because the old capital spawned near angle 0). Fix: map neighbouring rings' columns by ANGLE (`t0 = (y+0.5)/n·nn`) then mark t0±1. Diagnosed with `--toppleprobe` (kept in Program.cs) + temporary DM_TOPDBG prints in Settle (removed).
 
+
+
+## Moved from the old noita-sim note (2026-07-16)
+
+### 2026-07-14 blast + ladder pass
+
+- **Tower ladder shaft fix**: the center ladder (dt==0) was a 1-tile hole through a 2-tile-thick floor slab — the flanking slab tiles (dt=+/-1) walled the dwarf in so floors above blocked the climb. WorldGen.BuildTower now clears dt in {-1,0,1} to Sky full-height (before the slab/furniture fill) → clean 3-wide open climb channel, ladder centered, alloy wall backing kept via SetWall. cityprobe Ladder ~2121.
+
+### 2026-07-14 doors / hose-rework / clouds / deep-caves batch
+
+- **Doors one piece**: Renderer DoorClosed now draws a continuous leaf (stiles + panel lines full-height) with the brass handle drawn ONCE — only on the bottom tile of the run (innerK not a door) — so a tall door reads as one door, not stacked panels each with a knob. Functionally already toggled as a whole run (SetDoorRun). Aliens already open doors: CanUseDoors (Civilian/Peacekeeper/Lizardman/Marauder/Pyro) is wired into GroundMove.
+

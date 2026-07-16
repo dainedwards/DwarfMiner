@@ -2470,9 +2470,11 @@ public static class SimTest
                 && Tiles.IsAnchored(TileKind.LizardBrick));
 
             // Melt is a separate rule: a lava flow (eruption / magma surge) pools on a glass
-            // roof without melting it, though the same soak eats a dirt control to nothing.
+            // roof without melting it, though the same soak eats a gravel control to nothing.
+            // (Gravel, not dirt: dirt left the meltable set 2026-07-16 — ground holds under
+            // a lava coat now.)
             StampBlock(2.6f, TileKind.CityGlass, wide: 2, tall: 3, out var glass);
-            StampBlock(3.4f, TileKind.Dirt, wide: 2, tall: 3, out var control);
+            StampBlock(3.4f, TileKind.Gravel, wide: 2, tall: 3, out var control);
             void PourLavaOn(List<(int r, int t)> b)
             {
                 var top = 0;

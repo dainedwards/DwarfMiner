@@ -41,3 +41,11 @@ Hooks: DM_RIGID=0 kill switch, DM_RIGIDTEST=1 hangs 3 demo slabs beside spawn (o
 
 Known gaps / v2 ideas: no body-body collision (bodies stack only via stamp), player can't stand on a live body (only push-out + damage), bodies sink through cell-sim dust piles (reads as heavy rock through powder), stamped TreeTrunk logs are choppable but IsFlora so they never re-collapse; DrawRigidBodies has no view culling (a 30k-cell mountain draws every cell while falling). "hazard: acid dissolves a soft tile" SimTest check is flaky (Random.Shared) — not a rigid regression; verified base commit + two green reruns.
 
+
+
+## Moved from the old noita-sim note (2026-07-16)
+
+### 2026-07-14 big 15-item combat/world/ecosystem batch (branch noita-sim)
+
+- **Cave-ins easier**: Physics loose-ground now crumbles unless below-solid OR both inner shoulders solid (was: needs all 3 empty); StoneCollapseBudget 192→256.
+

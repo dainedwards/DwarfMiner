@@ -430,3 +430,17 @@ band's radial envelope:
   bearing" is a HINT: a crust reservoir settling across its own cave floor lands under a lake
   bearing often enough to false-FAIL an otherwise 95/95-retained lake.
 
+
+
+## Moved from the old noita-sim note (2026-07-16)
+
+### 2026-07-14 zoom / eruption / lizard / flame / gem-embed follow-up
+
+- **Debug/scheduled eruption picks NEAREST volcano** to the player (AmbientDirector.TryBegin Eruption loops VolcanoVents for min-dist), not a random vent. Duration bumped 5-9s → 8-14s.
+- **Eruptions MUCH bigger** (were a 12-cell trickle): Game1 eruption tick now wells up a fat magma surge (3× SpawnInTile at Density² each = ~48 cells/frame that overflow the crater) AND SPEWS a fountain — 9-16 gobs/frame LaunchAtWorld'd up+out of the vent mouth (spread ±0.5rad, speed 150-210, arc over and rain lava down the flanks; note FlyMaxOutward=170 caps fountain height, that's fine) + smoke plume + EmitCinders + shake 0.4 + a low "collapse" rumble (minGap 0.5).
+
+### 2026-07-14 doors / hose-rework / clouds / deep-caves batch
+
+- **Cave networks reach the lower depths**: CarveWormTunnels minFrac 0.50→max(0.38, LavaFillFrac+0.08) — worms thread the lower crust now, still a safe margin above the lava fill line.
+- **SimTest**: delver site now also requires solid ground BELOW (the deeper caves left open space under some sites → delver fell instead of digging).
+

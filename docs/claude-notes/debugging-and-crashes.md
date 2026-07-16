@@ -63,3 +63,15 @@ Add one when a bug is stochastic; it converts luck into a test.
   have watched it report "dirty" on a known-bad case.
 - **`dotnet run` deadlocks against the auto-committer** — run the built dll for probes/tests.
 - **macOS has no `timeout`**: background the run, `sleep`, then `kill <pid>`.
+
+
+## Moved from the old noita-sim note (2026-07-16)
+
+### 2026-07-14 tree-toughness / red-flash / snow follow-up
+
+- **Test fix (not a regression)**: SimTest.RunSavePath() used a FLAT `.../DwarfMiner/run.sav` but RunSave.SavePath is slot-based (`SaveSlots.Dir(Active)/run.sav`); when a slot save exists, RunSave.Exists=true then the flat read threw FileNotFound and crashed the whole suite. Fixed RunSavePath() to use SaveSlots.Dir(SaveSlots.Active). (Exposed by leftover slot save from DM_AUTOSTART debug launches.)
+
+### 2026-07-15 jump/jet controls REVERTED to Space-only (user request; supersedes the 07-14 "W-jumps/Space-jets split")
+
+- **TRAP confirmed**: `hazard: acid dissolves a soft tile` is FLAKY by construction — Cells `_rng = new Random()` (time-seeded) + acid self-neutralising 2-in-3 per bite can spend the whole pour before the pinned floor tile breaks. Failed once, passed on rerun with identical code. Also: the auto-committer commits per-file WHILE working — `git stash push` mid-wave found almost nothing to stash; don't use stash-vs-HEAD as a control experiment here.
+

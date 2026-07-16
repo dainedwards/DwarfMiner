@@ -147,3 +147,11 @@ identically — not this branch); --lavaprobe small 1-5 tile escapes appear in B
 control (quench-spit slosh, probe has no hard FAIL); --oceanprobe ALL OK. Auto-committer
 sweeps WORKTREE branches too — descriptive commit needed `git reset --soft <base>` + recommit.
 
+
+
+## Moved from the old noita-sim note (2026-07-16)
+
+### 2026-07-14 zoom / eruption / lizard / flame / gem-embed follow-up
+
+- NOTE: perf test "steady-state cell tick under 6 ms" flakes to ~25ms when the machine is CPU-throttled from many back-to-back `dotnet run` invocations (warm-up hit 249ms/tick — physically impossible from a code change). No edit this session touches Cells.Update or the perf scenario (plain WorldGen.Generate(7) + lava/water). All ~350 other tests + cityprobe pass.
+

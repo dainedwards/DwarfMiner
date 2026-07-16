@@ -28,3 +28,11 @@ Character/equipment system added 2026-07-13 (branch noita-sim):
 
 Related: [noita-sim](noita-sim.md), [overworld-and-planets](overworld-and-planets.md), [lighting](lighting.md), [worldgen-caves-and-lava](worldgen-caves-and-lava.md)
 
+
+
+## Moved from the old noita-sim note (2026-07-16)
+
+### 2026-07-14 big combat/city/tools batch
+
+- **Item context menu two-step** (CharacterScreen): RMB item → EQUIP / UPGRADE > / DROP; clicking UPGRADE > opens the DETAIL (materials line from UpgradeInfo + CONFIRM/BACK) instead of applying immediately (`_ctxUpgrade` flag) — "see the cost before committing".
+
