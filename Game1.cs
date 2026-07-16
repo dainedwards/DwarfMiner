@@ -5973,6 +5973,9 @@ public sealed partial class DwarfMinerGame : Game
                     SamplerState.LinearClamp, null, null, null, _camera.View);
                 _run.Cells.DrawHotLiquids(_renderer, _particles);
                 _particles.DrawFluid(_renderer, Material.Fire);
+                // Eruption fountain grains join the hot field too: the molten tongue and
+                // the crater pool it rises from threshold into ONE goopy body.
+                _particles.DrawFluid(_renderer, Material.Lava);
                 _renderer.Batch.End();
             }
         }
