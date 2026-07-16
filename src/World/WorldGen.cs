@@ -1479,7 +1479,7 @@ public static class WorldGen
                 }
                 if (!interior) continue;
                 var n = planet.TilesAt(r);
-                foreach (var dt in stackalloc[] { -1, 1 })
+                for (var dt = -1; dt <= 1; dt += 2)
                 {
                     var t2 = ((t + dt) % n + n) % n;
                     if (!set.Contains(Planet.TileKey(r, t2))
