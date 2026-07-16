@@ -347,6 +347,7 @@ public static class Tiles
         TileKind.Emerald => new Color(120, 255, 160),
         TileKind.Voidstone => new Color(200, 120, 255),
         TileKind.FuelOre => new Color(120, 255, 190),
+        TileKind.Geyser => new Color(255, 224, 130),   // the lava core's furnace facet
         _ => Color.White,
     };
 
