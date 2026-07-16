@@ -1734,13 +1734,14 @@ public sealed class Particles
                 MaxLife = 1.3f,
                 Color = tone,
                 FadeColor = new Color(205, 75, 15),
-                Size = 2f + (float)_rng.NextDouble() * 1.2f,   // cone-scale blob footprint
+                Size = hot ? 0.7f : 1f,              // hose-normal grain (strand fallback)
                 GravityScale = -0.25f,               // buoyant: the plume keeps lifting
                 Drag = 1.1f,
                 CollideTiles = true,
                 LightRadius = hot ? 70f : i % 3 == 0 ? 34f : 0f,
                 LightColor = new Color(255, 170, 70),
                 Fluid = (byte)Material.Fire,
+                JetScale = 2f + (float)_rng.NextDouble() * 1.2f,   // cone-scale blob footprint
                 LandMat = ignites ? (byte)Material.Fire : (byte)0,
                 LandFuse = ignites ? (byte)(30 + _rng.Next(12)) : (byte)0,
                 LandSparks = ignites,
