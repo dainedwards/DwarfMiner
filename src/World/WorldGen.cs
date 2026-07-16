@@ -1561,7 +1561,7 @@ public static class WorldGen
     /// seeds themselves: the settle slosh crests a course into the lid, so a shaft or
     /// shoreline gap at lid level is a drain exactly like one at fill level.</summary>
     private static void PlugFluidBreaches(Planet planet, HashSet<long> lavaLid,
-        HashSet<long> acidLid, HashSet<long> waterLid)
+        HashSet<long> acidLid, HashSet<long> waterLid, bool plugWater)
     {
         // The same soft kinds ShellLavaBodies hardens: a MELTABLE tile is no barrier —
         // the crest ate straight through a grass-and-sand shoreline and drained anyway,
@@ -1611,7 +1611,7 @@ public static class WorldGen
         Plug(planet.AcidSeeds, acidLid, TileKind.Obsidian, melts: true);
         // Water last: it only fills Sky, so it can never overwrite the jackets above.
         // Only the surface BASINS — a crust reservoir's open neighbours are its own cave.
-        Plug(planet.LakeBasinSeeds, waterLid, TileKind.Dirt, melts: false);
+        //BISECT Plug(planet.LakeBasinSeeds, waterLid, TileKind.Dirt, melts: false);
     }
 
     /// <summary>Expand every fluid seed tile by the 2-tile jacket reach into
