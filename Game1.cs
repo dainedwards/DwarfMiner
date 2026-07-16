@@ -2287,7 +2287,8 @@ public sealed partial class DwarfMinerGame : Game
                 var n = _run.Planet.TilesAt(dSurf);
                 var t0 = (int)(dAng * n);
                 var span = Math.Max(2, (int)(0.05f / MathHelper.TwoPi * n));
-                var budget = Cells.Density * Cells.Density * 3;
+                // ONE tile's worth per frame — a slow, stately subsidence, not a flush.
+                var budget = Cells.Density * Cells.Density;
                 for (var off = -span; off <= span && budget > 0; off++)
                 {
                     var t = ((t0 + off) % n + n) % n;
