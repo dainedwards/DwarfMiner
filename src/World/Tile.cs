@@ -515,6 +515,9 @@ public static class Tiles
         TileKind.Granite => ("granite", 1),
         TileKind.Basalt => ("basalt", 1),
         TileKind.LavaRock => ("basalt", 1),   // same rock family — no new resource id to bank
+        // The geyser's yield is handled as a single physical Pickup when the whole node
+        // shatters (Game1.HandleGeyserBroken); this mapping is what that pickup credits.
+        TileKind.Geyser => ("lava_core", 1),
         TileKind.Obsidian => ("obsidian", 1),
         TileKind.PlanetCore => ("stone", 3),
         TileKind.Support => ("stone", 2),
