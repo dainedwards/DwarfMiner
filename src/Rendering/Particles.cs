@@ -58,6 +58,12 @@ public struct Particle
     /// <summary>Spark shed by the flame plume: rides the SAME turbulence pattern as the
     /// jet body (without joining the fluid coverage or shedding recursively).</summary>
     public bool JetSpark;
+    /// <summary>Fluid-blob footprint multiplier for SCALED-UP jets (the volcano's eruption
+    /// column and side spew; 0 = 1×). Deliberately its own field, NOT Size: the handheld
+    /// hoses (flamethrower, acid spewer) never set it, so their metaball rendering is
+    /// bit-identical no matter how the eruption effects are tuned — and Size keeps its
+    /// normal meaning for the strand-quad fallback when the composite is off.</summary>
+    public float JetScale;
     /// <summary>Weather-backdrop layer: drawn in the early pass BEFORE the cloud banks
     /// (see Game1's weather-backdrop Draw call), so rain/snow spawned inside a cloud has
     /// its origin hidden behind the puffs and visibly falls OUT of the bank. Everything
