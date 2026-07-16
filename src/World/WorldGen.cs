@@ -1714,9 +1714,12 @@ public static class WorldGen
 
             const float craterFrac = 0.30f;           // crater mouth as a fraction of the footprint
             var craterDepth = coneH * 0.45f;
-            var poolTop = coneH - 1.5f * S;            // fluid level BRIMS — barely below the rim
-                                                       // (settle slosh stays contained), so an
-                                                       // erupting pump overflows the lip fast
+            // Resting fill: 80% of the bowl — a visible fifth of the crater wall stands dry
+            // above the pool. Eruptions RAISE the level from here to 110–130% of the rim so
+            // the magma visibly climbs and bubbles over the sides; the eruption tick derives
+            // this exact geometry back from the vent ring (poolTop = 0.91·coneH — keep the
+            // two in sync or the runtime level math drifts).
+            var poolTop = coneH - craterDepth * 0.2f;
             var floorR = surfaceR + (int)(coneH - craterDepth);
 
             // The cone. Profile: full height at the rim (f = craterFrac), a near-linear
