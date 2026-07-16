@@ -2357,6 +2357,23 @@ public sealed partial class DwarfMinerGame : Game
                         foreach (var kv in kinds) kindList.Append($"{kv.Key}×{kv.Value} ");
                         Console.WriteLine("[erupt] solids engulfed in bowl above rest line: "
                             + (kinds.Count == 0 ? "none" : kindList.ToString()));
+                        // Positions too: edge-column hits are the pool's own wall jacket
+                        // (scan overhang); centre-column hits at one ring are a floating
+                        // slab — the artifact.
+                        for (var r = restRd; r <= Math.Min(levelR, _run.Planet.Rings - 1); r++)
+                        {
+                            var n2 = _run.Planet.TilesAt(r);
+                            var t0d = (int)(angF * n2);
+                            var half = Math.Max(3, (int)(0.07f / MathHelper.TwoPi * n2));
+                            for (var o = -half; o <= half; o++)
+                            {
+                                var k2 = _run.Planet.Get(r, ((t0d + o) % n2 + n2) % n2);
+                                if (k2 != TileKind.Sky)
+                                    Console.WriteLine($"[erupt]   solid {k2} at ring {r} "
+                                        + $"(rest {restRd}, rim ~{_run.Planet.SurfaceRing + (int)coneHrt}) "
+                                        + $"colOff {o}/{half}");
+                            }
+                        }
                     }
 
                     // FAR MODE: past ~2000 px the player cannot possibly see the show, so
