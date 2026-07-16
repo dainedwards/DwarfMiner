@@ -490,6 +490,15 @@ public sealed class Particles
                     c = Color.Lerp(c, new Color(48 * a / 255, 43 * a / 255, 44 * a / 255, a), k);
                 }
             }
+            // Volcano lava blobs MELT AWAY instead of popping: over the last 0.4s the
+            // coverage alpha ramps to zero — the metaball threshold shrinks the blob
+            // smoothly into nothing. ALPHA ONLY: the rgb stays the flat body colour
+            // (dimming it would stamp dark patches wherever a dying blob overlaps the
+            // pool — the fill blend REPLACES colour). Dozens of pooled globs popping
+            // per second read as flashing; this kills it.
+            if (!fire && p.JetScale > 1f && p.Life < 0.4f)
+                c = new Color(c.R, c.G, c.B,
+                    (byte)(c.A * MathHelper.Clamp(p.Life / 0.4f, 0f, 1f)));
             r.Batch.Draw(tex, p.Position, null, c, rot, org,
                 new Vector2(len / tex.Width, wid / tex.Height), SpriteEffects.None, 0f);
         }
