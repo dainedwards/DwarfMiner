@@ -3221,15 +3221,18 @@ public sealed class Cells
         foreach (var (key, site) in _bubbleSites)
         {
             if (_time - site.Seen > 1.2f) { _bubbleDead.Add(key); continue; }
-            if (_time - site.Since < 4f) continue;    // settled: still for a while first
             var hash = (key.cx * 73856093) ^ (key.cy * 19349663);
             var period = 3f + ((hash >> 8) & 255) / 255f * 6f;  // one blister per 3-9s
             var cycle = (_time + ((hash >> 16) & 255) / 255f * period) % period;
             const float swell = 1.8f;
+            // Settled: continuously verified still since selection, capped so a
+            // short-period site (selected at its epoch start, swell at period−1.8s)
+            // can still reach its own swell.
+            if (_time - site.Since < MathF.Min(4f, period - swell)) continue;
             var t01 = (cycle - (period - swell)) / swell;
             var up = new Vector2(MathF.Cos(site.Angle), MathF.Sin(site.Angle));
             var rot = site.Angle + MathHelper.PiOver2;
-            var wMax = radial * (15f + ((hash >> 5) & 7) * 3.6f); // span ×1.5 per user
+            var wMax = radial * (22.5f + ((hash >> 5) & 7) * 5.4f); // ×1.5 again per user
             // The wrap happened inside this sim step: POP. Sparks fly, and the burst
             // SLOSHES for real — one actual lava cell is thrown off the surface (it arcs
             // and splashes back in), so the pool itself reacts, not just the overlay.
