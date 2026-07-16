@@ -29,6 +29,11 @@ public static class LakeProbe
 
         // Only the SURFACE basins matter here (the crust reservoirs are flooded caves by
         // design): anything within a few rings of the surface ring.
+        var (seams, _, _) = WorldGen.CaveStrata(planet, def);
+        Console.WriteLine($"    crust: RingMin {Planet.RingMin}, surface radius " +
+                          $"{Planet.RingMin + planet.SurfaceRing}t, {planet.SurfaceRing} rings of it");
+        foreach (var (lo, hi) in seams) Console.WriteLine($"      strata seam {lo:0.0}-{hi:0.0}t");
+
         var lake = new HashSet<(int r, int t)>(planet.LakeBasinSeeds);
         var loR = int.MaxValue; var hiR = 0;
         foreach (var (r, _) in lake) { loR = Math.Min(loR, r); hiR = Math.Max(hiR, r); }
