@@ -107,7 +107,22 @@ public static class LavaProbe
             // Breach census: initial lava tiles whose INWARD or SIDEWAYS tile neighbour is
             // open Sky outside the body — an open drain mouth (the pool's upper surface is
             // Sky too, but that sits ABOVE, dr=+1, and is excluded).
+            // Geometry dump: where is everything?
+            var seedSet = new System.Collections.Generic.HashSet<(int, int)>(planet.LavaSeeds);
+            var loSeed = int.MaxValue; var hiSeed = 0;
+            foreach (var (sr, _) in planet.LavaSeeds)
+            { loSeed = Math.Min(loSeed, sr); hiSeed = Math.Max(hiSeed, sr); }
+            Console.WriteLine($"    surfaceRing {planet.SurfaceRing}, rings {planet.Rings}, " +
+                              $"radius {planet.Radius}t, LavaSeeds rings {loSeed}-{hiSeed}");
+            foreach (var (vx, vy, vAcid) in planet.VolcanoVents)
+            {
+                var vRel = planet.TileToWorld(vx, vy) - planet.Center;
+                Console.WriteLine($"    vent ({vx},{vy}) acid={vAcid} " +
+                                  $"bearing {MathF.Atan2(vRel.Y, vRel.X):0.000}");
+            }
+
             var mouths = new System.Collections.Generic.List<string>();
+            var mouthCount = 0;
             foreach (var (r, t) in initial)
             {
                 var n = planet.TilesAt(r);
@@ -117,12 +132,17 @@ public static class LavaProbe
                     if (r2 < 0 || r2 >= planet.Rings) continue;
                     var n2 = planet.TilesAt(r2);
                     var t2 = ((int)((t + 0.5f) / n * n2) + dtt % n2 + n2) % n2;
-                    if (planet.Get(r2, t2) == TileKind.Sky && !initial.Contains((r2, t2))
-                        && mouths.Count < 12)
-                        mouths.Add($"drain mouth: lava({r},{t}) -> Sky({r2},{t2}) dr={dr} dt={dtt}");
+                    if (planet.Get(r2, t2) != TileKind.Sky || initial.Contains((r2, t2))) continue;
+                    mouthCount++;
+                    if (mouths.Count < 12)
+                    {
+                        var bearing = (t + 0.5f) / n * MathF.Tau - MathF.PI;
+                        mouths.Add($"drain mouth: lava({r},{t}) bearing {bearing:0.000} " +
+                                   $"seed={seedSet.Contains((r, t))} -> Sky({r2},{t2}) dr={dr} dt={dtt}");
+                    }
                 }
             }
-            Console.WriteLine($"    drain mouths at load: {mouths.Count}");
+            Console.WriteLine($"    drain mouths at load: {mouthCount}");
             foreach (var s in mouths) Console.WriteLine("    " + s);
 
             const float step = 1f / 60f;
