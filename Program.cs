@@ -102,7 +102,8 @@ if (args.Length > 0 && args[0] == "--toppleprobe")
 // no focus theft. .NET's SetEnvironmentVariable writes a MANAGED copy only, so SDL's native
 // getenv would never see the hint — poke the real environment through libc, and do it before
 // the GraphicsDeviceManager in the game's constructor initialises SDL.
-if (Environment.GetEnvironmentVariable("DM_NOFOCUS") is { Length: > 0 } && OperatingSystem.IsMacOS())
+if (System.Environment.GetEnvironmentVariable("DM_NOFOCUS") is { Length: > 0 }
+    && System.OperatingSystem.IsMacOS())
     Native.setenv("SDL_MAC_BACKGROUND_APP", "1", 1);
 
 using var game = new DwarfMinerGame();
