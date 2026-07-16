@@ -3039,6 +3039,10 @@ public sealed partial class DwarfMinerGame : Game
     /// the cursor tools (DoMine) and the physical swing (TickSwing).</summary>
     private void OnTileBroken(int x, int y, TileKind bk, MiningTool tool)
     {
+        // The volcano's heart: breaking into the geyser node shatters the whole thing —
+        // one lava core pickup, and that volcano never erupts again. Its own path (no
+        // dust pile — the payout is the single physical core, not per-tile scrap).
+        if (bk == TileKind.Geyser) { HandleGeyserBroken(x, y); return; }
         if (Tiles.Drop(bk) is not null) _meta.TotalOreMined++;
         // Wrecking city architecture is noticed — each broken tower tile stokes the city's
         // anger a little; keep chewing through apartments and the militia turns on you.
