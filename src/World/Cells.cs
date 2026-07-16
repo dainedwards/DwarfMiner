@@ -553,6 +553,31 @@ public sealed class Cells
                 IgniteTile(ctx + dr, cty + da);
     }
 
+    /// <summary>Remove up to <paramref name="max"/> cells of one material from a polar
+    /// tile, top row first — the eruption's post-show subsidence (magma withdrawing back
+    /// down the tube lowers the crater pool to its resting line). Neighbours wake so the
+    /// remaining pool re-levels itself. Returns how many cells were removed.</summary>
+    public int DrainLiquidInTile(int tx, int ty, Material m, int max)
+    {
+        if (tx < 0 || tx >= Planet.Rings || max <= 0) return 0;
+        var removed = 0;
+        for (var dy = Density - 1; dy >= 0 && removed < max; dy--)
+        {
+            var cy = tx * Density + dy;
+            for (var dx = 0; dx < Density && removed < max; dx++)
+            {
+                var cx = ty * Density + dx;
+                var i = Idx(cx, cy);
+                if ((Material)_mat[i] != m) continue;
+                _mat[i] = 0;
+                ClearKinetics(i);
+                WakeNeighbors(cx, cy);
+                removed++;
+            }
+        }
+        return removed;
+    }
+
     /// <summary>Spawn cells inside the polar tile (tx = ring, ty = angle). Picks random sub-cells.</summary>
     public void SpawnInTile(int tx, int ty, Material m, int count)
     {
