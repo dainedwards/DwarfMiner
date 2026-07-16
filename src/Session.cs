@@ -95,6 +95,10 @@ public sealed class Session
     public float EruptionLeft;
     public float EruptionTotal;
     public int EruptionVent = -1;
+    /// <summary>How high this eruption drives the crater pool, as a fraction of the rim
+    /// (1.0 = level with the lip): rolled 1.1–1.3 per eruption, so the magma always crests
+    /// the rim and bubbles down the flanks — some eruptions just barely, some in sheets.</summary>
+    public float EruptionPeakFrac = 1.2f;
 
     public float SpawnTimer;
     public float FaunaTimer;
