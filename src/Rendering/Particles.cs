@@ -1831,11 +1831,13 @@ public sealed class Particles
                 GravityScale = 1.0f,
                 Drag = 0.4f,
                 CollideTiles = true,
-                LightRadius = hot ? 20f : i % 3 == 0 ? 9f : 0f,
+                // Landers ALWAYS glow — a molten glob coming down the flank sheds light,
+                // and the glow marks it out from the fountain body it left.
+                LightRadius = hot ? 20f : lander ? 10f : i % 3 == 0 ? 9f : 0f,
                 LightColor = new Color(255, 170, 70),
                 // Only the landers hand off: real Lava (a JetScale-scaled dollop — see
                 // the rest-stamp in Update) plus a touchdown spark splash, then the
-                // rest-rule fades them where they pooled.
+                // rest-rule pools them where they landed for a few seconds.
                 LandMat = CellFx && lander ? (byte)Material.Lava : (byte)0,
                 LandSparks = lander,
                 SmearMax = 17.6f,
