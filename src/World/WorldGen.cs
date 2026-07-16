@@ -1529,7 +1529,8 @@ public static class WorldGen
                 // stitch neighbouring worm systems into one continuous warren.
                 CarveWorm(planet, rng, pos,
                     heading + (rng.Next(2) == 0 ? 1f : -1f) * (0.8f + (float)rng.NextDouble()),
-                    length / 2, length > 80 ? 1 : 0, minFrac, hardFloorPx, localCeiling);
+                    length / 2, length > 80 ? 1 : 0, floorTiles, driftCeilTiles, hardFloorPx,
+                    localCeiling);
             }
         }
     }
