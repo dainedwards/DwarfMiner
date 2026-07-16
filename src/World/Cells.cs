@@ -1666,7 +1666,12 @@ public sealed class Cells
                 splashBar *= 0.35f;
             }
         }
-        if (impact > splashBar && _rng.Next(3) == 0
+        // Rain (and ceiling-drip) water never throws a ballistic rebound droplet: the crown
+        // beads read as fat drops bouncing back up off the puddle, which the user doesn't
+        // want. Waterfalls and poured lava still fizz — only atmospheric rain is muted.
+        var landSrc = _srcTile[i];
+        var rainDrop = _mat[i] == (byte)Material.Water && (landSrc == RainWaterSrc || landSrc == DripWaterSrc);
+        if (!rainDrop && impact > splashBar && _rng.Next(3) == 0
             && _flying.Count < MaxFlying && cy < Height - 1)
         {
             var (ucx, ucy) = OuterCell(cx, cy);
