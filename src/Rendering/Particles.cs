@@ -1820,9 +1820,9 @@ public sealed class Particles
     /// burning Fire with a fuse — the spew genuinely sets the slopes alight.</summary>
     public void EmitLavaSpew(Vector2 pos, Vector2 dir, float strength)
     {
-        var jetSpeed = 140f + strength * 90f;
+        var jetSpeed = 210f + strength * 130f;
         const float coneArc = 0.09f;          // a touch looser than the spewer's 0.041
-        for (var i = 0; i < 7; i++)
+        for (var i = 0; i < 8; i++)
         {
             if (_rng.Next(5) == 0) continue;
             var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
@@ -1837,12 +1837,15 @@ public sealed class Particles
             {
                 Position = pos + d * (float)_rng.NextDouble() * 2f,
                 Velocity = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)),
-                Life = 1.0f + (float)_rng.NextDouble() * 0.6f,
-                MaxLife = 1.6f,
+                Life = 1.2f + (float)_rng.NextDouble() * 0.6f,
+                MaxLife = 1.8f,
                 Color = tone,
                 FadeColor = new Color(165, 45, 15),
                 Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
-                GravityScale = HoseArcGravity,
+                // A volcano-scale ballistic arc, NOT the handheld hose's heavy 2.25: the
+                // rope launches from inside the pool and must clear the crater ledge at
+                // 45° before falling away down the flank.
+                GravityScale = 0.9f,
                 Drag = 0.9f,
                 CollideTiles = true,
                 LightRadius = hot ? 22f : i % 3 == 0 ? 9f : 0f,
