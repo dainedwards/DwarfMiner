@@ -262,7 +262,8 @@ public sealed class Particles
                 }
                 next = p.Position;
             }
-            else if (p.CollideTiles && cells != null && cells.LiquidAtWorld(next)
+            else if (p.CollideTiles && cells != null
+                     && cells.LiquidKindAtWorld(next) is not Material.Empty and var pool
                      && (p.Backdrop || !cells.LiquidAtWorld(p.Position)))
             {
                 // Liquid surface CROSSING (entering ANY pool — water, lava, acid, oil —
