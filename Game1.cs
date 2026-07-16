@@ -1994,85 +1994,116 @@ public sealed partial class DwarfMinerGame : Game
             var ventUp = _run.Planet.UpAt(ventPos);
             var ventRight = new Vector2(-ventUp.Y, ventUp.X);
 
-            // The GEYSER at the tube foot throbs: eruptions come in surges, not a constant
-            // gush. The pulse rides the countdown so peaks and lulls alternate ~every second.
+            // Three-act show. RUMBLE (~first 2s): the mountain shakes, ash puffs, sparks —
+            // the warning. MAIN: the geyser pumps in surges (a slow sine over the countdown),
+            // each surge peak a violent fountain. TAIL (~last 2s): dying spurts as the
+            // pressure gives out.
+            var elapsed = MathF.Max(0f, _run.EruptionTotal - _run.EruptionLeft);
+            var rumble = elapsed < 2.0f;
+            var tail = _run.EruptionLeft < 2.0f;
             var pulse = 0.5f + 0.5f * MathF.Sin(_run.EruptionLeft * 3.2f);
-            var peak = pulse > 0.55f;
+            if (tail) pulse *= _run.EruptionLeft * 0.5f;   // pressure dying out
+            var peak = !rumble && pulse > 0.55f;
 
-            // Trace the tube down to the geyser floor — walk straight inward from the vent
-            // through the primed bore until the lava-rock shell stops us. That well is where
-            // the magma is PUMPED from, so the whole column rises and overflows up top.
-            int gx = vx, gy = vy;
-            for (var step = 0; step < 60; step++)
+            if (rumble)
             {
-                var inner = _run.Planet.InnerNeighbour(gx, gy);
-                if (inner.x < 2 || _run.Planet.Get(inner.x, inner.y) != TileKind.Sky) break;
-                gx = inner.x; gy = inner.y;
+                // Build-up: no lava yet — the ground trembles harder and harder, the crater
+                // pool spits sparks, ash curls off the mouth. The player gets a beat to look.
+                var ramp = elapsed / 2.0f;
+                _run.Shake = MathF.Max(_run.Shake, 0.25f + ramp * 0.5f);
+                if (Random.Shared.Next(3) == 0)
+                    _run.Cells.SpawnInTile(Math.Min(vx + 4, _run.Planet.Rings - 1), vy,
+                        Material.Smoke, 6);
+                if (!vAcid) _particles.EmitLavaSparks(ventPos + ventUp * 3f, ventUp);
+                PlayAt("collapse", ventPos, 0.35f + ramp * 0.3f, pitch: -0.7f, minGap: 0.4f);
             }
-
-            // Pump at the geyser floor: dense magma wells up from the bottom and drives the
-            // column up the tube. Stronger on the surge peak.
-            var pumpN = peak ? 2 : 1;
-            for (var i = 0; i < pumpN; i++)
-                _run.Cells.SpawnInTile(
-                    Math.Clamp(gx + Random.Shared.Next(-1, 2), 2, _run.Planet.Rings - 1),
-                    gy + Random.Shared.Next(-1, 2), mat, Cells.Density * Cells.Density);
-            if (peak)
+            else
             {
-                // Jet a slug of magma straight up the bore so the pump visibly shoots the
-                // column toward the crater.
-                var geyserPos = _run.Planet.TileToWorld(gx, gy);
-                var geyserUp = _run.Planet.UpAt(geyserPos);
-                for (var i = 0; i < 6; i++)
-                    _run.Cells.LaunchAtWorld(geyserPos + geyserUp * 4f,
-                        geyserUp * (220f + (float)Random.Shared.NextDouble() * 120f)
-                        + new Vector2(-geyserUp.Y, geyserUp.X)
-                        * (((float)Random.Shared.NextDouble() - 0.5f) * 40f), mat);
-            }
-
-            // Fill the crater pool so it brims and overflows the rim, running down the flanks.
-            for (var i = 0; i < (peak ? 3 : 1); i++)
-                _run.Cells.SpawnInTile(
-                    Math.Clamp(vx + Random.Shared.Next(-1, 2), 1, _run.Planet.Rings - 1),
-                    vy + Random.Shared.Next(-1, 2), mat, Cells.Density * Cells.Density);
-
-            // SPEW: a tall fountain of molten gobs hurled up and out of the crater mouth,
-            // arcing over and raining lava down the slopes — far bigger on the surge peak.
-            var gobs = peak ? 18 + Random.Shared.Next(12) : 6 + Random.Shared.Next(5);
-            for (var i = 0; i < gobs; i++)
-            {
-                var spread = (float)(Random.Shared.NextDouble() - 0.5) * 1.1f;
-                var dir = ventUp * MathF.Cos(spread) + ventRight * MathF.Sin(spread);
-                var speed = (peak ? 220f : 150f) + (float)Random.Shared.NextDouble() * 120f;
-                _run.Cells.LaunchAtWorld(ventPos + ventUp * 6f, dir * speed, mat);
-            }
-
-            // Rim leak: low, near-horizontal gobs that spill over the crater lip and crawl
-            // down the outer slope, so lava visibly leaks over the rim of the cone.
-            if (peak)
-            {
-                var spills = 6 + Random.Shared.Next(6);
-                for (var i = 0; i < spills; i++)
+                // Trace the tube down to the geyser — walk straight inward from the vent
+                // through the primed bore until solid rock (the geyser node itself, or the
+                // well shell) stops us. That's where the magma is PUMPED from, so the whole
+                // column rises and overflows up top.
+                int gx = vx, gy = vy;
+                for (var step = 0; step < 90; step++)
                 {
-                    var side = Random.Shared.Next(2) == 0 ? -1f : 1f;
-                    var a = 0.75f + (float)Random.Shared.NextDouble() * 0.5f;   // mostly sideways
-                    var dir = ventUp * MathF.Cos(a) + ventRight * (side * MathF.Sin(a));
-                    var speed = 90f + (float)Random.Shared.NextDouble() * 70f;
-                    _run.Cells.LaunchAtWorld(ventPos + ventUp * 4f, dir * speed, mat);
+                    var inner = _run.Planet.InnerNeighbour(gx, gy);
+                    if (inner.x < 2 || _run.Planet.Get(inner.x, inner.y) != TileKind.Sky) break;
+                    gx = inner.x; gy = inner.y;
                 }
-            }
-            // Molten rock bombs flung out of the throat — glowing scoria chunks that arc
-            // over and litter the slopes (lava craters only; acid vents don't spit rock).
-            if (peak && !vAcid)
-                _particles.EmitLavaChunks(ventPos + ventUp * 8f, ventUp, 5 + Random.Shared.Next(5));
 
-            // Ash plume, glowing cinders spat from the fountain, and a rolling rumble.
-            if (Random.Shared.Next(2) == 0)
-                _run.Cells.SpawnInTile(Math.Min(vx + 4, _run.Planet.Rings - 1), vy,
-                    Material.Smoke, peak ? 14 : 8);
-            _particles.EmitCinders(ventPos + ventUp * 10f, ventUp * 90f, peak ? 10 : 5, 140f);
-            _run.Shake = MathF.Max(_run.Shake, peak ? 0.85f : 0.4f);
-            PlayAt("collapse", ventPos, peak ? 0.7f : 0.4f, pitch: -0.5f, minGap: 0.5f);
+                // Pump at the geyser: dense magma wells off the node and drives the column
+                // up the tube. Stronger on the surge peak.
+                var pumpN = peak ? 2 : 1;
+                for (var i = 0; i < pumpN; i++)
+                    _run.Cells.SpawnInTile(
+                        Math.Clamp(gx + Random.Shared.Next(-1, 2), 2, _run.Planet.Rings - 1),
+                        gy + Random.Shared.Next(-1, 2), mat, Cells.Density * Cells.Density);
+                if (peak)
+                {
+                    // Jet a slug of magma straight up the bore so the pump visibly shoots
+                    // the column toward the crater.
+                    var geyserPos = _run.Planet.TileToWorld(gx, gy);
+                    var geyserUp = _run.Planet.UpAt(geyserPos);
+                    for (var i = 0; i < 6; i++)
+                        _run.Cells.LaunchAtWorld(geyserPos + geyserUp * 4f,
+                            geyserUp * (220f + (float)Random.Shared.NextDouble() * 120f)
+                            + new Vector2(-geyserUp.Y, geyserUp.X)
+                            * (((float)Random.Shared.NextDouble() - 0.5f) * 40f), mat);
+                }
+
+                // Fill the crater pool so it brims and overflows the rim, running down the
+                // flanks (the pool already sits barely below the lip — see CarveVolcanoes).
+                for (var i = 0; i < (peak ? 3 : 1); i++)
+                    _run.Cells.SpawnInTile(
+                        Math.Clamp(vx + Random.Shared.Next(-1, 2), 1, _run.Planet.Rings - 1),
+                        vy + Random.Shared.Next(-1, 2), mat, Cells.Density * Cells.Density);
+
+                // The FOUNTAIN BODY: goopy metaball droplets riding the surge — one
+                // connected molten tongue standing out of the crater, fused with the pool
+                // (lava only: the acid crater keeps its own spewer-green pool identity).
+                if (!vAcid)
+                    _particles.EmitLavaFountain(ventPos + ventUp * 5f, ventUp,
+                        MathF.Min(1f, pulse + (peak ? 0.35f : 0f)));
+
+                // ...and the MASS: real lava gobs hurled up and out of the crater mouth,
+                // arcing over and raining down the slopes — far bigger on the surge peak.
+                var gobs = peak ? 18 + Random.Shared.Next(12) : 5 + Random.Shared.Next(4);
+                for (var i = 0; i < gobs; i++)
+                {
+                    var spread = (float)(Random.Shared.NextDouble() - 0.5) * 1.1f;
+                    var dir = ventUp * MathF.Cos(spread) + ventRight * MathF.Sin(spread);
+                    var speed = (peak ? 220f : 150f) + (float)Random.Shared.NextDouble() * 120f;
+                    _run.Cells.LaunchAtWorld(ventPos + ventUp * 6f, dir * speed, mat);
+                }
+
+                // Rim leak: low, near-horizontal gobs that spill over the crater lip and
+                // crawl down the outer slope, so lava visibly leaks over the rim.
+                if (peak)
+                {
+                    var spills = 6 + Random.Shared.Next(6);
+                    for (var i = 0; i < spills; i++)
+                    {
+                        var side = Random.Shared.Next(2) == 0 ? -1f : 1f;
+                        var a = 0.75f + (float)Random.Shared.NextDouble() * 0.5f;  // mostly sideways
+                        var dir = ventUp * MathF.Cos(a) + ventRight * (side * MathF.Sin(a));
+                        var speed = 90f + (float)Random.Shared.NextDouble() * 70f;
+                        _run.Cells.LaunchAtWorld(ventPos + ventUp * 4f, dir * speed, mat);
+                    }
+                }
+                // Molten rock bombs flung out of the throat — glowing scoria chunks that
+                // arc over and litter the slopes (acid vents don't spit rock).
+                if (peak && !vAcid)
+                    _particles.EmitLavaChunks(ventPos + ventUp * 8f, ventUp,
+                        5 + Random.Shared.Next(5));
+
+                // Ash plume, glowing cinders spat from the fountain, and a rolling rumble.
+                if (Random.Shared.Next(2) == 0)
+                    _run.Cells.SpawnInTile(Math.Min(vx + 4, _run.Planet.Rings - 1), vy,
+                        Material.Smoke, peak ? 14 : 8);
+                _particles.EmitCinders(ventPos + ventUp * 10f, ventUp * 90f, peak ? 10 : 5, 140f);
+                _run.Shake = MathF.Max(_run.Shake, peak ? 0.85f : 0.4f);
+                PlayAt("collapse", ventPos, peak ? 0.7f : 0.4f, pitch: -0.5f, minGap: 0.5f);
+            }
         }
 
         // Population upkeep — cave dwellers, surface herds, sky flyers (see SpawnDirector).
