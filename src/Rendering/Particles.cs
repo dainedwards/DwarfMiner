@@ -1874,7 +1874,7 @@ public sealed class Particles
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 1.4f;
             var dir = up * MathF.Cos(spread) + right * MathF.Sin(spread);
-            var speed = 120f + (float)_rng.NextDouble() * 170f;
+            var speed = 150f + (float)_rng.NextDouble() * 190f;
             var hot = _rng.Next(3) != 0;
             _list.Add(new Particle
             {
