@@ -680,9 +680,15 @@ public sealed class Cells
                 if (ax >= 0 && ax < Planet.Rings && Planet.Get(ax, ay) == TileKind.Sky)
                     SpawnInTile(ax, ay, Material.Fire, 1);
             }
-            // Spread: one deterministic wavefront step over the fuel graph, diagonals
-            // included, the moment this tile has been alight past the delay.
-            if (clock < BurnSpreadDelay && nc >= BurnSpreadDelay)
+            // Spread: retried THROUGHOUT the blaze, not a one-shot crossing. The one-shot
+            // version wasted its only attempt whenever a neighbour couldn't ignite at
+            // that exact tick — chiefly the registry cap during a big blaze — leaving
+            // adjacent fuel permanently unlit (uneven burns, stalled waves, and long-
+            // lived flame cells "burning forever" beside tiles they could never hand
+            // off). Retrying is idempotent (already-burning neighbours are one dict hit)
+            // and heals as burn-outs free cap space; resumed clocks from re-stamped
+            // burning rigid chunks spread too, since there's no crossing to miss.
+            if (nc >= BurnSpreadDelay && _rng.Next(18) == 0)
                 for (var dr = -1; dr <= 1; dr++)
                     for (var da = -1; da <= 1; da++)
                     {
