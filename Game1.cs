@@ -2115,37 +2115,32 @@ public sealed partial class DwarfMinerGame : Game
                     _particles.EmitLavaFountain(spoutPos + ventUp * 5f, ventUp,
                         MathF.Min(1f, pulse + (peak ? 0.35f : 0f)));
 
-                // ...and the MASS: real lava gobs hurled up off the pool, arcing out of
-                // the crater mouth and raining down the slopes — far bigger on the peak.
-                var gobs = peak ? 18 + Random.Shared.Next(12) : 5 + Random.Shared.Next(4);
+                // ...and the MASS: real lava gobs hurled up out of the magma, bursting
+                // through the surface, arcing out of the crater mouth and raining down
+                // the slopes — far bigger on the peak. Speeds carry them up from the
+                // submerged spout and clear over the rim.
+                var gobs = peak ? 22 + Random.Shared.Next(14) : 6 + Random.Shared.Next(5);
                 for (var i = 0; i < gobs; i++)
                 {
                     var spread = (float)(Random.Shared.NextDouble() - 0.5) * 1.1f;
                     var dir = ventUp * MathF.Cos(spread) + ventRight * MathF.Sin(spread);
-                    var speed = (peak ? 240f : 170f) + (float)Random.Shared.NextDouble() * 120f;
+                    var speed = (peak ? 280f : 200f) + (float)Random.Shared.NextDouble() * 130f;
                     _run.Cells.LaunchAtWorld(spoutPos + ventUp * 6f, dir * speed, mat);
                 }
 
-                // SIDE SPEWERS: once the pool has crested the rim, two scaled-up spitter
-                // jets at the crater's edges hurl connected lava ropes out and down the
-                // flanks — the "spewing out of the sides" read. Strength grows as the
-                // level climbs past the lip and rides the surge pulse.
-                if (!vAcid && levelFrac > 0.95f)
+                // SIDE SPOUTS: two scaled-up spitter jets from the SAME submerged origin,
+                // angled ±45° — twin lava ropes bursting out of the pool and arcing over
+                // the ledge of the crater to rain down the flanks. On for the whole main
+                // act, breathing with the surge and hardest once the pool crests the rim.
+                if (!vAcid)
                 {
-                    var spew = MathF.Min(1f, (levelFrac - 0.95f) / 0.25f)
-                             * (0.5f + 0.5f * pulse);
-                    // Rim geometry off the reconstructed cone: the lip sits ~0.09·coneH
-                    // above the vent; the crater mouth half-width is ~0.045 rad of arc.
-                    var rimLift = (coneHrt * 0.09f + 1f) * Planet.TileSize;
-                    var rimRadPx = (Planet.RingMin + _run.Planet.SurfaceRing + coneHrt)
-                                 * Planet.TileSize;
-                    var rimHalf = rimRadPx * 0.045f;
+                    var spew = MathF.Min(1f,
+                        0.35f + 0.65f * pulse + (levelFrac > 1f ? 0.2f : 0f));
+                    const float side45 = 0.785f;   // ~45° off the local up
                     for (var s = -1; s <= 1; s += 2)
                     {
-                        var epos = ventPos + ventUp * rimLift + ventRight * (s * rimHalf);
-                        // Angled out over the lip: mostly sideways, a little lift.
-                        var edir = ventUp * MathF.Cos(1.05f) + ventRight * (s * MathF.Sin(1.05f));
-                        _particles.EmitLavaSpew(epos, edir, spew);
+                        var edir = ventUp * MathF.Cos(side45) + ventRight * (s * MathF.Sin(side45));
+                        _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
                     }
                 }
 
