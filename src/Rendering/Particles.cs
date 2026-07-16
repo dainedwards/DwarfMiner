@@ -573,7 +573,7 @@ public sealed class Particles
                     var cov = MathHelper.Lerp(1f, 0.55f, age * age)
                             * (0.92f + 0.08f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f));
                     if (age > 0.7f) cov *= 1f - (age - 0.7f) / 0.3f * 0.85f;
-                    c = new Color((byte)48, (byte)43, (byte)44,
+                    c = new Color((byte)255, (byte)0, (byte)0,   // TEMP DEBUG: loud red
                         (byte)(255 * MathHelper.Clamp(cov, 0f, 1f)));
                 }
                 else
