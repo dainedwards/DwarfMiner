@@ -234,6 +234,11 @@ public sealed class Particles
                     // the cinder rule: lit debris cools in place, dull debris vanishes.
                     p.Life = MathF.Min(p.Life,
                         p.Fluid == (byte)Material.Fire || p.JetSpark ? 0.1f
+                        // Volcano-scale fluid blobs (JetScale carriers): a landed glob
+                        // POOLS for a few seconds as a cooling molten puddle before it
+                        // melts away — the plain 0.15s vanish read as the glob
+                        // disappearing the instant it touched down.
+                        : p.JetScale > 1f ? 2.5f
                         : p.LightRadius > 0f ? 1.4f : 0.15f);
                     // Handoff on rest: the particle's persistent half enters the cell sim
                     // (a landed cinder becomes real fire). Once only.
