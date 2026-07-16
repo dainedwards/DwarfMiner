@@ -233,8 +233,10 @@ public sealed class Planet
 
     /// <summary>Playable ring count for a planet of the given size scale — shared by world
     /// gen and the run-save loader so restored planets get matching geometry.</summary>
+    /// <remarks>The 190 floor only binds below scale 0.475 — every campaign world sits at
+    /// 0.65+ (PlanetGen), so in practice it's the QA rig's floor alone.</remarks>
     public static int RingsFor(float sizeScale) =>
-        Math.Max(240, (int)MathF.Round(StandardRings * sizeScale));
+        Math.Max(190, (int)MathF.Round(StandardRings * sizeScale));
 
     private readonly TileKind[] _tiles;
     private readonly byte[] _damage;
