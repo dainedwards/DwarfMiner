@@ -362,65 +362,77 @@ public static class SimTest
     {
         // The suite runs with vegetation OFF globally (clean surfaces for the mechanic
         // tests) — this test is ABOUT the vegetation placement, so re-enable it here.
-        // Verdant: real fauna census (debug is NoFauna) plus lakes and acid pools.
+        // Verdant: real fauna census plus water lakes; debug: the lava lake and acid
+        // pools (its def is NoFauna, so only the flora half applies there).
         var prevVeg = WorldGen.ScatterVegetation;
         WorldGen.ScatterVegetation = true;
-        Session run;
-        try { run = DwarfMinerGame.BuildSessionWorld(World.PlanetDefs.ById("verdant")); }
-        finally { WorldGen.ScatterVegetation = prevVeg; }
-        var planet = run.Planet;
-        var cells = run.Cells;
-
-        var fluid = new HashSet<long>();
-        foreach (var (r, t) in planet.WaterSeeds) fluid.Add(Planet.TileKey(r, t));
-        foreach (var (r, t) in planet.LavaSeeds) fluid.Add(Planet.TileKey(r, t));
-        foreach (var (r, t) in planet.AcidSeeds) fluid.Add(Planet.TileKey(r, t));
-
-        var wetTrees = 0;
-        foreach (var tree in planet.Trees)
+        try
         {
-            var r = tree.GroundR + 1;
-            if (r >= planet.Rings) continue;
-            var n = planet.TilesAt(r);
-            var t = (int)((tree.Angle / MathHelper.TwoPi + 1f) % 1f * n);
-            if (fluid.Contains(Planet.TileKey(r, t))) wetTrees++;
-        }
-        Check($"fluid: no tree planted in a pour basin ({planet.Trees.Count} trees, {wetTrees} wet)",
-            planet.Trees.Count > 0 && wetTrees == 0);
-
-        var flora = 0;
-        var wetFlora = 0;
-        for (var r = 0; r < planet.Rings; r++)
-        {
-            var n = planet.TilesAt(r);
-            for (var t = 0; t < n; t++)
+            foreach (var id in new[] { "verdant", "debug" })
             {
-                var k = planet.Get(r, t);
-                if (k is not (TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
-                    or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom)) continue;
-                flora++;
-                if (fluid.Contains(Planet.TileKey(r, t))) wetFlora++;
+                var run = DwarfMinerGame.BuildSessionWorld(World.PlanetDefs.ById(id));
+                var planet = run.Planet;
+                var cells = run.Cells;
+
+                var fluid = new HashSet<long>();
+                foreach (var (r, t) in planet.WaterSeeds) fluid.Add(Planet.TileKey(r, t));
+                foreach (var (r, t) in planet.LavaSeeds) fluid.Add(Planet.TileKey(r, t));
+                foreach (var (r, t) in planet.AcidSeeds) fluid.Add(Planet.TileKey(r, t));
+
+                var wetTrees = 0;
+                foreach (var tree in planet.Trees)
+                {
+                    var r = tree.GroundR + 1;
+                    if (r >= planet.Rings) continue;
+                    var n = planet.TilesAt(r);
+                    var t = (int)((tree.Angle / MathHelper.TwoPi + 1f) % 1f * n);
+                    if (fluid.Contains(Planet.TileKey(r, t))) wetTrees++;
+                }
+                Check($"fluid/{id}: no tree planted in a pour basin "
+                    + $"({planet.Trees.Count} trees, {wetTrees} wet)",
+                    planet.Trees.Count > 0 && wetTrees == 0);
+
+                var flora = 0;
+                var wetFlora = 0;
+                for (var r = 0; r < planet.Rings; r++)
+                {
+                    var n = planet.TilesAt(r);
+                    for (var t = 0; t < n; t++)
+                    {
+                        var k = planet.Get(r, t);
+                        if (k is not (TileKind.Fernleaf or TileKind.Frostcap
+                            or TileKind.Emberbloom or TileKind.Rustbramble
+                            or TileKind.Vitrilily or TileKind.Geobloom)) continue;
+                        flora++;
+                        if (fluid.Contains(Planet.TileKey(r, t))) wetFlora++;
+                    }
+                }
+                Check($"fluid/{id}: no ground flora inside a pour basin "
+                    + $"({flora} plants, {wetFlora} wet)", wetFlora == 0);
+
+                if (run.Def.NoFauna) continue;
+
+                // Census fauna: a couple of cells of shore slosh is liquid behaviour, not
+                // a bad spawn — standing IN a pool means many hazard cells in body reach.
+                var landChecked = 0;
+                var soaked = 0;
+                foreach (var c in run.Creatures)
+                {
+                    if (c.IsWaterKind || c.Swims) continue;
+                    landChecked++;
+                    var probe = c.Radius + 1f;
+                    if (!c.ImmuneTo(Material.Water)
+                        && cells.CountWaterNear(c.Position, probe) > 6) soaked++;
+                    var (lava, acid, _, _) = cells.SampleHazardsNear(c.Position, probe);
+                    if (lava > 6 && !c.ImmuneTo(Material.Lava)) soaked++;
+                    if (acid > 6 && !c.ImmuneTo(Material.Acid)) soaked++;
+                }
+                Check($"fluid/{id}: census leaves no land creature in a pool "
+                    + $"({landChecked} land, {soaked} soaked)",
+                    landChecked > 0 && soaked == 0);
             }
         }
-        Check($"fluid: no ground flora inside a pour basin ({flora} plants, {wetFlora} wet)",
-            wetFlora == 0);
-
-        // Census fauna: a couple of cells of shore slosh is liquid behaviour, not a bad
-        // spawn — standing IN a pool means many hazard cells in body reach.
-        var landChecked = 0;
-        var soaked = 0;
-        foreach (var c in run.Creatures)
-        {
-            if (c.IsWaterKind || c.Swims) continue;
-            landChecked++;
-            var probe = c.Radius + 1f;
-            if (!c.ImmuneTo(Material.Water) && cells.CountWaterNear(c.Position, probe) > 6) soaked++;
-            var (lava, acid, _, _) = cells.SampleHazardsNear(c.Position, probe);
-            if (lava > 6 && !c.ImmuneTo(Material.Lava)) soaked++;
-            if (acid > 6 && !c.ImmuneTo(Material.Acid)) soaked++;
-        }
-        Check($"fluid: census leaves no land creature in a pool ({landChecked} land, {soaked} soaked)",
-            landChecked > 0 && soaked == 0);
+        finally { WorldGen.ScatterVegetation = prevVeg; }
     }
 
     /// <summary>The living tree ecosystem: a planted tree raises a slender trunk and threads
