@@ -2091,29 +2091,59 @@ public sealed partial class DwarfMinerGame : Game
                             mat, Cells.Density * Cells.Density);
                 }
 
+                // THE SPOUT stands on the POOL SURFACE, deep inside the bowl — not at the
+                // vent ring near the lip. It climbs with the magma as the level rises.
+                var spoutR = surfR >= 0 ? Math.Min(surfR + 1, _run.Planet.Rings - 1) : vx;
+                var spoutPos = surfR >= 0
+                    ? _run.Planet.TileToWorld(spoutR, (int)(angF * _run.Planet.TilesAt(spoutR)))
+                    : ventPos;
+
                 // THE COLUMN: the flamethrower jet at volcano scale — a roaring pillar of
-                // fire standing out of the crater centre, breathing with the surge (lava
+                // fire standing out of the molten pool, breathing with the surge (lava
                 // only; an acid vent has no burning column).
                 if (!vAcid)
-                    _particles.EmitEruptionJet(ventPos + ventUp * 4f, ventUp,
+                    _particles.EmitEruptionJet(spoutPos + ventUp * 4f, ventUp,
                         MathF.Min(1f, pulse + (peak ? 0.3f : 0f)));
 
                 // The FOUNTAIN BODY: goopy metaball droplets riding the surge — one
-                // connected molten tongue standing out of the crater, fused with the pool
+                // connected molten tongue standing out of the pool, fused with it
                 // (lava only: the acid crater keeps its own spewer-green pool identity).
                 if (!vAcid)
-                    _particles.EmitLavaFountain(ventPos + ventUp * 5f, ventUp,
+                    _particles.EmitLavaFountain(spoutPos + ventUp * 5f, ventUp,
                         MathF.Min(1f, pulse + (peak ? 0.35f : 0f)));
 
-                // ...and the MASS: real lava gobs hurled up and out of the crater mouth,
-                // arcing over and raining down the slopes — far bigger on the surge peak.
+                // ...and the MASS: real lava gobs hurled up off the pool, arcing out of
+                // the crater mouth and raining down the slopes — far bigger on the peak.
                 var gobs = peak ? 18 + Random.Shared.Next(12) : 5 + Random.Shared.Next(4);
                 for (var i = 0; i < gobs; i++)
                 {
                     var spread = (float)(Random.Shared.NextDouble() - 0.5) * 1.1f;
                     var dir = ventUp * MathF.Cos(spread) + ventRight * MathF.Sin(spread);
-                    var speed = (peak ? 220f : 150f) + (float)Random.Shared.NextDouble() * 120f;
-                    _run.Cells.LaunchAtWorld(ventPos + ventUp * 6f, dir * speed, mat);
+                    var speed = (peak ? 240f : 170f) + (float)Random.Shared.NextDouble() * 120f;
+                    _run.Cells.LaunchAtWorld(spoutPos + ventUp * 6f, dir * speed, mat);
+                }
+
+                // SIDE SPEWERS: once the pool has crested the rim, two scaled-up spitter
+                // jets at the crater's edges hurl connected lava ropes out and down the
+                // flanks — the "spewing out of the sides" read. Strength grows as the
+                // level climbs past the lip and rides the surge pulse.
+                if (!vAcid && levelFrac > 0.95f)
+                {
+                    var spew = MathF.Min(1f, (levelFrac - 0.95f) / 0.25f)
+                             * (0.5f + 0.5f * pulse);
+                    // Rim geometry off the reconstructed cone: the lip sits ~0.09·coneH
+                    // above the vent; the crater mouth half-width is ~0.045 rad of arc.
+                    var rimLift = (coneHrt * 0.09f + 1f) * Planet.TileSize;
+                    var rimRadPx = (Planet.RingMin + _run.Planet.SurfaceRing + coneHrt)
+                                 * Planet.TileSize;
+                    var rimHalf = rimRadPx * 0.045f;
+                    for (var s = -1; s <= 1; s += 2)
+                    {
+                        var epos = ventPos + ventUp * rimLift + ventRight * (s * rimHalf);
+                        // Angled out over the lip: mostly sideways, a little lift.
+                        var edir = ventUp * MathF.Cos(1.05f) + ventRight * (s * MathF.Sin(1.05f));
+                        _particles.EmitLavaSpew(epos, edir, spew);
+                    }
                 }
 
                 // Rim leak: low, near-horizontal gobs that spill over the crater lip and
