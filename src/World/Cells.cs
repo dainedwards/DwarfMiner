@@ -3182,7 +3182,14 @@ public sealed class Cells
         foreach (var (cx, cy) in _hotSurface)
         {
             var hash = (cx * 73856093) ^ (cy * 19349663);
-            if ((hash & 127) != 0) continue;          // ~1 in 128 surface cells is a site
+            // Selection RE-ROLLS every cycle: the eligibility hash folds in an epoch
+            // counter aligned to this cell's own period+phase, which increments exactly
+            // at the pop — so a spot hosts one full quiet-swell-pop cycle and the next
+            // blister rolls somewhere else, instead of the same cells bubbling forever.
+            var period = 3f + ((hash >> 8) & 255) / 255f * 6f;
+            var phase = ((hash >> 16) & 255) / 255f * period;
+            var epoch = (int)((_time + phase) / period);
+            if (((hash ^ (epoch * unchecked((int)0x9E3779B1))) & 127) != 0) continue;
             var deep = _travel[Idx(cx, cy)] == 0f;
             var (px, py) = (cx, cy);
             for (var d = 0; d < 16 && deep; d++)
