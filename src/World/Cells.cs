@@ -3421,7 +3421,8 @@ public sealed class Cells
             var period = 3f + ((hash >> 8) & 255) / 255f * 6f;
             var phase = ((hash >> 16) & 255) / 255f * period;
             var epoch = (int)((_time + phase) / period);
-            if (((hash ^ (epoch * unchecked((int)0x9E3779B1))) & 127) != 0) continue;
+            // & 63 (was 127): twice the eligible sites — a livelier simmer, per user.
+            if (((hash ^ (epoch * unchecked((int)0x9E3779B1))) & 63) != 0) continue;
             var deep = _travel[Idx(cx, cy)] == 0f;
             var (px, py) = (cx, cy);
             for (var d = 0; d < 16 && deep; d++)
