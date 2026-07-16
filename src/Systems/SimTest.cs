@@ -360,7 +360,14 @@ public static class SimTest
     /// lake" and "herd spawned on the lava lake bed" classes.</summary>
     private static void TestFluidContainment()
     {
-        var run = DwarfMinerGame.BuildSessionWorld(World.PlanetDefs.ById("debug"));
+        // The suite runs with vegetation OFF globally (clean surfaces for the mechanic
+        // tests) — this test is ABOUT the vegetation placement, so re-enable it here.
+        // Verdant: real fauna census (debug is NoFauna) plus lakes and acid pools.
+        var prevVeg = WorldGen.ScatterVegetation;
+        WorldGen.ScatterVegetation = true;
+        Session run;
+        try { run = DwarfMinerGame.BuildSessionWorld(World.PlanetDefs.ById("verdant")); }
+        finally { WorldGen.ScatterVegetation = prevVeg; }
         var planet = run.Planet;
         var cells = run.Cells;
 
