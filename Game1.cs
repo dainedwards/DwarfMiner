@@ -1528,6 +1528,9 @@ public sealed partial class DwarfMinerGame : Game
 
     protected override void Update(GameTime gameTime)
     {
+        // First frame, not Initialize: MonoGame's run loop shows the window itself once it
+        // starts, which is AFTER Initialize — a hide any earlier is simply undone.
+        if (_noFocus && !_windowHidden) { _windowHidden = true; HideWindow(); }
         _updSw.Restart();
         UpdateFrame(gameTime);
         _updSw.Stop();
