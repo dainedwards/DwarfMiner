@@ -756,7 +756,7 @@ public static class WorldGen
         // (noise caves included — they run in the tile pass, before any keep-out exists)
         // opened against a to-be-poured lava/acid body is plugged back with the barrier
         // material. Runs LAST so no later carve can undo it.
-        PlugFluidBreaches(planet, lavaLid, acidLid, waterLid);
+        PlugFluidBreaches(planet, lavaLid, acidLid, waterLid, plugWater: def.LakeScale <= 2.5f);
 
         // The prospector's jackpot: the odd RICH gold/silver vein — a solid ribbon of ore
         // far denser than the ambient scatter (which runs deliberately lean, gold most of
@@ -1627,7 +1627,7 @@ public static class WorldGen
     /// undercutting a lake bed drains the lake into the tunnel network at load, and a worm
     /// through an oil sump empties it the same way — the pockets are meant to be FOUND, so
     /// the only thing that should open one is a pickaxe.</summary>
-    private static void BuildFluidKeepOut(Planet planet)
+    private static void BuildFluidKeepOut(Planet planet, PlanetDef def)
     {
         void Halo(List<(int x, int y)> seeds)
         {
