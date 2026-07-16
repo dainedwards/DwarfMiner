@@ -123,7 +123,7 @@ public static class LavaProbe
                 // ON the geyser node; anything else names the solid kind that plugs the tube
                 // — the "tube never reached the bowl" class of bug shows up right here.
                 int gx = vx, gy = vy;
-                for (var step = 0; step < 120; step++)
+                for (var walk = 0; walk < 120; walk++)
                 {
                     var inner = planet.InnerNeighbour(gx, gy);
                     if (inner.x < 2 || planet.Get(inner.x, inner.y) != TileKind.Sky) break;
