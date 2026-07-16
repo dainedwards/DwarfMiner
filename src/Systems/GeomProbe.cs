@@ -1,0 +1,78 @@
+using System;
+using DwarfMiner.World;
+
+namespace DwarfMiner.Systems;
+
+/// <summary>
+/// Diagnostic (invoked via `--geomprobe`): two jobs, both about the underground's radial
+/// layout. It prints a HASH of every tile on a set of fixed-seed worlds — run it either side
+/// of a worldgen refactor and any world whose hash moved is a world whose layout you changed
+/// — and an air histogram by depth below the surface, which is what the upper worm band, the
+/// stratum seam and the deep strata actually look like from the player's side.
+/// </summary>
+public static class GeomProbe
+{
+    public static void Run()
+    {
+        foreach (var (id, seed) in new[]
+                 { ("verdant", 77), ("frost", 5), ("ember", 9), ("slag", 11), ("hollow", 13) })
+            Dump(PlanetDefs.ById(id), seed);
+
+        // The generated ocean worlds aren't in the classic chain; take one from the campaign
+        // generator the same way OceanProbe does.
+        foreach (var def in PlanetGen.Generate(22))
+            if (def.LakeScale > 2.5f) { Dump(def, 22); break; }
+
+        Dump(PlanetDefs.DebugWorld, 3);
+    }
+
+    private static void Dump(PlanetDef def, int seed)
+    {
+        var planet = WorldGen.Generate(seed, def);
+
+        // FNV-1a over every tile kind, in ring order — sensitive to any carve moving.
+        ulong hash = 14695981039346656037;
+        for (var r = 0; r < planet.Rings; r++)
+        {
+            var n = planet.TilesAt(r);
+            for (var t = 0; t < n; t++)
+            {
+                hash ^= (byte)planet.Get(r, t);
+                hash *= 1099511628211;
+            }
+        }
+
+        var surf = Planet.RingMin + planet.SurfaceRing;
+        Console.WriteLine($"--- {def.Id} (seed {seed}, size {def.SizeScale:0.00}, " +
+                          $"radius {planet.Radius}t, surface {surf}t, crust {planet.SurfaceRing} rings)");
+        Console.WriteLine($"    tile hash {hash:x16}");
+
+        var (seams, bands, _) = WorldGen.CaveStrata(planet, def);
+        foreach (var (lo, hi) in seams)
+            Console.WriteLine($"    seam {lo:0.0}-{hi:0.0}t = {(surf - hi) / Planet.LegacyTileScale:0.0}" +
+                              $"-{(surf - lo) / Planet.LegacyTileScale:0.0} legacy tiles down");
+        foreach (var (lo, hi) in bands) Console.WriteLine($"    deep band {lo:0.0}-{hi:0.0}t");
+
+        // Air by depth, in legacy-tile buckets: where the caves actually are.
+        var buckets = new int[28];
+        var total = new int[28];
+        for (var r = 0; r < planet.Rings; r++)
+        {
+            var depth = (int)((surf - (Planet.RingMin + r + 0.5f)) / Planet.LegacyTileScale / 5f);
+            if (depth < 0 || depth >= buckets.Length) continue;
+            var n = planet.TilesAt(r);
+            for (var t = 0; t < n; t++)
+            {
+                total[depth]++;
+                if (planet.Get(r, t) == TileKind.Sky) buckets[depth]++;
+            }
+        }
+        for (var b = 0; b < buckets.Length; b++)
+        {
+            if (total[b] == 0) continue;
+            var pct = 100f * buckets[b] / total[b];
+            Console.WriteLine($"      {b * 5,3}-{b * 5 + 5,3} legacy down: air {pct,5:0.0}% " +
+                              new string('#', (int)(pct / 2f)));
+        }
+    }
+}
