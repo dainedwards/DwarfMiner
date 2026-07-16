@@ -2522,6 +2522,23 @@ public static class WorldGen
                 var crLo = lavaTop + halfH + (int)(3 * S);
                 var crHi = surfaceR - halfH - (int)(2 * S);
                 cr = crLo <= crHi ? Math.Clamp(cr, crLo, crHi) : crHi;
+                // The descending chain WANDERS up to ~1 rad from the entrance bearing the
+                // placement loop actually checked — and the volcano's geyser well sits at
+                // exactly these depths. A hall overlapping the well leaves its den heart
+                // SOLID (the geyser node is anchored, CarveChamber skips it) or bites the
+                // lava-rock shell. Slide the hall along its ring until it clears every
+                // plumbing capsule (deterministic — no rng draws, streams stay stable).
+                for (var guard = 0; guard < 10; guard++)
+                {
+                    var probe = planet.Center + new Vector2(MathF.Cos(cAng), MathF.Sin(cAng))
+                        * (Planet.RingMin + cr + 0.5f) * Planet.TileSize;
+                    var clear = true;
+                    foreach (var (za, zb, zr) in planet.PlumbingZones)
+                        if (DistPointSegSq(probe, za, zb)
+                            < (zr + halfWpx + 24f) * (zr + halfWpx + 24f)) { clear = false; break; }
+                    if (clear) break;
+                    cAng += 0.12f;
+                }
                 var vault = i == count - 1;
                 CarveChamber(planet, rng, cr, cAng, halfH, halfWpx, vault);
 
