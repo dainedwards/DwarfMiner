@@ -2244,9 +2244,13 @@ public sealed partial class DwarfMinerGame : Game
         else if (_run.EruptionVent >= 0)
         {
             // The show just ended: the magma withdraws — hand the vent to the subsidence
-            // drain below, which lowers the pool back to its resting line.
+            // drain below, which lowers the pool back to its resting line. The wait lets
+            // every airborne gob land and the overflow settle before the level moves.
             if (_run.EruptionVent < _run.Planet.VolcanoVents.Count)
+            {
                 _run.EruptionDrainVent = _run.EruptionVent;
+                _run.EruptionDrainWait = 4.5f;
+            }
             _run.EruptionVent = -1;
         }
 
