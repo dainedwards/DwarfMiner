@@ -157,24 +157,6 @@ public static class WorldGen
                 w: (0.055f + (float)rng.NextDouble() * 0.05f) * def.LakeScale);  // ≈ 3°–6° half-width at scale 1
         }
 
-        // QA-rig lake pair (def.LakePair): the first two basins re-place as a UNIT, side
-        // by side with a narrow land strip between their rims — the second one seeds LAVA
-        // below instead of water. Both bearings must clear the mountains together.
-        if (def.LakePair && lakeCount >= 2)
-        {
-            var gap = (lakes[0].w + lakes[1].w) * 1.3f;
-            float pairAng;
-            var pairTries = 0;
-            do
-            {
-                pairAng = (float)(rng.NextDouble() * MathHelper.TwoPi);
-                pairTries++;
-            } while (pairTries < 60 && (NearMountain(mountains, pairAng, 0.14f)
-                     || NearMountain(mountains, (pairAng + gap) % MathHelper.TwoPi, 0.14f)));
-            lakes[0].ang = pairAng;
-            lakes[1].ang = (pairAng + gap) % MathHelper.TwoPi;
-        }
-
         // Surface acid pools (acid worlds): carved exactly like lakes but filled with acid
         // cells — open corrosive ponds to bridge or detour around. These (plus acid volcanoes
         // and acid-rain storms) are the ONLY acid a world gets now: the old underground cave
