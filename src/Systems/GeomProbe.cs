@@ -14,13 +14,19 @@ public static class GeomProbe
 {
     public static void Run()
     {
+        // Vegetation OFF, or the hash is worthless: TreeEcology.Plant draws its branches from
+        // Random.Shared, so a world's tree tiles differ every process even at a fixed seed.
+        // (That's a real reproducibility hole in gen, not a probe artefact — but it's above
+        // ground, and everything this probe is for is below it.)
+        WorldGen.ScatterVegetation = false;
+
         foreach (var (id, seed) in new[]
                  { ("verdant", 77), ("frost", 5), ("ember", 9), ("slag", 11), ("hollow", 13) })
             Dump(PlanetDefs.ById(id), seed);
 
         // The generated ocean worlds aren't in the classic chain; take one from the campaign
         // generator the same way OceanProbe does.
-        foreach (var def in PlanetGen.Generate(22))
+        foreach (var def in PlanetGen.Campaign(22))
             if (def.LakeScale > 2.5f) { Dump(def, 22); break; }
 
         Dump(PlanetDefs.DebugWorld, 3);
