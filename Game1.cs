@@ -6573,6 +6573,11 @@ public sealed partial class DwarfMinerGame : Game
                 1f / _camera.Zoom, _camera.SmoothRotation);
             _renderer.CompositeLiquids(_liquidRt!);
         }
+        // The eruption's ash column sits UNDER the hot bodies: near-full opacity, no hot
+        // rim (a soot cloud has no bright sheath — rimMul 1 passes the flat tone through),
+        // so the molten fountain and crater dome draw in front of the smoke.
+        if (_particles.FluidMode && _particles.SmokeJetLive && _smokeRt != null)
+            _renderer.CompositeLiquids(_smokeRt, 0.40f, 0.92f, 1f, 0.02f);
         // Hot bodies (lava pools + flame stream): full opacity + a hot bright rim — molten
         // rock's yellow-white edge and the flame's sheath, not a pool's translucent wet lip
         // (which made the tongue read as glowing liquid). No depth grading — that's a
