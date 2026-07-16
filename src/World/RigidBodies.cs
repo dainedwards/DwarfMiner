@@ -452,12 +452,22 @@ public sealed class RigidBodies
             var b = Bodies[i];
             Step(b, dt);
             // Burning cells keep flaming while the chunk tumbles (their burn clocks are
-            // frozen until landing): each queues the odd licking-flame tongue at its
-            // current world position, so a falling burning log visibly stays on fire.
-            if (!b.Dead && Random.Shared.Next(4) == 0)
+            // frozen until landing): each licks at the same per-tick rate as a standing
+            // burning tile so the flame doesn't thin at detach, and occasionally sheds a
+            // real flying fire cell that inherits the body's motion — a falling burning
+            // log trails embers and can spot-ignite what it passes.
+            if (!b.Dead)
                 foreach (var c in b.Cells)
-                    if (c.Burn > 0f && Random.Shared.Next(3) == 0)
-                        _cells.QueueFlame(b.Position + Rotate(c.Local, b.Angle));
+                {
+                    if (c.Burn <= 0f) continue;
+                    var wp = b.Position + Rotate(c.Local, b.Angle);
+                    if (Random.Shared.Next(5) == 0) _cells.QueueFlame(wp);
+                    if (Random.Shared.Next(30) == 0)
+                        _cells.LaunchAtWorld(wp,
+                            b.Velocity * 0.8f + new Vector2(Random.Shared.Next(-25, 26),
+                                                            Random.Shared.Next(-25, 26)),
+                            Material.Fire);
+                }
             if (b.Dead) Bodies.RemoveAt(i);
         }
     }
