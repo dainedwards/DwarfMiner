@@ -1416,6 +1416,33 @@ public static class WorldGen
         }
     }
 
+    /// <summary>Expand every lava/acid seed tile by the 2-tile jacket reach into
+    /// <see cref="Planet.FluidKeepOut"/> — the halo the tunnel carvers refuse to bite.
+    /// 2 tiles matches the shell contract: what survives between a tunnel and the fluid is
+    /// exactly the wall ShellLavaBodies hardens to LavaRock (or LineAcidReservoirs skins
+    /// in obsidian) at load.</summary>
+    private static void BuildFluidKeepOut(Planet planet)
+    {
+        void Halo(List<(int x, int y)> seeds)
+        {
+            foreach (var (r, t) in seeds)
+            {
+                var n = planet.TilesAt(r);
+                for (var dr = -2; dr <= 2; dr++)
+                {
+                    var r2 = r + dr;
+                    if (r2 < 0 || r2 >= planet.Rings) continue;
+                    var n2 = planet.TilesAt(r2);
+                    var t2c = (int)((t + 0.5f) / n * n2);
+                    for (var dt = -2; dt <= 2; dt++)
+                        planet.FluidKeepOut.Add(Planet.TileKey(r2, ((t2c + dt) % n2 + n2) % n2));
+                }
+            }
+        }
+        Halo(planet.LavaSeeds);
+        Halo(planet.AcidSeeds);
+    }
+
     /// <summary>True near a lizard-warren hall or under a city district's bearing span —
     /// the two kinds of architecture a worm must not undermine.</summary>
     private static bool NearDenOrCity(Planet planet, Vector2 pos)
