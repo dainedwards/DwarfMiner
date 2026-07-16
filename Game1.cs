@@ -7719,6 +7719,14 @@ public sealed partial class DwarfMinerGame : Game
     private static bool Pressed(KeyboardState now, KeyboardState prev, Keys k)
         => now.IsKeyDown(k) && !prev.IsKeyDown(k);
 
+    /// <summary>The mouse as seen while the window is unfocused: buttons up, and position
+    /// plus wheel frozen at where they were when focus was lost (passing the live pointer
+    /// through would drag menu hover and reticle aim around from another app).</summary>
+    private static MouseState Blurred(MouseState last)
+        => new(last.X, last.Y, last.ScrollWheelValue,
+            ButtonState.Released, ButtonState.Released, ButtonState.Released,
+            ButtonState.Released, ButtonState.Released);
+
     /// <summary>Play a positioned sound: pan follows the world point's screen-x (rotation-aware
     /// via the camera matrix) and volume falls off with distance, so a far-off explosion is a
     /// quiet thud on the correct side.</summary>
