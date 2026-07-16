@@ -96,9 +96,14 @@ public sealed class Session
     public float EruptionTotal;
     public int EruptionVent = -1;
     /// <summary>How high this eruption drives the crater pool, as a fraction of the rim
-    /// (1.0 = level with the lip): rolled 1.1–1.3 per eruption, so the magma always crests
-    /// the rim and bubbles down the flanks — some eruptions just barely, some in sheets.</summary>
-    public float EruptionPeakFrac = 1.2f;
+    /// (1.0 = level with the lip): rolled 1.2–1.45 per eruption, so the magma always
+    /// crests the rim and bubbles down the flanks — some eruptions barely, some in sheets.</summary>
+    public float EruptionPeakFrac = 1.3f;
+
+    /// <summary>Vent whose crater pool is SUBSIDING after an eruption: once the show ends
+    /// the magma withdraws back down the tube, and Game1 drains the pool a little each
+    /// frame until it sits back at its resting line. -1 = nothing draining.</summary>
+    public int EruptionDrainVent = -1;
 
     public float SpawnTimer;
     public float FaunaTimer;
