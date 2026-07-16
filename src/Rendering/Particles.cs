@@ -1811,62 +1811,6 @@ public sealed class Particles
         }
     }
 
-    /// <summary>SIDE SPEW: the acid spewer's goopy rope scaled to volcano size, recoloured
-    /// molten — two of these lob from the erupting pool at ±20°, arcing over the crater
-    /// ledge. Same mechanics as <see cref="EmitAcidJet"/> (tight cone, arcing droplets,
-    /// metaball fluid body) but a SEPARATE emitter: nothing here touches the handheld
-    /// hose. COSMETIC ONLY: the actual material is the volley of real flying lava cells
-    /// the eruption tick launches on the same trajectory — this rope just wraps the
-    /// stream in the spitter's connected goopy look.</summary>
-    public void EmitLavaSpew(Vector2 pos, Vector2 dir, float strength)
-    {
-        // Speed ×0.55 of the original ballistic tune = ~30% of the old reach (range goes
-        // with v²): a close lob over the crater lip, not a cross-flank cannon.
-        var jetSpeed = 115f + strength * 72f;
-        const float coneArc = 0.09f;          // a touch looser than the spewer's 0.041
-        for (var i = 0; i < 8; i++)
-        {
-            if (_rng.Next(5) == 0) continue;
-            var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
-            var c = MathF.Cos(spread);
-            var s = MathF.Sin(spread);
-            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
-            var hot = i < 2;                  // white-hot leading droplets
-            var tone = hot ? new Color(255, 242, 170)
-                : _rng.Next(2) == 0 ? new Color(255, 176, 60) : new Color(250, 120, 40);
-            _list.Add(new Particle
-            {
-                Position = pos + d * (float)_rng.NextDouble() * 2f,
-                Velocity = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)),
-                // Life OUTLASTS the whole lob: a droplet that expires mid-air never stamps
-                // its lava — the rope visibly vanished in flight. Every droplet must
-                // survive to touchdown, where the stamp hands it to the sim.
-                Life = 1.6f + (float)_rng.NextDouble() * 0.6f,
-                MaxLife = 2.2f,
-                Color = tone,
-                FadeColor = new Color(165, 45, 15),
-                Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
-                // A volcano-scale ballistic arc, NOT the handheld hose's heavy 2.25: the
-                // rope launches from inside the pool and must clear the crater ledge
-                // before falling away down the flank.
-                GravityScale = 0.9f,
-                Drag = 0.9f,
-                CollideTiles = true,
-                LightRadius = hot ? 22f : i % 3 == 0 ? 9f : 0f,
-                LightColor = new Color(255, 170, 70),
-                // PURELY COSMETIC rope: the side spout's material is now a volley of REAL
-                // flying lava cells launched alongside (see the eruption tick) — those
-                // land, pool and overflow. The rope only sheathes the stream in the
-                // spitter's goopy metaball look; stamping here too would double the lava.
-                LandSparks = true,
-                SmearMax = 26f,
-                SmearScale = 2f,
-                Fluid = (byte)Material.Lava,
-                JetScale = 2.2f + (float)_rng.NextDouble() * 0.8f,
-            });
-        }
-    }
-
     /// <summary>Volcanic bombs — molten rock lumps hurled out of an erupting crater. Bright
     /// glowing scoria that cools to maroon as it arcs, bounces on terrain, and litters the
     /// slopes. Thrown up and out around <paramref name="up"/> (the crater's outward normal).</summary>
