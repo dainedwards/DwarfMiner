@@ -2833,6 +2833,17 @@ public static class WorldGen
         Carve(def.FungalPockets, crystal: false);
     }
 
+    /// <summary>How deep a basin's bowl reaches at one bearing, in legacy tiles below the
+    /// local surface (0 outside its footprint) — the same parabola the tile pass carves, so
+    /// callers that must stay clear of a bed measure against the real thing.</summary>
+    private static float BasinDepthAt((float ang, float depth, float w) basin, float ang)
+    {
+        var angDiff = MathF.Abs(MathHelper.WrapAngle(ang - basin.ang));
+        if (angDiff >= basin.w) return 0f;
+        var f = angDiff / basin.w;
+        return (1f - f * f) * basin.depth;
+    }
+
     /// <summary>True if <paramref name="ang"/> falls within <paramref name="margin"/> radians
     /// of any mountain's footprint — used to keep lakes off the peaks.</summary>
     private static bool NearMountain((float ang, float h, float w)[] mountains, float ang, float margin)
