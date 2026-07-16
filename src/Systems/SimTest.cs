@@ -340,6 +340,7 @@ public static class SimTest
         TestAquatics();
         TestRainPooling();
         TestPopulateWorld();
+        TestFluidContainment();
         TestTreeEcology();
         TestRigidBodies();
         TestSpaceSim();
