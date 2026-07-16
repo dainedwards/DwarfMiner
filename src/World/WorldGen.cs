@@ -1642,8 +1642,8 @@ public static class WorldGen
         }
         Halo(planet.LavaSeeds);
         Halo(planet.AcidSeeds);
-        //BISECT Halo(planet.WaterSeeds);
-        //BISECT Halo(planet.OilSeeds);
+        Halo(planet.WaterSeeds);
+        Halo(planet.OilSeeds);
     }
 
     /// <summary>True near a lizard-warren hall or under a city district's bearing span —
@@ -2758,21 +2758,27 @@ public static class WorldGen
                 var depth = (int)((crystal ? 30 + rng.Next(40) : 8 + rng.Next(22)) * S);
                 var cr = planet.SurfaceRing - depth;
                 if (cr < 8 * S) continue;
+                // Every roll for this pocket happens BEFORE the wet skip below, so a skipped
+                // bearing consumes exactly the same draws as a carved one and the shared rng
+                // stream — with it every downstream carver's layout on every world — is
+                // untouched. The ocean-only version of this skip sat above the radius draw
+                // and quietly re-rolled the rest of the planet the moment it fired on a new
+                // world; the seams-and-tunnels test noticed before anyone else would have.
+                var radius = (int)((crystal ? 4 + rng.Next(4) : 3 + rng.Next(3)) * S);
+
                 // Pockets keep off every lake and acid-pool bearing. This carve eats ANYTHING
                 // unanchored — obsidian shell, basin buffer, jacket included — and it runs
                 // before the keep-out exists, so a grove under a basin is a drain the pour
                 // finds at load: it was the hole that emptied the debug rig's water lake
                 // from below. Was ocean-only, on the theory that only a sea plunges into the
                 // grove band; a 3× QA basin does too, and a normal lake sits close enough
-                // that a radius-5 cavity still bites its bed. (The skip comes after the
-                // rolls, so the shared rng stream — and every seeded layout — is unmoved.)
+                // that a radius-5 cavity still bites its bed.
                 var wet = false;
                 foreach (var l in lakes)
                     if (MathF.Abs(MathHelper.WrapAngle(ang - l.ang)) < l.w + 0.05f) { wet = true; break; }
                 foreach (var a in acidPools)
                     if (MathF.Abs(MathHelper.WrapAngle(ang - a.ang)) < a.w + 0.05f) { wet = true; break; }
                 if (wet) continue;
-                var radius = (int)((crystal ? 4 + rng.Next(4) : 3 + rng.Next(3)) * S);
                 var n = planet.TilesAt(cr);
                 var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);
                 var centre = planet.TileToWorld(cr, ct);
