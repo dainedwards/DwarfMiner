@@ -58,6 +58,9 @@ public static class LakeProbe
                 // air that is genuinely underground is a hole the pour can escape down.
                 if (Planet.RingMin + r2 >= planet.SurfaceRadiusAt(planet.TileToWorld(r2, t2)) - 1f)
                     continue;
+                // Air BESIDE the fill only drains if it keeps going down: the bowl's own
+                // freeboard/rim courses sit on the water itself, and water doesn't climb.
+                if (dr == 0 && !LeadsDown(planet, lake, r2, t2)) continue;
                 mouthCount++;
                 if (mouths.Count < 12)
                     mouths.Add($"drain mouth: water({r},{t}) bearing " +
