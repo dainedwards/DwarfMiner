@@ -476,6 +476,7 @@ public sealed partial class DwarfMinerGame : Game
 
     protected override void Initialize()
     {
+        if (_noFocus) HideWindowEarly();
         // Adopt any pre-slot save as slot 1 BEFORE anything reads (and thereby creates)
         // slot files — a fresh meta materialising first would block the migration and
         // orphan the legacy campaign.
