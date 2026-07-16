@@ -1583,6 +1583,8 @@ public static class WorldGen
         }
         Halo(planet.LavaSeeds);
         Halo(planet.AcidSeeds);
+        Halo(planet.WaterSeeds);
+        Halo(planet.OilSeeds);
     }
 
     /// <summary>True near a lizard-warren hall or under a city district's bearing span —
