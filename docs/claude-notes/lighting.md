@@ -1,0 +1,24 @@
+# Lighting: propagated LightGrid + hero raycasts
+
+<!-- Folded out of Claude's memory into the repo 2026-07-16: CLAUDE.md is the single
+     source of truth and links here. Notes are dated and historical by nature — trust
+     the code over any line here, and correct the note when you find it stale. -->
+
+2026-07-13: underground lighting replaced wholesale (user wanted to "test this look on its own" — old method fully removed, Noita-style ray-cast hero lights deferred as a possible later layer on top).
+
+**New system** (src/Rendering/LightGrid.cs): view-local square cartesian grid at tile res (4px cells, side ≤200, coarsens when zoomed out), world-axis aligned + origin cell-snapped (prevents swimming). Begin() samples occlusion (IsSolidAt) + sun seeds (air cell with radial dist ≥ SurfaceRadiusAt−0.5 → sun; ≥ planet.Radius fast-path — must NOT use profile max because skyscrapers overtop the terrain profile). Renderer.AddLight → Grid.Seed (radius keeps legacy "reach in px" meaning → converts to strength 0.05·AttAir^(−r/cell), clamp [0.10, 2.4], combine by MAX not add). 2 rounds of fwd/bwd chamfer sweeps w/ diagonal taps, manually inlined (Debug JIT inlines nothing). Recomputes every OTHER frame (Seed no-ops on off frames); texture double-buffered ([[perf-work]] SetData stall). Lighting.RenderGrid rasterizes grid tex (LinearClamp = smooth lighting) into the lightmap RT; Composite/Bloom/Vignette/Grade unchanged downstream (Composite now LinearClamp too).
+
+**Tunables**: AttAir 0.92/cell, AttSolid 0.78/cell (at 4px cells this ≈ Terraria's per-16px factors; 0.60 made rock a hard black silhouette — too harsh). Sun color (255,250,238).
+
+**Removed**: Lighting.Begin/AddPoint/Darken/End, radial-gradient light sprites, ambient clear (180,175,195), the two subtractive depth-darkness disks, player aura depth gate (auraGate) + 4-stacked aura radials → single warm AddLight × EffectiveLightTier lightMul ladder (0.30/0.65/1.00/1.50/2.10). Depth darkness is now emergent from occlusion.
+
+**Verified**: 59-60 FPS steady on ocean surface AND ember warren (Debug build); warren braziers/lava read as local pools of light, sun bleeds into cave mouths, mountains shade over ~48px. Ore/gem glow scan still only 14 tiles around player (pre-existing limit — placed glowshrooms beyond that don't light).
+
+2026-07-14: **Noita hero-light layer SHIPPED** (Lighting.RenderHeroLights): ≤10 lights/frame get 96-ray CPU raycast shadow fans drawn additively over the grid raster into the lightmap RT (BasicEffect + DrawUserPrimitives; RT must be PreserveContents — DiscardContents wiped the grid on the hero pass rebind, whole world went black). Sources: player lamp (dim accent), explosion cores + muzzle flashes (Particle.HeroLight flag). Renderer.AddHeroLight; RenderLightGrid now takes Planet.
+
+Sun seeding switched from Planet.SurfaceProfile to LightGrid's own **sky heightmap** (2048 bearings, radial descent to first solid, 24 bearings/frame round-robin refresh ≈3s full sweep): the stamped profile excludes carved lake/acid/crater basins so beaches read "underground" and sat dark at noon. Heightmap sees basins, city towers, overhangs; liquids don't stop the descent (lake floors sunlit — looked fine). Vertical cliff faces stay dim (radial-only test) — Terraria-equivalent behavior.
+
+**Grid-seed gotcha**: seeds combine by MAX (old additive blits SUMMED), and Seed converts radius→strength as 0.05·AttAir^(−r/4) w/ floor 0.10 — so any AddLight under ~40px reads as nearly nothing, and clusters of small lights don't stack. Fire-family radii rebalanced to real reach (fire cells 60, lava 50, flying fire 45, acid 24, flame-jet particles 70/36). Particles.EmitCinders = lasting glow: 1.3-2.7s tumbling embers (CollideTiles, light fades w/ life) from every EmitExplosion + occasional flamethrower shed; the particle settle-kill (0.15s on rest) exempts glowing particles (rest up to 1.4s) so landed coals keep glowing.
+
+Elemental arms 2026-07-14: flamethrower/acid spewer launch REAL Fire/Acid cells via Cells.LaunchAtWorld (mass-conserving flying cells) + near-cone direct damage w/ Creature.ImmuneTo gate; lightning gun is hitscan chain (creature seek along aim, titan competes, 4 jumps ×0.7 dmg, grounds on terrain) rendered by Particles.EmitLightning (jagged nodes + branches + hero endpoint flashes). Acid tile corrosion HALVED (Cells.TryCorrode 1-in-45 → 1-in-90) to compensate for player-sprayed acid. RunSave v16 (3 weapon bools). Icons get a programmatic **Polish pass** (contour outline tinted from neighbors + top-light/under-shade rims) over all ~60 icons; held-weapon textures added for dynamite/tnt/nuke/bullets + the 3 new guns, skin-tone fist drawn at the grip. `DM_AUTOFIRE=<belt id>` (pair w/ DM_GOD=1) equips + holds fire along local tangent for headless effect screenshots.
+

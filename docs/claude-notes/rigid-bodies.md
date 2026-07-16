@@ -1,0 +1,43 @@
+# Rigid bodies: detach, tumble, re-stamp
+
+<!-- Folded out of Claude's memory into the repo 2026-07-16: CLAUDE.md is the single
+     source of truth and links here. Notes are dated and historical by nature — trust
+     the code over any line here, and correct the note when you find it stale. -->
+
+Full Noita rigid-body coupling implemented 2026-07-15 on branch `rigid-bodies` (worktree `.claude/worktrees/rigid-bodies`; the auto-commit hook fires even in worktrees, so squash before merging). User playtested, approved, and it was MERGED into noita-sim same day (merge commit 265c41f). Merging raced the parallel session's auto-commits — ff-only failed twice because noita-sim kept advancing; the working pattern is merge-noita-sim-into-feature-branch first (resolve+test in the worktree), then a plain merge commit in the main tree. Compare SimTest failure sets at the SAME commit: the suite carries flaky/in-progress failures from the other session (rally runway, titan burst, city span were all theirs, not rigid regressions).
+
+Design (src/World/RigidBodies.cs, ~650 lines):
+- Condemned stone regions ≤400 tiles (MaxChunkTiles) shear off after the tremble as one tumbling body via `Physics.DetachToRigid` hook (null in probes/tests → legacy dust; also the fallback when >MaxBodies=20 or DM_RIGID=0). Bigger regions keep the dust cascade on purpose.
+- **Polar-grid trap**: bodies must live in Cartesian world space; every grid interaction (collision probe, erosion, stamping) goes through `Planet.WorldToTile` per cell. No square lattice exists — payload cells store float `Local` offsets from COM, adjacency by distance (≤1.5×TileSize), surface flags from the original polar cardinal adjacency at detach.
+- Sleep → `Stamp`: each cell takes its tile if Sky, else 3×3 ring, else spills as dust — mass-conserved (SimTest asserts 112/112 exact). `StampAll()` runs at the top of RunSave.Write (bodies aren't serialized, same policy as flying cells).
+- Blast memory (0.6 s) covers the settle-tick + tremble delay so a region an explosion just carved free still launches outward when it detaches later. Wired at projectile explosions, meteor deaths, titan shockwaves.
+- Erosion: lava/fire/acid cells eat surface payload cells at 0.22 s cadence; flood-split into components, crumbs spill as dust. Felled trees: ToppleTree gathers trunk tiles → `SpawnFromTiles` rigid log (canopy still dust-puffs).
+- **Wire the hook only after world build**: BuildSessionWorld wires DetachToRigid at the very end, after census + pre-settle (bodies spawned during background build would hang mid-air and eat the budget). ResumeRun wires it too.
+
+**Resting-contact stability was the hard part** (body landed then jittered ±20 px/s forever, SleepTimer pinned at 0):
+1. restitution only above 60 px/s impact speed (BounceThreshold) — resting contact must be perfectly inelastic;
+2. contact damping (v×0.96, spin×0.94 per substep) + settle assist (×0.88/×0.86 when grounded and <30 px/s) kills slope-rocking bursts;
+3. sleep gates on `SinceContact < 0.12s`, never "touching this exact frame" — the push-out separates a resting body every few frames.
+
+Hooks: DM_RIGID=0 kill switch, DM_RIGIDTEST=1 hangs 3 demo slabs beside spawn (offset sideways so they don't land on the tester), DM_RIGIDDBG=1 prints `[rigid] bodies A -> B` lifecycle lines (works in game + in the SimTest fall loop). SimTest `TestRigidBodies` runs before TestMoons/TestHollow (those Activate chains irreversibly).
+
+**v2 merged 2026-07-15** (commit d1cea63, user feedback pass):
+- Chunks render via the terrain atlas, NOT flat BaseColor ("way too discoloured"): BodyCell stores original R/T (stable variant+jitter), 4-bit Expose mask (baked erosion frame; terrain convention outer=1 inner=2 left=4 right=8), BaseRot (tile angle + π/2 at detach) — Renderer.DrawRigidBodies draws Source(kind, VariantFor, Expose) at BaseRot+body.Angle with BlobShade. Authored-art placeables fall back to flat colour.
+- `Tiles.Topples(k)` = city alloy/glass/lizard brick, crafted brick/plating/glass, doors, furniture, Ladder (ONLY so centre ladders can't anchor tower tops): still IsAnchored for every hazard gate (acid/craters/quakes/titan — SimTest asserts this), but load-bearing in the cave-in flood via `Tiles.CanFall`. Supports/platforms/rails/chests/lily pads keep full anchor.
+- Mountain-scale 400–2400 tile regions partition into 72px world buckets → several boulders (split-checked, spares dust, mass exact).
+- ToppleTree = flood fill of connected crown above the cut (the old ±4-column ring scan left wide canopies hanging).
+- Test trap: StampAll on a mid-air body re-condemns it and pollutes later tile counts — let bodies LAND in tests.
+
+**v3 corpse ragdolls merged 2026-07-15** (commit 7e27f20): Corpse = lightweight ragdoll reusing the contact recipe (Angle/Spin/Kick, 6-point sample ring, ease-flat-on-rest, wakes if floor removed); death inherits creature velocity, KickCorpses at all 3 blast sites. **Third jitter lesson**: below crawl speed the ROTATING sample ring's impulse torques pump ±2 rad/s rocking forever — slow bodies must collide as particles (no rotational coupling) with spin choked to zero; also one averaged push-out per frame (per-contact pushes stack to 3px/frame and pop bodies airborne), and the sleep "slow" window must exceed inter-contact free-fall regain (~15px/s). SimTest corpse-settle telemetry gated on DM_RIGIDDBG.
+
+**v4 corpse fidelity merged 2026-07-15** (commit 79519f2, RunSave v20→v21):
+- Corpse carries `Body` = dead Creature clone; `Creature.Draw(r, planet, player, poseRot, dead)` optional params: poseRot overrides planet axes (up = (sin, -cos) of rot), dead≥0 freezes anim time to _phase + greys colours. Pose = ragdoll Angle + PoseSide·90°.
+- `Renderer.BeginOutline/EndOutline` (enlarged dark silhouette per primitive, skips alpha<200) + `SetEntityFx(fade, desat)` (hits ALL primitives incl. raw-colour eyes/glints) — draw-twice gives every creature/corpse a Noita outline for free.
+- Harvest = channel: Corpse.HarvestProgress/HarvestTime (1.3–4.5s by radius), corpse fades via Dissolve; overlay = progress bar + rocking knife (_harvestFx* fields in Game1); TitanCorpse.cs = carcass (kind palette greyed, X-eye, rigor legs), 7s carve → soul + 8 meat/4 hide; Session.TitanCarcass + SoulClaimed saved (v21), TryRead re-offers carcass for dead-unclaimed titans.
+- Missing-corpse root causes: NO substep in corpse integration (blast-flung bodies tunnelled floors), spawn-inside-rock (wall-splatted flyers sank) → de-embed nudge, death velocity uncapped. NOT a spawn-path issue — every kind except BomberBeetle always spawned one.
+- The parallel session ACTIVELY extends this system (SurfaceIdx hot-path list, whole-structure sky topples with no size cap, Beacon in Topples) — always merge noita-sim first and re-read RigidBodies/Physics before editing them.
+
+**v3 2026-07-15 (whole-structure topple, user ask "no matter how big")**: regions floating ENTIRELY above the crust (`!_regionTouchesCrust`, i.e. severed skyscrapers / undercut mountains) now detach as ONE body with NO size cap — `PendingCollapse.Sky` flag flows through `DetachToRigid(List<int>, bool sky)`; MaxDetachTiles/boulder-bucketing only apply to crust-backed regions. Enablers: RebuildSurface + SplitIfDisconnected rewritten on a body-frame spatial hash (`_cellHash`, 2-tile buckets — the old all-pairs O(n²) froze on 30k-cell bodies); `Body.SurfaceIdx` list rebuilt in RecomputeMass so the per-substep contact scan and Overlap don't walk 30k cells; ApplyBlast linear kick attenuated by `min(1, MaxChunkTiles·InvMass)` so TNT can't yeet a mountain. **Beacon added to Tiles.Topples** — a spire's beacon-tipped mast used to anchor the whole skyscraper against condemnation. `Planet.ClearStructureWall` (engineered wall kinds, above crust only) clears ghost facades on Crumble/detach/bucket-spill. SimTest: 2800-tile sky slab must come off as exactly ONE body; "tower cut at the street topples whole" cuts a real generated tower. Cleanly-cut towers drop onto their stump and re-stamp (physically right — they only tip if they land off-balance).
+
+Known gaps / v2 ideas: no body-body collision (bodies stack only via stamp), player can't stand on a live body (only push-out + damage), bodies sink through cell-sim dust piles (reads as heavy rock through powder), stamped TreeTrunk logs are choppable but IsFlora so they never re-collapse; DrawRigidBodies has no view culling (a 30k-cell mountain draws every cell while falling). "hazard: acid dissolves a soft tile" SimTest check is flaky (Random.Shared) — not a rigid regression; verified base commit + two green reruns.
+

@@ -135,11 +135,26 @@ command — `Game1.TitleBar()` walks up from the binary to the checkout's `.git`
 reads the tree and branch off it at startup.
 
 - A linked worktree (`.git` file) reports its folder name; the primary checkout (`.git`
-  directory) reports `main`, since its folder is named after the repo.
+  directory) reports `main`, since its folder is named after the repo — otherwise it would
+  read the redundant `DwarfMiner | noita-sim | DwarfMiner`.
 - **CRITICAL: Do NOT include DM_TITLE in the run command.** The window title is auto-derived
-  and adding DM_TITLE will break the launcher.
+  and adding DM_TITLE will break the launcher. The old rule "always include DM_TITLE=<worktree>"
+  is dead; DM_TITLE is gone from the code.
 - If the branch you are on titles its window some other way, bring `TitleBar()` over as
   part of your change.
+- `TitleBar()` + `LocateTree()` + `BranchAt()` walk up from `AppContext.BaseDirectory` (the
+  binary sits at `bin/<Config>/net8.0/` INSIDE the checkout) to the `.git` entry and read git's
+  plain files — no shelling out to `git`, so a slow or missing binary can't stall startup.
+- **Why it is self-derived:** the user wanted every build tellable apart with nothing to
+  remember to set; a launcher-injected variable silently produced an untitled window whenever
+  it went missing.
+
+**Never `pkill -f DwarfMiner.dll`.** Another Claude session codes this repo in parallel and the
+user playtests between turns, so two or three DwarfMiners are often running — `kill <your pid>`
+only. For the same reason `pgrep -f DwarfMiner.dll` frequently returns several lines: pass ONE
+pid to osascript or it dies on a syntax error. (Accessibility window enumeration via System
+Events returns EMPTY here — no permission — so read a title off a `screencapture -x` frame, or
+better, use the window-server method under DM_NOFOCUS above.)
 
 ## Common test environment variables
 
