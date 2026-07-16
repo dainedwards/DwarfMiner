@@ -1528,11 +1528,15 @@ public sealed partial class DwarfMinerGame : Game
         {
             ViewportSize = new Point(VirtualWidth, VirtualHeight),
             // DM_ZOOM overrides the default zoom for testing (e.g. zoom out to frame a
-            // boss). DM_ERUPTSHOW implies max zoom-out (2) unless DM_ZOOM says otherwise
-            // — set HERE because this assignment runs after StartNewRun's hooks and is
+            // boss). DM_ERUPTSHOW implies a wide view unless DM_ZOOM says otherwise —
+            // set HERE because this assignment runs after StartNewRun's hooks and is
             // what _playZoom is initialised from (a value set earlier gets clobbered).
+            // 3.2 and not the hard 2.0 floor: cellPx = Zoom × TileSize/Density crosses
+            // the 1.6 liquid-LOD threshold at exactly 3.2 — below it the metaball pass
+            // shuts off and every lava blob degrades to flat flickering strand quads,
+            // which is precisely the show this hook exists to look at.
             Zoom = float.TryParse(Environment.GetEnvironmentVariable("DM_ZOOM"), out var z) ? z
-                : Environment.GetEnvironmentVariable("DM_ERUPTSHOW") is { Length: > 0 } ? 2f : 5.6f,
+                : Environment.GetEnvironmentVariable("DM_ERUPTSHOW") is { Length: > 0 } ? 3.2f : 5.6f,
         };
         // The space screen drives Zoom itself every frame; remember the in-run zoom (incl. any
         // DM_ZOOM override) so landing on a planet restores it.
