@@ -1806,7 +1806,7 @@ public sealed class Particles
                 SmearMax = 17.6f,
                 SmearScale = 2f,
                 Fluid = (byte)Material.Lava,
-                JetScale = 1.6f,   // a fatter molten rope than the handheld hoses
+                JetScale = 2.2f,   // a far fatter molten rope than the handheld hoses
             });
         }
     }
