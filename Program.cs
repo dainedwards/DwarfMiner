@@ -15,6 +15,14 @@ if (args.Length > 0 && args[0] == "--perf")
     return;
 }
 
+// Diagnostic: `--lakeprobe` audits the water side of the fluid-containment contract — the
+// surface basins must hold their pour instead of draining down a carver's hole.
+if (args.Length > 0 && args[0] == "--lakeprobe")
+{
+    DwarfMiner.Systems.LakeProbe.Run();
+    return;
+}
+
 // Temporary diagnostic: `--spawnprobe` simulates the spawn director around a parked player
 // and prints the local population mix.
 if (args.Length > 0 && args[0] == "--spawnprobe")
