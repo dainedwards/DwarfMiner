@@ -1488,6 +1488,14 @@ public static class WorldGen
     private static void PlugFluidBreaches(Planet planet, HashSet<long> lavaLid,
         HashSet<long> acidLid)
     {
+        // The same soft kinds ShellLavaBodies hardens: a MELTABLE tile is no barrier —
+        // the crest ate straight through a grass-and-sand shoreline and drained anyway,
+        // so the halo converts them to the barrier rock, not just the open Sky.
+        static bool Soft(TileKind k) => k is
+            TileKind.Sky or TileKind.Dirt or TileKind.Grass or TileKind.Stone
+            or TileKind.Gravel or TileKind.MossStone or TileKind.Granite
+            or TileKind.Basalt or TileKind.Snow or TileKind.Conglomerate;
+
         void Plug(List<(int x, int y)> seeds, HashSet<long> lid, TileKind barrier)
         {
             var open = new HashSet<long>(lid);
@@ -1505,7 +1513,7 @@ public static class WorldGen
                     {
                         var t2 = ((t2c + dt) % n2 + n2) % n2;
                         if (open.Contains(Planet.TileKey(r2, t2))) continue;
-                        if (planet.Get(r2, t2) == TileKind.Sky)
+                        if (Soft(planet.Get(r2, t2)))
                             planet.Set(r2, t2, barrier);
                     }
                 }
