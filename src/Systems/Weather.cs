@@ -270,9 +270,10 @@ public static class Weather
             {
                 var wAng = c.Angle + ((float)rng.NextDouble() - 0.5f) * 2f * c.HalfWidth;
                 var wGround = SpawnDirector.FindSurfaceSpawn(planet, wAng, planet.Radius);
-                // ON the surface (was 1-3px up): even a couple of pixels of clearance
-                // let the pooling cells visibly materialise in mid-air and drop onto
-                // the puddle they fed. Spawn flush with the ground so there's no fall.
+                // NOTE: FindSurfaceSpawn floats a body-sized clearance ABOVE the ground
+                // (creature semantics) — the cell sim settles the spawn to the actual
+                // surface (Cells.SettleToSurface), so the pooling cell never materialises
+                // mid-air and falls as a visible fat droplet.
                 var drop = wGround;
                 if (kind == RainKind.Water) run.Cells.SpawnRainWater(drop);
                 else run.Cells.SpawnSnow(drop);
