@@ -358,7 +358,7 @@ public static class WorldGen
                         planet.Set(r, t, TileKind.Sky);
                         if (depth >= (lavaLake ? 2f : 1f))
                             (lavaLake ? planet.LavaSeeds : planet.WaterSeeds).Add((r, t));
-                        else if (lavaLake) basinAir.Add(Planet.TileKey(r, t));
+                        else if (lavaLake) lavaLid.Add(Planet.TileKey(r, t));
                         continue;
                     }
 
