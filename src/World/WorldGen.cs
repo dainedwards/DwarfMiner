@@ -1280,25 +1280,13 @@ public static class WorldGen
             if (ventBearings.Length > 0)
             {
                 var posAng = MathF.Atan2(rel.Y, rel.X);
-                // RADIUS-AWARE margin: keep bites ~10 tiles of WORLD distance clear of the
-                // plumbing bearing (chamber radius + shell + bite disk), so the angular
-                // margin widens as the worm goes deeper. The fixed 0.07 rad it replaces
-                // covered the skinny throat but, at chamber depth, only a sliver of the
-                // chamber — a worm bit through the shell and the whole primed column
-                // drained to the core face (the lava-pouring-out-the-volcano bug, exposed
-                // when the QA rig lost its lava sea and its chamber landed inside a live
-                // deep-worm band for the first time).
-                var margin = MathF.Max(0.07f, 10f * Planet.TileSize / MathF.Max(dist, 1f));
+                // Coarse bearing skip only — the authoritative plumbing keep-out (chamber
+                // disc + throat capsule, which this margin can never fully cover at
+                // chamber depth) lives in CarveWormDisk, the chokepoint every bite from
+                // every worm family passes through.
                 foreach (var v in ventBearings)
-                    if (MathF.Abs(MathHelper.WrapAngle(posAng - v)) < margin) { nearVent = true; break; }
+                    if (MathF.Abs(MathHelper.WrapAngle(posAng - v)) < 0.07f) { nearVent = true; break; }
             }
-            // The chamber disc itself: the bearing margin above covers the ~5-tile throat
-            // column, but a chamber is 10-16 tiles across — Euclidean keep-out, bite
-            // radius (10px) + slack included.
-            if (!nearVent)
-                foreach (var (zc, zr) in planet.ChamberZones)
-                    if (Vector2.DistanceSquared(pos, zc) < (zr + 12f) * (zr + 12f))
-                    { nearVent = true; break; }
             if (dist >= minPx && dist <= maxPx && !nearVent && !NearDenOrCity(planet, pos))
                 CarveWormDisk(planet, pos, rng.Next(3) == 0 ? 10f : 7f, biteObsidian: true);
             if (branchBudget > 0 && s > length / 4 && rng.Next(50) == 0)
