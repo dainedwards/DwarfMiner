@@ -1422,6 +1422,15 @@ public static class WorldGen
     private static void CarveWormDisk(Planet planet, Vector2 centre, float radius,
         bool biteObsidian = false)
     {
+        // Volcano plumbing keep-out: refuse any bite whose disk reaches a chamber shell or
+        // throat sleeve. Enforced HERE — the single chokepoint every worm family funnels
+        // through (upper network, deep strata, ocean halls, connectors) — because a breach
+        // of a primed column drains the whole volcano to the core: the upper worms had no
+        // vent awareness at all, and the deep worms' bearing margin never covered a
+        // chamber's angular width. 6px slack on top of the disk radius.
+        foreach (var (za, zb, zr) in planet.PlumbingZones)
+            if (DistPointSegSq(centre, za, zb) < (zr + radius + 6f) * (zr + radius + 6f))
+                return;
         var (er, _) = planet.WorldToTile(centre);
         var span = (int)(radius / Planet.TileSize) + 1;
         var rel = centre - planet.Center;
