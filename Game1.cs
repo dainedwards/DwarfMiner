@@ -422,13 +422,6 @@ public sealed partial class DwarfMinerGame : Game
 
     private const uint SdlWindowHidden = 0x8;   // SDL_WINDOW_HIDDEN
 
-    private static readonly System.Diagnostics.Stopwatch _flashSw = System.Diagnostics.Stopwatch.StartNew();
-    internal void FlashProbe(string where)
-    {
-        var f = SdlWindowFlags(Window.Handle);
-        Console.WriteLine($"[flash] {_flashSw.Elapsed.TotalMilliseconds,8:0.0}ms {where,-22} " +
-                          $"hidden={(f & SdlWindowHidden) != 0} shown={(f & 0x4) != 0}");
-    }
 
     /// <summary>Take the window off the screen entirely. `GameWindow.Handle` is the SDL_Window*
     /// on the DesktopGL backend, and SDL2 is already loaded in-process by MonoGame, so this
@@ -1562,9 +1555,7 @@ public sealed partial class DwarfMinerGame : Game
 
     protected override void Update(GameTime gameTime)
     {
-        // First frame, not Initialize: MonoGame's run loop shows the window itself once it
-        // starts, which is AFTER Initialize — a hide any earlier is simply undone.
-        if (_noFocus && !_windowHidden) { _windowHidden = true; HideWindow(); }
+        if (_noFocus) KeepWindowHidden();
         _updSw.Restart();
         UpdateFrame(gameTime);
         _updSw.Stop();
