@@ -865,7 +865,7 @@ public sealed class Player
     /// cooldown + power profile. PlanetCore needs the hammer, the Core needs the core drill.
     /// The pickaxe and hammer normally mine via the physical swing instead
     /// (<see cref="TryStartSwing"/> / <see cref="UpdateSwing"/>) — this path still serves the
-    /// drill, the mining laser, and fly mode's cursor targeting.</summary>
+    /// drill, the mining laser, and god mode's cursor targeting.</summary>
     public TileKind? TryMine(Planet planet, Physics physics, Vector2 worldCursor, MiningTool tool = MiningTool.Pickaxe)
     {
         if (MineCooldown > 0) return null;
