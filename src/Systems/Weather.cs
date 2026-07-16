@@ -167,7 +167,11 @@ public static class Weather
             {
                 c.RainCooldown -= dt;
                 if (ForceRain) c.RainCooldown = 0f;
-                if (c.RainCooldown <= 0f) c.RainTimer = 6f + (float)rng.NextDouble() * 10f;
+                if (c.RainCooldown <= 0f)
+                {
+                    c.RainTimer = 6f + (float)rng.NextDouble() * 10f;
+                    c.RainElapsed = 0f;
+                }
             }
         }
     }
