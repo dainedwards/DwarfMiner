@@ -212,13 +212,6 @@ public static class WorldGen
             lakes[0].ang = trioAng;
             lakes[1].ang = (trioAng + gapWaterLava) % MathHelper.TwoPi;
             acidPools[0].ang = (trioAng + gapWaterLava + gapLavaAcid) % MathHelper.TwoPi;
-            if (Environment.GetEnvironmentVariable("DM_TRIOPROBE") == "1")
-                Console.WriteLine($"[trio] rings={planet.Rings} radius={planet.Radius}t | "
-                    + $"water ang={lakes[0].ang:0.000} w={lakes[0].w:0.000} d={lakes[0].depth:0.0} | "
-                    + $"lava ang={lakes[1].ang:0.000} w={lakes[1].w:0.000} d={lakes[1].depth:0.0} | "
-                    + $"acid ang={acidPools[0].ang:0.000} w={acidPools[0].w:0.000} d={acidPools[0].depth:0.0} | "
-                    + $"strip W-L={gapWaterLava - lakes[0].w - lakes[1].w:0.000} "
-                    + $"L-A={gapLavaAcid - lakes[1].w - acidPools[0].w:0.000}");
         }
 
         // Impact craters (the belt asteroid): dry bowls scooped out of the surface exactly
