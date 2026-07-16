@@ -2509,6 +2509,7 @@ public static class WorldGen
             // and drifts sideways, so the warren reads as a descending gallery network.
             var count = 5 + rng.Next(3);
             var centres = new List<Vector2>();
+            var widths = new List<float>();
             var cAng = ang;
             var cr = surfaceR - (int)((14 + rng.Next(5)) * S);
             for (var i = 0; i < count; i++)
