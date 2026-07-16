@@ -1526,7 +1526,11 @@ public static class WorldGen
             or TileKind.Gravel or TileKind.MossStone or TileKind.Granite
             or TileKind.Basalt or TileKind.Snow or TileKind.Conglomerate;
 
-        void Plug(List<(int x, int y)> seeds, HashSet<long> lid, TileKind barrier)
+        // `melts`: lava and acid eat their way through a soft tile, so for them a meltable
+        // solid in the halo is no barrier at all and gets converted outright. Water eats
+        // nothing — it only needs the OPEN tiles closed, and rewriting live rock as lake
+        // bed would recolour the crust around every basin for no containment gain.
+        void Plug(List<(int x, int y)> seeds, HashSet<long> lid, TileKind barrier, bool melts)
         {
             var open = new HashSet<long>(lid);
             foreach (var (r, t) in seeds) open.Add(Planet.TileKey(r, t));
@@ -1543,16 +1547,27 @@ public static class WorldGen
                     {
                         var t2 = ((t2c + dt) % n2 + n2) % n2;
                         if (open.Contains(Planet.TileKey(r2, t2))) continue;
-                        if (Soft(planet.Get(r2, t2)))
-                            planet.Set(r2, t2, barrier);
+                        var k = planet.Get(r2, t2);
+                        if (Tiles.IsAnchored(k)) continue;
+                        if (melts ? Soft(k) : k == TileKind.Sky)
+                        {
+                            // A water plug takes the structural wall the tile was cut from,
+                            // so a sealed hole reads as the crust around it rather than a
+                            // dirt scar sitting in a granite band.
+                            var w = planet.GetWall(r2, t2);
+                            planet.Set(r2, t2, melts || !Tiles.IsSolid(w) ? barrier : w);
+                        }
                     }
                 }
             }
             foreach (var (r, t) in seeds) Halo(r, t);
             foreach (var key in lid) Halo((int)(key / 4_000_000L), (int)(key % 4_000_000L));
         }
-        Plug(planet.LavaSeeds, lavaLid, TileKind.LavaRock);
-        Plug(planet.AcidSeeds, acidLid, TileKind.Obsidian);
+        Plug(planet.LavaSeeds, lavaLid, TileKind.LavaRock, melts: true);
+        Plug(planet.AcidSeeds, acidLid, TileKind.Obsidian, melts: true);
+        // Water last: it only fills Sky, so it can never overwrite the jackets above.
+        // Only the surface BASINS — a crust reservoir's open neighbours are its own cave.
+        Plug(planet.LakeBasinSeeds, waterLid, TileKind.Dirt, melts: false);
     }
 
     /// <summary>Expand every fluid seed tile by the 2-tile jacket reach into
