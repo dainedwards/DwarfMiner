@@ -715,7 +715,10 @@ public sealed class Cells
                         if (dr == 0 && da == 0) continue;
                         IgniteTile(tx + dr, ty + da);
                     }
-            // Burn out: the tile gives way in a last gout of flame and smoke.
+            // Burn out: the tile gives way in a last gout of flame and smoke. The charred
+            // site is queued so Game1 can wake the structural side — whatever this tile
+            // was holding up (the rest of a tree, an undercut ledge, a burnt-through
+            // support) detaches and FALLS through the rigid-body sim.
             if (nc >= dur)
             {
                 BurningTiles.Remove((tx, ty));
@@ -724,6 +727,7 @@ public sealed class Cells
                 SpawnInTile(tx, ty, Material.Fire, Density / 2);
                 SpawnInTile(tx, ty, Material.Smoke, Density / 2);
                 ShedBurningLeaves(tx, ty, k);
+                PendingCharred.Add((tx, ty, k));
                 continue;
             }
             BurningTiles[(tx, ty)] = nc;
