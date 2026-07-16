@@ -1674,9 +1674,11 @@ public static class WorldGen
     }
 
     /// <summary>Volcanoes: basalt cones raised on the surface, each holding an open crater
-    /// pool that connects through a primed two-tile throat to a deep obsidian-shelled magma
-    /// chamber — the lava genuinely rises from a pool far underground, and drilling into the
-    /// column anywhere lets it flow out through the breach. Acid worlds (def.VolcanoAcid)
+    /// pool that connects through a primed 3-tile lava-rock tube down to a shallow lava
+    /// GEYSER well — the tube ends just below the first crust layer under the cone, and the
+    /// well periodically pumps the column up the tube to overflow the rim (see the eruption
+    /// tick in Game1). Drilling into the column anywhere lets it flow out through the breach.
+    /// Acid worlds (def.VolcanoAcid)
     /// vent vitriol instead; their chambers stay above the global lava-fill line so the two
     /// fluids never share plumbing. Fluid sites are recorded as seeds (LavaSeeds/AcidSeeds)
     /// for Game1 to pour, and each crater registers a vent for periodic eruptions.</summary>
