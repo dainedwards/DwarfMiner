@@ -2316,25 +2316,25 @@ public sealed partial class DwarfMinerGame : Game
                     }
 
                     // SIDE SPOUTS: twin goopy blob ropes from the same submerged origin,
-                    // angled ±20° over the ledge of the crater. Each blob lives through
+                    // angled ±10° over the ledge of the crater. Each blob lives through
                     // its whole lob, POOLS where it lands for a cooling moment, and hands
-                    // off a real Lava cell right there (see EmitLavaSpew) — the stream
-                    // reads as the spitter jet, and the flanks accumulate genuine sim lava
-                    // at exactly the spots the globs visibly struck.
+                    // off a real dollop of Lava right there (see EmitLavaSpew) — the
+                    // stream reads as the spitter jet, and the flanks accumulate genuine
+                    // sim lava at exactly the spots the globs visibly struck.
                     if (!vAcid)
                     {
                         var spew = MathF.Min(1f,
                             0.35f + 0.65f * pulse + (levelFrac > 1f ? 0.2f : 0f));
-                        const float side20 = 0.349f;   // ~20° off the local up
+                        const float side10 = 0.175f;   // ~10° off the local up
                         for (var s = -1; s <= 1; s += 2)
                         {
                             // Scatter variety: each jet WANDERS — a slow independent sweep
-                            // plus per-frame jitter swings the aim around its ±20° base,
+                            // plus per-frame jitter swings the aim around its ±10° base,
                             // so gob clusters land at ever-different spots on the flank
                             // instead of drilling one line.
                             var wob = MathF.Sin(_run.EruptionLeft * 1.7f + s * 2.1f) * 0.12f
                                     + ((float)Random.Shared.NextDouble() - 0.5f) * 0.10f;
-                            var ang2 = s * side20 + wob;
+                            var ang2 = s * side10 + wob;
                             var edir = ventUp * MathF.Cos(ang2) + ventRight * MathF.Sin(ang2);
                             _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
                         }
