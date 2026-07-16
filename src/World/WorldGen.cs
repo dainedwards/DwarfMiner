@@ -777,6 +777,8 @@ public static class WorldGen
             var an = planet.TilesAt(groundR + 1);
             var at = (int)((ang / MathHelper.TwoPi + 1f) % 1f * an);
             if (planet.Get(groundR + 1, at) != TileKind.Sky) continue;
+            // Land plants never sprout under a pour — this "ground" is a lake bed.
+            if (wet.Contains(Planet.TileKey(groundR + 1, at))) continue;
             planet.Set(groundR + 1, at, flora);
         }
     }
