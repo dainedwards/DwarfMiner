@@ -1819,6 +1819,15 @@ public static class WorldGen
                     if (dist <= chamberRad * Planet.TileSize)
                     {
                         planet.SetWall(r, t, TileKind.Basalt);
+                        // The GEYSER node: a solid molten heart at the bulb's centre. It is
+                        // the pump behind every eruption — mine it out and the volcano falls
+                        // silent for good (Game1.HandleGeyserBroken removes the vent), paying
+                        // out a lava core. Solid, so it takes no lava seed.
+                        if (dist <= 1.6f * Planet.TileSize)
+                        {
+                            planet.Set(r, t, TileKind.Geyser);
+                            continue;
+                        }
                         planet.Set(r, t, TileKind.Sky);
                         seeds.Add((r, t));
                     }
