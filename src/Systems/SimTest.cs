@@ -353,6 +353,69 @@ public static class SimTest
         Environment.Exit(_failed ? 1 : 0);
     }
 
+    /// <summary>Pour-basin containment contracts on a full session build: LAND flora (ground
+    /// plants and tree bases — SeaFrond/LilyPad are the intended water plants) never sits
+    /// inside a to-be-poured water/lava/acid basin, and the census never leaves a land
+    /// creature standing in a pool it isn't immune to. Guards the "trees growing out of the
+    /// lake" and "herd spawned on the lava lake bed" classes.</summary>
+    private static void TestFluidContainment()
+    {
+        var run = DwarfMinerGame.BuildSessionWorld(World.PlanetDefs.ById("debug"));
+        var planet = run.Planet;
+        var cells = run.Cells;
+
+        var fluid = new HashSet<long>();
+        foreach (var (r, t) in planet.WaterSeeds) fluid.Add(Planet.TileKey(r, t));
+        foreach (var (r, t) in planet.LavaSeeds) fluid.Add(Planet.TileKey(r, t));
+        foreach (var (r, t) in planet.AcidSeeds) fluid.Add(Planet.TileKey(r, t));
+
+        var wetTrees = 0;
+        foreach (var tree in planet.Trees)
+        {
+            var r = tree.GroundR + 1;
+            if (r >= planet.Rings) continue;
+            var n = planet.TilesAt(r);
+            var t = (int)((tree.Angle / MathHelper.TwoPi + 1f) % 1f * n);
+            if (fluid.Contains(Planet.TileKey(r, t))) wetTrees++;
+        }
+        Check($"fluid: no tree planted in a pour basin ({planet.Trees.Count} trees, {wetTrees} wet)",
+            planet.Trees.Count > 0 && wetTrees == 0);
+
+        var flora = 0;
+        var wetFlora = 0;
+        for (var r = 0; r < planet.Rings; r++)
+        {
+            var n = planet.TilesAt(r);
+            for (var t = 0; t < n; t++)
+            {
+                var k = planet.Get(r, t);
+                if (k is not (TileKind.Fernleaf or TileKind.Frostcap or TileKind.Emberbloom
+                    or TileKind.Rustbramble or TileKind.Vitrilily or TileKind.Geobloom)) continue;
+                flora++;
+                if (fluid.Contains(Planet.TileKey(r, t))) wetFlora++;
+            }
+        }
+        Check($"fluid: no ground flora inside a pour basin ({flora} plants, {wetFlora} wet)",
+            wetFlora == 0);
+
+        // Census fauna: a couple of cells of shore slosh is liquid behaviour, not a bad
+        // spawn — standing IN a pool means many hazard cells in body reach.
+        var landChecked = 0;
+        var soaked = 0;
+        foreach (var c in run.Creatures)
+        {
+            if (c.IsWaterKind || c.Swims) continue;
+            landChecked++;
+            var probe = c.Radius + 1f;
+            if (!c.ImmuneTo(Material.Water) && cells.CountWaterNear(c.Position, probe) > 6) soaked++;
+            var (lava, acid, _, _) = cells.SampleHazardsNear(c.Position, probe);
+            if (lava > 6 && !c.ImmuneTo(Material.Lava)) soaked++;
+            if (acid > 6 && !c.ImmuneTo(Material.Acid)) soaked++;
+        }
+        Check($"fluid: census leaves no land creature in a pool ({landChecked} land, {soaked} soaked)",
+            landChecked > 0 && soaked == 0);
+    }
+
     /// <summary>The living tree ecosystem: a planted tree raises a slender trunk and threads
     /// roots into the soil; felling it leaves those roots, which — once watered — regrow the
     /// trunk back; and grubbing the roots out kills the tree for good.</summary>
