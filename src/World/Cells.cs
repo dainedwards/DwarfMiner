@@ -3169,19 +3169,20 @@ public sealed class Cells
         // overwrites are invisible. A hotter dome tint stamped a hard orange square into
         // the pool around every blister; the blister reads through its SILHOUETTE — the
         // added coverage bumps the metaball surface and the composite rim-lights the
-        // bulge — not through its ink. Site selection, size and rhythm all hash off the
-        // cell (zero per-bubble state); sites are RARE (a few spots across a big pool)
+        // bulge — not through its ink. Sites are RARE (a few spots across a big pool)
         // and gate on DEPTH + SETTLEDNESS, not width: crater pools and small-but-deep
         // lakes bubble; thin sheets, pouring streams and fresh spill fronts don't.
         var dtFx = MathF.Max(0f, _time - _hotFxTime);
         _hotFxTime = _time;
-        var sparks = 0;
+
+        // Refresh the site registry from this frame's surface cells: verify DEEP + AT
+        // REST (the site and two full tiles of lava straight beneath it, every cell
+        // motionless) and cache the geometry. Failing or absent cells just age out —
+        // never a same-frame kill, or rim churn strobes the dome (see BubbleSite).
         foreach (var (cx, cy) in _hotSurface)
         {
             var hash = (cx * 73856093) ^ (cy * 19349663);
             if ((hash & 127) != 0) continue;          // ~1 in 128 surface cells is a site
-            // DEEP + AT REST: the site and two full tiles of lava straight beneath it,
-            // every cell motionless.
             var deep = _travel[Idx(cx, cy)] == 0f;
             var (px, py) = (cx, cy);
             for (var d = 0; d < 16 && deep; d++)
@@ -3190,45 +3191,79 @@ public sealed class Cells
                 if (py < 0) { deep = false; break; }
                 deep = Get(px, py) == Material.Lava && _travel[Idx(px, py)] == 0f;
             }
-            if (!deep) { _bubbleStill.Remove((cx, cy)); continue; }
-            // SETTLED: continuously still for a few seconds — a fresh pour looks deep and
-            // motionless the instant it lands, but shouldn't blister yet.
-            if (_bubbleStill.Count > 512) _bubbleStill.Clear();
-            if (!_bubbleStill.TryGetValue((cx, cy), out var since))
+            if (!deep) continue;
+            if (!_bubbleSites.TryGetValue((cx, cy), out var site))
             {
-                _bubbleStill[(cx, cy)] = _time;
-                continue;
+                if (_bubbleSites.Count > 256) continue;
+                site = new BubbleSite { Since = _time };
             }
-            if (_time - since < 4f) continue;
+            var n = _cellsAt[cy];
+            site.Seen = _time;
+            site.Angle = (WrapX(cx, n) + 0.5f) * (MathHelper.TwoPi / n);
+            site.RingRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
+            _bubbleSites[(cx, cy)] = site;
+        }
+
+        // Drive the registered sites. Each runs a lazy hash clock: quiet for most of its
+        // 3-9s period, a ~1.8s swell at the end (fast swell, slow finish — the dome
+        // bursts, never deflates), the POP at the wrap, then a briefly collapsing splash
+        // lip. The dome's centre rides just off the surface cell so the blister visibly
+        // grows OUT of the pool — never hovers above it.
+        var sparks = 0;
+        _bubbleDead.Clear();
+        foreach (var (key, site) in _bubbleSites)
+        {
+            if (_time - site.Seen > 1.2f) { _bubbleDead.Add(key); continue; }
+            if (_time - site.Since < 4f) continue;    // settled: still for a while first
+            var hash = (key.cx * 73856093) ^ (key.cy * 19349663);
             var period = 3f + ((hash >> 8) & 255) / 255f * 6f;  // one blister per 3-9s
             var cycle = (_time + ((hash >> 16) & 255) / 255f * period) % period;
-            // The dome only lives in the last ~1.8s of the cycle — swell, then pop at the
-            // wrap. The rest of the period the site sits quiet: an occasional heave off a
-            // still sea, not a rolling boil.
             const float swell = 1.8f;
             var t01 = (cycle - (period - swell)) / swell;
-            var pop = cycle < dtFx;
-            if (t01 <= 0f && !pop) continue;
-            var n = _cellsAt[cy];
-            var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
-            var cellAng = (WrapX(cx, n) + 0.5f) * (MathHelper.TwoPi / n);
-            var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
-            // The wrap happened inside this sim step: pop. Sparks arc up and cool.
-            if (pop && sparks < 6)
+            var up = new Vector2(MathF.Cos(site.Angle), MathF.Sin(site.Angle));
+            var rot = site.Angle + MathHelper.PiOver2;
+            var wMax = radial * (15f + ((hash >> 5) & 7) * 3.6f); // span ×1.5 per user
+            // The wrap happened inside this sim step: POP. Sparks fly, and the burst
+            // SLOSHES for real — one actual lava cell is thrown off the surface (it arcs
+            // and splashes back in), so the pool itself reacts, not just the overlay.
+            if (cycle < dtFx && sparks < 6)
             {
-                particles.EmitLavaSparks(Planet.Center + up * (ringRadius + radial), up);
+                particles.EmitLavaSparks(Planet.Center + up * (site.RingRadius + radial), up);
                 sparks++;
+                if (_flying.Count < MaxFlying && Get(key.cx, key.cy) == Material.Lava)
+                {
+                    var jet = new Vector2(-up.Y, up.X);
+                    LaunchCell(key.cx, key.cy,
+                        up * (60f + _rng.Next(50)) + jet * (_rng.Next(90) - 45));
+                }
             }
-            if (t01 <= 0f) continue;
-            // Fast swell, slow finish, gone at the wrap — the dome bursts, never
-            // deflates. Span ×1.5 per user: rare fat blisters, not a fizzing skin.
-            var w = radial * (15f + ((hash >> 5) & 7) * 3.6f) * MathF.Sqrt(t01);
-            var pos = Planet.Center + up * (ringRadius + w * 0.22f);
-            var body = LiquidBody(Material.Lava, cx, cy);
-            r.Batch.Draw(blob, pos, null, body, cellAng + MathHelper.PiOver2,
-                blobOrigin, new Vector2(w / blob.Width, w * 0.8f / blob.Height),
-                SpriteEffects.None, 0f);
+            var body = LiquidBody(Material.Lava, key.cx, key.cy);
+            if (t01 > 0f)
+            {
+                var w = wMax * MathF.Sqrt(t01);
+                var pos = Planet.Center + up * (site.RingRadius + w * 0.08f);
+                r.Batch.Draw(blob, pos, null, body, rot, blobOrigin,
+                    new Vector2(w / blob.Width, w * 0.8f / blob.Height),
+                    SpriteEffects.None, 0f);
+            }
+            else if (cycle < 0.45f)
+            {
+                // Post-pop slosh: the burst lip — two side lobes where the dome's rim
+                // fell back, collapsing into the pool over the first half second.
+                var k = 1f - cycle / 0.45f;
+                var tan = new Vector2(-up.Y, up.X);
+                var lw = wMax * (0.2f + 0.35f * k);
+                for (var sgn = -1; sgn <= 1; sgn += 2)
+                {
+                    var lp = Planet.Center + up * (site.RingRadius + lw * 0.05f)
+                           + tan * (sgn * wMax * 0.3f);
+                    r.Batch.Draw(blob, lp, null, body, rot, blobOrigin,
+                        new Vector2(lw / blob.Width, lw * 0.7f / blob.Height),
+                        SpriteEffects.None, 0f);
+                }
+            }
         }
+        foreach (var dead in _bubbleDead) _bubbleSites.Remove(dead);
 
         // Lava's own surface line: the slow bright molten crest, after the bodies AND the
         // bubbles so its colour wins the replace blend and the line stays continuous
