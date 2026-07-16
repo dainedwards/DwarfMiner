@@ -2059,11 +2059,9 @@ public sealed partial class DwarfMinerGame : Game
                     var speed = 90f + (float)Random.Shared.NextDouble() * 70f;
                     _run.Cells.LaunchAtWorld(ventPos + ventUp * 4f, dir * speed, mat);
                 }
-                // Molten rock bombs flung out of the throat — glowing scoria chunks that
-                // arc over and litter the slopes (lava craters only; acid vents don't).
-                if (!vAcid)
-                    _run.Cells.LaunchAtWorld(ventPos, ventUp * 0f, mat); // (no-op guard removed below)
             }
+            // Molten rock bombs flung out of the throat — glowing scoria chunks that arc
+            // over and litter the slopes (lava craters only; acid vents don't spit rock).
             if (peak && !vAcid)
                 _particles.EmitLavaChunks(ventPos + ventUp * 8f, ventUp, 5 + Random.Shared.Next(5));
 
