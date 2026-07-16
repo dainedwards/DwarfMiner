@@ -84,6 +84,12 @@ public enum TileKind : byte
     /// it appears in neither IsMeltable nor IsFlammable, so lava can never burn through
     /// its own jacket.</summary>
     LavaRock = 59,
+    /// <summary>The living heart of a volcano: a molten node stamped at the centre of the
+    /// geyser well at the foot of every lava tube (WorldGen.CarveVolcanoes). It is what
+    /// pumps the eruptions — destroy it and that volcano falls silent forever, yielding
+    /// the lava core material. Anchored: only deliberate mining breaks it, never quakes,
+    /// blasts, or acid.</summary>
+    Geyser = 60,
     // Player-crafted placeables.
     Ladder = 22,
     Rail = 23,
