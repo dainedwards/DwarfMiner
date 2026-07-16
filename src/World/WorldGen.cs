@@ -1772,12 +1772,16 @@ public static class WorldGen
                 }
             }
 
-            // The magma chamber: a shelled pool deep under the cone. Lava chambers wear a
-            // LAVA-ROCK shell (melt/burn-proof — the same jacket every lava body gets);
-            // acid chambers keep OBSIDIAN, the only kind acid can't corrode. Either way
-            // the reservoir holds until the player (or a cave-in) breaches it.
-            var chamberRad = (int)((4 + rng.Next(3) + scale * 1.5f) * S);
-            var chamberR = surfaceR - (int)((55 + rng.Next(26)) * S);
+            // The lava GEYSER well: a shelled molten pit at the FOOT of the tube, sunk just
+            // below the first crust layer under the cone (not the old near-core chamber).
+            // Lava wells wear a LAVA-ROCK shell (melt/burn-proof — the same jacket every lava
+            // body gets); acid wells keep OBSIDIAN, the only kind acid can't corrode. The
+            // well holds a primed column that eruptions pump up the tube and over the rim.
+            var chamberRad = (int)((3 + rng.Next(2) + scale) * S);
+            // End the tube below the first underground layer: past the ~10-tile dirt band
+            // and a little into the stone crust, so the geyser sits in rock but stays a
+            // shallow, reachable conduit rather than a deep-core reservoir.
+            var chamberR = surfaceR - (int)((16 + rng.Next(8)) * S) - chamberRad;
             if (def.VolcanoAcid)
             {
                 // Keep acid plumbing above the global lava flood so the two never mix.
