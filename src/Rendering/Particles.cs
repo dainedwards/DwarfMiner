@@ -1718,7 +1718,7 @@ public sealed class Particles
     public void EmitEruptionJet(Vector2 pos, Vector2 up, float strength)
     {
         var right = new Vector2(-up.Y, up.X);
-        var count = 4 + (int)(strength * 6f);
+        var count = 6 + (int)(strength * 9f);
         for (var i = 0; i < count; i++)
         {
             var spread = (float)(_rng.NextDouble() - 0.5) * 0.22f;
@@ -1729,9 +1729,9 @@ public sealed class Particles
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 4f,
-                Velocity = d * ((170f + strength * 160f) * (0.85f + (float)_rng.NextDouble() * 0.3f)),
-                Life = 0.8f + (float)_rng.NextDouble() * 0.5f,
-                MaxLife = 1.3f,
+                Velocity = d * ((220f + strength * 220f) * (0.85f + (float)_rng.NextDouble() * 0.3f)),
+                Life = 0.9f + (float)_rng.NextDouble() * 0.6f,
+                MaxLife = 1.5f,
                 Color = tone,
                 FadeColor = new Color(205, 75, 15),
                 Size = hot ? 0.7f : 1f,              // hose-normal grain (strand fallback)
