@@ -426,6 +426,14 @@ public sealed class Particles
                 // scales with coverage: tips go dim and dark together, as flame does.)
                 var age = 1f - t;
                 wid = MathHelper.Lerp(3f, 11f, age);   // plume billow: puffs EXPAND with age
+                // Scaled-up jets (the volcano's eruption column) carry Size > 1: the whole
+                // blob footprint multiplies, so the same taper/bloom shape reads at cone
+                // scale. Flamethrower grains (Size ≤ 1) are untouched.
+                if (p.Size > 1f)
+                {
+                    wid *= p.Size;
+                    len = MathF.Max(len, 5f * p.Size);
+                }
                 // Dim floor raised 0.5→0.72: with the fade now ending on deep flame red,
                 // heavier dimming pushed tips toward brown-black — user wants NO black,
                 // so the tips tatter mostly via coverage, less via darkening.
