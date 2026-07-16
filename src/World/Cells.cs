@@ -618,11 +618,11 @@ public sealed class Cells
     // burn state, same policy as flying cells.
     public readonly Dictionary<(int tx, int ty), float> BurningTiles = new();
     private readonly List<((int tx, int ty) Key, float Clock)> _burnScratch = new();
-    // Planet-wide cap = the fire-storm guard. 600 gives a grove fire headroom — at the
-    // old 400 a healthy blaze pinned the cap and every ignition (spread steps, cell-fire
-    // catches) dropped silently, which read as the fire stalling and dying in patches.
-    // With retried spread the cap is SOFT: blocked ignitions heal as burn-outs free slots.
-    private const int MaxBurningTiles = 600;
+    // Planet-wide cap = the fire-storm guard. With retried spread the cap is SOFT
+    // (blocked ignitions heal as slots free), and PRESSURE AGING (see TickBurningTiles)
+    // burns the tail out faster as the count climbs past half-cap — so a big fire keeps
+    // its front pace as a travelling band rather than stalling here.
+    private const int MaxBurningTiles = 900;
     private const float BurnSpreadDelay = 0.25f;
     private const float BurnDurMin = 4f, BurnDurVar = 3f;
 
