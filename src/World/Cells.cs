@@ -3151,10 +3151,9 @@ public sealed class Cells
         // Bubbles ride on top of the crest line (their colour wins where they overlap it).
         // Site selection, size and rhythm all hash off the cell, so a resting sea keeps
         // stable, individually-phased bubblers with zero per-bubble state. Sites are RARE
-        // (a few spots across a big pool), fire on a long lazy clock, and only exist on
-        // LARGE STILL bodies — a resting site with a dozen unbroken lava cells to each
-        // side. Streams (1-3 cells wide), pouring fronts, and puddles all fail the gate,
-        // so flowing lava never blisters mid-fall.
+        // (a few spots across a big pool) and gate on DEPTH + SETTLEDNESS, not width:
+        // crater pools and small-but-deep lakes bubble; thin sheets, pouring streams and
+        // fresh spill fronts don't.
         var dtFx = MathF.Max(0f, _time - _hotFxTime);
         _hotFxTime = _time;
         var sparks = 0;
@@ -3162,12 +3161,27 @@ public sealed class Cells
         {
             var hash = (cx * 73856093) ^ (cy * 19349663);
             if ((hash & 127) != 0) continue;          // ~1 in 128 surface cells is a site
-            if (_travel[Idx(cx, cy)] != 0f) continue; // still, not mid-fall
-            var wide = true;
-            for (var d = 1; d <= 12 && wide; d++)
-                wide = Get(cx - d, cy) == Material.Lava && Get(cx + d, cy) == Material.Lava;
-            if (!wide) continue;
-            var period = 7f + ((hash >> 8) & 255) / 255f * 9f;  // one blister per 7-16s
+            // DEEP + AT REST: the site and two full tiles of lava straight beneath it,
+            // every cell motionless.
+            var deep = _travel[Idx(cx, cy)] == 0f;
+            var (px, py) = (cx, cy);
+            for (var d = 0; d < 16 && deep; d++)
+            {
+                (px, py) = InnerCell(px, py);
+                if (py < 0) { deep = false; break; }
+                deep = Get(px, py) == Material.Lava && _travel[Idx(px, py)] == 0f;
+            }
+            if (!deep) { _bubbleStill.Remove((cx, cy)); continue; }
+            // SETTLED: continuously still for a few seconds — a fresh pour looks deep and
+            // motionless the instant it lands, but shouldn't blister yet.
+            if (_bubbleStill.Count > 512) _bubbleStill.Clear();
+            if (!_bubbleStill.TryGetValue((cx, cy), out var since))
+            {
+                _bubbleStill[(cx, cy)] = _time;
+                continue;
+            }
+            if (_time - since < 4f) continue;
+            var period = 3f + ((hash >> 8) & 255) / 255f * 6f;  // one blister per 3-9s
             var cycle = (_time + ((hash >> 16) & 255) / 255f * period) % period;
             // The dome only lives in the last ~1.8s of the cycle — swell, then pop at the
             // wrap. The rest of the period the site sits quiet: an occasional heave off a
