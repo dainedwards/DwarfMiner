@@ -172,7 +172,7 @@ public static class AmbientDirector
                     if (d < bestSq) { bestSq = d; best = i; }
                 }
                 run.EruptionVent = best;
-                run.EruptionLeft = 8f + (float)Random.Shared.NextDouble() * 6f;
+                run.EruptionLeft = 12f + (float)Random.Shared.NextDouble() * 8f;
                 var (vx, vy, _) = run.Planet.VolcanoVents[best];
                 result.EruptionStarted = true;
                 result.EruptionPos = run.Planet.TileToWorld(vx, vy);
