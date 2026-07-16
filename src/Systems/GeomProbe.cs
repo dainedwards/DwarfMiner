@@ -59,16 +59,21 @@ public static class GeomProbe
                               $"-{(surf - lo) / Planet.LegacyTileScale:0.0} legacy tiles down");
         foreach (var (lo, hi) in bands) Console.WriteLine($"    deep band {lo:0.0}-{hi:0.0}t");
 
-        // Air by depth, in legacy-tile buckets: where the caves actually are.
+        // Air by depth, in legacy-tile buckets: where the caves actually are. Depth is
+        // measured from the LOCAL ground (the stamped surface profile), not the baseline
+        // radius — a mountain, a valley or a lake bowl otherwise reads as a huge cave, which
+        // is exactly the misread that makes a hollow crust and a lumpy one look alike.
         var buckets = new int[28];
         var total = new int[28];
         for (var r = 0; r < planet.Rings; r++)
         {
-            var depth = (int)((surf - (Planet.RingMin + r + 0.5f)) / Planet.LegacyTileScale / 5f);
-            if (depth < 0 || depth >= buckets.Length) continue;
             var n = planet.TilesAt(r);
             for (var t = 0; t < n; t++)
             {
+                var localSurf = planet.SurfaceRadiusAt(planet.TileToWorld(r, t));
+                var depth = (int)((localSurf - (Planet.RingMin + r + 0.5f))
+                                  / Planet.LegacyTileScale / 5f);
+                if (depth < 0 || depth >= buckets.Length) continue;
                 total[depth]++;
                 if (planet.Get(r, t) == TileKind.Sky) buckets[depth]++;
             }
