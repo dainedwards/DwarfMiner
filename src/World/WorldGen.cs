@@ -1449,6 +1449,49 @@ public static class WorldGen
         }
     }
 
+    /// <summary>Plug every open drain a carver left against a to-be-poured lava/acid body.
+    /// Two local rules cover the ways a pool can empty: fluid RESTS on something, so a
+    /// non-seed Sky tile directly INWARD of any seed is a drain floor; and a non-seed Sky
+    /// tile BESIDE an interior-course seed (one with more seed above it — i.e. below the
+    /// body's own surface line) is a side breach. Surface-course seeds keep their open
+    /// sideways air (that's the waterline meeting the basin) and everything keeps its open
+    /// top (crater mouths, lake surfaces). Lava plugs with its jacket rock, acid with the
+    /// only kind it can't eat.</summary>
+    private static void PlugFluidBreaches(Planet planet)
+    {
+        void Plug(List<(int x, int y)> seeds, TileKind barrier)
+        {
+            var set = new HashSet<long>();
+            foreach (var (r, t) in seeds) set.Add(Planet.TileKey(r, t));
+            foreach (var (r, t) in seeds)
+            {
+                var (ir, it) = planet.InnerNeighbour(r, t);
+                if (ir >= 0 && !set.Contains(Planet.TileKey(ir, it))
+                    && planet.Get(ir, it) == TileKind.Sky)
+                    planet.Set(ir, it, barrier);
+
+                var interior = false;
+                var oc = planet.OuterNeighbourCount(r, t);
+                for (var i = 0; i < oc && !interior; i++)
+                {
+                    var (or2, ot) = planet.OuterNeighbour(r, t, i);
+                    interior = or2 < planet.Rings && set.Contains(Planet.TileKey(or2, ot));
+                }
+                if (!interior) continue;
+                var n = planet.TilesAt(r);
+                foreach (var dt in stackalloc[] { -1, 1 })
+                {
+                    var t2 = ((t + dt) % n + n) % n;
+                    if (!set.Contains(Planet.TileKey(r, t2))
+                        && planet.Get(r, t2) == TileKind.Sky)
+                        planet.Set(r, t2, barrier);
+                }
+            }
+        }
+        Plug(planet.LavaSeeds, TileKind.LavaRock);
+        Plug(planet.AcidSeeds, TileKind.Obsidian);
+    }
+
     /// <summary>Expand every lava/acid seed tile by the 2-tile jacket reach into
     /// <see cref="Planet.FluidKeepOut"/> — the halo the tunnel carvers refuse to bite.
     /// 2 tiles matches the shell contract: what survives between a tunnel and the fluid is
