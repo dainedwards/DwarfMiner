@@ -240,6 +240,35 @@ public static class WorldGen
         // lava sea can never drain into the dry caves below it). See CaveStrata.
         var (strataSeams, _, seaFloorTiles) = CaveStrata(planet, def);
 
+        // BASIN DEPTH CAP — a bowl must always have a floor under it, and every basin depth
+        // above was rolled in ABSOLUTE legacy tiles with no idea how thick this world's crust
+        // actually is. On the shrunken QA rig (SizeScale 0.49) the crust is only ~27 legacy
+        // tiles from surface to core, while the LakeTrio's 3× showcase bowls roll 15-29 — so
+        // the water lake was carved straight through the bottom of the world and its "bed"
+        // was whatever the innermost ring left behind. Two floors to respect:
+        //   * the core: keep 45% of the crust under the deepest point, so a basin reads as a
+        //     bowl in the ground rather than a hole in the planet;
+        //   * the topmost strata seam: a bowl that reaches one is re-plugged by SealSeams
+        //     (the seam contract is absolute) — which quite literally cuts the lake's bottom
+        //     off, and leaves the pour sitting on a slab that was never meant to be a bed.
+        // Clamped here rather than at the roll so the rng stream — and every seeded layout —
+        // stays byte-identical; only the depths change, and only where they overran.
+        {
+            var maxDepth = baselineR / S * 0.55f;
+            foreach (var (lo, _) in strataSeams)
+            {
+                var toSeam = (baselineR + Planet.RingMin - lo) / S - 3f;   // 3 legacy tiles clear
+                if (toSeam < maxDepth) maxDepth = toSeam;
+            }
+            maxDepth = MathF.Max(maxDepth, 2f);
+            for (var i = 0; i < lakes.Length; i++)
+                lakes[i].depth = MathF.Min(lakes[i].depth, maxDepth);
+            for (var i = 0; i < acidPools.Length; i++)
+                acidPools[i].depth = MathF.Min(acidPools[i].depth, maxDepth);
+            for (var i = 0; i < craters.Length; i++)
+                craters[i].depth = MathF.Min(craters[i].depth, maxDepth);
+        }
+
         // Top of the lava flood (BuildSessionWorld fills Sky tiles inside this radius).
         // The liquid/gas pocket bands below are authored as ABSOLUTE depths, which sat
         // safely above the lava on full-size worlds — but on small worlds (the 0.7× QA
