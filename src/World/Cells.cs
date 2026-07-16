@@ -276,8 +276,9 @@ public sealed class Cells
     /// embedded-gem pop or shattered gem tile — is one whole drop at the shatter site.</summary>
     public readonly List<(Vector2 pos, TileKind kind)> PendingGemDrops = new();
 
-    public Cells(Planet planet)
+    public Cells(Planet planet, int? rngSeed = null)
     {
+        _rng = rngSeed is { } s ? new Random(s) : new Random();
         Planet = planet;
         Height = Planet.Rings * Density;
         _cellsAt = new int[Height];
