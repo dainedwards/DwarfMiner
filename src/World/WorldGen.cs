@@ -672,7 +672,7 @@ public static class WorldGen
             planet.SurfaceProfile = profile;
         }
 
-        SeedBiomePockets(planet, def, rng, lakes);
+        SeedBiomePockets(planet, def, rng, lakes, acidPools);
         if (def.GreatGeode) CarveGreatGeode(planet, rng);
 
         // Volcanoes stamp last so their plumbing (throat lining, chamber shell) wins over
@@ -725,7 +725,7 @@ public static class WorldGen
         // (noise caves included — they run in the tile pass, before any keep-out exists)
         // opened against a to-be-poured lava/acid body is plugged back with the barrier
         // material. Runs LAST so no later carve can undo it.
-        PlugFluidBreaches(planet, lavaLid, acidLid);
+        PlugFluidBreaches(planet, lavaLid, acidLid, waterLid);
 
         // The prospector's jackpot: the odd RICH gold/silver vein — a solid ribbon of ore
         // far denser than the ambient scatter (which runs deliberately lean, gold most of
