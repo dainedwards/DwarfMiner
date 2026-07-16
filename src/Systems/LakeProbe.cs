@@ -29,9 +29,15 @@ public static class LakeProbe
 
         // Only the SURFACE basins matter here (the crust reservoirs are flooded caves by
         // design): anything within a few rings of the surface ring.
+        var byRing = new SortedDictionary<int, int>();
+        foreach (var (r, _) in planet.WaterSeeds) byRing[r] = byRing.TryGetValue(r, out var c) ? c + 1 : 1;
+        Console.Write("    water seeds by ring:");
+        foreach (var (r, c) in byRing) Console.Write($" {r}:{c}");
+        Console.WriteLine();
+
         var lake = new HashSet<(int r, int t)>();
         foreach (var (r, t) in planet.WaterSeeds)
-            if (r > planet.SurfaceRing - 40) lake.Add((r, t));
+            if (r > planet.SurfaceRing - 30) lake.Add((r, t));
         Console.WriteLine($"    surface-basin water seeds: {lake.Count}");
 
         // Drain mouths: a basin tile with open air sideways or inward that is NOT itself part
