@@ -2766,18 +2766,22 @@ public static class WorldGen
                 // world; the seams-and-tunnels test noticed before anyone else would have.
                 var radius = (int)((crystal ? 4 + rng.Next(4) : 3 + rng.Next(3)) * S);
 
-                // Pockets keep off every lake and acid-pool bearing. This carve eats ANYTHING
-                // unanchored — obsidian shell, basin buffer, jacket included — and it runs
-                // before the keep-out exists, so a grove under a basin is a drain the pour
-                // finds at load: it was the hole that emptied the debug rig's water lake
-                // from below. Was ocean-only, on the theory that only a sea plunges into the
-                // grove band; a 3× QA basin does too, and a normal lake sits close enough
-                // that a radius-5 cavity still bites its bed.
+                // Pockets keep out of any basin's SOLID BUFFER (the cave-free rock the tile
+                // pass leaves under a lake/pool bed). This carve eats anything unanchored —
+                // obsidian shell, buffer, jacket included — and it runs before the keep-out
+                // exists, so a cavity that reaches a bed is a drain the pour finds at load:
+                // a grove is what emptied the debug rig's water lake from below. The old
+                // rule barred pockets from a sea's whole BEARING; that also condemns the
+                // deep crystal caverns 30-70 tiles under a 5-tile puddle, which are no
+                // threat to anything. Compare depths instead: only the cavity that actually
+                // rises into the buffer is dropped, whatever world it's on.
+                var top = depth - (radius + 1) / S;         // shallowest point of the cavity
                 var wet = false;
                 foreach (var l in lakes)
-                    if (MathF.Abs(MathHelper.WrapAngle(ang - l.ang)) < l.w + 0.05f) { wet = true; break; }
-                foreach (var a in acidPools)
-                    if (MathF.Abs(MathHelper.WrapAngle(ang - a.ang)) < a.w + 0.05f) { wet = true; break; }
+                    if (top < BasinDepthAt(l, ang) + 14f) { wet = true; break; }
+                if (!wet)
+                    foreach (var a in acidPools)
+                        if (top < BasinDepthAt(a, ang) + 14f) { wet = true; break; }
                 if (wet) continue;
                 var n = planet.TilesAt(cr);
                 var ct = (int)((ang / MathHelper.TwoPi + 1f) % 1f * n);

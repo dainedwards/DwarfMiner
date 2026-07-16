@@ -93,7 +93,7 @@ public static class RunSave
             w.Write(p.HasFlamethrower); w.Write(p.HasAcidSpewer); w.Write(p.HasLightningGun);
             w.Write(p.HasGrapple);    // v23
             w.Write(p.ScannerTier);   // v20
-            w.Write(p.FlyMode);
+            w.Write(p.GodMode);
             w.Write(p.BeaconWorld.HasValue);
             if (p.BeaconWorld is { } b) { w.Write(b.X); w.Write(b.Y); }
 
@@ -218,7 +218,7 @@ public static class RunSave
                 HasLightningGun = r.ReadBoolean(),
                 HasGrapple = r.ReadBoolean(),  // v23
                 ScannerTier = r.ReadInt32(),   // v20
-                FlyMode = r.ReadBoolean(),
+                GodMode = r.ReadBoolean(),
             };
             if (r.ReadBoolean()) p.BeaconWorld = new Vector2(r.ReadSingle(), r.ReadSingle());
 

@@ -245,10 +245,10 @@ public sealed class Player
     /// falls back to the tier-derived stats so crafted upgrades still persist across toggles.
     /// God mode NO LONGER auto-enables flight — press H while in god mode to toggle ghost
     /// flight (see <see cref="Flying"/>).</summary>
-    public bool FlyMode;
+    public bool GodMode;
 
     /// <summary>Ghost flight: no gravity, no collision, direct velocity control. Only meaningful
-    /// while <see cref="FlyMode"/> (god mode) is on, and toggled with the H key. Kept separate
+    /// while <see cref="GodMode"/> (god mode) is on, and toggled with the H key. Kept separate
     /// from god mode so the dev can be invulnerable while still walking the surface normally.</summary>
     public bool Flying;
     public const int GodPickaxePower = 50;
@@ -261,7 +261,7 @@ public sealed class Player
     {
         get
         {
-            if (FlyMode) return GodPickaxePower;
+            if (GodMode) return GodPickaxePower;
             // Miner's Charm (accessory) — the first of the augment bonuses this getter was
             // always going to grow.
             return PickaxeTier + (Equipment.HasAccessory("miners_charm") ? 1 : 0);
@@ -274,7 +274,7 @@ public sealed class Player
     {
         get
         {
-            if (FlyMode) return GodMineRange;
+            if (GodMode) return GodMineRange;
             var mul = PickaxeTier >= 3 ? 1.20f : 1.0f;
             return MineRange * mul;
         }
@@ -286,7 +286,7 @@ public sealed class Player
     /// cadence so dev movement isn't gated by swing rate.</summary>
     public float MineCooldownFor(MiningTool tool)
     {
-        if (FlyMode) return 0.04f;
+        if (GodMode) return 0.04f;
         var cd = tool switch
         {
             MiningTool.Drill       => 0.04f,
@@ -307,7 +307,7 @@ public sealed class Player
     /// power bonus on Obsidian (handled inside TryMine, not here).</summary>
     public bool CanBreak(TileKind k, MiningTool tool)
     {
-        if (FlyMode) return k != TileKind.Sky;
+        if (GodMode) return k != TileKind.Sky;
         var h = Tiles.Hardness(k);
         if (k == TileKind.Core) return HasCoreDrill;
         if (h >= 99) return tool == MiningTool.Hammer;
@@ -337,7 +337,7 @@ public sealed class Player
 
     public void TakeDamage(float amount)
     {
-        if (FlyMode) return;
+        if (GodMode) return;
         Health -= amount * DamageTakenMultiplier;
         if (amount > 0f) HurtFlash = MathF.Min(1f, HurtFlash + MathHelper.Clamp(amount / 25f, 0.25f, 1f));
     }
@@ -809,7 +809,7 @@ public sealed class Player
     private bool TickBuild(Planet planet, Vector2 worldCursor, float dt)
     {
         _buildHeld = true;
-        if (FlyMode) return true;
+        if (GodMode) return true;
         var site = planet.WorldToTile(worldCursor);
         if (_buildSite != site)
         {
@@ -833,7 +833,7 @@ public sealed class Player
     /// cursor mode.</summary>
     public (int X, int Y)? ResolveMineTarget(Planet planet, Vector2 worldCursor, MiningTool tool)
     {
-        if (FlyMode || tool == MiningTool.Drill)
+        if (GodMode || tool == MiningTool.Drill)
         {
             if ((worldCursor - Position).Length() > EffectiveMineRange) return null;
             var (cx, cy) = planet.WorldToTile(worldCursor);

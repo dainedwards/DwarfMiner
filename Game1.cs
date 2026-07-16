@@ -782,7 +782,7 @@ public sealed partial class DwarfMinerGame : Game
             // toggles it in-game either way. The toggle drives ghost flight, super-pickaxe
             // power, and extended mine range as a single bundle — see
             // Player.EffectivePickaxePower / EffectiveMineRange.
-            FlyMode = Environment.GetEnvironmentVariable("DM_GOD") is { Length: > 0 },
+            GodMode = Environment.GetEnvironmentVariable("DM_GOD") is { Length: > 0 },
             // Apply meta-progress: a player who has previously escaped starts with a
             // higher-tier pickaxe so subsequent runs are slightly easier.
             PickaxeTier = Math.Max(1, _meta.StartingPickaxePower),
@@ -793,7 +793,7 @@ public sealed partial class DwarfMinerGame : Game
         _run.HasCannon = _meta.StartWithCannon;
         // God mode grants everything PERMANENTLY from frame one — every item at max tier
         // plus unlimited crafting materials (see GrantGodmodeItems).
-        if (_run.Player.FlyMode)
+        if (_run.Player.GodMode)
         {
             GrantGodmodeItems();
             GrantGodmodeMaterials();
@@ -1678,11 +1678,11 @@ public sealed partial class DwarfMinerGame : Game
         // G toggles god mode for world testing.
         if (Pressed(keys, _prevKeys, Keys.G))
         {
-            _run.Player.FlyMode = !_run.Player.FlyMode;
+            _run.Player.GodMode = !_run.Player.GodMode;
             // God mode carries the full armoury: entering fills empty belt slots with every
             // weapon; leaving strips the ones the player doesn't actually own, so the loaner
             // guns vanish with the mode while crafted gear stays put.
-            if (_run.Player.FlyMode)
+            if (_run.Player.GodMode)
             {
                 // Everything is granted PERMANENTLY: ownership flags flip for real (so
                 // nothing is swept when god mode ends), plus 9999 of every material.
@@ -1701,7 +1701,7 @@ public sealed partial class DwarfMinerGame : Game
 
         // H toggles ghost flight, but only while in god mode — god mode no longer flies you
         // automatically, so this is how the dev lifts off.
-        if (Pressed(keys, _prevKeys, Keys.H) && _run.Player.FlyMode)
+        if (Pressed(keys, _prevKeys, Keys.H) && _run.Player.GodMode)
         {
             _run.Player.Flying = !_run.Player.Flying;
             _toast = _run.Player.Flying ? "FLIGHT ON" : "FLIGHT OFF";
@@ -3053,7 +3053,7 @@ public sealed partial class DwarfMinerGame : Game
         // Pickaxe and hammer are physical swings now: LMB starts the sweep and the strike
         // resolves in TickSwing where the blade actually contacts rock — not here. Fly mode
         // keeps instant cursor mining (dev tool).
-        if (!_run.Player.FlyMode && tool is MiningTool.Pickaxe or MiningTool.Hammer)
+        if (!_run.Player.GodMode && tool is MiningTool.Pickaxe or MiningTool.Hammer)
         {
             _run.Player.TryStartSwing(worldCursor, tool, _run.Planet.UpAt(_run.Player.Position));
             return;
@@ -3065,7 +3065,7 @@ public sealed partial class DwarfMinerGame : Game
 
         // Continuous drill chip-stream every frame the drill is held — fires during cooldown
         // so the swing reads as continuous.
-        if (tool == MiningTool.Drill && !_run.Player.FlyMode && target is { } dt)
+        if (tool == MiningTool.Drill && !_run.Player.GodMode && target is { } dt)
         {
             var tilePos = _run.Planet.TileToWorld(dt.X, dt.Y);
             var dir = tilePos - _run.Player.Position;
@@ -3580,7 +3580,7 @@ public sealed partial class DwarfMinerGame : Game
     /// stock, or god mode) — so charging only starts when a throw would land.</summary>
     private bool CanThrowSelected(string id)
     {
-        if (_run.Player.FlyMode) return true;
+        if (_run.Player.GodMode) return true;
         if (_items.TryGetValue(id, out var def) && def.Ammo is { } ammo)
             return _run.Player.Inventory.Count(ammo) > 0;
         return true;
@@ -3697,7 +3697,7 @@ public sealed partial class DwarfMinerGame : Game
     {
         var t = _run.Titan;
         var p = _run.Player;
-        if (!t.Hatched || t.Health <= 0 || !t.Targetable || p.FlyMode) { _riding = false; return; }
+        if (!t.Hatched || t.Health <= 0 || !t.Targetable || p.GodMode) { _riding = false; return; }
 
         var surfR = t.BodyRadius + p.Radius + 2f;
         if (!_riding)
@@ -3816,7 +3816,7 @@ public sealed partial class DwarfMinerGame : Game
     private void PlaceRope(Vector2 worldCursor)
     {
         var p = _run.Player;
-        if (p.Inventory.Count("rope") <= 0 && !p.FlyMode) return;
+        if (p.Inventory.Count("rope") <= 0 && !p.GodMode) return;
         if ((worldCursor - p.Position).Length() > 70f) return;
         var (cx, cy) = _run.Planet.WorldToTile(worldCursor);
         if (_run.Planet.Get(cx, cy) != TileKind.Sky) return;
@@ -3836,7 +3836,7 @@ public sealed partial class DwarfMinerGame : Game
             pos -= _run.Planet.UpAt(pos) * Planet.TileSize;   // per-step up: follow curvature
         }
         if (placed == 0) return;
-        if (!p.FlyMode) p.Inventory.TryConsume("rope", 1);
+        if (!p.GodMode) p.Inventory.TryConsume("rope", 1);
         p.ShootCooldown = 0.3f;
         PlayAt("throw", worldCursor, 0.5f);
     }
@@ -4719,7 +4719,7 @@ public sealed partial class DwarfMinerGame : Game
     {
         var p = _run.Player;
         var max = p.EffectiveMaxOxygen;
-        if (p.FlyMode)
+        if (p.GodMode)
         {
             p.Oxygen = max;
             return;
@@ -4770,7 +4770,7 @@ public sealed partial class DwarfMinerGame : Game
     private void TickHazardContact(float dt)
     {
         var p = _run.Player;
-        if (p.FlyMode) return;
+        if (p.GodMode) return;
 
         var (lava, acid, gas, fire) = _run.Cells.SampleHazardsNear(p.Position, p.Radius + 1.5f);
         if (lava > 0)
