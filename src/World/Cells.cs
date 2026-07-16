@@ -192,6 +192,9 @@ public sealed class Cells
     private readonly Random _rng = new();
     private readonly Dictionary<string, float> _dustAccum = new();
     private float _time;
+    /// <summary>Monotonic sim clock in seconds — read by the renderer to pace draw-time
+    /// visual decays (e.g. rain-wet ground) off the same timebase the sim ticks on.</summary>
+    public float Time => _time;
 
     // Fire-spread throttle: catching a NEW tile alight, and spitting a fresh ember, each draw
     // one point from a budget that refills slowly. A blaze can still sweep a grove or a grass
