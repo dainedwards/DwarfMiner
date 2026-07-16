@@ -1315,6 +1315,16 @@ public sealed class Cells
             var fn = _cellsAt[fcy];
             ffrac = (float)WrapX(fcx, fn) / fn;
         }
+        var second = throttled && SecondaryFocus is not null;
+        var f2cy = 0;
+        var f2frac = 0f;
+        if (second)
+        {
+            var (f2cx, f2c) = WorldToCell(SecondaryFocus!.Value);
+            f2cy = Math.Clamp(f2c, 0, Height - 1);
+            var f2n = _cellsAt[f2cy];
+            f2frac = (float)WrapX(f2cx, f2n) / f2n;
+        }
 
         // Clear the queued flags up front (so any cell can re-enqueue itself or be woken
         // again during this tick), then process in shuffled order — a fixed visit order
