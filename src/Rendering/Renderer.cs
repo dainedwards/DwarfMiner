@@ -748,7 +748,15 @@ public sealed class Renderer
                 // single grains at hash positions (many tiles get none), so flat runs lose
                 // their ruler line without any edge strip. Grass grows tufts instead; machined
                 // city walls get nothing (a straight parapet, no scree).
-                else if (outerSky && !IsEngineered(k))
+                //
+                // SHADER-OFF ONLY: these grains sit a hair past the nominal top edge (ly=-1),
+                // which was on the surface under the old baked erosion. The live carve shader
+                // retreats the real silhouette inward by a wandering amount, so the grains
+                // detach and read as random floating pixels above the coastline — the same
+                // "moat" trap DrawCrust warns about. The carve already dissolves the ruler
+                // line far better, so the crumbs are redundant when it's on; keep them only
+                // for the baked-erosion fallback, where the surface really is at the edge.
+                else if (outerSky && !IsEngineered(k) && _tileFx == null)
                 {
                     var crumbs = (hash >> 9) & 3;
                     for (var ci = 0; ci < crumbs; ci++)
