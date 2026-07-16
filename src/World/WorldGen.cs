@@ -1191,6 +1191,16 @@ public static class WorldGen
         CarveDeepStrata(planet, def, rng);
     }
 
+    /// <summary>Squared distance from a point to a segment — capsule test for the volcano
+    /// plumbing keep-out (a chamber disc is a zero-length segment).</summary>
+    private static float DistPointSegSq(Vector2 p, Vector2 a, Vector2 b)
+    {
+        var ab = b - a;
+        var len2 = ab.LengthSquared();
+        var t = len2 < 1e-4f ? 0f : MathHelper.Clamp(Vector2.Dot(p - a, ab) / len2, 0f, 1f);
+        return Vector2.DistanceSquared(p, a + ab * t);
+    }
+
     /// <summary>Plug every Sky tile inside a stratum seam back to solid rock — the final,
     /// authoritative enforcement of the seam contract (see the call site in Generate). The
     /// wall layer captured the structural material before any carver ran, so the plug is
