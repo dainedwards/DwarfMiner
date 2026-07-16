@@ -2474,9 +2474,17 @@ public sealed partial class DwarfMinerGame : Game
                     // Ash plume and a rolling rumble. (The old omnidirectional cinder
                     // burst at the vent is gone — a ball of sparks flying every way read
                     // as noise, not fire; the jet plume sheds its own directed sparks.)
+                    // The plume rises off the LIVE pool surface, never a fixed ring: at
+                    // full ramp the old vent+4 spawn point sat INSIDE the risen lava, and
+                    // the trapped smoke seeped sideways into thin dark layers — the
+                    // "floating dark bars in the dome" artifact.
                     if (Random.Shared.Next(2) == 0)
-                        _run.Cells.SpawnInTile(Math.Min(vx + 4, _run.Planet.Rings - 1), vy,
+                    {
+                        var ashR = Math.Min(Math.Max(vx + 4, surfR + 3), _run.Planet.Rings - 1);
+                        _run.Cells.SpawnInTile(ashR,
+                            (int)(angF * _run.Planet.TilesAt(ashR)),
                             Material.Smoke, peak ? 14 : 8);
+                    }
                     _run.Shake = MathF.Max(_run.Shake, peak ? 0.85f : 0.4f);
                     PlayAt("collapse", ventPos, peak ? 0.7f : 0.4f, pitch: -0.5f, minGap: 0.5f);
                 }
