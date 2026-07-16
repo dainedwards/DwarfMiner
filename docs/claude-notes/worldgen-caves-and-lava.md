@@ -299,7 +299,14 @@ slowly rises to 110–130% and bubbles over the sides):**
   degrades to flat strand quads + per-cell lava flicker ("blocky textures + flashing");
   DM_ERUPTSHOW zoom 2→3.2. Blob POP → alpha-only melt (coverage ramps out over last 0.4s;
   rgb must stay body colour — fill blend REPLACES), fire boil flicker ±25%→±10% for
-  JetScale grains, hero flash tightened 52-60px.
+  JetScale grains, hero flash tightened 52-60px. **Round 3n — the REAL lander killer**: not
+  the rest clamp but the LIQUID-CROSSING GATE — an erupting flank is coated in fresh lava,
+  and the gate's "everything dies at the surface" rule ate every lander at that coating
+  before CollideTiles could ever rest it (lava cells live in Sky tiles → never IsSolidAt).
+  Carve-out in the gate: `pool==Lava && Fluid==Lava && JetScale>1` → LAND on the lava
+  (stop at surface, dollop stamp, 3-spark splash, 2.5s pooled linger, `continue` — safe,
+  the update loop decrements in its header). Applies to spew blobs landing on their own
+  coating too. Fountain lander Life 3.2-4.0 so the tallest lobs can't expire mid-air.
 - SimTest note: "compaction: voided pile hardens" is time-seeded FLAKY (failed once,
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.

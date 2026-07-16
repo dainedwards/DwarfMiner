@@ -2217,8 +2217,13 @@ public sealed class Cells
                 -up * (10f + _rng.Next(50)) + tan * (_rng.Next(120) - 60), Material.Fire);
     }
 
+    // Dirt is deliberately NOT meltable (removed 2026-07-16 per user): eruption flows were
+    // eating craters through the dirt band wherever they landed — the ground should hold
+    // under a lava coat. Grass (the 1-tile skin) still scorches away, loose gravel/snow
+    // still melt, and dirt still converts at GEN time (ShellLavaBodies / plug halos use
+    // their own Convertible list).
     private static bool IsMeltable(TileKind k) => k is
-        TileKind.Dirt or TileKind.Grass or TileKind.Gravel or
+        TileKind.Grass or TileKind.Gravel or
         TileKind.MossStone or TileKind.Snow or TileKind.Support or
         TileKind.Conglomerate;
 
