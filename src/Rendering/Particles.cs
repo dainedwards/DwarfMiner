@@ -1879,11 +1879,12 @@ public sealed class Particles
             {
                 Position = pos + d * (float)_rng.NextDouble() * 2f,
                 Velocity = d * speed,
-                // Landers must SURVIVE their whole arc to the flank; body gouts fade
-                // sooner (most fall straight back into the pool anyway).
-                Life = lander ? 2.6f + (float)_rng.NextDouble() * 0.8f
+                // Landers must SURVIVE their whole arc to the flank — even the biggest
+                // lob (apex 200+ px) plus a roll down the slope; body gouts fade sooner
+                // (most fall straight back into the pool anyway).
+                Life = lander ? 3.2f + (float)_rng.NextDouble() * 0.8f
                               : 1.0f + (float)_rng.NextDouble() * 0.7f,
-                MaxLife = lander ? 3.4f : 1.7f,
+                MaxLife = lander ? 4.0f : 1.7f,
                 Color = body,
                 FadeColor = body,
                 Size = hot ? 0.8f : 0.9f + (float)_rng.NextDouble() * 0.5f,
