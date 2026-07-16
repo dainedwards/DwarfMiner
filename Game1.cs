@@ -70,8 +70,6 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>Window lost focus: input is being swallowed, and the next focused frame
     /// must resync the edge baseline. See the IsActive gate in UpdateFrame.</summary>
     private bool _blurred;
-    private readonly bool _focusDbg = Environment.GetEnvironmentVariable("DM_FOCUSDBG") is { Length: > 0 };
-    private bool _focusDbgLast = true;
     private string _gameOverReason = "";
     private bool _screenshotPending;
 
