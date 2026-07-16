@@ -2019,16 +2019,21 @@ public sealed partial class DwarfMinerGame : Game
             }
             else
             {
-                // Trace the tube down to the geyser — walk straight inward from the vent
+                // Trace the tube down to the geyser — descend the vent's exact bearing
                 // through the primed bore until solid rock (the geyser node itself, or the
-                // well shell) stops us. That's where the magma is PUMPED from, so the whole
-                // column rises and overflows up top.
+                // well shell) stops us. Bearing-anchored, not neighbour-hopping: the bore is
+                // only 3 tiles wide and a per-ring rounding drift could wander onto the
+                // lining and stop short. That's where the magma is PUMPED from, so the
+                // whole column rises and overflows up top.
+                var relV = ventPos - _run.Planet.Center;
+                var angF = MathF.Atan2(relV.Y, relV.X) / MathHelper.TwoPi;
+                if (angF < 0f) angF += 1f;
                 int gx = vx, gy = vy;
-                for (var step = 0; step < 90; step++)
+                for (var r = vx - 1; r >= 2; r--)
                 {
-                    var inner = _run.Planet.InnerNeighbour(gx, gy);
-                    if (inner.x < 2 || _run.Planet.Get(inner.x, inner.y) != TileKind.Sky) break;
-                    gx = inner.x; gy = inner.y;
+                    var t = (int)(angF * _run.Planet.TilesAt(r));
+                    if (_run.Planet.Get(r, t) != TileKind.Sky) break;
+                    gx = r; gy = t;
                 }
 
                 // Pump at the geyser: dense magma wells off the node and drives the column
