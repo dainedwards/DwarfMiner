@@ -2779,10 +2779,21 @@ public static class WorldGen
                 // scenery. Rotating costs no rng draw, so the shared stream — and every
                 // downstream carver's layout — stays put either way.
                 var top = (depth - radius - 1) / S;         // shallowest point, legacy tiles
+                // A bearing with no bowl over it has no bed to undercut — BasinDepthAt is 0
+                // there, so the buffer test only applies where the tile pass actually carved
+                // one (its own gate is the same `> 0.5`).
                 bool Undercuts(float a)
                 {
-                    foreach (var l in lakes) if (top < BasinDepthAt(l, a) + 14f) return true;
-                    foreach (var p in acidPools) if (top < BasinDepthAt(p, a) + 14f) return true;
+                    foreach (var l in lakes)
+                    {
+                        var d = BasinDepthAt(l, a);
+                        if (d > 0.5f && top < d + 14f) return true;
+                    }
+                    foreach (var p in acidPools)
+                    {
+                        var d = BasinDepthAt(p, a);
+                        if (d > 0.5f && top < d + 14f) return true;
+                    }
                     return false;
                 }
                 var moved = 0;
