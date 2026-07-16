@@ -861,6 +861,13 @@ public static class WorldGen
             var ground = planet.Get(groundR, gt);
             if (ground is not (TileKind.Grass or TileKind.Dirt or TileKind.Snow
                 or TileKind.MossStone or TileKind.Gravel or TileKind.Basalt)) continue;
+            // Never on a basin bed: the "ground" under a lake (Dirt) or the lava lake
+            // (Basalt) passes the soil test, but the column above it pours full of fluid.
+            {
+                var an = planet.TilesAt(groundR + 1);
+                var at = (int)((ang / MathHelper.TwoPi + 1f) % 1f * an);
+                if (wet.Contains(Planet.TileKey(groundR + 1, at))) continue;
+            }
             // Don't crowd trunks: keep a couple of tiles between neighbours.
             if (lastRing == groundR && Math.Abs(gt - lastT) < 3) continue;
 
