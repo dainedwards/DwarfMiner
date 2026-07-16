@@ -412,14 +412,34 @@ public sealed partial class DwarfMinerGame : Game
     [DllImport("libSDL2", EntryPoint = "SDL_HideWindow")]
     private static extern void SdlHideWindow(IntPtr window);
 
+    [DllImport("libSDL2", EntryPoint = "SDL_GetWindowFlags")]
+    private static extern uint SdlWindowFlags(IntPtr window);
+
+    private const uint SdlWindowHidden = 0x8;   // SDL_WINDOW_HIDDEN
+
     /// <summary>Take the window off the screen entirely. `GameWindow.Handle` is the SDL_Window*
     /// on the DesktopGL backend, and SDL2 is already loaded in-process by MonoGame, so this
-    /// only borrows the one entry point MonoGame's own bindings don't expose. Best-effort: a
-    /// hidden window is a convenience for test runs, never worth failing a launch over.</summary>
+    /// only borrows the one entry point MonoGame's own bindings don't expose.
+    ///
+    /// The result is CHECKED rather than assumed: DM_NOFOCUS also runs the process as a macOS
+    /// accessory app (no dock icon), so a window that fails to hide is a window with no way to
+    /// minimise, hide or quit it — the exact mess this is meant to avoid. If the hide ever
+    /// stops taking (a MonoGame that hands back a different handle, say), say so loudly instead
+    /// of leaving the next session to wonder.</summary>
     private void HideWindow()
     {
-        try { SdlHideWindow(Window.Handle); }
-        catch (Exception e) { Console.WriteLine($"[nofocus] could not hide the window: {e.Message}"); }
+        try
+        {
+            SdlHideWindow(Window.Handle);
+            if ((SdlWindowFlags(Window.Handle) & SdlWindowHidden) == 0)
+                Console.WriteLine("[nofocus] WARNING: the window did NOT hide. It has no dock icon " +
+                                  "either, so nothing on screen can minimise or quit it — kill the process.");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[nofocus] WARNING: could not hide the window ({e.Message}). It has no " +
+                              "dock icon either — kill the process rather than hunting for a close button.");
+        }
     }
 
     protected override void Initialize()
