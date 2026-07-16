@@ -3115,7 +3115,8 @@ public sealed class Cells
             var period = 1.2f + ((hash >> 8) & 255) / 255f * 1.8f;
             var cycle = (_time + ((hash >> 16) & 255) / 255f * period) % period;
             // Fast swell, slow finish, gone at the wrap — the dome bursts, never deflates.
-            var w = radial * (5f + ((hash >> 5) & 7) * 1.2f) * MathF.Sqrt(cycle / period);
+            // Dome span doubled per user: lava blisters should read as fat heaving domes.
+            var w = radial * (10f + ((hash >> 5) & 7) * 2.4f) * MathF.Sqrt(cycle / period);
             var n = _cellsAt[cy];
             var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
             var cellAng = (WrapX(cx, n) + 0.5f) * (MathHelper.TwoPi / n);
