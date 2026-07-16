@@ -229,6 +229,12 @@ public sealed partial class DwarfMinerGame : Game
     /// <summary>Flame-stream coverage target — the flamethrower's metaball body. Separate
     /// from _liquidRt so fire can never threshold-fuse with water/acid it crosses.</summary>
     private RenderTarget2D? _flameRt;
+    /// <summary>Eruption-column coverage target — the volcano's smoky black ash jet.
+    /// Separate from _flameRt because the fill blend's colour REPLACES: the orange
+    /// fountain/pool inked after the black column stamped hard capsule-quad rectangles
+    /// over it. Composited BENEATH the hot field, so molten bodies draw in front of the
+    /// smoke. Created lazily — only eruptions ever fill it.</summary>
+    private RenderTarget2D? _smokeRt;
     /// <summary>Integer upscale factor of the pixel-grid path this frame; 0 = direct path.</summary>
     private int _pixelK;
     /// <summary>Reentrancy guard for the ClientSizeChanged → ApplyChanges round-trip.</summary>
