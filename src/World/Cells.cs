@@ -1656,6 +1656,7 @@ public sealed class Cells
         // gives): raindrops crown off a lake at speeds that would land silently on stone.
         var splashBar = SplashMinImpact;
         var onLiquid = false;
+        var onRainPool = false;
         if (cy > 0)
         {
             var (lcx, lcy) = InnerCell(cx, cy);
@@ -1664,14 +1665,20 @@ public sealed class Cells
             {
                 onLiquid = true;
                 splashBar *= 0.35f;
+                // Is the pool it's landing on rain/drip water? A crown thrown off a rain
+                // puddle is the fat rebound droplet the user doesn't want (see below).
+                var bSrc = _srcTile[Idx(lcx, lcy)];
+                onRainPool = below == Material.Water && (bSrc == RainWaterSrc || bSrc == DripWaterSrc);
             }
         }
-        // Rain (and ceiling-drip) water never throws a ballistic rebound droplet: the crown
-        // beads read as fat drops bouncing back up off the puddle, which the user doesn't
-        // want. Waterfalls and poured lava still fizz — only atmospheric rain is muted.
+        // Rain (and ceiling-drip) water never throws a ballistic rebound droplet — neither the
+        // falling rain cell itself, nor a cell landing ON a rain puddle. The crown beads read
+        // as fat drops bouncing back up off the puddle, which the user doesn't want. Acid rain
+        // spawns no cells so it never showed this; waterfalls and poured lava still fizz on
+        // rock and on permanent (untagged) pools — only atmospheric rain is muted.
         var landSrc = _srcTile[i];
         var rainDrop = _mat[i] == (byte)Material.Water && (landSrc == RainWaterSrc || landSrc == DripWaterSrc);
-        if (!rainDrop && impact > splashBar && _rng.Next(3) == 0
+        if (!rainDrop && !onRainPool && impact > splashBar && _rng.Next(3) == 0
             && _flying.Count < MaxFlying && cy < Height - 1)
         {
             var (ucx, ucy) = OuterCell(cx, cy);
