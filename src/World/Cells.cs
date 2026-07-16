@@ -3127,11 +3127,23 @@ public sealed class Cells
     /// cycle wrap (the POP). Sim time, not wall time, so a paused game never pops.</summary>
     private float _hotFxTime;
 
-    /// <summary>Per-site "continuously still since" clocks for the bubble gate: a body must
-    /// have sat unmoving for a few seconds before it may blister — a fresh pour is deep and
-    /// motionless the instant it lands, but isn't SETTLED. Keys are the rare hash-selected
-    /// site cells only, so the map stays tiny; cleared wholesale if it ever grows stale.</summary>
-    private readonly Dictionary<(int cx, int cy), float> _bubbleStill = new();
+    /// <summary>Bubble-site registry, keyed by the rare hash-selected surface cells. This
+    /// is HYSTERESIS, not just a clock: a pool's rim cells micro-move constantly (sideways
+    /// dispersion churn), and gating the dome on the live cell every frame made blisters
+    /// flash on and off mid-swell. A site keeps drawing from its CACHED geometry for a
+    /// short grace after its cell last verified deep-and-still, and only a site unseen for
+    /// over a second dies. Since = first continuously-still sighting (the settled gate);
+    /// Seen = last verification.</summary>
+    private struct BubbleSite
+    {
+        public float Since;
+        public float Seen;
+        public float Angle;
+        public float RingRadius;
+    }
+
+    private readonly Dictionary<(int cx, int cy), BubbleSite> _bubbleSites = new();
+    private readonly List<(int cx, int cy)> _bubbleDead = new();
 
     /// <summary>Replay the lava ops collected by <see cref="DrawLiquids"/> into the HOT
     /// coverage field. Game1 calls this inside the flame-RT batch (blob mode only), so lava
