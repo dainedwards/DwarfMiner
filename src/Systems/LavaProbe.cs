@@ -118,8 +118,24 @@ public static class LavaProbe
             foreach (var (vx, vy, vAcid) in planet.VolcanoVents)
             {
                 var vRel = planet.TileToWorld(vx, vy) - planet.Center;
+                // Tube connectivity: walk straight inward from the vent through open bore
+                // (the exact trace the eruption pump uses). A connected volcano bottoms out
+                // ON the geyser node; anything else names the solid kind that plugs the tube
+                // — the "tube never reached the bowl" class of bug shows up right here.
+                int gx = vx, gy = vy;
+                for (var step = 0; step < 120; step++)
+                {
+                    var inner = planet.InnerNeighbour(gx, gy);
+                    if (inner.x < 2 || planet.Get(inner.x, inner.y) != TileKind.Sky) break;
+                    gx = inner.x; gy = inner.y;
+                }
+                var floor = planet.InnerNeighbour(gx, gy);
+                var floorKind = planet.Get(floor.x, floor.y);
                 Console.WriteLine($"    vent ({vx},{vy}) acid={vAcid} " +
-                                  $"bearing {MathF.Atan2(vRel.Y, vRel.X):0.000}");
+                                  $"bearing {MathF.Atan2(vRel.Y, vRel.X):0.000} " +
+                                  $"tube bottoms at ring {gx} on {floorKind}" +
+                                  (floorKind == TileKind.Geyser ? " (CONNECTED to geyser)"
+                                                                : " (NOT the geyser — plugged?)"));
             }
 
             var mouths = new System.Collections.Generic.List<string>();
