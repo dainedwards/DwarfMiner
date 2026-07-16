@@ -139,6 +139,42 @@ public static class LakeProbe
                 Console.WriteLine(line);
             }
         }
+        // Cross-section through the deepest basin: the bowl should be a bowl — a continuous
+        // floor of rock under a body of water, not an outline whose bottom courses run into
+        // a slab or off the innermost ring.
+        {
+            var (dr, dt) = (int.MaxValue, 0);
+            foreach (var (r, t) in lake) if (r < dr) { dr = r; dt = t; }
+            var dn = planet.TilesAt(dr);
+            Console.WriteLine($"    cross-section of the deepest basin (bearing " +
+                              $"{MathHelper.WrapAngle((dt + 0.5f) / dn * MathF.Tau):0.000}), " +
+                              "w = fill, . = air, letters = rock:");
+            for (var r = Math.Min(planet.Rings - 1, hiR + 3); r >= Math.Max(0, dr - 8); r--)
+            {
+                var n2 = planet.TilesAt(r);
+                var tc = (int)((dt + 0.5f) / dn * n2);
+                var line = $"      r{r,3}: ";
+                for (var d = -34; d <= 34; d++)
+                {
+                    var t2 = ((tc + d) % n2 + n2) % n2;
+                    var k = planet.Get(r, t2);
+                    line += after.Contains((r, t2)) ? 'w'
+                        : k == TileKind.Sky ? '.'
+                        : k == TileKind.Obsidian ? 'O'
+                        : k == TileKind.LavaRock ? 'R'
+                        : k == TileKind.Dirt ? 'd'
+                        : k == TileKind.Stone ? 's'
+                        : k == TileKind.Granite ? 'g'
+                        : k == TileKind.Gravel ? 'v'
+                        : k == TileKind.Basalt ? 'B'
+                        : k == TileKind.Grass ? 'G'
+                        : k == TileKind.Snow ? 'S'
+                        : '?';
+                }
+                Console.WriteLine(line);
+            }
+        }
+
         Console.WriteLine(mouthCount == 0 && escaped.Count == 0 && retained >= lake.Count * 0.9
             ? "    OK: every basin sealed and still holding its fill"
             : "    FAIL: basins leak");
