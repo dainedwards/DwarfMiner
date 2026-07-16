@@ -87,6 +87,14 @@ if (args.Length > 0 && args[0] == "--lavaprobe")
     return;
 }
 
+// Diagnostic: `--rainprobe` drives the rain-landing path over every angle of a world — the
+// groundless columns whose FindSurfaceSpawn fallback used to walk the cell grid off its end.
+if (args.Length > 0 && args[0] == "--rainprobe")
+{
+    DwarfMiner.Systems.RainProbe.Run();
+    return;
+}
+
 // Temporary diagnostic: `--toppleprobe` reproduces the SimTest street-level tower cut and
 // reports what keeps a severed section standing when it refuses to detach.
 if (args.Length > 0 && args[0] == "--toppleprobe")
