@@ -3139,33 +3139,50 @@ public sealed class Cells
 
         // Bubbles ride on top of the crest line (their colour wins where they overlap it).
         // Site selection, size and rhythm all hash off the cell, so a resting sea keeps
-        // stable, individually-phased bubblers with zero per-bubble state.
+        // stable, individually-phased bubblers with zero per-bubble state. Sites are RARE
+        // (a few spots across a big pool), fire on a long lazy clock, and only exist on
+        // LARGE STILL bodies — a resting site with a dozen unbroken lava cells to each
+        // side. Streams (1-3 cells wide), pouring fronts, and puddles all fail the gate,
+        // so flowing lava never blisters mid-fall.
         var dtFx = MathF.Max(0f, _time - _hotFxTime);
         _hotFxTime = _time;
         var sparks = 0;
         foreach (var (cx, cy) in _hotSurface)
         {
             var hash = (cx * 73856093) ^ (cy * 19349663);
-            if ((hash & 15) != 0) continue;           // ~1 in 16 surface cells bubbles
-            var period = 1.2f + ((hash >> 8) & 255) / 255f * 1.8f;
+            if ((hash & 127) != 0) continue;          // ~1 in 128 surface cells is a site
+            if (_travel[Idx(cx, cy)] != 0f) continue; // still, not mid-fall
+            var wide = true;
+            for (var d = 1; d <= 12 && wide; d++)
+                wide = Get(cx - d, cy) == Material.Lava && Get(cx + d, cy) == Material.Lava;
+            if (!wide) continue;
+            var period = 7f + ((hash >> 8) & 255) / 255f * 9f;  // one blister per 7-16s
             var cycle = (_time + ((hash >> 16) & 255) / 255f * period) % period;
-            // Fast swell, slow finish, gone at the wrap — the dome bursts, never deflates.
-            // Dome span doubled per user: lava blisters should read as fat heaving domes.
-            var w = radial * (10f + ((hash >> 5) & 7) * 2.4f) * MathF.Sqrt(cycle / period);
+            // The dome only lives in the last ~1.8s of the cycle — swell, then pop at the
+            // wrap. The rest of the period the site sits quiet: an occasional heave off a
+            // still sea, not a rolling boil.
+            const float swell = 1.8f;
+            var t01 = (cycle - (period - swell)) / swell;
+            var pop = cycle < dtFx;
+            if (t01 <= 0f && !pop) continue;
             var n = _cellsAt[cy];
             var ringRadius = (Planet.RingMin + (cy + 0.5f) / Density) * Planet.TileSize;
             var cellAng = (WrapX(cx, n) + 0.5f) * (MathHelper.TwoPi / n);
             var up = new Vector2(MathF.Cos(cellAng), MathF.Sin(cellAng));
+            // The wrap happened inside this sim step: pop. Sparks arc up and cool.
+            if (pop && sparks < 6)
+            {
+                particles.EmitLavaSparks(Planet.Center + up * (ringRadius + radial), up);
+                sparks++;
+            }
+            if (t01 <= 0f) continue;
+            // Fast swell, slow finish, gone at the wrap — the dome bursts, never
+            // deflates. Span ×1.5 per user: rare fat blisters, not a fizzing skin.
+            var w = radial * (15f + ((hash >> 5) & 7) * 3.6f) * MathF.Sqrt(t01);
             var pos = Planet.Center + up * (ringRadius + w * 0.22f);
             r.Batch.Draw(blob, pos, null, new Color(255, 132, 36), cellAng + MathHelper.PiOver2,
                 blobOrigin, new Vector2(w / blob.Width, w * 0.8f / blob.Height),
                 SpriteEffects.None, 0f);
-            // The wrap happened inside this sim step: pop. Sparks arc up and cool.
-            if (cycle < dtFx && sparks < 6)
-            {
-                particles.EmitLavaSparks(pos + up * radial, up);
-                sparks++;
-            }
         }
     }
 
