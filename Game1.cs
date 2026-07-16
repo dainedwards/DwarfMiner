@@ -2133,10 +2133,13 @@ public sealed partial class DwarfMinerGame : Game
                     _run.Cells.LaunchAtWorld(spoutPos + ventUp * 6f, dir * speed, mat);
                 }
 
-                // SIDE SPOUTS: two scaled-up spitter jets from the SAME submerged origin,
-                // angled ±20° — twin lava ropes lobbing out of the pool and over the ledge
-                // of the crater to fall close on the flanks. On for the whole main act,
-                // breathing with the surge and hardest once the pool crests the rim.
+                // SIDE SPOUTS: twin jets from the SAME submerged origin, angled ±20°,
+                // lobbing out of the pool and over the ledge of the crater. Each side is
+                // ACTUAL LAVA — a volley of real flying cells that land, pool, flow and
+                // overflow down the flanks — sheathed in the spitter-style metaball rope
+                // (EmitLavaSpew, now purely cosmetic) so the stream keeps its goopy look.
+                // Cells fall under FlyGravity (450 px/s², 2.5× the rope's 180), so they
+                // launch ~1.6× faster and their lob shadows the rope's arc.
                 if (!vAcid)
                 {
                     var spew = MathF.Min(1f,
@@ -2146,6 +2149,16 @@ public sealed partial class DwarfMinerGame : Game
                     {
                         var edir = ventUp * MathF.Cos(side20) + ventRight * (s * MathF.Sin(side20));
                         _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
+                        var volley = 1 + (int)(spew * 2f) + (peak ? 1 : 0);
+                        for (var i = 0; i < volley; i++)
+                        {
+                            var jit = (float)(Random.Shared.NextDouble() - 0.5) * 0.09f;
+                            var d = edir * MathF.Cos(jit)
+                                  + new Vector2(-edir.Y, edir.X) * MathF.Sin(jit);
+                            var speed = (190f + spew * 110f)
+                                      * (0.9f + (float)Random.Shared.NextDouble() * 0.2f);
+                            _run.Cells.LaunchAtWorld(spoutPos + edir * 4f, d * speed, mat);
+                        }
                     }
                 }
 
