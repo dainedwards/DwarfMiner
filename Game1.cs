@@ -776,13 +776,18 @@ public sealed partial class DwarfMinerGame : Game
                 if (hit) break;
             }
         }
+        // DM_FLY=1 starts the run airborne. Ghost flight is only ever valid inside god mode
+        // (H won't lift off without it, and dropping god mode clears it), so DM_FLY implies
+        // DM_GOD rather than stranding Flying in a state the G key can't reach.
+        var startFlying = Environment.GetEnvironmentVariable("DM_FLY") is { Length: > 0 };
         _run.Player = new Player(surfacePos)
         {
             // Survival by default; DM_GOD=1 starts runs in god mode for testing, and G
-            // toggles it in-game either way. The toggle drives ghost flight, super-pickaxe
-            // power, and extended mine range as a single bundle — see
+            // toggles it in-game either way. The toggle drives super-pickaxe power and
+            // extended mine range as a bundle, and gates ghost flight — see
             // Player.EffectivePickaxePower / EffectiveMineRange.
-            GodMode = Environment.GetEnvironmentVariable("DM_GOD") is { Length: > 0 },
+            GodMode = startFlying || Environment.GetEnvironmentVariable("DM_GOD") is { Length: > 0 },
+            Flying = startFlying,
             // Apply meta-progress: a player who has previously escaped starts with a
             // higher-tier pickaxe so subsequent runs are slightly easier.
             PickaxeTier = Math.Max(1, _meta.StartingPickaxePower),
