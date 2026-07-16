@@ -1852,7 +1852,14 @@ public static class WorldGen
             var throatTop = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
                 * (Planet.RingMin + floorR + 1) * Planet.TileSize;
             planet.PlumbingZones.Add((centre, throatTop, (throatSpan + 0.5f) * Planet.TileSize));
-            for (var r = chamberR + chamberRad - 1; r <= floorR; r++)
+            // The carve runs PAST floorR: the bowl's floor profile rises away from the exact
+            // centre bearing (h dips only at f=0), so stopping at floorR left a solid basalt
+            // WEDGE over the bore — a tube that never actually reached the bowl. Above floorR
+            // the loop only converts tiles that are still solid (bowl air is left alone, so
+            // no lining pillars poke up into the crater), cutting the bore through the wedge
+            // until every column has broken into the open pool above.
+            var throatTopR = Math.Min(planet.Rings - 1, floorR + (int)(craterDepth * 0.6f));
+            for (var r = chamberR + chamberRad - 1; r <= throatTopR; r++)
             {
                 if (r < 2 || r >= planet.Rings) continue;
                 var n = planet.TilesAt(r);
@@ -1861,6 +1868,7 @@ public static class WorldGen
                 {
                     var t = ((t0 + dt) % n + n) % n;
                     if (Tiles.IsAnchored(planet.Get(r, t))) continue;
+                    if (r > floorR && planet.Get(r, t) == TileKind.Sky) continue;
                     planet.SetWall(r, t, TileKind.Basalt);
                     if (Math.Abs(dt) > throatOpen)
                     {
