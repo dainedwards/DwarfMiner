@@ -1980,9 +1980,10 @@ public sealed partial class DwarfMinerGame : Game
         }
         UpdateCaveInWarning(dt);
 
-        // Eruption in progress (started by the disaster clock, or the debug menu): the vent
-        // spawns fresh cells from its deep conduit just above the crater pool until it
-        // overflows the rim and runs down the flanks.
+        // Eruption in progress (started by the disaster clock, or the debug menu): the lava
+        // geyser at the foot of the tube throbs, pumping the primed column up the bore until
+        // it brims the crater, overflows the rim, and spews a fountain of gobs and molten
+        // rock chunks that rain down the flanks.
         if (_run.EruptionLeft > 0f && _run.EruptionVent >= 0
             && _run.EruptionVent < _run.Planet.VolcanoVents.Count)
         {
