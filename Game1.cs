@@ -2367,7 +2367,20 @@ public sealed partial class DwarfMinerGame : Game
                                     + ((float)Random.Shared.NextDouble() - 0.5f) * 0.10f;
                             var ang2 = s * side10 + wob;
                             var edir = ventUp * MathF.Cos(ang2) + ventRight * MathF.Sin(ang2);
-                            _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
+                            if (showFx)
+                                _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
+                            else
+                            {
+                                // Far mode: the blobs' material outcome as bare cells —
+                                // real lava lobbed on the same trajectory (cells fall
+                                // under FlyGravity 450 vs the blobs' 180, hence ×1.6
+                                // speed), landing, flowing and igniting the flanks.
+                                var cSpeed = (185f + spew * 115f)
+                                           * (0.9f + (float)Random.Shared.NextDouble() * 0.2f);
+                                for (var i = 0; i < 2; i++)
+                                    _run.Cells.LaunchAtWorld(spoutPos + edir * 4f,
+                                        edir * cSpeed, mat);
+                            }
                         }
                     }
 
