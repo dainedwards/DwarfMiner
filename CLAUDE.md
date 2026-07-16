@@ -163,8 +163,8 @@ the one that covers what you are about to touch, and write what you learn back i
   biome, falling leaves, and the tree ecosystem (roots, regrowth, branches, biome identity,
   oases, vegetation scatter).
 - **[creatures-and-combat](docs/claude-notes/creatures-and-combat.md)** — bandits, sea monsters,
-  the Noita enemies, lizardmen, player weapons, blast falloff, the AIR meter, jump/jet controls
-  (Space-only), city combat buffs.
+  the flyer/caster/mortar enemies (Quillwing, Warpwisp, Thornback), lizardmen, player weapons,
+  blast falloff, the AIR meter, jump/jet controls (Space-only), city combat buffs.
 - **[titans](docs/claude-notes/titans.md)** — siege (kick/smash), weakpoints, riding, shake-off,
   grapple + rope, fight camera, pulverize.
 - **[pixel-look](docs/claude-notes/pixel-look.md)** — the grain ladder: particle size caps, cell

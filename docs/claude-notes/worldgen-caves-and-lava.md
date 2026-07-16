@@ -306,7 +306,24 @@ slowly rises to 110–130% and bubbles over the sides):**
   Carve-out in the gate: `pool==Lava && Fluid==Lava && JetScale>1` → LAND on the lava
   (stop at surface, dollop stamp, 3-spark splash, 2.5s pooled linger, `continue` — safe,
   the update loop decrements in its header). Applies to spew blobs landing on their own
-  coating too. Fountain lander Life 3.2-4.0 so the tallest lobs can't expire mid-air.
+  coating too. Fountain lander Life 3.2-4.0 so the tallest lobs can't expire mid-air. **Round 3o (2026-07-16)**: dirt REMOVED from Cells.IsMeltable (eruption flows cratered
+  the dirt band; ground now holds under a lava coat — gravel/snow/moss/grass still melt,
+  gen-time Convertible list separate; SimTest glass-roof control Dirt→Gravel).
+  **Particle.Hidden**: JetScale grains refresh `Hidden = cells.LiquidAtWorld(pos)` every
+  Update — submerged spout effects neither draw (Draw/DrawFluid) nor shed light
+  (AddLights) until they break the pool surface. **REAL-VOLCANO SHAPE**: coneH (30-46)→
+  (18-28)·scale·S, coneW (0.13-0.18)→(0.24-0.31)·√scale (≈0.6× height on 1.8× footprint);
+  eruption ramp fill 2/4→3/6 tiles/frame for the wider pool. TRAP CHAIN from the reshape:
+  wider cones consume different placement rng retries → downstream stream shuffles →
+  ember seed 12 exposed a LATENT warren bug — cave-exit doors hung at a FIXED 30px from
+  hall centres, INSIDE any hall wider than 60px (halls are 39-78px half-wide), and one
+  anchored DoorClosed landed exactly on a den heart ("den hearts open" 5/6). Fix: doors
+  at the hall's wall line (widths[h]+10px, per-hall widths now captured) + never on a
+  recorded den-heart tile; warren halls also slide (cAng += 0.12, ≤10 steps, no rng)
+  off volcano PlumbingZones capsules — the geyser well sits at exactly warren depths and
+  an overlapping hall would leave an anchored-node heart or bite the shell. Debug print
+  of solid den hearts stays in the SimTest (fires only on failure). 447 PASS + probe
+  clean (CONNECTED, 0 escapes) + screenshot-verified wide-cone eruption.
 - SimTest note: "compaction: voided pile hardens" is time-seeded FLAKY (failed once,
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.
