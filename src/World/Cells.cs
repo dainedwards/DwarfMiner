@@ -3212,10 +3212,16 @@ public sealed class Cells
             // deflates. Span ×1.5 per user: rare fat blisters, not a fizzing skin.
             var w = radial * (15f + ((hash >> 5) & 7) * 3.6f) * MathF.Sqrt(t01);
             var pos = Planet.Center + up * (ringRadius + w * 0.22f);
-            r.Batch.Draw(blob, pos, null, new Color(255, 132, 36), cellAng + MathHelper.PiOver2,
+            var body = LiquidBody(Material.Lava, cx, cy);
+            r.Batch.Draw(blob, pos, null, body, cellAng + MathHelper.PiOver2,
                 blobOrigin, new Vector2(w / blob.Width, w * 0.8f / blob.Height),
                 SpriteEffects.None, 0f);
         }
+
+        // Lava's own surface line: the slow bright molten crest, after the bodies AND the
+        // bubbles so its colour wins the replace blend and the line stays continuous
+        // across a swelling dome's base.
+        foreach (var (cx, cy) in _hotSurface) DrawSurfaceBand(r, radial, cx, cy, Material.Lava);
     }
 
     /// <summary>Lava/acid glow emitters. Same LOD contract as <see cref="Draw"/> — the
