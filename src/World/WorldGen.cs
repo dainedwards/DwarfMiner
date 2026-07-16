@@ -2547,6 +2547,7 @@ public static class WorldGen
                 var ct = (int)((cAng / MathHelper.TwoPi + 1f) % 1f * nC);
                 planet.LizardDens.Add((cr, ct));
                 centres.Add(planet.TileToWorld(cr, ct));
+                widths.Add(halfWpx);
 
                 cAng += ((float)rng.NextDouble() * 0.12f + 0.05f) * (rng.Next(2) == 0 ? 1f : -1f);
                 cr -= (int)((8 + rng.Next(7)) * S);
