@@ -438,7 +438,7 @@ public sealed class Particles
     {
         foreach (var p in _list)
         {
-            if (p.Backdrop != backdrop) continue;
+            if (p.Backdrop != backdrop || p.Hidden) continue;
             if (FluidMode && p.Fluid != 0) continue;   // rendered by DrawFluid instead
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             // Noita palette rule: colours cool in FOUR HARD STEPS, not a smooth ramp — a
