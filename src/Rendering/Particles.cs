@@ -1783,12 +1783,14 @@ public sealed class Particles
                 LandSparks = ignites,
             });
         }
-        // Hero flicker a third of the way up the column — the shadow-casting heart of the
-        // blaze, gated to every 3rd frame like the flamethrower's.
+        // Hero light a third of the way up the column — the shadow-casting heart of the
+        // blaze. Steadier than the flamethrower's flicker: at cone scale a strobing
+        // 60-84px hard-shadow flash read as the whole screen flashing, so the radius
+        // band is tight and the position wander small.
         if (_rng.Next(3) != 0) return;
         _list.Add(new Particle
         {
-            Position = pos + up * (30f + (float)_rng.NextDouble() * 40f),
+            Position = pos + up * (34f + (float)_rng.NextDouble() * 16f),
             Velocity = up * 60f,
             Life = 0.07f,
             MaxLife = 0.07f,
@@ -1796,7 +1798,7 @@ public sealed class Particles
             FadeColor = Color.Transparent,
             Size = 0f,
             Drag = 0f,
-            LightRadius = 60f + (float)_rng.NextDouble() * 24f,
+            LightRadius = 52f + (float)_rng.NextDouble() * 8f,
             LightColor = new Color(255, 170, 80),
             HeroLight = true,
         });
