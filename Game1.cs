@@ -2187,12 +2187,12 @@ public sealed partial class DwarfMinerGame : Game
                     _run.Cells.LaunchAtWorld(spoutPos + ventUp * 6f, dir * speed, mat);
                 }
 
-                // SIDE SPOUTS: twin lobs of PURE REAL LAVA from the same submerged origin,
-                // angled ±20° over the ledge of the crater (the cosmetic metaball rope is
-                // gone — the material itself is the effect). Each side streams a dense
-                // volley of flying lava cells every frame: they arc as glowing streak
-                // grains, land on the flanks, pool, flow and overflow — genuine sim lava
-                // for the whole trajectory.
+                // SIDE SPOUTS: twin goopy blob ropes from the same submerged origin,
+                // angled ±20° over the ledge of the crater. Each blob lives through its
+                // whole lob, POOLS where it lands for a cooling moment, and hands off a
+                // real Lava cell right there (see EmitLavaSpew) — the stream reads as the
+                // spitter jet, and the flanks accumulate genuine sim lava at exactly the
+                // spots the globs visibly struck.
                 if (!vAcid)
                 {
                     var spew = MathF.Min(1f,
@@ -2201,17 +2201,7 @@ public sealed partial class DwarfMinerGame : Game
                     for (var s = -1; s <= 1; s += 2)
                     {
                         var edir = ventUp * MathF.Cos(side20) + ventRight * (s * MathF.Sin(side20));
-                        // Denser volley now that the cells carry the look alone.
-                        var volley = 2 + (int)(spew * 4f) + (peak ? 2 : 0);
-                        for (var i = 0; i < volley; i++)
-                        {
-                            var jit = (float)(Random.Shared.NextDouble() - 0.5) * 0.09f;
-                            var d = edir * MathF.Cos(jit)
-                                  + new Vector2(-edir.Y, edir.X) * MathF.Sin(jit);
-                            var speed = (190f + spew * 110f)
-                                      * (0.9f + (float)Random.Shared.NextDouble() * 0.2f);
-                            _run.Cells.LaunchAtWorld(spoutPos + edir * 4f, d * speed, mat);
-                        }
+                        _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
                     }
                 }
 
