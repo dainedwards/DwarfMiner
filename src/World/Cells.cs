@@ -3256,22 +3256,6 @@ public sealed class Cells
                     new Vector2(w / blob.Width, w * 0.8f / blob.Height),
                     SpriteEffects.None, 0f);
             }
-            else if (cycle < 0.45f)
-            {
-                // Post-pop slosh: the burst lip — two side lobes where the dome's rim
-                // fell back, collapsing into the pool over the first half second.
-                var k = 1f - cycle / 0.45f;
-                var tan = new Vector2(-up.Y, up.X);
-                var lw = wMax * (0.2f + 0.35f * k);
-                for (var sgn = -1; sgn <= 1; sgn += 2)
-                {
-                    var lp = Planet.Center + up * (site.RingRadius + lw * 0.05f)
-                           + tan * (sgn * wMax * 0.3f);
-                    r.Batch.Draw(blob, lp, null, body, rot, blobOrigin,
-                        new Vector2(lw / blob.Width, lw * 0.7f / blob.Height),
-                        SpriteEffects.None, 0f);
-                }
-            }
         }
         foreach (var dead in _bubbleDead) _bubbleSites.Remove(dead);
 
