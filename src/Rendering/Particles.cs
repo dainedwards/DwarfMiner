@@ -1842,6 +1842,10 @@ public sealed class Particles
                 LightColor = new Color(255, 170, 70),
                 Fluid = (byte)Material.Fire,
                 JetScale = 2.8f + (float)_rng.NextDouble() * 1.6f,   // cone-scale blob footprint
+                // Born HIDDEN: these spawn under the crater lava, and a freshly added
+                // grain would otherwise draw once before its first Update refreshes the
+                // gate — a per-frame flash right at the submerged source.
+                Hidden = true,
                 LandMat = ignites ? (byte)Material.Fire : (byte)0,
                 LandFuse = ignites ? (byte)(30 + _rng.Next(12)) : (byte)0,
                 LandSparks = ignites,
@@ -1867,8 +1871,10 @@ public sealed class Particles
             HeroLight = true,
             // Volcano-family tag: rides the Hidden gate, so the flash can't strobe from
             // INSIDE the pool while the column base is still submerged (draws nothing —
-            // Fluid 0 and transparent — so the tag has no other effect).
+            // Fluid 0 and transparent — so the tag has no other effect). Born hidden for
+            // the same spawn-frame reason as the plume grains.
             JetScale = 2f,
+            Hidden = true,
         });
     }
 
@@ -1928,6 +1934,7 @@ public sealed class Particles
                 SmearScale = 2f,
                 Fluid = (byte)Material.Lava,
                 JetScale = 2.2f,   // a far fatter molten rope than the handheld hoses
+                Hidden = true,     // born under the pool; first Update reveals it
             });
         }
     }
@@ -1988,6 +1995,7 @@ public sealed class Particles
                 SmearScale = 2f,
                 Fluid = (byte)Material.Lava,
                 JetScale = 2.2f + (float)_rng.NextDouble() * 0.8f,
+                Hidden = true,     // born under the pool; first Update reveals it
             });
         }
     }
@@ -2022,6 +2030,7 @@ public sealed class Particles
                 // crater lava too) and the landed 2.5s cooling linger; chunks carry no
                 // LandMat and no Fluid, so nothing else about them changes.
                 JetScale = 2f,
+                Hidden = true,     // born under the pool; first Update reveals it
             });
         }
     }

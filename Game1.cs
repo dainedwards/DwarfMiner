@@ -2285,16 +2285,24 @@ public sealed partial class DwarfMinerGame : Game
 
                     if (surfR < levelR)
                     {
-                        // 3/6 tiles per frame (was 2/4): the squat real-volcano crater is
-                        // ~1.8× wider, so the ramp needs proportionally more volume to
-                        // climb at the same visible pace.
+                        // UNIFORM THIN-LAYER FILL: rain the ramp's volume gently across
+                        // the WHOLE crater mouth instead of dumping tile-sized slugs at
+                        // the vent bearing. The slugs kept the pool top churning — ragged
+                        // part-filled columns broke the surface row's run-merge into
+                        // strobing metaball singles, the "flicker at the top of the added
+                        // lava". A few cells per column per frame keeps the surface a
+                        // LEVEL line that simply rises; total volume per frame is
+                        // unchanged, it's the same water poured from a wider can.
                         var fillR = Math.Min(surfR + 1, _run.Planet.Rings - 1);
                         var fillN = _run.Planet.TilesAt(fillR);
                         var fillT0 = (int)(angF * fillN);
-                        for (var i = 0; i < (peak ? 6 : 3); i++)
+                        // Crater mouth half-arc ≈ craterFrac × coneW ≈ 0.07 rad on the
+                        // squat cones; clamp small so tiny worlds still get a few columns.
+                        var mouthHalf = Math.Max(3, (int)(0.07f / MathHelper.TwoPi * fillN));
+                        var perTile = peak ? 8 : 4;   // a gentle rain, not a slug
+                        for (var off = -mouthHalf; off <= mouthHalf; off++)
                             _run.Cells.SpawnInTile(fillR,
-                                ((fillT0 + Random.Shared.Next(-3, 4)) % fillN + fillN) % fillN,
-                                mat, Cells.Density * Cells.Density);
+                                ((fillT0 + off) % fillN + fillN) % fillN, mat, perTile);
                     }
 
                     // THE SPOUT erupts from WITHIN the magma, 10 tiles below the lava

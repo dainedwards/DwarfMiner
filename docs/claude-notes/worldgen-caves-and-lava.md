@@ -334,7 +334,15 @@ slowly rises to 110–130% and bubbles over the sides):**
   bore-jet slugs streaked visibly up through the crater pool). FAR MODE (>2000px from
   vent): all pure-visual emitters skipped, side spouts lob 2 bare lava cells/frame/side
   on the same trajectories (×1.6 speed for FlyGravity) — identical material outcome,
-  no particle cost. 447 PASS.
+  no particle cost. 447 PASS. **Round 3q**: volcano grains born `Hidden = true` (a fresh
+  grain drew ONCE before its first Update refresh = per-frame flash at the submerged
+  source; first Update reveals it). TREES-WON'T-BURN pair: (1) HasMeltableNeighbour →
+  Reactive = IsMeltable || IsFlammable (lava beside a tree used to settle+SLEEP in a few
+  ticks = a handful of 1/24 TryIgniteTile rolls, then nothing — flammables now keep lava
+  awake until they burn); (2) falling eruption embers get a payload — half carry
+  LandMat=Fire + LandFuse = the first-touch StampFireBlob path (+ its 3×3 IgniteTile
+  sweep), same mechanism as the flamethrower carriers. Fire budget was NOT the problem
+  (22/s regen, cap 90). 447 PASS.
 - SimTest note: "compaction: voided pile hardens" is time-seeded FLAKY (failed once,
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.
