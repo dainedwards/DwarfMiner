@@ -1272,7 +1272,7 @@ public static class WorldGen
         PlanetDef def, float minFrac, List<(float lo, float hi)> seams)
     {
         var floor = def.LavaFillFrac > 0f ? planet.Radius * minFrac : seams[0].hi;
-        var skinLegacy = MathF.Min(16f, planet.SurfaceRing / S * 0.20f);
+        var skinLegacy = MathF.Min(16f, planet.SurfaceRing / S * 0.35f);
         var surfaceR = Planet.RingMin + planet.SurfaceRing;
         return (floor,
                 surfaceR - skinLegacy * S,
