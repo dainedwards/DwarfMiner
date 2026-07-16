@@ -1811,6 +1811,59 @@ public sealed class Particles
         }
     }
 
+    /// <summary>SIDE SPEW: the acid spewer's goopy rope scaled to volcano size, recoloured
+    /// molten — two of these lob from the erupting pool at ±20°, arcing over the crater
+    /// ledge. Blob LIFECYCLE: Life comfortably outlasts the whole lob, and every droplet
+    /// glows (LightRadius > 0), which routes it through the cinder rest-rule — on
+    /// touchdown it POOLS in place for ~1.4s as a cooling molten blob instead of winking
+    /// out, and the rest-handoff stamps a REAL Lava cell right where it pooled (LandFuse
+    /// stays 0: a fuse+LandMat combo would trigger the fire-blob first-touch path
+    /// instead). The blobs ARE the lava carriers — no separate mid-air cell volley.</summary>
+    public void EmitLavaSpew(Vector2 pos, Vector2 dir, float strength)
+    {
+        var jetSpeed = 115f + strength * 72f;
+        const float coneArc = 0.09f;          // a touch looser than the spewer's 0.041
+        for (var i = 0; i < 8; i++)
+        {
+            if (_rng.Next(5) == 0) continue;
+            var spread = (float)(_rng.NextDouble() - 0.5) * coneArc;
+            var c = MathF.Cos(spread);
+            var s = MathF.Sin(spread);
+            var d = new Vector2(dir.X * c - dir.Y * s, dir.X * s + dir.Y * c);
+            var hot = i < 2;                  // white-hot leading droplets
+            var tone = hot ? new Color(255, 242, 170)
+                : _rng.Next(2) == 0 ? new Color(255, 176, 60) : new Color(250, 120, 40);
+            _list.Add(new Particle
+            {
+                Position = pos + d * (float)_rng.NextDouble() * 2f,
+                Velocity = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)),
+                // Life outlasts the full lob (~1.3-2s of flight) — expiry happens while
+                // POOLED on the ground (the rest-rule clamps to 1.4s), never mid-air.
+                Life = 2.4f + (float)_rng.NextDouble() * 0.6f,
+                MaxLife = 3.0f,
+                Color = tone,
+                FadeColor = new Color(165, 45, 15),
+                Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
+                // Volcano-scale ballistic arc, NOT the handheld hose's heavy 2.25.
+                GravityScale = 0.9f,
+                Drag = 0.9f,
+                CollideTiles = true,
+                // EVERY droplet glows: molten globs shed light anyway, and a lit lander
+                // takes the cinder rest-rule's 1.4s cooling linger — the pooling moment.
+                LightRadius = hot ? 22f : 8f,
+                LightColor = new Color(255, 170, 70),
+                // The pooled blob hands off to the sim where it rests: real Lava, spawned
+                // exactly where the glob visibly landed.
+                LandMat = CellFx ? (byte)Material.Lava : (byte)0,
+                LandSparks = true,
+                SmearMax = 26f,
+                SmearScale = 2f,
+                Fluid = (byte)Material.Lava,
+                JetScale = 2.2f + (float)_rng.NextDouble() * 0.8f,
+            });
+        }
+    }
+
     /// <summary>Volcanic bombs — molten rock lumps hurled out of an erupting crater. Bright
     /// glowing scoria that cools to maroon as it arcs, bounces on terrain, and litters the
     /// slopes. Thrown up and out around <paramref name="up"/> (the crater's outward normal).</summary>
