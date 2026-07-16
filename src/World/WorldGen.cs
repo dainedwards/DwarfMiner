@@ -178,6 +178,42 @@ public static class WorldGen
                 w: 0.05f + (float)rng.NextDouble() * 0.045f);
         }
 
+        // QA-rig lake trio (def.LakeTrio): the first two basins and the first acid pool
+        // re-place as a UNIT — water, lava, acid in a row, each rim a narrow land strip
+        // from the next. LAVA takes the middle seat so it borders BOTH of the others: one
+        // walk gives you every liquid pair at once (quench/steam on one rim, lava-vs-acid
+        // on the other). Runs after the acid array is built because the trio's spacing is
+        // derived from all three basins' widths.
+        if (def.LakeTrio && lakeCount >= 2 && acidPools.Length >= 1)
+        {
+            // The trio are the rig's SHOWCASE basins: 3× the width and depth of a normal
+            // one, so each is a body of fluid you swim, bridge or drain rather than a
+            // puddle you step over. Scaled BEFORE the gaps are measured — the strips
+            // between the rims stay proportional, so the row grows without merging. The
+            // widths feed the `blocked` list below, so the volcano/city/warren siting
+            // pass already routes around the trio at its true size.
+            const float trioScale = 3f;
+            lakes[0].depth *= trioScale; lakes[0].w *= trioScale;
+            lakes[1].depth *= trioScale; lakes[1].w *= trioScale;
+            acidPools[0].depth *= trioScale; acidPools[0].w *= trioScale;
+
+            // Centre-to-centre = 1.3 × the two half-widths, so rims fall a 0.3-strip apart.
+            var gapWaterLava = (lakes[0].w + lakes[1].w) * 1.3f;
+            var gapLavaAcid = (lakes[1].w + acidPools[0].w) * 1.3f;
+            float trioAng;
+            var trioTries = 0;
+            do
+            {
+                trioAng = (float)(rng.NextDouble() * MathHelper.TwoPi);
+                trioTries++;
+            } while (trioTries < 60 && (NearMountain(mountains, trioAng, 0.14f)
+                     || NearMountain(mountains, (trioAng + gapWaterLava) % MathHelper.TwoPi, 0.14f)
+                     || NearMountain(mountains, (trioAng + gapWaterLava + gapLavaAcid) % MathHelper.TwoPi, 0.14f)));
+            lakes[0].ang = trioAng;
+            lakes[1].ang = (trioAng + gapWaterLava) % MathHelper.TwoPi;
+            acidPools[0].ang = (trioAng + gapWaterLava + gapLavaAcid) % MathHelper.TwoPi;
+        }
+
         // Impact craters (the belt asteroid): dry bowls scooped out of the surface exactly
         // like lake basins, but left empty — the meteor-blasted look. Wider and shallower
         // than lakes so they read as scars, not pits.
