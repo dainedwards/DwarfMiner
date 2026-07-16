@@ -2329,6 +2329,32 @@ public sealed partial class DwarfMinerGame : Game
                     var spoutPos = _run.Planet.TileToWorld(spoutR,
                         (int)(angF * _run.Planet.TilesAt(spoutR)));
 
+                    // One-shot diagnostic per eruption: once the ramp is well past the rim,
+                    // list any SOLID tiles engulfed inside the bowl above the resting line
+                    // — the "dark floating bars in the dome" artifact. Names the culprit
+                    // (worldgen ledge vs quench-compacted crust) in the [erupt] log.
+                    if (!_eruptScanLogged && levelFrac > 1.15f)
+                    {
+                        _eruptScanLogged = true;
+                        var kinds = new Dictionary<TileKind, int>();
+                        var restRd = vx - (int)(2 * Planet.LegacyTileScale);
+                        for (var r = restRd; r <= Math.Min(levelR, _run.Planet.Rings - 1); r++)
+                        {
+                            var n2 = _run.Planet.TilesAt(r);
+                            var t0d = (int)(angF * n2);
+                            var half = Math.Max(3, (int)(0.07f / MathHelper.TwoPi * n2));
+                            for (var o = -half; o <= half; o++)
+                            {
+                                var k2 = _run.Planet.Get(r, ((t0d + o) % n2 + n2) % n2);
+                                if (k2 == TileKind.Sky) continue;
+                                kinds[k2] = kinds.GetValueOrDefault(k2) + 1;
+                            }
+                        }
+                        Console.WriteLine("[erupt] solids engulfed in bowl above rest line: "
+                            + (kinds.Count == 0 ? "none"
+                               : string.Join(", ", kinds.Select(kv => $"{kv.Key}×{kv.Value}"))));
+                    }
+
                     // FAR MODE: past ~2000 px the player cannot possibly see the show, so
                     // the pure-visual emitters (column, fountain, spew ropes, chunks) are
                     // skipped and the CELL side carries the whole eruption — pump, fill,
