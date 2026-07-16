@@ -125,6 +125,13 @@ public sealed class Particles
                 p.Velocity += planet.GravityAt(p.Position) * GravityStrength * p.GravityScale * dt;
             if (p.Drag > 0)
                 p.Velocity *= MathF.Max(0f, 1f - p.Drag * dt);
+            // Volcano-scale grains hide while the pool covers them: born 10 tiles under
+            // the crater lava, a grain only starts DRAWING (and shedding light) the frame
+            // it actually breaks the surface — the spout visibly erupts OUT of the pool
+            // instead of glowing through it. Refreshed every frame, so a gob that arcs
+            // back in vanishes into the body again.
+            if (p.JetScale > 1f && cells != null)
+                p.Hidden = cells.LiquidAtWorld(p.Position);
             // Flame turbulence: a bounded lateral wander that grows down the stream (age)
             // — the jet's body writhes like fire instead of flying a glassy arc. Phased
             // off each grain's own Life clock (grains are born with random lives, so the
