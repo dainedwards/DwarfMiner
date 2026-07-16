@@ -1,19 +1,19 @@
 # DwarfMiner — notes for Claude sessions
 
-## ⚠️ RULE #1 — end every finished change with the run command
+## ⚠️ RULE #1 — print the run command whenever it CHANGES (and only then)
 
-**Every reply that finishes a code change MUST end with the current run command line**
-(format below). No exceptions, no "same command as before" — print the full line again.
-The user's `run` launcher executes the NEWEST matching line from the session transcript;
-if you don't print it, the user keeps launching a stale command and your change is
-untestable from their side (this happened: DM_ERUPTSHOW was added and never printed, and
-several playtests silently ran without it).
+The user's `run` launcher executes the NEWEST matching line from the session transcript.
+Print the full run command line (format below) when the correct command is different
+from the last one printed — and NOT otherwise (don't repeat an unchanged line after
+every change; that's noise).
 
-Triggers — print the line when ANY of these happened since you last printed it:
-- you finished/built any code change,
-- you added, removed, or renamed a `DM_*` variable,
-- the right variable set for testing the current work changed,
-- you set up or switched a worktree.
+Print it when ANY of these make the command differ from the last printed line:
+- you added, removed, or renamed a `DM_*` variable relevant to testing the current work,
+- the right variable set / start scenario for testing changed,
+- the build config or checkout path changed (e.g. you set up or switched a worktree),
+- no line has been printed yet THIS SESSION (the launcher may otherwise pick up a stale
+  command from an old transcript — this happened: DM_ERUPTSHOW was added and never
+  printed, and several playtests silently ran without it).
 
 ## Run command for testing (machine-parsed — keep the exact format)
 
@@ -38,7 +38,8 @@ Rules:
 
 **FORBIDDEN VARIABLES — NEVER include these:**
 - `DM_TITLE` — Window title is auto-derived from `.git` at runtime. Including it breaks the launcher.
-  Never print it. If you see it in a past command, that command is stale.
+  Never print it. If you see DM_TITLE in a command from the transcript (stale from an older session),
+  that command is broken — print a corrected version without DM_TITLE to override it.
 - `DM_NOFOCUS` — Claude-side only (see below). The user's own playtests must take focus, so
   this must never appear in a printed run command.
 
