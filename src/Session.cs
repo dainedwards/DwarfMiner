@@ -110,6 +110,11 @@ public sealed class Session
     /// from a calm surface rather than fighting the still-falling lava.</summary>
     public float EruptionDrainWait;
 
+    /// <summary>The erupting spout's anchored ring. Set on the eruption's first main-act
+    /// frame and only ever RATCHETS DOWN (a breach draining the column pulls the source
+    /// deeper); it never climbs with the rising pool. int.MaxValue = not yet anchored.</summary>
+    public int EruptionSpoutR = int.MaxValue;
+
     public float SpawnTimer;
     public float FaunaTimer;
     public float Shake;
