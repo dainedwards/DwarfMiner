@@ -2159,9 +2159,15 @@ public static class SimTest
             // with voids a straight-line dig can fall into.
             Vector2? FindCorridorSite(int seed0)
             {
+                var found = 0; var best = 0f;
                 for (var so = 0; so < 60; so++)
                 {
-                    if (FindCavePos(planet, seedOffset: seed0 + so * 17) is not { } cand) continue;
+                    if (FindCavePos(planet, seedOffset: seed0 + so * 17) is not { } cand)
+                    {
+                        Console.WriteLine($"DBG so={so}: no cave pos at all");
+                        continue;
+                    }
+                    found++;
                     var cUp = planet.UpAt(cand);
                     var cRight = new Vector2(-cUp.Y, cUp.X);
                     var solid = 0; var samples = 0;
