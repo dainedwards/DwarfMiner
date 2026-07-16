@@ -1650,7 +1650,7 @@ public sealed partial class DwarfMinerGame : Game
         // Space is the one flight key, Noita-style: tap to jump, keep holding and the
         // jetpack lights (Player.Update gates the burn on hold time so a tap never sputters
         // the pack; an airborne press hovers immediately). W/Up no longer jump — they only
-        // climb ladders and steer fly mode via verticalAxis below.
+        // climb ladders and steer ghost flight via verticalAxis below.
         var jumpHeld = keys.IsKeyDown(Keys.Space);
 
         // DM_JETTEST=<1-4>: tooling hook — grants+equips that jetpack tier and holds jump
