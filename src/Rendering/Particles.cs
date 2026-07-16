@@ -335,10 +335,11 @@ public sealed class Particles
                 }
                 p.Velocity = Vector2.Zero;
                 p.Life = MathF.Min(p.Life, 0.1f);
-                // The drop fades out AT the contact point (inside the surface cell, under
-                // the rendered body) — resting it a step short left a grain hanging above
-                // the waterline. Re-entering this branch next frame is harmless: velocity
-                // is zero, so no crown, and the payload stamp already cleared.
+                // The drop fades out AT the contact point — resting it a step short left
+                // a grain hanging above the waterline; letting it run the whole step sank
+                // it. Re-entering this branch next frame is harmless: velocity is zero,
+                // so no crown, and the payload stamp already cleared.
+                next = contact;
             }
             p.Position = next;
             _list[i] = p;
