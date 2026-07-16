@@ -180,7 +180,7 @@ Headless testing: combine `DM_AUTOSTART=<planet-id|resume>` (skips the space scr
 verdant, frost, ember, slag, core), `DM_LAUNCH=1` (with DM_AUTOSTART: plants a fuelled
 rocket and lifts off at once — screenshots the escape ascent; added 2026-07-09), `DM_AUTOSAVE=<seconds>` (timed suspend-save), and
 `DM_GOD=1` (god mode, off by default since 2026-07-07) with
-[[hybrid-texture-pipeline]]'s `DM_AUTOSHOT=<seconds>` screenshot hook. The space screen
+[textures-and-crust](textures-and-crust.md)'s `DM_AUTOSHOT=<seconds>` screenshot hook. The space screen
 itself is captured by running DM_AUTOSHOT *without* DM_AUTOSTART. Meta progression (planet
 unlocks) is in `~/Library/Application Support/DwarfMiner/meta.json`. osascript keystroke
 injection is NOT permitted on this machine — to exercise input-gated UI, temporarily force

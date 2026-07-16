@@ -151,7 +151,7 @@ eruptions much bigger, spew lava chunks, leak over the rim). WorldGen.CarveVolca
   vent, **pumps dense magma from the bottom** + jets a slug up the bore on peak. Bigger spew
   (18–30 gobs peak vs 9–15, higher speed), **rim-leak** low near-horizontal gobs spilling
   over the lip, **EmitLavaChunks** (glowing scoria bombs, CollideTiles, cool to maroon) on
-  peak (lava only). Duration 12–20s (was 8–14, AmbientDirector). See [[noita-sim]] for fx.
+  peak (lava only). Duration 12–20s (was 8–14, AmbientDirector). See [noita-sim](noita-sim.md) for fx.
 
 **Round 2 (same day — user: tube not connected to bowl / geyser OBJECT / goopy jet / higher
 pool / half bulb):**
@@ -304,7 +304,7 @@ slowly rises to 110–130% and bubbles over the sides):**
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.
 
-**2026-07-14 (later) explosives + building rework**: Projectile Update's timed-explosive block REWRITTEN — Dynamite/DynamitePack/Tnt/TntPack share one `timed` path: gravity + fuse tick + damped bounce (`Velocity = vt*0.6 + n*|vn|*0.42`) on terrain contact, NEVER contact-detonate; TntPack sticks (_stuck) instead. `_resting` removed (bounces until fuse now). Fuses all 3.0s. New **DynamitePack** kind = 3× dynamite blast (ExplosionRadius 150, CraterTiles 12); item dynamite_pack (Weapon, FireDynamitePack). Building blocks (Brick/Plating/GlassBlock/Platform, TileKinds 45/46/47/49) — see [[character-equipment]] 6th pass for the Platform one-way collision detail. Throw charge-gauge on reticle (ThrowSpeed(min,max) read by all Fire*/ThrowTorch).
+**2026-07-14 (later) explosives + building rework**: Projectile Update's timed-explosive block REWRITTEN — Dynamite/DynamitePack/Tnt/TntPack share one `timed` path: gravity + fuse tick + damped bounce (`Velocity = vt*0.6 + n*|vn|*0.42`) on terrain contact, NEVER contact-detonate; TntPack sticks (_stuck) instead. `_resting` removed (bounces until fuse now). Fuses all 3.0s. New **DynamitePack** kind = 3× dynamite blast (ExplosionRadius 150, CraterTiles 12); item dynamite_pack (Weapon, FireDynamitePack). Building blocks (Brick/Plating/GlassBlock/Platform, TileKinds 45/46/47/49) — see [equipment-and-ui](equipment-and-ui.md) 6th pass for the Platform one-way collision detail. Throw charge-gauge on reticle (ThrowSpeed(min,max) read by all Fire*/ThrowTorch).
 
 2026-07-15 LAVA-BARRIER SAGA (user: tunnels through lavarock breaking lava barriers) — the leak was NEVER one bug; five stacked mechanisms, each probe-caught on `--lavaprobe` (now dumps seam bands + tile-kind maps around the first drain mouth AND the top of the escape chain — keep those dumps, they solved every round). **BuildSessionWorld seeds from DateTime.Now.Ticks — every run a fresh world, so breaches are probabilistic: validate with 8-12 probe loops, never one.**
 1. Carvers had no fluid awareness → `Planet.FluidKeepOut` (lava+acid seed halo-2, built in Generate after CarveVolcanoes) checked by CarveWormDisk + CarveTunnel; CarveWormDisk now ALWAYS spares LavaRock, CarveTunnel spares LavaRock+Obsidian. Water deliberately excluded (ocean under-sea worm net runs against the seabed shell by design).

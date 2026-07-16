@@ -12,7 +12,7 @@ Mass-break spike fixed 2026-07-12 (second pass): worst combined tick 39ms→~23m
 
 2026-07-13 (lighting session) hard-won pacing lessons: (1) **Texture2D.SetData on a texture the GPU sampled last frame = full pipeline sync stall on macOS GL** — CPU timers show nothing (upd+drw ~12ms) yet FPS collapses to ~23; double-buffer any per-frame-uploaded texture (see LightGrid._tex[2]). (2) **DM_AUTOSTART skips the boot load screen, so the survey warm-up (full world gen per planet) contends with live play for the first ~8s** — any FPS reading in that window is garbage; measure steady-state with `DM_FPSLOG=1` (per-second console `[fps]` lines) instead of screenshot-cropping the HUD counter. (3) Diagnostics added: `DM_LIGHTPERF=1` (light-pass component ms), `DM_NOLIGHT=1` (skip light+bloom → fullbright), `DM_NORT=1` (bypass virtual-res scene RT; breaks resize scaling).
 
-Related: [[terraria-lighting]], [[overworld-roadmap]] (parallel Claude session auto-commits to this repo — expect files to change on disk mid-session; my edits get auto-committed too).
+Related: [lighting](lighting.md), [overworld-and-planets](overworld-and-planets.md) (parallel Claude session auto-commits to this repo — expect files to change on disk mid-session; my edits get auto-committed too).
 
 2026-07-15 perf pass (lander drop / effect storms / water worlds), all verified live:
 **New tooling** — `DM_PERF=1`: per-phase frame attribution (src/Systems/FramePerf.cs; [perf]
@@ -84,7 +84,7 @@ frontmost OR rely on InactiveSleepTime=0 build; sequential runs only.
 23cf14c — validated in a /tmp detached worktree first: simtest PASS, lavaprobe ×3 clean,
 drain mean 1.57ms on merged tree; one Cells.cs conflict = noita-sim's rain-splash muting
 rebuilt on the belowMat cache; merge also added DM_TITLE window naming per CLAUDE.md
-(DM_TITLE since REMOVED 2026-07-16 — the title is self-derived now, see [[window-title]]);
+(DM_TITLE since REMOVED 2026-07-16 — the title is self-derived now, see [CLAUDE.md: window title](../../CLAUDE.md));
 worktree can be retired): targets "lake completely drains" chaos.
 (a) **Stale-hop enqueues were the hidden active-set inflater**: TryMoveTo enqueued the dest
 of EVERY hop of a multi-step fall/dispersion — a 16-step fall parked 15 dead indices per

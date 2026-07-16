@@ -98,7 +98,7 @@ neighbour's own ATLAS sub-rect (the strip adjacent to the shared edge, DrawDecoT
 BlobShade tint at FULL alpha — flag-band trap) with world-space ValueNoise column depths
 0..2px, dispatched only when BOTH families are earth (dirt 1 / gravel+Conglomerate 3 /
 rock+LavaRock 4 — EarthPair); snow (2) and every other pair keep the ORIGINAL v1 hash
-teeth. (2) Lake/acid basins are QUARTIC bowls now, see [[caves-and-spawners]].
+teeth. (2) Lake/acid basins are QUARTIC bowls now, see [worldgen-caves-and-lava](worldgen-caves-and-lava.md).
 KNOWN REMAINING: tree trunk/canopy/root tiles are authored-art flat quads (UsesAuthoredArt)
 — can't take the carve flag (deco texcoords don't map tile space), still read as square
 block chains; slope stepping at strong zoom is tile GEOMETRY (4px), not edge rendering.
@@ -106,5 +106,5 @@ block chains; slope stepping at strong zoom is tile GEOMETRY (4px), not edge ren
 Hooks: `DM_SHADER=0` disables the shader (baked erosion returns), `DM_CARVE=<px>` sets max
 carve depth in world px (default 2.0), `DM_NOITA=0` disables the additive crust,
 `DM_CONTACT=0` disables the contact probe (raw carve everywhere, no liquid band).
-Related: [[hybrid-texture-pipeline]] (erosion/crust history), [[noita-sim]] (cell sim).
+Related: [textures-and-crust](textures-and-crust.md) (erosion/crust history), [noita-sim](noita-sim.md) (cell sim).
 

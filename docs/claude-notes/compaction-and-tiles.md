@@ -24,6 +24,6 @@ On the noita-sim branch (2026-07-10) tiles were quartered: `Planet.TileSize` 8â†
 
 **Why:** any future edit that reuses old 8-px-era numbers (depths, radii, budgets in tiles) will silently halve feature sizes; the divisor and 2Ã—2 stamps are what keep the resource economy exploit-free.
 
-**How to apply:** author new world-space distances in px or multiply legacy tile counts by `Planet.LegacyTileScale`; when adding granular materials, decide whether they join `Materials.IsCompactable`. See also [[overworld-roadmap]].
+**How to apply:** author new world-space distances in px or multiply legacy tile counts by `Planet.LegacyTileScale`; when adding granular materials, decide whether they join `Materials.IsCompactable`. See also [overworld-and-planets](overworld-and-planets.md).
 
 
