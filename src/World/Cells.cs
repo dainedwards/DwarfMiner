@@ -1668,10 +1668,11 @@ public sealed class Cells
             if (!IsBlocked(ucx, ucy))
             {
                 var (up, tan) = AxesAt(cx, cy);
-                // Pool crowns stay LOW (×0.7): a raindrop's rebound off a lake is a lick
-                // of spray, not the full plunge-pool fountain a rock landing throws.
+                // Pool crowns stay LOW (×0.7, then another ×0.7 per user — "30% lower"):
+                // a raindrop's rebound off a lake is a lick of spray, not the full
+                // plunge-pool fountain a rock landing throws.
                 var v = up * (impact * PxPerCell * (0.35f + (float)_rng.NextDouble() * 0.3f)
-                              * (onLiquid ? 0.7f : 1f))
+                              * (onLiquid ? 0.49f : 1f))
                       + tan * (((float)_rng.NextDouble() - 0.5f) * impact * PxPerCell * 0.8f);
                 if (LaunchCell(cx, cy, v)) return;
             }
