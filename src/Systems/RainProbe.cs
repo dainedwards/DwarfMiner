@@ -19,10 +19,9 @@ public static class RainProbe
 {
     public static void Run()
     {
-        foreach (var id in new[] { "debug", "verdant", "ocean" })
+        foreach (var id in new[] { "debug", "verdant", "frost" })
         {
             var def = PlanetDefs.ById(id);
-            if (def is null) { Console.WriteLine($"--- {id}: no such planet, skipped"); continue; }
             var run = DwarfMinerGame.BuildSessionWorld(def);
             var planet = run.Planet;
             var cells = run.Cells;
