@@ -371,7 +371,7 @@ public static class WorldGen
                         // shore level that ran along the jacket top and drained down the
                         // first roofed shaft it met — the crater pool survives the same
                         // slosh only because its pool line sits tiles below the rim.
-                        var lavaLake = def.LakePair && lakeIdx == 1;
+                        var lavaLake = def.LakeTrio && lakeIdx == 1;
                         planet.SetWall(r, t, lavaLake ? TileKind.Basalt : TileKind.Dirt);
                         planet.Set(r, t, TileKind.Sky);
                         if (depth >= (lavaLake ? 2f : 1f))
