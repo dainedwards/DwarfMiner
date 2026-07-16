@@ -2241,6 +2241,55 @@ public sealed partial class DwarfMinerGame : Game
                 PlayAt("collapse", ventPos, peak ? 0.7f : 0.4f, pitch: -0.5f, minGap: 0.5f);
             }
         }
+        else if (_run.EruptionVent >= 0)
+        {
+            // The show just ended: the magma withdraws — hand the vent to the subsidence
+            // drain below, which lowers the pool back to its resting line.
+            if (_run.EruptionVent < _run.Planet.VolcanoVents.Count)
+                _run.EruptionDrainVent = _run.EruptionVent;
+            _run.EruptionVent = -1;
+        }
+
+        // POST-ERUPTION SUBSIDENCE: with the eruption over, the raised crater pool sinks
+        // back to its resting line — the magma withdraws down the tube. Each frame skims a
+        // few tiles' worth of cells off the pool's top surface row across the crater mouth;
+        // the remaining liquid re-levels itself, so the whole pool settles smoothly.
+        if (_run.EruptionLeft <= 0f && _run.EruptionDrainVent >= 0
+            && _run.EruptionDrainVent < _run.Planet.VolcanoVents.Count)
+        {
+            var (dvx, dvy, dAcid) = _run.Planet.VolcanoVents[_run.EruptionDrainVent];
+            var dMat = dAcid ? Material.Acid : Material.Lava;
+            var dRel = _run.Planet.TileToWorld(dvx, dvy) - _run.Planet.Center;
+            var dAng = MathF.Atan2(dRel.Y, dRel.X) / MathHelper.TwoPi;
+            if (dAng < 0f) dAng += 1f;
+            // Resting line straight from the vent-geometry contract: the vent ring sits
+            // 2S above the resting pool (see CarveVolcanoes).
+            var restR = dvx - (int)(2 * Planet.LegacyTileScale);
+            var coneHd = (restR - _run.Planet.SurfaceRing) / 0.91f;
+            var topR = Math.Min(_run.Planet.Rings - 1,
+                _run.Planet.SurfaceRing + (int)(coneHd * 1.4f) + 2);
+            var dSurf = -1;
+            for (var r = topR; r > restR; r--)
+            {
+                var t = (int)(dAng * _run.Planet.TilesAt(r));
+                if (_run.Planet.Get(r, t) != TileKind.Sky) break;   // crusted over: stop
+                if (_run.Cells.LiquidKindAtWorld(_run.Planet.TileToWorld(r, t))
+                    != Material.Empty) { dSurf = r; break; }
+            }
+            if (dSurf < 0) _run.EruptionDrainVent = -1;   // back at the resting line: done
+            else
+            {
+                var n = _run.Planet.TilesAt(dSurf);
+                var t0 = (int)(dAng * n);
+                var span = Math.Max(2, (int)(0.05f / MathHelper.TwoPi * n));
+                var budget = Cells.Density * Cells.Density * 3;
+                for (var off = -span; off <= span && budget > 0; off++)
+                {
+                    var t = ((t0 + off) % n + n) % n;
+                    budget -= _run.Cells.DrainLiquidInTile(dSurf, t, dMat, budget);
+                }
+            }
+        }
 
         // Population upkeep — cave dwellers, surface herds, sky flyers (see SpawnDirector).
         tPerf = FramePerf.Now();
