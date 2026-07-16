@@ -71,30 +71,38 @@ public static class LakeProbe
         Console.WriteLine($"    drain mouths at load: {mouthCount}");
         foreach (var s in mouths) Console.WriteLine("    " + s);
 
+        // The basins' BEARINGS, bucketed — the crust reservoirs pour at load too, and their
+        // water legitimately spreads across its own cave floor, so a whole-world water census
+        // can't tell a lake draining from a reservoir settling. Water that appears under a
+        // lake's bearing, below the bowl, is unambiguous: nothing else put it there.
+        const int buckets = 1440;
+        var basinBearing = new HashSet<int>();
+        foreach (var (r, t) in lake)
+        {
+            var b = (int)((t + 0.5f) / planet.TilesAt(r) * buckets);
+            for (var d = -2; d <= 2; d++) basinBearing.Add(((b + d) % buckets + buckets) % buckets);
+        }
+
         var initial = ScanWater(planet, cells);
-        Console.WriteLine($"    water tiles at load: {initial.Count}");
+        Console.WriteLine($"    water tiles at load: {initial.Count} " +
+                          $"({initial.Count - lake.Count} of them crust reservoirs)");
 
         const float step = 1f / 60f;
         for (var tick = 0; tick < 60 * 60; tick++) cells.Update(step);
 
         var after = ScanWater(planet, cells);
+        var retained = 0;
+        foreach (var k in lake) if (after.Contains(k)) retained++;
         var escaped = new List<(int r, int t)>();
         foreach (var (r, t) in after)
         {
-            var near = false;
-            for (var dr = -2; dr <= 2 && !near; dr++)
-                for (var dt = -2; dt <= 2 && !near; dt++)
-                {
-                    var r2 = r + dr;
-                    if (r2 < 0 || r2 >= planet.Rings) continue;
-                    var n2 = planet.TilesAt(r2);
-                    var t2 = (int)((t + 0.5f) / planet.TilesAt(r) * n2) + dt;
-                    near = initial.Contains((r2, (t2 % n2 + n2) % n2));
-                }
-            if (!near) escaped.Add((r, t));
+            if (r >= loR - 2) continue;                     // still at basin level or above
+            if (!basinBearing.Contains((int)((t + 0.5f) / planet.TilesAt(r) * buckets))) continue;
+            if (initial.Contains((r, t))) continue;         // a reservoir that was always there
+            escaped.Add((r, t));
         }
-        Console.WriteLine($"    after 60s: water tiles {after.Count} (was {initial.Count}), " +
-                          $"escaped beyond body+2: {escaped.Count}");
+        Console.WriteLine($"    after 60s: basin fill retained {retained}/{lake.Count}, " +
+                          $"water under a basin bearing below ring {loR - 2}: {escaped.Count}");
 
         // The highest escape sits nearest the breach it poured through.
         if (escaped.Count > 0)
