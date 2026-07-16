@@ -453,10 +453,15 @@ public sealed class Cells
         return (cx, cy);
     }
 
-    /// <summary>Inner cell (cy-1, mapped to its row's angle space).</summary>
+    /// <summary>Inner cell (cy-1, mapped to its row's angle space). Rows outside the grid have
+    /// no mappable angle space (their width is unknown), so — like <see cref="IsBlocked"/> and
+    /// <see cref="Place"/>, which guard both ends — an out-of-range row yields an invalid cell
+    /// rather than an index off the end of `_cellsAt`: below the core reads (0, -1), above the
+    /// sky reads (0, Height), and IsBlocked calls both blocked so walks stop there.</summary>
     public (int cx, int cy) InnerCell(int cx, int cy)
     {
         if (cy <= 0) return (0, -1);
+        if (cy >= Height) return (0, Height);
         var nIn = _cellsAt[cy - 1];
         var nOut = _cellsAt[cy];
         var w = WrapX(cx, nOut);
