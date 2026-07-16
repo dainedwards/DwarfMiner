@@ -1609,8 +1609,6 @@ public static class WorldGen
         }
         Plug(planet.LavaSeeds, lavaLid, TileKind.LavaRock, melts: true);
         Plug(planet.AcidSeeds, acidLid, TileKind.Obsidian, melts: true);
-        // Water last: it only fills Sky, so it can never overwrite the jackets above.
-        // Only the surface BASINS — a crust reservoir's open neighbours are its own cave.
         // Water last: it only fills Sky, so it can never overwrite the jackets above. Only
         // the surface BASINS — a crust reservoir's open neighbours are its own cave — and
         // only on lake worlds. An ocean's sea is 70%+ of the bearings, and its containment
