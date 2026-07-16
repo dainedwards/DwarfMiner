@@ -1486,12 +1486,14 @@ public static class WorldGen
     /// shallow shore basin and turn the sea into a drain. Other worlds keep the historical
     /// global-only rule so their layouts stay byte-identical.</param>
     private static void CarveWorm(Planet planet, Random rng, Vector2 pos, float heading,
-        int length, int branchBudget, float minFrac, float hardFloorPx,
+        int length, int branchBudget, float floorTiles, float driftCeilTiles, float hardFloorPx,
         bool localCeiling = false)
     {
-        var minRad = planet.Radius * (minFrac - 0.02f) * Planet.TileSize;
-        var maxRad = (Planet.RingMin + planet.SurfaceRing - 14f * Planet.LegacyTileScale)
-                     * Planet.TileSize;
+        // The steering floor sits a touch under the band's own floor (it's a nudge, not a
+        // wall — hardFloorPx is the wall). The slack was 0.02 of the sky-inclusive radius;
+        // keeping it in those terms leaves every full-size world's walk bit-identical.
+        var minRad = (floorTiles - planet.Radius * 0.02f) * Planet.TileSize;
+        var maxRad = driftCeilTiles * Planet.TileSize;
         for (var s = 0; s < length; s++)
         {
             // Meander, but steer back toward the band when drifting out of it — the pull
