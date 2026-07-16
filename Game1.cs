@@ -2160,10 +2160,10 @@ public sealed partial class DwarfMinerGame : Game
                         _run.Cells.LaunchAtWorld(ventPos + ventUp * 4f, dir * speed, mat);
                     }
                 }
-                // Molten rock bombs flung out of the throat — glowing scoria chunks that
-                // arc over and litter the slopes (acid vents don't spit rock).
+                // Molten rock bombs flung up off the boiling pool — glowing scoria chunks
+                // that arc over the rim and litter the slopes (acid vents don't spit rock).
                 if (peak && !vAcid)
-                    _particles.EmitLavaChunks(ventPos + ventUp * 8f, ventUp,
+                    _particles.EmitLavaChunks(spoutPos + ventUp * 8f, ventUp,
                         5 + Random.Shared.Next(5));
 
                 // Ash plume, glowing cinders spat from the fountain, and a rolling rumble.
