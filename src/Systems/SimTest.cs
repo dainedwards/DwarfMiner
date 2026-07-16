@@ -1009,9 +1009,12 @@ public static class SimTest
             Check($"titan: enraged boss stomps a shaft down toward buried prey ({startRadial - dugRadial:0}px)",
                 startRadial - dugRadial > 120f);
 
-            // Prey escapes upward — the boss should climb back toward the surface.
+            // Prey escapes upward — the boss should climb back toward the surface. Same
+            // 30s window as the dig-down half: the acid-pool obsidian halos and the
+            // fluid keep-out reroute this seed's caves, and the denser overburden left
+            // the old 20s window ~20px short of the bar while the climb itself was fine.
             var upPlayer = boss.Position + pp.UpAt(boss.Position) * 500f;
-            for (var i = 0; i < 60 * 20; i++)
+            for (var i = 0; i < 60 * 30; i++)
             {
                 boss.OnDamage();
                 boss.Anger = 90f;
