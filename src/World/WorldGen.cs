@@ -1830,8 +1830,12 @@ public static class WorldGen
         for (var v = 0; v < def.Volcanoes; v++)
         {
             var scale = def.VolcanoScale * (0.85f + (float)rng.NextDouble() * 0.3f);
-            var coneH = MathF.Min((30f + (float)rng.NextDouble() * 16f) * scale * S, Planet.SkyHeadroom - 6f * S);
-            var coneW = (0.13f + (float)rng.NextDouble() * 0.05f) * MathF.Sqrt(scale);
+            // REAL-VOLCANO proportions (2026-07-16, was 30-46 tall × 0.13-0.18 rad — a
+            // spike): squat and broad, ~60% of the old height on ~1.8× the footprint,
+            // so the flanks run long and gentle and the cone reads as a mountain that
+            // happens to be hollow, not a chimney.
+            var coneH = MathF.Min((18f + (float)rng.NextDouble() * 10f) * scale * S, Planet.SkyHeadroom - 6f * S);
+            var coneW = (0.24f + (float)rng.NextDouble() * 0.07f) * MathF.Sqrt(scale);
 
             // Placement: clear of mountains, lake/pool basins, other volcanoes — and the
             // spawn bearing (-π/2), so the rover never drops the dwarf into a crater.
