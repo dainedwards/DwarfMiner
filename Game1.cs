@@ -356,10 +356,14 @@ public sealed partial class DwarfMinerGame : Game
         if (Environment.GetEnvironmentVariable("DM_TITLE") is { Length: > 0 } wt) return wt;
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         for (var d = dir; d is not null; d = d.Parent)
-            // A linked worktree carries a .git FILE, the primary checkout a .git directory.
-            if (Directory.Exists(Path.Combine(d.FullName, ".git")) ||
-                File.Exists(Path.Combine(d.FullName, ".git")))
-                return d.Name;
+        {
+            var git = Path.Combine(d.FullName, ".git");
+            // A linked worktree carries a .git FILE and is named after the tree; the primary
+            // checkout carries a .git DIRECTORY and is named after the repo, so it reports
+            // itself as "main" rather than the redundant "DwarfMiner - DwarfMiner".
+            if (File.Exists(git)) return d.Name;
+            if (Directory.Exists(git)) return "main";
+        }
         return dir.Name;
     }
 
