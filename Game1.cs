@@ -1670,7 +1670,7 @@ public sealed partial class DwarfMinerGame : Game
             jumpHeld = true;
         }
 
-        // Vertical input for fly mode: W/Up = ascend, S/Down = descend along local up.
+        // Vertical input for ghost flight: W/Up = ascend, S/Down = descend along local up.
         var verticalAxis = 0;
         if (keys.IsKeyDown(Keys.W) || keys.IsKeyDown(Keys.Up)) verticalAxis += 1;
         if (keys.IsKeyDown(Keys.S) || keys.IsKeyDown(Keys.Down)) verticalAxis -= 1;
