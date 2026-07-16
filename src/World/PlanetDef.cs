@@ -202,7 +202,9 @@ public static class PlanetDefs
         // so the failure class can't fire here; its only lava is the trio basin and the
         // volcano's plumbing, both of which sit far outside the strata seams.
         SizeScale: 0.49f, LakeScale: 1.4f,
-        AcidPools: 2, AcidRain: true, LakeTrio: true,
+        // EXACTLY one basin of each fluid: LakeMin 2 (water + the trio's lava) and ONE
+        // acid pool (conscripted into the trio) — no stray second acid pond on the rig.
+        AcidPools: 1, AcidRain: true, LakeTrio: true,
         Volcanoes: 1, VolcanoScale: 1.1f,
         // One civilisation per planet holds on the QA rig too: it keeps the tower district
         // (city QA), and warren QA runs on slag/core via DM_AUTOSTART + DM_WARREN.
