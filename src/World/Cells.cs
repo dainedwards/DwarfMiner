@@ -3151,16 +3151,16 @@ public sealed class Cells
             r.Batch.Draw(op.Blob ? blob : r.Pixel, op.Pos, null, op.Col, op.Rot,
                 op.Blob ? blobOrigin : new Vector2(0.5f, 0.5f), op.Scale,
                 SpriteEffects.None, 0f);
-        // Lava's own surface line: the slow bright molten crest, after the bodies so its
-        // colour wins the replace blend.
-        foreach (var (cx, cy) in _hotSurface) DrawSurfaceBand(r, radial, cx, cy, Material.Lava);
-
-        // Bubbles ride on top of the crest line (their colour wins where they overlap it).
-        // Site selection, size and rhythm all hash off the cell, so a resting sea keeps
-        // stable, individually-phased bubblers with zero per-bubble state. Sites are RARE
-        // (a few spots across a big pool) and gate on DEPTH + SETTLEDNESS, not width:
-        // crater pools and small-but-deep lakes bubble; thin sheets, pouring streams and
-        // fresh spill fronts don't.
+        // Bubble domes, in the BODY'S OWN flat colour and BEFORE the crest line: the fill
+        // blend REPLACES colour wherever a quad lands, even at near-zero alpha — the
+        // whole design rests on every writer of a body using one flat colour so the
+        // overwrites are invisible. A hotter dome tint stamped a hard orange square into
+        // the pool around every blister; the blister reads through its SILHOUETTE — the
+        // added coverage bumps the metaball surface and the composite rim-lights the
+        // bulge — not through its ink. Site selection, size and rhythm all hash off the
+        // cell (zero per-bubble state); sites are RARE (a few spots across a big pool)
+        // and gate on DEPTH + SETTLEDNESS, not width: crater pools and small-but-deep
+        // lakes bubble; thin sheets, pouring streams and fresh spill fronts don't.
         var dtFx = MathF.Max(0f, _time - _hotFxTime);
         _hotFxTime = _time;
         var sparks = 0;
