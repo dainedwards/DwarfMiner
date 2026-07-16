@@ -270,8 +270,8 @@ public sealed class Particles
                         // around the rest point, so a fat glob leaves a real dollop of
                         // material, not one pixel. Handheld hoses (JetScale 0) unchanged.
                         if (p.JetScale > 1f)
-                            for (var e = 0; e < (int)(p.JetScale * 2f); e++)
-                                cells.StampAtWorld(p.Position + Jitter(2.5f),
+                            for (var e = 0; e < (int)(p.JetScale * 6f); e++)
+                                cells.StampAtWorld(p.Position + Jitter(3.5f),
                                     (Material)p.LandMat, 0);
                         p.LandMat = 0;
                     }
