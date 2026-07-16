@@ -193,11 +193,13 @@ public static class PlanetDefs
         OxygenDrainScale: 1.5f, SeedsGas: true, SeedsAcid: true, SeedsOil: true,
         Titan: TitanKind.Godzilla,
         CrystalPockets: 2, FungalPockets: 2,
-        // 0.7 is the campaign generator's own size floor — the strata/seam contract is
-        // only proven down to it (a 0.55 experiment left the lava sea leaking into the
-        // dry strata: ~75k cells churning forever, worse than the giant world).
-        SizeScale: 0.7f, LakeScale: 1.4f,
-        AcidPools: 2, AcidRain: true, LakePair: true,
+        // 0.49 is BELOW the campaign generator's 0.65 floor, which the old 0.55 experiment
+        // showed is unsafe for a world with a lava SEA (it leaked into the dry strata:
+        // ~75k cells churning forever). The rig carries LavaFillFrac 0f — no sea to leak —
+        // so the failure class can't fire here; its only lava is the trio basin and the
+        // volcano's plumbing, both of which sit far outside the strata seams.
+        SizeScale: 0.49f, LakeScale: 1.4f,
+        AcidPools: 2, AcidRain: true, LakeTrio: true,
         Volcanoes: 1, VolcanoScale: 1.1f,
         // One civilisation per planet holds on the QA rig too: it keeps the tower district
         // (city QA), and warren QA runs on slag/core via DM_AUTOSTART + DM_WARREN.
