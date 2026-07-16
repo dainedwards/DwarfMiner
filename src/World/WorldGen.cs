@@ -959,6 +959,8 @@ public static class WorldGen
                 var an = planet.TilesAt(groundR + 1);
                 var at = (int)((ang / MathHelper.TwoPi + 1f) % 1f * an);
                 if (planet.Get(groundR + 1, at) != TileKind.Sky) continue;
+                // Never on a basin bed — see ScatterTrees.
+                if (wet.Contains(Planet.TileKey(groundR + 1, at))) continue;
 
                 // A tree every ~3rd tile (tight but not fused), undergrowth everywhere else.
                 if (((dt + halfSpanTiles) % 3) == 1)
