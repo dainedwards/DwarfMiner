@@ -641,11 +641,11 @@ public sealed class Cells
     // burn state, same policy as flying cells.
     public readonly Dictionary<(int tx, int ty), float> BurningTiles = new();
     private readonly List<((int tx, int ty) Key, float Clock)> _burnScratch = new();
-    // Planet-wide cap = the fire-storm guard. 600 gives a grove fire headroom — at the
-    // old 400 a healthy blaze pinned the cap and every ignition (spread steps, cell-fire
-    // catches) dropped silently, which read as the fire stalling and dying in patches.
-    // With retried spread the cap is SOFT: blocked ignitions heal as burn-outs free slots.
-    private const int MaxBurningTiles = 600;
+    // Planet-wide cap = the fire-storm guard. With retried spread the cap is SOFT
+    // (blocked ignitions heal as slots free), and PRESSURE AGING (see TickBurningTiles)
+    // burns the tail out faster as the count climbs past half-cap — so a big fire keeps
+    // its front pace as a travelling band rather than stalling here.
+    private const int MaxBurningTiles = 900;
     private const float BurnSpreadDelay = 0.25f;
     private const float BurnDurMin = 4f, BurnDurVar = 3f;
 
@@ -680,6 +680,15 @@ public sealed class Cells
     private void TickBurningTiles(float dt)
     {
         if (BurningTiles.Count == 0) return;
+        // PRESSURE AGING: as the registry fills toward its cap, every burn's clock runs
+        // faster (up to 3×) — the oldest tiles burn out sooner, freeing slots, so a big
+        // fire becomes a TRAVELLING BAND: the tail consumes itself to keep the front
+        // spreading at full pace, instead of the cap stalling the climb. (The spread
+        // delay shrinks with it, so the front actually quickens slightly under
+        // pressure — a big fire raging harder reads right.)
+        var pressure = 1f + MathF.Max(0f, BurningTiles.Count - MaxBurningTiles * 0.5f)
+                          / (MaxBurningTiles * 0.25f);
+        var adt = dt * MathF.Min(3f, pressure);
         _burnScratch.Clear();
         foreach (var kv in BurningTiles) _burnScratch.Add((kv.Key, kv.Value));
         foreach (var ((tx, ty), clock) in _burnScratch)
@@ -690,7 +699,7 @@ public sealed class Cells
                 BurningTiles.Remove((tx, ty));
                 continue;
             }
-            var nc = clock + dt;
+            var nc = clock + adt;
             var h = (uint)((tx * 73856093) ^ (ty * 19349663));
             var dur = BurnDurMin + (h & 1023) / 1023f * BurnDurVar;
             // Blaze visuals + hazard: licking flames off the tile, and the odd REAL fire
