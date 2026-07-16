@@ -282,7 +282,7 @@ public sealed class Player
 
     /// <summary>Per-tool mining cooldown. Pickaxe is the standard rhythm; drill is a near-
     /// continuous stream; hammer is slow but lands a heavy blow per swing; the mining laser
-    /// out-paces even the drill — a held stream, not swings. Fly mode keeps the drill
+    /// out-paces even the drill — a held stream, not swings. God mode keeps the drill
     /// cadence so dev movement isn't gated by swing rate.</summary>
     public float MineCooldownFor(MiningTool tool)
     {
