@@ -1812,12 +1812,12 @@ public sealed class Particles
     }
 
     /// <summary>SIDE SPEW: the acid spewer's goopy rope scaled to volcano size, recoloured
-    /// molten — two of these fire from the crater's edges during an eruption, hurling a
-    /// connected lava tongue out and down the flanks. Same mechanics as
-    /// <see cref="EmitAcidJet"/> (tight cone, arcing droplets, metaball fluid body,
-    /// stamp-on-landing) but a SEPARATE emitter: nothing here touches the handheld hose.
-    /// Half the droplets stamp real Lava where they land, and a share of the rest stamp
-    /// burning Fire with a fuse — the spew genuinely sets the slopes alight.</summary>
+    /// molten — two of these lob from the erupting pool at ±20°, arcing over the crater
+    /// ledge. Same mechanics as <see cref="EmitAcidJet"/> (tight cone, arcing droplets,
+    /// metaball fluid body) but a SEPARATE emitter: nothing here touches the handheld
+    /// hose. COSMETIC ONLY: the actual material is the volley of real flying lava cells
+    /// the eruption tick launches on the same trajectory — this rope just wraps the
+    /// stream in the spitter's connected goopy look.</summary>
     public void EmitLavaSpew(Vector2 pos, Vector2 dir, float strength)
     {
         // Speed ×0.55 of the original ballistic tune = ~30% of the old reach (range goes
