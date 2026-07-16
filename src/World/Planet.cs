@@ -143,6 +143,13 @@ public sealed class Planet
     /// keep erupting.</summary>
     public readonly List<(int x, int y, bool acid)> VolcanoVents = new();
 
+    /// <summary>Magma/acid chamber exclusion discs (world px), recorded by CarveVolcanoes
+    /// for the deep-worm carve: a bearing-only margin around the vent can never cover the
+    /// chamber's true angular width at depth (it drained a whole volcano to the core when
+    /// a worm bit the chamber shoulder). GENERATION-ONLY — worms carve inside
+    /// WorldGen.Generate, so this is deliberately not persisted.</summary>
+    public readonly List<(Vector2 Centre, float RadiusPx)> ChamberZones = new();
+
     /// <summary>Living trees the ecosystem tracks. WorldGen registers one per planted tree;
     /// <see cref="Systems.TreeEcology"/> regrows a felled one from its surviving underground
     /// roots (faster when the biome's rain — water, acid, or fire — waters it). Not persisted:
