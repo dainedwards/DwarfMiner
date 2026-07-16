@@ -2136,13 +2136,12 @@ public sealed partial class DwarfMinerGame : Game
                     _run.Cells.LaunchAtWorld(spoutPos + ventUp * 6f, dir * speed, mat);
                 }
 
-                // SIDE SPOUTS: twin jets from the SAME submerged origin, angled ±20°,
-                // lobbing out of the pool and over the ledge of the crater. Each side is
-                // ACTUAL LAVA — a volley of real flying cells that land, pool, flow and
-                // overflow down the flanks — sheathed in the spitter-style metaball rope
-                // (EmitLavaSpew, now purely cosmetic) so the stream keeps its goopy look.
-                // Cells fall under FlyGravity (450 px/s², 2.5× the rope's 180), so they
-                // launch ~1.6× faster and their lob shadows the rope's arc.
+                // SIDE SPOUTS: twin lobs of PURE REAL LAVA from the same submerged origin,
+                // angled ±20° over the ledge of the crater (the cosmetic metaball rope is
+                // gone — the material itself is the effect). Each side streams a dense
+                // volley of flying lava cells every frame: they arc as glowing streak
+                // grains, land on the flanks, pool, flow and overflow — genuine sim lava
+                // for the whole trajectory.
                 if (!vAcid)
                 {
                     var spew = MathF.Min(1f,
@@ -2151,8 +2150,8 @@ public sealed partial class DwarfMinerGame : Game
                     for (var s = -1; s <= 1; s += 2)
                     {
                         var edir = ventUp * MathF.Cos(side20) + ventRight * (s * MathF.Sin(side20));
-                        _particles.EmitLavaSpew(spoutPos + edir * 4f, edir, spew);
-                        var volley = 1 + (int)(spew * 2f) + (peak ? 1 : 0);
+                        // Denser volley now that the cells carry the look alone.
+                        var volley = 2 + (int)(spew * 4f) + (peak ? 2 : 0);
                         for (var i = 0; i < volley; i++)
                         {
                             var jit = (float)(Random.Shared.NextDouble() - 0.5) * 0.09f;
