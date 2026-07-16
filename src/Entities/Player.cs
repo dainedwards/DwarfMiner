@@ -805,7 +805,7 @@ public sealed class Player
 
     /// <summary>Advance the held-construction timer toward the stamp anchored at the cursor
     /// tile. Returns true the frame the build completes (and resets for the next one). A new
-    /// target tile restarts the clock; fly mode builds instantly (dev tool).</summary>
+    /// target tile restarts the clock; god mode builds instantly (dev tool).</summary>
     private bool TickBuild(Planet planet, Vector2 worldCursor, float dt)
     {
         _buildHeld = true;
