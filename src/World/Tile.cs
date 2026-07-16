@@ -120,6 +120,9 @@ public static class Tiles
           or TileKind.Platform
           // Treasure chests sit solid in the warren vault — they never crumble; you loot them.
           or TileKind.Chest or TileKind.ChestOpen
+          // The volcano's beating heart: submerged in the geyser well, it must survive
+          // every ambient hazard (quakes, blasts, its own lava) — only mining ends it.
+          or TileKind.Geyser
           // Lily pads float on the water — with no rock under them they must never "fall".
           or TileKind.LilyPad;
           // NOTE: trees & water plants are NOT anchored — an anchored plant reads as an
