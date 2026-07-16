@@ -1516,7 +1516,7 @@ public static class WorldGen
     /// seeds themselves: the settle slosh crests a course into the lid, so a shaft or
     /// shoreline gap at lid level is a drain exactly like one at fill level.</summary>
     private static void PlugFluidBreaches(Planet planet, HashSet<long> lavaLid,
-        HashSet<long> acidLid)
+        HashSet<long> acidLid, HashSet<long> waterLid)
     {
         // The same soft kinds ShellLavaBodies hardens: a MELTABLE tile is no barrier —
         // the crest ate straight through a grass-and-sand shoreline and drained anyway,
