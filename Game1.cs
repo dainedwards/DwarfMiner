@@ -2379,7 +2379,7 @@ public sealed partial class DwarfMinerGame : Game
             if (_run.EruptionVent < _run.Planet.VolcanoVents.Count)
             {
                 _run.EruptionDrainVent = _run.EruptionVent;
-                _run.EruptionDrainWait = 4.5f;
+                _run.EruptionDrainWait = 4f;
             }
             _run.EruptionVent = -1;
         }
