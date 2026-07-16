@@ -36,6 +36,10 @@ Rules:
   for the newest line matching this format and executes it verbatim, so a command in
   any other shape makes the change untestable from the user's side.
 
+**FORBIDDEN VARIABLES — NEVER include these:**
+- `DM_TITLE` — Window title is auto-derived from `.git` at runtime. Including it breaks the launcher.
+  Never print it. If you see it in a past command, that command is stale.
+
 ## Game window title (identifies which tree is running)
 
 The game titles its own window `DwarfMiner | <branch> | <worktree>` (e.g.
@@ -53,12 +57,17 @@ reads the tree and branch off it at startup.
 
 ## Common test environment variables
 
-When testing specific features, include the relevant `DM_*` variables:
+When testing specific features, include the relevant `DM_*` variables. Variable names
+below are verified against the code — grep `GetEnvironmentVariable` before inventing or
+renaming one, and update this list when you add a hook:
 
-- **Volcano testing**: `DM_VOLCANO=1 DM_ERUPTION=1` (spawns on volcano, auto-erupts)
-- **Zoom**: `DM_ZOOM_MAX=<value>` (max camera zoom level)
-- **Perf profiling**: `DM_PERF=1` (enables per-phase profiler)
-- **Liquid effects**: `DM_LIQRT=1 DM_LIQFX=1` (liquid RT + metaball rendering)
-- **Debug features**: `DM_DEBUG=1`, `DM_AUTOFIRE=1`, `DM_CRAFT=1`, `DM_JETTEST=1`, `DM_SWIM=1`
+- **Volcano/eruption demo**: `DM_ERUPTSHOW=1` (spawns on the volcano, zooms out to max,
+  auto-erupts ~5s in — the whole show in one variable). Granular pieces: `DM_VOLCANO=1`
+  (volcano-flank spawn only), `DM_ERUPT=<seconds>` (schedule an eruption anywhere).
+- **Perf profiling**: `DM_PERF=1` (per-phase profiler; `DM_NOWARM=1` skips prewarm)
+- **Liquid effects**: ON by default — `DM_LIQRT=0` / `DM_LIQFX=0` DISABLE the liquid RT /
+  metaball shader (setting them to 1 does nothing)
+- **Debug features**: `DM_DEBUG=1`, `DM_AUTOFIRE=1`, `DM_CRAFT=1`, `DM_JETTEST=1`,
+  `DM_SWIM=1`, `DM_RAIN=1`, `DM_WARREN=1`, `DM_CITY=1`
 
 Check game code and commit history for the full set of available test variables.
