@@ -1779,9 +1779,11 @@ public sealed class Particles
     /// (the same composite as the lava pools and the flame stream): the fountain
     /// thresholds into one connected molten tongue that fuses with the crater pool it
     /// rises from, exactly like the acid spewer's rope — but fire-family, with the hot
-    /// bright rim. A third of the droplets stamp real Lava where they land, so the
-    /// spray genuinely coats the flanks. <paramref name="strength"/> 0..1 scales count,
-    /// speed and spread (ride the eruption's surge pulse with it).</summary>
+    /// bright rim. One in TEN droplets is a LANDER — lives through its whole arc,
+    /// touches down on the flanks, splashes sparks, deposits a dollop of real Lava
+    /// (JetScale-scaled rest-stamp) and fades soon after; the rest are pure fountain
+    /// body that falls back into the pool. <paramref name="strength"/> 0..1 scales
+    /// count, speed and spread (ride the eruption's surge pulse with it).</summary>
     public void EmitLavaFountain(Vector2 pos, Vector2 up, float strength)
     {
         var right = new Vector2(-up.Y, up.X);
@@ -1797,13 +1799,17 @@ public sealed class Particles
             var spread = (float)(_rng.NextDouble() - 0.5) * (0.35f + strength * 0.5f);
             var d = up * MathF.Cos(spread) + right * MathF.Sin(spread);
             var hot = i < 2;   // (leading gouts keep only their bigger glow)
+            var lander = _rng.Next(10) == 0;   // the 10% that ride out and touch down
             var speed = (140f + strength * 180f) * (0.85f + (float)_rng.NextDouble() * 0.3f);
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 2f,
                 Velocity = d * speed,
-                Life = 1.0f + (float)_rng.NextDouble() * 0.7f,
-                MaxLife = 1.7f,
+                // Landers must SURVIVE their whole arc to the flank; body gouts fade
+                // sooner (most fall straight back into the pool anyway).
+                Life = lander ? 2.6f + (float)_rng.NextDouble() * 0.8f
+                              : 1.0f + (float)_rng.NextDouble() * 0.7f,
+                MaxLife = lander ? 3.4f : 1.7f,
                 Color = body,
                 FadeColor = body,
                 Size = hot ? 0.8f : 0.9f + (float)_rng.NextDouble() * 0.5f,
@@ -1812,8 +1818,11 @@ public sealed class Particles
                 CollideTiles = true,
                 LightRadius = hot ? 20f : i % 3 == 0 ? 9f : 0f,
                 LightColor = new Color(255, 170, 70),
-                LandMat = CellFx && _rng.Next(3) == 0 ? (byte)Material.Lava : (byte)0,
-                LandSparks = true,
+                // Only the landers hand off: real Lava (a JetScale-scaled dollop — see
+                // the rest-stamp in Update) plus a touchdown spark splash, then the
+                // rest-rule fades them where they pooled.
+                LandMat = CellFx && lander ? (byte)Material.Lava : (byte)0,
+                LandSparks = lander,
                 SmearMax = 17.6f,
                 SmearScale = 2f,
                 Fluid = (byte)Material.Lava,
