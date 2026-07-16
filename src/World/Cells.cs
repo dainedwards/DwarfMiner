@@ -1338,7 +1338,8 @@ public sealed class Cells
             var m = (Material)_mat[idx];
             if (m == Material.Empty) continue;
             var (cx, cy) = UnIdx(idx);
-            if (throttled && ((idx + _tickNo) & 3) != 0 && IsFarFromFocus(cx, cy, fcy, ffrac))
+            if (throttled && ((idx + _tickNo) & 3) != 0 && IsFarFromFocus(cx, cy, fcy, ffrac)
+                && (!second || IsFarFromFocus(cx, cy, f2cy, f2frac)))
             {
                 Enqueue(idx);
                 continue;
