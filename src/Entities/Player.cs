@@ -366,7 +366,7 @@ public sealed class Player
     /// without the caller having to think about it. Space is ALSO the jetpack throttle,
     /// Noita-style: a grounded press jumps, and keeping it held past the tap window lights
     /// the pack; an airborne press lights the pack immediately.</param>
-    /// <param name="verticalAxis">-1 down, 0 idle, +1 up (along local up). Used in fly mode and
+    /// <param name="verticalAxis">-1 down, 0 idle, +1 up (along local up). Used in ghost flight and
     /// when the player is overlapping a ladder tile (climb up/down).</param>
     public void Update(float dt, Planet planet, int moveAxis, bool jumpHeld, int verticalAxis = 0)
     {
