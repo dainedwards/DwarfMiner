@@ -4771,6 +4771,9 @@ public sealed partial class DwarfMinerGame : Game
             _toastTimer = 4f;
             _run.Shake = MathF.Max(_run.Shake, 0.8f);
             PlayAt("collapse", ambient.EruptionPos, 0.9f, pitch: -0.5f);
+            // Tooling breadcrumb: headless runs verify the eruption actually began.
+            Console.WriteLine($"[erupt] eruption STARTED at vent {_run.EruptionVent} "
+                + $"({_run.EruptionLeft:0.0}s, peak {_run.EruptionPeakFrac:0.00})");
         }
         if (ambient.QuakeStruck)
             _run.Shake = MathF.Max(_run.Shake, 1.0f);
