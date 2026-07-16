@@ -1628,6 +1628,10 @@ public static class WorldGen
             // 1-tile Euclidean annulus on the polar grid had diagonal pinholes at the
             // circle's shoulders — cell flow crosses tile diagonals at ring remaps.
             var shellR = (chamberRad + 2) * Planet.TileSize;
+            // Record the chamber for the deep-worm carve: chambers are 10-16 tiles across
+            // and sit deep, where a bearing margin around the vent covers only a sliver of
+            // them — the worms need the true disc to stay out of.
+            planet.ChamberZones.Add((centre, shellR));
             for (var dr = -chamberRad - 2; dr <= chamberRad + 2; dr++)
             {
                 var r = chamberR + dr;
