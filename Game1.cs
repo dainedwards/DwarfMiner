@@ -999,6 +999,15 @@ public sealed partial class DwarfMinerGame : Game
             { _run.DisasterTimer = art; _run.NextDisaster = DisasterKind.AcidRain; }
         if (float.TryParse(Environment.GetEnvironmentVariable("DM_ERUPT"), out var vt))
             { _run.DisasterTimer = vt; _run.NextDisaster = DisasterKind.Eruption; }
+        // DM_ERUPTSHOW=1: the eruption demo — already spawned on the volcano flank
+        // (see the spawn hook), now zoom all the way out and fire the eruption once the
+        // world has had a few seconds to settle. One variable, whole show.
+        if (Environment.GetEnvironmentVariable("DM_ERUPTSHOW") is { Length: > 0 })
+        {
+            _playZoom = 2f;   // gameplay's max zoom-out (the -/+ clamp floor)
+            _run.DisasterTimer = 5f;
+            _run.NextDisaster = DisasterKind.Eruption;
+        }
         _gameOverReason = "";
         _craftingMenu.Reset();
         _charScreen.Reset();
