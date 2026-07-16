@@ -189,7 +189,10 @@ public sealed class Cells
     }
     /// <summary>True while the cell index is already queued in <see cref="_next"/>.</summary>
     private readonly bool[] _queued;
-    private readonly Random _rng = new();
+    /// <summary>Time-seeded in the game; SimTest passes a fixed seed through the
+    /// constructor — the compaction/acid cases were permanent time-seeded FLAKES that
+    /// cost a re-run every time they rolled badly.</summary>
+    private readonly Random _rng;
     private readonly Dictionary<string, float> _dustAccum = new();
     private float _time;
     /// <summary>Monotonic sim clock in seconds — read by the renderer to pace draw-time

@@ -367,7 +367,15 @@ slowly rises to 110–130% and bubbles over the sides):**
   the LIVE surface. Diagnosis via a permanent one-shot [erupt] bowl-interior scan
   (excludes rest ring + 2 edge cols = the pool's own LavaRock wall jacket, which a
   naive scan false-positives on). Verified: "bowl interior clean above rest line" +
-  clean screenshot.
+  clean screenshot. **Round 3u — the ACTUAL squares root cause** (they turned pale
+  orange after 3t's flat-tone change, which unmasked it): fire and lava share ONE hot RT
+  with REPLACE blending — a fire capsule overlapping the pool stamps its tone as a hard
+  30-50px QUAD RECT on the dome (soot-dark before 3t, flat pale after). Fix = DRAW ORDER:
+  `DrawFluid(Fire)` FIRST, then `DrawHotLiquids` (pool), then `DrawFluid(Lava)` — the
+  lava family always wins its own pixels, the column's submerged stretch just wears the
+  dome's colour (reads as emerging from it), and every boundary is a metaball edge.
+  RULE: within a replace-blended composite, draw bodies in back-to-front COLOUR-priority
+  order; never interleave differently-coloured families. Screenshot-verified clean.
 - SimTest note: "compaction: voided pile hardens" is time-seeded FLAKY (failed once,
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.
