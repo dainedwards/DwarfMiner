@@ -2617,7 +2617,7 @@ public sealed class Cells
             for (var i = 0; i < oc; i++)
             {
                 var (ocx, ocy) = OuterCell(cx, cy, i);
-                if (IsMeltable(TileAt(ocx, ocy))) return true;
+                if (Reactive(TileAt(ocx, ocy))) return true;
             }
         }
         return false;
