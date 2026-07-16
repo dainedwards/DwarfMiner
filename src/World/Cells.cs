@@ -625,6 +625,7 @@ public sealed class Cells
     {
         if (CountNear(worldPos, 8f, Material.Snow) > 20) return;
         var (cx, cy) = WorldToCell(worldPos);
+        (cx, cy) = SettleToSurface(cx, cy);
         Place(cx, cy, Material.Snow);
     }
 
