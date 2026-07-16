@@ -48,11 +48,19 @@ Rules:
 ## Launching the game yourself (DM_NOFOCUS)
 
 When YOU launch the game to test something, prefix the run command with `DM_NOFOCUS=1`. The run
-is INVISIBLE: the process never activates (SDL's macOS background-app hint) and the window is
-hidden outright, so nothing appears on screen, nothing steals focus, and nothing takes the
+is INVISIBLE end to end: the process never activates (SDL's macOS background-app hint), the
+window is transparent before it can ever be shown (no flash on startup), and it is hidden on
+every frame thereafter. Nothing appears on screen, nothing steals focus, nothing takes the
 user's keyboard or mouse. Rendering continues into the scene render target, so `DM_AUTOSHOT`
 and F12 screenshots work exactly as they do in a visible run — screenshots stay your way to
 see a test run.
+
+Verifying it stays invisible needs the WINDOW SERVER, not a screenshot: `screencapture` only
+sees the current Space, so a window on another Space reads as "hidden" when it is in fact on
+screen. Use `swift` + `CGWindowListCopyWindowInfo(.optionAll)` filtered by owner pid, and
+always A/B against a run without `DM_NOFOCUS` to prove the check can see a window at all.
+A visible window during your test is often the USER's own `run` playtest — check
+`pgrep -fl DwarfMiner.dll` for a second pid before blaming your own launch, and never kill theirs.
 
 Never print it in a run command: a hidden window is unplayable, and the user's playtests need
 a real one.
