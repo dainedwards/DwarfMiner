@@ -2014,6 +2014,8 @@ public static class SimTest
         foreach (var (r, t) in warren.LizardDens)
         {
             if (!Tiles.BlocksPlayer(warren.Get(r, t))) openDens++;
+            else Console.WriteLine($"    [dbg] solid den heart ({r},{t}) kind={warren.Get(r, t)} "
+                + $"bearing={(t + 0.5f) / warren.TilesAt(r) * MathF.Tau - MathF.PI:0.00}");
             allAboveLava &= r > lavaTop;
         }
         Check($"warren: den hearts are open hall air ({openDens}/{warren.LizardDens.Count})",
