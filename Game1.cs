@@ -1664,7 +1664,9 @@ public sealed partial class DwarfMinerGame : Game
         // neutral, non-moving state while blurred; on the way back adopt the real state as
         // the edge baseline in the same frame, so the click that refocused the window is
         // not also read as a trigger pull and a scroll elsewhere is not a hotbar spin.
-        if (!IsActive)
+        // A DM_NOFOCUS run keeps the gate shut for its whole life: a hidden test window
+        // must never play from the user's keys, whatever focus state SDL reports for it.
+        if (!IsActive || _noFocus)
         {
             keys = new KeyboardState();
             mouse = Blurred(_prevMouse);
