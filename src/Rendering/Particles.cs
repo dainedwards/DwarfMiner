@@ -263,11 +263,17 @@ public sealed class Particles
                 next = p.Position;
             }
             else if (p.CollideTiles && cells != null && cells.WaterAtWorld(next)
-                     && !cells.WaterAtWorld(p.Position))
+                     && (p.Backdrop || !cells.WaterAtWorld(p.Position)))
             {
                 // Water surface CROSSING (entering water from outside — grains born
                 // underwater, like mining chips and rising bubbles, are exempt): colliding
-                // effects interact with pools instead of sailing through the body. A
+                // effects interact with pools instead of sailing through the body.
+                // Backdrop grains (rain) skip the crossing test and die WHENEVER they're
+                // found in water: the sea's top cell layer churns, so a drop could thread
+                // a momentarily-open surface cell — after which both samples read water,
+                // the crossing never fired, and the drop streaked visibly through the
+                // whole body for its remaining second and a half. Rain is never born
+                // underwater, so the exemption buys it nothing but that leak. A
                 // fire-natured grain FIZZLES — its handoff becomes a steam wisp at the
                 // last position above the waterline; any other payload (acid droplets)
                 // stamps there instead, settling ON the surface. Rain and sparks throw a
