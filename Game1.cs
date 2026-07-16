@@ -6938,6 +6938,11 @@ public sealed partial class DwarfMinerGame : Game
                         // Soft pulse so a row of mushrooms breathes together with a low frequency.
                         r = 26f + MathF.Sin((float)gameTime.TotalGameTime.TotalSeconds * 1.6f + dx * 0.3f) * 3f;
                         break;
+                    case TileKind.Geyser:
+                        // The volcano's heart throbs — a slow furnace pulse deep in the well.
+                        glow = new Color(255, 150, 60);
+                        r = 30f + MathF.Sin((float)gameTime.TotalGameTime.TotalSeconds * 2.2f) * 6f;
+                        break;
                     case TileKind.Beacon:
                         glow = new Color(190, 130, 255);
                         // Sharper pulse for the beacon — matches the renderer's pixel pulse so
