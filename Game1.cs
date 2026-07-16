@@ -402,10 +402,15 @@ public sealed partial class DwarfMinerGame : Game
         return s.Length >= 7 ? $"detached {s[..7]}" : null;
     }
 
-    /// <summary>DM_NOFOCUS=1 — an automated/test launch: the window is HIDDEN outright (see
+    /// <summary>DM_NOFOCUS=1 — an automated/test launch: the process never activates (SDL's
+    /// macOS background-app hint, set in Program.cs) AND the window is hidden outright (see
     /// <see cref="HideWindow"/>). Rendering carries on into the scene render target, so
-    /// DM_AUTOSHOT/F12 screenshots are unaffected; there is simply nothing on screen to
-    /// steal focus, take input, or sit in front of what the user is doing.</summary>
+    /// DM_AUTOSHOT/F12 screenshots are unaffected; there is simply nothing on screen to steal
+    /// focus, take input, or sit in front of what the user is doing.
+    ///
+    /// Both halves are needed: hiding alone still lets SDL activate the app on launch (focus
+    /// theft with nothing to show for it), and not activating alone still leaves a window
+    /// on screen — one with no dock icon to hide, minimise or quit it.</summary>
     private readonly bool _noFocus = Environment.GetEnvironmentVariable("DM_NOFOCUS") is { Length: > 0 };
     private bool _windowHidden;
 
