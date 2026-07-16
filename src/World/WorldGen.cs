@@ -254,6 +254,7 @@ public static class WorldGen
         // rim is part of the containment, not the shore.
         var lavaLid = new HashSet<long>();
         var acidLid = new HashSet<long>();
+        var waterLid = new HashSet<long>();
 
         for (var r = 0; r < planet.Rings; r++)
         {
