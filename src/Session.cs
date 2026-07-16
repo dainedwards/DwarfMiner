@@ -105,6 +105,11 @@ public sealed class Session
     /// frame until it sits back at its resting line. -1 = nothing draining.</summary>
     public int EruptionDrainVent = -1;
 
+    /// <summary>Seconds before the subsidence actually starts — the pause after the show
+    /// while the last airborne gobs rain down and the overflow settles, so the pool sinks
+    /// from a calm surface rather than fighting the still-falling lava.</summary>
+    public float EruptionDrainWait;
+
     public float SpawnTimer;
     public float FaunaTimer;
     public float Shake;
