@@ -148,9 +148,17 @@ public sealed class Particles
                 // "sparks interacting with the ground".
                 if (!p.JetSpark && sp > 3600f && _rng.Next(7) < 4)
                 {
+                    // ERUPTION EMBERS: a quarter of the volcano column's sparks (JetScale
+                    // parents only — the handheld flamethrower keeps its no-ground-contact
+                    // contract below) become long-lived falling embers: they ride the
+                    // blast out, rain down under full gravity UNTIL THEY TOUCH GROUND,
+                    // splash a pinch of sparks there and die (the rest-rule kills a
+                    // JetSpark in 0.1s on contact).
+                    var ember = p.JetScale > 1f && _rng.Next(4) == 0;
                     // Born white-hot: MaxLife == initial Life (see EmitLickingFlame) so
                     // every spark starts at the ramp's top and cools over its own path.
-                    var sparkLife = 0.2f + (float)_rng.NextDouble() * 0.25f;
+                    var sparkLife = ember ? 1.8f + (float)_rng.NextDouble() * 1.4f
+                                          : 0.2f + (float)_rng.NextDouble() * 0.25f;
                     _list.Add(new Particle
                     {
                         Position = p.Position + Jitter(1f),
@@ -164,15 +172,17 @@ public sealed class Particles
                         Size = 0.5f,
                         // Symmetric ±gravity: half the sparks curve UP exactly as hard as
                         // the others sag down — dancing fire flecks, not falling grit.
-                        GravityScale = ((float)_rng.NextDouble() * 2f - 1f) * 1.6f,
-                        Drag = 1.4f,
+                        // (Embers fall for real instead.)
+                        GravityScale = ember ? 1.0f : ((float)_rng.NextDouble() * 2f - 1f) * 1.6f,
+                        Drag = ember ? 0.4f : 1.4f,
                         // NO ground interaction at all (per user): sparks don't bounce,
                         // rest, or ricochet — they're pure light, fading out wherever
                         // their moment ends (their sub-half-second life keeps any
                         // into-the-ground overshoot invisible at 0.5 px). Only the
-                        // STREAM's carriers touch the world.
-                        CollideTiles = false,
-                        LightRadius = _rng.Next(5) == 0 ? 14f : 0f,
+                        // STREAM's carriers touch the world — and the eruption's embers.
+                        CollideTiles = ember,
+                        LandSparks = ember,
+                        LightRadius = ember ? 12f : _rng.Next(5) == 0 ? 14f : 0f,
                         LightColor = new Color(255, 190, 80),
                         // MUCH shorter streak than the shared default (was up to 8 px).
                         SmearMax = 1.5f,
