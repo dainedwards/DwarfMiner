@@ -22,7 +22,7 @@ public static class SimTest
         // exercise, and dense forest cover perturbs titan digs, flame breath, and runway scans.
         WorldGen.ScatterVegetation = false;
         var planet = WorldGen.Generate(42);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         var physics = new Physics(planet, cells);
         // Park the player far away on the surface so aggro doesn't skew the wander tests.
         var player = new Player(planet.Center + new Vector2(0, -(planet.SurfaceRing + Planet.RingMin) * Planet.TileSize));
@@ -696,7 +696,7 @@ public static class SimTest
 
         // --- Egg hatches on the timer ---
         var planet = WorldGen.Generate(55);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         var physics = new Physics(planet, cells);
         var shots = new System.Collections.Generic.List<TitanProjectile>();
         var boulders = new System.Collections.Generic.List<FallingBoulder>();
@@ -1030,7 +1030,7 @@ public static class SimTest
     private static void TestHazards()
     {
         var planet = WorldGen.Generate(99);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         const float dt = 1f / 60f;
 
         // --- Gas rises through an open shaft ---
@@ -1106,7 +1106,7 @@ public static class SimTest
         static bool FloorMelts(TileKind floor)
         {
             var planet = WorldGen.Generate(101);
-            var cells = new Cells(planet);
+            var cells = new Cells(planet, rngSeed: 20260716);
             const int r = 118;
             var af = 40.5f / planet.TilesAt(r);
             int Ti(int ring, int da) => (int)(af * planet.TilesAt(ring)) + da;
@@ -1132,7 +1132,7 @@ public static class SimTest
     private static void TestNoitaFeel()
     {
         var planet = WorldGen.Generate(77);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         const float dt = 1f / 60f;
 
         // Tile counts vary per ring (chord ≈ TileSize), so a constant tile index skews in
@@ -1313,7 +1313,7 @@ public static class SimTest
     private static void TestMeteors()
     {
         var planet = WorldGen.Generate(88);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         var physics = new Physics(planet, cells);
         var particles = new DwarfMiner.Rendering.Particles();
         var player = new Player(SpawnDirector.FindSurfaceSpawn(planet, -MathF.PI / 2f, planet.Radius));
@@ -1351,7 +1351,7 @@ public static class SimTest
     private static void TestCaveIn()
     {
         var planet = WorldGen.Generate(7);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         var physics = new Physics(planet, cells);
         const float dt = 1f / 60f;
 
@@ -1434,7 +1434,7 @@ public static class SimTest
     private static void TestSkyCollapse()
     {
         var planet = WorldGen.Generate(9);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         var physics = new Physics(planet, cells);
         const float dt = 1f / 60f;
         const int slabH = 16, slabW = 32;   // 512 tiles (same world size as ever) — past the stone budget of 192
@@ -1491,7 +1491,7 @@ public static class SimTest
     private static void TestCompaction()
     {
         var planet = WorldGen.Generate(11);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         const float dt = 1f / 60f;
 
         // A sealed one-tile pocket deep in stone, packed full of stone dust: solid floor
@@ -1589,7 +1589,7 @@ public static class SimTest
     private static void TestGemDrops()
     {
         var planet = WorldGen.Generate(13);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         var r = planet.SurfaceRing - 40;
         const int t = 21;
         planet.Set(r, t, TileKind.Ruby);
@@ -2112,7 +2112,7 @@ public static class SimTest
     {
         const float dt = 1f / 60f;
         var planet = WorldGen.Generate(77);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         var physics = new Physics(planet, cells);
 
         // Stamp a free-standing alloy block on the surface at a bearing clear of the spawn.
@@ -2641,7 +2641,7 @@ public static class SimTest
     {
         const float dt = 1f / 60f;
         var planet = WorldGen.Generate(97);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         var surfaceR = planet.SurfaceRing;
 
         // Obsidian-walled pocket below the surface, part-filled with PERMANENT water —
@@ -2719,7 +2719,7 @@ public static class SimTest
     {
         const float dt = 1f / 60f;
         var planet = WorldGen.Generate(88);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         var physics = new Physics(planet, cells);
 
         // Carve a test pool below the baseline surface and fill it with water cells.
@@ -3963,7 +3963,7 @@ public static class SimTest
     {
         Console.WriteLine("rigid body debris:");
         var planet = WorldGen.Generate(1234);
-        var cells = new Cells(planet);
+        var cells = new Cells(planet, rngSeed: 20260716);
         var physics = new Physics(planet, cells);
         var rigid = new RigidBodies(planet, cells, physics);
         physics.DetachToRigid = rigid.TryDetach;

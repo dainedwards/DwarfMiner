@@ -375,7 +375,13 @@ slowly rises to 110–130% and bubbles over the sides):**
   lava family always wins its own pixels, the column's submerged stretch just wears the
   dome's colour (reads as emerging from it), and every boundary is a metaball edge.
   RULE: within a replace-blended composite, draw bodies in back-to-front COLOUR-priority
-  order; never interleave differently-coloured families. Screenshot-verified clean.
+  order; never interleave differently-coloured families. Screenshot-verified clean. **Round 3v — SimTest flakes RETIRED**: the compaction voided-pile flake hit twice in a
+  row (4 fails in ~16 runs, a re-run tax every time) — root cause was `Cells._rng = new()`
+  (time-seeded). Cells ctor now takes `int? rngSeed = null` (game paths unchanged,
+  time-seeded); SimTest pins `rngSeed: 20260716` at all 14 direct `new Cells(planet)`
+  sites → the suite is DETERMINISTIC (2× consecutive PASS verified; any future failure is
+  a real regression, not dice). The acid-dissolve flake class rides the same fix. Tests
+  that build Cells via BuildSessionWorld remain time-seeded — none have flaked.
 - SimTest note: "compaction: voided pile hardens" is time-seeded FLAKY (failed once,
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.
