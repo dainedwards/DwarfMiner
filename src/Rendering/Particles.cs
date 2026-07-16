@@ -1820,7 +1820,9 @@ public sealed class Particles
     /// burning Fire with a fuse — the spew genuinely sets the slopes alight.</summary>
     public void EmitLavaSpew(Vector2 pos, Vector2 dir, float strength)
     {
-        var jetSpeed = 210f + strength * 130f;
+        // Speed ×0.55 of the original ballistic tune = ~30% of the old reach (range goes
+        // with v²): a close lob over the crater lip, not a cross-flank cannon.
+        var jetSpeed = 115f + strength * 72f;
         const float coneArc = 0.09f;          // a touch looser than the spewer's 0.041
         for (var i = 0; i < 8; i++)
         {
@@ -1832,29 +1834,30 @@ public sealed class Particles
             var hot = i < 2;                  // white-hot leading droplets
             var tone = hot ? new Color(255, 242, 170)
                 : _rng.Next(2) == 0 ? new Color(255, 176, 60) : new Color(250, 120, 40);
-            var ignites = CellFx && _rng.Next(3) == 0;
             _list.Add(new Particle
             {
                 Position = pos + d * (float)_rng.NextDouble() * 2f,
                 Velocity = d * (jetSpeed * (0.895f + (float)_rng.NextDouble() * 0.21f)),
-                Life = 1.2f + (float)_rng.NextDouble() * 0.6f,
-                MaxLife = 1.8f,
+                // Life OUTLASTS the whole lob: a droplet that expires mid-air never stamps
+                // its lava — the rope visibly vanished in flight. Every droplet must
+                // survive to touchdown, where the stamp hands it to the sim.
+                Life = 1.6f + (float)_rng.NextDouble() * 0.6f,
+                MaxLife = 2.2f,
                 Color = tone,
                 FadeColor = new Color(165, 45, 15),
                 Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
                 // A volcano-scale ballistic arc, NOT the handheld hose's heavy 2.25: the
-                // rope launches from inside the pool and must clear the crater ledge at
-                // 45° before falling away down the flank.
+                // rope launches from inside the pool and must clear the crater ledge
+                // before falling away down the flank.
                 GravityScale = 0.9f,
                 Drag = 0.9f,
                 CollideTiles = true,
                 LightRadius = hot ? 22f : i % 3 == 0 ? 9f : 0f,
                 LightColor = new Color(255, 170, 70),
-                // Landing: half the rope IS lava — it pools and flows where it strikes;
-                // a share of the rest leaves burning fire, so dry slopes catch alight.
-                LandMat = CellFx && _rng.Next(2) == 0 ? (byte)Material.Lava
-                        : ignites ? (byte)Material.Fire : (byte)0,
-                LandFuse = ignites ? (byte)(30 + _rng.Next(12)) : (byte)0,
+                // ACTUAL LAVA: every droplet stamps a real Lava cell where it lands, so
+                // the whole rope joins the world — pooling, flowing, igniting, melting —
+                // while the flight keeps the spitter's goopy metaball look.
+                LandMat = CellFx ? (byte)Material.Lava : (byte)0,
                 LandSparks = true,
                 SmearMax = 26f,
                 SmearScale = 2f,
