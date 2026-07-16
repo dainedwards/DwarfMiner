@@ -573,24 +573,38 @@ public sealed class Renderer
                     Math.Clamp(col.G + jitter / 4, 0, 255),
                     Math.Clamp(col.B + jitter / 4, 0, 255));
 
-                // Damp ground: a tile with water resting on its outer face draws darkened
-                // and cooled — rain-wet earth reads wet, shorelines ring their pools, and it
-                // dries the instant the water evaporates. Pure draw-time probe of the cell
-                // grid (two Gets on the face-adjacent cell row), no state anywhere.
-                if (WorldCells is { } wcells && !lowDetail)
+                // Damp ground: a tile with water resting on its outer face draws darkened and
+                // cooled — rain-wet earth reads wet, shorelines ring their pools. The probe of
+                // the cell grid (two Gets on the face-adjacent cell row) only sets a TARGET; the
+                // drawn darkening follows a smoothed per-tile wetness so transient rain droplets
+                // don't strobe the tile and it fades wet / dries out over a gradient instead.
+                if (WorldCells is { } wcells && _wetness is { } wet && !lowDetail)
                 {
+                    var tileIdx = planet.Index(r, t);
                     var wcy = (r + 1) * Cells.Density;
+                    var faceWet = false;
                     if (wcy < wcells.Height)
                     {
                         var wcx = (int)(angle / MathHelper.TwoPi * wcells.CellsAt(wcy));
-                        if (wcells.Get(wcx, wcy) == Material.Water
-                            || wcells.Get(wcx + 1, wcy) == Material.Water)
-                        {
-                            // col drives the flat/authored/crust paths; tintF the atlas art.
-                            col = new Color((int)(col.R * 0.72f), (int)(col.G * 0.78f),
-                                (int)(col.B * 0.92f));
-                            tintF *= new Vector3(0.72f, 0.78f, 0.92f);
-                        }
+                        faceWet = wcells.Get(wcx, wcy) == Material.Water
+                               || wcells.Get(wcx + 1, wcy) == Material.Water;
+                    }
+                    // Rise fast when water touches (a splash soaks in), dry slowly when it
+                    // leaves (damp earth lingers) — the asymmetry is what keeps rain smooth.
+                    var w = wet[tileIdx];
+                    var target = faceWet ? 1f : 0f;
+                    var rate = faceWet ? 5f : 0.5f;
+                    w += Math.Clamp(target - w, -rate * wetDt, rate * wetDt);
+                    wet[tileIdx] = w;
+
+                    if (w > 0.004f)
+                    {
+                        // Lerp the damp tint by wetness so lightly-damp reads faint and a
+                        // soaked tile reads full-dark. col drives flat/authored/crust; tintF art.
+                        var wetMul = Vector3.Lerp(Vector3.One, new Vector3(0.72f, 0.78f, 0.92f), w);
+                        col = new Color((int)(col.R * wetMul.X), (int)(col.G * wetMul.Y),
+                            (int)(col.B * wetMul.Z));
+                        tintF *= wetMul;
                     }
                 }
 
