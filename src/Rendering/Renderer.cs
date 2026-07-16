@@ -1767,19 +1767,20 @@ public sealed class Renderer
     /// the per-quad double-blend mottling that made pools read as stacked pixels.</summary>
     public void CompositeLiquids(RenderTarget2D rt) =>
         CompositeLiquids(rt, LiquidThresh, LiquidOpacity, LiquidRimMul, LiquidRimAdd,
-            LiquidWaveAmp);
+            LiquidDepthGrade);
 
-    /// <summary>Body-texture amplitude for the pool composite (shader waves + depth fade;
-    /// see RuntimeEffect.LiquidGlsl). The body colour itself is strictly flat — this is
-    /// the ONLY texture the submerged body gets, applied per pixel so it cannot show the
-    /// primitive seams that killed the old vertex-level shimmer.</summary>
-    private const float LiquidWaveAmp = 0.06f;
+    /// <summary>Strength of the WATER depth-colour gradient (shallow blue → deep navy;
+    /// see RuntimeEffect.LiquidGlsl). The body colour itself is strictly flat — the
+    /// gradient is applied per pixel in the composite so it cannot show the primitive
+    /// seams that killed the old vertex-level shimmer. Water only; acid/oil/lava and the
+    /// glint quads pass through untouched.</summary>
+    private const float LiquidDepthGrade = 1f;
 
-    /// <summary>World frame for the liquid composite's body texture: the planet centre in
-    /// RT pixel coordinates, world px per RT px (1/zoom), and the camera rotation — what
-    /// the shader needs to reconstruct world polar coordinates per pixel so its waves stay
-    /// anchored to the water while the camera pans and rolls. Call each frame before the
-    /// composites; the boot prewarm runs before any camera exists, so defaults are benign.</summary>
+    /// <summary>World frame for the liquid composite's depth march: the planet centre in
+    /// RT pixel coordinates and world px per RT px (1/zoom) — what the shader needs to
+    /// walk "surface-ward" (radially outward) per pixel at a zoom-independent step. Call
+    /// each frame before the composites; the boot prewarm runs before any camera exists,
+    /// so defaults are benign.</summary>
     public void SetLiquidWorld(Vector2 planetCentreRtPx, float worldPxPerRtPx, float camRot)
     {
         _lqCentre = planetCentreRtPx;
@@ -1793,11 +1794,11 @@ public sealed class Renderer
 
     /// <summary>Parameterised overload: the FLAME stream composites through the same
     /// metaball shader but must not read as water — it passes full opacity and a hotter,
-    /// brighter rim (a flame's white sheath, not a pool's wet specular lip), plus its own
-    /// body-texture amplitude (a faint heat swell; 0 disables). Pools keep the default
+    /// brighter rim (a flame's white sheath, not a pool's wet specular lip), and depth
+    /// grading 0 (the gradient is a water-only treatment). Pools keep the default
     /// constants via the overload above.</summary>
     public void CompositeLiquids(RenderTarget2D rt, float thresh, float opacity,
-        float rimMul, float rimAdd, float waveAmp = 0f)
+        float rimMul, float rimAdd, float depthGrade = 0f)
     {
         if (_liquidFx != null)
         {
@@ -1808,7 +1809,7 @@ public sealed class Renderer
             _lqCol2!.SetValue(new Vector4(m.M13, m.M23, m.M33, m.M43));
             _lqCol3!.SetValue(new Vector4(m.M14, m.M24, m.M34, m.M44));
             _lqPs!.SetValue(new Vector4(1f / rt.Width, 1f / rt.Height, thresh, opacity));
-            _lqPs2!.SetValue(new Vector4(rimMul, rimAdd, Time, waveAmp));
+            _lqPs2!.SetValue(new Vector4(rimMul, rimAdd, Time, depthGrade));
             _lqPs3!.SetValue(new Vector4(_lqCentre.X, _lqCentre.Y, _lqWpp, _lqRot));
             _sb.Begin(samplerState: SamplerState.PointClamp, effect: _liquidFx);
         }

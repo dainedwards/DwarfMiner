@@ -234,20 +234,20 @@ void main()
     /// premultiplied at ONE uniform opacity, so the whole body composites over the world
     /// in a single blend: no per-quad double-blend mottling, tiles ghost through evenly.
     /// PsParams  = (texelW, texelH, coverage threshold, body opacity).
-    /// PsParams2 = (rim multiply, rim add, time, body-texture amplitude).
-    /// PsParams3 = (planet centre in RT px X, Y, world px per RT px, camera rotation).
+    /// PsParams2 = (rim multiply, rim add, time, WATER depth-gradient strength).
+    /// PsParams3 = (planet centre in RT px X, Y, world px per RT px, unused).
     ///
-    /// Body texture (amplitude &gt; 0): the body colour arrives strictly FLAT — anything
-    /// positional baked into the fill quads shows every primitive boundary as a seam,
-    /// because the field is assembled from merged run chunks, per-cell quads and blob
-    /// stamps whose colour sampling points differ. So the texture is applied HERE, per
-    /// pixel, where primitive boundaries no longer exist: (a) a travelling two-wave
-    /// shimmer anchored to WORLD polar coordinates (arc length along the ring × radius),
-    /// reconstructed from the planet centre + rotation uniforms so it stays glued to the
-    /// water while the camera pans/rolls; (b) a depth fade that marches the coverage
-    /// field outward (toward the surface) and darkens by how deep this pixel sits below
-    /// open air — the free "volume" cue. The flame stream passes a smaller amplitude
-    /// through the same path (a faint heat swell); zero disables both exactly.</summary>
+    /// Water depth gradient (strength &gt; 0): WATER body pixels shift from their flat
+    /// base blue toward a deep navy by how far below open air they sit — the coverage
+    /// field is marched outward (toward the surface) to measure depth per pixel. Done
+    /// HERE rather than in the fill colours because the field is assembled from mixed
+    /// primitives (merged run chunks, per-cell quads, blob stamps) whose colour sampling
+    /// points differ — anything positional baked into them shows every primitive
+    /// boundary as a seam, while a per-pixel gradient cannot. Water is identified by its
+    /// flat body colour (Cells.LiquidBody's water base — the bodies arrive strictly
+    /// flat, so the match is exact within the surface row's small tint); acid, oil,
+    /// glint quads and the hot field pass through untouched. The flame/hot composite
+    /// passes strength 0, skipping the march entirely.</summary>
     private const string LiquidGlsl = @"#version 110
 uniform sampler2D s0;
 uniform vec4 ps_uniforms_vec4[3];
@@ -269,25 +269,23 @@ void main()
     float amp = ps_uniforms_vec4[1].w;
     if (amp > 0.0)
     {
-        float t   = ps_uniforms_vec4[1].z;
-        float wpp = max(ps_uniforms_vec4[2].z, 0.001);
-        vec2 rel  = vTexCoord / texel - ps_uniforms_vec4[2].xy;
-        float rr  = max(length(rel), 0.001);
-        float rw  = rr * wpp;
-        float arc = (atan(rel.y, rel.x) + ps_uniforms_vec4[2].w) * rw;
-        float w = sin(arc * 0.050 + t * 1.2) * sin(rw * 0.110 - t * 0.8)
-            + 0.6 * sin(arc * 0.013 - t * 0.5);
-        vec2 up = (rel / rr) * texel * (3.0 / wpp);
-        float depth = 16.0;
-        for (int i = 1; i <= 16; i++)
+        vec3 dw = rgb - vec3(0.180, 0.353, 0.698);   // 46,90,178 = water body base
+        if (dot(dw, dw) < 0.006)
         {
-            if (texture2D(s0, vTexCoord + up * float(i)).a < thresh)
+            float wpp = max(ps_uniforms_vec4[2].z, 0.001);
+            vec2 rel  = vTexCoord / texel - ps_uniforms_vec4[2].xy;
+            vec2 up   = (rel / max(length(rel), 0.001)) * texel * (3.0 / wpp);
+            float depth = 16.0;
+            for (int i = 1; i <= 16; i++)
             {
-                depth = float(i);
-                break;
+                if (texture2D(s0, vTexCoord + up * float(i)).a < thresh)
+                {
+                    depth = float(i);
+                    break;
+                }
             }
+            rgb = mix(rgb, vec3(0.063, 0.173, 0.455), (depth / 16.0) * 0.9 * amp);
         }
-        rgb = rgb * (1.0 - depth * amp * 0.22 + amp * w);
     }
     if (n < thresh)
         rgb = min(rgb * ps_uniforms_vec4[1].x + vec3(ps_uniforms_vec4[1].y), vec3(1.0));

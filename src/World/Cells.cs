@@ -3082,7 +3082,7 @@ public sealed class Cells
                         var seg = Math.Min(maxRun - WrapX(cx0 + s, n) % maxRun, e - s + 1);
                         var midAng = (cx0 + s + (seg - 1) * 0.5f + 0.5f) * angStep;
                         var up = new Vector2(MathF.Cos(midAng), MathF.Sin(midAng));
-                        var body = LiquidBody(runMat, cx0 + s + seg / 2, cy, false);
+                        var body = LiquidBody(runMat, cx0 + s + seg / 2, cy);
                         var col = new Color(body.R, body.G, body.B, (byte)(MatAlpha(runMat) * 255f));
                         if (runMat == Material.Lava)
                             _hotOps.Add(new HotOp
@@ -3228,10 +3228,7 @@ public sealed class Cells
             var (icx, icy) = InnerCell(cx, cy);
             openIn = !IsBlocked(icx, icy);
         }
-        // Shimmer only on the open surface (and airborne streams) — submerged cells take
-        // the flat body colour so they blend invisibly with the merged run chunks and
-        // blob stamps around them (see LiquidBody's shimmer note).
-        var body = LiquidBody(m, cx, cy, openOut);
+        var body = LiquidBody(m, cx, cy);
         var col = new Color(body.R, body.G, body.B, (byte)(MatAlpha(m) * 255f));
         var interior = !openOut && !openIn && IsBlocked(cx - 1, cy) && IsBlocked(cx + 1, cy);
         if (blobMode && !interior)
@@ -3580,30 +3577,17 @@ public sealed class Cells
         }
     }
 
-    /// <summary>Flat liquid body colour: ONE colour per material plus a slow shimmer band
-    /// travelling smoothly across the pool. The old per-cell hash jitter and hash-phased
-    /// shimmer made adjacent cells sparkle out of sync — which is exactly what read as "a
-    /// bunch of stacked pixels" instead of one body of water. Phase is a smooth function
-    /// of position (an INTEGER multiple of the ring angle, so it's continuous across the
-    /// wrap seam). Returns an opaque colour; callers apply translucency.
-    /// <paramref name="shimmer"/> false = the strictly flat base colour: SUBMERGED body
-    /// cells must all use it, because the body is drawn from mixed primitives (merged run
-    /// chunks sampled once per segment, per-cell quads, blob stamps) whose sampling
-    /// points differ — any positional variation shows every primitive boundary as a faint
-    /// moving seam patchwork. With one flat body colour the boundaries are invisible by
-    /// construction; the shimmer lives on the SURFACE row (evaluated per cell = smooth)
-    /// and on airborne droplets, where it reads as glint instead of seams.</summary>
-    private Color LiquidBody(Material m, int cx, int cy, bool shimmer = true)
+    /// <summary>Flat liquid body colour: ONE strictly flat colour per material. The body
+    /// is drawn from mixed primitives (merged run chunks sampled once per segment,
+    /// per-cell quads, blob stamps) whose colour sampling points differ — ANY positional
+    /// variation baked in here shows every primitive boundary as a faint moving seam
+    /// patchwork, which is why the old travelling shimmer band was removed (per user).
+    /// Body variation lives per PIXEL in the composite shader instead: water's
+    /// depth-colour gradient keys off the flat water base below (RuntimeEffect.LiquidGlsl
+    /// hardcodes 46,90,178 — keep them in sync). Returns an opaque colour; callers apply
+    /// translucency.</summary>
+    private Color LiquidBody(Material m, int cx, int cy)
     {
-        // Flying liquid cells land here with world px coords (see Draw) — out of row
-        // bounds, so they get a coarse positional phase instead of an angular one.
-        float ang;
-        if (cy >= 0 && cy < Height)
-        {
-            var n = _cellsAt[cy];
-            ang = (WrapX(cx, n) + 0.5f) / n * MathHelper.TwoPi;
-        }
-        else ang = cx * 0.01f;
         switch (m)
         {
             case Material.Water:
@@ -3612,20 +3596,16 @@ public sealed class Cells
                 if (_zapUntil > _time && cy >= 0 && cy < Height
                     && _zapped.Contains(_rowOffsets[cy] + WrapX(cx, _cellsAt[cy])))
                     return new Color(216, 236, 255);
-                return Tint(new Color(46, 90, 178), !shimmer ? 0 :
-                    (int)(MathF.Sin(_time * 1.6f + ang * 17f + cy * 0.045f) * 10f));
+                return new Color(46, 90, 178);
             case Material.Acid:
-                return Tint(new Color(120, 200, 40), !shimmer ? 0 :
-                    (int)(MathF.Sin(_time * 2.0f + ang * 23f + cy * 0.05f) * 12f));
+                return new Color(120, 200, 40);
             case Material.Lava:
-                // Molten body: flat deep orange with a slow, wide heat-swell band — the
-                // fast per-cell flicker lives on in ColorFor for the plain fallback, but
-                // the cohesive body wants one calm surface (the rim + glow carry the heat).
-                return Tint(new Color(235, 92, 20), !shimmer ? 0 :
-                    (int)(MathF.Sin(_time * 1.3f + ang * 15f + cy * 0.04f) * 14f));
-            default: // Oil — near-black slick with a slow crawling sheen.
-                return Tint(new Color(38, 32, 26), !shimmer ? 0 :
-                    (int)(MathF.Sin(_time * 1.1f + ang * 13f + cy * 0.035f) * 7f));
+                // Molten body: flat deep orange — the fast per-cell flicker lives on in
+                // ColorFor for the plain fallback, but the cohesive body wants one calm
+                // surface (the rim + glow carry the heat).
+                return new Color(235, 92, 20);
+            default: // Oil — near-black slick.
+                return new Color(38, 32, 26);
         }
     }
 
