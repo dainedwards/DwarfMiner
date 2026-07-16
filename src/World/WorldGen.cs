@@ -234,6 +234,8 @@ public static class WorldGen
         // per fluid: PlugFluidBreaches keeps this lid open as the pool's own surface but
         // WALLS ITS EDGES — the settle slosh crests one course into the lid, so the lid's
         // rim is part of the containment, not the shore.
+        var lavaLid = new HashSet<long>();
+        var acidLid = new HashSet<long>();
 
         for (var r = 0; r < planet.Rings; r++)
         {
