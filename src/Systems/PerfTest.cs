@@ -116,6 +116,59 @@ public static class PerfTest
         Console.WriteLine($"[perf] particle storm: {particles.Count} spawned");
         RunTicks("particle die-off", 120, () => particles.Update(Dt, planet));
 
+        // --- Scenario 4: lake drain. Breach the floor of the biggest lake with a 2-tile
+        // shaft straight down into the lava sea: the whole lake wakes, drains as a
+        // waterfall and quenches against the sea — the worst-case sustained liquid chaos
+        // (a player mining through a lake bottom does exactly this). Appended AFTER the
+        // legacy scenarios so their historical numbers stay comparable.
+        {
+            // Densest cluster of water seeds = the biggest lake.
+            var seeds = planet.WaterSeeds;
+            var best = seeds[0];
+            var bestScore = -1;
+            foreach (var s in seeds)
+            {
+                var score = 0;
+                foreach (var t in seeds)
+                    if (Math.Abs(t.x - s.x) <= 6 && Math.Abs(t.y - s.y) <= 10) score++;
+                if (score > bestScore) { bestScore = score; best = s; }
+            }
+            var lavaTop = (int)(planet.Radius * HarnessWorld.LavaFillFrac) - Planet.RingMin;
+            var frac = (best.y + 0.5f) / planet.TilesAt(best.x);
+            var carved = 0;
+            for (var ring = best.x; ring > Math.Max(2, lavaTop - 3); ring--)
+            {
+                var nT = planet.TilesAt(ring);
+                var ty0 = (int)(frac * nT);
+                for (var w = 0; w < 2; w++)
+                {
+                    var y = (ty0 + w) % nT;
+                    var k = planet.Get(ring, y);
+                    if (!Tiles.IsSolid(k) || Tiles.IsAnchored(k)) continue;
+                    planet.Set(ring, y, TileKind.Sky);
+                    carved++;
+                }
+            }
+            cells.WakeFreeSurfaces(0, (best.x + 8) * Cells.Density);
+            Console.WriteLine($"[perf] lake drain: lake at ring {best.x} " +
+                              $"({bestScore} seeds near), {carved} shaft tiles carved");
+            var dsw = new Stopwatch();
+            double worst = 0, sum = 0;
+            for (var i = 0; i < 900; i++)
+            {
+                dsw.Restart();
+                cells.Update(Dt);
+                var ms = dsw.Elapsed.TotalMilliseconds;
+                sum += ms;
+                if (ms > worst) worst = ms;
+                if (i % 150 == 0)
+                    Console.WriteLine($"[perf]   drain tick {i}: {ms:F2}ms, " +
+                                      $"active {cells.ActiveCellCount} [{cells.ActiveBreakdown()}]");
+            }
+            Console.WriteLine($"[perf] lake drain: 900 ticks, total {sum:F0}ms, " +
+                              $"mean {sum / 900:F2}ms, worst {worst:F2}ms");
+        }
+
         Console.WriteLine($"[perf] total {total.ElapsedMilliseconds}ms");
     }
 
