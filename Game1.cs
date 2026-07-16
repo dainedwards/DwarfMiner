@@ -2066,14 +2066,14 @@ public sealed partial class DwarfMinerGame : Game
 
             if (rumble)
             {
-                // Build-up: no lava yet — the ground trembles harder and harder, the crater
-                // pool spits sparks, ash curls off the mouth. The player gets a beat to look.
+                // Build-up: no lava yet — the ground trembles harder and harder, ash curls
+                // off the mouth. The player gets a beat to look. (No sparks here: the vent
+                // ring floats above the resting pool, so mid-air flecks read as a glitch.)
                 var ramp = elapsed / 2.0f;
                 _run.Shake = MathF.Max(_run.Shake, 0.25f + ramp * 0.5f);
                 if (Random.Shared.Next(3) == 0)
                     _run.Cells.SpawnInTile(Math.Min(vx + 4, _run.Planet.Rings - 1), vy,
                         Material.Smoke, 6);
-                if (!vAcid) _particles.EmitLavaSparks(ventPos + ventUp * 3f, ventUp);
                 PlayAt("collapse", ventPos, 0.35f + ramp * 0.3f, pitch: -0.7f, minGap: 0.4f);
             }
             else
