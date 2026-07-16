@@ -1778,14 +1778,17 @@ public sealed class Particles
     {
         var right = new Vector2(-up.Y, up.X);
         var count = 4 + (int)(strength * 9f);
+        // ONE FLAT COLOUR = the lava body's own (Cells.LiquidBody), same rule as the side
+        // spew: the hot composite's fill blend REPLACES colour, so the fountain must ink
+        // the identical flat orange as the pool it stands in or every overlap stamps a
+        // hard-edged patch. Color == FadeColor keeps the glob lava-orange for life.
+        var body = new Color(235, 92, 20);
         for (var i = 0; i < count; i++)
         {
             if (_rng.Next(5) == 0) continue;
             var spread = (float)(_rng.NextDouble() - 0.5) * (0.35f + strength * 0.5f);
             var d = up * MathF.Cos(spread) + right * MathF.Sin(spread);
-            var hot = i < 2;   // white-hot leading gouts
-            var tone = hot ? new Color(255, 242, 170)
-                : _rng.Next(2) == 0 ? new Color(255, 176, 60) : new Color(250, 120, 40);
+            var hot = i < 2;   // (leading gouts keep only their bigger glow)
             var speed = (140f + strength * 180f) * (0.85f + (float)_rng.NextDouble() * 0.3f);
             _list.Add(new Particle
             {
@@ -1793,8 +1796,8 @@ public sealed class Particles
                 Velocity = d * speed,
                 Life = 1.0f + (float)_rng.NextDouble() * 0.7f,
                 MaxLife = 1.7f,
-                Color = tone,
-                FadeColor = new Color(165, 45, 15),
+                Color = body,
+                FadeColor = body,
                 Size = hot ? 0.8f : 0.9f + (float)_rng.NextDouble() * 0.5f,
                 GravityScale = 1.0f,
                 Drag = 0.4f,
