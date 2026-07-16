@@ -1846,10 +1846,11 @@ public sealed class Particles
                 // WIDE speed spread (0.7–1.25×): with range going as v², the gobs land
                 // scattered from half-distance to past the nominal arc, not in one line.
                 Velocity = d * (jetSpeed * (0.7f + (float)_rng.NextDouble() * 0.55f)),
-                // Life outlasts the full lob (~1.3-2s of flight) — expiry happens while
-                // POOLED on the ground (the rest-rule clamps to 1.4s), never mid-air.
-                Life = 2.4f + (float)_rng.NextDouble() * 0.6f,
-                MaxLife = 3.0f,
+                // Life FAR outlasts the full lob (~1.3-2s of flight) — expiry happens
+                // while POOLED on the ground (the rest-rule clamps to 1.4s), never
+                // mid-air, and even a long ricochet down the flank stays covered.
+                Life = 3.2f + (float)_rng.NextDouble() * 0.8f,
+                MaxLife = 4.0f,
                 Color = body,
                 FadeColor = body,
                 Size = hot ? 0.7f : 0.8f + (float)_rng.NextDouble() * 0.4f,
