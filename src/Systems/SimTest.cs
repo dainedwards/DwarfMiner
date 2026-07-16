@@ -2176,10 +2176,8 @@ public static class SimTest
                         samples++;
                         if (planet.IsSolidAt(cand + cRight * d)) solid++;
                     }
-                    best = MathF.Max(best, (float)solid / samples);
                     if (solid >= samples * 0.8f) return cand;
                 }
-                Console.WriteLine($"DBG FindCorridorSite({seed0}) failed: {found}/60 cave pos, best solid {best:0.00}");
                 return null;
             }
 
