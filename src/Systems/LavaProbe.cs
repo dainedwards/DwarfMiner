@@ -136,7 +136,8 @@ public static class LavaProbe
                     mouthCount++;
                     if (mouths.Count < 12)
                     {
-                        var bearing = (t + 0.5f) / n * MathF.Tau - MathF.PI;
+                        var bearing = Microsoft.Xna.Framework.MathHelper.WrapAngle(
+                            (t + 0.5f) / n * MathF.Tau);
                         mouths.Add($"drain mouth: lava({r},{t}) bearing {bearing:0.000} " +
                                    $"seed={seedSet.Contains((r, t))} -> Sky({r2},{t2}) dr={dr} dt={dtt}");
                     }
