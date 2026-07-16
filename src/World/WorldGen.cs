@@ -397,6 +397,16 @@ public static class WorldGen
                 // obsidian afterwards.
                 var acidBuffer = acidDepth > 0.5f && depth < acidDepth + 12f;
 
+                // The LAVA lake gets the same solid buffer (acid pools always had one; the
+                // crucible never did): every probe-caught lake drain was a noise cave or
+                // shaft in the crust under/beside the basin that the pour then found. The
+                // jacket + plug passes seal what touches the fill, but a cave a few tiles
+                // out only needs one melted or crumbled tile to connect — solid rock there
+                // ends the class. Water lakes deliberately keep their caves (a flooded
+                // grotto is gameplay; a drained lava lake is a broken world).
+                var lavaBuffer = def.LakePair && lakeIdx == 1
+                    && lakeDepth > 0.5f && depth < lakeDepth + 12f;
+
                 // Ocean worlds (LakeScale > 2.5, same marker as the deep-water bonus above)
                 // armour their seabeds: an obsidian SHELL under every real basin (nothing
                 // upper-crust may bite obsidian — worms detour, noise caves are suppressed
