@@ -1522,6 +1522,23 @@ public sealed partial class DwarfMinerGame : Game
         _frameDt = dt;   // for per-frame item actions dispatched by id (see BuildItems)
         var keys = Keyboard.GetState();
         var mouse = Screen.Mouse();
+        // Unfocused window: SDL still reports the OS-wide keyboard/pointer, so without this
+        // gate typing or clicking in another app drives the player. Freeze the input to a
+        // neutral, non-moving state while blurred; on the way back adopt the real state as
+        // the edge baseline in the same frame, so the click that refocused the window is
+        // not also read as a trigger pull and a scroll elsewhere is not a hotbar spin.
+        if (!IsActive)
+        {
+            keys = new KeyboardState();
+            mouse = Blurred(_prevMouse);
+            _blurred = true;
+        }
+        else if (_blurred)
+        {
+            _blurred = false;
+            _prevKeys = keys;
+            _prevMouse = mouse;
+        }
         _totalTime += dt;
         _transitionFlash = MathF.Max(0f, _transitionFlash - dt * 1.6f);
 
