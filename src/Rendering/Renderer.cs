@@ -461,6 +461,19 @@ public sealed class Renderer
         }
         _sb.Begin(samplerState: SamplerState.PointClamp, transformMatrix: view, effect: _tileFx);
 
+        // Advance the smoothed wet-ground state once per frame off the sim clock, and (re)size
+        // the per-tile buffer to this planet. wetDt is clamped so a paused frame or world swap
+        // can't snap every tile dry/wet in a single step.
+        var wetDt = 0f;
+        if (WorldCells is { } wclock)
+        {
+            var now = wclock.Time;
+            if (_wetClock >= 0f) wetDt = Math.Clamp(now - _wetClock, 0f, 0.1f);
+            _wetClock = now;
+            if (_wetness == null || _wetness.Length != planet.TileCount)
+                _wetness = new float[planet.TileCount];
+        }
+
         for (var r = minRing; r <= maxRing; r += tileStep)
         {
             var ringRadius = (Planet.RingMin + r + 0.5f) * Planet.TileSize;
