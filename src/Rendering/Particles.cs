@@ -102,10 +102,16 @@ public sealed class Particles
     /// fall back to ordinary strand quads.</summary>
     public bool FluidMode;
 
+    /// <summary>True while any eruption-column grain (cone-scale Fire fluid) is alive and
+    /// visible — gates Game1's smoke coverage RT (fill + clear + composite) so the extra
+    /// target costs nothing outside an eruption. Refreshed every Update.</summary>
+    public bool SmokeJetLive { get; private set; }
+
     public int Count => _list.Count;
 
     public void Update(float dt, Planet planet, Cells? cells = null)
     {
+        SmokeJetLive = false;
         for (var i = _list.Count - 1; i >= 0; i--)
         {
             var p = _list[i];
