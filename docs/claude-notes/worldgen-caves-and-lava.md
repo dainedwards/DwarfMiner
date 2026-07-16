@@ -350,7 +350,13 @@ slowly rises to 110–130% and bubbles over the sides):**
   Now a UNIFORM THIN-LAYER rain: perTile 4/8 cells across the whole crater mouth
   (mouthHalf ≈ 0.07 rad ≈ craterFrac·coneW of the squat cones) — same volume, level line
   that simply rises. Screenshot-verified: smooth dome cresting the rim. Rule of thumb for
-  ANY future pool-level mechanic: never point-dump into a liquid surface; layer it.
+  ANY future pool-level mechanic: never point-dump into a liquid surface; layer it. **Round 3s**: the layer-rain's FIXED mouth span overhung the sloped bowl walls (the
+  open mouth narrows below the rim) — edge columns dropped cells onto rock that dribbled
+  down = churning flickering SHORELINE. Fill now rains ONLY onto columns whose surfR tile
+  is already the pool's own liquid (LiquidKindAtWorld per column); walls get nothing and
+  the pool claims them naturally as it rises. Corollary to the rule of thumb: layer-fill
+  a pool STRICTLY within its current wetted footprint. Landing dollops ×3 per user
+  (JetScale·6 extra cells, jitter 3.5px, both stamp sites).
 - SimTest note: "compaction: voided pile hardens" is time-seeded FLAKY (failed once,
   passed clean re-run with identical binaries — Cells sim rng, like the acid-dissolve
   test). Verified: probe 0 drain mouths + CONNECTED + 0 escapes, simtest 444 PASS.

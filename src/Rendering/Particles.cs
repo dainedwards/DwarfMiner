@@ -528,30 +528,43 @@ public sealed class Particles
                 var age = 1f - t;
                 wid = MathHelper.Lerp(3f, 11f, age)    // plume billow: puffs EXPAND with age
                     * MathF.Max(1f, p.JetScale);       // …at the jet's own scale
-                // Dim floor raised 0.5→0.72: with the fade now ending on deep flame red,
-                // heavier dimming pushed tips toward brown-black — user wants NO black,
-                // so the tips tatter mostly via coverage, less via darkening.
-                c *= MathHelper.Lerp(1f, 0.72f, age * age);
-                // ~12 Hz whole-body flicker (item 4): each blob's brightness oscillates
-                // on its own phase, so the fused tongue boils visually. The per-grain
-                // phase key `Life + Time` is CONSTANT for a given grain (birth time +
-                // initial life), so a grain flickers coherently rather than strobing
-                // white-noise as its life ticks down. Cone-scale jets (JetScale) damp
-                // the amplitude hard: the same ±25% on a 40-px blob strobes the whole
-                // eruption column.
-                c *= p.JetScale > 1f
-                    ? 0.94f + 0.10f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f)
-                    : 0.85f + 0.25f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f);
-                // TAIL-END SMOKE: the last stretch of a puff's life — the wisping top of
-                // the plume and everything left when the trigger releases — shifts to
-                // black-smoke in two hard steps. Fire colours own the body; soot owns the
-                // die-off. Hue-shift only: alpha (coverage) is preserved, so the wisp
-                // keeps its shape while going dark.
-                if (age > 0.7f)
+                if (p.JetScale > 1f)
                 {
-                    var k = MathF.Ceiling((age - 0.7f) / 0.3f * 2f) * 0.5f;
-                    var a = c.A;
-                    c = Color.Lerp(c, new Color(48 * a / 255, 43 * a / 255, 44 * a / 255, a), k);
+                    // CONE-SCALE COLOUR CONTRACT: the fill blend REPLACES colour, so any
+                    // rgb difference between overlapping capsules draws their rectangular
+                    // boundaries — invisible on the hose's 4-11px quads, glaring pale
+                    // blocks on the eruption's 30-50px ones. A big jet inks ONE flat fire
+                    // tone (the pools' own rule); ageing, flicker and the soot die-off all
+                    // ride the ALPHA — coverage tatters and thins, colour never varies.
+                    var cov = MathHelper.Lerp(1f, 0.55f, age * age)
+                            * (0.92f + 0.08f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f));
+                    if (age > 0.7f) cov *= 1f - (age - 0.7f) / 0.3f * 0.85f;
+                    c = new Color((byte)255, (byte)158, (byte)64,
+                        (byte)(255 * MathHelper.Clamp(cov, 0f, 1f)));
+                }
+                else
+                {
+                    // Dim floor raised 0.5→0.72: with the fade now ending on deep flame
+                    // red, heavier dimming pushed tips toward brown-black — user wants NO
+                    // black, so the tips tatter mostly via coverage, less via darkening.
+                    c *= MathHelper.Lerp(1f, 0.72f, age * age);
+                    // ~12 Hz whole-body flicker (item 4): each blob's brightness
+                    // oscillates on its own phase, so the fused tongue boils visually.
+                    // The per-grain phase key `Life + Time` is CONSTANT for a given grain
+                    // (birth time + initial life), so a grain flickers coherently rather
+                    // than strobing white-noise as its life ticks down.
+                    c *= 0.85f + 0.25f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f);
+                    // TAIL-END SMOKE: the last stretch of a puff's life — the wisping top
+                    // of the plume and everything left when the trigger releases — shifts
+                    // to black-smoke in two hard steps. Fire colours own the body; soot
+                    // owns the die-off. Hue-shift only: alpha (coverage) is preserved, so
+                    // the wisp keeps its shape while going dark.
+                    if (age > 0.7f)
+                    {
+                        var k = MathF.Ceiling((age - 0.7f) / 0.3f * 2f) * 0.5f;
+                        var a = c.A;
+                        c = Color.Lerp(c, new Color(48 * a / 255, 43 * a / 255, 44 * a / 255, a), k);
+                    }
                 }
             }
             // Volcano lava blobs MELT AWAY instead of popping: over the last 0.4s the
