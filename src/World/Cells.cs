@@ -863,6 +863,16 @@ public sealed class Cells
         return Get(cx, cy) == Material.Water;
     }
 
+    /// <summary>Whether the cell at a world position holds ANY pooling liquid (water, lava,
+    /// acid, oil — see <see cref="Materials.IsLiquid"/>). The particle pass gates on this so
+    /// colliding effects stop at every pool's surface, not just water's.</summary>
+    public bool LiquidAtWorld(Vector2 worldPos)
+    {
+        var (cx, cy) = WorldToCell(worldPos);
+        if (cy < 0 || cy >= Height) return false;
+        return Materials.IsLiquid(Get(cx, cy));
+    }
+
     /// <summary>Whether the cell at a world position holds settled powder (sand/dirt/gravel/
     /// dust). Pickups treat these as ground so a dropped gem rests on a pile, not under it.</summary>
     public bool PowderAtWorld(Vector2 worldPos)
