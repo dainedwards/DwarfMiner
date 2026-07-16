@@ -368,7 +368,7 @@ public static class WorldGen
                         planet.SetWall(r, t, TileKind.Stone);
                         planet.Set(r, t, TileKind.Sky);
                         if (depth >= 1f) planet.AcidSeeds.Add((r, t));
-                        else basinAir.Add(Planet.TileKey(r, t));
+                        else acidLid.Add(Planet.TileKey(r, t));
                         continue;
                     }
 
