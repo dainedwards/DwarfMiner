@@ -1825,11 +1825,15 @@ public static class WorldGen
                 }
             }
 
-            // The throat: a primed channel from the chamber roof up to the crater floor,
-            // sleeved in basalt so the soft dirt band it crosses can't slump into it.
-            // Span keeps the legacy world width: open channel ≈24 px, 8-px walls each side.
-            var throatSpan = (int)(2 * S) + 1;
-            // Throat keep-out capsule (chamber → crater floor) — see Planet.PlumbingZones.
+            // The throat: a primed LAVA-ROCK tube from the geyser roof up to the crater
+            // floor, so it connects the well straight through the bottom of the top bowl.
+            // Open bore is 3 tiles wide (dt −1..1); a 2-tile lava-rock lining each side
+            // (obsidian for acid) sleeves it so the soft dirt band it crosses can't slump
+            // in, and the rising column can't dissolve its own walls.
+            const int throatOpen = 1;                   // half-width of open bore → 3 tiles
+            const int throatLine = 2;                   // lining courses each side
+            var throatSpan = throatOpen + throatLine;   // total half-span carved + lined
+            // Throat keep-out capsule (geyser → crater floor) — see Planet.PlumbingZones.
             var throatTop = planet.Center + new Vector2(MathF.Cos(ang), MathF.Sin(ang))
                 * (Planet.RingMin + floorR + 1) * Planet.TileSize;
             planet.PlumbingZones.Add((centre, throatTop, (throatSpan + 0.5f) * Planet.TileSize));
@@ -1843,11 +1847,12 @@ public static class WorldGen
                     var t = ((t0 + dt) % n + n) % n;
                     if (Tiles.IsAnchored(planet.Get(r, t))) continue;
                     planet.SetWall(r, t, TileKind.Basalt);
-                    if (Math.Abs(dt) >= throatSpan - 1)
+                    if (Math.Abs(dt) > throatOpen)
                     {
-                        // Acid throats are obsidian-sleeved so the rising column can't dissolve
-                        // its own channel walls and drain into the surrounding crust.
-                        planet.Set(r, t, def.VolcanoAcid ? TileKind.Obsidian : TileKind.Basalt);
+                        // Lining: LAVA ROCK for lava tubes (the every-lava-body jacket),
+                        // OBSIDIAN for acid (the only kind vitriol can't corrode) so the
+                        // rising column can't eat its way out through the crust.
+                        planet.Set(r, t, def.VolcanoAcid ? TileKind.Obsidian : TileKind.LavaRock);
                     }
                     else
                     {
