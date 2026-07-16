@@ -1493,8 +1493,14 @@ public static class WorldGen
                 var t = ((t0 + dt) % n + n) % n;
                 if ((planet.TileToWorld(r, t) - centre).LengthSquared() > radiusSq) continue;
                 var k = planet.Get(r, t);
-                if (k == TileKind.Sky || Tiles.IsAnchored(k)
-                    || (!biteObsidian && k == TileKind.Obsidian)) continue;
+                // LavaRock is spared in BOTH modes: it only ever exists as a lava body's
+                // jacket (crater lining, chamber shell) — never as biteable bedrock — so
+                // even the deep-strata worms must leave it. The fluid keep-out is the
+                // same contract for jackets that don't exist yet: the pour comes after
+                // every carver, so the halo around each seed is the barrier's footprint.
+                if (k == TileKind.Sky || Tiles.IsAnchored(k) || k == TileKind.LavaRock
+                    || (!biteObsidian && k == TileKind.Obsidian)
+                    || planet.FluidKeepOut.Contains(Planet.TileKey(r, t))) continue;
                 planet.Set(r, t, TileKind.Sky);
             }
         }
