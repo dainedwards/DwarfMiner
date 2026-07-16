@@ -310,7 +310,51 @@ public sealed class Particles
                 // film IGNITES — the hose lights the slick it can no longer pierce; lava
                 // just swallows flame whole. Any other payload (acid droplets) stamps at
                 // the surface instead, settling ON it. Rain and sparks throw a tiny crown
-                // of spray. Everything dies at the surface.
+                // of spray. Everything dies at the surface —
+                // — EXCEPT a volcano blob meeting LAVA: during an eruption all the ground
+                // near the vent wears a fresh lava coating, so the generic die-at-surface
+                // rule made every fountain lander vanish the frame it "landed". A
+                // JetScale lava glob touching lava LANDS there instead: it stops, hands
+                // off its dollop, splashes, and pools its few seconds like it does on
+                // bare rock.
+                if (pool == Material.Lava && p.Fluid == (byte)Material.Lava && p.JetScale > 1f)
+                {
+                    if (p.LandMat != 0 && cells != null)
+                    {
+                        cells.StampAtWorld(p.Position, (Material)p.LandMat, 0);
+                        for (var e = 0; e < (int)(p.JetScale * 2f); e++)
+                            cells.StampAtWorld(p.Position + Jitter(2.5f),
+                                (Material)p.LandMat, 0);
+                        p.LandMat = 0;
+                    }
+                    if (p.LandSparks)
+                    {
+                        p.LandSparks = false;
+                        var nUp = planet.UpAt(p.Position);
+                        for (var k = 0; k < 3; k++)
+                            _list.Add(new Particle
+                            {
+                                Position = p.Position,
+                                Velocity = nUp * (26f + (float)_rng.NextDouble() * 34f)
+                                         + new Vector2(-nUp.Y, nUp.X)
+                                           * ((_rng.Next(2) == 0 ? 1f : -1f)
+                                              * (14f + (float)_rng.NextDouble() * 26f)),
+                                Life = 0.16f + (float)_rng.NextDouble() * 0.15f,
+                                MaxLife = 0.31f,
+                                Color = Color.Lerp(p.Color, Color.White, 0.35f),
+                                FadeColor = p.FadeColor,
+                                Size = 0.5f,
+                                GravityScale = 1f,
+                                Drag = 1.5f,
+                            });
+                    }
+                    p.Velocity = Vector2.Zero;
+                    p.Life = MathF.Min(p.Life, 2.5f);   // the pooled-glob linger
+                    next = p.Position;                  // rest AT the surface, not inside
+                    p.Position = next;
+                    _list[i] = p;
+                    continue;
+                }
                 if (p.LandMat == (byte)Material.Fire)
                 {
                     if (pool == Material.Oil)
