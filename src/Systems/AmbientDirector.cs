@@ -176,7 +176,9 @@ public static class AmbientDirector
                 run.EruptionTotal = run.EruptionLeft;
                 // How far past the rim this one drives the pool (see Session.EruptionPeakFrac).
                 run.EruptionPeakFrac = 1.2f + (float)Random.Shared.NextDouble() * 0.25f;
-                run.EruptionDrainVent = -1;   // a fresh eruption cancels any subsidence
+                // A fresh eruption at the SAME vent cancels its subsidence (another
+                // volcano's drain keeps running — they're independent pools).
+                if (run.EruptionDrainVent == best) run.EruptionDrainVent = -1;
                 var (vx, vy, _) = run.Planet.VolcanoVents[best];
                 result.EruptionStarted = true;
                 result.EruptionPos = run.Planet.TileToWorld(vx, vy);
