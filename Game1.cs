@@ -2091,9 +2091,12 @@ public sealed partial class DwarfMinerGame : Game
                             mat, Cells.Density * Cells.Density);
                 }
 
-                // THE SPOUT stands on the POOL SURFACE, deep inside the bowl — not at the
-                // vent ring near the lip. It climbs with the magma as the level rises.
-                var spoutR = surfR >= 0 ? Math.Min(surfR + 1, _run.Planet.Rings - 1) : vx;
+                // THE SPOUT erupts from WITHIN the magma — 10 tiles below the lava line,
+                // deep inside the bowl — so the column and every gob visibly BURST up
+                // through the pool surface rather than standing on it. (Particles born
+                // inside a liquid aren't killed by the surface-crossing gate; they die
+                // normally when they arc back IN.) It rises with the magma line.
+                var spoutR = surfR >= 0 ? Math.Max(2, surfR - 10) : vx;
                 var spoutPos = surfR >= 0
                     ? _run.Planet.TileToWorld(spoutR, (int)(angF * _run.Planet.TilesAt(spoutR)))
                     : ventPos;
