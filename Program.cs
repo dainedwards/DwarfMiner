@@ -95,5 +95,22 @@ if (args.Length > 0 && args[0] == "--toppleprobe")
     return;
 }
 
+// `DM_NOFOCUS=1` — bring the window up WITHOUT stealing focus, so an automated/test launch
+// does not yank the user out of whatever they are doing. SDL's macOS path activates the app
+// (`activateIgnoringOtherApps`) unless SDL_MAC_BACKGROUND_APP is set, which leaves it an
+// accessory app: window visible and rendering (screenshots still work), no dock activation,
+// no focus theft. .NET's SetEnvironmentVariable writes a MANAGED copy only, so SDL's native
+// getenv would never see the hint — poke the real environment through libc, and do it before
+// the GraphicsDeviceManager in the game's constructor initialises SDL.
+if (Environment.GetEnvironmentVariable("DM_NOFOCUS") is { Length: > 0 } && OperatingSystem.IsMacOS())
+    Native.setenv("SDL_MAC_BACKGROUND_APP", "1", 1);
+
 using var game = new DwarfMinerGame();
 game.Run();
+
+internal static partial class Native
+{
+    [System.Runtime.InteropServices.LibraryImport("libc",
+        StringMarshalling = System.Runtime.InteropServices.StringMarshalling.Utf8)]
+    internal static partial int setenv(string name, string value, int overwrite);
+}
