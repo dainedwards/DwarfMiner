@@ -292,17 +292,33 @@ public sealed class Particles
                 else if (p.LandMat != 0)
                     cells.StampAtWorld(p.Position, (Material)p.LandMat);
                 p.LandMat = 0;
+                // The true CONTACT point: `next` overshoots the boundary by up to a whole
+                // frame-step (~4 px at raindrop speeds), which sank the crown visibly
+                // below the waterline — march the step 1 px at a time and stop at the
+                // first liquid sample instead. (The drop's death spot uses it too.)
+                var contact = next;
+                var stepV = next - p.Position;
+                var stepLen = stepV.Length();
+                if (stepLen > 1f)
+                {
+                    var stepDir = stepV / stepLen;
+                    for (var d2 = 1f; d2 <= stepLen; d2 += 1f)
+                    {
+                        var probe = p.Position + stepDir * d2;
+                        if (cells.LiquidAtWorld(probe)) { contact = probe; break; }
+                    }
+                }
                 if (p.Velocity.LengthSquared() > 1600f)
                 {
                     var n = planet.UpAt(p.Position);
                     for (var k = 0; k < 2; k++)
                         _list.Add(new Particle
                         {
-                            // The crown sprouts at the CONTACT point (`next`, just inside
-                            // the surface cell), not the drop's last airborne spot — a
-                            // splash hovering pixels above the waterline read as firing
-                            // before the drop ever hit.
-                            Position = next,
+                            // The crown sprouts at the CONTACT point (the first liquid
+                            // sample along the step), not the drop's last airborne spot —
+                            // a splash hovering above the line read as firing early, one
+                            // sunk a frame-step deep read as underwater.
+                            Position = contact,
                             // Low crown — ×0.7 per user, then another ×0.7 ("30% lower").
                             Velocity = n * (10.5f + (float)_rng.NextDouble() * 14.7f)
                                      + new Vector2(-n.Y, n.X)
