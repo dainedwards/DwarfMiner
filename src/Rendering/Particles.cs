@@ -2017,8 +2017,9 @@ public sealed class Particles
     /// instead). The blobs ARE the lava carriers — no separate mid-air cell volley.</summary>
     public void EmitLavaSpew(Vector2 pos, Vector2 dir, float strength)
     {
-        // ×1.072 (√1.15) on the ballistic tune = +15% reach (range goes with v²).
-        var jetSpeed = 123f + strength * 77f;
+        // ×1.072 (√1.15) then ×1.162 (√1.35) on the ballistic tune = +15% then +35%
+        // reach (range goes with v²).
+        var jetSpeed = 143f + strength * 89f;
         const float coneArc = 0.24f;          // a loose spray, not the spewer's tight rope
         // ONE FLAT COLOUR — the lava body's own (Cells.LiquidBody): the hot composite's
         // fill blend REPLACES colour wherever a quad lands, so a blob crossing the pool
