@@ -34,6 +34,13 @@ Print it when ANY of these make the command differ from the last printed line:
   command from an old transcript — this happened: DM_ERUPTSHOW was added and never
   printed, and several playtests silently ran without it).
 
+BUT the newest marked line wins ACROSS sessions, so printing SHADOWS the other session's
+command. Before printing under the "none this session" clause, check the current winner
+(`DWARVEN_DRY_RUN=1 run <checkout>`): if it already carries the variables for what the user
+is actively playtesting and your own work needs no user playtest, print NOTHING. This
+happened 2026-07-17: a default line printed only because "none printed this session"
+shadowed the other session's DM_ERUPTSHOW command mid-playtest.
+
 ## Run command for testing (machine-parsed — keep the exact format)
 
 Whenever the run command changes (Rule #1), print it as a single line in exactly this
