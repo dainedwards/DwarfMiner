@@ -1634,8 +1634,10 @@ public sealed class Particles
     /// aged top of the plume — the billow that used to read light orange/cream — inks
     /// the smoke RT in soot black; younger grains are the orange column base and keep
     /// the fire tone in the hot field (per user: the top goes smoke, the bottom orange
-    /// stays).</summary>
-    private const float JetSootAge = 0.55f;
+    /// stays). Height saturates under the jet's drag, so age overshoots height: 0.55
+    /// still put orange blobs ~¾ of the way up the cap — 0.3 lands the hand-off around
+    /// the plume's midpoint.</summary>
+    private const float JetSootAge = 0.3f;
 
     private static readonly Color[] FlameTones =
         { new(255, 250, 200), new(255, 220, 110), new(255, 170, 60), new(255, 120, 35) };
