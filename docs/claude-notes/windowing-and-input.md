@@ -21,6 +21,21 @@ All four parts are load-bearing (`Program.cs`, `Game1.HideWindowEarly`/`KeepWind
    `Initialize` OR in the first `Update` is silently undone and the window is back for the
    whole session.
 
+4. **`MakeWindowUntouchable` (objc P/Invoke in `Initialize`)** — activation policy →
+   `Prohibited` and `ignoresMouseEvents` → YES on the NSWindow. Parts 1–3 only make the window
+   *invisible*; they never stopped it taking INPUT. The gap: MonoGame's loop-start
+   `SDL_ShowWindow` leaves the transparent window on screen until the next `Update` re-hides
+   it, and an early frame stalled on worldgen/prewarm stretches that gap to seconds — a click
+   landing there activated the app and moved the user's keyboard focus into an invisible
+   window (reported live 2026-07-16: "the hidden window is taking my input"). Prohibited means
+   macOS refuses to activate the app at all; ignoresMouseEvents lets clicks fall through even
+   while shown. Verified: window-server probe shows policy 2, zero visible windows, and
+   DM_AUTOSHOT captures unaffected.
+
+Belt-and-braces on top: the `UpdateFrame` input gate (below) is forced shut for the entire
+life of a `_noFocus` run, so even if SDL reports the window focused the game never plays from
+the user's keys.
+
 `Window.Handle` is the SDL_Window* and is stable throughout (logged: it never changes).
 `DllImport("libSDL2")` resolves — the dylib ships under
 `bin/<Config>/net8.0/runtimes/osx/native/` and deps.json puts it on the search path. MonoGame
