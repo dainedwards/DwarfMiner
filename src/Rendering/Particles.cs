@@ -573,7 +573,11 @@ public sealed class Particles
                     var cov = MathHelper.Lerp(1f, 0.55f, age * age)
                             * (0.92f + 0.08f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f));
                     if (age > 0.7f) cov *= 1f - (age - 0.7f) / 0.3f * 0.85f;
-                    c = new Color((byte)48, (byte)43, (byte)44,
+                    // Darker than the hose die-off's (48,43,44) soot ON PURPOSE: the
+                    // eruption's own glow (hero light + fountain) multiplies the plume up
+                    // ~2× through the lightmap, so the base must undershoot for the lit
+                    // column to land at smoky black instead of washed-out mauve.
+                    c = new Color((byte)30, (byte)27, (byte)28,
                         (byte)(255 * MathHelper.Clamp(cov, 0f, 1f)));
                 }
                 else
