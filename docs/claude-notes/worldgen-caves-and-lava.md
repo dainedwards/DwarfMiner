@@ -211,6 +211,19 @@ slowly rises to 110–130% and bubbles over the sides):**
   Size also drives the strand-quad fallback, so overloading it was wrong twice). Speeds
   170–330, lives 0.8–1.3s, buoyant, hero-flicker 1/3 up the column every 3rd frame.
   Lava-only (acid vents get no burning column).
+- **2026-07-16 SMOKY BLACK COLUMN** (user: the light-orange centre jet → smoky black):
+  the column's cone-scale flat tone is now (30,27,28) and it inks its **OWN coverage RT
+  (`Game1._smokeRt`)**, composited BENEATH the hot field (thresh 0.12, opacity 1, rim
+  1.3/0.03 — an ash catch-light, not the hot 1.85 sheath), gated by
+  `Particles.SmokeJetLive` so the extra target costs nothing outside eruptions. TWO traps,
+  both verified by pixel-sampling DM_AUTOSHOT frames: (1) it CANNOT share the hot RT —
+  the fill blend's colour REPLACES across each capsule's whole quad, so the orange
+  fountain inked after a black column stamps hard 30-50px rectangles over it (invisible
+  while both were orange); (2) the eruption's own lights lift the plume ~+50 per channel
+  through the lightmap — the base tone must undershoot "smoky black" (hence 30 not 48),
+  and the jet grains' per-grain LightRadius was trimmed 70/34 → 40/0 (lights INSIDE the
+  plume lit the ash from within and washed it to mauve; the hero flicker still lights
+  the flanks). Sparks/embers/fountain keep their molten oranges untouched.
 - **Round 3b** (user: spout from deeper in bowl / decouple from flamethrower / 2 angled
   acid-spitter-style side jets): **EmitLavaSpew** = acid-spewer mechanics scaled up
   (JetScale 2.2–3, Fluid=Lava hot composite, LandMat: ½ Lava + ⅓-of-rest Fire w/ fuse =
