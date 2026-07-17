@@ -65,9 +65,12 @@ Rules:
   assignments, then `dotnet …DwarfMiner.dll` last. The newest marked command wins.
 
 **FORBIDDEN VARIABLES — NEVER include these:**
-- `DM_TITLE` — Window title is auto-derived from `.git` at runtime. Including it breaks the launcher.
-  Never print it. If you see DM_TITLE in a command from the transcript (stale from an older session),
-  that command is broken — print a corrected version without DM_TITLE to override it.
+- `DM_TITLE` — Window title is auto-derived from `.git` at runtime. Never print it in a RUNCMD
+  line. BUT the launcher itself injects `DM_TITLE=<tree>` into every launch and its
+  `launched:`/`would run:` echo — DM_TITLE appearing THERE is normal, current builds ignore it,
+  and it says nothing about the grabbed command (misread 2026-07-17 as "stale line with
+  DM_TITLE" when the real problem was a newer line that shadowed DM_ERUPTSHOW). Diagnose a
+  wrong launch by which VARIABLES the picked line is missing, not by DM_TITLE.
 - `DM_NOFOCUS` — Claude-side only (see below). The user's own playtests must take focus, so
   this must never appear in a printed run command.
 
