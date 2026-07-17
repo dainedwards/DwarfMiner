@@ -177,7 +177,11 @@ public sealed class Particles
                 // resting at the ground surface in their last frames were spawning
                 // sparks right on the terrain — the other half of the phantom
                 // "sparks interacting with the ground".
-                if (!p.JetSpark && !p.Hidden && sp > 3600f && _rng.Next(7) < 4)
+                // Eruption columns shed at HALF the hose's rate (2/7 vs 4/7): at cone
+                // scale the full-rate sheath read as a dense cream rain drowning the
+                // ash plume (user: -50%). The handheld flamethrower keeps its rate.
+                if (!p.JetSpark && !p.Hidden && sp > 3600f
+                    && _rng.Next(7) < (p.JetScale > 1f ? 2 : 4))
                 {
                     // (!Hidden: a plume grain still under the crater lava must not shed —
                     // its sparks would draw through the pool it is hidden inside.)
