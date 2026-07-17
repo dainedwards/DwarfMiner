@@ -575,6 +575,10 @@ public sealed class Particles
                     var cov = MathHelper.Lerp(1f, 0.55f, age * age)
                             * (0.92f + 0.08f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f));
                     if (age > 0.7f) cov *= 1f - (age - 0.7f) / 0.3f * 0.85f;
+                    // The ash billow blooms wider and thicker than the orange throat it
+                    // grew from: +40% blob footprint, +30% coverage (counteracts the age
+                    // die-off, so the cloud reads dense instead of tattering early).
+                    if (smokeJets) { wid *= 1.4f; cov *= 1.3f; }
                     // Ash darker than the hose die-off's (48,43,44) soot ON PURPOSE: the
                     // eruption's own glow (hero light + fountain) multiplies the plume up
                     // ~2× through the lightmap, so the base must undershoot for the lit
