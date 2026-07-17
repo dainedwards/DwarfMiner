@@ -235,8 +235,6 @@ public sealed partial class DwarfMinerGame : Game
     /// over it. Composited BENEATH the hot field, so molten bodies draw in front of the
     /// smoke. Created lazily — only eruptions ever fill it.</summary>
     private RenderTarget2D? _smokeRt;
-    // TEMP DEBUG (smoke jet verification — remove)
-    private int _dbgSmokeTick;
     /// <summary>Integer upscale factor of the pixel-grid path this frame; 0 = direct path.</summary>
     private int _pixelK;
     /// <summary>Reentrancy guard for the ClientSizeChanged → ApplyChanges round-trip.</summary>
