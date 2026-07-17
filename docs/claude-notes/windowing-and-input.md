@@ -6,7 +6,8 @@
 
 ## DM_NOFOCUS: how the invisible test launch works
 
-All three parts are load-bearing (`Program.cs`, `Game1.HideWindowEarly`/`KeepWindowHidden`):
+All four parts are load-bearing (`Program.cs`, `Game1.HideWindowEarly`/`KeepWindowHidden`/
+`MakeWindowUntouchable`):
 
 1. **`SDL_MAC_BACKGROUND_APP=1`**, poked into the real environment via `libc setenv` before SDL
    starts, so SDL skips `activateIgnoringOtherApps`: no focus theft, no dock icon. .NET's
