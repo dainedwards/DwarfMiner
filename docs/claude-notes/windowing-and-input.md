@@ -34,7 +34,8 @@ All four parts are load-bearing (`Program.cs`, `Game1.HideWindowEarly`/`KeepWind
 
 Belt-and-braces on top: the `UpdateFrame` input gate (below) is forced shut for the entire
 life of a `_noFocus` run, so even if SDL reports the window focused the game never plays from
-the user's keys.
+the user's keys. DM_NOFOCUS also implies DM_MUTE (`Sfx.Build`) — every sound funnels through
+`Sfx.Play`, which drops out when `Muted`, so a hidden run is inaudible as well as invisible.
 
 `Window.Handle` is the SDL_Window* and is stable throughout (logged: it never changes).
 `DllImport("libSDL2")` resolves — the dylib ships under
