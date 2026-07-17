@@ -6573,12 +6573,6 @@ public sealed partial class DwarfMinerGame : Game
                 _particles.DrawFluid(_renderer, Material.Lava);
                 _renderer.Batch.End();
 
-                // TEMP DEBUG (smoke jet verification — remove)
-                if (_particles.DbgJetTotal > 0 && Environment.TickCount / 500 != _dbgSmokeTick)
-                {
-                    _dbgSmokeTick = Environment.TickCount / 500;
-                    Console.WriteLine($"[smoke] jets={_particles.DbgJetTotal} hidden={_particles.DbgJetHidden} live={_particles.SmokeJetLive} blob={blobMode}");
-                }
                 // The eruption's smoky black column fills its OWN coverage field (see
                 // _smokeRt) — gated on live column grains so the target costs nothing
                 // outside an eruption.
