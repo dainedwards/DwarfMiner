@@ -6600,16 +6600,6 @@ public sealed partial class DwarfMinerGame : Game
         if (_pixelK > 0) GraphicsDevice.SetRenderTarget(_worldRt);
         else if (liquidPass) GraphicsDevice.SetRenderTarget(_sceneRt);
 
-        // TEMP DEBUG (smoke jet verification — remove)
-        if (_particles.DbgJetTotal > 300 && _smokeRt != null && _dbgSmokeTick % 4 == 0)
-        {
-            var dd = new Microsoft.Xna.Framework.Color[_smokeRt.Width * _smokeRt.Height];
-            _smokeRt.GetData(dd);
-            int nCov = 0, maxA = 0;
-            foreach (var c in dd) { if (c.A > 100) nCov++; if (c.A > maxA) maxA = c.A; }
-            Console.WriteLine($"[smoke] RT cov px={nCov} maxA={maxA} rt={_smokeRt.Width}x{_smokeRt.Height}");
-        }
-
         tDraw = FramePerf.Now();
         _renderer.DrawWorld(_run.Planet, _camera);
         FramePerf.Add("world", tDraw);
