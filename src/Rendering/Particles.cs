@@ -567,20 +567,22 @@ public sealed class Particles
                     // CONE-SCALE COLOUR CONTRACT: the fill blend REPLACES colour, so any
                     // rgb difference between overlapping capsules draws their rectangular
                     // boundaries — invisible on the hose's 4-11px quads, glaring pale
-                    // blocks on the eruption's 30-50px ones. A big jet inks ONE flat tone;
-                    // ageing, flicker and the die-off all ride the ALPHA — coverage
-                    // tatters and thins, colour never varies. SMOKY BLACK (the hose
-                    // die-off's soot tone), per user: the column reads as a roaring ash
-                    // jet, with the fountain/pool supplying the molten orange.
+                    // blocks on the eruption's 30-50px ones. Each PASS inks ONE flat tone
+                    // (young ash core in the smoke RT / aged cap in the hot field — the
+                    // age split happens in the pass filter above, so tones never mix in
+                    // one RT); ageing, flicker and the die-off all ride the ALPHA.
                     var cov = MathHelper.Lerp(1f, 0.55f, age * age)
                             * (0.92f + 0.08f * MathF.Sin(r.Time * 75f + (p.Life + r.Time) * 40f));
                     if (age > 0.7f) cov *= 1f - (age - 0.7f) / 0.3f * 0.85f;
-                    // Darker than the hose die-off's (48,43,44) soot ON PURPOSE: the
+                    // Ash darker than the hose die-off's (48,43,44) soot ON PURPOSE: the
                     // eruption's own glow (hero light + fountain) multiplies the plume up
                     // ~2× through the lightmap, so the base must undershoot for the lit
                     // column to land at smoky black instead of washed-out mauve.
-                    c = new Color((byte)30, (byte)27, (byte)28,
-                        (byte)(255 * MathHelper.Clamp(cov, 0f, 1f)));
+                    c = smokeJets
+                        ? new Color((byte)30, (byte)27, (byte)28,
+                            (byte)(255 * MathHelper.Clamp(cov, 0f, 1f)))
+                        : new Color((byte)255, (byte)158, (byte)64,
+                            (byte)(255 * MathHelper.Clamp(cov, 0f, 1f)));
                 }
                 else
                 {
