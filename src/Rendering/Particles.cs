@@ -1629,6 +1629,12 @@ public sealed class Particles
     /// the arc keeps matching the rest of the world's ballistics.</summary>
     private const float HoseArcGravity = 2.25f;
 
+    /// <summary>Age (1 − Life/MaxLife) below which an eruption-column grain is ASH: the
+    /// young core — the stretch that used to read light orange — inks the smoke RT in
+    /// soot black; older grains are the billowing cream cap and keep the fire tone in
+    /// the hot field (per user: only the light-orange column goes black).</summary>
+    private const float JetSootAge = 0.55f;
+
     private static readonly Color[] FlameTones =
         { new(255, 250, 200), new(255, 220, 110), new(255, 170, 60), new(255, 120, 35) };
     private static readonly Color[] AcidTones =
