@@ -107,15 +107,11 @@ public sealed class Particles
     /// target costs nothing outside an eruption. Refreshed every Update.</summary>
     public bool SmokeJetLive { get; private set; }
 
-    // TEMP DEBUG (smoke jet verification — remove)
-    public int DbgJetTotal, DbgJetHidden;
-
     public int Count => _list.Count;
 
     public void Update(float dt, Planet planet, Cells? cells = null)
     {
         SmokeJetLive = false;
-        DbgJetTotal = 0; DbgJetHidden = 0;
         for (var i = _list.Count - 1; i >= 0; i--)
         {
             var p = _list[i];
