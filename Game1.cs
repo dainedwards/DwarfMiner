@@ -6637,7 +6637,7 @@ public sealed partial class DwarfMinerGame : Game
         // gentle rim (1.3/0.03, well under the hot 1.85 — an ash edge catch-light, not a
         // molten sheath), so the fountain and crater dome draw in front of the smoke.
         if (_particles.FluidMode && _particles.SmokeJetLive && _smokeRt != null)
-            _renderer.CompositeLiquids(_smokeRt, 0.15f, 1f, 1.3f, 0.03f);
+            _renderer.CompositeLiquids(_smokeRt, 0.12f, 1f, 1.3f, 0.03f);
         // Hot bodies (lava pools + flame stream): full opacity + a hot bright rim — molten
         // rock's yellow-white edge and the flame's sheath, not a pool's translucent wet lip
         // (which made the tongue read as glowing liquid). No depth grading — that's a
