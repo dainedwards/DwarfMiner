@@ -46,7 +46,8 @@ public sealed class Sfx
 
     public void Build()
     {
-        Muted = Environment.GetEnvironmentVariable("DM_MUTE") is { Length: > 0 };
+        Muted = Environment.GetEnvironmentVariable("DM_MUTE") is { Length: > 0 }
+             || Environment.GetEnvironmentVariable("DM_NOFOCUS") is { Length: > 0 };
         try
         {
             foreach (var name in Names)
