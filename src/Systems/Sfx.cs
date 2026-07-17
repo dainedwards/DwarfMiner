@@ -22,7 +22,8 @@ public sealed class Sfx
     private double _now;
     private bool _ok;
 
-    /// <summary>Master multiplier on every play; 0 mutes. DM_MUTE=1 forces silence.</summary>
+    /// <summary>Master multiplier on every play; 0 mutes. DM_MUTE=1 forces silence, and so
+    /// does DM_NOFOCUS — a hidden test run must be inaudible as well as invisible.</summary>
     public float Master = 0.55f;
     public bool Muted;
 
