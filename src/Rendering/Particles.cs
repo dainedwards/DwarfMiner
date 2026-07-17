@@ -1889,7 +1889,10 @@ public sealed class Particles
                 GravityScale = -0.25f,               // buoyant: the plume keeps lifting
                 Drag = 1.1f,
                 CollideTiles = true,
-                LightRadius = hot ? 70f : i % 3 == 0 ? 34f : 0f,
+                // Trimmed from 70/34 with the smoky-black column: per-grain lights INSIDE
+                // an ash plume lit it from within and washed the black out to mauve. The
+                // hero light below still lights the flanks; these just rim the throat.
+                LightRadius = hot ? 40f : 0f,
                 LightColor = new Color(255, 170, 70),
                 Fluid = (byte)Material.Fire,
                 JetScale = 2.8f + (float)_rng.NextDouble() * 1.6f,   // cone-scale blob footprint
