@@ -213,9 +213,11 @@ slowly rises to 110–130% and bubbles over the sides):**
   Lava-only (acid vents get no burning column).
 - **2026-07-16 SMOKY BLACK PLUME TOP** (user, 3 rounds: light-orange jet → smoky black;
   then "not the WHOLE thing"; final: the TOP goes smoke, the bottom orange STAYS): the
-  column is split by grain AGE at `Particles.JetSootAge` (0.55) — young grains keep the
-  original flat (255,158,64) in the hot field (the orange column base), aged grains (the
-  billowing top) turn ash (30,27,28) and ink their **OWN coverage RT (`Game1._smokeRt`)**,
+  column is split by grain AGE at `Particles.JetSootAge` (0.3 — NOT the intuitive ~0.5:
+  height saturates under the jet's drag, so age overshoots height; 0.55 still put orange
+  blobs ~¾ of the way up the cap) — young grains keep the original flat (255,158,64) in
+  the hot field (the orange column base), aged grains (the billowing top) turn ash
+  (30,27,28) and ink their **OWN coverage RT (`Game1._smokeRt`)**,
   composited BENEATH the hot field (thresh 0.12, opacity 1, rim 1.3/0.03 — an ash
   catch-light, not the hot 1.85 sheath), gated by `Particles.SmokeJetLive` so the extra
   target costs nothing outside eruptions. TWO traps, both verified by pixel-sampling
