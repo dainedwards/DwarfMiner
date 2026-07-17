@@ -273,8 +273,8 @@ slowly rises to 110–130% and bubbles over the sides):**
   at the resting line (restR = ventR − 2S, the geometry contract again). Same-vent
   re-eruption cancels its drain; HandleGeyserBroken fixes up the drain index on RemoveAt. **Round 3i**: Session.EruptionDrainWait = 4.5s pause
   before subsidence (airborne gobs settle first) + budget 3→1 tile/frame (slow, stately);
-  EmitLavaFountain also flat LiquidBody orange (the eruption JET keeps its fire colours +
-  soot tail — that's the Fire-fluid branch, untouched); rumble-phase EmitLavaSparks REMOVED
+  EmitLavaFountain also flat LiquidBody orange (the eruption JET is now smoky black in its
+  own RT — see the SMOKY BLACK COLUMN entry above); rumble-phase EmitLavaSparks REMOVED
   (vent ring floats above the resting pool → mid-air flecks read as a glitch). **DM_ERUPTSHOW=1** = one-stop eruption demo: volcano-flank spawn + max zoom-out +
   auto-eruption at 5s. TWO TRAPS fixed 2026-07-16: (1) the rig's `NoDisasters: true`
   gated the WHOLE disaster clock — forced disasters (run.NextDisaster from DM_ hooks) now
