@@ -148,12 +148,8 @@ public sealed class Particles
                     && cells.LiquidAtWorld(p.Position)
                     && cells.LiquidAtWorld(p.Position + outw * (3f / ol));
             }
-            if (p.JetScale > 1f && p.Fluid == (byte)Material.Fire)
-            {
-                DbgJetTotal++;
-                if (p.Hidden) DbgJetHidden++;
-                else SmokeJetLive = true;
-            }
+            if (!p.Hidden && p.JetScale > 1f && p.Fluid == (byte)Material.Fire)
+                SmokeJetLive = true;
             // Flame turbulence: a bounded lateral wander that grows down the stream (age)
             // — the jet's body writhes like fire instead of flying a glassy arc. Phased
             // off each grain's own Life clock (grains are born with random lives, so the
