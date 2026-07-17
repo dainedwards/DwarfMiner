@@ -513,7 +513,12 @@ public sealed class Particles
     /// (JetScale &gt; 1, smoky black) inks its OWN coverage RT — sharing the hot field
     /// with the orange fountain/pool stamped their capsule quads as hard rects over the
     /// black (the fill blend's colour REPLACES across the whole quad; invisible while
-    /// both were orange). Handheld hoses (smokeJets false) keep the hot field.</summary>
+    /// both were orange). Only the YOUNG core is ash (see <see cref="JetSootAge"/>):
+    /// aged grains — the billowing cream cap atop the plume — return to the hot field
+    /// with the original fire tone (per user: only the light-orange column goes black,
+    /// not the whole plume). The two zones never share an RT, so their colour boundary
+    /// is a composite layer edge, never an in-RT quad rect. Handheld hoses (smokeJets
+    /// false) keep the hot field at any age.</summary>
     public void DrawFluid(Renderer r, Material which, bool smokeJets = false)
     {
         var tex = r.LiquidBlob;
@@ -522,7 +527,12 @@ public sealed class Particles
         foreach (var p in _list)
         {
             if (p.Fluid != (byte)which || p.Hidden) continue;
-            if (fire && p.JetScale > 1f != smokeJets) continue;
+            if (fire)
+            {
+                var ashCore = p.JetScale > 1f
+                    && 1f - MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f) <= JetSootAge;
+                if (ashCore != smokeJets) continue;
+            }
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             var c = Color.Lerp(p.FadeColor, p.Color, MathF.Ceiling(t * 4f) * 0.25f);
             // CAPSULES, not discs: each frame's grain batch fuses into one blob, but
