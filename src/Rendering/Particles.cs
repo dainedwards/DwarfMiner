@@ -514,12 +514,12 @@ public sealed class Particles
     /// (JetScale &gt; 1, smoky black) inks its OWN coverage RT — sharing the hot field
     /// with the orange fountain/pool stamped their capsule quads as hard rects over the
     /// black (the fill blend's colour REPLACES across the whole quad; invisible while
-    /// both were orange). Only the YOUNG core is ash (see <see cref="JetSootAge"/>):
-    /// aged grains — the billowing cream cap atop the plume — return to the hot field
-    /// with the original fire tone (per user: only the light-orange column goes black,
-    /// not the whole plume). The two zones never share an RT, so their colour boundary
-    /// is a composite layer edge, never an in-RT quad rect. Handheld hoses (smokeJets
-    /// false) keep the hot field at any age.</summary>
+    /// both were orange). Only the AGED billow is ash (see <see cref="JetSootAge"/>):
+    /// young grains — the orange column base — stay in the hot field with the original
+    /// fire tone (per user: the plume top goes smoke, the bottom orange stays). The two
+    /// zones never share an RT, so their colour boundary is a composite layer edge,
+    /// never an in-RT quad rect. Handheld hoses (smokeJets false) keep the hot field at
+    /// any age.</summary>
     public void DrawFluid(Renderer r, Material which, bool smokeJets = false)
     {
         var tex = r.LiquidBlob;
