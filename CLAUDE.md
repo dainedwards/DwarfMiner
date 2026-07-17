@@ -67,7 +67,7 @@ Rules:
 ## Launching the game yourself (DM_NOFOCUS)
 
 Prefix YOUR OWN launches with `DM_NOFOCUS=1`. The run is invisible end to end — no window, no
-focus theft, no flash, nothing taking the user's keyboard or mouse — while rendering carries on
+focus theft, no flash, no sound, nothing taking the user's keyboard or mouse — while rendering carries on
 into the scene render target, so `DM_AUTOSHOT` and F12 screenshots work exactly as in a visible
 run. Screenshots stay your way to see a test run.
 
