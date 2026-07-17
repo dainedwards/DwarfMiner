@@ -530,9 +530,9 @@ public sealed class Particles
             if (p.Fluid != (byte)which || p.Hidden) continue;
             if (fire)
             {
-                var ashCore = p.JetScale > 1f
-                    && 1f - MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f) <= JetSootAge;
-                if (ashCore != smokeJets) continue;
+                var ashBillow = p.JetScale > 1f
+                    && 1f - MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f) > JetSootAge;
+                if (ashBillow != smokeJets) continue;
             }
             var t = MathHelper.Clamp(p.Life / p.MaxLife, 0f, 1f);
             var c = Color.Lerp(p.FadeColor, p.Color, MathF.Ceiling(t * 4f) * 0.25f);
